@@ -3243,6 +3243,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       badge: z.string().max(50).default(""),
       badgeClass: z.string().max(100).default("bg-yellow-400 text-[#06038d]"),
       emoji: z.string().max(10).default("🏆"),
+      imageUrl: z.string().max(500).default(""),
       sortOrder: z.number().int().default(0),
       isActive: z.boolean().default(true),
     }))
@@ -3264,6 +3265,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
       badge: z.string().max(50).optional(),
       badgeClass: z.string().max(100).optional(),
       emoji: z.string().max(10).optional(),
+      imageUrl: z.string().max(500).optional(),
       sortOrder: z.number().int().optional(),
       isActive: z.boolean().optional(),
     }))

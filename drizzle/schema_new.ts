@@ -1005,6 +1005,7 @@ export const marketplaceBanners = mysqlTable("marketplaceBanners", {
   badge: varchar("badge", { length: 50 }).default("").notNull(),
   badgeClass: varchar("badgeClass", { length: 100 }).default("bg-yellow-400 text-[#06038d]").notNull(),
   emoji: varchar("emoji", { length: 10 }).default("🏆").notNull(),
+  imageUrl: varchar("imageUrl", { length: 500 }).default("").notNull(),
   sortOrder: int("sortOrder").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

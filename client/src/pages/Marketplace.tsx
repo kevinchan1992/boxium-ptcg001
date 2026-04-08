@@ -789,15 +789,18 @@ export default function Marketplace() {
           {activeBanners.map((banner: any, i: number) => (
             <div
               key={banner.id}
-              className={`bg-gradient-to-r ${banner.gradient} ${
+              className={`relative bg-gradient-to-r ${banner.gradient} ${
                 i === bannerIdx
                   ? bannerAnimating
                     ? `block ${bannerDir === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`
                     : 'block'
                   : 'hidden'
               }`}
+              style={banner.imageUrl ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
             >
-              <div className="px-6 pt-5 pb-10 sm:pt-7 sm:pb-12 flex items-center justify-between gap-4">
+              {/* Dark overlay when image is set */}
+              {banner.imageUrl && <div className="absolute inset-0 bg-black/45" />}
+              <div className="relative px-6 pt-5 pb-10 sm:pt-7 sm:pb-12 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl hidden sm:block">{banner.emoji}</span>
                   <div>

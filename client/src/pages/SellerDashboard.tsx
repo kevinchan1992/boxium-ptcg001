@@ -809,8 +809,51 @@ function SellerAuctionsTab() {
     return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#06038d]" /></div>;
   }
 
+  // Need to access setShowNewListing and setListingForm from parent - use a context or event
+  // Since this is a nested component, we'll use a custom event to trigger the parent
+  const handleStartAuction = () => {
+    // Dispatch a custom event that the parent SellerDashboard listens to
+    window.dispatchEvent(new CustomEvent('boxium:openNewListing', { detail: { mode: 'auction' } }));
+  };
+
   return (
     <div className="space-y-4">
+      {/* Auction Quick Start Banner: show when no active auctions */}
+      {allListings.length === 0 && (
+        <div className="rounded-2xl overflow-hidden border-2 border-[#FEDD00] bg-gradient-to-br from-[#06038D] to-[#1a0a9e] shadow-lg">
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">拍賣中心</p>
+                <h3 className="text-white font-bold text-lg leading-tight">開設你的第一場拍賣</h3>
+                <p className="text-white/60 text-xs mt-1">讓買家競價，以最佳價格成交</p>
+              </div>
+              <button
+                className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold text-sm px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                onClick={handleStartAuction}
+              >
+                <Gavel className="w-4 h-4" />
+                開始拍賣
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {[
+                { step: '1', title: '設定起拍價', desc: '最低入場價格' },
+                { step: '2', title: '選擇天數', desc: '3 日或 7 日拍賣' },
+                { step: '3', title: '等候競價', desc: '自動通知結果' },
+              ].map(s => (
+                <div key={s.step} className="bg-white/10 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
+                  <div>
+                    <p className="text-white text-xs font-semibold leading-tight">{s.title}</p>
+                    <p className="text-white/50 text-[10px] mt-0.5">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Sub-tab switcher */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
         {([
@@ -1005,7 +1048,7 @@ export default function SellerDashboard() {
     // Auction fields
     listingMode: "buy_now" as "buy_now" | "auction",
     startingBid: "", reservePrice: "", buyNowPrice: "", bidIncrement: "10",
-    auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 7,
+    auctionStartAt: "", auctionEndAt: "", auctionDurationDays: 3,
   });
   const [listingImages, setListingImages] = useState<string[]>([]);
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
@@ -1330,6 +1373,24 @@ export default function SellerDashboard() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerProfile?.id]);
+
+  // Listen for auction quick-start event from SellerAuctionsTab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
+        toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+        return;
+      }
+      if (detail?.mode === 'auction') {
+        setListingForm(p => ({ ...p, listingMode: 'auction' }));
+      }
+      setShowNewListing(true);
+    };
+    window.addEventListener('boxium:openNewListing', handler);
+    return () => window.removeEventListener('boxium:openNewListing', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, sellerProfile?.stripeConnectStatus]);
 
   const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: number; orderNo: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string }>({ open: false, orderId: 0, orderNo: "" });
   const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
@@ -3416,14 +3477,23 @@ export default function SellerDashboard() {
                     </div>
                     {/* Auto-calculated end time display */}
                     {listingForm.auctionEndAt && (
-                      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${new Date(listingForm.auctionEndAt) <= new Date() ? 'bg-red-50 border-red-200' : 'bg-[#06038D]/5 border-[#06038D]/20'}`}>
-                        <span className="text-xs text-[#06038D]/60">預計結標時間：</span>
-                        <span className={`text-xs font-semibold ${new Date(listingForm.auctionEndAt) <= new Date() ? 'text-red-600' : 'text-[#06038D]'}`}>
-                          {new Date(listingForm.auctionEndAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        {new Date(listingForm.auctionEndAt) <= new Date() && (
-                          <span className="text-xs text-red-500 ml-1">⚠️ 結標時間已過去，請重新設定</span>
+                      <div className={`space-y-1.5`}>
+                        {!listingForm.auctionStartAt && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200">
+                            <span className="text-green-600 text-xs">⚡</span>
+                            <span className="text-xs font-semibold text-green-700">立即開始</span>
+                            <span className="text-xs text-green-600">— 上架後立即開始拍賣</span>
+                          </div>
                         )}
+                        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${new Date(listingForm.auctionEndAt) <= new Date() ? 'bg-red-50 border-red-200' : 'bg-[#06038D]/5 border-[#06038D]/20'}`}>
+                          <span className="text-xs text-[#06038D]/60">預計結標時間：</span>
+                          <span className={`text-xs font-semibold ${new Date(listingForm.auctionEndAt) <= new Date() ? 'text-red-600' : 'text-[#06038D]'}`}>
+                            {new Date(listingForm.auctionEndAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {new Date(listingForm.auctionEndAt) <= new Date() && (
+                            <span className="text-xs text-red-500 ml-1">⚠️ 結標時間已過去，請重新設定</span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3616,7 +3686,18 @@ export default function SellerDashboard() {
                       : (!listingForm.price || parseFloat(listingForm.price) < 4.00)
                   ) : false
                 }
-                onClick={() => setListingStep(s => (s + 1) as 1 | 2 | 3)}
+                onClick={() => {
+                  // When entering Step 2 in auction mode, auto-compute auctionEndAt with default 3 days
+                  if (listingStep === 1 && listingForm.listingMode === 'auction' && !listingForm.auctionEndAt) {
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    const now = new Date();
+                    const days = listingForm.auctionDurationDays || 3;
+                    const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+                    const newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
+                    setListingForm(p => ({ ...p, auctionEndAt: newEndAt }));
+                  }
+                  setListingStep(s => (s + 1) as 1 | 2 | 3);
+                }}
               >
                 下一步
               </Button>

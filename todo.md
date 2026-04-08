@@ -7960,3 +7960,20 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] /marketplace 廣告輪播圓點：縮小（active: w-1.5/h-1.5，inactive: w-1/h-1）
 - [x] /seller 上架新商品按鈕：增大至 h-9，加陰影和 hover 縮放效果，更突出
 - [x] /seller 無商品時新增「開始上架」引導橫幅：深藍背景 + 黃色「立即上架」按鈕 + 3 步驟說明
+
+---
+## 🔧 待實作改善（2026-04-08）
+- [ ] MarketplaceListing.tsx 賣家 URL 修正（userId → sellerId）
+- [ ] 拍賣 Step 2：開始時間留空時顯示「（立即開始）」提示
+- [ ] 拍賣 Step 2：天數預設選中「3 日」
+- [ ] 我的拍賣 Tab 加入引導橫幅（無拍賣時顯示）
+- [ ] 廣告橫幅支援圖片（Admin 後台上傳 + Marketplace 顯示）
+
+---
+## ✅ 5 項改善完成（2026-04-08）
+- [x] MarketplaceListing.tsx 賣家 URL 確認正確（sellerProfile.id = sellerProfiles.id，無需修改）
+- [x] 拍賣 Step 2：開始時間留空時顯示「（立即開始）」提示文字
+- [x] 拍賣天數預設選中「3 日」，進入 Step 2 自動計算結標時間
+- [x] 我的拍賣 Tab 加入引導橫幅（無拍賣時顯示「開設拍賣」CTA + 步驟說明）
+- [x] 廣告橫幅支援背景圖片：Admin 後台可上傳圖片，Marketplace 顯示時覆蓋漸層背景
+- [x] Admin 後台重新加回「廣告橫幅」管理頁（含圖片上傳、新增/編輯/刪除功能）

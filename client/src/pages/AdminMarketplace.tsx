@@ -4147,7 +4147,170 @@ function DisputesTab() {
   );
 }
 
-// BannersTab removed - Banner functionality has been deprecated
+function BannersTab() {
+  const { data: banners, refetch } = trpc.marketplace.adminGetBanners.useQuery();
+  const [editingBanner, setEditingBanner] = useState<any>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', subtitle: '', cta: '立即選購', badge: '', emoji: '🏆', gradient: 'from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]', accentColor: '#FFD700', imageUrl: '', sortOrder: 0, isActive: true });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const createMutation = trpc.marketplace.adminCreateBanner.useMutation({ onSuccess: () => { toast.success('廣告橫幅已建立'); refetch(); setShowForm(false); resetForm(); }, onError: (e) => toast.error(parseApiError(e)) });
+  const updateMutation = trpc.marketplace.adminUpdateBanner.useMutation({ onSuccess: () => { toast.success('廣告橫幅已更新'); refetch(); setEditingBanner(null); setShowForm(false); resetForm(); }, onError: (e) => toast.error(parseApiError(e)) });
+  const deleteMutation = trpc.marketplace.adminDeleteBanner.useMutation({ onSuccess: () => { toast.success('廣告橫幅已刪除'); refetch(); }, onError: (e) => toast.error(parseApiError(e)) });
+
+  const resetForm = () => setForm({ title: '', subtitle: '', cta: '立即選購', badge: '', emoji: '🏆', gradient: 'from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]', accentColor: '#FFD700', imageUrl: '', sortOrder: 0, isActive: true });
+
+  const handleEdit = (banner: any) => {
+    setEditingBanner(banner);
+    setForm({ title: banner.title, subtitle: banner.subtitle, cta: banner.cta, badge: banner.badge, emoji: banner.emoji, gradient: banner.gradient, accentColor: banner.accentColor, imageUrl: banner.imageUrl || '', sortOrder: banner.sortOrder, isActive: banner.isActive });
+    setShowForm(true);
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith('image/')) { toast.error('請選擇圖片檔案'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('圖片不能超過 10MB'); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload-marketplace-image', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('上傳失敗');
+      const { url } = await res.json();
+      setForm(p => ({ ...p, imageUrl: url }));
+      toast.success('背景圖片已上傳');
+    } catch (e: any) {
+      toast.error(e.message || '圖片上傳失敗');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!form.title.trim()) { toast.error('請填寫標題'); return; }
+    if (editingBanner) {
+      updateMutation.mutate({ id: editingBanner.id, ...form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900">廣告橫幅管理</h3>
+        <Button size="sm" className="bg-[#06038d] text-white" onClick={() => { resetForm(); setEditingBanner(null); setShowForm(true); }}>
+          <Plus className="w-4 h-4 mr-1" />新增橫幅
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+          <h4 className="font-semibold text-sm text-[#06038d]">{editingBanner ? '編輯橫幅' : '新增橫幅'}</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">標題 *</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="橫幅標題" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">副標題</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.subtitle} onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="副標題文字" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">按鈕文字</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.cta} onChange={e => setForm(p => ({ ...p, cta: e.target.value }))} placeholder="立即選購" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">標籤文字（可留空）</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.badge} onChange={e => setForm(p => ({ ...p, badge: e.target.value }))} placeholder="PSA 10" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Emoji 圖示</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.emoji} onChange={e => setForm(p => ({ ...p, emoji: e.target.value }))} placeholder="🏆" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">排序（數字越小越前）</label>
+              <input type="number" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" value={form.sortOrder} onChange={e => setForm(p => ({ ...p, sortOrder: parseInt(e.target.value) || 0 }))} />
+            </div>
+          </div>
+          {/* Background image upload */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">背景圖片（可選，覆蓋漸層背景）</label>
+            {form.imageUrl ? (
+              <div className="relative inline-block">
+                <img src={form.imageUrl} alt="背景預覽" className="w-full max-w-xs h-20 object-cover rounded-lg border border-gray-200" />
+                <button type="button" onClick={() => setForm(p => ({ ...p, imageUrl: '' }))} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <div
+                className="border-2 border-dashed border-[#06038d]/30 rounded-lg p-3 text-center cursor-pointer hover:border-[#06038d]/60 hover:bg-blue-50/30 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <div className="flex items-center justify-center gap-2 text-gray-400">
+                    <Loader2 className="w-4 h-4 animate-spin" /><span className="text-xs">上傳中...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-gray-400">
+                    <ImagePlus className="w-5 h-5" />
+                    <span className="text-xs">點擊上傳背景圖片（建議 1200×300px）</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e.target.files)} />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-600">啟用</label>
+            <button type="button" onClick={() => setForm(p => ({ ...p, isActive: !p.isActive }))} className={`w-10 h-5 rounded-full transition-colors relative ${form.isActive ? 'bg-[#FEDD00]' : 'bg-gray-200'}`}>
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5 left-0.5 bg-[#06038d]' : 'left-0.5 bg-white'}`} />
+            </button>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" className="bg-[#06038d] text-white" onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
+              {createMutation.isPending || updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingBanner ? '儲存' : '建立')}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setShowForm(false); setEditingBanner(null); resetForm(); }}>取消</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {!banners?.length ? (
+          <div className="text-center py-8 text-gray-400 text-sm">尚無廣告橫幅，點擊「新增橫幅」開始</div>
+        ) : banners.map((banner: any) => (
+          <div key={banner.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {/* Preview */}
+            <div className={`relative h-16 bg-gradient-to-r ${banner.gradient} flex items-center px-4 gap-3`} style={banner.imageUrl ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+              {banner.imageUrl && <div className="absolute inset-0 bg-black/40" />}
+              <span className="relative text-lg">{banner.emoji}</span>
+              <div className="relative">
+                <p className="text-white font-bold text-sm">{banner.title}</p>
+                {banner.subtitle && <p className="text-white/70 text-xs">{banner.subtitle}</p>}
+              </div>
+              {!banner.isActive && <span className="relative ml-auto text-xs bg-gray-500/80 text-white px-2 py-0.5 rounded">已停用</span>}
+            </div>
+            {/* Actions */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
+              <span className="text-xs text-gray-400 flex-1">排序: {banner.sortOrder} · ID: {banner.id}</span>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleEdit(banner)}>
+                <Edit className="w-3 h-3 mr-1" />編輯
+              </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50" onClick={() => { if (confirm('確定刪除此橫幅？')) deleteMutation.mutate({ id: banner.id }); }}>
+                <Trash2 className="w-3 h-3 mr-1" />刪除
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function SalesReportTab() {
   const [months, setMonths] = useState(12);
@@ -7392,6 +7555,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'timeout_settings', label: '超時時限設定', icon: Timer },
   { key: 'audit_logs', label: '審計日誌', icon: ScrollText },
   { key: 'maintenance', label: '維護模式', icon: Shield },
+  { key: 'banners', label: '廣告橫幅', icon: ImagePlus },
 ];
 
 export default function AdminMarketplace() {
@@ -7439,6 +7603,7 @@ export default function AdminMarketplace() {
       case 'timeout_settings': return <TimeoutSettingsTab />;
       case 'audit_logs': return <AuditLogsTab />;
       case 'maintenance': return <MaintenanceModeTab />;
+      case 'banners': return <BannersTab />;
       default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };
