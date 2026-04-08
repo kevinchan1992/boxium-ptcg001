@@ -1724,49 +1724,48 @@ export default function SellerDashboard() {
               </BrandTabsList>
 
               <BrandTabsContent value="listings" className="mt-4">
-                {/* Quick Start Banner: only show when no listings */}
-                {!myListings?.length && (
-                  <div className="mb-4 rounded-2xl overflow-hidden border-2 border-[#FEDD00] bg-gradient-to-br from-[#06038D] to-[#1a0a9e] shadow-lg">
-                    <div className="px-5 pt-5 pb-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">賣家中心</p>
-                          <h3 className="text-white font-bold text-lg leading-tight">開始上架你的第一件商品</h3>
-                          <p className="text-white/60 text-xs mt-1">只需 3 個步驟，即可在 Boxium 開賣</p>
-                        </div>
-                        <button
-                          className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold text-sm px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
-                          onClick={() => {
-                            if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
-                              toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
-                              return;
-                            }
-                            setShowNewListing(true);
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                          立即上架
-                        </button>
+                {/* Listing Guide Card: always visible */}
+                <div className="mb-4 rounded-2xl overflow-hidden border-2 border-[#FEDD00] bg-gradient-to-br from-[#06038D] to-[#1a0a9e] shadow-lg">
+                  <div className="px-5 pt-5 pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">賣家中心</p>
+                        <h3 className="text-white font-bold text-lg leading-tight">上架你的商品</h3>
+                        <p className="text-white/60 text-xs mt-1">只需 3 個步驟，即可在 Boxium 開賣</p>
                       </div>
-                      {/* Step guide */}
-                      <div className="mt-4 grid grid-cols-3 gap-2">
-                        {[
-                          { step: '1', title: '填寫商品資料', desc: '名稱、品相、系列' },
-                          { step: '2', title: '設定售價', desc: '定價或拍賣模式' },
-                          { step: '3', title: '確認上架', desc: '商品即時公開' },
-                        ].map(s => (
-                          <div key={s.step} className="bg-white/10 rounded-xl px-3 py-2.5 flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
-                            <div>
-                              <p className="text-white text-xs font-semibold leading-tight">{s.title}</p>
-                              <p className="text-white/50 text-[10px] mt-0.5">{s.desc}</p>
-                            </div>
+                      <button
+                        className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold text-sm px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                        onClick={() => {
+                          if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
+                            toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+                            return;
+                          }
+                          setShowNewListing(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        上架新商品
+                      </button>
+                    </div>
+                    {/* Step guide */}
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {[
+                        { step: '1', title: '填寫商品資料', desc: '名稱、品相、系列' },
+                        { step: '2', title: '設定售價', desc: '定價或拍賣模式' },
+                        { step: '3', title: '確認上架', desc: '商品即時公開' },
+                      ].map(s => (
+                        <div key={s.step} className="bg-white/10 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
+                          <div>
+                            <p className="text-white text-xs font-semibold leading-tight">{s.title}</p>
+                            <p className="text-white/50 text-[10px] mt-0.5">{s.desc}</p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
+
                 {/* Listing Filter Sidebar + Content */}
                 {(() => {
                   const filterCategories = [
@@ -1841,17 +1840,7 @@ export default function SellerDashboard() {
                           {batchMode ? <X className="w-3 h-3 mr-1" /> : <CheckSquare className="w-3 h-3 mr-1" />}
                           {batchMode ? "取消批量" : "批量管理"}
                         </Button>
-                        {isAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-8 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/10 bg-white"
-                            onClick={() => setShowBulkUpload(true)}
-                          >
-                            <Layers className="w-3 h-3 mr-1" />
-                            批量上架
-                          </Button>
-                        )}
+
                         {/* View mode toggle */}
                         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden ml-auto">
                           <button
