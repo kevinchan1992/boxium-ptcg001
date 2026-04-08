@@ -30,7 +30,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { RefreshCw, Trash2, ChevronLeft, ChevronRight, BarChart3, Clock, CheckCircle2, XCircle, Loader2, Pause, RotateCcw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RefreshCw, Trash2, ChevronLeft, ChevronRight, BarChart3, Clock, CheckCircle2, XCircle, Loader2, Pause, RotateCcw, Zap, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 function formatDuration(ms: number | null): string {
@@ -59,6 +65,13 @@ function formatDateTime(date: Date | string | null): string {
   });
 }
 
+function formatSpeed(processedItems: number, activeProcessingMs: number | null): string {
+  if (!activeProcessingMs || activeProcessingMs < 1000) return "-";
+  const speed = processedItems / (activeProcessingMs / 1000);
+  if (speed >= 1) return `${speed.toFixed(1)}/s`;
+  return `${(speed * 60).toFixed(1)}/min`;
+}
+
 function getStatusBadge(status: string) {
   switch (status) {
     case "running":
@@ -85,6 +98,118 @@ function getTaskTypeName(taskType: string): string {
     default:
       return taskType;
   }
+}
+
+type TaskError = { cardName: string; error: string; timestamp?: string };
+
+function FailureDetailsDialog({
+  taskId,
+  failureCount,
+  recentErrors,
+}: {
+  taskId: number;
+  failureCount: number;
+  recentErrors: TaskError[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (failureCount === 0) {
+    return <span className="text-green-400 font-mono">0</span>;
+  }
+
+  // Group errors by type
+  const errorGroups: Record<string, { count: number; examples: string[] }> = {};
+  for (const e of recentErrors) {
+    // Normalize error message to group similar errors
+    const key = e.error
+      .replace(/\d+/g, "N")
+      .replace(/https?:\/\/[^\s]+/g, "[URL]")
+      .substring(0, 80);
+    if (!errorGroups[key]) {
+      errorGroups[key] = { count: 0, examples: [] };
+    }
+    errorGroups[key].count++;
+    if (errorGroups[key].examples.length < 3) {
+      errorGroups[key].examples.push(e.cardName);
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="text-red-400 font-mono hover:text-red-300 hover:underline cursor-pointer transition-colors"
+        title="點擊查看失敗詳情"
+      >
+        {failureCount.toLocaleString()}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              任務 #{taskId} 失敗詳情（共 {failureCount.toLocaleString()} 個）
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {recentErrors.length === 0 ? (
+              <p className="text-gray-400 text-sm">暫無詳細錯誤記錄（舊版任務未記錄錯誤詳情）</p>
+            ) : (
+              <>
+                {/* Error type summary */}
+                <div>
+                  <h4 className="text-gray-300 text-sm font-medium mb-2">錯誤類型分佈（最近 {recentErrors.length} 個）</h4>
+                  <div className="space-y-2">
+                    {Object.entries(errorGroups)
+                      .sort((a, b) => b[1].count - a[1].count)
+                      .map(([key, group]) => (
+                        <div key={key} className="bg-gray-800 rounded-lg p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-red-300 text-xs font-mono flex-1 break-all">{key}</p>
+                            <Badge className="bg-red-900/50 text-red-400 border-red-800 shrink-0">
+                              {group.count}次
+                            </Badge>
+                          </div>
+                          {group.examples.length > 0 && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              例：{group.examples.join("、")}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Individual errors */}
+                <div>
+                  <h4 className="text-gray-300 text-sm font-medium mb-2">最近失敗記錄</h4>
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {recentErrors.slice().reverse().map((e, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs py-1 border-b border-gray-800">
+                        <span className="text-gray-500 shrink-0 w-4">{i + 1}.</span>
+                        <span className="text-gray-300 shrink-0 max-w-[160px] truncate" title={e.cardName}>{e.cardName}</span>
+                        <span className="text-red-400 flex-1 break-all">{e.error}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3">
+              <p className="text-blue-300 text-xs">
+                <strong>常見失敗原因：</strong>
+                <br />• <strong>HTTP 429</strong>：SNKRDUNK API 限流，系統會自動重試
+                <br />• <strong>HTTP 404</strong>：卡牌在 SNKRDUNK 已下架或不存在
+                <br />• <strong>Timeout</strong>：網絡超時，下次批量更新會自動重試
+                <br />• <strong>No data</strong>：該卡牌在 SNKRDUNK 無交易記錄
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 export function AdminTaskHistory() {
@@ -313,9 +438,18 @@ export function AdminTaskHistory() {
                       <TableHead className="text-gray-400">狀態</TableHead>
                       <TableHead className="text-gray-400">進度</TableHead>
                       <TableHead className="text-gray-400">成功</TableHead>
-                      <TableHead className="text-gray-400">失敗</TableHead>
+                      <TableHead className="text-gray-400">
+                        <span title="點擊失敗數字可查看詳情">失敗 ⓘ</span>
+                      </TableHead>
                       <TableHead className="text-gray-400">開始時間</TableHead>
-                      <TableHead className="text-gray-400">耗時</TableHead>
+                      <TableHead className="text-gray-400">
+                        <span title="掛牆時間（含 sandbox 休眠）">耗時</span>
+                      </TableHead>
+                      <TableHead className="text-gray-400">
+                        <span title="實際處理速度（排除 sandbox 休眠時間）" className="flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-yellow-400" />速度
+                        </span>
+                      </TableHead>
                       <TableHead className="text-gray-400">錯誤信息</TableHead>
                       <TableHead className="text-gray-400">操作</TableHead>
                     </TableRow>
@@ -341,10 +475,28 @@ export function AdminTaskHistory() {
                           </div>
                         </TableCell>
                         <TableCell className="text-green-400 font-mono">{task.successCount.toLocaleString()}</TableCell>
-                        <TableCell className="text-red-400 font-mono">{task.failureCount.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <FailureDetailsDialog
+                            taskId={task.id}
+                            failureCount={task.failureCount}
+                            recentErrors={(task as any).recentErrors || []}
+                          />
+                        </TableCell>
                         <TableCell className="text-gray-300 text-sm whitespace-nowrap">{formatDateTime(task.startedAt)}</TableCell>
-                        <TableCell className="text-gray-300 text-sm whitespace-nowrap">{formatDuration(task.durationMs)}</TableCell>
-                        <TableCell className="text-gray-400 text-sm max-w-[200px] truncate" title={task.errorMessage || ""}>
+                        <TableCell className="text-gray-300 text-sm whitespace-nowrap">
+                          <div className="flex flex-col gap-0.5">
+                            <span>{formatDuration(task.durationMs)}</span>
+                            {(task as any).activeProcessingMs && (task as any).activeProcessingMs > 0 && (
+                              <span className="text-xs text-yellow-500/70" title="實際處理時間（排除休眠）">
+                                實際 {formatDuration((task as any).activeProcessingMs)}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-yellow-400 text-sm font-mono">
+                          {formatSpeed(task.processedItems, (task as any).activeProcessingMs)}
+                        </TableCell>
+                        <TableCell className="text-gray-400 text-sm max-w-[180px] truncate" title={task.errorMessage || ""}>
                           {task.errorMessage || "-"}
                         </TableCell>
                         <TableCell>

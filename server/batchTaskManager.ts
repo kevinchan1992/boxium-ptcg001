@@ -193,6 +193,21 @@ export async function updateTaskProgressFailure(
 }
 
 /**
+ * Accumulate active processing time (ms) for a task session.
+ * Call this at the end of each processing session to record actual processing time
+ * (excludes hibernate/idle time between sandbox restarts).
+ */
+export async function addTaskActiveProcessingMs(taskId: number, sessionMs: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    UPDATE ${scheduledTasks}
+    SET activeProcessingMs = COALESCE(activeProcessingMs, 0) + ${Math.round(sessionMs)}
+    WHERE id = ${taskId}
+  `);
+}
+
+/**
  * Update task progress for multiple failures at once - ATOMIC SQL update
  */
 export async function updateTaskProgressBulkFailure(taskId: number, count: number): Promise<void> {
@@ -349,6 +364,8 @@ export async function getTaskHistory(options: {
     completedAt: Date | null;
     createdAt: Date | null;
     durationMs: number | null;
+    activeProcessingMs: number | null;
+    recentErrors: Array<{ cardName: string; error: string; timestamp?: string }>;
   }>;
   total: number;
   page: number;
@@ -400,6 +417,17 @@ export async function getTaskHistory(options: {
         durationMs = Date.now() - new Date(task.startedAt).getTime();
       }
 
+      // Parse metadata for recent errors
+      let recentErrors: Array<{ cardName: string; error: string; timestamp?: string }> = [];
+      if (task.metadata) {
+        try {
+          const meta = typeof task.metadata === 'string' ? JSON.parse(task.metadata) : task.metadata;
+          const allErrors = meta.errors || [];
+          // Return last 20 errors for display
+          recentErrors = allErrors.slice(-20);
+        } catch (e) {}
+      }
+
       return {
         id: task.id,
         taskType: task.taskType,
@@ -414,6 +442,8 @@ export async function getTaskHistory(options: {
         completedAt: task.completedAt,
         createdAt: task.createdAt,
         durationMs,
+        activeProcessingMs: (task as any).activeProcessingMs || null,
+        recentErrors,
       };
     }),
     total,

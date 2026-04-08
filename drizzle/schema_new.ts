@@ -272,6 +272,7 @@ export const scheduledTasks = mysqlTable("scheduledTasks", {
   completedAt: timestamp("completedAt"),
   errorMessage: text("errorMessage"),
   metadata: text("metadata"), // JSON metadata about the task (errors, details, etc.)
+  activeProcessingMs: int("activeProcessingMs").default(0), // Actual processing time in ms (excludes hibernate/idle time, max ~596 hours)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

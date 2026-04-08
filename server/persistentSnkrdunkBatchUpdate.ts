@@ -438,6 +438,8 @@ async function runControlledParallelProcessing(
       if (pendingSuccessFlush > 0) await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
       if (pendingFailFlush > 0) await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
       await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
+      // Record session time before stopping
+      await batchTaskManager.addTaskActiveProcessingMs(taskId, Date.now() - startTime);
       
       try {
         const database = await db.getDb();
@@ -471,8 +473,12 @@ async function runControlledParallelProcessing(
   }
   await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
   
+  // ─── Record actual processing time for this session ──────────
+  const sessionMs = Date.now() - startTime;
+  await batchTaskManager.addTaskActiveProcessingMs(taskId, sessionMs);
+  
   // ─── Complete ─────────────────────────────────────────────────
-  const elapsed = (Date.now() - startTime) / 1000;
+  const elapsed = sessionMs / 1000;
   const speed = (successCount + failCount) / elapsed;
   console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes (${speed.toFixed(1)}/s)`);
   console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed`);

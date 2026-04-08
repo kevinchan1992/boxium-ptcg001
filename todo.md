@@ -7920,3 +7920,24 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] **BUG-9**: canDispute 未排除 disputed 狀態（可能重複申請爭議）— 已修復
 - [x] **BUG-10**: disputed 狀態缺少清晰的提示訊息 — 已添加「等待管理員處理中」提示
 
+
+---
+
+## ✅ 批量更新功能優化（2026-04-08）
+
+### 問題診斷
+- 任務 2490002 顯示「12時7分」耗時，但實際只需 ~2 分鐘
+- 根本原因：sandbox 多次休眠（每次休眠 ~1-2 小時），任務自動恢復後繼續，但掛牆時間累積
+- 311 個失敗：來自多次 sandbox 重啟後的累積計數（每次重啟前未完成的 batch 被標記為失敗）
+- 任務本身處理速度正常（~10/s）
+
+### 優化項目
+- [x] 在 schema 添加 `activeProcessingMs` 欄位追蹤實際處理時間（排除 sandbox 休眠）
+- [x] 在 persistentSnkrdunkBatchUpdate 記錄每個 session 的實際處理時間
+- [x] 在 batchTaskManager 添加 `addTaskActiveProcessingMs` 函數（累加而非覆蓋）
+- [x] 更新 getTaskHistory 返回 `activeProcessingMs` 和 `recentErrors` 失敗詳情
+- [x] 重寫 AdminTaskHistory UI：
+  - 新增「速度」欄位（cards/s，基於實際處理時間）
+  - 耗時欄位顯示「掛牆時間 + 實際處理時間」兩行
+  - 失敗數字可點擊展開查看詳細錯誤原因（按錯誤類型分組）
+  - 失敗詳情 Dialog 包含常見失敗原因說明
