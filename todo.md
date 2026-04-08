@@ -7941,3 +7941,15 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - 耗時欄位顯示「掛牆時間 + 實際處理時間」兩行
   - 失敗數字可點擊展開查看詳細錯誤原因（按錯誤類型分組）
   - 失敗詳情 Dialog 包含常見失敗原因說明
+
+---
+
+## 🐛 Bug 修復（2026-04-08 用戶回報）
+
+- [ ] 拍賣 Step 2：開始時間留空時無法點擊下一步（應允許留空表示立即開始）
+- [ ] 賣家頁面 /seller/8：URL 使用數字 ID，但後端用 username 查詢，導致找不到賣家資料
+
+---
+## ✅ Bug 修復（2026-04-08 繼續）
+- [x] 拍賣 Step 2：開始時間留空時無法點擊下一步 — 修復：選擇天數時若 startAt 為空，自動用「現在 + 天數」計算 auctionEndAt
+- [x] 賣家頁面 URL 錯誤：AuctionDetail.tsx 使用 sellerInfo.userId（users.id）改為 listing.sellerId（sellerProfiles.id）

@@ -977,7 +977,7 @@ export default function AuctionDetail() {
                 </h3>
                 <div
                   className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => window.location.href = `/seller/${listing.sellerInfo!.userId}`}
+                  onClick={() => window.location.href = `/seller/${listing.sellerId}`}
                 >
                   {listing.sellerInfo.avatarUrl ? (
                     <img src={listing.sellerInfo.avatarUrl} alt="seller" className="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />

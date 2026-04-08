@@ -3325,16 +3325,20 @@ export default function SellerDashboard() {
                             onClick={() => {
                               setListingForm(p => {
                                 const newDuration = days;
-                                // Recalculate endAt if startAt (time-only HH:MM) is set
+                                const pad = (n: number) => String(n).padStart(2, '0');
                                 let newEndAt = p.auctionEndAt;
                                 if (p.auctionStartAt && p.auctionStartAt.includes(':')) {
-                              const today = new Date();
-                              const [hh, mm] = p.auctionStartAt.split(':').map(Number);
-                              const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
-                              const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
-                              // Use local time string to avoid UTC offset issues
-                              const pad = (n: number) => String(n).padStart(2, '0');
-                              newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
+                                  // startAt is set: use today + chosen time
+                                  const today = new Date();
+                                  const [hh, mm] = p.auctionStartAt.split(':').map(Number);
+                                  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
+                                  const end = new Date(start.getTime() + newDuration * 24 * 60 * 60 * 1000);
+                                  newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
+                                } else {
+                                  // startAt is empty (immediate start): use now + duration
+                                  const now = new Date();
+                                  const end = new Date(now.getTime() + newDuration * 24 * 60 * 60 * 1000);
+                                  newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
                                 }
                                 return { ...p, auctionDurationDays: newDuration, auctionEndAt: newEndAt };
                               });
@@ -3360,6 +3364,7 @@ export default function SellerDashboard() {
                         onChange={(e) => {
                           const timeVal = e.target.value; // "HH:MM"
                           setListingForm(p => {
+                            const pad = (n: number) => String(n).padStart(2, '0');
                             let newEndAt = p.auctionEndAt;
                             if (timeVal && p.auctionDurationDays) {
                               // Build today's date with the chosen time
@@ -3367,11 +3372,12 @@ export default function SellerDashboard() {
                               const [hh, mm] = timeVal.split(':').map(Number);
                               const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm, 0, 0);
                               const end = new Date(start.getTime() + p.auctionDurationDays * 24 * 60 * 60 * 1000);
-                              // Use local time string to avoid UTC offset issues
-                              const pad = (n: number) => String(n).padStart(2, '0');
                               newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
-                            } else if (!timeVal) {
-                              newEndAt = '';
+                            } else if (!timeVal && p.auctionDurationDays) {
+                              // startAt cleared: recalculate from now + duration
+                              const now = new Date();
+                              const end = new Date(now.getTime() + p.auctionDurationDays * 24 * 60 * 60 * 1000);
+                              newEndAt = `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}T${pad(end.getHours())}:${pad(end.getMinutes())}`;
                             }
                             return { ...p, auctionStartAt: timeVal, auctionEndAt: newEndAt };
                           });
