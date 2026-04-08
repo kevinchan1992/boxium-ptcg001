@@ -1037,6 +1037,48 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const listing = await getListingById(input.id);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND" });
+      const isAdmin = ctx.user.role === 'admin';
+      // Admin can edit any listing (platform or C2C) except sold ones
+      if (isAdmin) {
+        if (listing.status === 'sold') {
+          throw new TRPCError({ code: "FORBIDDEN", message: "已完成交易的商品不可修改" });
+        }
+        const { id, ...updateData } = input;
+        const updatePayload: Record<string, any> = { ...updateData };
+        const oldPriceHkd = parseFloat(listing.priceHkd as string);
+        if (updatePayload.price) {
+          updatePayload.priceHkd = parseFloat(updatePayload.price).toFixed(2);
+          delete updatePayload.price;
+        }
+        await updateListing(id, updatePayload);
+        // 降價通知（管理員修改平台商品價格時也觸發）
+        if (updatePayload.priceHkd) {
+          const newPrice = parseFloat(updatePayload.priceHkd);
+          if (newPrice < oldPriceHkd) {
+            try {
+              const db = await getDb();
+              if (db) {
+                const { wishlists: wishlistsTable } = await import("../../drizzle/schema_new");
+                const { eq: eqFn } = await import("drizzle-orm");
+                const wishlistUsers = await db.select({ userId: wishlistsTable.userId }).from(wishlistsTable).where(eqFn(wishlistsTable.listingId, id));
+                for (const wu of wishlistUsers) {
+                  await createNotification({
+                    userId: wu.userId,
+                    type: "trade",
+                    title: "心願商品降價了！",
+                    body: `「${listing.title}」價格已從 HKD ${oldPriceHkd.toFixed(2)} 降至 HKD ${newPrice.toFixed(2)}，快去看看！`,
+                    linkUrl: `/shop/${id}`,
+                    isRead: false,
+                  });
+                }
+              }
+            } catch (e) {
+              console.error("[Wishlist Price Alert] Failed to send notifications:", e);
+            }
+          }
+        }
+        return { success: true };
+      }
       const seller = await getSellerProfileByUserId(ctx.user.id);
       if (!seller || listing.sellerId !== seller.id) throw new TRPCError({ code: "FORBIDDEN" });
       // 若試圖將商品狀態改為 active，需要驗證 Stripe Connect 已完成
@@ -5703,9 +5745,7 @@ IMPORTANT:
   batchDeleteListings: protectedProcedure
     .input(z.object({ ids: z.array(z.number().int()).min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
-      const seller = await getSellerProfileByUserId(ctx.user.id);
-      if (!seller) throw new TRPCError({ code: "FORBIDDEN", message: "你還沒有賣家資料" });
-
+      const isAdmin = ctx.user.role === 'admin';
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { marketplaceListings, marketplaceOrders } = await import("../../drizzle/schema_new");
@@ -5715,16 +5755,22 @@ IMPORTANT:
       const listings = await db.select({
         id: marketplaceListings.id,
         sellerId: marketplaceListings.sellerId,
+        sellerType: marketplaceListings.sellerType,
         status: marketplaceListings.status,
       })
         .from(marketplaceListings)
         .where(inArrayFn(marketplaceListings.id, input.ids));
 
-      // 2. Authorization: all listings must belong to current seller
-      const unauthorized = listings.filter(l => l.sellerId !== seller.id);
-      if (unauthorized.length > 0) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+      // 2. Authorization
+      if (!isAdmin) {
+        const seller = await getSellerProfileByUserId(ctx.user.id);
+        if (!seller) throw new TRPCError({ code: "FORBIDDEN", message: "你還沒有賣家資料" });
+        const unauthorized = listings.filter(l => l.sellerId !== seller.id);
+        if (unauthorized.length > 0) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "部分商品不屬於你" });
+        }
       }
+      // Admin has no ownership restriction — can delete any listing
 
       // 3. HARD RULE: Never delete sold listings
       const soldListings = listings.filter(l => l.status === 'sold');

@@ -535,6 +535,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
 function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOpenOrder }: { listingId: number | null; onClose: () => void; onUpdated: () => void; onViewOrders?: (listingId: number) => void; onOpenOrder?: (orderId: number) => void }) {
   const [editMode, setEditMode] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", quantity: "", status: "" });
   const utils = trpc.useUtils();
 
@@ -553,6 +554,17 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
       utils.marketplace.adminGetPendingPayoutCount.invalidate();
     },
     onError: (e) => toast.error(parseApiError(e)),
+  });
+
+  const deleteMutation = trpc.marketplace.batchDeleteListings.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已永久刪除商品${data.cancelledOrdersCount > 0 ? `，並取消 ${data.cancelledOrdersCount} 個待付款訂單` : ''}`);
+      setShowDeleteConfirm(false);
+      onClose();
+      onUpdated();
+      utils.marketplace.adminGetStats.invalidate();
+    },
+    onError: (e) => { toast.error(parseApiError(e)); setShowDeleteConfirm(false); },
   });
 
   const listing = data?.listing;
@@ -586,6 +598,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
   const isPlatformListing = listing?.sellerType === 'platform';
 
   return (
+    <>
     <Dialog open={!!listingId} onOpenChange={() => { onClose(); setEditMode(false); setImgIdx(0); }}>
       <DialogContent className="max-w-2xl h-[92vh] flex flex-col p-0 gap-0 rounded-xl overflow-hidden">
         {/* ── Header ───────────────────────────────────────────── */}
@@ -1000,10 +1013,15 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                       <ShoppingBag className="w-4 h-4 mr-2" />查看訂單 ({orderCount})
                     </Button>
                   )}
-                  {isPlatformListing && listing.status !== 'sold' && (
-                    <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
-                      <Edit className="w-4 h-4 mr-2" />編輯商品
-                    </Button>
+                  {listing.status !== 'sold' && (
+                    <>
+                      <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShowDeleteConfirm(true)}>
+                        <Trash2 className="w-4 h-4 mr-2" />刪除
+                      </Button>
+                      <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white" onClick={handleEditOpen}>
+                        <Edit className="w-4 h-4 mr-2" />編輯商品
+                      </Button>
+                    </>
                   )}
                 </>
               )}
@@ -1012,6 +1030,44 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
         ) : null}
       </DialogContent>
     </Dialog>
+    {/* Delete Confirmation Dialog */}
+
+    <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-red-600">
+            <Trash2 className="w-5 h-5" />確認刪除商品
+          </DialogTitle>
+          <DialogDescription>
+            您即將永久刪除以下 <strong>1 件</strong> 商品，此操作不可復原：
+          </DialogDescription>
+        </DialogHeader>
+        {listing && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+            <p className="font-semibold text-gray-800">{listing.title}</p>
+            <p className="text-gray-500 text-xs mt-1">#BOXIUM-{listing.id} · HKD {parseFloat(listing.priceHkd as string).toFixed(2)} · {listing.status === 'active' ? '上架中' : listing.status === 'removed' ? '已下架' : listing.status}</p>
+          </div>
+        )}
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-1">
+          <p className="font-semibold">注意事項</p>
+          <p>• 商品將從資料庫永久刪除</p>
+          <p>• 如有待付款訂單，將自動更新為已取消</p>
+          <p>• 已售出商品不會被刪除</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>取消</Button>
+          <Button
+            variant="destructive"
+            disabled={deleteMutation.isPending}
+            onClick={() => listingId && deleteMutation.mutate({ ids: [listingId] })}
+          >
+            {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+            確認刪除
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
