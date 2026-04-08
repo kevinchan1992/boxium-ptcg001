@@ -73,14 +73,16 @@ function ListingCard({ listing }: { listing: any }) {
   const conditionLabel: Record<string, string> = {
     new: "全新", like_new: "近全新", good: "良好", fair: "一般"
   };
+  // images is stored as JSON string in DB, parse it
+  const imgs = (() => { try { return JSON.parse(listing.images ?? "[]"); } catch { return []; } })();
   return (
     <Link href={`/marketplace/${listing.id}`}>
       <div className="group bg-white rounded-2xl border border-gray-100 hover:border-[#06038D]/30 hover:shadow-lg transition-all duration-200 overflow-hidden cursor-pointer">
         {/* Image */}
         <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
-          {listing.images?.[0] ? (
+          {imgs[0] ? (
             <img
-              src={listing.images[0]}
+              src={imgs[0]}
               alt={listing.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />

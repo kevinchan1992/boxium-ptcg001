@@ -1892,7 +1892,7 @@ export default function SellerDashboard() {
                           }}
                         >
                           <Plus className="w-4 h-4 mr-1" />
-                          + 上架新商品
+                          上架新商品
                         </Button>
                       </div>
                       {/* Row 2: Batch actions (shown only in batch mode) */}
