@@ -1041,6 +1041,7 @@ export default function SellerDashboard() {
   const [listingStep, setListingStep] = useState<1 | 2 | 3>(1);
   const [showSellerTerms, setShowSellerTerms] = useState(false);
   const [pendingAuctionSubmit, setPendingAuctionSubmit] = useState(false);
+  const [listingTermsAgreed, setListingTermsAgreed] = useState(false);
   const [applyForm, setApplyForm] = useState({ displayName: "", bio: "" });
   const [listingForm, setListingForm] = useState({
     title: "", description: "", condition: "raw_a", price: "", quantity: "1",
@@ -3660,6 +3661,33 @@ export default function SellerDashboard() {
                       </>
                     )}
                   </div>
+
+                  {/* Terms Agreement Checkbox */}
+                  <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-colors"
+                    style={{ borderColor: listingTermsAgreed ? '#06038D' : 'rgba(6,3,141,0.2)', backgroundColor: listingTermsAgreed ? 'rgba(6,3,141,0.05)' : 'white' }}
+                  >
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={listingTermsAgreed}
+                        onChange={(e) => setListingTermsAgreed(e.target.checked)}
+                      />
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                        listingTermsAgreed ? 'border-[#06038D] bg-[#06038D]' : 'border-[#06038D]/40 bg-white'
+                      }`}>
+                        {listingTermsAgreed && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                    </div>
+                    <span className="text-xs text-[#06038D]/80 leading-relaxed">
+                      我已閱讀並同意
+                      <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
+                        className="font-semibold text-[#06038D] underline underline-offset-2 hover:text-[#06038D]/70 mx-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >買賣條款</a>
+                      ，包括平台服務費率、拍賣規則及退款政策。
+                    </span>
+                  </label>
                 </div>
               </>
             )}
@@ -3702,8 +3730,8 @@ export default function SellerDashboard() {
             )}
             {listingStep === 3 && (
               <Button
-                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
-                disabled={createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending}
+                className="flex-1 bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold disabled:opacity-50"
+                disabled={createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending || !listingTermsAgreed}
                 onClick={() => {
                   if (listingForm.listingMode === 'auction') {
                     // Check if seller has agreed to terms first

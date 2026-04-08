@@ -185,6 +185,17 @@ export const marketplaceRouter = router({
       return rows;
     }),
 
+  // Public endpoint to get current fee tier settings (used by /auction/terms page)
+  getFeeTiers: publicProcedure
+    .query(async () => {
+      const tiers = await getPlatformFeeTiers();
+      return tiers.map((t, i) => ({
+        tier: i + 1,
+        maxAmount: t.maxAmount === Infinity ? null : t.maxAmount,
+        rate: t.rate,
+      }));
+    }),
+
   getListings: publicProcedure
     .input(z.object({
       page: z.number().int().min(1).default(1),

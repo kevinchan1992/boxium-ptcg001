@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { ChevronDown, ChevronUp, ShoppingCart, Gavel, DollarSign, Shield, AlertTriangle, CheckCircle, ArrowRight, Package, CreditCard, RotateCcw, Clock, Scale, FileText } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
@@ -89,6 +90,43 @@ const TOC = [
 
 export default function AuctionTerms() {
   const [tocOpen, setTocOpen] = useState(false);
+  const { data: feeTiersData, isLoading: feeTiersLoading } = trpc.marketplace.getFeeTiers.useQuery();
+
+  // Build display tiers from API data or fall back to defaults
+  const displayTiers = feeTiersData ? feeTiersData.map((t, i) => {
+    const ratePercent = (t.rate * 100).toFixed(1).replace(/\.0$/, '') + '%';
+    const tierColors = [
+      { color: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' },
+      { color: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
+      { color: 'bg-green-50', badge: 'bg-green-100 text-green-800' },
+    ];
+    const tierNames = ['第一級', '第二級', '第三級'];
+    const tierRanges = [
+      t.maxAmount ? `HKD ${t.maxAmount.toLocaleString()} 或以下` : 'HKD 10,001 或以上',
+      feeTiersData[0]?.maxAmount && feeTiersData[1]?.maxAmount
+        ? `HKD ${(feeTiersData[0].maxAmount + 1).toLocaleString()} – HKD ${feeTiersData[1].maxAmount.toLocaleString()}`
+        : 'HKD 5,001 – HKD 10,000',
+      feeTiersData[1]?.maxAmount ? `HKD ${(feeTiersData[1].maxAmount + 1).toLocaleString()} 或以上` : 'HKD 10,001 或以上',
+    ];
+    // Example calculations
+    const exampleAmounts = [1000, 8000, 15000];
+    const exAmt = exampleAmounts[i] || 1000;
+    const exFee = Math.round(exAmt * t.rate);
+    const exReceive = exAmt - exFee;
+    const example = `成交 HKD ${exAmt.toLocaleString()} → 服務費 HKD ${exFee.toLocaleString()}，實收 HKD ${exReceive.toLocaleString()}`;
+    return {
+      tier: tierNames[i] || `第${i+1}級`,
+      range: tierRanges[i],
+      rate: ratePercent,
+      color: (tierColors[i] || tierColors[0]).color,
+      badge: (tierColors[i] || tierColors[0]).badge,
+      example,
+    };
+  }) : [
+    { tier: '第一級', range: 'HKD 5,000 或以下', rate: '5.5%', color: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', example: '成交 HKD 1,000 → 服務費 HKD 55，實收 HKD 945' },
+    { tier: '第二級', range: 'HKD 5,001 – HKD 10,000', rate: '5%', color: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', example: '成交 HKD 8,000 → 服務費 HKD 400，實收 HKD 7,600' },
+    { tier: '第三級', range: 'HKD 10,001 或以上', rate: '4.5%', color: 'bg-green-50', badge: 'bg-green-100 text-green-800', example: '成交 HKD 15,000 → 服務費 HKD 675，實收 HKD 14,325' },
+  ];
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -261,11 +299,9 @@ export default function AuctionTerms() {
                 賣家服務費率（以成交金額計算）
               </div>
               <div className="divide-y divide-blue-50">
-                {[
-                  { tier: "第一級", range: "HKD 5,000 或以下", rate: "5.5%", color: "bg-amber-50", badge: "bg-amber-100 text-amber-800", example: "成交 HKD 1,000 → 服務費 HKD 55，實收 HKD 945" },
-                  { tier: "第二級", range: "HKD 5,001 – HKD 10,000", rate: "5%", color: "bg-blue-50", badge: "bg-blue-100 text-blue-800", example: "成交 HKD 8,000 → 服務費 HKD 400，實收 HKD 7,600" },
-                  { tier: "第三級", range: "HKD 10,001 或以上", rate: "4.5%", color: "bg-green-50", badge: "bg-green-100 text-green-800", example: "成交 HKD 15,000 → 服務費 HKD 675，實收 HKD 14,325" },
-                ].map((t, i) => (
+                {feeTiersLoading ? (
+                  <div className="px-4 py-6 text-center text-sm text-gray-400">載入費率中...</div>
+                ) : displayTiers.map((t, i) => (
                   <div key={i} className={`px-4 py-3.5 ${t.color}`}>
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
