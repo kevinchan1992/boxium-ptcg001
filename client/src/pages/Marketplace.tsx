@@ -827,12 +827,12 @@ export default function Marketplace() {
           ))}
           {activeBanners.length > 1 && (
             <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
-              <div className="flex gap-1">
+                  <div className="flex gap-1.5">
                 {activeBanners.map((_: any, i: number) => (
                   <button
                     key={i}
                     onClick={() => setBannerIdx(i)}
-                    className={`rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-2 h-2" : "bg-white/40 w-1.5 h-1.5"}`}
+                    className={`rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-1.5 h-1.5" : "bg-white/40 w-1 h-1"}`}
                   />
                 ))}
               </div>
@@ -859,35 +859,68 @@ export default function Marketplace() {
       </div>
 
       {/* ── Market Tab Switcher ── */}
-      <div className="max-w-7xl mx-auto px-4 mt-4">
-        <div className="flex items-center gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5">
+      <div className="max-w-7xl mx-auto px-4 mt-5">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Shop Tab */}
           <button
             onClick={() => setMarketTab('shop')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+            className={`relative flex items-center gap-3 px-5 py-4 rounded-2xl border-2 transition-all duration-200 text-left overflow-hidden ${
               marketTab === 'shop'
-                ? 'bg-[#06038D] text-white shadow-sm'
-                : 'text-gray-500 hover:text-[#06038D] hover:bg-gray-50'
+                ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
+                : 'border-gray-200 bg-white hover:border-[#06038D]/40 hover:shadow-md'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
-            商城
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              marketTab === 'shop' ? 'bg-[#FEDD00]' : 'bg-[#06038D]/10'
+            }`}>
+              <ShoppingBag className={`w-5 h-5 ${marketTab === 'shop' ? 'text-[#06038D]' : 'text-[#06038D]'}`} />
+            </div>
+            <div className="min-w-0">
+              <div className={`font-bold text-sm leading-tight ${
+                marketTab === 'shop' ? 'text-white' : 'text-[#06038D]'
+              }`}>商城</div>
+              <div className={`text-xs mt-0.5 ${
+                marketTab === 'shop' ? 'text-white/70' : 'text-gray-400'
+              }`}>即買即賣</div>
+            </div>
+            {marketTab === 'shop' && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
+            )}
           </button>
+
+          {/* Auction Tab */}
           <button
             onClick={() => setMarketTab('auction')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+            className={`relative flex items-center gap-3 px-5 py-4 rounded-2xl border-2 transition-all duration-200 text-left overflow-hidden ${
               marketTab === 'auction'
-                ? 'bg-[#06038D] text-white shadow-sm'
-                : 'text-gray-500 hover:text-[#06038D] hover:bg-gray-50'
+                ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
+                : 'border-gray-200 bg-white hover:border-[#06038D]/40 hover:shadow-md'
             }`}
           >
-            <Gavel className="w-4 h-4" />
-            拍賣
-            {auctionData && auctionData.total > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                marketTab === 'auction' ? 'bg-[#FEDD00] text-[#06038D]' : 'bg-gray-100 text-gray-500'
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              marketTab === 'auction' ? 'bg-[#FEDD00]' : 'bg-orange-50'
+            }`}>
+              <Gavel className={`w-5 h-5 ${marketTab === 'auction' ? 'text-[#06038D]' : 'text-orange-500'}`} />
+            </div>
+            <div className="min-w-0">
+              <div className={`font-bold text-sm leading-tight flex items-center gap-2 ${
+                marketTab === 'auction' ? 'text-white' : 'text-[#06038D]'
               }`}>
-                {auctionData.total}
-              </span>
+                拍賣
+                {auctionData && auctionData.total > 0 && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    marketTab === 'auction' ? 'bg-[#FEDD00] text-[#06038D]' : 'bg-orange-100 text-orange-600'
+                  }`}>
+                    {auctionData.total}
+                  </span>
+                )}
+              </div>
+              <div className={`text-xs mt-0.5 ${
+                marketTab === 'auction' ? 'text-white/70' : 'text-gray-400'
+              }`}>競價得標</div>
+            </div>
+            {marketTab === 'auction' && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
             )}
           </button>
         </div>

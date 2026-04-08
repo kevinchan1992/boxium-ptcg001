@@ -7953,3 +7953,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## ✅ Bug 修復（2026-04-08 繼續）
 - [x] 拍賣 Step 2：開始時間留空時無法點擊下一步 — 修復：選擇天數時若 startAt 為空，自動用「現在 + 天數」計算 auctionEndAt
 - [x] 賣家頁面 URL 錯誤：AuctionDetail.tsx 使用 sellerInfo.userId（users.id）改為 listing.sellerId（sellerProfiles.id）
+
+---
+## ✅ UI 設計改善（2026-04-08）
+- [x] /marketplace 商城/拍賣分區：改為 2 欄大卡片設計，含圖示、副標題「即買即賣」/「競價得標」，選中時深藍底色，更清晰區分
+- [x] /marketplace 廣告輪播圓點：縮小（active: w-1.5/h-1.5，inactive: w-1/h-1）
+- [x] /seller 上架新商品按鈕：增大至 h-9，加陰影和 hover 縮放效果，更突出
+- [x] /seller 無商品時新增「開始上架」引導橫幅：深藍背景 + 黃色「立即上架」按鈕 + 3 步驟說明
