@@ -12,34 +12,34 @@ interface SectionProps {
   title: string;
   badge?: string;
   children: React.ReactNode;
-  defaultOpen?: boolean;
+  isOpen: boolean;
+  onToggle: (id: string) => void;
 }
 
-function Section({ id, icon, title, badge, children, defaultOpen = false }: SectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ id, icon, title, badge, children, isOpen, onToggle }: SectionProps) {
   return (
     <div id={id} className="border border-blue-100 rounded-2xl overflow-hidden shadow-sm mb-4 scroll-mt-20">
       <button
         className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors"
-        style={{ background: open ? BRAND_BLUE : "#fff" }}
-        onClick={() => setOpen(v => !v)}
+        style={{ background: isOpen ? BRAND_BLUE : "#fff" }}
+        onClick={() => onToggle(id)}
       >
         <span
           className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
-          style={open ? { background: "rgba(255,255,255,0.2)", color: "#fff" } : { background: BRAND_BLUE, color: "#fff" }}
+          style={isOpen ? { background: "rgba(255,255,255,0.2)", color: "#fff" } : { background: BRAND_BLUE, color: "#fff" }}
         >
           {icon}
         </span>
-        <span className={`flex-1 font-bold text-base ${open ? "text-white" : "text-[#06038D]"}`}>{title}</span>
+        <span className={`flex-1 font-bold text-base ${isOpen ? "text-white" : "text-[#06038D]"}`}>{title}</span>
         {badge && (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mr-2"
             style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>{badge}</span>
         )}
-        <span className={open ? "text-white/70" : "text-gray-400"}>
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        <span className={isOpen ? "text-white/70" : "text-gray-400"}>
+          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
       </button>
-      {open && (
+      {isOpen && (
         <div className="px-5 py-5 bg-white text-sm text-gray-700 leading-relaxed space-y-4">
           {children}
         </div>
@@ -90,6 +90,8 @@ const TOC = [
 
 export default function AuctionTerms() {
   const [tocOpen, setTocOpen] = useState(false);
+  const [openSectionId, setOpenSectionId] = useState<string | null>("overview");
+  const handleToggle = (id: string) => setOpenSectionId(prev => prev === id ? null : id);
   const { data: feeTiersData, isLoading: feeTiersLoading } = trpc.marketplace.getFeeTiers.useQuery();
 
   // Build display tiers from API data or fall back to defaults
@@ -196,7 +198,7 @@ export default function AuctionTerms() {
         </div>
 
         {/* Section 1: Platform Overview */}
-        <Section id="overview" icon={<Package className="w-5 h-5" />} title="一、平台概覽" defaultOpen={true}>
+        <Section id="overview" icon={<Package className="w-5 h-5" />} title="一、平台概覽" isOpen={openSectionId === "overview"} onToggle={handleToggle}>
           <p>
             Boxium PTCG（下稱「本平台」）是一個專為集換式卡牌（TCG）愛好者而設的香港買賣平台，提供<strong>直購</strong>及<strong>拍賣</strong>兩種交易模式，讓買賣雙方能夠安全、便捷地進行卡牌交易。
           </p>
@@ -222,7 +224,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 2: Buy Now Flow */}
-        <Section id="buy-now" icon={<ShoppingCart className="w-5 h-5" />} title="二、直購流程" badge="直購">
+        <Section id="buy-now" icon={<ShoppingCart className="w-5 h-5" />} title="二、直購流程" badge="直購" isOpen={openSectionId === "buy-now"} onToggle={handleToggle}>
           <div className="space-y-3">
             <p className="font-semibold text-[#06038D]">買家流程</p>
             <div className="space-y-3">
@@ -247,7 +249,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 3: Auction Flow */}
-        <Section id="auction" icon={<Gavel className="w-5 h-5" />} title="三、拍賣流程及條款" badge="拍賣">
+        <Section id="auction" icon={<Gavel className="w-5 h-5" />} title="三、拍賣流程及條款" badge="拍賣" isOpen={openSectionId === "auction"} onToggle={handleToggle}>
           <div className="space-y-4">
             <div>
               <p className="font-semibold text-[#06038D] mb-3">拍賣流程</p>
@@ -288,7 +290,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 4: Fees */}
-        <Section id="fees" icon={<DollarSign className="w-5 h-5" />} title="四、平台收費說明" badge="重要">
+        <Section id="fees" icon={<DollarSign className="w-5 h-5" />} title="四、平台收費說明" badge="重要" isOpen={openSectionId === "fees"} onToggle={handleToggle}>
           <div className="space-y-4">
             <p>本平台採用<strong>階梯式服務費</strong>，按成交金額高低收取不同費率，成交金額越高，費率越低。服務費僅向<strong>賣家</strong>收取，買家無需支付額外服務費。</p>
 
@@ -333,7 +335,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 5: Payment */}
-        <Section id="payment" icon={<CreditCard className="w-5 h-5" />} title="五、付款與結算">
+        <Section id="payment" icon={<CreditCard className="w-5 h-5" />} title="五、付款與結算" isOpen={openSectionId === "payment"} onToggle={handleToggle}>
           <div className="space-y-3">
             <div>
               <p className="font-semibold text-[#06038D] mb-2">買家付款</p>
@@ -399,7 +401,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 6: Shipping */}
-        <Section id="shipping" icon={<Package className="w-5 h-5" />} title="六、交收安排">
+        <Section id="shipping" icon={<Package className="w-5 h-5" />} title="六、交收安排" isOpen={openSectionId === "shipping"} onToggle={handleToggle}>
           <div className="space-y-3">
             <p>買賣雙方須在訂單確認後，透過平台訊息功能協商交收方式。本平台目前支援以下交收方式：</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -422,7 +424,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 7: Returns */}
-        <Section id="returns" icon={<RotateCcw className="w-5 h-5" />} title="七、退款及退貨政策">
+        <Section id="returns" icon={<RotateCcw className="w-5 h-5" />} title="七、退款及退貨政策" isOpen={openSectionId === "returns"} onToggle={handleToggle}>
           <div className="space-y-3">
             <p>本平台的退款政策以保障買家利益為前提，同時尊重賣家的合理權益。</p>
             <div className="rounded-xl overflow-hidden border border-blue-100">
@@ -468,7 +470,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 8: Conduct */}
-        <Section id="conduct" icon={<Scale className="w-5 h-5" />} title="八、用戶行為守則">
+        <Section id="conduct" icon={<Scale className="w-5 h-5" />} title="八、用戶行為守則" isOpen={openSectionId === "conduct"} onToggle={handleToggle}>
           <div className="space-y-3">
             <p>為維護平台的公平交易環境，所有用戶須遵守以下行為守則：</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -527,7 +529,7 @@ export default function AuctionTerms() {
         </Section>
 
         {/* Section 9: Liability */}
-        <Section id="liability" icon={<FileText className="w-5 h-5" />} title="九、免責聲明及法律條款">
+        <Section id="liability" icon={<FileText className="w-5 h-5" />} title="九、免責聲明及法律條款" isOpen={openSectionId === "liability"} onToggle={handleToggle}>
           <div className="space-y-3">
             <div className="space-y-2">
               <Rule num="1" title="平台角色">本平台僅作為買賣雙方的交易媒介，不對商品的真偽、品質或狀況作出任何保證。</Rule>
