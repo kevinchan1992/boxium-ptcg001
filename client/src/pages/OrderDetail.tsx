@@ -1535,6 +1535,29 @@ export default function OrderDetail() {
               <span>總計</span>
               <span className="text-[#06038d]">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
+            {/* Fee tier info - shown to seller for C2C orders */}
+            {isSeller && order.sellerType === 'seller' && (() => {
+              const amount = parseFloat(order.subtotalHkd as string ?? '0');
+              const rate = parseFloat(order.platformFeeRate as string ?? '0.05');
+              const ratePercent = Math.round(rate * 100);
+              const tier = ratePercent >= 5 ? 1 : ratePercent >= 4 ? 2 : 3;
+              const platformFee = parseFloat(order.platformFeeHkd as string ?? '0');
+              const sellerReceivable = parseFloat(order.sellerReceivableHkd as string ?? (amount - platformFee).toFixed(2));
+              const tierBg = tier === 1 ? 'bg-yellow-50 border-yellow-200' : tier === 2 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200';
+              const tierText = tier === 1 ? 'text-yellow-800' : tier === 2 ? 'text-blue-800' : 'text-green-800';
+              return (
+                <div className={`mt-2 rounded-lg border p-3 space-y-1.5 ${tierBg}`}>
+                  <div className={`flex items-center justify-between text-xs font-semibold ${tierText}`}>
+                    <span>本訂單適用第 {tier} 級費率（{ratePercent}%）</span>
+                    <span>-HKD {platformFee.toFixed(2)}</span>
+                  </div>
+                  <div className={`flex items-center justify-between text-xs opacity-75 ${tierText}`}>
+                    <span>賣家實收</span>
+                    <span className="font-bold">HKD {sellerReceivable.toFixed(2)}</span>
+                  </div>
+                </div>
+              );
+            })()}
             {/* Alipay proof screenshot display + re-upload */}
             {order.paymentMethod === "alipay_hk" && isBuyer && (
               <div className="mt-3 pt-3 border-t border-gray-100">

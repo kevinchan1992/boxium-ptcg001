@@ -3357,6 +3357,29 @@ export default function SellerDashboard() {
                       </p>
                     );
                   })()}
+                  {/* Real-time fee calculation */}
+                  {listingForm.price && parseFloat(listingForm.price) >= 4 && (() => {
+                    const price = parseFloat(listingForm.price);
+                    const rate = price <= 5000 ? 0.05 : price <= 10000 ? 0.04 : 0.03;
+                    const tier = price <= 5000 ? 1 : price <= 10000 ? 2 : 3;
+                    const ratePercent = Math.round(rate * 100);
+                    const fee = price * rate;
+                    const receivable = price - fee;
+                    const tierBg = tier === 1 ? 'bg-yellow-50 border-yellow-200' : tier === 2 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200';
+                    const tierText = tier === 1 ? 'text-yellow-800' : tier === 2 ? 'text-blue-800' : 'text-green-800';
+                    return (
+                      <div className={`mt-2 rounded-lg border p-2.5 ${tierBg}`}>
+                        <div className={`flex items-center justify-between text-xs font-semibold ${tierText}`}>
+                          <span>適用第 {tier} 級費率（{ratePercent}%）</span>
+                          <span>預計平台費 -HKD {fee.toFixed(2)}</span>
+                        </div>
+                        <div className={`flex items-center justify-between text-xs mt-1 opacity-75 ${tierText}`}>
+                          <span>預計實收</span>
+                          <span className="font-bold">HKD {receivable.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 )}
 
