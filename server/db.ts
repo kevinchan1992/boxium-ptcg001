@@ -5805,3 +5805,119 @@ export async function getAdminAuctionOrders(opts: {
   ]);
   return { orders: rows, total: Number(countRows[0]?.count ?? 0) };
 }
+
+// ─── Message Center: All Order Threads ───────────────────────────────────────
+export async function getMyOrderThreads(userId: number, role: 'buyer' | 'seller'): Promise<Array<{
+  orderNo: string;
+  orderId: number;
+  listingTitle: string | null;
+  listingImage: string | null;
+  counterpartyName: string | null;
+  unreadCount: number;
+  latestContent: string | null;
+  latestAt: Date | null;
+  orderStatus: string;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { orderMessages, marketplaceOrders, marketplaceListings, users: usersTable, sellerProfiles } = await import('../drizzle/schema_new');
+  const { eq, desc, sql, inArray } = await import('drizzle-orm');
+
+  const unreadCol = role === 'buyer' ? orderMessages.readByBuyer : orderMessages.readBySeller;
+  const orderCondition = role === 'buyer'
+    ? eq(marketplaceOrders.buyerId, userId)
+    : eq(marketplaceOrders.sellerId, userId);
+
+  const rows = await db
+    .select({
+      orderNo: orderMessages.orderNo,
+      orderId: orderMessages.orderId,
+      unreadCount: sql<number>`sum(case when ${unreadCol} = false then 1 else 0 end)`,
+      latestAt: sql<Date | null>`max(${orderMessages.createdAt})`,
+    })
+    .from(orderMessages)
+    .innerJoin(marketplaceOrders, eq(marketplaceOrders.id, orderMessages.orderId))
+    .where(orderCondition)
+    .groupBy(orderMessages.orderNo, orderMessages.orderId)
+    .orderBy(desc(sql`max(${orderMessages.createdAt})`))
+    .limit(50);
+
+  if (rows.length === 0) return [];
+
+  const orderIds = rows.map(r => r.orderId);
+
+  const orderDetails = await db
+    .select({
+      id: marketplaceOrders.id,
+      orderStatus: marketplaceOrders.orderStatus,
+      listingTitle: marketplaceListings.title,
+      listingImages: marketplaceListings.images,
+      buyerId: marketplaceOrders.buyerId,
+      sellerId: marketplaceOrders.sellerId,
+    })
+    .from(marketplaceOrders)
+    .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
+    .where(inArray(marketplaceOrders.id, orderIds));
+
+  const orderDetailMap = new Map(orderDetails.map(o => [o.id, o]));
+
+  const counterpartyIds = orderDetails
+    .map(o => role === 'buyer' ? o.sellerId : o.buyerId)
+    .filter((id): id is number => id !== null && id !== undefined);
+
+  const counterpartyMap = new Map<number, string>();
+  if (counterpartyIds.length > 0) {
+    if (role === 'buyer') {
+      const sellerRows = await db
+        .select({ userId: sellerProfiles.userId, displayName: sellerProfiles.displayName })
+        .from(sellerProfiles)
+        .where(inArray(sellerProfiles.userId, counterpartyIds));
+      for (const s of sellerRows) counterpartyMap.set(s.userId, s.displayName);
+    } else {
+      const buyerRows = await db
+        .select({ id: usersTable.id, name: usersTable.name })
+        .from(usersTable)
+        .where(inArray(usersTable.id, counterpartyIds));
+      for (const b of buyerRows) counterpartyMap.set(b.id, b.name ?? '買家');
+    }
+  }
+
+  const orderNos = rows.map(r => r.orderNo);
+  const latestMsgs = await db
+    .select({ orderNo: orderMessages.orderNo, content: orderMessages.content, imageUrl: orderMessages.imageUrl })
+    .from(orderMessages)
+    .where(inArray(orderMessages.orderNo, orderNos))
+    .orderBy(desc(orderMessages.createdAt));
+
+  const latestContentMap = new Map<string, { content: string | null; imageUrl: string | null }>();
+  for (const m of latestMsgs) {
+    if (!latestContentMap.has(m.orderNo)) {
+      latestContentMap.set(m.orderNo, { content: m.content, imageUrl: m.imageUrl ?? null });
+    }
+  }
+
+  return rows.map(r => {
+    const detail = orderDetailMap.get(r.orderId);
+    const counterpartyId = detail ? (role === 'buyer' ? detail.sellerId : detail.buyerId) : null;
+    const latestMsg = latestContentMap.get(r.orderNo);
+    let listingImage: string | null = null;
+    if (detail?.listingImages) {
+      try {
+        const imgs = JSON.parse(detail.listingImages as string);
+        listingImage = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
+      } catch { listingImage = null; }
+    }
+    return {
+      orderNo: r.orderNo,
+      orderId: r.orderId,
+      listingTitle: detail?.listingTitle ?? null,
+      listingImage,
+      counterpartyName: counterpartyId ? (counterpartyMap.get(counterpartyId) ?? null) : null,
+      unreadCount: Number(r.unreadCount),
+      latestContent: latestMsg?.imageUrl ? '[圖片]' : (latestMsg?.content ?? null),
+      latestAt: r.latestAt,
+      orderStatus: detail?.orderStatus ?? 'unknown',
+    };
+  });
+}

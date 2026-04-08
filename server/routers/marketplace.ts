@@ -46,6 +46,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getUnreadMessageCount,
   getTotalUnreadMessageCount,
   getRecentUnreadOrderThreads,
+  getMyOrderThreads,
   insertDisputeMedia,
   getDisputeMediaByOrderId,
 } from "../db";
@@ -5583,8 +5584,15 @@ IMPORTANT:
       const role: 'buyer' | 'seller' | 'admin' = isAdmin ? 'admin' : isSeller ? 'seller' : 'buyer';
       return getRecentUnreadOrderThreads(ctx.user.id, role);
     }),
-
-  /** Admin: mark an order as disputed and send Email notifications to buyer and seller */
+  /** MessageCenter: get ALL order threads with messages for current user */
+  getMyOrderThreads: protectedProcedure
+    .query(async ({ ctx }) => {
+      const sp = await getSellerProfileByUserId(ctx.user.id);
+      const isSeller = !!sp;
+      const role: 'buyer' | 'seller' = isSeller ? 'seller' : 'buyer';
+      return getMyOrderThreads(ctx.user.id, role);
+    }),
+  /** Admin: mark an order as disputedd and send Email notifications to buyer and seller */
   adminMarkOrderAsDisputed: adminProcedure
     .input(z.object({
       orderId: z.number().int(),

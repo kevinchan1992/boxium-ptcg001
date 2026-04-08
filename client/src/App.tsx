@@ -40,6 +40,8 @@ import Cart from "./pages/Cart";
 import Unsubscribe from "./pages/Unsubscribe";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
+import MessageCenter from "./components/MessageCenter";
+import { trpc } from "./lib/trpc";
 
 
 
@@ -47,6 +49,7 @@ import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
 function Router() {
   const [location] = useLocation();
+  const { data: user } = trpc.auth.me.useQuery();
 
   // Scroll to top on route change
   useEffect(() => {
@@ -56,6 +59,7 @@ function Router() {
   return (
     <PageWrapper>
       <TopNav />
+      {user && <MessageCenter />}
       <div className="pt-16">
         <Switch>
       <Route path={"/"} component={Home} />
