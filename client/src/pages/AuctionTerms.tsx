@@ -1,346 +1,516 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Gavel, Clock, CreditCard, AlertTriangle, Shield, FileText, Scale, ChevronRight, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, ShoppingCart, Gavel, DollarSign, Shield, AlertTriangle, CheckCircle, ArrowRight, Package, CreditCard, RotateCcw, Clock, Scale, FileText } from "lucide-react";
 
-const sections = [
-  {
-    id: "overview",
-    icon: Gavel,
-    title: "競標規則",
-    content: [
-      {
-        heading: "1.1 服務性質與適用範圍",
-        body: "BOXIUM 拍賣服務（下稱「本服務」）由 BOXIUM 平台（下稱「本平台」）提供，作為買賣雙方進行交易的中介媒介。本平台僅提供技術及撮合服務，不對商品真實性、品質或交易結果作出任何明示或默示的保證。使用本服務即表示您已閱讀、理解並同意受本條款約束。",
-      },
-      {
-        heading: "1.2 參與資格",
-        body: "所有已完成帳號驗證的 BOXIUM 會員均可參與競標。賣家須通過 BOXIUM 賣家認證，並遵守平台商品上架規範。本平台保留在不作任何解釋的情況下，拒絕或終止任何用戶使用本服務的權利。",
-      },
-      {
-        heading: "1.3 出價規則",
-        body: "每次出價必須高於當前最高出價加上最低加價幅度（由賣家設定）。出價一經提交即具法律約束力，不得撤回。若拍賣設有保留價，成交價必須達到保留價方可成交。本平台對因技術故障、網絡中斷或其他不可抗力因素導致的出價失敗概不負責。",
-      },
-      {
-        heading: "1.4 即時購買（Buy Now）",
-        body: "若賣家設定了即時購買價格，買家可在拍賣結束前隨時以該價格直接購買，拍賣將立即結束。即時購買與競標出價同樣具有法律約束力，完成後不得取消。",
-      },
-      {
-        heading: "1.5 防狙擊機制",
-        body: "為確保公平競標環境，若在拍賣結束前 5 分鐘內有新出價，拍賣時間將自動延長 5 分鐘。此機制可重複觸發，直至無新出價為止。本平台對因此機制導致的拍賣延長不承擔任何責任。",
-      },
-    ],
-  },
-  {
-    id: "payment",
-    icon: CreditCard,
-    title: "付款條款",
-    content: [
-      {
-        heading: "2.1 付款期限",
-        body: "得標者必須在拍賣結束後 24 小時內完成付款。系統將在結標後立即發送付款通知。逾期未付款將視為棄標，並依本條款第三節執行相應措施。",
-      },
-      {
-        heading: "2.2 付款方式",
-        body: "本平台接受信用卡及 Stripe 支付等主要付款方式。所有交易均通過 Stripe 安全處理，本平台不儲存任何信用卡資料。付款手續費由買家承擔，具體費率以結算頁面顯示為準。",
-      },
-      {
-        heading: "2.3 平台服務費",
-        body: "本平台就每筆成交交易向賣家收取服務費，費率以平台公告為準。服務費將在款項結算時自動扣除。本平台保留調整服務費率的權利，並提前通知賣家。",
-      },
-      {
-        heading: "2.4 款項結算",
-        body: "買家付款確認後，款項將暫存於本平台。當買家確認收貨或商品出貨後 14 天自動完成時，系統將進入 48 小時冷靜期。冷靜期內如無爭議發生，款項將自動轉帳至賣家的 Stripe Connect 帳戶（扣除平台服務費後）。本平台對銀行轉帳延誤概不負責。",
-      },
-      {
-        heading: "2.5 退款政策與爭議處理",
-        body: "商品一旦發貨，原則上不接受退款申請。若商品與賣家描述存在重大差異，買家可在確認收貨後 48 小時冷靜期內透過本平台提出爭議申請。爭議期間款項將凍結，不會放款給賣家。本平台將根據雙方提供的資料作出裁決，裁決結果對雙方具有約束力。本平台的裁決屬最終決定，本平台不對任何裁決結果承擔法律責任。",
-      },
-    ],
-  },
-  {
-    id: "violations",
-    icon: AlertTriangle,
-    title: "違規處理制度",
-    content: [
-      {
-        heading: "3.1 棄標定義",
-        body: "以下情況均視為棄標違規：得標後 24 小時內未完成付款；惡意出價後主動要求取消；以任何方式規避付款義務；提供虛假付款資料。本平台對棄標違規的認定擁有最終裁量權。",
-      },
-      {
-        heading: "3.2 懲罰級別",
-        body: "本平台採用累進式懲罰制度：\n• 第 1 次違規：書面警告，永久記錄在案\n• 第 2 次違規：封禁競標資格 7 天\n• 第 3 次違規：封禁競標資格 30 天\n• 第 4 次及以上：永久封禁競標資格，本平台保留追討損失的權利",
-      },
-      {
-        heading: "3.3 賣家違規",
-        body: "賣家若出現以下行為，本平台有權採取相應措施，包括但不限於暫停或終止賣家資格、扣押待結算款項：惡意取消已成交拍賣；提供虛假商品資訊；延遲或拒絕發貨；操控出價或與他人串謀。",
-      },
-      {
-        heading: "3.4 申訴機制",
-        body: "若認為違規記錄有誤，可在 7 個工作日內向本平台客服提出書面申訴，並提供相關佐證資料。申訴期間違規記錄暫不生效。本平台將在 5 個工作日內回覆申訴結果，申訴結果為最終決定。",
-      },
-      {
-        heading: "3.5 平台裁量權",
-        body: "本平台管理員有權根據具體情況，在不事先通知的情況下調整懲罰力度，包括提前解除封禁或加重懲罰。所有決定均以維護平台公平交易環境及保障各方合法權益為原則。本平台對行使此裁量權所產生的後果不承擔任何責任。",
-      },
-    ],
-  },
-  {
-    id: "seller",
-    icon: Shield,
-    title: "賣家責任與義務",
-    content: [
-      {
-        heading: "4.1 商品真實性保證",
-        body: "賣家保證所有上架商品為真品，商品描述、評級及圖片均如實呈現，不存在任何誤導性陳述。若商品涉及第三方評級（如 PSA、BGS 等），賣家須確保評級資料真實有效。虛假描述或偽造評級將導致帳號永久封禁，本平台保留向相關執法機構舉報的權利。",
-      },
-      {
-        heading: "4.2 拍賣取消限制",
-        body: "拍賣審核通過並開始後，賣家不得無故取消拍賣。若確有不可抗力原因需要取消，須提前聯繫本平台客服審批，並提供合理解釋及相關證明。未經批准的取消將被視為違規行為，本平台保留向賣家追討因此造成損失的權利。",
-      },
-      {
-        heading: "4.3 發貨義務",
-        body: "賣家須在買家付款確認後 3 個工作日內完成發貨，並在本平台上傳有效追蹤號碼。延遲發貨或拒絕發貨將導致訂單取消、退款給買家，並扣除相應服務費。本平台對因賣家延遲發貨造成的任何損失概不負責。",
-      },
-      {
-        heading: "4.4 商品上架規範",
-        body: "賣家上架的商品須符合本平台商品政策，不得上架任何違禁品、仿冒品或侵權商品。本平台有權在不事先通知的情況下下架任何違規商品，並對相關賣家帳號採取限制措施。因上架違規商品引起的任何法律責任由賣家獨立承擔。",
-      },
-      {
-        heading: "4.5 保留價設定",
-        body: "賣家可設定保留價（最低成交價），保留價對買家不公開，僅顯示「保留價已達到╱未達到」狀態。若拍賣結束時最高出價未達保留價，拍賣視為流標，賣家不得要求買家以低於保留價的出價成交。",
-      },
-    ],
-  },
-  {
-    id: "platform",
-    icon: Scale,
-    title: "平台責任限制",
-    content: [
-      {
-        heading: "5.1 中介角色聲明",
-        body: "本平台僅作為買賣雙方交易的技術中介，不參與實際交易，不對任何商品的品質、真偽、合法性或適銷性作出保證。買賣雙方之間的交易糾紛應由雙方自行協商解決，本平台的介入屬自願性質的調解服務。",
-      },
-      {
-        heading: "5.2 責任免除",
-        body: "在法律允許的最大範圍內，本平台對以下情況不承擔任何責任：因技術故障、伺服器中斷、網絡問題或不可抗力導致的服務中斷或數據丟失；因用戶違反本條款造成的損失；因第三方行為（包括但不限於黑客攻擊、詐騙）造成的損失；任何間接、附帶、特殊或懲罰性損害賠償。",
-      },
-      {
-        heading: "5.3 賠償上限",
-        body: "若本平台被裁定須就任何事項承擔責任，本平台的最高賠償責任不超過相關交易中本平台實際收取的服務費金額。本條款不影響任何不可依法律排除的消費者權利。",
-      },
-      {
-        heading: "5.4 條款修改權",
-        body: "本平台保留隨時修改本條款的權利，修改後的條款將在本平台公告後立即生效。繼續使用本服務即視為接受修改後的條款。如不同意修改後的條款，用戶應立即停止使用本服務。",
-      },
-    ],
-  },
-  {
-    id: "timing",
-    icon: Clock,
-    title: "時間規則",
-    content: [
-      {
-        heading: "6.1 拍賣時長",
-        body: "賣家可設定 3 天或 7 天的拍賣時長。拍賣開始時間由賣家設定（留空則在審核通過後立即開始），系統將在設定時間自動開始競標。所有時間均以香港時間（UTC+8）為準。",
-      },
-      {
-        heading: "6.2 結標時間",
-        body: "拍賣在設定的結束時間自動結標。若觸發防狙擊機制，結標時間將相應延後。系統定期自動處理到期拍賣，本平台對因系統延遲導致的結標時間偏差（通常不超過 5 分鐘）不承擔責任。",
-      },
-      {
-        heading: "6.3 通知時間",
-        body: "系統將在以下時間點發送通知：拍賣開始時（通知所有關注者）；結束前 1 小時（通知所有出價者）；結標後立即（通知得標者及賣家）；付款後 12 小時（提醒未付款的得標者）。通知的發送依賴網絡及第三方服務，本平台對通知延誤或未送達不承擔責任。",
-      },
-    ],
-  },
-  {
-    id: "legal",
-    icon: FileText,
-    title: "法律條款",
-    content: [
-      {
-        heading: "7.1 適用法律",
-        body: "本條款受香港特別行政區法律管轄，並依據香港法律解釋。任何因本條款或本服務引起的爭議，雙方同意提交香港法院的專屬管轄。",
-      },
-      {
-        heading: "7.2 條款可分割性",
-        body: "若本條款的任何條文被裁定為無效、不合法或不可執行，該條文應在最小必要範圍內修改，其餘條款繼續完全有效。",
-      },
-      {
-        heading: "7.3 完整協議",
-        body: "本條款連同本平台的《服務條款》及《私隱政策》構成用戶與本平台之間關於本服務的完整協議，取代雙方之前就本服務達成的所有口頭或書面協議。",
-      },
-      {
-        heading: "7.4 語言版本",
-        body: "本條款以繁體中文版本為準。如本條款有其他語言版本，以繁體中文版本為最終解釋依據。",
-      },
-    ],
-  },
+const BRAND_BLUE = "#06038D";
+const BRAND_YELLOW = "#FEDD00";
+
+interface SectionProps {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  badge?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+function Section({ id, icon, title, badge, children, defaultOpen = false }: SectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div id={id} className="border border-blue-100 rounded-2xl overflow-hidden shadow-sm mb-4 scroll-mt-20">
+      <button
+        className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors"
+        style={{ background: open ? BRAND_BLUE : "#fff" }}
+        onClick={() => setOpen(v => !v)}
+      >
+        <span
+          className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+          style={open ? { background: "rgba(255,255,255,0.2)", color: "#fff" } : { background: BRAND_BLUE, color: "#fff" }}
+        >
+          {icon}
+        </span>
+        <span className={`flex-1 font-bold text-base ${open ? "text-white" : "text-[#06038D]"}`}>{title}</span>
+        {badge && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full mr-2"
+            style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>{badge}</span>
+        )}
+        <span className={open ? "text-white/70" : "text-gray-400"}>
+          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </span>
+      </button>
+      {open && (
+        <div className="px-5 py-5 bg-white text-sm text-gray-700 leading-relaxed space-y-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Rule({ num, title, children }: { num: string; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <span className="flex-shrink-0 w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center mt-0.5"
+        style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>{num}</span>
+      <div>
+        <p className="font-semibold text-[#06038D] mb-0.5">{title}</p>
+        <p className="text-gray-600 text-sm">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ type, children }: { type: "info" | "warning" | "success"; children: React.ReactNode }) {
+  const styles = {
+    info: { bg: "bg-blue-50", border: "border-blue-200", icon: <Shield className="w-4 h-4 text-blue-600" /> },
+    warning: { bg: "bg-amber-50", border: "border-amber-200", icon: <AlertTriangle className="w-4 h-4 text-amber-600" /> },
+    success: { bg: "bg-green-50", border: "border-green-200", icon: <CheckCircle className="w-4 h-4 text-green-600" /> },
+  };
+  const s = styles[type];
+  return (
+    <div className={`flex gap-2.5 p-3.5 rounded-xl border ${s.bg} ${s.border}`}>
+      <span className="flex-shrink-0 mt-0.5">{s.icon}</span>
+      <p className="text-sm text-gray-700">{children}</p>
+    </div>
+  );
+}
+
+const TOC = [
+  { id: "overview", label: "平台概覽" },
+  { id: "buy-now", label: "直購流程" },
+  { id: "auction", label: "拍賣流程" },
+  { id: "fees", label: "平台收費" },
+  { id: "payment", label: "付款與結算" },
+  { id: "shipping", label: "交收安排" },
+  { id: "returns", label: "退款政策" },
+  { id: "conduct", label: "行為守則" },
+  { id: "liability", label: "免責聲明" },
 ];
 
 export default function AuctionTerms() {
+  const [tocOpen, setTocOpen] = useState(false);
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTocOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-[#06038D]">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-[#04026A]">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'repeating-linear-gradient(45deg, #FEDD00 0, #FEDD00 1px, transparent 0, transparent 50%)',
-            backgroundSize: '20px 20px'
-          }} />
+      <div className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a0a9e 100%)` }}>
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white transform translate-x-1/3 -translate-y-1/3" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white transform -translate-x-1/3 translate-y-1/3" />
         </div>
-        <div className="relative max-w-5xl mx-auto px-4 py-10">
-          <Link href="/marketplace">
-            <button className="flex items-center gap-2 text-[#FEDD00]/70 hover:text-[#FEDD00] transition-colors text-sm mb-6">
-              <ArrowLeft className="w-4 h-4" />
-              返回市集
-            </button>
-          </Link>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-14 h-14 bg-[#FEDD00] rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#FEDD00]/20">
-              <Gavel className="w-7 h-7 text-[#06038D]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-3xl font-black text-white tracking-tight">BOXIUM 拍賣條款</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#FEDD00]/20 text-[#FEDD00] text-xs font-semibold border border-[#FEDD00]/30">
-                  Auction Terms & Conditions
-                </span>
-              </div>
-              <p className="text-white/50 text-sm mt-1">最後更新：2026 年 4 月 1 日</p>
-            </div>
+        <div className="relative max-w-3xl mx-auto px-4 py-12 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4"
+            style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+            <Shield className="w-3 h-3" />
+            BOXIUM PTCG 官方條款
           </div>
-          <div className="mt-6 bg-white/5 border border-[#FEDD00]/20 rounded-xl px-5 py-4 flex gap-3">
-            <Info className="w-5 h-5 text-[#FEDD00] flex-shrink-0 mt-0.5" />
-            <p className="text-white/70 text-sm leading-relaxed">
-              參與 BOXIUM 拍賣即表示您已閱讀、理解並同意受以下所有條款約束。請在出價或上架拍賣前仔細閱讀，確保您了解所有規則、責任及限制。
-            </p>
-          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
+            買賣條款及細則
+          </h1>
+          <p className="text-white/70 text-sm max-w-xl mx-auto">
+            本條款適用於 Boxium PTCG 平台上的所有買賣交易，包括直購及拍賣商品。請於交易前仔細閱讀，使用本平台即表示你同意以下所有條款。
+          </p>
+          <p className="text-white/40 text-xs mt-4">最後更新：2025 年 4 月</p>
         </div>
       </div>
 
-      {/* Quick Nav */}
-      <div className="sticky top-0 z-10 bg-[#04026A]/95 backdrop-blur border-b border-white/10 shadow-lg">
-        <div className="max-w-5xl mx-auto px-4 py-3">
-          <div className="flex flex-wrap gap-2">
-            {sections.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-[#FEDD00]/20 text-white/70 hover:text-[#FEDD00] text-xs font-medium transition-all border border-white/10 hover:border-[#FEDD00]/30"
-              >
-                <s.icon className="w-3 h-3" />
-                {s.title}
-              </a>
+      {/* Sticky TOC (mobile) */}
+      <div className="sticky top-0 z-30 bg-white border-b border-blue-100 shadow-sm sm:hidden">
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold"
+          style={{ color: BRAND_BLUE }}
+          onClick={() => setTocOpen(v => !v)}
+        >
+          <span>目錄導覽</span>
+          {tocOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {tocOpen && (
+          <div className="px-4 pb-3 grid grid-cols-2 gap-1.5">
+            {TOC.map(t => (
+              <button key={t.id} onClick={() => scrollTo(t.id)}
+                className="text-left text-xs px-3 py-2 rounded-lg bg-blue-50 text-[#06038D] font-medium hover:bg-blue-100 transition-colors">
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Desktop TOC */}
+        <div className="hidden sm:block mb-8 p-5 rounded-2xl border-2 border-blue-100 bg-white">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">目錄</p>
+          <div className="grid grid-cols-3 gap-2">
+            {TOC.map(t => (
+              <button key={t.id} onClick={() => scrollTo(t.id)}
+                className="text-left text-sm px-3 py-2 rounded-xl hover:bg-blue-50 text-[#06038D] font-medium transition-colors flex items-center gap-1.5">
+                <ArrowRight className="w-3 h-3 opacity-50" />
+                {t.label}
+              </button>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-        {sections.map((section, sIdx) => (
-          <div
-            key={section.id}
-            id={section.id}
-            className="rounded-2xl overflow-hidden border border-white/10 scroll-mt-16"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          >
-            {/* Section Header */}
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10"
-              style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <div className="w-9 h-9 bg-[#FEDD00] rounded-xl flex items-center justify-center flex-shrink-0">
-                <section.icon className="w-4 h-4 text-[#06038D]" />
+        {/* Section 1: Platform Overview */}
+        <Section id="overview" icon={<Package className="w-5 h-5" />} title="一、平台概覽" defaultOpen={true}>
+          <p>
+            Boxium PTCG（下稱「本平台」）是一個專為集換式卡牌（TCG）愛好者而設的香港買賣平台，提供<strong>直購</strong>及<strong>拍賣</strong>兩種交易模式，讓買賣雙方能夠安全、便捷地進行卡牌交易。
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            <div className="rounded-xl p-4 border border-blue-100 bg-blue-50">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingCart className="w-4 h-4" style={{ color: BRAND_BLUE }} />
+                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>直購模式</span>
               </div>
-              <div>
-                <h2 className="text-base font-bold text-white">{section.title}</h2>
-                <p className="text-white/40 text-xs">第 {sIdx + 1} 節</p>
+              <p className="text-xs text-gray-600">賣家設定固定售價，買家即時購買，交易即時確認。</p>
+            </div>
+            <div className="rounded-xl p-4 border border-blue-100 bg-blue-50">
+              <div className="flex items-center gap-2 mb-2">
+                <Gavel className="w-4 h-4" style={{ color: BRAND_BLUE }} />
+                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>拍賣模式</span>
+              </div>
+              <p className="text-xs text-gray-600">賣家設定起拍價，買家競標，限時結束後最高出價者得標。</p>
+            </div>
+          </div>
+          <InfoBox type="info">
+            本平台所有交易均以<strong>港幣（HKD）</strong>計算。賣家須完成 Stripe Connect 收款帳戶設定方可上架商品。
+          </InfoBox>
+        </Section>
+
+        {/* Section 2: Buy Now Flow */}
+        <Section id="buy-now" icon={<ShoppingCart className="w-5 h-5" />} title="二、直購流程" badge="直購">
+          <div className="space-y-3">
+            <p className="font-semibold text-[#06038D]">買家流程</p>
+            <div className="space-y-3">
+              <Rule num="1" title="瀏覽及選購">在商品列表中選擇心儀商品，查閱商品詳情、品相評級及賣家評分。</Rule>
+              <Rule num="2" title="加入購物車或即時購買">點擊「立即購買」或加入購物車後結帳，確認訂單詳情及總金額。</Rule>
+              <Rule num="3" title="完成付款">透過 Stripe 安全支付頁面完成付款，系統即時確認訂單。</Rule>
+              <Rule num="4" title="等候交收">賣家確認出貨後，根據雙方協議的交收方式完成交收。</Rule>
+            </div>
+            <div className="border-t border-gray-100 pt-3 mt-3">
+              <p className="font-semibold text-[#06038D] mb-3">賣家流程</p>
+              <div className="space-y-3">
+                <Rule num="1" title="上架商品">填寫商品名稱、品相、系列、售價及商品圖片，提交審核。</Rule>
+                <Rule num="2" title="等候管理員審核">所有商品須經平台管理員審核後方可公開上架，確保商品資訊準確。</Rule>
+                <Rule num="3" title="處理訂單">收到訂單通知後，在規定時間內確認出貨並安排交收。</Rule>
+                <Rule num="4" title="收款結算">交易完成後，平台扣除服務費後將款項結算至賣家 Stripe 帳戶。</Rule>
+              </div>
+            </div>
+            <InfoBox type="warning">
+              買家確認付款後，訂單即告成立。除符合退款政策的情況外，買家不得單方面取消訂單。
+            </InfoBox>
+          </div>
+        </Section>
+
+        {/* Section 3: Auction Flow */}
+        <Section id="auction" icon={<Gavel className="w-5 h-5" />} title="三、拍賣流程及條款" badge="拍賣">
+          <div className="space-y-4">
+            <div>
+              <p className="font-semibold text-[#06038D] mb-3">拍賣流程</p>
+              <div className="space-y-3">
+                <Rule num="1" title="賣家設定拍賣">設定起拍價、拍賣天數（3 日或 7 日）及可選即買價，提交審核後上架。</Rule>
+                <Rule num="2" title="買家出價">登入後可對進行中的拍賣出價，每次出價必須高於當前最高出價。</Rule>
+                <Rule num="3" title="拍賣結束">拍賣時間結束時，最高出價者自動得標。系統即時通知買賣雙方。</Rule>
+                <Rule num="4" title="付款及交收">得標買家須在 <strong>48 小時內</strong>完成付款，逾期視為放棄得標資格。</Rule>
               </div>
             </div>
 
-            {/* Section Content */}
-            <div className="divide-y divide-white/5">
-              {section.content.map((item, idx) => (
-                <div key={idx} className="px-6 py-5 hover:bg-white/3 transition-colors">
-                  <h3 className="text-[#FEDD00] font-semibold text-sm mb-2">{item.heading}</h3>
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{item.body}</p>
+            <div className="rounded-xl overflow-hidden border border-blue-100">
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>拍賣重要規則</div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  { icon: "🔒", title: "出價具法律約束力", desc: "一旦出價，即構成購買承諾。得標後必須完成付款，否則帳號將受到限制。" },
+                  { icon: "⏱️", title: "即買價機制", desc: "若賣家設有即買價，買家可隨時以即買價直接購買，拍賣即時結束。" },
+                  { icon: "🔔", title: "自動通知", desc: "被超越出價時，系統將自動通知買家，讓你有機會再次出價。" },
+                  { icon: "⏰", title: "防狙擊機制", desc: "拍賣結束前 5 分鐘內有新出價，拍賣時間將自動延長 5 分鐘，確保公平競標。" },
+                  { icon: "❌", title: "拍賣取消限制", desc: "拍賣開始後，若已有出價，賣家不得單方面取消拍賣，違者將受到平台處分。" },
+                  { icon: "🏆", title: "得標確認", desc: "拍賣結束後，系統自動向得標買家發送付款連結，請留意通知。" },
+                ].map((r, i) => (
+                  <div key={i} className="flex gap-3 px-4 py-3">
+                    <span className="text-base flex-shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{r.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <InfoBox type="warning">
+              得標買家若在 48 小時內未完成付款，平台有權將商品重新上架，並對違規帳號採取相應措施，包括限制出價資格。
+            </InfoBox>
+          </div>
+        </Section>
+
+        {/* Section 4: Fees */}
+        <Section id="fees" icon={<DollarSign className="w-5 h-5" />} title="四、平台收費說明" badge="重要">
+          <div className="space-y-4">
+            <p>本平台採用<strong>階梯式服務費</strong>，按成交金額高低收取不同費率，成交金額越高，費率越低。服務費僅向<strong>賣家</strong>收取，買家無需支付額外服務費。</p>
+
+            {/* Fee Tier Table */}
+            <div className="rounded-xl overflow-hidden border border-blue-100 shadow-sm">
+              <div className="px-4 py-3 text-sm font-bold text-white flex items-center gap-2" style={{ background: BRAND_BLUE }}>
+                <DollarSign className="w-4 h-4" />
+                賣家服務費率（以成交金額計算）
+              </div>
+              <div className="divide-y divide-blue-50">
+                {[
+                  { tier: "第一級", range: "HKD 5,000 或以下", rate: "5%", color: "bg-amber-50", badge: "bg-amber-100 text-amber-800", example: "成交 HKD 1,000 → 服務費 HKD 50，實收 HKD 950" },
+                  { tier: "第二級", range: "HKD 5,001 – HKD 10,000", rate: "4%", color: "bg-blue-50", badge: "bg-blue-100 text-blue-800", example: "成交 HKD 8,000 → 服務費 HKD 320，實收 HKD 7,680" },
+                  { tier: "第三級", range: "HKD 10,001 或以上", rate: "3%", color: "bg-green-50", badge: "bg-green-100 text-green-800", example: "成交 HKD 15,000 → 服務費 HKD 450，實收 HKD 14,550" },
+                ].map((t, i) => (
+                  <div key={i} className={`px-4 py-3.5 ${t.color}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${t.badge}`}>{t.tier}</span>
+                        <span className="text-sm font-medium text-gray-700">{t.range}</span>
+                      </div>
+                      <span className="text-lg font-black" style={{ color: BRAND_BLUE }}>{t.rate}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 pl-0.5">{t.example}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl p-4 border border-blue-100 bg-blue-50 space-y-2">
+              <p className="text-sm font-bold" style={{ color: BRAND_BLUE }}>費率補充說明</p>
+              <ul className="space-y-1.5 text-sm text-gray-600">
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>服務費於款項結算時自動扣除，賣家毋須另行繳付。</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>費率以<strong>單筆成交金額</strong>計算，而非累計金額。</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>平台保留調整費率的權利，並提前 7 日以公告形式通知賣家。</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>買家付款時，Stripe 支付手續費由平台承擔，不另向買家收取。</li>
+              </ul>
+            </div>
+
+            <InfoBox type="success">
+              上架商品及瀏覽平台完全免費。平台僅於交易成功後才收取服務費，不成交不收費。
+            </InfoBox>
+          </div>
+        </Section>
+
+        {/* Section 5: Payment */}
+        <Section id="payment" icon={<CreditCard className="w-5 h-5" />} title="五、付款與結算">
+          <div className="space-y-3">
+            <div>
+              <p className="font-semibold text-[#06038D] mb-2">買家付款</p>
+              <div className="space-y-2">
+                <Rule num="1" title="接受付款方式">本平台透過 Stripe 處理所有付款，支援 Visa、Mastercard、American Express 等主要信用卡及扣帳卡。</Rule>
+                <Rule num="2" title="付款安全">所有付款均透過 Stripe 加密處理，本平台不儲存任何信用卡資料。</Rule>
+                <Rule num="3" title="付款時限">直購訂單須即時完成付款；拍賣得標後須於 48 小時內付款。</Rule>
+              </div>
+            </div>
+            <div className="border-t border-gray-100 pt-3">
+              <p className="font-semibold text-[#06038D] mb-2">賣家結算</p>
+              <div className="space-y-2">
+                <Rule num="1" title="Stripe Connect 帳戶">賣家須設立並連接 Stripe Connect 帳戶，方可接收款項。</Rule>
+                <Rule num="2" title="結算時間">買家確認收貨或交易完成後，平台將於 <strong>3–5 個工作天</strong>內完成結算。</Rule>
+                <Rule num="3" title="結算金額">結算金額為成交金額扣除平台服務費後的實收金額。</Rule>
+              </div>
+            </div>
+            <InfoBox type="info">
+              如賣家尚未設立 Stripe Connect 帳戶，款項將暫時保留，直至帳戶設立完成後方可提取。
+            </InfoBox>
+          </div>
+        </Section>
+
+        {/* Section 6: Shipping */}
+        <Section id="shipping" icon={<Package className="w-5 h-5" />} title="六、交收安排">
+          <div className="space-y-3">
+            <p>買賣雙方須在訂單確認後，透過平台訊息功能協商交收方式。本平台目前支援以下交收方式：</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { icon: "🤝", title: "面交", desc: "雙方協定地點及時間，親身交收。建議選擇公共場所。" },
+                { icon: "📦", title: "郵寄", desc: "賣家負責安全包裝及寄出，運費由雙方協議承擔。" },
+                { icon: "🏪", title: "門市自取", desc: "如賣家設有實體門市，買家可預約自取。" },
+              ].map((m, i) => (
+                <div key={i} className="rounded-xl p-3.5 border border-blue-100 bg-blue-50">
+                  <div className="text-2xl mb-1.5">{m.icon}</div>
+                  <p className="text-sm font-bold text-[#06038D] mb-1">{m.title}</p>
+                  <p className="text-xs text-gray-500">{m.desc}</p>
                 </div>
               ))}
             </div>
+            <InfoBox type="warning">
+              郵寄交收時，賣家建議使用掛號或有追蹤號碼的寄件方式，以保障雙方利益。如商品在運送途中損毀或遺失，責任歸屬由雙方協商解決，平台不承擔相關責任。
+            </InfoBox>
           </div>
-        ))}
+        </Section>
 
-        {/* Penalty Summary Table */}
-        <div id="penalty-table" className="rounded-2xl overflow-hidden border border-[#FEDD00]/30 scroll-mt-16">
-          <div className="px-6 py-4 border-b border-[#FEDD00]/20 flex items-center gap-3"
-            style={{ background: 'rgba(254,221,0,0.08)' }}>
-            <div className="w-9 h-9 bg-[#FEDD00] rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-4 h-4 text-[#06038D]" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-white">違規懲罰速查表</h2>
-              <p className="text-white/40 text-xs">棄標及違規行為處理標準</p>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
-                  <th className="text-left px-6 py-3 text-[#FEDD00]/80 font-semibold text-xs uppercase tracking-wider">違規次數</th>
-                  <th className="text-left px-6 py-3 text-[#FEDD00]/80 font-semibold text-xs uppercase tracking-wider">懲罰措施</th>
-                  <th className="text-left px-6 py-3 text-[#FEDD00]/80 font-semibold text-xs uppercase tracking-wider">封禁時長</th>
-                  <th className="text-left px-6 py-3 text-[#FEDD00]/80 font-semibold text-xs uppercase tracking-wider">備注</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
+        {/* Section 7: Returns */}
+        <Section id="returns" icon={<RotateCcw className="w-5 h-5" />} title="七、退款及退貨政策">
+          <div className="space-y-3">
+            <p>本平台的退款政策以保障買家利益為前提，同時尊重賣家的合理權益。</p>
+            <div className="rounded-xl overflow-hidden border border-blue-100">
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>可申請退款的情況</div>
+              <div className="divide-y divide-gray-100">
                 {[
-                  { count: "第 1 次", action: "書面警告", duration: "無封禁", note: "永久記錄在案", color: "text-emerald-400", bg: "bg-emerald-400" },
-                  { count: "第 2 次", action: "封禁競標資格", duration: "7 天", note: "可提出申訴", color: "text-amber-400", bg: "bg-amber-400" },
-                  { count: "第 3 次", action: "封禁競標資格", duration: "30 天", note: "申訴機會有限", color: "text-orange-400", bg: "bg-orange-400" },
-                  { count: "第 4 次及以上", action: "永久封禁", duration: "永久", note: "平台保留追討損失權利", color: "text-red-400", bg: "bg-red-400" },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 text-white font-semibold">{row.count}</td>
-                    <td className="px-6 py-4 text-white/80">{row.action}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 font-bold ${row.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${row.bg}`} />
-                        {row.duration}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-white/50 text-xs">{row.note}</td>
-                  </tr>
+                  { icon: "✅", title: "商品與描述嚴重不符", desc: "收到商品的品相、版本或狀況與賣家描述有重大差異。" },
+                  { icon: "✅", title: "收到損毀商品", desc: "商品在運送過程中損毀，且非買家原因造成。" },
+                  { icon: "✅", title: "賣家未能出貨", desc: "賣家在承諾時間內未能安排交收，且未有合理解釋。" },
+                ].map((r, i) => (
+                  <div key={i} className="flex gap-3 px-4 py-3">
+                    <span className="text-base flex-shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{r.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-red-100">
+              <div className="px-4 py-2.5 text-xs font-bold text-white bg-red-500">不接受退款的情況</div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  { icon: "❌", title: "買家個人原因", desc: "買家改變主意、重複購買或個人喜好問題，不接受退款。" },
+                  { icon: "❌", title: "拍賣得標後", desc: "拍賣成交後，除商品描述嚴重不符外，一律不接受退款。" },
+                  { icon: "❌", title: "已使用或改動的商品", desc: "商品經買家使用、改動或損毀後，不接受退款申請。" },
+                ].map((r, i) => (
+                  <div key={i} className="flex gap-3 px-4 py-3">
+                    <span className="text-base flex-shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{r.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <InfoBox type="info">
+              如需申請退款，請於收貨後 <strong>3 日內</strong>透過平台訊息功能聯絡賣家，並提供相關證明（如照片）。如雙方未能達成協議，可向平台客服申請介入調解。
+            </InfoBox>
           </div>
-        </div>
+        </Section>
+
+        {/* Section 8: Conduct */}
+        <Section id="conduct" icon={<Scale className="w-5 h-5" />} title="八、用戶行為守則">
+          <div className="space-y-3">
+            <p>為維護平台的公平交易環境，所有用戶須遵守以下行為守則：</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { icon: "🚫", title: "禁止虛假描述", desc: "賣家不得以虛假或誤導性資訊描述商品，包括品相、版本及真偽。" },
+                { icon: "🚫", title: "禁止操控出價", desc: "禁止以多個帳號或與他人勾結的方式操控拍賣出價。" },
+                { icon: "🚫", title: "禁止場外交易", desc: "禁止繞過平台進行私下交易，以規避平台服務費。" },
+                { icon: "🚫", title: "禁止騷擾行為", desc: "禁止以任何形式騷擾、威脅或欺詐其他用戶。" },
+                { icon: "✅", title: "誠實交易", desc: "買賣雙方須誠實、守信地完成每一筆交易。" },
+                { icon: "✅", title: "及時回應", desc: "交易雙方應在合理時間內回應對方的訊息及請求。" },
+              ].map((r, i) => (
+                <div key={i} className="flex gap-2.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                  <span className="text-lg flex-shrink-0">{r.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{r.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Violation Penalty Table */}
+            <div className="rounded-xl overflow-hidden border border-blue-100 mt-2">
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>違規懲罰制度</div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-blue-50">
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">違規次數</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">懲罰措施</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">封禁時長</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {[
+                      { count: "第 1 次", action: "書面警告，永久記錄", duration: "無封禁", color: "text-emerald-600" },
+                      { count: "第 2 次", action: "封禁競標資格", duration: "7 天", color: "text-amber-600" },
+                      { count: "第 3 次", action: "封禁競標資格", duration: "30 天", color: "text-orange-600" },
+                      { count: "第 4 次及以上", action: "永久封禁，保留追討損失權利", duration: "永久", color: "text-red-600" },
+                    ].map((row, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-semibold text-gray-800 text-sm">{row.count}</td>
+                        <td className="px-4 py-3 text-gray-600 text-sm">{row.action}</td>
+                        <td className={`px-4 py-3 font-bold text-sm ${row.color}`}>{row.duration}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <InfoBox type="warning">
+              違反行為守則的用戶，平台有權採取相應措施，包括警告、暫停帳號或永久封禁，視乎違規嚴重程度而定。如認為違規記錄有誤，可在 7 個工作日內向平台客服提出書面申訴。
+            </InfoBox>
+          </div>
+        </Section>
+
+        {/* Section 9: Liability */}
+        <Section id="liability" icon={<FileText className="w-5 h-5" />} title="九、免責聲明及法律條款">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Rule num="1" title="平台角色">本平台僅作為買賣雙方的交易媒介，不對商品的真偽、品質或狀況作出任何保證。</Rule>
+              <Rule num="2" title="交易風險">買賣雙方須自行承擔交易風險。本平台對因交易產生的任何損失不承擔法律責任。</Rule>
+              <Rule num="3" title="賠償上限">若本平台被裁定須就任何事項承擔責任，最高賠償責任不超過相關交易中本平台實際收取的服務費金額。</Rule>
+              <Rule num="4" title="服務中斷">本平台不保證服務的持續性及穩定性，因技術故障或維護導致的服務中斷，平台不承擔責任。</Rule>
+              <Rule num="5" title="條款修改">本平台保留隨時修改條款的權利，修改後的條款將在平台公告後生效。繼續使用本平台即表示接受修改後的條款。</Rule>
+              <Rule num="6" title="適用法律">本條款受香港特別行政區法律管轄，任何爭議應提交香港法院解決。</Rule>
+            </div>
+            <InfoBox type="info">
+              如對本條款有任何疑問，請透過平台客服功能聯絡我們。我們致力於為買賣雙方提供公平、安全的交易環境。
+            </InfoBox>
+          </div>
+        </Section>
 
         {/* Key Highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           {[
-            { icon: Shield, title: "平台保障", desc: "本平台作為中介，對商品真偽及交易結果不承擔保證責任，但提供爭議調解服務。" },
-            { icon: Scale, title: "公平交易", desc: "所有出價具法律約束力，防狙擊機制確保公平競標，違規行為將受到相應處理。" },
-            { icon: Clock, title: "時效要求", desc: "得標後 24 小時內付款，賣家付款確認後 3 個工作日內發貨，逾期將受處分。" },
+            { icon: Shield, title: "平台保障", desc: "本平台作為中介，提供爭議調解服務，保障買賣雙方的合理權益。" },
+            { icon: Scale, title: "公平交易", desc: "所有出價具法律約束力，防狙擊機制確保公平競標，違規行為受到相應處理。" },
+            { icon: Clock, title: "時效要求", desc: "得標後 48 小時內付款，賣家付款確認後 3 個工作日內發貨，逾期將受處分。" },
           ].map((item, i) => (
-            <div key={i} className="rounded-xl border border-white/10 px-5 py-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div key={i} className="rounded-xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
-                <item.icon className="w-4 h-4 text-[#FEDD00]" />
-                <span className="text-white font-semibold text-sm">{item.title}</span>
+                <item.icon className="w-4 h-4" style={{ color: BRAND_BLUE }} />
+                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>{item.title}</span>
               </div>
-              <p className="text-white/55 text-xs leading-relaxed">{item.desc}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
 
-        {/* Footer Note */}
-        <div className="rounded-xl border border-white/10 px-6 py-5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <p className="text-white/40 text-xs leading-relaxed text-center">
-            BOXIUM 保留隨時修改本條款的權利，修改後將通過站內通知告知用戶，並在本頁面更新「最後更新」日期。
-            繼續使用 BOXIUM 拍賣服務即視為接受最新條款。如有疑問，請透過本平台客服渠道聯繫我們。
-            <br /><span className="mt-1 block">© 2026 BOXIUM. All rights reserved.</span>
-          </p>
+        {/* Footer CTA */}
+        <div className="rounded-2xl overflow-hidden border-2 border-[#FEDD00]" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a0a9e 100%)` }}>
+          <div className="px-6 py-8 text-center">
+            <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-2">BOXIUM PTCG</p>
+            <h3 className="text-white font-black text-xl mb-2">準備好開始交易了嗎？</h3>
+            <p className="text-white/60 text-sm mb-6">閱讀並同意以上條款後，即可開始在 Boxium PTCG 買賣卡牌。</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/marketplace">
+                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center transition-all hover:scale-105 active:scale-95"
+                  style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+                  <ShoppingCart className="w-4 h-4" />
+                  瀏覽商品
+                </button>
+              </Link>
+              <Link href="/seller">
+                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center border-2 border-white/30 text-white transition-all hover:bg-white/10">
+                  <Gavel className="w-4 h-4" />
+                  開始出售
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
+
+        <p className="text-center text-xs text-gray-400 mt-6 pb-4">
+          © 2025 Boxium PTCG. 保留所有權利。 ·{" "}
+          <Link href="/privacy" className="hover:underline">私隱政策</Link>
+        </p>
       </div>
     </div>
   );
