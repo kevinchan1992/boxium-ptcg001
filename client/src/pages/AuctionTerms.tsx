@@ -361,23 +361,33 @@ export default function AuctionTerms() {
                 放款時間軸
               </div>
               <div className="p-4">
-                <div className="flex items-start gap-0">
-                  {[
-                    { step: "買家確認收貨", sub: "或系統自動完成（14天後）", color: "bg-blue-500" },
-                    { step: "48 小時冷靜期", sub: "買家可提出爭議申請", color: "bg-amber-500" },
-                    { step: "自動放款", sub: "款項轉入賣家帳戶", color: "bg-green-500" },
-                  ].map((item, i, arr) => (
-                    <div key={i} className="flex-1 flex flex-col items-center">
-                      <div className="flex items-center w-full">
-                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color}`} />
-                        {i < arr.length - 1 && <div className="flex-1 h-0.5 bg-gray-200" />}
-                      </div>
-                      <div className="mt-2 text-center px-1">
+                {/* Timeline: full-width connector line with dots centered on it */}
+                <div className="relative">
+                  {/* Full-width background line */}
+                  <div className="absolute top-[5px] left-[6px] right-[6px] h-0.5 bg-gray-200" />
+                  {/* Dots row */}
+                  <div className="relative flex justify-between mb-2">
+                    {[
+                      { color: "bg-blue-500" },
+                      { color: "bg-amber-500" },
+                      { color: "bg-green-500" },
+                    ].map((item, i) => (
+                      <div key={i} className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color} relative z-10`} />
+                    ))}
+                  </div>
+                  {/* Labels row */}
+                  <div className="flex justify-between">
+                    {[
+                      { step: "買家確認收貨", sub: "或系統自動完成（14天後）" },
+                      { step: "48 小時冷静期", sub: "買家可提出爭議申請" },
+                      { step: "自動放款", sub: "款項轉入賣家帳戶" },
+                    ].map((item, i) => (
+                      <div key={i} className={`text-center ${i === 0 ? 'text-left' : i === 2 ? 'text-right' : 'text-center'}`} style={{ width: '33%' }}>
                         <p className="text-xs font-semibold text-gray-800">{item.step}</p>
                         <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

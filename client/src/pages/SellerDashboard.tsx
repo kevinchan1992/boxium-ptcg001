@@ -1082,6 +1082,7 @@ export default function SellerDashboard() {
     undefined, { enabled: !!sellerProfile || isAdmin, refetchInterval: 60000 }
   );
   const pendingSellerOffersCount = sellerOffers?.filter((o: any) => o.status === 'pending').length ?? 0;
+  const { data: feeTiersData } = trpc.marketplace.getFeeTiers.useQuery();
   // 待確認訂單：截圖已提交待審核、支付寶待確認、待付款狀態
   const pendingOrdersCount = (myOrders as any[])?.filter((o: any) =>
     ['payment_submitted', 'alipay_pending', 'pending_payment'].includes(o.orderStatus)
@@ -3333,12 +3334,27 @@ export default function SellerDashboard() {
                       </p>
                     );
                   })()}
-                  {/* Real-time fee calculation */}
+                  {/* Real-time fee calculation - dynamic from API */}
                   {listingForm.price && parseFloat(listingForm.price) >= 4 && (() => {
                     const price = parseFloat(listingForm.price);
-                    const rate = price <= 5000 ? 0.05 : price <= 10000 ? 0.04 : 0.03;
-                    const tier = price <= 5000 ? 1 : price <= 10000 ? 2 : 3;
-                    const ratePercent = Math.round(rate * 100);
+                    // Use dynamic fee tiers from API, fallback to hardcoded defaults
+                    let rate = 0.055;
+                    let tierIndex = 0;
+                    if (feeTiersData && feeTiersData.length > 0) {
+                      for (let i = 0; i < feeTiersData.length; i++) {
+                        const t = feeTiersData[i];
+                        if (!t.maxAmount || price <= t.maxAmount) {
+                          rate = t.rate;
+                          tierIndex = i;
+                          break;
+                        }
+                      }
+                    } else {
+                      rate = price <= 5000 ? 0.055 : price <= 10000 ? 0.05 : 0.045;
+                      tierIndex = price <= 5000 ? 0 : price <= 10000 ? 1 : 2;
+                    }
+                    const tier = tierIndex + 1;
+                    const ratePercent = (rate * 100).toFixed(1).replace(/\.0$/, '');
                     const fee = price * rate;
                     const receivable = price - fee;
                     const tierBg = tier === 1 ? 'bg-yellow-50 border-yellow-200' : tier === 2 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200';
