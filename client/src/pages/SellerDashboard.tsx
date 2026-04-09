@@ -1965,238 +1965,211 @@ export default function SellerDashboard() {
                         <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
                         <p className="text-sm">此類別無商品</p>
                       </div>
-                    ) : (
-                    <div className={listingViewMode === 'grid' ? 'grid grid-cols-2 gap-2.5' : 'space-y-3'}>
-                    {filteredListings.map((listing: any) => {
-                      let coverImg: string | null = null;
-                      try {
-                        const imgs = listing.images ? JSON.parse(listing.images as string) : null;
-                        coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
-                      } catch {}
-                      const isSold = listing.status === "sold";
-                      const isRemoved = listing.status === "removed";
-                      const isActive = listing.status === "active";
-                      const isAdminDelisted = !!(listing as any).adminDelisted;
-                      const isSelected = selectedIds.has(listing.id);
-                      const listingUrl = `${window.location.origin}/marketplace/${listing.id}`;
-                      const shareText = `「${listing.title}」 HKD ${parseFloat(listing.priceHkd as string).toFixed(2)} - BOXIUM PTCG`;
-                      return (
-                        <div
-                          key={listing.id}
-                          className={`bg-white rounded-2xl shadow-md border overflow-hidden transition-all ${
-                            isSelected ? "border-[#06038d] ring-2 ring-[#06038d]/20" : "border-gray-100"
-                          }${isSold ? " opacity-80" : ""}`}
-                          onClick={batchMode && !isSold ? () => toggleSelectId(listing.id) : undefined}
-                          style={batchMode && !isSold ? { cursor: "pointer" } : undefined}
-                        >
-                          {listingViewMode === 'grid' ? (
-                            /* Grid Card Layout */
-                            <>
-                              {/* Cover Image - full width */}
+                    ) : listingViewMode === 'grid' ? (
+                      /* ── Grid View ── */
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {filteredListings.map((listing: any) => {
+                          let coverImg: string | null = null;
+                          try { const imgs = listing.images ? JSON.parse(listing.images as string) : null; coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null; } catch {}
+                          const isSold = listing.status === "sold";
+                          const isRemoved = listing.status === "removed";
+                          const isActive = listing.status === "active";
+                          const isAdminDelisted = !!(listing as any).adminDelisted;
+                          const isSelected = selectedIds.has(listing.id);
+                          return (
+                            <div key={listing.id}
+                              className={`bg-white rounded-2xl shadow-md border overflow-hidden transition-all ${isSelected ? "border-[#06038d] ring-2 ring-[#06038d]/20" : "border-gray-100"}${isSold ? " opacity-80" : ""}`}
+                              onClick={batchMode && !isSold ? () => toggleSelectId(listing.id) : undefined}
+                              style={batchMode && !isSold ? { cursor: "pointer" } : undefined}
+                            >
                               <div className="relative">
                                 <div className="aspect-square overflow-hidden" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                  {coverImg ? (
-                                    <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      <span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span>
-                                    </div>
-                                  )}
+                                  {coverImg ? <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span></div>}
                                 </div>
-                                {/* Status badge overlay */}
-                                <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                                  isActive ? "bg-green-500 text-white" :
-                                  isSold ? "bg-blue-500 text-white" :
-                                  isRemoved ? "bg-red-500 text-white" :
-                                  "bg-gray-500 text-white"
-                                }`}>
-                                  {isActive ? "上架" :
-                                   isSold ? "售出" :
-                                   isRemoved ? "下架" : listing.status}
+                                <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${isActive ? "bg-green-500 text-white" : isSold ? "bg-blue-500 text-white" : isRemoved ? "bg-red-500 text-white" : "bg-gray-500 text-white"}`}>
+                                  {isActive ? "上架" : isSold ? "售出" : isRemoved ? "下架" : listing.status}
                                 </span>
-                                {/* Batch select overlay (hidden for sold items) */}
                                 {batchMode && !isSold && (
-                                  <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                    isSelected ? 'border-[#FEDD00] bg-[#FEDD00]' : 'border-white bg-white/30'
-                                  }`}>
+                                  <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[#FEDD00] bg-[#FEDD00]' : 'border-white bg-white/30'}`}>
                                     {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
                                   </div>
                                 )}
                               </div>
-                              {/* Info */}
                               <div className="px-2.5 pt-2 pb-1">
-                                {/* TCG logo */}
-                                {(() => {
-                                  const tcgLogos: Record<string, { logo: string; label: string }> = {
-                                    pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
-                                    onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
-                                    yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
-                                  };
-                                  const series = tcgLogos[listing.tcgSeries as string];
-                                  return series ? (
-                                    <img src={series.logo} alt={series.label} title={series.label} className="h-4 w-auto object-contain opacity-60 mb-1" />
-                                  ) : null;
-                                })()}
                                 <p className="font-semibold text-xs leading-snug text-gray-900 line-clamp-2 mb-1.5">{listing.title}</p>
                                 <div className="flex items-center justify-between">
-                                  <p className="text-sm font-bold" style={{ color: '#06038D' }}>
-                                    HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
-                                  </p>
+                                  <p className="text-sm font-bold" style={{ color: '#06038D' }}>HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</p>
                                   <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-full border border-gray-100">×{listing.quantity}</span>
                                 </div>
                               </div>
-                            </>
-                          ) : (
-                            /* List Card Layout */
-                            <>
-                              {/* Brand Header Bar */}
-                              <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                <div className="flex items-center gap-2">
-                                  {batchMode && !isSold && (
-                                    <div className="w-4 h-4 rounded border-2 border-white/60 flex items-center justify-center" style={isSelected ? { background: '#FEDD00', borderColor: '#FEDD00' } : {}}>
-                                      {isSelected && <Check className="w-3 h-3" style={{ color: '#06038D' }} />}
-                                    </div>
-                                  )}
-                                  <span className="text-xs text-white/80 font-medium">#BOXIUM-{listing.id}</span>
-                                  <span className="text-xs text-white/50">庫存 {listing.quantity}</span>
+                              {!batchMode && (
+                                <div className="flex items-center gap-1.5 px-2.5 pb-2.5">
+                                  {!isSold && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1" onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}><Pencil className="w-3 h-3 mr-1" />編輯</Button>}
+                                  {isActive && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-red-400 text-red-600 hover:bg-red-50 flex-1" disabled={deactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}><EyeOff className="w-3 h-3 mr-1" />下架</Button>}
+                                  {isRemoved && !isAdminDelisted && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-green-500 text-green-700 hover:bg-green-50 flex-1" disabled={reactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}><Eye className="w-3 h-3 mr-1" />上架</Button>}
+                                  {isRemoved && isAdminDelisted && <span className="text-[10px] text-red-500 font-medium">{t("seller.listings.card.adminDelisted")}</span>}
                                 </div>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  isActive ? "bg-green-400/20 text-green-200 border border-green-400/30" :
-                                  isSold ? "bg-blue-400/20 text-blue-200 border border-blue-400/30" :
-                                  isRemoved ? "bg-red-400/20 text-red-200 border border-red-400/30" :
-                                  "bg-white/20 text-white/70 border border-white/30"
-                                }`}>
-                                  {isActive ? "上架中" :
-                                   isSold ? "已售出" :
-                                   isRemoved ? "已下架" : listing.status}
-                                </span>
-                              </div>
-                              {/* Card Body */}
-                              <div className="flex items-start gap-3 px-3 py-3">
-                                {/* Cover Image - fixed 1:1 aspect ratio */}
-                                <div className="w-16 flex-shrink-0">
-                                  <div className="aspect-square rounded-lg overflow-hidden border border-gray-200" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                    {coverImg ? (
-                                      <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <div className="w-full h-full flex items-center justify-center">
-                                        <span className="text-white font-black text-[9px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* ── Compact Table View (list mode) ── */
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-100 bg-gray-50">
+                              {batchMode && <th className="py-2.5 pl-4 pr-2 w-8"></th>}
+                              <th className="py-2.5 pl-4 pr-2 text-left text-xs font-semibold text-gray-500">商品名稱</th>
+                              <th className="py-2.5 px-2 text-right text-xs font-semibold text-gray-500">售價</th>
+                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden sm:table-cell">庫存</th>
+                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden md:table-cell">品相</th>
+                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden lg:table-cell">系列</th>
+                              <th className="py-2.5 px-2 text-left text-xs font-semibold text-gray-500">狀態</th>
+                              <th className="py-2.5 pl-2 pr-4 text-right text-xs font-semibold text-gray-500">操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredListings.map((listing: any) => {
+                              let coverImg: string | null = null;
+                              try { const imgs = listing.images ? JSON.parse(listing.images as string) : null; coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null; } catch {}
+                              const isSold = listing.status === "sold";
+                              const isRemoved = listing.status === "removed";
+                              const isActive = listing.status === "active";
+                              const isAdminDelisted = !!(listing as any).adminDelisted;
+                              const isSelected = selectedIds.has(listing.id);
+                              const conditionLabels: Record<string, string> = { raw_a: 'A品', raw_b: 'B品', raw_c: 'C品', psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', cgc10: 'CGC 10', bgs10: 'BGS 10' };
+                              const tcgLogos: Record<string, { logo: string; label: string }> = {
+                                pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
+                                onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+                                yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+                              };
+                              const seriesInfo = tcgLogos[listing.tcgSeries as string];
+                              return (
+                                <tr key={listing.id}
+                                  className={`border-b border-gray-100 transition-colors ${
+                                    isSelected ? 'bg-[#f0f4ff]' : isSold ? 'bg-gray-50/60 opacity-75' : 'hover:bg-[#f8f9ff]'
+                                  } ${batchMode && !isSold ? 'cursor-pointer' : ''}`}
+                                  onClick={batchMode && !isSold ? () => toggleSelectId(listing.id) : undefined}
+                                >
+                                  {batchMode && (
+                                    <td className="py-3 pl-4 pr-2 w-8">
+                                      {!isSold && (
+                                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                          isSelected ? 'border-[#06038d] bg-[#06038d]' : 'border-gray-300'
+                                        }`}>
+                                          {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                                        </div>
+                                      )}
+                                    </td>
+                                  )}
+                                  {/* Thumbnail + Title */}
+                                  <td className="py-3 pl-4 pr-2">
+                                    <div className="flex items-center gap-3">
+                                      {coverImg ? (
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 hidden sm:block">
+                                          <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
+                                        </div>
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-lg border border-gray-100 flex items-center justify-center flex-shrink-0 hidden sm:block" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
+                                          <span className="text-white font-black text-[8px]">BOX</span>
+                                        </div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate max-w-[140px] sm:max-w-[220px] md:max-w-none">{listing.title}</p>
+                                        <p className="text-[11px] text-gray-400 font-mono">#BOXIUM-{listing.id}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  {/* Price */}
+                                  <td className="py-3 px-2 text-right">
+                                    <span className="text-sm font-bold whitespace-nowrap" style={{ color: '#06038D' }}>HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</span>
+                                  </td>
+                                  {/* Stock */}
+                                  <td className="py-3 px-2 text-center hidden sm:table-cell">
+                                    <span className={`text-sm font-bold ${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</span>
+                                  </td>
+                                  {/* Condition */}
+                                  <td className="py-3 px-2 text-center hidden md:table-cell">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">{conditionLabels[listing.condition as string] ?? listing.condition ?? '—'}</span>
+                                  </td>
+                                  {/* TCG Series */}
+                                  <td className="py-3 px-2 text-center hidden lg:table-cell">
+                                    {seriesInfo ? (
+                                      <img src={seriesInfo.logo} alt={seriesInfo.label} title={seriesInfo.label} className="h-5 w-auto object-contain opacity-70 mx-auto" />
+                                    ) : <span className="text-xs text-gray-400">—</span>}
+                                  </td>
+                                  {/* Status */}
+                                  <td className="py-3 px-2">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
+                                      isActive ? 'bg-green-50 text-green-700 border-green-200' :
+                                      isSold ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                      isRemoved ? 'bg-red-50 text-red-600 border-red-200' :
+                                      'bg-gray-100 text-gray-500 border-gray-200'
+                                    }`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? 'bg-green-500' : isSold ? 'bg-blue-500' : isRemoved ? 'bg-red-400' : 'bg-gray-400'}`} />
+                                      {isActive ? '上架中' : isSold ? '已售出' : isRemoved ? (isAdminDelisted ? '強制下架' : '已下架') : listing.status}
+                                    </span>
+                                  </td>
+                                  {/* Actions */}
+                                  <td className="py-3 pl-2 pr-4">
+                                    {!batchMode && (
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        {!isSold && (
+                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/5"
+                                            onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}>
+                                            <Pencil className="w-3 h-3 mr-1" />編輯
+                                          </Button>
+                                        )}
+                                        {isActive && (
+                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-red-300 text-red-600 hover:bg-red-50"
+                                            disabled={deactivateMutation.isPending}
+                                            onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}>
+                                            <EyeOff className="w-3 h-3 mr-1" />下架
+                                          </Button>
+                                        )}
+                                        {isRemoved && !isAdminDelisted && (
+                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-green-500 text-green-700 hover:bg-green-50"
+                                            disabled={reactivateMutation.isPending}
+                                            onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}>
+                                            <Eye className="w-3 h-3 mr-1" />上架
+                                          </Button>
+                                        )}
+                                        {isRemoved && isAdminDelisted && (
+                                          <span className="text-xs text-red-500 font-medium">{t("seller.listings.card.adminDelisted")}</span>
+                                        )}
+                                        {(isSold || isActive) && (
+                                          <Link href={`/marketplace/${listing.id}`}>
+                                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-gray-200 text-gray-500 hover:bg-gray-50">
+                                              <ExternalLink className="w-3 h-3" />
+                                            </Button>
+                                          </Link>
+                                        )}
+                                        {isAdmin && (
+                                          <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/5"
+                                            title={t("seller.listings.card.duplicateListingTooltip")}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setListingForm({ title: listing.title ?? '', description: listing.description ?? '', condition: listing.condition ?? 'raw_a', price: parseFloat(listing.priceHkd as string).toFixed(2), quantity: String(listing.quantity ?? 1), tcgSeries: (listing as any).tcgSeries ?? 'pokemon', acceptOffers: !!(listing as any).allowOffers, minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '', listingMode: 'buy_now', startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10', auctionStartAt: '', auctionEndAt: '', auctionDurationDays: 7 });
+                                              setListingImages([]); setSelectedCard(null); setListingStep(1); setShowNewListing(true);
+                                              toast.info(t("seller.listings.card.duplicateSuccess"));
+                                            }}>
+                                            <Layers className="w-3 h-3" />
+                                          </Button>
+                                        )}
                                       </div>
                                     )}
-                                  </div>
-                                </div>
-                                {/* Info */}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-sm leading-snug text-gray-900 line-clamp-2">{listing.title}</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    {(() => {
-                                      const tcgLogos: Record<string, { logo: string; label: string }> = {
-                                        pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
-                                        onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
-                                        yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
-                                      };
-                                      const series = tcgLogos[listing.tcgSeries as string];
-                                      return series ? (
-                                        <img src={series.logo} alt={series.label} title={series.label} className="h-5 w-auto object-contain opacity-70" />
-                                      ) : null;
-                                    })()}
-                                    <p className="text-sm font-bold" style={{ color: '#06038D' }}>
-                                      HKD {parseFloat(listing.priceHkd as string).toFixed(2)}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {/* Action Bar */}
-                          {!batchMode && (
-                            <div className="flex items-center gap-1.5 px-3 pb-3">
-                              {/* Edit button */}
-                              {!isSold && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 px-3 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1"
-                                  onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}
-                                >
-                                  <Pencil className="w-3 h-3 mr-1" />
-                                  <span className="hidden sm:inline">{t("seller.auctions.card.editAction")}</span>
-                                  <span className="sm:hidden">{t("seller.auctions.card.editAction")}</span>
-                                </Button>
-                              )}
-                              {/* Deactivate / Reactivate */}
-                              {isActive && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 px-3 border-red-400 text-red-600 hover:bg-red-50 flex-1"
-                                  disabled={deactivateMutation.isPending}
-                                  onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}
-                                >
-                                  <EyeOff className="w-3 h-3 mr-1" />下架
-                                </Button>
-                              )}
-                              {isRemoved && !isAdminDelisted && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 px-3 border-green-500 text-green-700 hover:bg-green-50 flex-1"
-                                  disabled={reactivateMutation.isPending}
-                                  onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />重新上架
-                                </Button>
-                              )}
-                              {isRemoved && isAdminDelisted && (
-                                <span className="text-xs text-red-500 font-medium px-1">{t("seller.listings.card.adminDelisted")}</span>
-                              )}
-                              {/* View detail */}
-                              {(isSold || isActive) && (
-                                <Link href={`/marketplace/${listing.id}`}>
-                                  <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-gray-300 text-gray-600 hover:bg-gray-50 flex-shrink-0">
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </Button>
-                                </Link>
-                              )}
-                              {/* Admin: Duplicate listing */}
-                              {isAdmin && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-8 px-2.5 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/10"
-                                  title={t("seller.listings.card.duplicateListingTooltip")}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setListingForm({
-                                      title: listing.title ?? '',
-                                      description: listing.description ?? '',
-                                      condition: listing.condition ?? 'raw_a',
-                                      price: parseFloat(listing.priceHkd as string).toFixed(2),
-                                      quantity: String(listing.quantity ?? 1),
-                                      tcgSeries: (listing as any).tcgSeries ?? 'pokemon',
-                                      acceptOffers: !!(listing as any).allowOffers,
-                                      minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '',
-                                      listingMode: 'buy_now',
-                                      startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10',
-                                      auctionStartAt: '', auctionEndAt: '', auctionDurationDays: 7,
-                                    });
-                                    setListingImages([]);
-                                    setSelectedCard(null);
-                                    setListingStep(1);
-                                    setShowNewListing(true);
-                                    toast.info(t("seller.listings.card.duplicateSuccess"));
-                                  }}
-                                >
-                                  <Layers className="w-3.5 h-3.5" />
-                                </Button>
-                              )}
-
-                            </div>
-                          )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
+                          共 {filteredListings.length} 件商品
                         </div>
-                      );
-                    })}
-                    </div>
+                      </div>
                     )}
                   </div>
                 )}
