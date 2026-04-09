@@ -3,10 +3,11 @@ import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
-import { ExternalLink, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, RefreshCw, ArrowLeft, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { toast } from "sonner";
 
 interface PricingItem {
   id: string;
@@ -28,22 +29,28 @@ const GRADE_FILTERS = [
   { key: "B", label: "B品" },
   { key: "C", label: "C品" },
   { key: "D", label: "D品" },
+  { key: "Used", label: "中古" },
 ];
 
 // Normalize condition string to a filter key
 function normalizeCondition(condition?: string): string {
   if (!condition) return "other";
   const c = condition.trim().toUpperCase();
+  // PSA 10
   if (c === "PSA 10" || c === "PSA10") return "PSA10";
-  if (c === "A") return "A";
-  if (c === "B") return "B";
-  if (c === "C") return "C";
-  if (c === "D") return "D";
+  // SNKRDUNK A/B/C/D grades
+  if (c === "A" || c === "A品") return "A";
+  if (c === "B" || c === "B品") return "B";
+  if (c === "C" || c === "C品") return "C";
+  if (c === "D" || c === "D品") return "D";
+  // eBay used/ungraded
+  if (c === "USED" || c === "UNGRADED" || c === "GRADED") return "Used";
   return "other";
 }
 
 export default function PricingDetail() {
   const { t } = useTranslation();
+  const { data: user } = trpc.auth.me.useQuery();
   const [, params] = useRoute("/pricing/:id");
   const [, setLocation] = useLocation();
   const idParam = params?.id;
@@ -51,6 +58,17 @@ export default function PricingDetail() {
 
   // Active grade filter - default to "all"
   const [activeGrade, setActiveGrade] = useState<string>("all");
+
+  // Admin: clear cache mutation
+  const clearCacheMutation = trpc.pricing.clearCache.useMutation({
+    onSuccess: () => {
+      toast.success("快取已清除，正在重新抓取最新資料...");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(`清除失敗: ${err.message}`);
+    },
+  });
 
   // Fetch pricing data (eBay + SNKRDUNK) - use database ID
   const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
@@ -251,15 +269,30 @@ export default function PricingDetail() {
             })}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={pricingLoading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${pricingLoading ? "animate-spin" : ""}`} />
-          {t("pricing.refresh")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.role === 'admin' && cardId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearCacheMutation.mutate({ cardId })}
+              disabled={clearCacheMutation.isPending}
+              className="text-orange-500 border-orange-500/50 hover:bg-orange-500/10"
+              title="清除快取並重新抓取"
+            >
+              <Trash2 className={`w-4 h-4 mr-1 ${clearCacheMutation.isPending ? "animate-spin" : ""}`} />
+              清除快取
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={pricingLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${pricingLoading ? "animate-spin" : ""}`} />
+            {t("pricing.refresh")}
+          </Button>
+        </div>
       </div>
 
       {/* Listings Grid */}
@@ -308,6 +341,14 @@ export default function PricingDetail() {
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                       normalizeCondition(item.condition) === "PSA10"
                         ? "bg-blue-600 text-white"
+                        : normalizeCondition(item.condition) === "A"
+                        ? "bg-green-600 text-white"
+                        : normalizeCondition(item.condition) === "B"
+                        ? "bg-yellow-500 text-black"
+                        : normalizeCondition(item.condition) === "C"
+                        ? "bg-orange-500 text-white"
+                        : normalizeCondition(item.condition) === "D"
+                        ? "bg-red-600 text-white"
                         : "bg-zinc-700 text-zinc-200"
                     }`}>
                       {item.condition}

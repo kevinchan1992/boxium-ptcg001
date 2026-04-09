@@ -5946,3 +5946,16 @@ export async function getMyOrderThreads(userId: number, role: 'buyer' | 'seller'
     };
   });
 }
+
+/**
+ * Clear all eBay cache entries for a given cardId
+ */
+export async function clearEbayCacheByCardId(cardId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const { ebayListingsCache } = await import("../drizzle/schema_new");
+  const result = await db
+    .delete(ebayListingsCache)
+    .where(eq(ebayListingsCache.cardId, cardId));
+  return result[0].affectedRows || 0;
+}
