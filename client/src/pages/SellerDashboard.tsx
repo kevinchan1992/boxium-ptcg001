@@ -918,14 +918,16 @@ function SellerAuctionsTab() {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm truncate">{auction.title}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm break-words line-clamp-2 leading-snug">{auction.title}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {auction.cardName && `${auction.cardName} · `}
                         {auction.grade && `PSA ${auction.grade}`}
                       </p>
                     </div>
-                    <AuctionStatusBadge status={auction.auctionStatus} auctionPaymentStatus={auction.auctionPaymentStatus} />
+                    <div className="flex-shrink-0 ml-2">
+                      <AuctionStatusBadge status={auction.auctionStatus} auctionPaymentStatus={auction.auctionPaymentStatus} />
+                    </div>
                   </div>
 
                   {/* Scheduled auction info banner */}
@@ -996,21 +998,21 @@ function SellerAuctionsTab() {
                   {(auction.auctionStatus === 'rejected' || auction.adminDelisted) && (
                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
                       <p className="text-xs font-semibold text-red-600 mb-1">下架原因：</p>
-                      <p className="text-xs text-red-700 mb-3">{auction.rejectedReason || '未提供原因'}</p>
-                      <div className="flex gap-2">
+                      <p className="text-xs text-red-700 mb-3 break-words min-h-[1.5rem]">{auction.rejectedReason || '未提供原因'}</p>
+                      <div className="grid grid-cols-2 gap-2">
                         <button
-                          className="flex-1 text-xs px-3 py-2 rounded-lg font-semibold border-2 border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                          className="text-xs px-3 py-2.5 rounded-lg font-semibold border-2 border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors flex items-center justify-center gap-1.5 w-full"
                           onClick={() => setEditingAuction(auction)}
                         >
-                          <Pencil className="w-3 h-3" />
+                          <Pencil className="w-3 h-3 flex-shrink-0" />
                           編輯拍賣
                         </button>
                         <button
-                          className="flex-1 text-xs px-3 py-2 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          className="text-xs px-3 py-2.5 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 w-full"
                           disabled={resubmitMutation.isPending}
                           onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
                         >
-                          {resubmitMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                          {resubmitMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" /> : <Check className="w-3 h-3 flex-shrink-0" />}
                           {resubmitMutation.isPending ? '提交中...' : '重新上架'}
                         </button>
                       </div>
