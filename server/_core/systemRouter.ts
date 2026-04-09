@@ -176,17 +176,17 @@ export const systemRouter = router({
   updateMoreSettings: adminProcedure
     .input(
       z.object({
-        autoCompleteDays: z.number().int().min(1).max(90).optional(),
-        minListingPriceHkd: z.number().min(0.01).max(9999).optional(),
-        cartRetentionDays: z.number().int().min(1).max(90).optional(),
-        cartExpiryReminderDays: z.number().int().min(1).max(30).optional(),
-        maxOffersPerDay: z.number().int().min(1).max(20).optional(),
-        alipayReviewSlaHours: z.number().int().min(1).max(168).optional(),
-        disputeSlaHours: z.number().int().min(1).max(720).optional(),
-        meetupCancelDays: z.number().int().min(1).max(30).optional(),
-        paymentTimeoutMinutes: z.number().int().min(5).max(1440).optional(),
-        offerPaymentTimeoutHours: z.number().int().min(1).max(168).optional(),
-        paymentReminderMinutes: z.number().int().min(5).max(1440).optional(),
+        autoCompleteDays: z.number().int().min(1).max(365).optional(),
+        minListingPriceHkd: z.number().min(0.01).max(99999).optional(),
+        cartRetentionDays: z.number().int().min(1).max(365).optional(),
+        cartExpiryReminderDays: z.number().int().min(1).max(90).optional(),
+        maxOffersPerDay: z.number().int().min(1).max(999).optional(),
+        alipayReviewSlaHours: z.number().int().min(1).max(720).optional(),
+        disputeSlaHours: z.number().int().min(1).max(2160).optional(),
+        meetupCancelDays: z.number().int().min(1).max(90).optional(),
+        paymentTimeoutMinutes: z.number().int().min(5).max(10080).optional(),
+        offerPaymentTimeoutHours: z.number().int().min(1).max(720).optional(),
+        paymentReminderMinutes: z.number().int().min(5).max(10080).optional(),
       })
     )
     .mutation(async ({ input }) => {
