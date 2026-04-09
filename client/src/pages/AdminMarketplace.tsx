@@ -631,20 +631,20 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
 
             {/* ── 強制下架警告橫幅 ─────────────────────── */}
             {(listing as any).adminDelisted && (
-              <div className="mx-5 mt-4 rounded-lg bg-red-50 border-2 border-red-400 px-4 py-3 flex items-start gap-2">
-                <span className="text-red-600 text-lg flex-shrink-0">🚫</span>
-                <div>
-                  <p className="text-sm font-bold text-red-700">此商品已被管理員強制下架</p>
-                  <p className="text-xs text-red-600 mt-0.5">賣家無法自行重新上架此商品。如需恢復上架，請由管理員手動將狀態改為「上架中」，系統將自動清除強制下架標記。</p>
+              <div className="mx-5 mt-4 rounded-lg bg-red-50 border-2 border-red-400 px-4 py-3 flex items-start gap-2 flex-shrink-0">
+                <span className="text-red-600 text-lg flex-shrink-0 leading-tight">🚫</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-red-700 leading-snug">此商品已被管理員強制下架</p>
+                  <p className="text-xs text-red-600 mt-1 leading-relaxed whitespace-normal break-words">賣家無法自行重新上架此商品。如需恢復上架，請由管理員手動將狀態改為「上架中」，系統將自動清除強制下架標記。</p>
                 </div>
               </div>
             )}
 
             {/* ── 賣家商品唯讀提示 ─────────────────────── */}
             {!isPlatformListing && (
-              <div className="mx-5 mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-start gap-2">
+              <div className="mx-5 mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-start gap-2 flex-shrink-0">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-amber-800">
+                <p className="text-sm text-amber-800 leading-relaxed whitespace-normal break-words min-w-0 flex-1">
                   此商品由 <strong>{sellerProfile?.displayName ?? '賣家'}</strong> 上架，Admin 不建議直接編輯賣家商品內容。如需調整，請聯絡賣家或使用狀態管理功能。
                 </p>
               </div>

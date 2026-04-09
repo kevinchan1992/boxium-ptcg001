@@ -2,10 +2,12 @@ import { eq, desc, asc, and, gte, lte, or, like, sql, inArray, isNotNull, isNull
 import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns, scoreCardRelevance } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool } from "mysql2";
 import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia } from "../drizzle/schema_new";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _db: any | null = null;
 
 /**
  * Hong Kong timezone offset for MySQL session.
@@ -18,13 +20,18 @@ const HK_TIMEZONE = '+08:00';
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // Append timezone parameter to the connection URL
+      // Parse the DATABASE_URL and create a pool with explicit charset=utf8mb4
+      // This is required for emoji support in MySQL/TiDB
       const dbUrl = process.env.DATABASE_URL;
-      const separator = dbUrl.includes('?') ? '&' : '?';
-      const dbUrlWithTz = `${dbUrl}${separator}timezone=${encodeURIComponent(HK_TIMEZONE)}`;
-      
-      _db = drizzle(dbUrlWithTz);
-      console.log(`[Database] Connected with timezone: ${HK_TIMEZONE} (Hong Kong)`);
+      const pool = createPool({
+        uri: dbUrl,
+        charset: 'utf8mb4',
+        timezone: HK_TIMEZONE,
+        supportBigNumbers: true,
+        bigNumberStrings: false,
+      });
+      _db = drizzle(pool);
+      console.log(`[Database] Connected with timezone: ${HK_TIMEZONE} (Hong Kong), charset: utf8mb4`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
