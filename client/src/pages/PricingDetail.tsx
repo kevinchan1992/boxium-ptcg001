@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,28 @@ interface PricingItem {
   condition?: string;
 }
 
+// Grade filter options
+const GRADE_FILTERS = [
+  { key: "all", label: "全部" },
+  { key: "PSA10", label: "PSA 10" },
+  { key: "A", label: "A品" },
+  { key: "B", label: "B品" },
+  { key: "C", label: "C品" },
+  { key: "D", label: "D品" },
+];
+
+// Normalize condition string to a filter key
+function normalizeCondition(condition?: string): string {
+  if (!condition) return "other";
+  const c = condition.trim().toUpperCase();
+  if (c === "PSA 10" || c === "PSA10") return "PSA10";
+  if (c === "A") return "A";
+  if (c === "B") return "B";
+  if (c === "C") return "C";
+  if (c === "D") return "D";
+  return "other";
+}
+
 export default function PricingDetail() {
   const { t } = useTranslation();
   const [, params] = useRoute("/pricing/:id");
@@ -27,8 +49,10 @@ export default function PricingDetail() {
   const idParam = params?.id;
   const cardId = idParam ? parseInt(idParam, 10) : null;
 
+  // Active grade filter - default to "all"
+  const [activeGrade, setActiveGrade] = useState<string>("all");
+
   // Fetch pricing data (eBay + SNKRDUNK) - use database ID
-  // API will internally use SNKRDUNK ID for scraping
   const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
     { cardId: cardId! },
     { 
@@ -48,8 +72,6 @@ export default function PricingDetail() {
   };
 
   const handleBack = () => {
-    // Use browser history to go back to the previous page (search results)
-    // instead of always navigating to /pricing
     if (window.history.length > 1) {
       window.history.back();
     } else {
@@ -63,13 +85,27 @@ export default function PricingDetail() {
     }
   };
 
-  // Calculate price statistics
-  const allPrices = pricingData?.listings.map(item => item.price) || [];
-  const lowestPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
-  const highestPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
-  const averagePrice = allPrices.length > 0 
-    ? allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length 
+  // Filter listings by active grade
+  const filteredListings = useMemo(() => {
+    const all = pricingData?.listings || [];
+    if (activeGrade === "all") return all;
+    return all.filter((item) => normalizeCondition(item.condition) === activeGrade);
+  }, [pricingData?.listings, activeGrade]);
+
+  // Calculate price statistics for the filtered listings
+  const filteredPrices = filteredListings.map((item) => item.price);
+  const lowestPrice = filteredPrices.length > 0 ? Math.min(...filteredPrices) : 0;
+  const highestPrice = filteredPrices.length > 0 ? Math.max(...filteredPrices) : 0;
+  const averagePrice = filteredPrices.length > 0
+    ? filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length
     : 0;
+
+  // Check which grade filters have data
+  const availableGrades = useMemo(() => {
+    const all = pricingData?.listings || [];
+    const gradeSet = new Set(all.map((item) => normalizeCondition(item.condition)));
+    return gradeSet;
+  }, [pricingData?.listings]);
 
   if (cardLoading) {
     return (
@@ -152,7 +188,7 @@ export default function PricingDetail() {
               </p>
             )}
 
-            {/* Price Statistics */}
+            {/* Price Statistics - dynamic based on active grade filter */}
             <div className="grid grid-cols-3 gap-4 mt-6">
               <div className="bg-muted rounded-lg p-4">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t("pricing.lowestPrice")}</p>
@@ -177,13 +213,44 @@ export default function PricingDetail() {
         </div>
       </div>
 
-      {/* Info: SNKRDUNK商品已整合到下方列表中，按價格從低到高排序 */}
-
-      {/* Listings Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-base sm:text-xl font-bold text-foreground">
-          {t("pricing.allListings")}
-        </h2>
+      {/* Listings Header with Grade Filter Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-base sm:text-xl font-bold text-foreground mr-2">
+            {t("pricing.allListings")}
+          </h2>
+          {/* Grade filter buttons */}
+          <div className="flex flex-wrap gap-1.5">
+            {GRADE_FILTERS.map((filter) => {
+              const hasData = filter.key === "all" 
+                ? (pricingData?.listings?.length || 0) > 0
+                : availableGrades.has(filter.key);
+              return (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveGrade(filter.key)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                    activeGrade === filter.key
+                      ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                      : hasData
+                      ? "bg-muted border-border text-foreground hover:border-primary/50 hover:text-primary"
+                      : "bg-muted/40 border-border/40 text-muted-foreground cursor-default opacity-50"
+                  }`}
+                  disabled={!hasData && filter.key !== "all"}
+                >
+                  {filter.label}
+                  {hasData && filter.key !== "all" && (
+                    <span className="ml-1 text-[10px] opacity-70">
+                      ({(pricingData?.listings || []).filter(
+                        (item) => normalizeCondition(item.condition) === filter.key
+                      ).length})
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <Button
           variant="outline"
           size="sm"
@@ -201,9 +268,9 @@ export default function PricingDetail() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <span className="ml-2 text-sm text-muted-foreground">{t("pricing.loadingListings")}</span>
         </div>
-      ) : pricingData && pricingData.listings.length > 0 ? (
+      ) : filteredListings.length > 0 ? (
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
-          {pricingData.listings.map((item: PricingItem) => (
+          {filteredListings.map((item: PricingItem) => (
             <div
               key={item.id}
               className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow"
@@ -235,6 +302,18 @@ export default function PricingDetail() {
                     </div>
                   )}
                 </div>
+                {/* Condition Badge */}
+                {item.condition && (
+                  <div className="absolute top-2 left-2">
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      normalizeCondition(item.condition) === "PSA10"
+                        ? "bg-blue-600 text-white"
+                        : "bg-zinc-700 text-zinc-200"
+                    }`}>
+                      {item.condition}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Item Info */}
@@ -255,13 +334,6 @@ export default function PricingDetail() {
                   </p>
                 )}
 
-                {/* Condition */}
-                {item.condition && (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 sm:mb-3">
-                    {t("pricing.condition")}: {item.condition}
-                  </p>
-                )}
-
                 {/* Buy Button */}
                 <BrandButton
                   size="sm"
@@ -276,19 +348,16 @@ export default function PricingDetail() {
             </div>
           ))}
         </div>
-      ) : pricingLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
-            <p className="text-muted-foreground">{t("pricing.fetchingPrices")}</p>
-            <p className="text-sm text-muted-foreground mt-2">{t("pricing.pleaseWait")}</p>
-          </div>
-        </div>
       ) : (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t("pricing.noListings")}</p>
+            <p className="text-muted-foreground">
+              {activeGrade === "all" 
+                ? t("pricing.noListings") 
+                : `暫無 ${GRADE_FILTERS.find(f => f.key === activeGrade)?.label} 在售商品`
+              }
+            </p>
           </div>
         </div>
       )}

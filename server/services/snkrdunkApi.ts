@@ -129,7 +129,7 @@ async function fetchSnkrdunkApiPage(
  * Replaces the Playwright-based scraper for dramatically improved performance.
  * 
  * @param snkrdunkId - SNKRDUNK product ID (e.g., "737036")
- * @returns Array of PSA 10 listings sorted by price (lowest first)
+ * @returns Array of all condition listings sorted by price (lowest first)
  */
 export async function scrapeSnkrdunkListingsViaApi(
   snkrdunkId: string
@@ -144,15 +144,13 @@ export async function scrapeSnkrdunkListingsViaApi(
 
     console.log(`[SNKRDUNK API] Fetched ${onSaleItems.length} on-sale items`);
 
-    // Filter PSA 10 only
-    const psa10Items = onSaleItems.filter(
-      (item) => item.condition === "PSA 10" || item.condition === "PSA10"
-    );
+    // Return ALL conditions (PSA 10, A, B, C, D, etc.) - frontend will filter
+    const allItems = onSaleItems;
 
-    console.log(`[SNKRDUNK API] PSA 10 on-sale: ${psa10Items.length}`);
+    console.log(`[SNKRDUNK API] All on-sale items: ${allItems.length}`);
 
     // Convert to unified listing format
-    const listings: SnkrdunkListing[] = psa10Items.map((item) => {
+    const listings: SnkrdunkListing[] = allItems.map((item) => {
       const { amount, currency } = parsePrice(item.price);
       const priceInHKD = convertToHKD(amount, currency);
 
@@ -170,7 +168,7 @@ export async function scrapeSnkrdunkListingsViaApi(
     listings.sort((a, b) => a.price - b.price);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`[SNKRDUNK API] Completed in ${elapsed}s: ${listings.length} PSA 10 listings`);
+    console.log(`[SNKRDUNK API] Completed in ${elapsed}s: ${listings.length} listings (all conditions)`);
 
     if (listings.length > 0) {
       const minPrice = Math.min(...listings.map((l) => l.price));
