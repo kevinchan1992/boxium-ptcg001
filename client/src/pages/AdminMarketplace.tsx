@@ -1082,6 +1082,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
   const [batchRejectReason, setBatchRejectReason] = useState("");
+  const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
   const utils = trpc.useUtils();
   const invalidateStats = () => {
     utils.marketplace.adminGetStats.invalidate();
@@ -1113,6 +1114,16 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
       invalidateStats();
     },
     onError: (e) => toast.error(parseApiError(e))
+  });
+  const batchDeleteMutation = trpc.marketplace.batchDeleteListings.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已永久刪除 ${selectedIds.size} 個商品${data.cancelledOrdersCount > 0 ? `，並取消 ${data.cancelledOrdersCount} 個待付款訂單` : ''}`);
+      setSelectedIds(new Set());
+      setShowBatchDeleteDialog(false);
+      refetch();
+      invalidateStats();
+    },
+    onError: (e) => { toast.error(parseApiError(e)); setShowBatchDeleteDialog(false); }
   });
   const listings = filteredListings;
   const total = statusFilter === 'anomalous' ? (anomalousData?.total ?? 0) : (data?.total ?? 0);
@@ -1198,12 +1209,17 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
           <span className="text-xs text-gray-400 ml-1">共 {total} 件</span>
         )}
       </div>
-      {/* Batch toolbar */}
-      {someSelected && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-[#06038d] rounded-xl text-white flex-wrap">
-          <span className="text-sm font-medium">已選 {selectedIds.size} 個商品</span>
-          <div className="flex items-center gap-2 ml-auto flex-wrap">
-            {/* Batch status change dropdown */}
+      {/* Batch toolbar — only shown when items are selected */}
+      {someSelected ? (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#06038d] rounded-xl text-white flex-wrap">
+          {/* Left: select-all checkbox + count */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <input type="checkbox" checked={allSelected} onChange={toggleAll}
+              className="w-3.5 h-3.5 rounded border-white/50 flex-shrink-0 cursor-pointer" />
+            <span className="text-sm font-semibold">已選 {selectedIds.size} 個商品</span>
+          </div>
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-1.5 ml-auto flex-wrap">
             <select
               className="text-xs rounded px-2 py-1.5 bg-white/15 border border-white/30 text-white cursor-pointer"
               defaultValue=""
@@ -1220,39 +1236,43 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
               <option value="draft" className="text-gray-800">📝 草稿</option>
               <option value="removed" className="text-gray-800">❌ 下架</option>
             </select>
-            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white text-xs"
+            <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
               disabled={batchUpdateMutation.isPending}
               onClick={() => batchUpdateMutation.mutate({ ids: Array.from(selectedIds), status: 'active' })}>
-              <CheckCircle className="w-3 h-3 mr-1" />重新上架
-            </Button>
-            <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white text-xs"
+              <CheckCircle className="w-3 h-3" />重新上架
+            </button>
+            <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
               disabled={batchUpdateMutation.isPending}
               onClick={() => { setShowBatchRejectDialog(true); setBatchRejectReason(''); }}>
-              <X className="w-3 h-3 mr-1" />下架
-            </Button>
-            <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white text-xs border border-white/30"
+              <X className="w-3 h-3" />下架
+            </button>
+            <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              disabled={batchDeleteMutation.isPending}
+              onClick={() => setShowBatchDeleteDialog(true)}>
+              <Trash2 className="w-3 h-3" />刪除商品
+            </button>
+            <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 text-white rounded-lg border border-white/30 transition-colors"
               onClick={handleExportListingsCSV}>
-              <Download className="w-3 h-3 mr-1" />匯出 CSV
-            </Button>
-            <button className="text-xs text-white/70 hover:text-white underline"
+              <Download className="w-3 h-3" />匯出 CSV
+            </button>
+            <button className="text-xs text-white/70 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
               onClick={() => setSelectedIds(new Set())}>
               取消
             </button>
           </div>
         </div>
-      )}
-      {/* Select all row */}
-      {listings.length > 0 && !isLoadingCombined && (
-        <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
-          <input type="checkbox" checked={allSelected} onChange={toggleAll}
-            className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
-          <span className="text-xs text-gray-600 font-medium">
-            {allSelected ? '取消全選' : '全選本頁'} ({listings.length} 個)
-          </span>
-          {selectedIds.size > 0 && !allSelected && (
-            <span className="text-xs text-[#06038d] font-semibold ml-auto">已選 {selectedIds.size} 個</span>
-          )}
-        </div>
+      ) : (
+        /* Select-all row when nothing selected */
+        listings.length > 0 && !isLoadingCombined ? (
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+            <input type="checkbox" checked={allSelected} onChange={toggleAll}
+              className="w-3.5 h-3.5 rounded border-gray-300 flex-shrink-0 cursor-pointer" />
+            <span className="text-xs text-gray-600 font-medium">
+              全選本頁 ({listings.length} 個)
+            </span>
+            <span className="text-xs text-gray-400 ml-auto">共 {total} 件</span>
+          </div>
+        ) : null
       )}
       {isLoadingCombined ? (
         <div className="flex items-center justify-center py-16">
@@ -1440,6 +1460,33 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
               }}>
               {batchUpdateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               確認批量下架
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Batch delete confirm dialog */}
+      <Dialog open={showBatchDeleteDialog} onOpenChange={setShowBatchDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />批量刪除商品
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">您即將永久刪除已選的 <strong className="text-red-600">{selectedIds.size}</strong> 個商品，此操作不可復原。</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+              <p className="text-xs text-red-700 font-semibold">刪除後將發生：</p>
+              <p className="text-xs text-red-600">• 商品將從資料庫永久刪除</p>
+              <p className="text-xs text-red-600">• 相關待付款訂單將被自動取消</p>
+              <p className="text-xs text-red-600">• 已售出的商品不會被刪除</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-gray-700" onClick={() => setShowBatchDeleteDialog(false)}>取消</Button>
+            <Button variant="destructive" disabled={batchDeleteMutation.isPending}
+              onClick={() => batchDeleteMutation.mutate({ ids: Array.from(selectedIds) })}>
+              {batchDeleteMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              確認刪除 {selectedIds.size} 個商品
             </Button>
           </DialogFooter>
         </DialogContent>
