@@ -279,6 +279,15 @@ export default function Cart() {
     );
   }
 
+  // Clear cart after Stripe payment success (webhook may be delayed, so also clear from frontend)
+  useEffect(() => {
+    if (isStripeSuccess && user) {
+      // Invalidate cart queries to reflect cleared state after payment
+      utils.marketplace.getMyCart.invalidate();
+      utils.marketplace.getCartCount.invalidate();
+    }
+  }, [isStripeSuccess, user]);
+
   // Stripe payment success page
   if (isStripeSuccess) {
     return (

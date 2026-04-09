@@ -3034,9 +3034,18 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
 
       // Step 4: Create all sub-orders in DB with pending_payment status
+      // Idempotency: reuse existing pending_payment order for same buyer+listing to prevent duplicates
       const batchRef = orderItems.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
       const createdOrders: Array<{ orderNo: string; orderId: number; listingId: number; effectivePrice: number }> = [];
       for (const { listing, effectivePrice, offerId } of orderItems) {
+        // Check if buyer already has a pending_payment order for this listing
+        const existingOrder = await getActiveOrderByListingId(listing.id);
+        if (existingOrder && existingOrder.buyerId === ctx.user.id) {
+          // Reuse existing order instead of creating a duplicate
+          console.log(`[createBatchStripeOrder] Reusing existing order ${existingOrder.orderNo} for listing ${listing.id} (buyer ${ctx.user.id})`);
+          createdOrders.push({ orderNo: existingOrder.orderNo, orderId: existingOrder.id, listingId: listing.id, effectivePrice });
+          continue;
+        }
         const itemFeeRate = getFeeRateForAmount(effectivePrice, feeTiers);
         const orderNo = await generateOrderNo();
         const newOrder = await createMarketplaceOrder({
