@@ -29,6 +29,13 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
+        // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
+        typeCast: function(field: any, next: any) {
+          if (field.type === 'TINY' && field.length === 1) {
+            return field.string() === '1';
+          }
+          return next();
+        },
       });
       _db = drizzle(pool);
       console.log(`[Database] Connected with timezone: ${HK_TIMEZONE} (Hong Kong), charset: utf8mb4`);
@@ -3937,13 +3944,20 @@ export async function getAllBanners() {
 export async function createBanner(data: InsertMarketplaceBanner) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(marketplaceBanners).values(data);
+  // drizzle mysql2 doesn't auto-convert boolean to 0/1 on INSERT; do it manually
+  const insertData = { ...data, isActive: data.isActive ? 1 : 0 } as any;
+  await db.insert(marketplaceBanners).values(insertData);
 }
 
 export async function updateBanner(id: number, data: Partial<InsertMarketplaceBanner>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(marketplaceBanners).set({ ...data, updatedAt: new Date() }).where(eq(marketplaceBanners.id, id));
+  // drizzle mysql2 doesn't auto-convert boolean to 0/1 on UPDATE; do it manually
+  const updateData: any = { ...data, updatedAt: new Date() };
+  if (typeof updateData.isActive === 'boolean') {
+    updateData.isActive = updateData.isActive ? 1 : 0;
+  }
+  await db.update(marketplaceBanners).set(updateData).where(eq(marketplaceBanners.id, id));
 }
 
 export async function deleteBanner(id: number) {
