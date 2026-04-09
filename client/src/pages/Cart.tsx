@@ -212,6 +212,16 @@ export default function Cart() {
     return null;
   }, [personalizedListings, recentListings]);
 
+  // Clear cart after Stripe payment success (webhook may be delayed, so also clear from frontend)
+  // MUST be placed before any early returns to comply with React Hooks rules
+  useEffect(() => {
+    if (isStripeSuccess && user) {
+      utils.marketplace.getMyCart.invalidate();
+      utils.marketplace.getCartCount.invalidate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStripeSuccess, !!user]);
+
   // ── Maintenance mode guard (after all hooks) ──
   if (accessLoading) return <div className="min-h-screen flex items-center justify-center bg-[#06038D]"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>;
   if (accessData && !accessData.allowed) return (
@@ -278,15 +288,6 @@ export default function Cart() {
       </div>
     );
   }
-
-  // Clear cart after Stripe payment success (webhook may be delayed, so also clear from frontend)
-  useEffect(() => {
-    if (isStripeSuccess && user) {
-      // Invalidate cart queries to reflect cleared state after payment
-      utils.marketplace.getMyCart.invalidate();
-      utils.marketplace.getCartCount.invalidate();
-    }
-  }, [isStripeSuccess, user]);
 
   // Stripe payment success page
   if (isStripeSuccess) {
