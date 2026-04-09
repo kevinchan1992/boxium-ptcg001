@@ -7766,7 +7766,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
   { key: 'disputes', label: '爭議處理', icon: Flag, badgeKey: 'unresolvedDisputeCount' },
-  { key: 'sales', label: '销售總覽', icon: BarChart3 },
+  { key: 'sales', label: '銷售總覽', icon: BarChart3 },
   { key: 'reports', label: '舉報管理', icon: Flag },
   { key: 'payouts', label: '放款管理', icon: DollarSign },
   { key: 'offers', label: '出價管理', icon: Tag },
