@@ -3375,8 +3375,12 @@ export async function getAdminListings(page = 1, pageSize = 20, status?: string,
 export async function getSellerListings(sellerId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Exclude auction listings — they are managed separately in the 我的拍賣 tab
   return db.select().from(marketplaceListings)
-    .where(eq(marketplaceListings.sellerId, sellerId))
+    .where(and(
+      eq(marketplaceListings.sellerId, sellerId),
+      ne(marketplaceListings.listingMode, 'auction')
+    ))
     .orderBy(desc(marketplaceListings.createdAt));
 }
 
