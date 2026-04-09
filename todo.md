@@ -7988,3 +7988,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] priceUpdateScheduler.ts：購物車到期提醒天數改為動態讀取 cart_expiry_reminder_days
 - [x] marketplace.ts：新增上架時最低金額驗證（讀取 min_listing_price_hkd）
 - [x] DB 插入 8 個新設定預設值（min_listing_price_hkd=4, auto_complete_days=14, cart_retention_days=14, cart_expiry_reminder_days=3, max_offers_per_day=3, alipay_review_sla_hours=24, dispute_sla_hours=72, meetup_cancel_days=7）
+
+---
+
+## 📱 手機版表格佈局修復（2026-04-10）
+
+- [x] 修復賣家中心「我的商品」手機版表格操作欄截斷問題
+- [x] 修復「我的訂單」手機版表格佈局問題

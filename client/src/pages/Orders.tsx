@@ -393,7 +393,7 @@ function OrderRowDetail({ order, onClose }: { order: any; onClose: () => void })
 // ── Compact Order Table Row ────────────────────────────────────────────────
 function OrderTableRow({ order, highlight }: { order: any; highlight?: boolean }) {
   const [expanded, setExpanded] = useState(!!highlight);
-  const rowRef = useRef<HTMLTableRowElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (highlight) {
@@ -407,63 +407,46 @@ function OrderTableRow({ order, highlight }: { order: any; highlight?: boolean }
   const thumb = imgs[0];
 
   return (
-    <>
-      <tr
-        ref={rowRef}
-        className={`border-b border-gray-100 hover:bg-[#f8f9ff] transition-colors cursor-pointer ${highlight ? "bg-yellow-50 border-l-4 border-l-[#FEDD00]" : ""} ${expanded ? "bg-[#f0f4ff]" : ""}`}
+    <div ref={rowRef} className={`border-b border-gray-100 last:border-0 ${highlight ? "border-l-4 border-l-[#FEDD00]" : ""}`}>
+      {/* Main row */}
+      <div
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-[#f8f9ff] ${expanded ? "bg-[#f0f4ff]" : ""} ${highlight ? "bg-yellow-50" : ""}`}
         onClick={() => setExpanded(e => !e)}
       >
-        {/* Thumbnail + Title */}
-        <td className="py-3 pl-4 pr-2">
-          <div className="flex items-center gap-3">
-            {thumb ? (
-              <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 hidden sm:block">
-                <img src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <div className="w-10 h-10 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 hidden sm:block">
-                <span className="text-lg">🃏</span>
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate max-w-[160px] sm:max-w-[240px] md:max-w-none">{order.listingTitle ?? "商品"}</p>
-              <p className="text-[11px] text-gray-400 font-mono">{order.orderNo}</p>
-            </div>
+        {/* Thumbnail */}
+        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
+          {thumb ? <img src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
+        </div>
+        {/* Title + meta */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{order.listingTitle ?? "商品"}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <span className="text-[11px] text-gray-400 font-mono">{order.orderNo}</span>
+            {/* Mobile: amount + date inline */}
+            <span className="text-xs font-bold sm:hidden" style={{ color: '#06038d' }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
+            <span className="text-[11px] text-gray-400 sm:hidden">{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
           </div>
-        </td>
-        {/* Amount */}
-        <td className="py-3 px-2 text-right">
-          <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
-        </td>
+        </div>
+        {/* Desktop: amount */}
+        <span className="text-sm font-bold whitespace-nowrap hidden sm:inline" style={{ color: "#06038d" }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span>
         {/* Status */}
-        <td className="py-3 px-2">
-          <StatusBadge status={order.orderStatus} />
-        </td>
-        {/* Date – hidden on mobile */}
-        <td className="py-3 px-2 hidden md:table-cell">
-          <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
-        </td>
-        {/* Payment – hidden on mobile */}
-        <td className="py-3 px-2 hidden lg:table-cell">
-          <span className="text-xs text-gray-500">
-            {order.paymentMethod === 'stripe' ? '信用卡' : order.paymentMethod === 'alipay_hk' ? '支付寶HK' : order.paymentMethod ?? '—'}
-          </span>
-        </td>
-        {/* Expand toggle */}
-        <td className="py-3 pl-2 pr-4 text-right">
-          <button className="text-gray-400 hover:text-[#06038d] transition-colors p-1 rounded" onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}>
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </td>
-      </tr>
+        <div className="flex-shrink-0"><StatusBadge status={order.orderStatus} /></div>
+        {/* Desktop: date */}
+        <span className="text-xs text-gray-400 whitespace-nowrap hidden md:inline">{new Date(order.createdAt).toLocaleDateString("zh-HK")}</span>
+        {/* Desktop: payment */}
+        <span className="text-xs text-gray-500 hidden lg:inline">
+          {order.paymentMethod === 'stripe' ? '信用卡' : order.paymentMethod === 'alipay_hk' ? '支付寶HK' : order.paymentMethod ?? '—'}
+        </span>
+        {/* Expand chevron */}
+        <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </div>
+      {/* Expanded detail */}
       {expanded && (
-        <tr>
-          <td colSpan={6} className="p-0">
-            <OrderRowDetail order={order} onClose={() => setExpanded(false)} />
-          </td>
-        </tr>
+        <div className="border-t border-gray-100">
+          <OrderRowDetail order={order} onClose={() => setExpanded(false)} />
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -481,35 +464,31 @@ function BatchOrderGroup({ group, highlightOrderNo }: { group: { key: string; is
   const dominantStatus = Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "pending_payment";
 
   return (
-    <>
-      <tr className="border-b border-[#06038d]/20 bg-[#f0f4ff] cursor-pointer hover:bg-[#e8edff] transition-colors" onClick={() => setExpanded(e => !e)}>
-        <td className="py-3 pl-4 pr-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#06038d" }}>
-              <Package className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold" style={{ color: "#06038d" }}>批量訂單 · {groupOrders.length} 件商品</p>
-              <p className="text-[11px] text-gray-500">總計 HKD {totalHkd.toFixed(2)}</p>
-            </div>
-          </div>
-        </td>
-        <td className="py-3 px-2 text-right">
-          <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#06038d" }}>HKD {totalHkd.toFixed(2)}</span>
-        </td>
-        <td className="py-3 px-2"><StatusBadge status={dominantStatus} /></td>
-        <td className="py-3 px-2 hidden md:table-cell" />
-        <td className="py-3 px-2 hidden lg:table-cell" />
-        <td className="py-3 pl-2 pr-4 text-right">
-          <button className="text-gray-400 hover:text-[#06038d] transition-colors p-1 rounded">
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </td>
-      </tr>
-      {expanded && groupOrders.map(o => (
-        <OrderTableRow key={o.id} order={o} highlight={!!highlightOrderNo && o.orderNo === highlightOrderNo} />
-      ))}
-    </>
+    <div className="border-b border-[#06038d]/20 last:border-0">
+      {/* Batch group header */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer bg-[#f0f4ff] hover:bg-[#e8edff] transition-colors"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#06038d" }}>
+          <Package className="w-4 h-4 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold" style={{ color: "#06038d" }}>批量訂單 · {groupOrders.length} 件商品</p>
+          <p className="text-[11px] text-gray-500">總計 HKD {totalHkd.toFixed(2)}</p>
+        </div>
+        <StatusBadge status={dominantStatus} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </div>
+      {/* Expanded individual orders */}
+      {expanded && (
+        <div className="border-t border-[#06038d]/10">
+          {groupOrders.map(o => (
+            <OrderTableRow key={o.id} order={o} highlight={!!highlightOrderNo && o.orderNo === highlightOrderNo} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -540,61 +519,57 @@ function MyOffersTab({ userId }: { userId: number }) {
   }
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-100 bg-gray-50">
-            <th className="py-2.5 pl-4 pr-2 text-left text-xs font-semibold text-gray-500">商品</th>
-            <th className="py-2.5 px-2 text-right text-xs font-semibold text-gray-500">出價金額</th>
-            <th className="py-2.5 px-2 text-left text-xs font-semibold text-gray-500">狀態</th>
-            <th className="py-2.5 px-2 hidden md:table-cell text-left text-xs font-semibold text-gray-500">日期</th>
-            <th className="py-2.5 pl-2 pr-4 text-right text-xs font-semibold text-gray-500">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {offers.map((offer: any) => {
-            const imgs = (() => { try { return JSON.parse(offer.listingImages ?? '[]'); } catch { return []; } })();
-            const thumb = imgs[0];
-            return (
-              <tr key={offer.id} className="border-b border-gray-100 hover:bg-[#f8f9ff] transition-colors">
-                <td className="py-3 pl-4 pr-2">
-                  <div className="flex items-center gap-3">
-                    {thumb ? <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 hidden sm:block"><img src={thumb} alt={offer.listingTitle} className="w-full h-full object-cover" /></div> : <div className="w-10 h-10 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 hidden sm:block"><span className="text-lg">🃏</span></div>}
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate max-w-[160px] sm:max-w-[240px]">{offer.listingTitle ?? "商品"}</p>
-                      <p className="text-[11px] text-gray-400">出價 #{offer.id}</p>
-                      {offer.status === "accepted" && <p className="text-xs text-green-600 font-medium">✅ 賣家已接受，請盡快付款</p>}
-                      {offer.status === "pending" && <p className="text-xs text-amber-600">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3 px-2 text-right">
-                  <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#06038d" }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span>
-                </td>
-                <td className="py-3 px-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${offerStatusLabel[offer.status]?.color ?? "bg-gray-100"}`}>{offerStatusLabel[offer.status]?.label ?? offer.status}</span>
-                </td>
-                <td className="py-3 px-2 hidden md:table-cell">
-                  <span className="text-xs text-gray-400">{new Date(offer.createdAt).toLocaleDateString("zh-HK")}</span>
-                </td>
-                <td className="py-3 pl-2 pr-4">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <Link href={`/shop/${offer.listingId}`}>
-                      <Button size="sm" variant="outline" className="h-7 text-xs text-[#06038d] border-[#06038d]/40 hover:bg-[#06038d]/5 px-2">查看</Button>
-                    </Link>
-                    {offer.status === "pending" && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50 px-2"
-                        disabled={cancelOfferMutation.isPending} onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}>取消</Button>
-                    )}
-                    {offer.status === "accepted" && offer.orderId && (
-                      <Link href="/cart"><Button size="sm" className="h-7 text-xs text-white font-bold px-2" style={{ backgroundColor: "#06038d" }}><ShoppingCart className="w-3 h-3 mr-1" />付款</Button></Link>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Desktop header */}
+      <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500">
+        <div className="w-10 flex-shrink-0"></div>
+        <span className="flex-1">商品</span>
+        <span>出價金額</span>
+        <span>狀態</span>
+        <span className="hidden md:inline">日期</span>
+        <span>操作</span>
+      </div>
+      {offers.map((offer: any) => {
+        const imgs = (() => { try { return JSON.parse(offer.listingImages ?? '[]'); } catch { return []; } })();
+        const thumb = imgs[0];
+        return (
+          <div key={offer.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-[#f8f9ff] transition-colors">
+            {/* Thumbnail */}
+            <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
+              {thumb ? <img src={thumb} alt={offer.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
+            </div>
+            {/* Title + meta */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{offer.listingTitle ?? "商品"}</p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-[11px] text-gray-400">出價 #{offer.id}</span>
+                {/* Mobile: price inline */}
+                <span className="text-xs font-bold sm:hidden" style={{ color: '#06038d' }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span>
+              </div>
+              {offer.status === "accepted" && <p className="text-xs text-green-600 font-medium mt-0.5">✅ 賣家已接受，請盡快付款</p>}
+              {offer.status === "pending" && <p className="text-xs text-amber-600 mt-0.5">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>}
+            </div>
+            {/* Desktop: price */}
+            <span className="text-sm font-bold whitespace-nowrap hidden sm:inline" style={{ color: "#06038d" }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span>
+            {/* Status */}
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${offerStatusLabel[offer.status]?.color ?? "bg-gray-100"}`}>{offerStatusLabel[offer.status]?.label ?? offer.status}</span>
+            {/* Desktop: date */}
+            <span className="text-xs text-gray-400 hidden md:inline whitespace-nowrap">{new Date(offer.createdAt).toLocaleDateString("zh-HK")}</span>
+            {/* Actions */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <Link href={`/shop/${offer.listingId}`}>
+                <Button size="sm" variant="outline" className="h-7 text-xs text-[#06038d] border-[#06038d]/40 hover:bg-[#06038d]/5 px-2">查看</Button>
+              </Link>
+              {offer.status === "pending" && (
+                <Button size="sm" variant="outline" className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50 px-2"
+                  disabled={cancelOfferMutation.isPending} onClick={() => cancelOfferMutation.mutate({ offerId: offer.id })}>取消</Button>
+              )}
+              {offer.status === "accepted" && offer.orderId && (
+                <Link href="/cart"><Button size="sm" className="h-7 text-xs text-white font-bold px-2" style={{ backgroundColor: "#06038d" }}><ShoppingCart className="w-3 h-3 mr-1" />付款</Button></Link>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -763,23 +738,19 @@ export default function Orders() {
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="py-2.5 pl-4 pr-2 text-left text-xs font-semibold text-gray-500">商品 / 訂單號</th>
-                          <th className="py-2.5 px-2 text-right text-xs font-semibold text-gray-500">金額</th>
-                          <th className="py-2.5 px-2 text-left text-xs font-semibold text-gray-500">狀態</th>
-                          <th className="py-2.5 px-2 hidden md:table-cell text-left text-xs font-semibold text-gray-500">日期</th>
-                          <th className="py-2.5 px-2 hidden lg:table-cell text-left text-xs font-semibold text-gray-500">付款方式</th>
-                          <th className="py-2.5 pl-2 pr-4 text-right text-xs font-semibold text-gray-500"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredGroups.map(group => (
-                          <BatchOrderGroup key={group.key} group={group} highlightOrderNo={highlightOrderNo} />
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* Header row - desktop only */}
+                    <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500">
+                      <div className="w-10 flex-shrink-0"></div>
+                      <span className="flex-1">商品 / 訂單號</span>
+                      <span className="hidden sm:inline">金額</span>
+                      <span>狀態</span>
+                      <span className="hidden md:inline">日期</span>
+                      <span className="hidden lg:inline">付款方式</span>
+                      <div className="w-4"></div>
+                    </div>
+                    {filteredGroups.map(group => (
+                      <BatchOrderGroup key={group.key} group={group} highlightOrderNo={highlightOrderNo} />
+                    ))}
                     <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
                       共 {filteredOrders.length} 筆訂單
                     </div>

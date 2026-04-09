@@ -1037,6 +1037,172 @@ function SellerAuctionsTab() {
   );
 }
 
+// ── ListingTable: Mobile-friendly expandable row table for seller listings ──
+function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmin, deactivateMutation, reactivateMutation, openEditDialog, setListingForm, setListingImages, setSelectedCard, setListingStep, setShowNewListing, t }: {
+  listings: any[];
+  batchMode: boolean;
+  selectedIds: Set<number>;
+  toggleSelectId: (id: number) => void;
+  isAdmin: boolean;
+  deactivateMutation: any;
+  reactivateMutation: any;
+  openEditDialog: (listing: any) => void;
+  setListingForm: (form: any) => void;
+  setListingImages: (imgs: string[]) => void;
+  setSelectedCard: (card: any) => void;
+  setListingStep: (step: any) => void;
+  setShowNewListing: (show: boolean) => void;
+  t: any;
+}) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const conditionLabels: Record<string, string> = { raw_a: 'A品', raw_b: 'B品', raw_c: 'C品', psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', cgc10: 'CGC 10', bgs10: 'BGS 10' };
+  const tcgLogos: Record<string, { logo: string; label: string }> = {
+    pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
+    onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
+    yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Desktop header row */}
+      <div className="hidden sm:grid border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2.5" style={{ gridTemplateColumns: '1fr auto auto auto auto' }}>
+        {batchMode && <span className="w-6"></span>}
+        <span>商品名稱</span>
+        <span className="text-right pr-3">售價</span>
+        <span className="text-center px-3 hidden md:block">庫存</span>
+        <span className="text-center px-3 hidden lg:block">品相</span>
+        <span className="text-left">狀態</span>
+      </div>
+      {listings.map((listing: any) => {
+        let coverImg: string | null = null;
+        try { const imgs = listing.images ? JSON.parse(listing.images as string) : null; coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null; } catch {}
+        const isSold = listing.status === "sold";
+        const isRemoved = listing.status === "removed";
+        const isActive = listing.status === "active";
+        const isAdminDelisted = !!(listing as any).adminDelisted;
+        const isSelected = selectedIds.has(listing.id);
+        const isExpanded = expandedId === listing.id;
+        const seriesInfo = tcgLogos[listing.tcgSeries as string];
+        const statusBadge = (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
+            isActive ? 'bg-green-50 text-green-700 border-green-200' :
+            isSold ? 'bg-blue-50 text-blue-700 border-blue-200' :
+            isRemoved ? 'bg-red-50 text-red-600 border-red-200' :
+            'bg-gray-100 text-gray-500 border-gray-200'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? 'bg-green-500' : isSold ? 'bg-blue-500' : isRemoved ? 'bg-red-400' : 'bg-gray-400'}`} />
+            {isActive ? '上架中' : isSold ? '已售出' : isRemoved ? (isAdminDelisted ? '強制下架' : '已下架') : listing.status}
+          </span>
+        );
+        const actionButtons = (
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isSold && (
+              <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/5"
+                onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}>
+                <Pencil className="w-3 h-3 mr-1" />編輯
+              </Button>
+            )}
+            {isActive && (
+              <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-red-300 text-red-600 hover:bg-red-50"
+                disabled={deactivateMutation.isPending}
+                onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}>
+                <EyeOff className="w-3 h-3 mr-1" />下架
+              </Button>
+            )}
+            {isRemoved && !isAdminDelisted && (
+              <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-green-500 text-green-700 hover:bg-green-50"
+                disabled={reactivateMutation.isPending}
+                onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}>
+                <Eye className="w-3 h-3 mr-1" />重新上架
+              </Button>
+            )}
+            {isRemoved && isAdminDelisted && (
+              <span className="text-xs text-red-500 font-medium">{t("seller.listings.card.adminDelisted")}</span>
+            )}
+            {(isSold || isActive) && (
+              <Link href={`/marketplace/${listing.id}`}>
+                <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-gray-200 text-gray-500 hover:bg-gray-50">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            )}
+            {isAdmin && (
+              <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/5"
+                title={t("seller.listings.card.duplicateListingTooltip")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setListingForm({ title: listing.title ?? '', description: listing.description ?? '', condition: listing.condition ?? 'raw_a', price: parseFloat(listing.priceHkd as string).toFixed(2), quantity: String(listing.quantity ?? 1), tcgSeries: (listing as any).tcgSeries ?? 'pokemon', acceptOffers: !!(listing as any).allowOffers, minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '', listingMode: 'buy_now', startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10', auctionStartAt: '', auctionEndAt: '', auctionDurationDays: 7 });
+                  setListingImages([]); setSelectedCard(null); setListingStep(1); setShowNewListing(true);
+                  toast.info(t("seller.listings.card.duplicateSuccess"));
+                }}>
+                <Layers className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
+        );
+        return (
+          <div key={listing.id} className={`border-b border-gray-100 last:border-0 ${isSelected ? 'bg-[#f0f4ff]' : isSold ? 'bg-gray-50/60 opacity-75' : ''}`}>
+            {/* Main row */}
+            <div
+              className={`flex items-center gap-3 px-4 py-3 transition-colors ${batchMode && !isSold ? 'cursor-pointer' : 'cursor-pointer'} hover:bg-[#f8f9ff]`}
+              onClick={() => {
+                if (batchMode && !isSold) { toggleSelectId(listing.id); return; }
+                if (!batchMode) setExpandedId(isExpanded ? null : listing.id);
+              }}
+            >
+              {/* Batch checkbox */}
+              {batchMode && !isSold && (
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-[#06038d] bg-[#06038d]' : 'border-gray-300'}`}>
+                  {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                </div>
+              )}
+              {/* Thumbnail */}
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0" style={!coverImg ? { background: 'linear-gradient(135deg, #06038d 0%, #0a06b5 100%)' } : {}}>
+                {coverImg ? <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-[8px]">BOX</span></div>}
+              </div>
+              {/* Title + meta */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{listing.title}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[11px] text-gray-400 font-mono">#BOXIUM-{listing.id}</span>
+                  {/* On mobile: show price inline */}
+                  <span className="text-xs font-bold sm:hidden" style={{ color: '#06038D' }}>HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</span>
+                </div>
+              </div>
+              {/* Desktop: price + stock + condition */}
+              <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
+                <span className="text-sm font-bold whitespace-nowrap" style={{ color: '#06038D' }}>HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</span>
+                <span className={`text-sm font-bold w-6 text-center hidden md:block ${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</span>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap hidden lg:inline-flex">{conditionLabels[listing.condition as string] ?? listing.condition ?? '—'}</span>
+              </div>
+              {/* Status badge */}
+              <div className="flex-shrink-0">{statusBadge}</div>
+              {/* Expand chevron (non-batch mode) */}
+              {!batchMode && (
+                <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              )}
+            </div>
+            {/* Expanded action row */}
+            {isExpanded && !batchMode && (
+              <div className="px-4 pb-3 pt-1 bg-[#f8f9ff] border-t border-gray-100">
+                {/* Extra meta on mobile */}
+                <div className="flex items-center gap-3 mb-2.5 sm:hidden">
+                  <span className="text-xs text-gray-500">庫存：<strong className={`${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</strong></span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{conditionLabels[listing.condition as string] ?? listing.condition ?? '—'}</span>
+                  {seriesInfo && <img src={seriesInfo.logo} alt={seriesInfo.label} className="h-4 w-auto object-contain opacity-70" />}
+                </div>
+                {actionButtons}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
+        共 {listings.length} 件商品
+      </div>
+    </div>
+  );
+}
+
 export default function SellerDashboard() {
   const { t } = useTranslation();
   // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
@@ -2016,160 +2182,22 @@ export default function SellerDashboard() {
                       </div>
                     ) : (
                       /* ── Compact Table View (list mode) ── */
-                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-gray-100 bg-gray-50">
-                              {batchMode && <th className="py-2.5 pl-4 pr-2 w-8"></th>}
-                              <th className="py-2.5 pl-4 pr-2 text-left text-xs font-semibold text-gray-500">商品名稱</th>
-                              <th className="py-2.5 px-2 text-right text-xs font-semibold text-gray-500">售價</th>
-                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden sm:table-cell">庫存</th>
-                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden md:table-cell">品相</th>
-                              <th className="py-2.5 px-2 text-center text-xs font-semibold text-gray-500 hidden lg:table-cell">系列</th>
-                              <th className="py-2.5 px-2 text-left text-xs font-semibold text-gray-500">狀態</th>
-                              <th className="py-2.5 pl-2 pr-4 text-right text-xs font-semibold text-gray-500">操作</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredListings.map((listing: any) => {
-                              let coverImg: string | null = null;
-                              try { const imgs = listing.images ? JSON.parse(listing.images as string) : null; coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null; } catch {}
-                              const isSold = listing.status === "sold";
-                              const isRemoved = listing.status === "removed";
-                              const isActive = listing.status === "active";
-                              const isAdminDelisted = !!(listing as any).adminDelisted;
-                              const isSelected = selectedIds.has(listing.id);
-                              const conditionLabels: Record<string, string> = { raw_a: 'A品', raw_b: 'B品', raw_c: 'C品', psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', cgc10: 'CGC 10', bgs10: 'BGS 10' };
-                              const tcgLogos: Record<string, { logo: string; label: string }> = {
-                                pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
-                                onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
-                                yugioh:   { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp",  label: "Yu-Gi-Oh!" },
-                              };
-                              const seriesInfo = tcgLogos[listing.tcgSeries as string];
-                              return (
-                                <tr key={listing.id}
-                                  className={`border-b border-gray-100 transition-colors ${
-                                    isSelected ? 'bg-[#f0f4ff]' : isSold ? 'bg-gray-50/60 opacity-75' : 'hover:bg-[#f8f9ff]'
-                                  } ${batchMode && !isSold ? 'cursor-pointer' : ''}`}
-                                  onClick={batchMode && !isSold ? () => toggleSelectId(listing.id) : undefined}
-                                >
-                                  {batchMode && (
-                                    <td className="py-3 pl-4 pr-2 w-8">
-                                      {!isSold && (
-                                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                                          isSelected ? 'border-[#06038d] bg-[#06038d]' : 'border-gray-300'
-                                        }`}>
-                                          {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                                        </div>
-                                      )}
-                                    </td>
-                                  )}
-                                  {/* Thumbnail + Title */}
-                                  <td className="py-3 pl-4 pr-2">
-                                    <div className="flex items-center gap-3">
-                                      {coverImg ? (
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 hidden sm:block">
-                                          <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-10 h-10 rounded-lg border border-gray-100 flex items-center justify-center flex-shrink-0 hidden sm:block" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                          <span className="text-white font-black text-[8px]">BOX</span>
-                                        </div>
-                                      )}
-                                      <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate max-w-[140px] sm:max-w-[220px] md:max-w-none">{listing.title}</p>
-                                        <p className="text-[11px] text-gray-400 font-mono">#BOXIUM-{listing.id}</p>
-                                      </div>
-                                    </div>
-                                  </td>
-                                  {/* Price */}
-                                  <td className="py-3 px-2 text-right">
-                                    <span className="text-sm font-bold whitespace-nowrap" style={{ color: '#06038D' }}>HKD {parseFloat(listing.priceHkd as string).toFixed(2)}</span>
-                                  </td>
-                                  {/* Stock */}
-                                  <td className="py-3 px-2 text-center hidden sm:table-cell">
-                                    <span className={`text-sm font-bold ${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</span>
-                                  </td>
-                                  {/* Condition */}
-                                  <td className="py-3 px-2 text-center hidden md:table-cell">
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">{conditionLabels[listing.condition as string] ?? listing.condition ?? '—'}</span>
-                                  </td>
-                                  {/* TCG Series */}
-                                  <td className="py-3 px-2 text-center hidden lg:table-cell">
-                                    {seriesInfo ? (
-                                      <img src={seriesInfo.logo} alt={seriesInfo.label} title={seriesInfo.label} className="h-5 w-auto object-contain opacity-70 mx-auto" />
-                                    ) : <span className="text-xs text-gray-400">—</span>}
-                                  </td>
-                                  {/* Status */}
-                                  <td className="py-3 px-2">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
-                                      isActive ? 'bg-green-50 text-green-700 border-green-200' :
-                                      isSold ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                      isRemoved ? 'bg-red-50 text-red-600 border-red-200' :
-                                      'bg-gray-100 text-gray-500 border-gray-200'
-                                    }`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? 'bg-green-500' : isSold ? 'bg-blue-500' : isRemoved ? 'bg-red-400' : 'bg-gray-400'}`} />
-                                      {isActive ? '上架中' : isSold ? '已售出' : isRemoved ? (isAdminDelisted ? '強制下架' : '已下架') : listing.status}
-                                    </span>
-                                  </td>
-                                  {/* Actions */}
-                                  <td className="py-3 pl-2 pr-4">
-                                    {!batchMode && (
-                                      <div className="flex items-center justify-end gap-1.5">
-                                        {!isSold && (
-                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/5"
-                                            onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}>
-                                            <Pencil className="w-3 h-3 mr-1" />編輯
-                                          </Button>
-                                        )}
-                                        {isActive && (
-                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-red-300 text-red-600 hover:bg-red-50"
-                                            disabled={deactivateMutation.isPending}
-                                            onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}>
-                                            <EyeOff className="w-3 h-3 mr-1" />下架
-                                          </Button>
-                                        )}
-                                        {isRemoved && !isAdminDelisted && (
-                                          <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-green-500 text-green-700 hover:bg-green-50"
-                                            disabled={reactivateMutation.isPending}
-                                            onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}>
-                                            <Eye className="w-3 h-3 mr-1" />上架
-                                          </Button>
-                                        )}
-                                        {isRemoved && isAdminDelisted && (
-                                          <span className="text-xs text-red-500 font-medium">{t("seller.listings.card.adminDelisted")}</span>
-                                        )}
-                                        {(isSold || isActive) && (
-                                          <Link href={`/marketplace/${listing.id}`}>
-                                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-gray-200 text-gray-500 hover:bg-gray-50">
-                                              <ExternalLink className="w-3 h-3" />
-                                            </Button>
-                                          </Link>
-                                        )}
-                                        {isAdmin && (
-                                          <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-[#06038d]/30 text-[#06038d] hover:bg-[#06038d]/5"
-                                            title={t("seller.listings.card.duplicateListingTooltip")}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setListingForm({ title: listing.title ?? '', description: listing.description ?? '', condition: listing.condition ?? 'raw_a', price: parseFloat(listing.priceHkd as string).toFixed(2), quantity: String(listing.quantity ?? 1), tcgSeries: (listing as any).tcgSeries ?? 'pokemon', acceptOffers: !!(listing as any).allowOffers, minOffer: (listing as any).minOfferHkd ? String(parseFloat((listing as any).minOfferHkd)) : '', listingMode: 'buy_now', startingBid: '', reservePrice: '', buyNowPrice: '', bidIncrement: '10', auctionStartAt: '', auctionEndAt: '', auctionDurationDays: 7 });
-                                              setListingImages([]); setSelectedCard(null); setListingStep(1); setShowNewListing(true);
-                                              toast.info(t("seller.listings.card.duplicateSuccess"));
-                                            }}>
-                                            <Layers className="w-3 h-3" />
-                                          </Button>
-                                        )}
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-                          共 {filteredListings.length} 件商品
-                        </div>
-                      </div>
+                      <ListingTable
+                        listings={filteredListings}
+                        batchMode={batchMode}
+                        selectedIds={selectedIds}
+                        toggleSelectId={toggleSelectId}
+                        isAdmin={isAdmin}
+                        deactivateMutation={deactivateMutation}
+                        reactivateMutation={reactivateMutation}
+                        openEditDialog={openEditDialog}
+                        setListingForm={setListingForm}
+                        setListingImages={setListingImages}
+                        setSelectedCard={setSelectedCard}
+                        setListingStep={setListingStep}
+                        setShowNewListing={setShowNewListing}
+                        t={t}
+                      />
                     )}
                   </div>
                 )}
