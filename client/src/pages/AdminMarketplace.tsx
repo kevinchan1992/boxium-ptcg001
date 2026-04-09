@@ -1255,83 +1255,143 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
         </div>
       )}
       {isLoadingCombined ? (
-        <div className="text-center py-12 text-gray-500">載入中...</div>
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-2 border-[#06038d] border-t-transparent rounded-full animate-spin" />
+        </div>
       ) : listings.length === 0 ? (
-        <div className="text-center py-12 text-gray-500"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>暫無商品</p></div>
+        <div className="text-center py-16 text-gray-400">
+          <Package className="w-14 h-14 mx-auto mb-3 opacity-20" />
+          <p className="text-base font-medium">暫無商品</p>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {listings.map((listing: any) => (
-            <div key={listing.id} className={`rounded-xl border shadow-sm overflow-hidden transition-all ${selectedIds.has(listing.id) ? 'border-[#06038d] ring-2 ring-[#06038d]/20' : 'border-gray-200'}`}>
-              {/* Header bar */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-[#06038d] to-[#1a17a0]">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input type="checkbox"
-                    checked={selectedIds.has(listing.id)}
-                    onChange={() => toggleOne(listing.id)}
-                    onClick={e => e.stopPropagation()}
-                    className="w-4 h-4 rounded border-white/50 bg-white/20 flex-shrink-0"
-                  />
-                  <span className="text-white text-sm font-semibold font-mono">#BOXIUM-{listing.id} · {listing.title}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    listing.condition === 'PSA10' ? 'bg-yellow-400 text-yellow-900' :
-                    listing.condition === 'PSA9' ? 'bg-green-300 text-green-900' :
-                    'bg-white/20 text-white'
-                  }`}>{conditionLabel[listing.condition] ?? listing.condition}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    listing.sellerType === 'platform' ? 'bg-blue-200 text-blue-900' : 'bg-orange-200 text-orange-900'
-                  }`}>{listing.sellerType === 'platform' ? '官方' : '賣家'}</span>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {(listing as any).adminDelisted ? (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white whitespace-nowrap">
-                      🚫強制下架
-                    </span>
-                  ) : (
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                      listing.status === 'active' ? 'bg-green-200 text-green-900' :
-                      listing.status === 'sold' ? 'bg-gray-300 text-gray-800' :
-                      'bg-red-200 text-red-900'
-                    }`}>
-                      {listing.status === 'active' ? '上架中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
-                    </span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          {/* Table Header */}
+          <div className="hidden md:grid bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wide"
+            style={{gridTemplateColumns: '32px 52px 1fr 100px 60px 80px 80px 80px 140px'}}>
+            <div className="flex items-center">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-3.5 h-3.5 rounded border-gray-300" />
+            </div>
+            <div></div>
+            <div>商品名稱</div>
+            <div className="text-right">售價</div>
+            <div className="text-center">庫存</div>
+            <div className="text-center">品相</div>
+            <div className="text-center">類型</div>
+            <div className="text-center">狀態</div>
+            <div className="text-right">操作</div>
+          </div>
+          {/* Table Rows */}
+          <div className="divide-y divide-gray-100">
+          {listings.map((listing: any) => {
+            let thumbUrl: string | null = null;
+            try {
+              const imgs = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
+              if (Array.isArray(imgs) && imgs.length > 0) thumbUrl = imgs[0];
+            } catch {}
+            const isSelected = selectedIds.has(listing.id);
+            const statusInfo = (listing as any).adminDelisted
+              ? { label: '強制下架', cls: 'bg-red-100 text-red-700' }
+              : listing.status === 'active' ? { label: '上架中', cls: 'bg-green-100 text-green-700' }
+              : listing.status === 'sold' ? { label: '已售出', cls: 'bg-blue-100 text-blue-700' }
+              : listing.status === 'draft' ? { label: '草稿', cls: 'bg-yellow-100 text-yellow-700' }
+              : { label: '已下架', cls: 'bg-gray-100 text-gray-500' };
+            return (
+            <div key={listing.id}
+              className={`group flex md:grid items-center px-3 py-2.5 hover:bg-blue-50/30 transition-colors gap-2 md:gap-0 ${
+                isSelected ? 'bg-[#06038d]/5 border-l-2 border-l-[#06038d]' : ''
+              }`}
+              style={{gridTemplateColumns: '32px 52px 1fr 100px 60px 80px 80px 80px 140px'}}>
+              {/* Checkbox */}
+              <div className="flex items-center flex-shrink-0">
+                <input type="checkbox" checked={isSelected} onChange={() => toggleOne(listing.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-3.5 h-3.5 rounded border-gray-300" />
+              </div>
+              {/* Thumbnail */}
+              <div className="flex items-center flex-shrink-0">
+                {thumbUrl ? (
+                  <img src={thumbUrl} alt="" className="w-9 h-11 object-cover rounded border border-gray-200" />
+                ) : (
+                  <div className="w-9 h-11 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+                    <Package className="w-4 h-4 text-gray-300" />
+                  </div>
+                )}
+              </div>
+              {/* Title + meta */}
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{listing.title}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="text-[11px] font-mono text-[#06038d]/60">#BOXIUM-{listing.id}</span>
+                  {listing.sellerDisplayName && (
+                    <span className="text-[11px] text-gray-400 truncate">· {listing.sellerDisplayName}</span>
                   )}
-                  <span className="text-white/70 text-[10px] whitespace-nowrap hidden sm:inline">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
+                  <span className="text-[10px] text-gray-400">{new Date(listing.createdAt).toLocaleDateString('zh-HK')}</span>
+                </div>
+                {/* Mobile-only inline info */}
+                <div className="flex items-center gap-1.5 mt-1 md:hidden flex-wrap">
+                  <span className="text-xs font-bold text-[#06038d]">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(0)}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusInfo.cls}`}>{statusInfo.label}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${conditionColor[listing.condition] ?? 'bg-gray-100 text-gray-600'}`}>{conditionLabel[listing.condition] ?? listing.condition ?? '-'}</span>
                 </div>
               </div>
-              {/* Content */}
-              <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {(() => {
-                    try {
-                      const imgs = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
-                      const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                      if (firstImg) return <img src={firstImg} alt="" className="w-12 h-14 object-cover rounded border border-gray-200 flex-shrink-0" />;
-                    } catch {}
-                    return null;
-                  })()}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-4 text-sm text-gray-700">
-                      <span className="font-semibold text-gray-900">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(2)}</span>
-                      <span className="text-gray-500">庫存: {listing.quantity}</span>
-                      {listing.sellerDisplayName && <span className="text-gray-500">賣家: {listing.sellerDisplayName}</span>}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => setSelectedListingId(listing.id)}>
-                    <Eye className="w-3 h-3 mr-1" />{listing.status === 'sold' ? '查看詳情' : '查看/編輯'}
-                  </Button>
-                  {/* Governance mode: no per-listing approve/reject buttons; admin uses batch delist */}
-                  {listing.status === 'active' && (
-                    <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}>下架</Button>
-                  )}
-                  {listing.status === 'removed' && (
-                    <Button size="sm" variant="outline" className="text-xs text-gray-700 bg-white" onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}>重新上架</Button>
-                  )}
-                </div>
+              {/* Price - desktop only */}
+              <div className="hidden md:flex justify-end">
+                <span className="text-sm font-bold text-[#06038d]">HKD {parseFloat(listing.priceHkd as string || '0').toFixed(0)}</span>
+              </div>
+              {/* Qty - desktop only */}
+              <div className="hidden md:flex justify-center">
+                <span className={`text-sm font-semibold ${
+                  (listing.quantity ?? 0) === 0 ? 'text-red-500' :
+                  (listing.quantity ?? 0) <= 2 ? 'text-orange-500' : 'text-gray-700'
+                }`}>{listing.quantity ?? 0}</span>
+              </div>
+              {/* Condition - desktop only */}
+              <div className="hidden md:flex justify-center">
+                <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
+                  conditionColor[listing.condition] ?? 'bg-gray-100 text-gray-600'
+                }`}>{conditionLabel[listing.condition] ?? listing.condition ?? '-'}</span>
+              </div>
+              {/* Seller Type - desktop only */}
+              <div className="hidden md:flex justify-center">
+                <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
+                  listing.sellerType === 'platform' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                }`}>{listing.sellerType === 'platform' ? '官方' : 'C2C'}</span>
+              </div>
+              {/* Status - desktop only */}
+              <div className="hidden md:flex justify-center">
+                <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${statusInfo.cls}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-1 flex-shrink-0">
+                <button
+                  onClick={() => setSelectedListingId(listing.id)}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-[#06038d] bg-[#06038d]/8 hover:bg-[#06038d]/15 rounded-md transition-colors whitespace-nowrap"
+                  title="查看/編輯">
+                  <Eye className="w-3 h-3" />{listing.status === 'sold' ? '查看' : '編輯'}
+                </button>
+                {listing.status === 'active' && !((listing as any).adminDelisted) && (
+                  <button
+                    onClick={() => updateMutation.mutate({ id: listing.id, status: 'removed' })}
+                    className="hidden md:flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors whitespace-nowrap"
+                    title="下架">
+                    <XCircle className="w-3 h-3" />下架
+                  </button>
+                )}
+                {(listing.status === 'removed' || (listing as any).adminDelisted) && (
+                  <button
+                    onClick={() => updateMutation.mutate({ id: listing.id, status: 'active' })}
+                    className="hidden md:flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-md transition-colors whitespace-nowrap"
+                    title="重新上架">
+                    <CheckCircle className="w-3 h-3" />上架
+                  </button>
+                )}
               </div>
             </div>
-          ))}
+            );
+          })}
+          </div>
         </div>
       )}
       {total > 20 && (
@@ -7007,15 +7067,29 @@ function AuctionsAdminTab() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#06038D] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : listings.length === 0 ? (
-        <div className="text-center py-12 text-[#06038D]/40">
-          <p className="text-lg">目前沒有{statusOptions.find(o => o.value === filterStatus)?.label ?? ''}的拍賣</p>
+        <div className="text-center py-16 text-[#06038D]/40">
+          <p className="text-base font-medium">目前沒有{statusOptions.find(o => o.value === filterStatus)?.label ?? ''}的拍賣</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          {/* Table Header */}
+          <div className="hidden lg:grid bg-gray-50 border-b border-gray-200 px-3 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wide"
+            style={{gridTemplateColumns: '52px 1fr 100px 70px 70px 130px 130px 160px'}}>
+            <div></div>
+            <div>拍賣商品</div>
+            <div className="text-right">起標價</div>
+            <div className="text-center">出價數</div>
+            <div className="text-center">系列</div>
+            <div className="text-center">開始時間</div>
+            <div className="text-center">結標時間</div>
+            <div className="text-right">操作</div>
+          </div>
+          {/* Table Rows */}
+          <div className="divide-y divide-gray-100">
           {listings.map((listing: any) => {
             // Parse images field (stored as JSON string or array)
             let thumbUrl: string | null = null;
@@ -7023,93 +7097,125 @@ function AuctionsAdminTab() {
               const imgs = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
               if (Array.isArray(imgs) && imgs.length > 0) thumbUrl = imgs[0];
             } catch {}
+            const hasCurrentBid = listing.currentBid && parseFloat(listing.currentBid) > 0;
             return (
-            <div key={listing.id} className="bg-white rounded-xl border border-[#06038D]/15 p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                {/* Thumbnail */}
-                <div className="flex-shrink-0 w-16 h-20 rounded-lg overflow-hidden bg-[#06038D]/5 border border-[#06038D]/10 flex items-center justify-center">
-                  {thumbUrl ? (
-                    <img src={thumbUrl} alt="拍賣品" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-[#06038D]/30 text-xs text-center px-1">無圖片</span>
+            <div key={listing.id}
+              className="group flex lg:grid items-center px-3 py-3 hover:bg-blue-50/30 transition-colors gap-3 lg:gap-0"
+              style={{gridTemplateColumns: '52px 1fr 100px 70px 70px 130px 130px 160px'}}>
+              {/* Thumbnail */}
+              <div className="flex-shrink-0 w-11 h-14 rounded-lg overflow-hidden bg-[#06038D]/5 border border-[#06038D]/10 flex items-center justify-center">
+                {thumbUrl ? (
+                  <img src={thumbUrl} alt="拍賣品" className="w-full h-full object-cover" />
+                ) : (
+                  <Package className="w-4 h-4 text-[#06038D]/20" />
+                )}
+              </div>
+              {/* Title + status + seller */}
+              <div className="flex-1 min-w-0 pr-2">
+                <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                  {auctionStatusBadge(listing.auctionStatus ?? 'pending_review', listing.auctionPaymentStatus)}
+                  <span className="text-[11px] font-mono text-[#06038D]/50">#{listing.id}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{listing.title ?? `卡牌 #${listing.cardId}`}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="text-[11px] text-gray-500">賣家: {listing.sellerName ?? listing.sellerId}</span>
+                  {hasCurrentBid && (
+                    <span className="text-[11px] font-semibold text-green-700">目前出價: HKD {parseFloat(listing.currentBid).toLocaleString()}</span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    {auctionStatusBadge(listing.auctionStatus ?? 'pending_review', listing.auctionPaymentStatus)}
-                    <span className="text-xs text-[#06038D]/50">#{listing.id}</span>
-                    <span className="text-xs text-[#06038D]/50">{listing.tcgSeries?.toUpperCase()}</span>
-                  </div>
-                  <p className="font-semibold text-[#06038D] truncate">{listing.title ?? `卡牌 #${listing.cardId}`}</p>
-                  <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    <span className="text-xs text-[#06038D]/60">賣家: {listing.sellerName ?? listing.sellerId}</span>
-                    <span className="text-xs text-[#06038D]/60">起標: HKD {parseFloat(listing.startingBid ?? '0').toLocaleString()}</span>
-                    {listing.buyNowPrice && <span className="text-xs text-[#06038D]/60">即買: HKD {parseFloat(listing.buyNowPrice).toLocaleString()}</span>}
-                    <span className="text-xs text-[#06038D]/60">出價: {listing.bidCount ?? 0} 筆</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    {listing.auctionStartAt && <span className="text-xs text-[#06038D]/50">開始: {new Date(listing.auctionStartAt).toLocaleString('zh-HK')}</span>}
-                    {listing.auctionEndAt && <span className="text-xs text-[#06038D]/50">結標: {new Date(listing.auctionEndAt).toLocaleString('zh-HK')}</span>}
-                  </div>
-                  {/* Rejection reason */}
-                  {listing.auctionStatus === 'rejected' && listing.rejectedReason && (
-                    <div className="mt-2 px-2 py-1.5 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-xs font-semibold text-red-600">拒絕原因：</p>
-                      <p className="text-xs text-red-700 mt-0.5">{listing.rejectedReason}</p>
-                    </div>
-                  )}
+                {/* Mobile-only extra info */}
+                <div className="flex items-center gap-2 mt-1 lg:hidden flex-wrap">
+                  <span className="text-[11px] text-[#06038D]/70">起標: HKD {parseFloat(listing.startingBid ?? '0').toLocaleString()}</span>
+                  <span className="text-[11px] text-gray-500">出價: {listing.bidCount ?? 0} 筆</span>
+                  {listing.auctionEndAt && <span className="text-[11px] text-gray-400">結標: {new Date(listing.auctionEndAt).toLocaleString('zh-HK', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>}
                 </div>
-                {/* Action buttons */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  {/* Governance mode: no approve/reject; admin uses delist/restore */}
-                  {listing.auctionStatus === 'admin_delisted' && (
-                    <Button
-                      size="sm"
-                      className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold text-xs h-8"
-                      disabled={approveMutation.isPending}
-                      onClick={() => approveMutation.mutate({ listingId: listing.id })}
-                    >
-                      重新上架
-                    </Button>
-                  )}
-                  {['active', 'ending_soon'].includes(listing.auctionStatus ?? '') && (
-                    <Button
-                      size="sm"
-                      className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-8"
-                      disabled={forceEndMutation.isPending}
-                      onClick={() => {
-                        if (confirm(`確認將拍賣 #${listing.id}「${listing.title}」強制結標？`)) {
-                          forceEndMutation.mutate({ listingId: listing.id });
-                        }
-                      }}
-                    >
-                      ⚡ 強制結標
-                    </Button>
-                  )}
-                  {['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '') && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
-                      disabled={cancelMutation.isPending}
-                      onClick={() => setCancelDialog({ open: true, listingId: listing.id, reason: '' })}
-                    >
-                      強制取消
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-[#06038D]/30 text-[#06038D] text-xs h-8"
-                    onClick={() => window.open(`/auction/${listing.id}`, '_blank')}
-                  >
-                    查看
-                  </Button>
-                </div>
+                {listing.auctionStatus === 'rejected' && listing.rejectedReason && (
+                  <div className="mt-1 px-2 py-1 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                    拒絕原因：{listing.rejectedReason}
+                  </div>
+                )}
+              </div>
+              {/* Starting Bid - desktop */}
+              <div className="hidden lg:flex flex-col items-end">
+                <span className="text-sm font-bold text-[#06038D]">HKD {parseFloat(listing.startingBid ?? '0').toLocaleString()}</span>
+                {listing.buyNowPrice && (
+                  <span className="text-[11px] text-gray-400">即買: {parseFloat(listing.buyNowPrice).toLocaleString()}</span>
+                )}
+              </div>
+              {/* Bid Count - desktop */}
+              <div className="hidden lg:flex flex-col items-center">
+                <span className={`text-sm font-bold ${(listing.bidCount ?? 0) > 0 ? 'text-green-700' : 'text-gray-400'}`}>
+                  {listing.bidCount ?? 0}
+                </span>
+                <span className="text-[10px] text-gray-400">出價</span>
+              </div>
+              {/* Series - desktop */}
+              <div className="hidden lg:flex justify-center">
+                <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
+                  listing.tcgSeries === 'pokemon' ? 'bg-yellow-100 text-yellow-800' :
+                  listing.tcgSeries === 'onepiece' ? 'bg-red-100 text-red-700' :
+                  'bg-purple-100 text-purple-700'
+                }`}>{listing.tcgSeries?.toUpperCase() ?? '-'}</span>
+              </div>
+              {/* Start time - desktop */}
+              <div className="hidden lg:flex justify-center">
+                {listing.auctionStartAt ? (
+                  <span className="text-[11px] text-gray-500 text-center">
+                    {new Date(listing.auctionStartAt).toLocaleString('zh-HK', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+                  </span>
+                ) : <span className="text-[11px] text-gray-300">-</span>}
+              </div>
+              {/* End time - desktop */}
+              <div className="hidden lg:flex justify-center">
+                {listing.auctionEndAt ? (
+                  <span className={`text-[11px] text-center ${
+                    listing.auctionStatus === 'ending_soon' ? 'text-orange-600 font-semibold' : 'text-gray-500'
+                  }`}>
+                    {new Date(listing.auctionEndAt).toLocaleString('zh-HK', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+                  </span>
+                ) : <span className="text-[11px] text-gray-300">-</span>}
+              </div>
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-1 flex-shrink-0">
+                <button
+                  onClick={() => window.open(`/auction/${listing.id}`, '_blank')}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-[#06038D] bg-[#06038D]/8 hover:bg-[#06038D]/15 rounded-md transition-colors whitespace-nowrap"
+                  title="查看拍賣">
+                  <Eye className="w-3 h-3" />查看
+                </button>
+                {listing.auctionStatus === 'admin_delisted' && (
+                  <button
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-[#06038D] bg-[#FEDD00] hover:bg-[#FEDD00]/80 rounded-md transition-colors whitespace-nowrap"
+                    disabled={approveMutation.isPending}
+                    onClick={() => approveMutation.mutate({ listingId: listing.id })}>
+                    <CheckCircle className="w-3 h-3" />恢復
+                  </button>
+                )}
+                {['active', 'ending_soon'].includes(listing.auctionStatus ?? '') && (
+                  <button
+                    className="hidden md:flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors whitespace-nowrap"
+                    disabled={forceEndMutation.isPending}
+                    onClick={() => {
+                      if (confirm(`確認將拍賣 #${listing.id}「${listing.title}」強制結標？`)) {
+                        forceEndMutation.mutate({ listingId: listing.id });
+                      }
+                    }}>
+                    <Timer className="w-3 h-3" />結標
+                  </button>
+                )}
+                {['active', 'ending_soon', 'scheduled'].includes(listing.auctionStatus ?? '') && (
+                  <button
+                    className="hidden md:flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors whitespace-nowrap"
+                    disabled={cancelMutation.isPending}
+                    onClick={() => setCancelDialog({ open: true, listingId: listing.id, reason: '' })}>
+                    <XCircle className="w-3 h-3" />取消
+                  </button>
+                )}
               </div>
             </div>
             );
           })}
+          </div>
         </div>
       )}
 
