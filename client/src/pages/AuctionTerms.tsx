@@ -131,9 +131,13 @@ export default function AuctionTerms() {
   ];
 
   const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setOpenSectionId(id);
     setTocOpen(false);
+    // Wait a tick for the section to expand before scrolling
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   return (
