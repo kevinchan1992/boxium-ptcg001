@@ -5550,16 +5550,16 @@ export async function getAuctionAdminStats(): Promise<{
         eq(marketplaceListings.listingMode as any, 'auction'),
         gt(marketplaceListings.createdAt, todayStart),
       )),
-    // Monthly completed auctions + revenue
+    // Monthly completed auctions + revenue (only count auctions with paid orders)
     db.select({
       count: sql<number>`COUNT(*)`,
-      revenue: sql<number>`COALESCE(SUM(CAST(${marketplaceListings.currentHighestBid} AS DECIMAL(10,2))), 0)`,
+      revenue: sql<number>`COALESCE(SUM(CAST(${marketplaceOrders.unitPriceHkd} AS DECIMAL(10,2))), 0)`,
     })
-      .from(marketplaceListings)
+      .from(marketplaceOrders)
       .where(and(
-        eq(marketplaceListings.listingMode as any, 'auction'),
-        eq(marketplaceListings.auctionStatus as any, 'ended_sold'),
-        gt(marketplaceListings.updatedAt, monthStart),
+        eq(marketplaceOrders.orderSource as any, 'auction'),
+        eq(marketplaceOrders.paymentStatus as any, 'paid'),
+        gt(marketplaceOrders.updatedAt, monthStart),
       )),
     // Total violations
     db.select({ count: sql<number>`COUNT(*)` }).from(auctionViolations),

@@ -6893,13 +6893,22 @@ function AuctionsAdminTab() {
     { value: 'admin_delisted', label: '🚫 強制下架' },
   ];
 
-  const auctionStatusBadge = (status: string) => {
+  const auctionStatusBadge = (status: string, auctionPaymentStatus?: string | null) => {
+    let endedSoldLabel: string;
+    let endedSoldClass: string;
+    if (auctionPaymentStatus === 'paid') {
+      endedSoldLabel = '已成交'; endedSoldClass = 'bg-green-100 text-green-700';
+    } else if (auctionPaymentStatus === 'expired' || auctionPaymentStatus === 'failed') {
+      endedSoldLabel = '已取消'; endedSoldClass = 'bg-red-100 text-red-600';
+    } else {
+      endedSoldLabel = '已得標（待付款）'; endedSoldClass = 'bg-[#06038D]/10 text-[#06038D]';
+    }
     const map: Record<string, { label: string; className: string }> = {
       pending_review: { label: '待審核', className: 'bg-amber-100 text-amber-700' },
       scheduled: { label: '已排程', className: 'bg-blue-100 text-blue-700' },
       active: { label: '競標中', className: 'bg-green-100 text-green-700' },
       ending_soon: { label: '即將結標', className: 'bg-orange-100 text-orange-700' },
-      ended_sold: { label: '已成交', className: 'bg-[#06038D]/10 text-[#06038D]' },
+      ended_sold: { label: endedSoldLabel, className: endedSoldClass },
       ended_no_bid: { label: '流標', className: 'bg-gray-100 text-gray-500' },
       cancelled: { label: '已取消', className: 'bg-red-100 text-red-600' },
       rejected: { label: '已拒絕', className: 'bg-red-200 text-red-700' },
@@ -7027,7 +7036,7 @@ function AuctionsAdminTab() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    {auctionStatusBadge(listing.auctionStatus ?? 'pending_review')}
+                    {auctionStatusBadge(listing.auctionStatus ?? 'pending_review', listing.auctionPaymentStatus)}
                     <span className="text-xs text-[#06038D]/50">#{listing.id}</span>
                     <span className="text-xs text-[#06038D]/50">{listing.tcgSeries?.toUpperCase()}</span>
                   </div>

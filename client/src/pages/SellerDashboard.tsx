@@ -766,14 +766,23 @@ function SellerAuctionsTab() {
     return null;
   }
 
-  function AuctionStatusBadge({ status }: { status: string }) {
+  function AuctionStatusBadge({ status, auctionPaymentStatus }: { status: string; auctionPaymentStatus?: string | null }) {
   const { t } = useTranslation();
+    let endedSoldLabel: string;
+    let endedSoldCls: string;
+    if (auctionPaymentStatus === 'paid') {
+      endedSoldLabel = '已成交'; endedSoldCls = 'bg-green-100 text-green-700';
+    } else if (auctionPaymentStatus === 'expired' || auctionPaymentStatus === 'failed') {
+      endedSoldLabel = '已取消'; endedSoldCls = 'bg-red-100 text-red-600';
+    } else {
+      endedSoldLabel = '已得標（待付款）'; endedSoldCls = 'bg-[#06038D]/10 text-[#06038D]';
+    }
     const map: Record<string, { label: string; cls: string }> = {
       active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
       ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
       scheduled:      { label: "已排程",   cls: "bg-indigo-100 text-indigo-700" },
       pending_review: { label: t("seller.auctions.tab.filter.review"),   cls: "bg-yellow-100 text-yellow-700" },
-      ended_sold:     { label: "已成交",   cls: "bg-green-100 text-green-700" },
+      ended_sold:     { label: endedSoldLabel, cls: endedSoldCls },
       ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
       ended:          { label: "已結標",   cls: "bg-green-100 text-green-700" },
       sold:           { label: "已成交",   cls: "bg-green-100 text-green-700" },
@@ -916,7 +925,7 @@ function SellerAuctionsTab() {
                         {auction.grade && `PSA ${auction.grade}`}
                       </p>
                     </div>
-                    <AuctionStatusBadge status={auction.auctionStatus} />
+                    <AuctionStatusBadge status={auction.auctionStatus} auctionPaymentStatus={auction.auctionPaymentStatus} />
                   </div>
 
                   {/* Scheduled auction info banner */}
