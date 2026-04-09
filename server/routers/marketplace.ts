@@ -973,11 +973,11 @@ export const marketplaceRouter = router({
       title: z.string().min(3).max(200),
       description: z.string().max(2000).optional(),
       condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
-      price: z.number().min(4.00, "商品定價不能低於 HKD 4.00"),
+      price: z.number().min(0.01, "商品定價必須大於 0"),
       quantity: z.number().int().min(1).default(1),
       cardId: z.number().int().optional(),
       images: z.array(z.string()).max(5).optional(),
-      minOfferHkd: z.number().min(4.00).optional(),
+      minOfferHkd: z.number().min(0.01).optional(),
       allowOffers: z.boolean().default(false),
       tcgSeries: z.enum(["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon"),
     }))
@@ -994,6 +994,13 @@ export const marketplaceRouter = router({
       if (!input.images || input.images.length === 0) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "請至少上傳一張商品圖片才能上架" });
       }
+      // Min listing price check — read from system settings
+      const minPriceSetting = await getSystemSetting('min_listing_price_hkd').catch(() => null);
+      const minListingPrice = minPriceSetting ? parseFloat(minPriceSetting.settingValue) : 4.00;
+      if (input.price < minListingPrice) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `商品定價 HKD ${input.price.toFixed(2)} 低於平台最低上架金額 HKD ${minListingPrice.toFixed(2)}` });
+      }
+
       // RC3: Duplicate listing check — same card + same condition by same seller (active only)
       // BUG-2 Fix: Use getSellerListings(seller.id) to only check current seller's listings
       if (input.cardId) {
@@ -1030,7 +1037,7 @@ export const marketplaceRouter = router({
       id: z.number().int(),
       title: z.string().min(3).max(200).optional(),
       description: z.string().max(2000).optional(),
-      price: z.number().min(4.00, "商品定價不能低於 HKD 4.00").optional(),
+      price: z.number().min(0.01, "商品定價必須大於 0").optional(),
       quantity: z.number().int().min(1).optional(),
       status: z.enum(["draft", "active", "removed"]).optional(),
     }))
@@ -1282,9 +1289,11 @@ export const marketplaceRouter = router({
         if (!sellerProfile || order.sellerId !== sellerProfile.id) throw new TRPCError({ code: "FORBIDDEN" });
       }
       if (!["processing", "payment_received", "paid_held"].includes(order.orderStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "訂單狀態不允許此操作" });
-      // Set autoCompleteAt = 14 days from now
+      // Set autoCompleteAt = N days from now (configurable via platform settings)
+      const autoCompleteSetting = await getSystemSetting('auto_complete_days').catch(() => null);
+      const autoCompleteDays = autoCompleteSetting ? parseInt(autoCompleteSetting.settingValue) : 14;
       const autoCompleteAt = new Date();
-      autoCompleteAt.setDate(autoCompleteAt.getDate() + 14);
+      autoCompleteAt.setDate(autoCompleteAt.getDate() + autoCompleteDays);
       await updateMarketplaceOrder(input.orderId, {
         orderStatus: "shipped",
         shippedAt: new Date(),
@@ -2203,8 +2212,10 @@ export const marketplaceRouter = router({
         if (input.shippingMethod) updates.shippingMethod = input.shippingMethod;
       }
       if (input.orderStatus === "delivered") {
+        const autoCompleteSettingD = await getSystemSetting('auto_complete_days').catch(() => null);
+        const autoCompleteDaysD = autoCompleteSettingD ? parseInt(autoCompleteSettingD.settingValue) : 14;
         const autoComplete = new Date();
-        autoComplete.setDate(autoComplete.getDate() + 14);
+        autoComplete.setDate(autoComplete.getDate() + autoCompleteDaysD);
         updates.autoCompleteAt = autoComplete;
       }
       // When cancelling, also update paymentStatus and clear any pending Alipay proof
@@ -4168,14 +4179,16 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const sellerProfile = await getSellerProfileById(listing.sellerId);
       if (!sellerProfile) throw new TRPCError({ code: "NOT_FOUND", message: "賣家不存在" });
 
-      // UX1: Rate limit — max 3 offers per listing per buyer per 24 hours
+      // UX1: Rate limit — max N offers per listing per buyer per 24 hours (configurable)
+      const maxOffersSetting = await getSystemSetting('max_offers_per_day').catch(() => null);
+      const maxOffersPerDay = maxOffersSetting ? parseInt(maxOffersSetting.settingValue) : 3;
       const recentOffers = await getListingOffers(input.listingId);
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const myRecentOffers = recentOffers.filter(
         (o: any) => o.buyerId === ctx.user.id && new Date(o.createdAt) > twentyFourHoursAgo
       );
-      if (myRecentOffers.length >= 3) {
-        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "同一商品 24 小時內最多出價 3 次，請稍後再試" });
+      if (myRecentOffers.length >= maxOffersPerDay) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `同一商品 24 小時內最多出價 ${maxOffersPerDay} 次，請稍後再試` });
       }
 
       // Expire in 48 hours
@@ -4878,9 +4891,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
           throw new TRPCError({ code: 'BAD_REQUEST', message: '不能將自己的商品加入購物車' });
         }
       }
-      // Upsert (ignore if already in cart) — expiresAt = 14 days from now
-      const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-      await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId, expiresAt }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()`, expiresAt: sql`DATE_ADD(NOW(), INTERVAL 14 DAY)` } });
+      // Upsert (ignore if already in cart) — expiresAt = N days from now (configurable)
+      const cartRetentionSetting = await getSystemSetting('cart_retention_days').catch(() => null);
+      const cartRetentionDays = cartRetentionSetting ? parseInt(cartRetentionSetting.settingValue) : 14;
+      const expiresAt = new Date(Date.now() + cartRetentionDays * 24 * 60 * 60 * 1000);
+      await db.insert(cartItems).values({ userId: ctx.user.id, listingId: input.listingId, expiresAt }).onDuplicateKeyUpdate({ set: { addedAt: sql`NOW()`, expiresAt: sql`DATE_ADD(NOW(), INTERVAL ${sql.raw(cartRetentionDays.toString())} DAY)` } });
       return { success: true };
     }),
 

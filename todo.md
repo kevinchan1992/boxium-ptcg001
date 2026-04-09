@@ -7980,3 +7980,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 站內訊息中心：後端新增 getMyOrderThreads procedure（列出用戶所有訂單 thread，含最新訊息預覽）
 - [ ] 站內訊息中心：開發 MessageCenter.tsx 全局浮動訊息中心組件（右下角圓點按鈕 + 展開視窗）
 - [ ] 站內訊息中心：在 App.tsx 掛載浮動按鈕（登入後顯示）
+
+---
+## ✅ 平台「更多設定」功能完成（2026-04-09）
+- [x] 後端 systemRouter.ts：新增 getMoreSettings / updateMoreSettings procedures（11 個設定鍵）
+- [x] 前端 AdminPlatformSettings.tsx：完整實作「更多設定」UI（5 個分組：訂單生命週期、出價設定、商品上架、購物車、SLA）
+- [x] priceUpdateScheduler.ts：購物車到期提醒天數改為動態讀取 cart_expiry_reminder_days
+- [x] marketplace.ts：新增上架時最低金額驗證（讀取 min_listing_price_hkd）
+- [x] DB 插入 8 個新設定預設值（min_listing_price_hkd=4, auto_complete_days=14, cart_retention_days=14, cart_expiry_reminder_days=3, max_offers_per_day=3, alipay_review_sla_hours=24, dispute_sla_hours=72, meetup_cancel_days=7）

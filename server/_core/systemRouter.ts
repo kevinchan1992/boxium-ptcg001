@@ -128,4 +128,92 @@ export const systemRouter = router({
       await Promise.all(updates);
       return { success: true };
     }),
+
+  // Get all "more settings" (order lifecycle, listing, cart, SLA)
+  getMoreSettings: adminProcedure
+    .query(async () => {
+      const [
+        autoCompleteDays,
+        minListingPrice,
+        cartRetentionDays,
+        cartExpiryReminderDays,
+        maxOffersPerDay,
+        alipayReviewSlaHours,
+        disputeSlaHours,
+        meetupCancelDays,
+        paymentTimeout,
+        offerPaymentTimeout,
+        reminderMinutes,
+      ] = await Promise.all([
+        getSystemSetting('auto_complete_days'),
+        getSystemSetting('min_listing_price_hkd'),
+        getSystemSetting('cart_retention_days'),
+        getSystemSetting('cart_expiry_reminder_days'),
+        getSystemSetting('max_offers_per_day'),
+        getSystemSetting('alipay_review_sla_hours'),
+        getSystemSetting('dispute_sla_hours'),
+        getSystemSetting('meetup_cancel_days'),
+        getSystemSetting('payment_timeout_minutes'),
+        getSystemSetting('offer_payment_timeout_hours'),
+        getSystemSetting('payment_reminder_minutes'),
+      ]);
+      return {
+        autoCompleteDays: autoCompleteDays ? parseInt(autoCompleteDays.settingValue) : 14,
+        minListingPriceHkd: minListingPrice ? parseFloat(minListingPrice.settingValue) : 4.00,
+        cartRetentionDays: cartRetentionDays ? parseInt(cartRetentionDays.settingValue) : 14,
+        cartExpiryReminderDays: cartExpiryReminderDays ? parseInt(cartExpiryReminderDays.settingValue) : 3,
+        maxOffersPerDay: maxOffersPerDay ? parseInt(maxOffersPerDay.settingValue) : 3,
+        alipayReviewSlaHours: alipayReviewSlaHours ? parseInt(alipayReviewSlaHours.settingValue) : 24,
+        disputeSlaHours: disputeSlaHours ? parseInt(disputeSlaHours.settingValue) : 72,
+        meetupCancelDays: meetupCancelDays ? parseInt(meetupCancelDays.settingValue) : 7,
+        paymentTimeoutMinutes: paymentTimeout ? parseInt(paymentTimeout.settingValue) : 30,
+        offerPaymentTimeoutHours: offerPaymentTimeout ? parseInt(offerPaymentTimeout.settingValue) : 24,
+        paymentReminderMinutes: reminderMinutes ? parseInt(reminderMinutes.settingValue) : 60,
+      };
+    }),
+
+  // Update all "more settings"
+  updateMoreSettings: adminProcedure
+    .input(
+      z.object({
+        autoCompleteDays: z.number().int().min(1).max(90).optional(),
+        minListingPriceHkd: z.number().min(0.01).max(9999).optional(),
+        cartRetentionDays: z.number().int().min(1).max(90).optional(),
+        cartExpiryReminderDays: z.number().int().min(1).max(30).optional(),
+        maxOffersPerDay: z.number().int().min(1).max(20).optional(),
+        alipayReviewSlaHours: z.number().int().min(1).max(168).optional(),
+        disputeSlaHours: z.number().int().min(1).max(720).optional(),
+        meetupCancelDays: z.number().int().min(1).max(30).optional(),
+        paymentTimeoutMinutes: z.number().int().min(5).max(1440).optional(),
+        offerPaymentTimeoutHours: z.number().int().min(1).max(168).optional(),
+        paymentReminderMinutes: z.number().int().min(5).max(1440).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const updates: Promise<unknown>[] = [];
+      if (input.autoCompleteDays !== undefined)
+        updates.push(setSystemSetting('auto_complete_days', input.autoCompleteDays.toString(), '出貨後自動完成訂單天數 (default: 14)'));
+      if (input.minListingPriceHkd !== undefined)
+        updates.push(setSystemSetting('min_listing_price_hkd', input.minListingPriceHkd.toString(), '最低出售金額 HKD (default: 4.00)'));
+      if (input.cartRetentionDays !== undefined)
+        updates.push(setSystemSetting('cart_retention_days', input.cartRetentionDays.toString(), '購物車商品保留天數 (default: 14)'));
+      if (input.cartExpiryReminderDays !== undefined)
+        updates.push(setSystemSetting('cart_expiry_reminder_days', input.cartExpiryReminderDays.toString(), '購物車到期提醒提前天數 (default: 3)'));
+      if (input.maxOffersPerDay !== undefined)
+        updates.push(setSystemSetting('max_offers_per_day', input.maxOffersPerDay.toString(), '每個商品每買家每24小時最多出價次數 (default: 3)'));
+      if (input.alipayReviewSlaHours !== undefined)
+        updates.push(setSystemSetting('alipay_review_sla_hours', input.alipayReviewSlaHours.toString(), 'Alipay 審核 SLA 時限小時 (default: 24)'));
+      if (input.disputeSlaHours !== undefined)
+        updates.push(setSystemSetting('dispute_sla_hours', input.disputeSlaHours.toString(), '爭議處理 SLA 時限小時 (default: 72)'));
+      if (input.meetupCancelDays !== undefined)
+        updates.push(setSystemSetting('meetup_cancel_days', input.meetupCancelDays.toString(), '面交訂單未確認自動取消天數 (default: 7)'));
+      if (input.paymentTimeoutMinutes !== undefined)
+        updates.push(setSystemSetting('payment_timeout_minutes', input.paymentTimeoutMinutes.toString(), '待付款訂單自動取消時限分鐘 (default: 30)'));
+      if (input.offerPaymentTimeoutHours !== undefined)
+        updates.push(setSystemSetting('offer_payment_timeout_hours', input.offerPaymentTimeoutHours.toString(), '接受出價後付款時限小時 (default: 24)'));
+      if (input.paymentReminderMinutes !== undefined)
+        updates.push(setSystemSetting('payment_reminder_minutes', input.paymentReminderMinutes.toString(), '付款提醒郵件發送時機分鐘 (default: 60)'));
+      await Promise.all(updates);
+      return { success: true };
+    }),
 });

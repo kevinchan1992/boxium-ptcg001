@@ -1601,10 +1601,13 @@ async function runCartExpiryNotification() {
     const database = await getDb();
     if (!database) return;
 
+    const { getSystemSetting } = await import('./db');
     const now = new Date();
-    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const reminderDaysSetting = await getSystemSetting('cart_expiry_reminder_days').catch(() => null);
+    const reminderDays = reminderDaysSetting ? parseInt(reminderDaysSetting.settingValue) : 3;
+    const threeDaysLater = new Date(now.getTime() + reminderDays * 24 * 60 * 60 * 1000);
 
-    // Find cart items expiring within 3 days (but not yet expired)
+    // Find cart items expiring within reminderDays days (but not yet expired)
     const expiringItems = await database
       .select({
         id: cartItems.id,
