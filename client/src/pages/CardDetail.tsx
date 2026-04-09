@@ -427,23 +427,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               <ShareButton cardName={product.name} cardId={cardId!} />
             </div>
 
-            {/* Grade Filter - single cards only */}
-            {!isSealedProduct && (
-              <div className="flex flex-wrap gap-1.5">
-                {grades.map((grade) => (
-                  <button
-                    key={grade}
-                    onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
-                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 border ${activeGrade === grade
-                      ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
-                      : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                      }`}
-                  >
-                    {grade}
-                  </button>
-                ))}
-              </div>
-            )}
+
 
             {/* ── Price Reference Card (deep blue, like MarketplaceListing) ── */}
             <div className="rounded-xl overflow-hidden border border-[#1565C0]/50">
@@ -617,11 +601,30 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
         {/* ── Price History Table ── */}
         <div className="rounded-xl overflow-hidden border border-zinc-800 mb-4 sm:mb-6">
-          <div className="bg-zinc-900 px-4 py-3 flex items-center gap-2 border-b border-zinc-800">
-            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-            <h3 className="text-sm sm:text-base font-semibold text-white">
-              SNKRDUNK {t("cardDetail.actualPriceHistory")}
-            </h3>
+          <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
+              <h3 className="text-sm sm:text-base font-semibold text-white">
+                SNKRDUNK {t("cardDetail.actualPriceHistory")}
+              </h3>
+            </div>
+            {/* Grade Filter - single cards only */}
+            {!isSealedProduct && (
+              <div className="flex flex-wrap gap-1.5">
+                {grades.map((grade) => (
+                  <button
+                    key={grade}
+                    onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${activeGrade === grade
+                      ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
+                      : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                      }`}
+                  >
+                    {grade}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {activePriceLoading ? (
             <div className="flex items-center justify-center py-10 bg-zinc-900/50">
