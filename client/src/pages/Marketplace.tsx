@@ -828,20 +828,7 @@ export default function Marketplace() {
               </div>
             </div>
           ))}
-          {activeBanners.length > 1 && (
-            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
-                  <div className="flex gap-1.5">
-                {activeBanners.map((_: any, i: number) => (
-                  <button
-                    key={i}
-                    onClick={() => setBannerIdx(i)}
-                    className={`rounded-full transition-all duration-300 ${i === bannerIdx ? "bg-white w-1 h-1" : "bg-white/40 w-0.5 h-0.5"}`}
-                  />
-                ))}
-              </div>
-              <span className="text-white/30 text-[8px] sm:hidden leading-none tracking-widest select-none">← 滑動 →</span>
-            </div>
-          )}
+
           {activeBanners.length > 1 && (
             <>
               <button
