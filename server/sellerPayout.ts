@@ -26,7 +26,7 @@ import {
   getCartOrderById,
 } from "./db";
 import { getDb } from "./db";
-import { marketplacePayouts, marketplaceOrders } from "../drizzle/schema_new";
+import { marketplacePayouts, marketplaceOrders, orderStatusHistory } from "../drizzle/schema_new";
 import { eq } from "drizzle-orm";
 import { createNotification } from "./db/notifications";
 
@@ -192,6 +192,23 @@ export async function executeSellerPayout(orderId: number): Promise<PayoutResult
       body: `您的訂單 #${order.orderNo} 款項已成功轉帳至您的 Stripe 帳戶，金額 HKD ${sellerReceivable.toFixed(2)}。`,
       linkUrl: "/seller",
     }).catch(() => {});
+
+    // Record status history: payout paid
+    try {
+      if (db) {
+        await db.insert(orderStatusHistory).values({
+          orderId,
+          fromStatus: 'completed',
+          toStatus: 'completed',
+          operatorId: null, // system action
+          operatorName: 'system',
+          note: `Stripe 放款完成 HKD ${sellerReceivable.toFixed(2)} (Transfer: ${transfer.id})`,
+          entryType: 'note',
+        });
+      }
+    } catch (histErr: any) {
+      console.warn('[Payout] orderStatusHistory insert failed:', histErr.message);
+    }
 
     return { success: true, transferId: transfer.id, amountHkd: sellerReceivable };
   } catch (err: any) {

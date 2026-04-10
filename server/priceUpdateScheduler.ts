@@ -479,6 +479,21 @@ export function startAutoCompleteOrdersScheduler() {
                 }
               }
             }
+            // Record status history: auto-complete (system)
+            try {
+              const { orderStatusHistory: osh } = await import('../drizzle/schema_new');
+              await db.insert(osh).values({
+                orderId: order.id,
+                fromStatus: order.orderStatus,
+                toStatus: 'completed',
+                operatorId: null,
+                operatorName: 'system',
+                note: '系統自動完成（14 天未確認收貨）',
+                entryType: 'status_change',
+              });
+            } catch (histErr: any) {
+              console.warn(`[AutoComplete] orderStatusHistory insert failed for order ${order.orderNo}:`, histErr.message);
+            }
             console.log(`[AutoComplete] Order ${order.orderNo} auto-completed`);
           } catch (err) {
             console.error(`[AutoComplete] Failed to auto-complete order ${order.orderNo}:`, err);
@@ -1044,6 +1059,21 @@ export function startPaymentTimeoutCancelScheduler() {
               } catch (violationErr: any) {
                 console.error(`[PaymentTimeout] Failed to record violation for order ${order.id}:`, violationErr.message);
               }
+            }
+            // Record status history: payment timeout cancellation (system)
+            try {
+              const { orderStatusHistory: osh } = await import('../drizzle/schema_new');
+              await db.insert(osh).values({
+                orderId: order.id,
+                fromStatus: 'pending_payment',
+                toStatus: 'cancelled',
+                operatorId: null,
+                operatorName: 'system',
+                note: `進入超時自動取消（${timeoutMinutes} 分鐘未付款）`,
+                entryType: 'status_change',
+              });
+            } catch (histErr: any) {
+              console.warn(`[PaymentTimeout] orderStatusHistory insert failed for order ${order.orderNo}:`, histErr.message);
             }
             console.log(`[PaymentTimeout] Cancelled order ${order.orderNo} (id: ${order.id})`);
           } catch (err) {

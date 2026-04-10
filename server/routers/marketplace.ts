@@ -920,6 +920,23 @@ export const marketplaceRouter = router({
       } catch (emailErr: any) {
         console.warn("[Order] Completed email failed:", emailErr.message);
       }
+      // Record status history: shipped/delivered → completed
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.insert(orderStatusHistory).values({
+            orderId: input.orderId,
+            fromStatus: order.orderStatus,
+            toStatus: 'completed',
+            operatorId: ctx.user.id,
+            operatorName: ctx.user.name ?? ctx.user.email,
+            note: '買家確認收貨',
+            entryType: 'status_change',
+          });
+        }
+      } catch (histErr: any) {
+        console.warn('[Order] orderStatusHistory insert failed:', histErr.message);
+      }
       return { success: true };
     }),
 
@@ -1937,7 +1954,7 @@ export const marketplaceRouter = router({
       orderId: z.number().int(),
       reason: z.string().min(1, "請填寫拒絕原因"),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       // Reset order back to pending_payment, clear proof, save rejection reason
@@ -1957,6 +1974,8 @@ export const marketplaceRouter = router({
         body: `訂單 ${order.orderNo} 的付款截圖未通過審核，請重新上傳正確截圖。原因：${input.reason}`,
         linkUrl: `/orders/${order.orderNo}`,
       }).catch(() => {});
+      // Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: 'reject_alipay_payment', targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, reason: input.reason }) });
       return { success: true };
     }),
 
@@ -1967,7 +1986,7 @@ export const marketplaceRouter = router({
       note: z.string().optional(),
       proofUrl: z.string().url().optional(), // S3 URL of payment proof screenshot
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
       // P1 Fix #6: Corrected condition — use || instead of &&
@@ -2003,6 +2022,8 @@ export const marketplaceRouter = router({
           }).catch(() => {});
         }
       }
+      // Audit log
+      await createAuditLog({ adminId: ctx.user.id, action: 'manual_payout', targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, note: input.note, proofUrl: input.proofUrl }) });
       return { success: true, message: "已標記為手動放款" };
     }),
 
@@ -2013,7 +2034,7 @@ export const marketplaceRouter = router({
       note: z.string().optional(),
       proofUrl: z.string().url().optional(), // Shared proof screenshot for all orders in batch
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const results: { orderId: number; orderNo: string; success: boolean; error?: string }[] = [];
       for (const orderId of input.orderIds) {
         try {
@@ -2047,6 +2068,11 @@ export const marketplaceRouter = router({
         }
       }
       const successCount = results.filter(r => r.success).length;
+      // Audit log for batch payout
+      const successOrderNos = results.filter(r => r.success).map(r => r.orderNo);
+      if (successOrderNos.length > 0) {
+        await createAuditLog({ adminId: ctx.user.id, action: 'batch_manual_payout', targetType: 'order', targetId: input.orderIds[0], details: JSON.stringify({ orderIds: input.orderIds, successCount, successOrderNos, note: input.note }) }).catch(() => {});
+      }
       return { results, successCount, totalCount: input.orderIds.length };
     }),
 
@@ -3860,6 +3886,23 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       // AT1: Audit log
       await createAuditLog({ adminId: ctx.user.id, action: `resolve_dispute_${input.outcome}`, targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, outcome: input.outcome, resolution: input.resolution }) });
+      // Record status history: disputed → finalStatus
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.insert(orderStatusHistory).values({
+            orderId: input.orderId,
+            fromStatus: 'disputed',
+            toStatus: finalStatus,
+            operatorId: ctx.user.id,
+            operatorName: ctx.user.name ?? ctx.user.email,
+            note: `爭議裁定 [${input.outcome}]: ${input.resolution.slice(0, 200)}`,
+            entryType: 'status_change',
+          });
+        }
+      } catch (histErr: any) {
+        console.warn('[Dispute] orderStatusHistory insert failed:', histErr.message);
+      }
       return { success: true };
     }),
   adminGetDisputes: adminProcedure

@@ -8105,3 +8105,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ### 前端：模板選擇器 + 多步驟審核
 - [ ] 前端：AIArticleGenerator 加入模板選擇步驟
 - [ ] 前端：多步驟審核機制（數據核對/語氣/SEO/風險/最終發布）
+
+## 系統風險點修復（2026-04-10）
+
+- [ ] adminRejectAlipayPayment 加入 audit log（缺少 ctx 和 createAuditLog）
+- [ ] adminManualPayout 加入 audit log（mutation handler 缺少 ctx 解構）
+- [ ] adminBatchManualPayout 加入 audit log（mutation handler 缺少 ctx 解構）
+- [ ] confirmReceipt / dispute / payout 關鍵狀態轉換加入 orderStatusHistory 記錄
