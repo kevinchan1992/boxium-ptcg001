@@ -29,7 +29,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Shield, Ban, Unlock, RefreshCw, AlertTriangle, Activity, Globe, Bot } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 /* ─── Event type badge colours ──────────────────────────────────────── */
@@ -152,7 +152,6 @@ function BlockIpDialog({
 
 /* ─── Main Component ─────────────────────────────────────────────────── */
 export default function AdminSecurityMonitor() {
-  const { toast } = useToast();
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [logLimit, setLogLimit] = useState(100);
 
@@ -165,21 +164,22 @@ export default function AdminSecurityMonitor() {
 
   const blockMutation = trpc.security.blockIp.useMutation({
     onSuccess: (data) => {
-      toast({ title: "封鎖成功", description: data.message });
+      toast.success(data.message ?? "封鎖成功");
       setBlockDialogOpen(false);
       utils.security.getBlockedIps.invalidate();
       utils.security.getStats.invalidate();
     },
-    onError: (err) => toast({ title: "封鎖失敗", description: err.message, variant: "destructive" }),
+    onError: (err) => toast.error(`封鎖失敗：${err.message}`),
+
   });
 
   const unblockMutation = trpc.security.unblockIp.useMutation({
     onSuccess: (data) => {
-      toast({ title: "解封成功", description: data.message });
+      toast.success(data.message ?? "解封成功");
       utils.security.getBlockedIps.invalidate();
       utils.security.getStats.invalidate();
     },
-    onError: (err) => toast({ title: "解封失敗", description: err.message, variant: "destructive" }),
+    onError: (err) => toast.error(`解封失敗：${err.message}`),
   });
 
   const handleRefresh = () => {
