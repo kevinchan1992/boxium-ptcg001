@@ -318,7 +318,7 @@ export function TopNav() {
                     </Button>
                   </motion.div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 p-0 bg-[#111] border-white/15 text-white">
+                <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-1rem)] p-0 bg-[#111] border-white/15 text-white">
                   {/* Tab Header */}
                   <div className="flex border-b border-white/10">
                     <button

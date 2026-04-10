@@ -165,7 +165,7 @@ export default function AuctionTerms() {
       </div>
 
       {/* Sticky TOC (mobile) */}
-      <div className="sticky top-0 z-30 bg-white border-b border-blue-100 shadow-sm sm:hidden">
+      <div className="sticky top-14 z-30 bg-white border-b border-blue-100 shadow-sm sm:hidden">
         <button
           className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold"
           style={{ color: BRAND_BLUE }}

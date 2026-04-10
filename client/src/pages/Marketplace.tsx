@@ -1255,7 +1255,8 @@ export default function Marketplace() {
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-[#06038D] text-white shadow-lg flex items-center justify-center hover:bg-[#0804b8] transition-all duration-200 hover:scale-110 z-30"
+          style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+          className="fixed right-20 w-10 h-10 rounded-full bg-[#06038D] text-white shadow-lg flex items-center justify-center hover:bg-[#0804b8] transition-all duration-200 hover:scale-110 z-30"
         >
           <ArrowUp className="w-5 h-5" />
         </button>

@@ -64,14 +64,14 @@ function CountdownDisplay({ ms, compact = false }: { ms: number; compact?: boole
   }
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
       {parts.map(({ label, val }) => (
-        <div key={label} className={`flex flex-col items-center px-4 py-3 rounded-2xl min-w-[64px] border-2 ${
+        <div key={label} className={`flex flex-col items-center px-2 sm:px-4 py-2 sm:py-3 rounded-2xl min-w-[52px] sm:min-w-[64px] border-2 ${
           urgent
             ? 'bg-red-600 border-red-400 shadow-lg shadow-red-500/30'
             : 'bg-[#06038D] border-[#FEDD00]/30 shadow-lg shadow-[#06038D]/30'
         }`}>
-          <span className={`text-3xl font-black tabular-nums leading-none ${urgent ? 'text-white' : 'text-[#FEDD00]'}`}>
+          <span className={`text-2xl sm:text-3xl font-black tabular-nums leading-none ${urgent ? 'text-white' : 'text-[#FEDD00]'}`}>
             {String(val).padStart(2, '0')}
           </span>
           <span className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${urgent ? 'text-red-200' : 'text-white/60'}`}>
@@ -739,7 +739,7 @@ export default function AuctionDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Hero Header ─────────────────────────────────────────── */}
-      <div className="bg-[#06038D] sticky top-0 z-20 shadow-lg shadow-[#06038D]/30">
+      <div className="bg-[#06038D] sticky top-14 z-20 shadow-lg shadow-[#06038D]/30">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => setLocation('/marketplace')}

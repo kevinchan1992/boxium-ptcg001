@@ -550,7 +550,7 @@ export default function Cart() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sticky top-24">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 lg:sticky lg:top-20">
                 <h2 className="font-bold text-gray-800 mb-4">訂單資訊</h2>
                 <div className="space-y-2 text-sm">
                   {activeItems.length > 0 && (

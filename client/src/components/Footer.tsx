@@ -55,7 +55,7 @@ export default function Footer() {
   };
 
   return (
-    <footer style={{ backgroundColor: "#06038d" }} className="border-t border-white/10">
+    <footer style={{ backgroundColor: "#06038d", paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} className="border-t border-white/10">
       <div className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-12">
 
         {/* Main grid: 4 columns on desktop */}

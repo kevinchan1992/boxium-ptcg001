@@ -117,8 +117,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    /* iOS safe-area: prevent content from hiding behind notch or home indicator */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

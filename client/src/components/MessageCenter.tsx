@@ -412,8 +412,9 @@ export default function MessageCenter() {
       {/* FAB */}
       <button
         onClick={() => setOpen((v) => !v)}
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
         className={cn(
-          "fixed bottom-6 right-6 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
+          "fixed right-6 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
           "bg-[#06038D] hover:bg-[#06038D]/90 active:scale-95",
           open && "ring-2 ring-[#FEDD00] ring-offset-2"
         )}
@@ -431,8 +432,9 @@ export default function MessageCenter() {
       {open && (
         <div
           ref={panelRef}
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
           className={cn(
-            "fixed bottom-24 right-6 z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden",
+            "fixed right-6 z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden",
             "flex flex-col",
             // Desktop: two-column layout
             "w-[680px] h-[520px] max-w-[calc(100vw-3rem)] max-h-[calc(100vh-8rem)]",
