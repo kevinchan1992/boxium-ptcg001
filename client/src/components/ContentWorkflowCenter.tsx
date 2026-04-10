@@ -17,7 +17,7 @@ import {
   Search, PenLine, CheckCircle, Send, RefreshCw,
   ChevronRight, BarChart3, Sparkles, TrendingUp, TrendingDown,
   Clock, Eye, Tag, ArrowRight, Zap, Database, Globe,
-  FileText, AlertCircle, CheckCheck, Info
+  FileText, AlertCircle, CheckCheck, Info, ListOrdered, Network, LayoutTemplate
 } from "lucide-react";
 import { CardSelectionDialog } from "@/components/CardSelectionDialog";
 
@@ -71,6 +71,402 @@ function SkillCard({
         </div>
       </div>
     </button>
+  );
+}
+
+// ─── Skill F: 內容優先級引擎 ─────────────────────────────────────
+function ContentPrioritySkill() {
+  const [topN, setTopN] = useState(8);
+  const [result, setResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const priorityQuery = trpc.blogAi.getContentPriorities.useQuery(
+    { topN },
+    { enabled: false }
+  );
+
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    try {
+      const data = await priorityQuery.refetch();
+      if (data.data) setResult(data.data);
+    } catch (e: any) {
+      toast.error(`生成失敗：${e.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const priorityColors: Record<string, string> = {
+    '緊急': 'bg-red-600',
+    '高': 'bg-orange-600',
+    '中': 'bg-yellow-600',
+    '低': 'bg-zinc-600',
+  };
+
+  const actionColors: Record<string, string> = {
+    '新寫': 'text-green-400',
+    '刷新': 'text-blue-400',
+    '翻譯': 'text-purple-400',
+    '補充數據': 'text-yellow-400',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 bg-indigo-900/20 border border-indigo-700/30 rounded-lg">
+        <div className="flex items-start gap-2">
+          <ListOrdered className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-indigo-300 text-xs font-medium">F. 內容優先級引擎 — 今日最值得寫什麼</p>
+            <p className="text-gray-400 text-xs mt-0.5">AI 分析市場熱度、現有文章缺口、內容時效性，自動排序今日最值得寫的文章主題。</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <Label className="text-white text-sm">建議數量</Label>
+          <Select value={String(topN)} onValueChange={v => setTopN(Number(v))}>
+            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5 個建議</SelectItem>
+              <SelectItem value="8">8 個建議</SelectItem>
+              <SelectItem value="10">10 個建議</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="pt-6">
+          <Button onClick={handleGenerate} disabled={isLoading}
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700">
+            <ListOrdered className="w-4 h-4 mr-2" />
+            {isLoading ? '分析中...' : '生成今日清單'}
+          </Button>
+        </div>
+      </div>
+
+      {result && (
+        <div className="space-y-3">
+          <div className="p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+            <p className="text-gray-400 text-xs">
+              <span className="text-indigo-300 font-medium">今日市場概況：</span>{result.marketSummary}
+            </p>
+            <p className="text-gray-500 text-[10px] mt-1">生成時間：{new Date(result.generatedAt).toLocaleString('zh-TW')}</p>
+          </div>
+
+          <div className="space-y-2">
+            {result.priorities?.map((item: any) => (
+              <div key={item.rank} className="p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-zinc-600 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center">
+                    <span className="text-white text-[10px] font-bold">{item.rank}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="text-white text-sm font-medium">{item.title}</p>
+                      <Badge className={`text-[10px] px-1.5 py-0 ${priorityColors[item.priority] || 'bg-zinc-600'} text-white`}>{item.priority}</Badge>
+                      <span className={`text-[10px] font-medium ${actionColors[item.actionType] || 'text-gray-400'}`}>{item.actionType}</span>
+                    </div>
+                    <p className="text-gray-400 text-xs">{item.reason}</p>
+                    {item.relatedCards?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {item.relatedCards.map((card: string, i: number) => (
+                          <span key={i} className="text-[10px] bg-zinc-700 text-gray-300 px-1.5 py-0.5 rounded">{card}</span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-indigo-300 text-[10px] mt-1">預期效果：{item.estimatedImpact}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {result.contentGaps?.length > 0 && (
+            <div className="p-3 bg-red-900/20 border border-red-700/30 rounded-lg">
+              <p className="text-red-300 text-xs font-medium mb-2">⚠️ 內容缺口（平台缺少的主題）</p>
+              <ul className="space-y-1">
+                {result.contentGaps.map((gap: string, i: number) => (
+                  <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                    <span className="text-red-400 mt-0.5">•</span>{gap}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.quickWins?.length > 0 && (
+            <div className="p-3 bg-green-900/20 border border-green-700/30 rounded-lg">
+              <p className="text-green-300 text-xs font-medium mb-2">⚡ 快速見效行動</p>
+              <ul className="space-y-1">
+                {result.quickWins.map((win: string, i: number) => (
+                  <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                    <span className="text-green-400 mt-0.5">→</span>{win}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Skill G: 內容集群分析 ────────────────────────────────────────
+function ContentClusterSkill() {
+  const [clusterTopic, setClusterTopic] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const clusterQuery = trpc.blogAi.analyzeContentCluster.useQuery(
+    { clusterTopic: clusterTopic || undefined },
+    { enabled: false }
+  );
+
+  const handleAnalyze = async () => {
+    setIsLoading(true);
+    try {
+      const data = await clusterQuery.refetch();
+      if (data.data) setResult(data.data);
+    } catch (e: any) {
+      toast.error(`分析失敗：${e.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const strengthColors: Record<string, string> = {
+    '強': 'text-green-400 bg-green-900/30 border-green-700/30',
+    '中': 'text-yellow-400 bg-yellow-900/30 border-yellow-700/30',
+    '弱': 'text-red-400 bg-red-900/30 border-red-700/30',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 bg-cyan-900/20 border border-cyan-700/30 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Network className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-cyan-300 text-xs font-medium">G. 集群分析 — Topic Cluster 健康度</p>
+            <p className="text-gray-400 text-xs mt-0.5">分析平台所有文章的 Topic Cluster 結構，找出缺口，建議如何建立更強的 SEO 集群。</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <Label className="text-white text-sm">重點分析主題（選填）</Label>
+        <Input value={clusterTopic} onChange={e => setClusterTopic(e.target.value)}
+          className="bg-zinc-800 border-zinc-700 text-white mt-1"
+          placeholder="例如：PSA 評級指南（留空則分析全部）" />
+      </div>
+      <Button onClick={handleAnalyze} disabled={isLoading}
+        className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+        <Network className="w-4 h-4 mr-2" />
+        {isLoading ? 'AI 分析集群結構中...' : '分析內容集群'}
+      </Button>
+
+      {result && (
+        <div className="space-y-3">
+          <div className="p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+            <p className="text-gray-400 text-xs">
+              <span className="text-cyan-300 font-medium">整體集群健康度：</span>{result.overallClusterHealth}
+            </p>
+          </div>
+
+          {result.existingClusters?.map((cluster: any, i: number) => (
+            <div key={i} className={`p-3 rounded-lg border ${strengthColors[cluster.strength] || 'text-gray-400 bg-zinc-800 border-zinc-700'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Network className="w-3.5 h-3.5" />
+                <p className="text-sm font-medium">{cluster.clusterName}</p>
+                <Badge className={`text-[10px] px-1.5 py-0 ${
+                  cluster.strength === '強' ? 'bg-green-700' :
+                  cluster.strength === '中' ? 'bg-yellow-700' : 'bg-red-700'
+                } text-white`}>{cluster.strength}</Badge>
+              </div>
+              <p className="text-gray-400 text-xs mb-1">支柱文章：{cluster.pillarArticleTitle}</p>
+              <p className="text-gray-500 text-xs mb-2">支援文章：{cluster.clusterArticleIds?.length || 0} 篇</p>
+              {cluster.gaps?.length > 0 && (
+                <div>
+                  <p className="text-gray-400 text-[10px] font-medium mb-1">缺少的子主題：</p>
+                  <div className="flex flex-wrap gap-1">
+                    {cluster.gaps.map((gap: string, j: number) => (
+                      <span key={j} className="text-[10px] bg-zinc-700 text-gray-300 px-1.5 py-0.5 rounded">{gap}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {result.missingClusters?.length > 0 && (
+            <div className="p-3 bg-red-900/20 border border-red-700/30 rounded-lg">
+              <p className="text-red-300 text-xs font-medium mb-2">❌ 缺少的主題集群</p>
+              <ul className="space-y-1">
+                {result.missingClusters.map((cluster: string, i: number) => (
+                  <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                    <span className="text-red-400 mt-0.5">•</span>{cluster}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.topPriorityActions?.length > 0 && (
+            <div className="p-3 bg-cyan-900/20 border border-cyan-700/30 rounded-lg">
+              <p className="text-cyan-300 text-xs font-medium mb-2">🎯 最優先執行的行動</p>
+              <ol className="space-y-1">
+                {result.topPriorityActions.map((action: string, i: number) => (
+                  <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                    <span className="text-cyan-400 font-bold mt-0.5">{i + 1}.</span>{action}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Skill H: 模板生成 ────────────────────────────────────────────
+function TemplateSkill({ onArticleReady }: { onArticleReady?: (article: any) => void }) {
+  const [templateType, setTemplateType] = useState<'market-report' | 'card-research' | 'trend-analysis' | 'beginner-guide' | 'platform-news'>('market-report');
+  const [variables, setVariables] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<any>(null);
+
+  const templateConfigs = {
+    'market-report': {
+      label: '市場快報',
+      icon: '📊',
+      fields: [{ key: '日期', placeholder: '例如：2026年4月10日' }, { key: '市場整體走勢', placeholder: '例如：整體偏強，PSA 10 市場活躍' }],
+    },
+    'card-research': {
+      label: '單卡研究',
+      icon: '🔬',
+      fields: [{ key: '卡牌名稱', placeholder: '例如：Charizard Base Set' }, { key: '系列名稱', placeholder: '例如：Base Set 1999' }, { key: '稀有度', placeholder: '例如：Holo Rare' }],
+    },
+    'trend-analysis': {
+      label: '趨勢報告',
+      icon: '📈',
+      fields: [{ key: '時間段', placeholder: '例如：2026年第一季度' }, { key: '主要趨勢', placeholder: '例如：PSA 10 市場持續上漲' }],
+    },
+    'beginner-guide': {
+      label: '收藏入門教學',
+      icon: '📚',
+      fields: [{ key: '主題', placeholder: '例如：如何選擇 PSA 評級服務' }, { key: '目標讀者', placeholder: '例如：剛入門的 PTCG 收藏家' }],
+    },
+    'platform-news': {
+      label: '平台公告',
+      icon: '📢',
+      fields: [{ key: '公告標題', placeholder: '例如：Boxium PTCG 新功能上線' }, { key: '主要內容', placeholder: '例如：新增每日市場快報功能' }],
+    },
+  };
+
+  const generateMutation = trpc.blogAi.generateFromTemplate.useMutation({
+    onSuccess: (data) => {
+      setResult(data);
+      toast.success('模板文章生成完成！');
+    },
+    onError: (e) => toast.error(`生成失敗：${e.message}`),
+  });
+
+  const config = templateConfigs[templateType];
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 bg-rose-900/20 border border-rose-700/30 rounded-lg">
+        <div className="flex items-start gap-2">
+          <LayoutTemplate className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-rose-300 text-xs font-medium">H. 模板生成 — 標準化文章骨架</p>
+            <p className="text-gray-400 text-xs mt-0.5">選擇文章類型模板，填入關鍵變量，AI 按固定骨架生成高品質文章，確保風格一致。</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-white text-sm">文章模板類型</Label>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          {(Object.entries(templateConfigs) as [typeof templateType, typeof config][]).map(([key, cfg]) => (
+            <button
+              key={key}
+              onClick={() => { setTemplateType(key); setVariables({}); }}
+              className={`p-2.5 rounded-lg border text-left transition-all ${
+                templateType === key
+                  ? 'border-rose-500 bg-rose-900/20'
+                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+              }`}
+            >
+              <span className="text-base">{cfg.icon}</span>
+              <p className="text-white text-xs font-medium mt-1">{cfg.label}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-gray-400 text-xs font-medium">填入關鍵變量（選填，留空則 AI 自動填充）</p>
+        {config.fields.map(field => (
+          <div key={field.key}>
+            <Label className="text-white text-xs">{field.key}</Label>
+            <Input
+              value={variables[field.key] || ''}
+              onChange={e => setVariables(prev => ({ ...prev, [field.key]: e.target.value }))}
+              className="bg-zinc-800 border-zinc-700 text-white mt-1 text-sm"
+              placeholder={field.placeholder}
+            />
+          </div>
+        ))}
+      </div>
+
+      <Button
+        onClick={() => generateMutation.mutate({ templateType, variables: Object.keys(variables).length > 0 ? variables : undefined })}
+        disabled={generateMutation.isPending}
+        className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
+      >
+        <LayoutTemplate className="w-4 h-4 mr-2" />
+        {generateMutation.isPending ? 'AI 按模板生成中...' : `生成${config.label}文章`}
+      </Button>
+
+      {result && (
+        <div className="p-4 bg-zinc-800 rounded-xl border border-zinc-700 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-white font-medium text-sm">{result.title}</p>
+            <Badge className="bg-rose-700 text-white text-[10px]">{result.templateUsed}</Badge>
+          </div>
+          <p className="text-gray-400 text-xs">{result.excerpt}</p>
+          {result.suggestedTags?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {result.suggestedTags.map((tag: string, i: number) => (
+                <span key={i} className="text-[10px] bg-zinc-700 text-gray-300 px-1.5 py-0.5 rounded">{tag}</span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(result.content);
+                toast.success('文章內容已複製到剪貼板！');
+              }}
+              className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-xs"
+            >
+              複製 Markdown
+            </Button>
+            {onArticleReady && (
+              <Button
+                size="sm"
+                onClick={() => onArticleReady(result)}
+                className="flex-1 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-xs"
+              >
+                傳送到博客管理
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -489,7 +885,7 @@ function RefreshSkill() {
 
 // ─── Main Component ──────────────────────────────────────────────
 export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (article: any) => void }) {
-  const [activeSkill, setActiveSkill] = useState<'overview' | 'research' | 'daily-report' | 'write' | 'proofread' | 'refresh'>('overview');
+  const [activeSkill, setActiveSkill] = useState<'overview' | 'research' | 'daily-report' | 'write' | 'proofread' | 'refresh' | 'priority' | 'cluster' | 'template'>('overview');
 
   const skills = [
     {
@@ -541,6 +937,36 @@ export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (ar
       inputLabel: '文章表現數據',
       outputLabel: '刷新建議',
       color: 'green',
+    },
+    {
+      id: 'priority' as const,
+      icon: ListOrdered,
+      title: 'F. 優先級引擎',
+      subtitle: '今日最值得寫什麼',
+      description: 'AI 分析市場熱度、現有文章缺口、內容時效性，自動排序今日最值得寫的文章主題清單。',
+      inputLabel: '建議數量',
+      outputLabel: '優先級清單',
+      color: 'indigo',
+    },
+    {
+      id: 'cluster' as const,
+      icon: Network,
+      title: 'G. 集群分析',
+      subtitle: 'Topic Cluster 健康度',
+      description: '分析平台所有文章的 Topic Cluster 結構，找出 SEO 缺口，建議如何建立更強的內容集群。',
+      inputLabel: '重點主題（選填）',
+      outputLabel: '集群分析報告',
+      color: 'cyan',
+    },
+    {
+      id: 'template' as const,
+      icon: LayoutTemplate,
+      title: 'H. 模板生成',
+      subtitle: '標準化文章骨架',
+      description: '選擇文章類型模板（快報/研究/趨勢/教學/公告），填入關鍵變量，AI 按固定骨架生成高品質文章。',
+      inputLabel: '模板類型 + 變量',
+      outputLabel: '完整文章',
+      color: 'rose',
     },
   ];
 
@@ -679,6 +1105,15 @@ export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (ar
 
               {activeSkill === 'refresh' && (
                 <RefreshSkill />
+              )}
+              {activeSkill === 'priority' && (
+                <ContentPrioritySkill />
+              )}
+              {activeSkill === 'cluster' && (
+                <ContentClusterSkill />
+              )}
+              {activeSkill === 'template' && (
+                <TemplateSkill onArticleReady={handleArticleReady} />
               )}
             </CardContent>
           </Card>

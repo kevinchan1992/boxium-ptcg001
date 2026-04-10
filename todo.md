@@ -8074,3 +8074,34 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端：建立 ContentWorkflowCenter 组件（五大技能卡片）
 - [x] 前端：Admin 加入「AI 内容工作流」tab
 - [x] 测试：blogAiProcedures.test.ts（9 tests passed）
+
+---
+## AI 內容運營中樞升級（2026-04-10）
+
+### 後端：內容優先級引擎 + 文章健康度
+- [x] 後端：blogAi.getContentPriorities — 自動排序今日最值得寫的主題
+- [ ] 後端：blogAi.getArticleHealthScore — 計算文章健康度（6 個維度）
+- [ ] 後端：blog.getLifecycleList — 待更新/過時文章列表
+
+### 後端：內容集群管理 + 內鏈建議
+- [ ] 後端：blogAi.suggestInternalLinks — AI 自動建議內部連結
+- [x] 後端：blogAi.analyzeContentCluster — 分析內容集群缺口
+- [ ] 數據庫：新增 contentClusters 和 clusterPosts 表格
+
+### 後端：模板化文章系統 + 事實校驗
+- [x] 後端：blogAi.generateFromTemplate — 5 種模板骨架生成
+- [ ] 後端：事實引用層（dataSnapshot 升級，記錄哪些句子來自真實數據）
+
+### 前端：文章健康度儀表板
+- [x] 前端：AdminBlogManagement 文章列表加入健康度評分標籤
+- [ ] 前端：新增 ArticleHealthDashboard 組件（6 維度雷達圖）
+- [x] 前端：ContentWorkflowCenter 加入 F/G/H 三個新技能（優先級/集群/模板）
+
+### 前端：內容日曆與排程中心
+- [ ] 前端：新增 ContentCalendar 組件（可視化日曆視圖）
+- [ ] 前端：Admin 加入「內容日曆」tab
+- [ ] 前端：日曆顯示今日任務（生成/發布/刷新/翻譯）
+
+### 前端：模板選擇器 + 多步驟審核
+- [ ] 前端：AIArticleGenerator 加入模板選擇步驟
+- [ ] 前端：多步驟審核機制（數據核對/語氣/SEO/風險/最終發布）

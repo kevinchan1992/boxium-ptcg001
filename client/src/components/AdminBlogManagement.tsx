@@ -406,10 +406,16 @@ export function AdminBlogManagement() {
                       )}
                     </div>
                     <p className="text-white text-sm font-medium line-clamp-1">{post.title}</p>
-                    <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2">
+                    <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2 flex-wrap">
                       <Clock className="w-3 h-3" />
                       {formatHKDate(post.publishedAt || post.createdAt)}
                       {post.viewCount > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.viewCount}</span>}
+                      {post.status === 'published' && (() => {
+                        const daysSince = Math.floor((Date.now() - new Date(post.updatedAt || post.publishedAt || post.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                        if (daysSince >= 90) return <span className="inline-flex items-center gap-0.5 text-[10px] bg-red-900/40 text-red-300 border border-red-700/30 px-1.5 py-0.5 rounded">⚠ 需刷新 {daysSince}天</span>;
+                        if (daysSince >= 30) return <span className="inline-flex items-center gap-0.5 text-[10px] bg-yellow-900/40 text-yellow-300 border border-yellow-700/30 px-1.5 py-0.5 rounded">↻ 建議更新</span>;
+                        return null;
+                      })()}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

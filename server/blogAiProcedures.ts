@@ -613,4 +613,459 @@ ${input.content.substring(0, 500)}...`,
       });
       return JSON.parse(response.choices[0].message.content as string);
     }),
+
+  // ─── 內容優先級引擎 ───
+  getContentPriorities: adminProcedure
+    .input(z.object({
+      topN: z.number().optional().default(10),
+    }))
+    .query(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const blogDb = await import('./blogDb');
+      const { getTrendingByPriceIncrease } = await import('./db');
+
+      const postsData = await blogDb.getPosts({ limit: 100, sortBy: 'newest' });
+      const now = new Date();
+      const existingPostsSummary = postsData.posts.map((p: any) => {
+        const daysSinceUpdate = Math.floor((now.getTime() - new Date(p.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+        return `- ${p.title}（${p.category || '未分類'}，${p.status}，${daysSinceUpdate} 天前更新，${p.viewCount} 次瀏覽）`;
+      }).join('\n');
+
+      let trendingCardsSummary = '（暫無市場數據）';
+      try {
+        const trending = await getTrendingByPriceIncrease({ limit: 10, days: 7 });
+        trendingCardsSummary = trending.slice(0, 10).map((c: any) =>
+          `- ${c.name || c.nameJa}：7 日漲幅 ${c.priceChange7d || c.priceChange}%，現價 HKD$${c.currentPrice || c.latestPrice}`
+        ).join('\n');
+      } catch (e) { /* 市場數據暫時不可用 */ }
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `你是 Boxium PTCG 平台的內容策劃員。根據市場熱度、現有文章缺口、內容時效性，為今日生成「內容優先級清單」，告訴管理員今天最值得寫哪些文章。
+
+判斷標準（按重要性排序）：
+1. 市場熱度：卡牌漲跌幅大 → 優先寫
+2. 內容缺口：市場熱但平台沒有相關文章 → 優先寫
+3. 內容過時：相關文章超過 30 天未更新 → 建議刷新
+4. 流量潛力：SEO 搜尋需求高的主題 → 優先寫
+5. 平台特色：與平台卡牌數據強相關的主題 → 優先寫`,
+          },
+          {
+            role: 'user',
+            content: `今日日期：${now.toLocaleDateString('zh-TW')}
+
+現有文章（最近 100 篇）：
+${existingPostsSummary}
+
+市場熱門卡牌（7 日漲幅榜）：
+${trendingCardsSummary}
+
+請生成今日內容優先級清單（${input.topN} 個建議）`,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'content_priorities',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                generatedAt: { type: 'string', description: '生成時間（ISO 格式）' },
+                marketSummary: { type: 'string', description: '今日市場概況（1-2 句）' },
+                priorities: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      rank: { type: 'number' },
+                      title: { type: 'string', description: '建議文章標題' },
+                      articleType: { type: 'string', description: '文章類型（daily-report/card-analysis/market-trend/news/beginner-guide）' },
+                      priority: { type: 'string', description: '優先級（緊急/高/中/低）' },
+                      reason: { type: 'string', description: '為什麼現在要寫這篇（具體理由）' },
+                      relatedCards: { type: 'array', items: { type: 'string' }, description: '相關卡牌名稱' },
+                      estimatedImpact: { type: 'string', description: '預期效果（流量/SEO/用戶價值）' },
+                      actionType: { type: 'string', description: '建議動作（新寫/刷新/翻譯/補充數據）' },
+                    },
+                    required: ['rank', 'title', 'articleType', 'priority', 'reason', 'relatedCards', 'estimatedImpact', 'actionType'],
+                    additionalProperties: false,
+                  },
+                },
+                contentGaps: { type: 'array', items: { type: 'string' }, description: '平台內容缺口（3-5 個主題）' },
+                quickWins: { type: 'array', items: { type: 'string' }, description: '快速見效的行動建議（2-3 條）' },
+              },
+              required: ['generatedAt', 'marketSummary', 'priorities', 'contentGaps', 'quickWins'],
+              additionalProperties: false,
+            },
+          },
+        },
+        thinking: { budget_tokens: 2048 },
+      });
+      const result = JSON.parse(response.choices[0].message.content as string);
+      result.generatedAt = now.toISOString();
+      return result;
+    }),
+
+  // ─── 文章健康度計算 ───
+  getArticleHealthScore: adminProcedure
+    .input(z.object({
+      postId: z.number(),
+      title: z.string(),
+      excerpt: z.string().optional(),
+      content: z.string(),
+      publishedAt: z.number().optional(),
+      viewCount: z.number().optional(),
+      metaKeywords: z.string().optional(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      relatedCardIds: z.string().optional(),
+      hasEnTranslation: z.boolean().optional(),
+      hasJaTranslation: z.boolean().optional(),
+    }))
+    .query(async ({ input }) => {
+      const now = Date.now();
+      const daysSincePublish = input.publishedAt
+        ? Math.floor((now - input.publishedAt) / (1000 * 60 * 60 * 24))
+        : 0;
+
+      // SEO 分數（0-100）
+      let seoScore = 100;
+      const seoIssues: string[] = [];
+      if (!input.title || input.title.length < 10) { seoScore -= 20; seoIssues.push('標題過短'); }
+      if (input.title && input.title.length > 60) { seoScore -= 10; seoIssues.push('標題過長'); }
+      if (!input.excerpt || input.excerpt.length < 50) { seoScore -= 15; seoIssues.push('摘要不足'); }
+      if (!input.metaKeywords || input.metaKeywords.split(',').filter((k: string) => k.trim()).length < 3) {
+        seoScore -= 15; seoIssues.push('SEO 關鍵字不足');
+      }
+      const h2Count = (input.content.match(/^## /gm) || []).length;
+      if (h2Count < 2) { seoScore -= 15; seoIssues.push('缺少 H2 標題結構'); }
+      if (input.content.length < 500) { seoScore -= 20; seoIssues.push('內容過短'); }
+      seoScore = Math.max(0, seoScore);
+
+      // 內容新鮮度（0-100）
+      let freshnessScore = 100;
+      const freshnessIssues: string[] = [];
+      if (daysSincePublish > 90) { freshnessScore -= 40; freshnessIssues.push('超過 90 天未更新'); }
+      else if (daysSincePublish > 60) { freshnessScore -= 25; freshnessIssues.push('超過 60 天未更新'); }
+      else if (daysSincePublish > 30) { freshnessScore -= 15; freshnessIssues.push('超過 30 天未更新'); }
+      const hasCardData = !!(input.relatedCardIds && input.relatedCardIds !== '[]');
+      if (hasCardData && daysSincePublish > 14) { freshnessScore -= 20; freshnessIssues.push('卡牌數據文章建議每 14 天更新'); }
+      freshnessScore = Math.max(0, freshnessScore);
+
+      // 可讀性（0-100）
+      let readabilityScore = 100;
+      const readabilityIssues: string[] = [];
+      const wordCount = input.content.replace(/[#*`\[\]]/g, '').length;
+      if (wordCount < 300) { readabilityScore -= 30; readabilityIssues.push('字數過少（< 300 字）'); }
+      else if (wordCount < 600) { readabilityScore -= 15; readabilityIssues.push('字數偏少（< 600 字）'); }
+      if (h2Count === 0) { readabilityScore -= 20; readabilityIssues.push('缺少章節結構'); }
+      if (!input.content.includes('**')) { readabilityScore -= 10; readabilityIssues.push('缺少重點標記（粗體）'); }
+      if (!input.content.includes('\n- ') && !input.content.includes('\n1. ')) { readabilityScore -= 10; readabilityIssues.push('缺少列表結構'); }
+      readabilityScore = Math.max(0, readabilityScore);
+
+      // 數據可信度（0-100）
+      let dataCredibilityScore = 100;
+      const dataIssues: string[] = [];
+      if (!hasCardData) { dataCredibilityScore -= 30; dataIssues.push('未關聯平台卡牌數據'); }
+      if (!/HKD\$\d+|\d+%|\d+\s*元/.test(input.content)) { dataCredibilityScore -= 25; dataIssues.push('缺少具體數字/價格引用'); }
+      if (!/\d{4}年|\d{1,2}月|今日|本週|本月/.test(input.content)) { dataCredibilityScore -= 15; dataIssues.push('缺少時間參照'); }
+      dataCredibilityScore = Math.max(0, dataCredibilityScore);
+
+      // 多語言完整度（0-100）
+      const i18nScore = (input.hasEnTranslation ? 50 : 0) + (input.hasJaTranslation ? 50 : 0);
+
+      // 內容集群關聯度（0-100）
+      let clusterScore = 50;
+      const clusterIssues: string[] = [];
+      if (!input.category) { clusterScore -= 20; clusterIssues.push('未設置分類'); }
+      if (!input.tags || input.tags.length === 0) { clusterScore -= 20; clusterIssues.push('未設置標籤'); }
+      if (input.tags && input.tags.length > 0) clusterScore += 20;
+      clusterScore = Math.min(100, Math.max(0, clusterScore));
+
+      // 整體健康度（加權平均）
+      const overallScore = Math.round(
+        seoScore * 0.25 +
+        freshnessScore * 0.20 +
+        readabilityScore * 0.20 +
+        dataCredibilityScore * 0.20 +
+        i18nScore * 0.05 +
+        clusterScore * 0.10
+      );
+
+      const healthGrade =
+        overallScore >= 80 ? '優秀' :
+        overallScore >= 60 ? '良好' :
+        overallScore >= 40 ? '一般' : '需改善';
+
+      return {
+        postId: input.postId,
+        overallScore,
+        healthGrade,
+        dimensions: {
+          seo: { score: seoScore, issues: seoIssues },
+          freshness: { score: freshnessScore, issues: freshnessIssues, daysSincePublish },
+          readability: { score: readabilityScore, issues: readabilityIssues, wordCount },
+          dataCredibility: { score: dataCredibilityScore, issues: dataIssues, hasCardData },
+          i18n: { score: i18nScore, hasEn: !!input.hasEnTranslation, hasJa: !!input.hasJaTranslation },
+          cluster: { score: clusterScore, issues: clusterIssues },
+        },
+        topIssues: [...seoIssues.slice(0, 2), ...freshnessIssues.slice(0, 1), ...readabilityIssues.slice(0, 1), ...dataIssues.slice(0, 1)].slice(0, 5),
+        recommendedActions: [
+          ...(seoScore < 60 ? ['優化 SEO 關鍵字和標題結構'] : []),
+          ...(freshnessScore < 60 ? ['更新文章數據和內容'] : []),
+          ...(readabilityScore < 60 ? ['改善文章結構和可讀性'] : []),
+          ...(dataCredibilityScore < 60 ? ['補充卡牌成交數據引用'] : []),
+          ...(i18nScore < 50 ? ['新增英文或日文翻譯'] : []),
+        ].slice(0, 3),
+      };
+    }),
+
+  // ─── 內部連結建議 ───
+  suggestInternalLinks: adminProcedure
+    .input(z.object({
+      postId: z.number(),
+      title: z.string(),
+      content: z.string(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const blogDb = await import('./blogDb');
+
+      const postsData = await blogDb.getPosts({ status: 'published', limit: 50 });
+      const publishedPosts = postsData.posts
+        .filter((p: any) => p.id !== input.postId)
+        .map((p: any) => `- [ID:${p.id}] ${p.title}（${p.category || '未分類'}）：${p.excerpt?.substring(0, 80) || '無摘要'}`);
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `你是 Boxium PTCG 平台的 SEO 專家。分析當前文章，從現有文章庫中找出最適合做內部連結的文章。
+
+內部連結原則：
+1. 相關性：主題高度相關的文章優先
+2. 自然性：連結應自然嵌入文章內容，不強行插入
+3. 錨文字：建議具體的錨文字（不要用「點擊這裡」）
+4. 數量：每篇文章建議 3-5 個內部連結
+5. 避免重複：不連結到當前文章本身`,
+          },
+          {
+            role: 'user',
+            content: `當前文章：
+標題：${input.title}
+分類：${input.category || '未分類'}
+標籤：${input.tags?.join('、') || '無'}
+內容摘要：${input.content.substring(0, 400)}...
+
+現有已發布文章庫：
+${publishedPosts.join('\n')}
+
+請建議最適合的內部連結`,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'internal_links',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                suggestions: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      targetPostId: { type: 'number' },
+                      targetTitle: { type: 'string' },
+                      anchorText: { type: 'string', description: '建議錨文字' },
+                      insertionContext: { type: 'string', description: '建議插入位置（引用當前文章的相關段落）' },
+                      relevanceReason: { type: 'string', description: '為什麼相關' },
+                    },
+                    required: ['targetPostId', 'targetTitle', 'anchorText', 'insertionContext', 'relevanceReason'],
+                    additionalProperties: false,
+                  },
+                },
+                missingTopics: { type: 'array', items: { type: 'string' }, description: '應該有但平台缺少的相關文章主題' },
+              },
+              required: ['suggestions', 'missingTopics'],
+              additionalProperties: false,
+            },
+          },
+        },
+        thinking: { budget_tokens: 1024 },
+      });
+      return JSON.parse(response.choices[0].message.content as string);
+    }),
+
+  // ─── 內容集群分析 ───
+  analyzeContentCluster: adminProcedure
+    .input(z.object({
+      clusterTopic: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+      const blogDb = await import('./blogDb');
+
+      const postsData = await blogDb.getPosts({ limit: 100 });
+      const allPostsSummary = postsData.posts.map((p: any) =>
+        `- [${p.status}] ${p.title}（${p.category || '未分類'}，標籤：${p.tags?.map((t: any) => t.name).join('/') || '無'}，${p.viewCount} 瀏覽）`
+      ).join('\n');
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `你是 Boxium PTCG 平台的 SEO 策略師。分析平台所有文章，識別現有的內容集群，找出缺口，並建議如何建立更強的 Topic Cluster 結構。
+
+Topic Cluster 結構：
+- 支柱文章（Pillar Page）：廣泛覆蓋某個主題的長文
+- 支援文章（Cluster Content）：深入探討支柱文章的某個子主題
+- 內部連結：支援文章連回支柱文章，支柱文章連向支援文章
+
+Boxium PTCG 的核心主題集群應包括：
+1. Pokémon TCG 市場分析
+2. One Piece TCG 市場分析
+3. 卡牌評級指南（PSA/CGC/BGS）
+4. 收藏入門教學
+5. 市場趨勢與投資`,
+          },
+          {
+            role: 'user',
+            content: `${input.clusterTopic ? `重點分析主題：${input.clusterTopic}\n\n` : ''}平台現有文章（共 ${postsData.posts.length} 篇）：
+${allPostsSummary}
+
+請分析內容集群結構並提供建議`,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'content_cluster_analysis',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                existingClusters: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      clusterName: { type: 'string' },
+                      pillarArticleId: { type: 'number', description: '建議的支柱文章 ID（-1 表示尚未有）' },
+                      pillarArticleTitle: { type: 'string' },
+                      clusterArticleIds: { type: 'array', items: { type: 'number' } },
+                      strength: { type: 'string', description: '集群強度（強/中/弱）' },
+                      gaps: { type: 'array', items: { type: 'string' }, description: '缺少的子主題' },
+                    },
+                    required: ['clusterName', 'pillarArticleId', 'pillarArticleTitle', 'clusterArticleIds', 'strength', 'gaps'],
+                    additionalProperties: false,
+                  },
+                },
+                missingClusters: { type: 'array', items: { type: 'string' }, description: '平台應有但缺少的主題集群' },
+                topPriorityActions: { type: 'array', items: { type: 'string' }, description: '最優先執行的 3-5 個行動' },
+                overallClusterHealth: { type: 'string', description: '整體集群健康度評估' },
+              },
+              required: ['existingClusters', 'missingClusters', 'topPriorityActions', 'overallClusterHealth'],
+              additionalProperties: false,
+            },
+          },
+        },
+        thinking: { budget_tokens: 2048 },
+      });
+      return JSON.parse(response.choices[0].message.content as string);
+    }),
+
+  // ─── 模板化文章生成 ───
+  generateFromTemplate: adminProcedure
+    .input(z.object({
+      templateType: z.enum(['market-report', 'card-research', 'trend-analysis', 'beginner-guide', 'platform-news']),
+      variables: z.record(z.string(), z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { invokeLLM } = await import('./_core/llm');
+
+      const templates: Record<string, { name: string; skeleton: string; systemNote: string }> = {
+        'market-report': {
+          name: '市場快報模板',
+          skeleton: `# 【市場快報】{日期} Pokémon TCG 市場動態\n\n## 今日市場概況\n{市場整體走勢，2-3 句}\n\n## 重點卡牌動態\n### {卡牌名稱 1}\n- 現價：HKD${'{'}現價{'}'} | 7 日漲跌：{漲跌幅}%\n- 分析：{1-2 句分析}\n\n## 市場趨勢觀察\n{2-3 個趨勢觀察}\n\n## 投資建議\n{具體建議，包含風險提示}\n\n---\n*數據來源：Boxium PTCG 平台成交記錄*`,
+          systemNote: '市場快報要求：數據準確、語氣專業、重點突出、字數 600-800 字',
+        },
+        'card-research': {
+          name: '單卡研究模板',
+          skeleton: `# {卡牌名稱} 深度研究報告\n\n## 卡牌基本資料\n- **系列**：{系列名稱}\n- **稀有度**：{稀有度}\n- **評級版本**：PSA 10 / CGC 10 / 中古 A 級\n\n## 價格分析\n### PSA 10 評級版\n- 現價：HKD${'{'}現價{'}'} | 30 日均價：HKD${'{'}30日均價{'}'}\n- 30 日漲跌：{漲跌幅}%\n\n## 歷史走勢分析\n{價格歷史走勢分析，包含高點和低點}\n\n## 市場需求分析\n{為什麼這張卡受歡迎，競爭格局}\n\n## 收藏與投資建議\n{具體建議，包含風險提示}\n\n## 常見問題\n**Q: {問題 1}**\nA: {答案 1}\n\n---\n*數據來源：Boxium PTCG 平台成交記錄 | 更新日期：{日期}*`,
+          systemNote: '單卡研究要求：數據詳盡、分析深入、適合收藏家閱讀、字數 1000-1500 字',
+        },
+        'trend-analysis': {
+          name: '趨勢報告模板',
+          skeleton: `# {時間段} Pokémon TCG 市場趨勢報告\n\n## 執行摘要\n{3-5 句核心結論}\n\n## 市場整體走勢\n{整體趨勢分析}\n\n## 各類別表現\n### PSA 10 評級市場\n{分析}\n\n### 中古 A 級市場\n{分析}\n\n## 熱門卡牌排行\n{漲幅榜 Top 5}\n\n## 影響市場的關鍵因素\n1. {因素 1}\n2. {因素 2}\n3. {因素 3}\n\n## 未來走勢預測\n{預測，包含風險提示}\n\n## 結語\n{總結和 CTA}\n\n---\n*數據來源：Boxium PTCG 平台成交記錄*`,
+          systemNote: '趨勢報告要求：分析性強、有數據支撐、專業客觀、字數 1000-1500 字',
+        },
+        'beginner-guide': {
+          name: '收藏入門教學模板',
+          skeleton: `# {主題} 完全入門指南\n\n## 前言\n{為什麼要讀這篇文章}\n\n## 基礎概念\n### {概念 1}\n{解釋}\n\n### {概念 2}\n{解釋}\n\n## 入門步驟\n1. **第一步：{步驟名稱}**\n   {詳細說明}\n\n2. **第二步：{步驟名稱}**\n   {詳細說明}\n\n## 常見錯誤\n- ❌ {錯誤 1}：{解釋}\n- ❌ {錯誤 2}：{解釋}\n\n## 常見問題\n**Q: {問題}**\nA: {答案}\n\n## 結語\n{鼓勵性結語 + CTA}\n\n---\n*Boxium PTCG — 香港最專業的 TCG 資訊平台*`,
+          systemNote: '入門教學要求：淺白易懂、步驟清晰、適合新手、字數 800-1200 字',
+        },
+        'platform-news': {
+          name: '平台公告模板',
+          skeleton: `# {公告標題}\n\n## 重要更新\n{核心公告內容，1-2 段}\n\n## 詳細說明\n{詳細說明新功能或變更}\n\n## 如何使用\n1. {步驟 1}\n2. {步驟 2}\n\n## 常見問題\n**Q: {問題}**\nA: {答案}\n\n## 聯絡我們\n如有任何疑問，歡迎透過平台聯絡我們。\n\n---\n*Boxium PTCG 團隊*`,
+          systemNote: '平台公告要求：清晰直接、重點突出、友善語氣、字數 400-600 字',
+        },
+      };
+
+      const template = templates[input.templateType];
+      const variablesText = input.variables
+        ? Object.entries(input.variables).map(([k, v]) => `- ${k}：${v}`).join('\n')
+        : '（請根據模板骨架自動填充）';
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `你是 Boxium PTCG 平台的專業文章撰稿人。根據提供的模板骨架，生成一篇完整的文章。
+
+${template.systemNote}
+
+規範：
+- 繁體中文，香港口語與書面語混合
+- 所有價格以 HKD$ 表示
+- 保留 TCG 術語（PSA 10、CGC 10、GEM-MT 10 等）
+- 使用 Markdown 格式
+- 數據導向，引用具體數字
+- 不捏造數據，如無數據則說明`,
+          },
+          {
+            role: 'user',
+            content: `模板類型：${template.name}\n\n模板骨架：\n${template.skeleton}\n\n填充變量：\n${variablesText}\n\n請根據模板骨架生成完整文章（保留 Markdown 格式，替換所有 {佔位符}）`,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'template_article',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                title: { type: 'string', description: '文章標題' },
+                excerpt: { type: 'string', description: '文章摘要（50-160 字）' },
+                content: { type: 'string', description: '完整 Markdown 正文' },
+                templateUsed: { type: 'string', description: '使用的模板名稱' },
+                suggestedTags: { type: 'array', items: { type: 'string' }, description: '建議標籤' },
+                seoTitle: { type: 'string', description: 'SEO 標題' },
+                seoKeywords: { type: 'string', description: 'SEO 關鍵字（逗號分隔）' },
+              },
+              required: ['title', 'excerpt', 'content', 'templateUsed', 'suggestedTags', 'seoTitle', 'seoKeywords'],
+              additionalProperties: false,
+            },
+          },
+        },
+        thinking: { budget_tokens: 4096 },
+      });
+      return JSON.parse(response.choices[0].message.content as string);
+    }),
 });
