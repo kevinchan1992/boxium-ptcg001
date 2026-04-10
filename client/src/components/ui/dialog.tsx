@@ -140,7 +140,7 @@ function DialogContent({
                 "sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:zoom-out-95",
               ].join(" ")
             : // Default: always centered dialog
-              "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg",
+              "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[90dvh] overflow-y-auto overscroll-contain",
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}

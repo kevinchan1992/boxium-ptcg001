@@ -466,7 +466,7 @@ export default function Cart() {
                       清空購物車
                     </button>
                   </div>
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-gray-50 overscroll-contain">
                     {activeItems.map((item) => (
                       <CartItemRow
                         key={item.cartItemId}
@@ -501,7 +501,7 @@ export default function Cart() {
                     <span className="font-semibold text-amber-800 text-sm">拍賣得標待付款（{pendingAuctionOrders.length}）</span>
                     <span className="text-xs text-amber-600 ml-1">— 請在時限內完成付款</span>
                   </div>
-                  <div className="divide-y divide-yellow-50">
+                  <div className="divide-y divide-yellow-50 overscroll-contain">
                     {pendingAuctionOrders.map((order) => (
                       <AuctionOrderRow
                         key={order.orderId}
@@ -533,7 +533,7 @@ export default function Cart() {
                       一鍵清理
                     </button>
                   </div>
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-gray-50 overscroll-contain">
                     {unavailableItems.map((item) => (
                       <CartItemRow
                         key={item.cartItemId}

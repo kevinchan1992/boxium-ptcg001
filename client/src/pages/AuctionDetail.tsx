@@ -886,7 +886,9 @@ export default function AuctionDetail() {
                   </span>
                 )}
               </h3>
-              <BidHistory bids={bids} />
+              <div className="max-h-96 overflow-y-auto overscroll-contain">
+                <BidHistory bids={bids} />
+              </div>
             </div>
           </div>
 
