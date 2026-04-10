@@ -3782,6 +3782,102 @@ HK SEO 關鍵字策略：
         
         return { success: true, imageId: image.insertId };
       }),
+    // Get card images from DB for cover image selection (Admin only)
+    getCardImagesForCover: adminProcedure
+      .input(z.object({
+        query: z.string().optional(),
+        limit: z.number().min(1).max(20).default(8),
+      }))
+      .query(async ({ input }) => {
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { cards } = await import('../drizzle/schema_new');
+        const { desc, like, and, isNotNull, ne } = await import('drizzle-orm');
+
+        if (input.query) {
+          const results = await db.select({
+            id: cards.id,
+            name: cards.name,
+            nameJa: cards.nameJa,
+            rarity: cards.rarity,
+            setName: cards.setName,
+            imageUrl: cards.imageUrl,
+            imageUrlHiRes: cards.imageUrlHiRes,
+          })
+          .from(cards)
+          .where(and(
+            like(cards.name, `%${input.query}%`),
+            isNotNull(cards.imageUrl),
+            ne(cards.imageUrl, ''),
+          ))
+          .orderBy(desc(cards.updatedAt))
+          .limit(input.limit);
+          return results;
+        }
+
+        // Default: trending cards with images
+        try {
+          const { getTrendingByPriceIncrease } = await import('./db');
+          const trending = await getTrendingByPriceIncrease({ limit: input.limit, days: 30 });
+          const trendingWithImages = trending
+            .filter((c: any) => c.imageUrl || c.imageUrlHiRes)
+            .map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              nameJa: c.nameJa,
+              rarity: c.rarity,
+              setName: c.setName,
+              imageUrl: c.imageUrl,
+              imageUrlHiRes: c.imageUrlHiRes,
+              priceChangePercent: c.priceChangePercent,
+            }));
+          if (trendingWithImages.length >= 4) return trendingWithImages.slice(0, input.limit);
+        } catch (_) { /* fallback */ }
+
+        // Fallback: latest cards with images
+        const fallback = await db.select({
+          id: cards.id,
+          name: cards.name,
+          nameJa: cards.nameJa,
+          rarity: cards.rarity,
+          setName: cards.setName,
+          imageUrl: cards.imageUrl,
+          imageUrlHiRes: cards.imageUrlHiRes,
+        })
+        .from(cards)
+        .where(and(isNotNull(cards.imageUrl), ne(cards.imageUrl, '')))
+        .orderBy(desc(cards.updatedAt))
+        .limit(input.limit);
+        return fallback;
+      }),
+    // Generate AI cover image using card images as reference (Admin only)
+    generateCoverImage: adminProcedure
+      .input(z.object({
+        articleTitle: z.string(),
+        articleType: z.string(),
+        cardImageUrls: z.array(z.string()).min(1).max(4),
+        cardNames: z.array(z.string()).optional(),
+        style: z.enum(['market-report', 'card-analysis', 'guide', 'news']).default('market-report'),
+      }))
+      .mutation(async ({ input }) => {
+        const { generateImage } = await import('./_core/imageGeneration');
+        const styleGuides: Record<string, string> = {
+          'market-report': 'dynamic financial market style, bold yellow (#FEDD00) and dark navy blue (#06038D) color scheme matching Boxium brand, data visualization elements, energetic composition',
+          'card-analysis': 'premium collector showcase style, elegant dark background, dramatic spotlight lighting on card, luxury TCG card display',
+          'guide': 'clean educational infographic style, bright and welcoming, step-by-step visual flow, friendly layout',
+          'news': 'breaking news banner style, urgent red and white accents, bold typography space, modern editorial design',
+        };
+        const styleGuide = styleGuides[input.style] || styleGuides['market-report'];
+        const cardNamesStr = (input.cardNames || []).slice(0, 3).join(', ') || 'Pokemon TCG cards';
+        const prompt = `Professional blog cover image for a Pokemon TCG article. Title context: "${input.articleTitle}". Style: ${styleGuide}. Featured cards: ${cardNamesStr}. Layout: wide banner (16:9), leave left 40% as dark space for title text overlay. Design: Boxium PTCG Hong Kong platform aesthetic, professional TCG market analysis. NO text in image. High quality photorealistic card showcase.`;
+        const originalImages = input.cardImageUrls.slice(0, 2).map(url => ({
+          url,
+          mimeType: 'image/jpeg' as const,
+        }));
+        const result = await generateImage({ prompt, originalImages });
+        return { url: result.url, prompt };
+      }),
   }),
 
   // Trending router - hot cards rankings

@@ -4,12 +4,12 @@
  * 設計原則：管理員只需 3 步完成出文章：
  *   Step 1 → 選擇文章類型 + 可選填主題
  *   Step 2 → 一鍵生成，AI 自動完成策略+大綱+撰寫+校對
- *   Step 3 → 預覽文章，確認後一鍵發布或存草稿
+ *   Step 3 → 預覽文章 + AI 生成封面圖，確認後一鍵發布或存草稿
  *
  * 取代原有複雜的 A/B/C/D 技能選擇流程。
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +21,8 @@ import {
   Zap, TrendingUp, BookOpen, Newspaper, FileText,
   ChevronRight, CheckCircle, Loader2, Eye, Send,
   RotateCcw, Sparkles, ArrowLeft, Edit3, Tag,
-  BarChart3, Star, Info,
+  BarChart3, Star, Info, Image, Search, X, RefreshCw,
+  ImagePlus, Check,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -41,6 +42,7 @@ interface ArticleType {
   requiresTopic: boolean;
   topicPlaceholder: string;
   topicHint: string;
+  coverStyle: "market-report" | "card-analysis" | "guide" | "news";
 }
 
 const ARTICLE_TYPES: ArticleType[] = [
@@ -57,6 +59,7 @@ const ARTICLE_TYPES: ArticleType[] = [
     requiresTopic: false,
     topicPlaceholder: "",
     topicHint: "",
+    coverStyle: "market-report",
   },
   {
     id: "card-research",
@@ -71,6 +74,7 @@ const ARTICLE_TYPES: ArticleType[] = [
     requiresTopic: true,
     topicPlaceholder: "例如：噴火龍 EX SR、皮卡丘 V MAX...",
     topicHint: "輸入卡牌名稱，AI 會自動搜尋平台成交數據",
+    coverStyle: "card-analysis",
   },
   {
     id: "trend-analysis",
@@ -85,6 +89,7 @@ const ARTICLE_TYPES: ArticleType[] = [
     requiresTopic: false,
     topicPlaceholder: "選填：指定分析主題（例如：PSA 10 評級市場）",
     topicHint: "不填則自動分析全平台趨勢",
+    coverStyle: "market-report",
   },
   {
     id: "beginner-guide",
@@ -99,6 +104,7 @@ const ARTICLE_TYPES: ArticleType[] = [
     requiresTopic: true,
     topicPlaceholder: "例如：如何開始收藏 PTCG、PSA 評級入門...",
     topicHint: "描述你想教新手的主題",
+    coverStyle: "guide",
   },
   {
     id: "platform-news",
@@ -113,6 +119,7 @@ const ARTICLE_TYPES: ArticleType[] = [
     requiresTopic: true,
     topicPlaceholder: "例如：新增 eBay 比價功能、平台維護通知...",
     topicHint: "簡述公告的主要內容",
+    coverStyle: "news",
   },
 ];
 
@@ -193,9 +200,283 @@ function TypeCard({
   );
 }
 
+/* ─── Cover Image Section ────────────────────────────────────────────── */
+interface CardImageItem {
+  id: number;
+  name: string;
+  nameJa?: string | null;
+  rarity?: string | null;
+  setName?: string | null;
+  imageUrl?: string | null;
+  imageUrlHiRes?: string | null;
+  priceChangePercent?: number;
+}
+
+function CoverImageSection({
+  articleTitle,
+  articleType,
+  coverStyle,
+  coverImageUrl,
+  onCoverImageChange,
+}: {
+  articleTitle: string;
+  articleType: ArticleTypeId;
+  coverStyle: "market-report" | "card-analysis" | "guide" | "news";
+  coverImageUrl: string | null;
+  onCoverImageChange: (url: string | null) => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCards, setSelectedCards] = useState<CardImageItem[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showCardPicker, setShowCardPicker] = useState(false);
+
+  // Fetch card images for cover
+  const { data: cardImages, isLoading: isLoadingCards } = trpc.blog.getCardImagesForCover.useQuery(
+    { query: searchQuery || undefined, limit: 8 },
+    { enabled: showCardPicker }
+  );
+
+  const generateCoverMutation = trpc.blog.generateCoverImage.useMutation();
+
+  const handleToggleCard = useCallback((card: CardImageItem): void => {
+    setSelectedCards((prev) => {
+      const exists = prev.find((c) => c.id === card.id);
+      if (exists) return prev.filter((c) => c.id !== card.id);
+      if (prev.length >= 3) {
+        toast.info("最多選擇 3 張卡牌");
+        return prev;
+      }
+      return [...prev, card];
+    });
+  }, []);
+
+  const handleGenerateCover = async () => {
+    if (selectedCards.length === 0) {
+      toast.error("請先選擇至少 1 張卡牌");
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const cardImageUrls = selectedCards
+        .map((c) => c.imageUrlHiRes || c.imageUrl)
+        .filter(Boolean) as string[];
+      const cardNames = selectedCards.map((c) => c.name);
+
+      const result = await generateCoverMutation.mutateAsync({
+        articleTitle,
+        articleType,
+        cardImageUrls,
+        cardNames,
+        style: coverStyle,
+      });
+      onCoverImageChange(result.url ?? null);
+      toast.success("封面圖生成成功！");
+    } catch (e: any) {
+      toast.error(`封面圖生成失敗：${e.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Image className="w-3.5 h-3.5 text-zinc-400" />
+          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">封面圖</span>
+          <Badge variant="outline" className="text-[10px] text-zinc-500 border-zinc-600">選填</Badge>
+        </div>
+        {coverImageUrl && (
+          <button
+            onClick={() => onCoverImageChange(null)}
+            className="text-xs text-zinc-500 hover:text-red-400 flex items-center gap-1 transition-colors"
+          >
+            <X className="w-3 h-3" />
+            移除
+          </button>
+        )}
+      </div>
+
+      {/* Current Cover Preview */}
+      {coverImageUrl ? (
+        <div className="relative rounded-lg overflow-hidden border border-zinc-700 group">
+          <img
+            src={coverImageUrl}
+            alt="封面圖"
+            className="w-full h-40 object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCardPicker(true)}
+              className="gap-1.5 text-xs border-white/30 text-white hover:bg-white/10"
+            >
+              <RefreshCw className="w-3 h-3" />
+              重新生成
+            </Button>
+          </div>
+          <div className="absolute bottom-2 right-2">
+            <Badge className="bg-green-500/90 text-white text-[10px]">
+              <Check className="w-2.5 h-2.5 mr-1" />
+              已設定封面圖
+            </Badge>
+          </div>
+        </div>
+      ) : (
+        <div
+          onClick={() => setShowCardPicker(true)}
+          className="border-2 border-dashed border-zinc-700 rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-zinc-500 hover:bg-zinc-800/30 transition-all group"
+        >
+          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-700 transition-colors">
+            <ImagePlus className="w-5 h-5 text-zinc-500 group-hover:text-zinc-300" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-zinc-400 font-medium">AI 生成封面圖</p>
+            <p className="text-xs text-zinc-600 mt-0.5">從資料庫選擇卡牌，AI 自動合成封面</p>
+          </div>
+        </div>
+      )}
+
+      {/* Card Picker Panel */}
+      {showCardPicker && (
+        <div className="border border-zinc-700 rounded-xl bg-zinc-800/50 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-white font-medium">選擇卡牌作為封面素材</p>
+            <button
+              onClick={() => setShowCardPicker(false)}
+              className="text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜尋卡牌名稱..."
+              className="pl-8 bg-zinc-900 border-zinc-600 text-white text-sm placeholder:text-zinc-500 h-8"
+            />
+          </div>
+
+          {/* Selected Cards */}
+          {selectedCards.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center gap-1.5 bg-[#06038d]/20 border border-[#06038d]/30 rounded-lg px-2 py-1"
+                >
+                  {(card.imageUrl || card.imageUrlHiRes) && (
+                    <img
+                      src={card.imageUrl || card.imageUrlHiRes || ""}
+                      alt={card.name}
+                      className="w-6 h-8 object-cover rounded"
+                    />
+                  )}
+                  <span className="text-xs text-white">{card.name}</span>
+                  <button
+                    onClick={() => handleToggleCard(card)}
+                    className="text-zinc-400 hover:text-red-400"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Card Grid */}
+          {isLoadingCards ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+              <span className="ml-2 text-sm text-zinc-500">載入卡牌中...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-1">
+              {(cardImages || []).map((card: CardImageItem) => {
+                const isSelected = selectedCards.some((c) => c.id === card.id);
+                const imgUrl = card.imageUrlHiRes || card.imageUrl;
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => handleToggleCard(card)}
+                    className={`relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                      isSelected
+                        ? "border-[#FEDD00] ring-1 ring-[#FEDD00]/50"
+                        : "border-zinc-700 hover:border-zinc-500"
+                    }`}
+                  >
+                    {imgUrl ? (
+                      <img
+                        src={imgUrl}
+                        alt={card.name}
+                        className="w-full aspect-[3/4] object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[3/4] bg-zinc-700 flex items-center justify-center">
+                        <Image className="w-4 h-4 text-zinc-500" />
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#FEDD00] flex items-center justify-center">
+                        <Check className="w-3 h-3 text-black" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">
+                      <p className="text-[9px] text-white truncate leading-tight">{card.name}</p>
+                      {card.rarity && (
+                        <p className="text-[8px] text-yellow-400 truncate">{card.rarity}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+              {(cardImages || []).length === 0 && !isLoadingCards && (
+                <div className="col-span-4 text-center py-4 text-zinc-500 text-sm">
+                  找不到卡牌，請嘗試其他關鍵字
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Generate Button */}
+          <Button
+            onClick={handleGenerateCover}
+            disabled={selectedCards.length === 0 || isGenerating}
+            className="w-full gap-2 bg-gradient-to-r from-[#06038d] to-purple-700 hover:from-[#0804b0] hover:to-purple-600 text-white text-sm"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                AI 生成封面中（約 15 秒）...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                用選中的 {selectedCards.length} 張卡牌生成封面圖
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-zinc-600 text-center">
+            AI 會以選中的卡牌為素材，配合文章風格自動合成專業封面
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Generated Article Preview ─────────────────────────────────────── */
 function ArticlePreview({
   article,
+  articleTypeId,
+  coverStyle,
   onEdit,
   onPublish,
   onSaveDraft,
@@ -204,6 +485,8 @@ function ArticlePreview({
   isSavingDraft,
 }: {
   article: any;
+  articleTypeId: ArticleTypeId;
+  coverStyle: "market-report" | "card-analysis" | "guide" | "news";
   onEdit: (field: string, value: string) => void;
   onPublish: () => void;
   onSaveDraft: () => void;
@@ -215,6 +498,13 @@ function ArticlePreview({
   const [editingExcerpt, setEditingExcerpt] = useState(false);
   const [localTitle, setLocalTitle] = useState(article.title || "");
   const [localExcerpt, setLocalExcerpt] = useState(article.excerpt || "");
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(article.featuredImage || null);
+
+  // Sync cover image to parent when changed
+  const handleCoverImageChange = (url: string | null) => {
+    setCoverImageUrl(url ?? null);
+    onEdit("featuredImage", url || "");
+  };
 
   return (
     <div className="space-y-4">
@@ -255,6 +545,15 @@ function ArticlePreview({
           </Button>
         </div>
       </div>
+
+      {/* Cover Image Section */}
+      <CoverImageSection
+        articleTitle={localTitle || article.title || ""}
+        articleType={articleTypeId}
+        coverStyle={coverStyle}
+        coverImageUrl={coverImageUrl}
+        onCoverImageChange={handleCoverImageChange}
+      />
 
       {/* Title */}
       <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700">
@@ -429,21 +728,17 @@ export default function AdminQuickPublish() {
       let article: any = null;
 
       if (selectedType === "market-report") {
-        // 快報：直接用 generateDailyReport（自動拉數據）
         article = await generateReportMutation.mutateAsync({
           days: 7,
           reportType: "weekly",
         });
       } else if (selectedType === "trend-analysis") {
-        // 趨勢報告：用 generateFromTemplate
         article = await generateFromTemplateMutation.mutateAsync({
           templateType: "trend-analysis",
           variables: topic.trim() ? { 時間段: "本週", 主題: topic.trim() } : { 時間段: "本週" },
         });
-        // Normalize field names
         if (article.suggestedTags && !article.tags) article.tags = article.suggestedTags;
       } else if (selectedType === "beginner-guide") {
-        // 入門指南：strategy → outline → generate
         const strategy = await generateStrategyMutation.mutateAsync({
           topic: topic.trim(),
           targetAudience: "PTCG 新手收藏家",
@@ -469,7 +764,6 @@ export default function AdminQuickPublish() {
           },
         });
       } else if (selectedType === "card-research") {
-        // 單卡研究：strategy → outline → generate
         const strategy = await generateStrategyMutation.mutateAsync({
           topic: `${topic.trim()} 卡牌價格分析`,
           targetAudience: "PTCG 收藏家和投資者",
@@ -496,7 +790,6 @@ export default function AdminQuickPublish() {
           },
         });
       } else if (selectedType === "platform-news") {
-        // 平台公告：用 template
         article = await generateFromTemplateMutation.mutateAsync({
           templateType: "platform-news",
           variables: { 公告標題: topic.trim(), 核心內容: topic.trim() },
@@ -509,7 +802,7 @@ export default function AdminQuickPublish() {
       setGeneratedArticle(article);
       setEditedFields({});
       setStep(3);
-      toast.success("文章生成成功！請確認後發布");
+      toast.success("文章生成成功！可選擇生成封面圖後發布");
     } catch (e: any) {
       toast.error(`生成失敗：${e.message}`);
       setStep(1);
@@ -547,6 +840,7 @@ export default function AdminQuickPublish() {
         metaTitle: finalArticle.seoTitle || finalArticle.title,
         metaDescription: finalArticle.seoDescription || finalArticle.excerpt || "",
         metaKeywords: finalArticle.seoKeywords || (finalArticle.tags || []).join(", "),
+        featuredImage: finalArticle.featuredImage || undefined,
       });
 
       if (status === "published") {
@@ -712,9 +1006,11 @@ export default function AdminQuickPublish() {
       )}
 
       {/* ── STEP 3: 預覽發布 ── */}
-      {step === 3 && generatedArticle && (
+      {step === 3 && generatedArticle && selectedTypeInfo && (
         <ArticlePreview
           article={{ ...generatedArticle, ...editedFields }}
+          articleTypeId={selectedType!}
+          coverStyle={selectedTypeInfo.coverStyle}
           onEdit={handleEditField}
           onPublish={() => handlePublishOrDraft("published")}
           onSaveDraft={() => handlePublishOrDraft("draft")}
