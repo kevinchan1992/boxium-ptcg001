@@ -208,537 +208,292 @@ export function AdminBlogManagement() {
       title: post.title,
       excerpt: post.excerpt || '',
       content: post.content,
-      featuredImage: post.featuredImage || '',
-      category: post.category || '',
-      tags: Array.isArray(post.tags) ? post.tags.map((t: any) => typeof t === 'string' ? t : t.name).join(', ') : (post.tags || ''),
-      dataSource: post.dataSource || 'manual',
+      featuredImage: post.featuredImage,
+      tags: post.tags,
+      categoryId: post.categoryId,
+      status: post.status,
+      slug: post.slug,
+      seoTitle: post.seoTitle,
+      seoDescription: post.seoDescription,
+      seoKeywords: post.seoKeywords,
     });
+    setActiveView('preview');
+  };
+  const handlePreview = (post: any) => handleEdit(post);
+  const handleTranslationEdit = (post: any) => {
     setSelectedPost(post);
+    setActiveView('edit-translation');
+  };
+
+  const handleAISuccess = (article: any) => {
+    setPreviewArticle(article);
     setActiveView('preview');
   };
 
-  // Translation status helper
-  const getTranslationStatus = (post: any) => {
-    const hasEn = post.titleEn || post.contentEn;
-    const hasJa = post.titleJa || post.contentJa;
-    if (hasEn && hasJa) return { label: '中/英/日', color: 'bg-emerald-600' };
-    if (hasEn) return { label: '中/英', color: 'bg-blue-600' };
-    if (hasJa) return { label: '中/日', color: 'bg-purple-600' };
-    return { label: '僅中文', color: 'bg-zinc-600' };
+  const handleSaveArticle = async (article: any) => {
+    if (article.id) {
+      await updatePostMutation.mutateAsync({
+        id: article.id,
+        title: article.title,
+        excerpt: article.excerpt,
+        content: article.content,
+        featuredImage: article.featuredImage,
+        tags: article.tags,
+        categoryId: article.categoryId,
+        status: article.status,
+        metaTitle: article.seoTitle,
+        metaDescription: article.seoDescription,
+        metaKeywords: article.seoKeywords,
+      });
+    } else {
+      await createPostMutation.mutateAsync({
+        title: article.title,
+        excerpt: article.excerpt,
+        content: article.content,
+        featuredImage: article.featuredImage,
+        tags: article.tags,
+        categoryId: article.categoryId,
+        status: article.status || 'draft',
+        dataSource: 'ai-generated' as const,
+        metaTitle: article.seoTitle,
+        metaDescription: article.seoDescription,
+        metaKeywords: article.seoKeywords,
+      });
+    }
+    setActiveView('list');
+    refetch();
   };
 
-  // Filtered posts by category (client-side since API doesn't filter by category name)
   const filteredPosts = useMemo(() => {
     if (!posts?.posts) return [];
     if (categoryFilter === 'all') return posts.posts;
-    return posts.posts.filter((p: any) => p.category === categoryFilter);
+    return posts.posts.filter((p: any) => String(p.categoryId) === categoryFilter);
   }, [posts, categoryFilter]);
 
+  const toggleSelectPost = (id: number) => {
+    setSelectedPostIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  if (activeView === 'generate') {
+    return (
+      <AIArticleGenerator
+        categories={categories || []}
+        onCancel={() => setActiveView('list')}
+        onSuccess={handleAISuccess}
+      />
+    );
+  }
+
+  if (activeView === 'preview' && previewArticle) {
+    return (
+      <ArticlePreview
+        article={previewArticle}
+        onPublish={handleSaveArticle}
+        onEdit={() => {}}
+        onCancel={() => setActiveView('list')}
+        initialEditMode={!previewArticle.id}
+      />
+    );
+  }
+
+  if (activeView === 'edit-translation' && selectedPost) {
+    return (
+      <TranslationEditor
+        post={selectedPost}
+        onCancel={() => setActiveView('list')}
+        onSuccess={() => { setActiveView('list'); refetch(); }}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white">博客管理</h2>
-          <p className="text-xs text-gray-400 mt-0.5">管理文章、AI 生成、翻譯與分享統計</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => { setSelectedPost(null); setActiveView('generate'); }}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm"
-            size="sm"
-          >
-            <Sparkles className="w-4 h-4 mr-1.5" />
-            AI 生成
-          </Button>
-          <BrandButton
-            onClick={() => {
-              setPreviewArticle({
-                title: '', excerpt: '', content: '', featuredImage: '',
-                category: '', tags: '', dataSource: 'manual',
-              });
-              setSelectedPost(null);
-              setActiveView('preview');
-            }}
-            className="text-sm"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            新增文章
-          </BrandButton>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <ShareStatisticsCard />
 
-      {/* ── List View ── */}
-      {activeView === 'list' && (
-        <>
-          {/* Share Statistics (Collapsible) */}
-          <ShareStatisticsCard />
+      {/* Header */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-white">文章管理</CardTitle>
+              <CardDescription>共 {posts?.total || 0} 篇文章</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setActiveView('generate')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                size="sm"
+              >
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                AI 內容工廠
+              </Button>
+              <Button
+                onClick={() => { setPreviewArticle(null); setActiveView('preview'); }}
+                className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038d] font-semibold"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                新增文章
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="搜尋文章標題..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                className="bg-zinc-800 border-zinc-700 text-white pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部狀態</SelectItem>
+                <SelectItem value="published">已發布</SelectItem>
+                <SelectItem value="draft">草稿</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-36 bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部分類</SelectItem>
+                {(categories || []).map((cat: any) => (
+                  <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {/* Article List */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="text-white text-base">文章列表</CardTitle>
-                  <CardDescription className="text-xs">共 {posts?.total || 0} 篇文章</CardDescription>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-                    <Input
-                      placeholder="搜尋文章..."
-                      value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                      className="w-48 pl-8 h-8 text-xs bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                  {/* Status Filter */}
-                  <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-24 h-8 text-xs bg-zinc-800 border-zinc-700 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部</SelectItem>
-                      <SelectItem value="draft">草稿</SelectItem>
-                      <SelectItem value="published">已發布</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {/* Category Filter */}
-                  <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-28 h-8 text-xs bg-zinc-800 border-zinc-700 text-white">
-                      <SelectValue placeholder="分類" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部分類</SelectItem>
-                      {(categories || []).map((cat: any) => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {/* Batch Mode Toggle */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setIsSelectMode(!isSelectMode); setSelectedPostIds([]); }}
-                    className={`h-8 text-xs border-zinc-700 ${isSelectMode ? 'bg-[#FEDD00] text-[#06038d] border-[#FEDD00]' : 'text-white hover:bg-zinc-800'}`}
-                  >
-                    {isSelectMode ? '取消選擇' : '批量操作'}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {isLoading ? (
-                <div className="text-center py-8 text-gray-400">載入中...</div>
-              ) : filteredPosts.length > 0 ? (
-                <div className="space-y-2">
-                  {/* Batch Operations Toolbar */}
+          {/* Post List */}
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-400">載入中...</div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>沒有找到文章</p>
+              <Button onClick={() => setActiveView('generate')} className="mt-4 bg-purple-600 hover:bg-purple-700" size="sm">
+                <Sparkles className="w-4 h-4 mr-1.5" /> 用 AI 生成第一篇文章
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredPosts.map((post: any) => (
+                <div key={post.id} className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors group">
                   {isSelectMode && (
-                    <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg border border-zinc-700">
-                      <label className="flex items-center gap-2 text-white cursor-pointer text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedPostIds.length === filteredPosts.length && filteredPosts.length > 0}
-                          onChange={(e) => {
-                            setSelectedPostIds(e.target.checked ? filteredPosts.map((p: any) => p.id) : []);
-                          }}
-                          className="w-4 h-4 rounded"
-                        />
-                        全選 ({selectedPostIds.length}/{filteredPosts.length})
-                      </label>
-                      <div className="flex gap-1.5">
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => {
-                            if (selectedPostIds.length === 0) { toast.error('請選擇至少一篇文章'); return; }
-                            if (confirm(`確定要發布 ${selectedPostIds.length} 篇文章嗎？`)) {
-                              const drafts = filteredPosts.filter((p: any) => selectedPostIds.includes(p.id) && p.status === 'draft');
-                              drafts.forEach((post: any) => togglePublishMutation.mutate({ id: post.id }));
-                              setSelectedPostIds([]);
-                            }
-                          }}
-                          className="h-7 text-xs border-zinc-700 text-green-400 hover:bg-zinc-700"
-                          disabled={selectedPostIds.length === 0}
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1" />發布
-                        </Button>
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => {
-                            if (selectedPostIds.length === 0) { toast.error('請選擇至少一篇文章'); return; }
-                            if (confirm(`確定要取消發布 ${selectedPostIds.length} 篇文章嗎？`)) {
-                              const published = filteredPosts.filter((p: any) => selectedPostIds.includes(p.id) && p.status === 'published');
-                              published.forEach((post: any) => togglePublishMutation.mutate({ id: post.id }));
-                              setSelectedPostIds([]);
-                            }
-                          }}
-                          className="h-7 text-xs border-zinc-700 text-yellow-400 hover:bg-zinc-700"
-                          disabled={selectedPostIds.length === 0}
-                        >
-                          <EyeOff className="w-3.5 h-3.5 mr-1" />取消發布
-                        </Button>
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => {
-                            if (selectedPostIds.length === 0) { toast.error('請選擇至少一篇文章'); return; }
-                            if (confirm(`確定要刪除 ${selectedPostIds.length} 篇文章嗎？此操作無法復原！`)) {
-                              selectedPostIds.forEach(id => deletePostMutation.mutate({ id }));
-                              setSelectedPostIds([]);
-                            }
-                          }}
-                          className="h-7 text-xs border-zinc-700 text-red-400 hover:bg-zinc-700"
-                          disabled={selectedPostIds.length === 0}
-                        >
-                          <Trash2 className="w-3.5 h-3.5 mr-1" />刪除
-                        </Button>
-                      </div>
-                    </div>
+                    <input type="checkbox" checked={selectedPostIds.includes(post.id)}
+                      onChange={() => toggleSelectPost(post.id)}
+                      className="w-4 h-4 accent-[#FEDD00]" />
                   )}
-
-                  {/* Article Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-zinc-700 text-gray-400 text-xs">
-                          {isSelectMode && <th className="px-2 py-2 w-8"></th>}
-                          <th className="px-3 py-2 text-left">文章</th>
-                          <th className="px-3 py-2 text-left hidden lg:table-cell">分類</th>
-                          <th className="px-3 py-2 text-center hidden md:table-cell">狀態</th>
-                          <th className="px-3 py-2 text-center hidden lg:table-cell">語言</th>
-                          <th className="px-3 py-2 text-center hidden md:table-cell">瀏覽</th>
-                          <th className="px-3 py-2 text-left hidden lg:table-cell">日期</th>
-                          <th className="px-3 py-2 text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredPosts.map((post: any) => {
-                          const translationStatus = getTranslationStatus(post);
-                          return (
-                            <tr
-                              key={post.id}
-                              className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
-                            >
-                              {/* Checkbox */}
-                              {isSelectMode && (
-                                <td className="px-2 py-2.5">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedPostIds.includes(post.id)}
-                                    onChange={(e) => {
-                                      setSelectedPostIds(
-                                        e.target.checked
-                                          ? [...selectedPostIds, post.id]
-                                          : selectedPostIds.filter(id => id !== post.id)
-                                      );
-                                    }}
-                                    className="w-4 h-4 rounded"
-                                  />
-                                </td>
-                              )}
-
-                              {/* Title + Excerpt + Tags */}
-                              <td className="px-3 py-2.5 max-w-[320px]">
-                                <div className="flex items-start gap-2">
-                                  {/* Thumbnail */}
-                                  {post.featuredImage && (
-                                    <img
-                                      src={post.featuredImage}
-                                      alt=""
-                                      className="w-10 h-10 rounded object-cover flex-shrink-0 mt-0.5"
-                                    />
-                                  )}
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-white font-medium line-clamp-1 text-sm">{post.title}</span>
-                                      {post.dataSource === 'ai-generated' && (
-                                        <span title="AI 生成"><Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0" /></span>
-                                      )}
-                                    </div>
-                                    {post.excerpt && (
-                                      <p className="text-gray-500 text-xs line-clamp-1 mt-0.5">{post.excerpt}</p>
-                                    )}
-                                    {/* Tags */}
-                                    {post.tags && post.tags.length > 0 && (
-                                      <div className="flex items-center gap-1 mt-1 flex-wrap">
-                                        <Tag className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                                        {(Array.isArray(post.tags) ? post.tags : []).slice(0, 3).map((tag: any, i: number) => (
-                                          <span key={i} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-gray-400 rounded">
-                                            {typeof tag === 'string' ? tag : tag.name}
-                                          </span>
-                                        ))}
-                                        {Array.isArray(post.tags) && post.tags.length > 3 && (
-                                          <span className="text-[10px] text-gray-500">+{post.tags.length - 3}</span>
-                                        )}
-                                      </div>
-                                    )}
-                                    {/* Mobile-only info */}
-                                    <div className="flex items-center gap-2 mt-1 md:hidden text-[10px] text-gray-500">
-                                      <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0">
-                                        {post.status === 'published' ? '已發布' : '草稿'}
-                                      </Badge>
-                                      <span>{post.viewCount} 瀏覽</span>
-                                      <span>{formatHKDate(post.publishedAt || post.createdAt)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-
-                              {/* Category */}
-                              <td className="px-3 py-2.5 hidden lg:table-cell">
-                                {post.category ? (
-                                  <span className="text-xs px-2 py-0.5 bg-zinc-800 text-gray-300 rounded-full flex items-center gap-1 w-fit">
-                                    <FolderOpen className="w-3 h-3" />
-                                    {post.category}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-gray-500">—</span>
-                                )}
-                              </td>
-
-                              {/* Status */}
-                              <td className="px-3 py-2.5 text-center hidden md:table-cell">
-                                <Badge
-                                  variant={post.status === 'published' ? 'default' : 'secondary'}
-                                  className={`text-xs ${post.status === 'published' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'bg-zinc-700 text-gray-400'}`}
-                                >
-                                  {post.status === 'published' ? '已發布' : '草稿'}
-                                </Badge>
-                              </td>
-
-                              {/* Translation Status */}
-                              <td className="px-3 py-2.5 text-center hidden lg:table-cell">
-                                <Badge className={`text-[10px] ${translationStatus.color}`}>
-                                  {translationStatus.label}
-                                </Badge>
-                              </td>
-
-                              {/* Views */}
-                              <td className="px-3 py-2.5 text-center hidden md:table-cell">
-                                <span className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                                  <BarChart3 className="w-3 h-3" />
-                                  {post.viewCount || 0}
-                                </span>
-                              </td>
-
-                              {/* Date */}
-                              <td className="px-3 py-2.5 hidden lg:table-cell">
-                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatHKDate(post.publishedAt || post.createdAt)}
-                                </span>
-                              </td>
-
-                              {/* Actions */}
-                              <td className="px-3 py-2.5">
-                                <div className="flex items-center justify-end gap-0.5">
-                                  {/* Toggle Publish */}
-                                  <Button
-                                    size="sm" variant="ghost"
-                                    onClick={() => handleTogglePublish(post.id)}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-white"
-                                    title={post.status === 'published' ? '取消發布' : '發布'}
-                                  >
-                                    {post.status === 'published' ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                  </Button>
-                                  {/* AI Translate */}
-                                  <Button
-                                    size="sm" variant="ghost"
-                                    onClick={() => handleTranslate(post.id)}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-purple-400"
-                                    disabled={translatePostMutation.isPending}
-                                    title="AI 翻譯"
-                                  >
-                                    <Languages className="w-3.5 h-3.5" />
-                                  </Button>
-                                  {/* Edit Translation */}
-                                  <Button
-                                    size="sm" variant="ghost"
-                                    onClick={() => { setSelectedPost(post); setActiveView('edit-translation'); }}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-400"
-                                    title="編輯翻譯"
-                                  >
-                                    <Globe className="w-3.5 h-3.5" />
-                                  </Button>
-                                  {/* Edit Article */}
-                                  <Button
-                                    size="sm" variant="ghost"
-                                    onClick={() => handleEdit(post)}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-[#FEDD00]"
-                                    title="編輯文章"
-                                  >
-                                    <PenLine className="w-3.5 h-3.5" />
-                                  </Button>
-                                  {/* View */}
-                                  <a
-                                    href={`/blog/${post.slug}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center h-7 w-7 text-gray-400 hover:text-green-400 transition-colors"
-                                    title="查看文章"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </a>
-                                  {/* Delete */}
-                                  <Button
-                                    size="sm" variant="ghost"
-                                    onClick={() => handleDelete(post.id)}
-                                    className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                                    title="刪除"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  {post.featuredImage && (
+                    <img src={post.featuredImage} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0 hidden sm:block" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Badge className={post.status === 'published' ? 'bg-green-600 text-white text-[10px] px-1.5 py-0' : 'bg-zinc-600 text-gray-300 text-[10px] px-1.5 py-0'}>
+                        {post.status === 'published' ? '已發布' : '草稿'}
+                      </Badge>
+                      {post.category && (
+                        <Badge className="bg-zinc-700 text-gray-300 text-[10px] px-1.5 py-0">{post.category.name}</Badge>
+                      )}
+                    </div>
+                    <p className="text-white text-sm font-medium line-clamp-1">{post.title}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2">
+                      <Clock className="w-3 h-3" />
+                      {formatHKDate(post.publishedAt || post.createdAt)}
+                      {post.viewCount > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.viewCount}</span>}
+                    </p>
                   </div>
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-                      <span className="text-xs text-gray-500">
-                        第 {currentPage} / {totalPages} 頁，共 {posts?.total || 0} 篇
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                          className="h-7 w-7 p-0 border-zinc-700 text-white hover:bg-zinc-800"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        {/* Page numbers */}
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let page: number;
-                          if (totalPages <= 5) {
-                            page = i + 1;
-                          } else if (currentPage <= 3) {
-                            page = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            page = totalPages - 4 + i;
-                          } else {
-                            page = currentPage - 2 + i;
-                          }
-                          return (
-                            <Button
-                              key={page}
-                              variant={currentPage === page ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setCurrentPage(page)}
-                              className={`h-7 w-7 p-0 text-xs ${
-                                currentPage === page
-                                  ? 'bg-[#FEDD00] text-[#06038d] hover:bg-[#FEDD00]/90'
-                                  : 'border-zinc-700 text-white hover:bg-zinc-800'
-                              }`}
-                            >
-                              {page}
-                            </Button>
-                          );
-                        })}
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                          className="h-7 w-7 p-0 border-zinc-700 text-white hover:bg-zinc-800"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(post)}
+                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
+                      <PenLine className="w-3 h-3 mr-1" />編輯
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleTogglePublish(post.id)}
+                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
+                      {post.status === 'published' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleTranslate(post.id)}
+                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs"
+                      disabled={translatePostMutation.isPending}>
+                      <Globe className="w-3 h-3" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(post.id)}
+                      className="h-7 px-2 text-xs">
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">還沒有文章，點擊「新增文章」或「AI 生成」開始吧！</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+              ))}
+            </div>
+          )}
 
-      {/* ── Preview / Edit View ── */}
-      {activeView === 'preview' && previewArticle && (
-        <ArticlePreview
-          article={previewArticle}
-          initialEditMode={!!previewArticle.id}
-          onPublish={async (article) => {
-            try {
-              const tagsArray = article.tags
-                ? article.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-                : [];
-
-              if (article.id) {
-                await updatePostMutation.mutateAsync({
-                  id: article.id,
-                  title: article.title,
-                  excerpt: article.excerpt || '',
-                  content: article.content,
-                  featuredImage: article.featuredImage,
-                  category: article.category,
-                  status: 'published',
-                  tags: tagsArray,
-                  metaKeywords: article.seoKeywords,
-                });
-              } else {
-                await createPostMutation.mutateAsync({
-                  title: article.title,
-                  excerpt: article.excerpt || '',
-                  content: article.content,
-                  featuredImage: article.featuredImage,
-                  category: article.category,
-                  status: 'published',
-                  dataSource: (article.dataSource as 'manual' | 'ai-generated' | 'mixed') || 'manual',
-                  tags: tagsArray,
-                  metaKeywords: article.seoKeywords,
-                });
-              }
-              setActiveView('list');
-            } catch (error: any) {
-              // Error handled by mutation
-            }
-          }}
-          onEdit={() => {}}
-          onCancel={() => setActiveView('list')}
-        />
-      )}
-
-      {/* ── AI Generate View ── */}
-      {activeView === 'generate' && (
-        <AIArticleGenerator
-          categories={categories || []}
-          onCancel={() => setActiveView('list')}
-          onSuccess={(generatedArticle) => {
-            setPreviewArticle({
-              ...generatedArticle,
-              category: generatedArticle.suggestedCategory || '',
-              tags: generatedArticle.suggestedTags?.join(', ') || '',
-              seoKeywords: generatedArticle.seoMetadata?.keywords?.join(', ') || '',
-            });
-            setActiveView('preview');
-          }}
-        />
-      )}
-
-      {/* ── Translation Editor View ── */}
-      {activeView === 'edit-translation' && selectedPost && (
-        <TranslationEditor
-          post={selectedPost}
-          onCancel={() => setActiveView('list')}
-          onSuccess={() => { setActiveView('list'); refetch(); }}
-        />
-      )}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1} className="border-zinc-700 text-white hover:bg-zinc-800">
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-gray-400 text-sm">{currentPage} / {totalPages}</span>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages} className="border-zinc-700 text-white hover:bg-zinc-800">
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// ─── AI Article Generator ───────────────────────────────────────
+// ─── Workflow Step Indicator ─────────────────────────────────────
+function WorkflowStepIndicator({ currentStep }: { currentStep: number }) {
+  const steps = [
+    { id: 1, label: '輸入素材', icon: FileText },
+    { id: 2, label: '內容策略', icon: TrendingUp },
+    { id: 3, label: '文章大綱', icon: BarChart3 },
+    { id: 4, label: '生成全文', icon: Sparkles },
+    { id: 5, label: 'AI 校對', icon: Check },
+  ];
+  return (
+    <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
+      {steps.map((step, i) => (
+        <div key={step.id} className="flex items-center gap-1 flex-shrink-0">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            currentStep === step.id
+              ? 'bg-purple-600 text-white'
+              : currentStep > step.id
+              ? 'bg-green-600/20 text-green-400 border border-green-600/30'
+              : 'bg-zinc-800 text-gray-500'
+          }`}>
+            {currentStep > step.id ? (
+              <Check className="w-3 h-3" />
+            ) : (
+              <step.icon className="w-3 h-3" />
+            )}
+            <span className="hidden sm:inline">{step.label}</span>
+            <span className="sm:hidden">{step.id}</span>
+          </div>
+          {i < steps.length - 1 && (
+            <ChevronRight className={`w-3 h-3 flex-shrink-0 ${currentStep > step.id ? 'text-green-500' : 'text-zinc-600'}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── AI Article Generator (Multi-Step Workflow) ──────────────────
 function AIArticleGenerator({
   categories, onCancel, onSuccess,
 }: {
@@ -746,14 +501,25 @@ function AIArticleGenerator({
   onCancel: () => void;
   onSuccess: (article: any) => void;
 }) {
-  const [inputMethod, setInputMethod] = useState<'image' | 'text' | 'url'>('url');
-  const [articleType, setArticleType] = useState<'daily-report' | 'card-analysis' | 'market-trend' | 'news'>('news');
+  // ── Workflow State ──
+  const [workflowStep, setWorkflowStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [strategy, setStrategy] = useState<any>(null);
+  const [outline, setOutline] = useState<any>(null);
+  const [generatedArticle, setGeneratedArticle] = useState<any>(null);
+  const [proofreadResult, setProofreadResult] = useState<any>(null);
+  const [selectedTitleIndex, setSelectedTitleIndex] = useState(0);
+
+  // ── Step 1: Input State ──
+  const [inputMethod, setInputMethod] = useState<'topic' | 'url' | 'image' | 'text'>('topic');
+  const [articleType, setArticleType] = useState<string>('card-analysis');
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [textContent, setTextContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [topic, setTopic] = useState('');
-  const [targetLanguage, setTargetLanguage] = useState('zh-TW');
+  const [targetAudience, setTargetAudience] = useState('香港及台灣 TCG 玩家和收藏家');
+  const [seoKeywords, setSeoKeywords] = useState('');
+  const [targetLanguage, setTargetLanguage] = useState<'zh-TW' | 'en' | 'ja'>('zh-TW');
   const [isUploading, setIsUploading] = useState(false);
   const [cardSelectionDialogOpen, setCardSelectionDialogOpen] = useState(false);
 
@@ -761,9 +527,22 @@ function AIArticleGenerator({
     setTextContent(prev => prev ? prev + '\n\n' + cardData : cardData);
   };
 
+  // ── Mutations ──
+  const strategyMutation = trpc.blogAi.generateStrategy.useMutation({
+    onSuccess: (data) => { setStrategy(data); setWorkflowStep(2); toast.success('內容策略已生成！'); },
+    onError: (e) => toast.error(`策略生成失敗：${e.message}`),
+  });
+  const outlineMutation = trpc.blogAi.generateOutline.useMutation({
+    onSuccess: (data) => { setOutline(data); setWorkflowStep(3); toast.success('文章大綱已生成！'); },
+    onError: (e) => toast.error(`大綱生成失敗：${e.message}`),
+  });
   const generateMutation = trpc.blog.generateArticle.useMutation({
-    onSuccess: (data) => { toast.success('文章生成成功！'); onSuccess(data); },
+    onSuccess: (data) => { setGeneratedArticle(data); setWorkflowStep(4); toast.success('文章生成成功！'); },
     onError: (e) => toast.error(`生成失敗：${e.message}`),
+  });
+  const proofreadMutation = trpc.blogAi.proofreadArticle.useMutation({
+    onSuccess: (data) => { setProofreadResult(data); setWorkflowStep(5); toast.success('校對完成！'); },
+    onError: (e) => toast.error(`校對失敗：${e.message}`),
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -786,198 +565,538 @@ function AIArticleGenerator({
     } catch { toast.error('圖片上傳失敗'); }
     finally { setIsUploading(false); }
   };
-
   const removeImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
     setUploadedImageUrls(uploadedImageUrls.filter((_, i) => i !== index));
   };
 
-  const handleGenerate = () => {
+  // ── Step 1 → 2: Generate Strategy ──
+  const handleGenerateStrategy = () => {
+    if (inputMethod === 'topic' && !topic) { toast.error('請輸入文章主題'); return; }
     if (inputMethod === 'url' && !urlInput) { toast.error('請輸入網址'); return; }
     if (inputMethod === 'image' && uploadedImageUrls.length === 0) { toast.error('請上傳至少一張圖片'); return; }
     if (inputMethod === 'text' && !textContent) { toast.error('請輸入文字內容'); return; }
+    const topicText = inputMethod === 'topic' ? topic
+      : inputMethod === 'url' ? `分析網址：${urlInput}`
+      : inputMethod === 'text' ? (topic || textContent.substring(0, 200))
+      : '圖片素材分析';
+    strategyMutation.mutate({ topic: topicText, targetAudience, seoKeywords, language: targetLanguage });
+  };
 
+  // ── Step 2 → 3: Generate Outline ──
+  const handleGenerateOutline = () => {
+    if (!strategy) return;
+    const selectedTitle = strategy.titleOptions?.[selectedTitleIndex] || strategy.titleOptions?.[0] || topic;
+    outlineMutation.mutate({
+      title: selectedTitle,
+      articleType: strategy.articleType || articleType,
+      contentAngle: strategy.contentAngle,
+      keyPoints: strategy.keyPoints,
+      targetAudience: strategy.targetAudience,
+      estimatedLength: strategy.estimatedLength,
+    });
+  };
+
+  // ── Step 3 → 4: Generate Full Article ──
+  const handleGenerateArticle = () => {
     const input: any = { articleType };
     if (inputMethod === 'url') {
       input.urlInput = { url: urlInput, targetLanguage };
     } else if (inputMethod === 'image') {
       input.imageInput = { imageUrls: uploadedImageUrls };
       if (uploadedImageUrls.length > 0) input.featuredImageUrl = uploadedImageUrls[0];
-    } else if (inputMethod === 'text') {
-      input.textInput = { content: textContent, topic: topic || '市場快訊' };
+    } else {
+      const outlineText = outline ? `文章標題：${outline.h1}\n文章大綱：\n${outline.sections?.map((s: any, i: number) =>
+        `${i+1}. ## ${s.h2}\n   說明：${s.description}${s.subsections?.map((sub: any) => `\n   - ### ${sub.h3}：${sub.description}`).join('') || ''}`
+      ).join('\n')}\nFAQ：${outline.faq?.map((f: any) => `Q: ${f.question}`).join('、')}\n結語：${outline.cta}` : topic;
+      const dataContent = inputMethod === 'text' ? textContent : '';
+      input.textInput = {
+        content: dataContent ? `${outlineText}\n\n參考資料：\n${dataContent}` : outlineText,
+        topic: outline?.h1 || topic
+      };
     }
     generateMutation.mutate(input);
   };
 
+  // ── Step 4 → 5: Proofread ──
+  const handleProofread = () => {
+    if (!generatedArticle) return;
+    proofreadMutation.mutate({
+      title: generatedArticle.title,
+      excerpt: generatedArticle.excerpt || '',
+      content: generatedArticle.content,
+      seoKeywords,
+    });
+  };
+
+  const handleAccept = () => {
+    if (generatedArticle) onSuccess(generatedArticle);
+  };
+
+  const isAnyLoading = strategyMutation.isPending || outlineMutation.isPending || generateMutation.isPending || proofreadMutation.isPending;
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          AI 自動生成文章
-        </CardTitle>
-        <CardDescription>上傳圖片或輸入文字，讓 AI 幫你生成專業文章</CardDescription>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+            AI 內容工廠
+          </CardTitle>
+          <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+            <ChevronLeft className="w-4 h-4 mr-1" /> 返回
+          </Button>
+        </div>
+        <CardDescription>專業 AI 內容運營系統：策略 → 大綱 → 生成 → 校對</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Input Method */}
-        <div>
-          <Label className="text-white mb-2 block text-sm">輸入方式</Label>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {[
-              { key: 'url' as const, icon: FileText, label: '網址' },
-              { key: 'image' as const, icon: ImageIcon, label: '圖片' },
-              { key: 'text' as const, icon: FileText, label: '文字' },
-            ].map(({ key, icon: Icon, label }) => (
-              <Button
-                key={key}
-                variant={inputMethod === key ? 'default' : 'outline'}
-                onClick={() => setInputMethod(key)}
-                className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
-                size="sm"
-              >
-                <Icon className="w-4 h-4 mr-1.5" />
-                {label}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <WorkflowStepIndicator currentStep={workflowStep} />
 
-        {/* Article Type */}
-        <div>
-          <Label className="text-white text-sm">文章類型</Label>
-          <Select value={articleType} onValueChange={(v: any) => setArticleType(v)}>
-            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="news">新聞快訊</SelectItem>
-              <SelectItem value="daily-report">每日市場快報</SelectItem>
-              <SelectItem value="card-analysis">卡牌深度研究</SelectItem>
-              <SelectItem value="market-trend">市場趨勢報告</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* URL Input */}
-        {inputMethod === 'url' && (
-          <div className="space-y-3">
-            <div>
-              <Label className="text-white text-sm">網址</Label>
-              <Input
-                placeholder="https://example.com/article"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
+        {/* ── STEP 1: 輸入素材 ── */}
+        {workflowStep === 1 && (
+          <div className="space-y-4">
+            <div className="p-3 bg-purple-900/20 border border-purple-700/30 rounded-lg">
+              <p className="text-purple-300 text-xs font-medium mb-1">📋 步驟 1：提供素材</p>
+              <p className="text-gray-400 text-xs">選擇輸入方式，提供文章主題或參考資料。AI 將分析並制定內容策略。</p>
             </div>
+
+            {/* Input Mode Tabs */}
             <div>
-              <Label className="text-white text-sm">目標語言</Label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+              <Label className="text-white mb-2 block text-sm">輸入方式</Label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { key: 'topic' as const, icon: PenLine, label: '主題' },
+                  { key: 'url' as const, icon: ExternalLink, label: '網址' },
+                  { key: 'image' as const, icon: ImageIcon, label: '圖片' },
+                  { key: 'text' as const, icon: FileText, label: '文字' },
+                ].map(({ key, icon: Icon, label }) => (
+                  <Button key={key} variant={inputMethod === key ? 'default' : 'outline'}
+                    onClick={() => setInputMethod(key)}
+                    className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+                    size="sm">
+                    <Icon className="w-3.5 h-3.5 mr-1" />{label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Article Type */}
+            <div>
+              <Label className="text-white text-sm">文章類型</Label>
+              <Select value={articleType} onValueChange={setArticleType}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="zh-TW">繁體中文</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
+                  <SelectItem value="news">📰 新聞快訊</SelectItem>
+                  <SelectItem value="daily-report">📊 每日市場快報</SelectItem>
+                  <SelectItem value="card-analysis">🔬 卡牌深度研究</SelectItem>
+                  <SelectItem value="market-trend">📈 市場趨勢報告</SelectItem>
+                  <SelectItem value="collection-guide">📚 收藏指南</SelectItem>
+                  <SelectItem value="price-tracking">💰 價格追蹤報告</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Topic Input */}
+            {inputMethod === 'topic' && (
+              <div>
+                <Label className="text-white text-sm">文章主題 <span className="text-red-400">*</span></Label>
+                <Input value={topic} onChange={(e) => setTopic(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  placeholder="例如：Charizard PSA 10 近期市場分析、2024 年最值得收藏的 Pokemon 卡牌" />
+              </div>
+            )}
+
+            {/* URL Input */}
+            {inputMethod === 'url' && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-white text-sm">參考網址</Label>
+                  <Input placeholder="https://example.com/article" value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                  <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
+                </div>
+                <div>
+                  <Label className="text-white text-sm">目標語言</Label>
+                  <Select value={targetLanguage} onValueChange={(v) => setTargetLanguage(v as 'zh-TW' | 'en' | 'ja')}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zh-TW">繁體中文</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="ja">日本語</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Image Input */}
+            {inputMethod === 'image' && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-white mb-2 block text-sm">上傳圖片</Label>
+                  <div className="border-2 border-dashed border-zinc-700 rounded-lg p-5 text-center hover:border-purple-500 transition-colors">
+                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" id="image-upload" disabled={isUploading} />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <ImageIcon className="w-10 h-10 mx-auto mb-3 text-gray-500" />
+                      <p className="text-white text-sm mb-1">點擊上傳圖片</p>
+                      <p className="text-xs text-gray-500">支援 JPG、PNG、WEBP 格式</p>
+                    </label>
+                  </div>
+                </div>
+                {uploadedImageUrls.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {uploadedImageUrls.map((url, i) => (
+                      <div key={i} className="relative group">
+                        <img src={url} alt="" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
+                        {i === 0 && <Badge className="absolute top-1 left-1 bg-purple-600 text-[10px]">主題圖</Badge>}
+                        <Button size="sm" variant="destructive" onClick={() => removeImage(i)}
+                          className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100">
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Text Input */}
+            {inputMethod === 'text' && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-white text-sm">主題（選填）</Label>
+                  <Input value={topic} onChange={(e) => setTopic(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                    placeholder="例如：Pikachu 價格飆升、市場動態等" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-white text-sm">參考資料 / 數據</Label>
+                    <Button type="button" variant="outline" size="sm"
+                      onClick={() => setCardSelectionDialogOpen(true)}
+                      className="h-7 text-xs border-[#FEDD00] text-[#FEDD00] hover:bg-[#FEDD00]/10">
+                      🎴 插入卡牌資料
+                    </Button>
+                  </div>
+                  <Textarea value={textContent} onChange={(e) => setTextContent(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                    placeholder={`輸入參考資料或數據...\n\n例如：\n- Charizard PSA 10 今日成交：HKD 45,000\n- 過去 30 天均價：HKD 38,500\n- 交易量：+45%\n\n提示：點擊「插入卡牌資料」可從資料庫選擇卡牌並插入真實價格資料`}
+                    rows={8} />
+                </div>
+              </div>
+            )}
+
+            {/* Strategy Options */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-white text-xs">目標讀者</Label>
+                <Input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1 text-xs" />
+              </div>
+              <div>
+                <Label className="text-white text-xs">SEO 關鍵字（選填）</Label>
+                <Input value={seoKeywords} onChange={(e) => setSeoKeywords(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1 text-xs"
+                  placeholder="PSA 10, 卡牌市場, 香港 PTCG" />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-zinc-700">
+              <Button onClick={handleGenerateStrategy} disabled={strategyMutation.isPending}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <TrendingUp className="w-4 h-4 mr-1.5" />
+                {strategyMutation.isPending ? '分析中...' : '生成內容策略 →'}
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Image Input */}
-        {inputMethod === 'image' && (
-          <div className="space-y-3">
-            <div>
-              <Label className="text-white mb-2 block text-sm">上傳圖片</Label>
-              <div className="border-2 border-dashed border-zinc-700 rounded-lg p-5 text-center hover:border-purple-500 transition-colors">
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" id="image-upload" disabled={isUploading} />
-                <label htmlFor="image-upload" className="cursor-pointer">
-                  <ImageIcon className="w-10 h-10 mx-auto mb-3 text-gray-500" />
-                  <p className="text-white text-sm mb-1">點擊上傳圖片</p>
-                  <p className="text-xs text-gray-500">支援 JPG、PNG、WEBP 格式</p>
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">AI 將自動提取圖片中的文字和卡牌資訊</p>
+        {/* ── STEP 2: 內容策略 ── */}
+        {workflowStep === 2 && strategy && (
+          <div className="space-y-4">
+            <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
+              <p className="text-blue-300 text-xs font-medium mb-1">🎯 步驟 2：確認內容策略</p>
+              <p className="text-gray-400 text-xs">AI 已分析你的主題並制定策略。選擇最合適的標題，然後生成大綱。</p>
             </div>
-            {uploadedImageUrls.length > 0 && (
-              <div>
-                <Label className="text-white mb-2 block text-sm">已上傳 ({uploadedImageUrls.length})</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                  {uploadedImageUrls.map((url, i) => (
-                    <div key={i} className="relative group">
-                      <img src={url} alt="" className="w-full h-24 object-cover rounded-lg border border-zinc-700" />
-                      {i === 0 && <Badge className="absolute top-1 left-1 bg-purple-600 text-[10px]">主題圖</Badge>}
-                      <Button size="sm" variant="destructive" onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
+
+            {/* Search Intent */}
+            <div className="p-3 bg-zinc-800 rounded-lg">
+              <p className="text-xs text-gray-400 mb-1">搜尋意圖分析</p>
+              <p className="text-white text-sm">{strategy.searchIntent}</p>
+            </div>
+
+            {/* Title Options */}
+            <div>
+              <Label className="text-white text-sm mb-2 block">選擇標題方案</Label>
+              <div className="space-y-2">
+                {strategy.titleOptions?.map((title: string, i: number) => (
+                  <button key={i} onClick={() => setSelectedTitleIndex(i)}
+                    className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${
+                      selectedTitleIndex === i
+                        ? 'border-purple-500 bg-purple-900/20 text-white'
+                        : 'border-zinc-700 bg-zinc-800 text-gray-300 hover:border-zinc-500'
+                    }`}>
+                    <span className={`inline-block w-5 h-5 rounded-full text-xs text-center leading-5 mr-2 ${
+                      selectedTitleIndex === i ? 'bg-purple-600 text-white' : 'bg-zinc-700 text-gray-400'
+                    }`}>{i + 1}</span>
+                    {title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Strategy Details */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-zinc-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-1">內容切入角度</p>
+                <p className="text-white text-xs">{strategy.contentAngle}</p>
+              </div>
+              <div className="p-3 bg-zinc-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-1">內容集群</p>
+                <p className="text-white text-xs">{strategy.contentCluster}</p>
+              </div>
+            </div>
+
+            {strategy.keyPoints?.length > 0 && (
+              <div className="p-3 bg-zinc-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2">必須涵蓋重點</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {strategy.keyPoints.map((point: string, i: number) => (
+                    <Badge key={i} className="bg-zinc-700 text-gray-200 text-xs">{point}</Badge>
                   ))}
                 </div>
               </div>
             )}
+
+            <div className="flex justify-between pt-2 border-t border-zinc-700">
+              <Button variant="outline" onClick={() => setWorkflowStep(1)}
+                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-1" /> 返回
+              </Button>
+              <Button onClick={handleGenerateOutline} disabled={outlineMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                <BarChart3 className="w-4 h-4 mr-1.5" />
+                {outlineMutation.isPending ? '生成大綱中...' : '生成文章大綱 →'}
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Text Input */}
-        {inputMethod === 'text' && (
-          <>
-            <div>
-              <Label className="text-white text-sm">主題/分類</Label>
-              <Input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                placeholder="例如：Pikachu 價格飆升、市場動態等"
-              />
+        {/* ── STEP 3: 文章大綱 ── */}
+        {workflowStep === 3 && outline && (
+          <div className="space-y-4">
+            <div className="p-3 bg-green-900/20 border border-green-700/30 rounded-lg">
+              <p className="text-green-300 text-xs font-medium mb-1">📋 步驟 3：確認文章大綱</p>
+              <p className="text-gray-400 text-xs">AI 已生成結構化大綱。確認無誤後，AI 將按大綱生成完整文章。</p>
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <Label className="text-white text-sm">文字內容</Label>
-                <Button
-                  type="button" variant="outline" size="sm"
-                  onClick={() => setCardSelectionDialogOpen(true)}
-                  className="h-7 text-xs border-[#FEDD00] text-[#FEDD00] hover:bg-[#FEDD00]/10"
-                >
-                  🎴 插入卡牌資料
+
+            {/* Title */}
+            <div className="p-3 bg-zinc-800 rounded-lg">
+              <p className="text-xs text-gray-400 mb-1">文章標題</p>
+              <p className="text-white font-semibold">{outline.h1}</p>
+              <p className="text-xs text-gray-500 mt-1">預估字數：{outline.estimatedWordCount}</p>
+            </div>
+
+            {/* Sections */}
+            <div className="space-y-2">
+              {outline.sections?.map((section: any, i: number) => (
+                <div key={i} className="p-3 bg-zinc-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-purple-400 text-xs font-mono mt-0.5">H2</span>
+                    <div className="flex-1">
+                      <p className="text-white text-sm font-medium">{section.h2}</p>
+                      <p className="text-gray-400 text-xs mt-0.5">{section.description}</p>
+                      {section.hasImage && (
+                        <Badge className="mt-1 bg-blue-900/40 text-blue-300 text-[10px] border border-blue-700/30">
+                          📷 {section.imageNote || '建議插圖'}
+                        </Badge>
+                      )}
+                      {section.subsections?.map((sub: any, j: number) => (
+                        <div key={j} className="mt-2 ml-3 pl-3 border-l border-zinc-600">
+                          <p className="text-gray-300 text-xs font-medium">{sub.h3}</p>
+                          <p className="text-gray-500 text-xs">{sub.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* FAQ Preview */}
+            {outline.faq?.length > 0 && (
+              <div className="p-3 bg-zinc-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2">FAQ（{outline.faq.length} 個問題）</p>
+                {outline.faq.map((f: any, i: number) => (
+                  <p key={i} className="text-gray-300 text-xs mb-1">Q{i+1}: {f.question}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-between pt-2 border-t border-zinc-700">
+              <Button variant="outline" onClick={() => setWorkflowStep(2)}
+                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-1" /> 返回
+              </Button>
+              <Button onClick={handleGenerateArticle} disabled={generateMutation.isPending}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                {generateMutation.isPending ? '生成全文中...' : '按大綱生成全文 →'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 4: 生成全文 ── */}
+        {workflowStep === 4 && generatedArticle && (
+          <div className="space-y-4">
+            <div className="p-3 bg-yellow-900/20 border border-yellow-700/30 rounded-lg">
+              <p className="text-yellow-300 text-xs font-medium mb-1">✍️ 步驟 4：文章已生成</p>
+              <p className="text-gray-400 text-xs">文章已按大綱生成完成。建議進行 AI 校對，或直接接受並進入編輯器。</p>
+            </div>
+
+            {/* Article Preview */}
+            <div className="p-4 bg-zinc-800 rounded-lg space-y-2">
+              <p className="text-xs text-gray-400">標題</p>
+              <p className="text-white font-semibold">{generatedArticle.title}</p>
+              {generatedArticle.excerpt && (
+                <>
+                  <p className="text-xs text-gray-400 mt-2">摘要</p>
+                  <p className="text-gray-300 text-sm">{generatedArticle.excerpt}</p>
+                </>
+              )}
+              <p className="text-xs text-gray-400 mt-2">內容預覽</p>
+              <p className="text-gray-300 text-xs line-clamp-6 font-mono">{generatedArticle.content?.substring(0, 400)}...</p>
+              <p className="text-xs text-gray-500">約 {generatedArticle.content?.length || 0} 字元</p>
+            </div>
+
+            <div className="flex justify-between pt-2 border-t border-zinc-700">
+              <Button variant="outline" onClick={() => setWorkflowStep(3)}
+                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-1" /> 返回
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleProofread} disabled={proofreadMutation.isPending}
+                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/20" size="sm">
+                  <Check className="w-4 h-4 mr-1" />
+                  {proofreadMutation.isPending ? 'AI 校對中...' : 'AI 校對'}
+                </Button>
+                <Button onClick={handleAccept}
+                  className="bg-gradient-to-r from-[#FEDD00] to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-semibold">
+                  <PenLine className="w-4 h-4 mr-1.5" /> 接受並編輯
                 </Button>
               </div>
-              <Textarea
-                value={textContent}
-                onChange={(e) => setTextContent(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white"
-                placeholder={`輸入您想要生成文章的資訊...\n\n例如：\n- Pikachu PROMO 今日價格從 HKD 10,000 升至 HKD 13,500\n- 交易量增加 200%\n\n提示：點擊「插入卡牌資料」可從資料庫選擇卡牌並插入真實價格資料`}
-                rows={10}
-              />
             </div>
-          </>
+          </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
-          <p className="text-xs text-gray-400">
-            {generateMutation.isPending ? '正在生成文章，請稍候...' : 'AI 將根據您提供的資訊生成專業文章'}
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
-              取消
-            </Button>
-            <Button
-              onClick={handleGenerate}
-              disabled={generateMutation.isPending}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              size="sm"
-            >
-              <Sparkles className="w-4 h-4 mr-1.5" />
-              {generateMutation.isPending ? '生成中...' : 'AI 生成文章'}
-            </Button>
-          </div>
-        </div>
-      </CardContent>
+        {/* ── STEP 5: AI 校對結果 ── */}
+        {workflowStep === 5 && proofreadResult && (
+          <div className="space-y-4">
+            <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-white font-semibold text-sm">整體評分：{proofreadResult.overallScore}</p>
+                <div className="flex gap-2 text-xs">
+                  <Badge className={`${
+                    proofreadResult.aiDetectionRisk === '低' ? 'bg-green-900/40 text-green-300 border-green-700/30'
+                    : proofreadResult.aiDetectionRisk === '中' ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700/30'
+                    : 'bg-red-900/40 text-red-300 border-red-700/30'
+                  } border`}>AI 痕跡：{proofreadResult.aiDetectionRisk}</Badge>
+                  <Badge className="bg-zinc-700 text-gray-200 border-zinc-600 border">可讀性：{proofreadResult.readabilityScore}/10</Badge>
+                </div>
+              </div>
+              <p className="text-gray-300 text-xs">{proofreadResult.overallComment}</p>
+            </div>
 
+            {/* Quick Fixes */}
+            {proofreadResult.quickFixes?.length > 0 && (
+              <div className="p-3 bg-orange-900/20 border border-orange-700/30 rounded-lg">
+                <p className="text-orange-300 text-xs font-medium mb-2">⚡ 快速修改建議</p>
+                <ul className="space-y-1">
+                  {proofreadResult.quickFixes.map((fix: string, i: number) => (
+                    <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                      <span className="text-orange-400 mt-0.5">•</span>{fix}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Issues */}
+            {proofreadResult.issues?.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-white text-sm font-medium">發現 {proofreadResult.issues.length} 個問題</p>
+                {proofreadResult.issues.slice(0, 5).map((issue: any, i: number) => (
+                  <div key={i} className={`p-3 rounded-lg border ${
+                    issue.severity === '高' ? 'bg-red-900/20 border-red-700/30'
+                    : issue.severity === '中' ? 'bg-yellow-900/20 border-yellow-700/30'
+                    : 'bg-zinc-800 border-zinc-700'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className={`text-[10px] ${
+                        issue.severity === '高' ? 'bg-red-600' : issue.severity === '中' ? 'bg-yellow-600' : 'bg-zinc-600'
+                      }`}>{issue.severity}</Badge>
+                      <span className="text-gray-400 text-xs">{issue.category}</span>
+                      <span className="text-gray-500 text-xs">@ {issue.location}</span>
+                    </div>
+                    <p className="text-gray-300 text-xs">{issue.description}</p>
+                    <p className="text-blue-300 text-xs mt-1">💡 {issue.suggestion}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* SEO Analysis */}
+            {proofreadResult.seoAnalysis && (
+              <div className="p-3 bg-zinc-800 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2">SEO 分析</p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="text-center p-2 bg-zinc-700 rounded">
+                    <p className="text-white font-semibold">{proofreadResult.seoAnalysis.titleScore}/10</p>
+                    <p className="text-xs text-gray-400">標題評分</p>
+                  </div>
+                  <div className="text-center p-2 bg-zinc-700 rounded">
+                    <p className="text-white font-semibold">{proofreadResult.seoAnalysis.excerptScore}/10</p>
+                    <p className="text-xs text-gray-400">摘要評分</p>
+                  </div>
+                </div>
+                <p className="text-gray-400 text-xs">{proofreadResult.seoAnalysis.keywordDensity}</p>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-2 border-t border-zinc-700">
+              <Button variant="outline" onClick={() => setWorkflowStep(4)}
+                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-1" /> 返回
+              </Button>
+              <Button onClick={handleAccept}
+                className="bg-gradient-to-r from-[#FEDD00] to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-semibold">
+                <PenLine className="w-4 h-4 mr-1.5" /> 接受並進入編輯器
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {isAnyLoading && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 text-center max-w-sm mx-4">
+              <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-white font-medium">
+                {strategyMutation.isPending ? '🎯 AI 正在分析內容策略...'
+                  : outlineMutation.isPending ? '📋 AI 正在生成文章大綱...'
+                  : generateMutation.isPending ? '✍️ AI 正在按大綱生成全文...'
+                  : proofreadMutation.isPending ? '🔍 AI 正在校對文章品質...'
+                  : '處理中...'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2">Gemini 2.5 Flash 深度思考中，請稍候</p>
+            </div>
+          </div>
+        )}
+      </CardContent>
       <CardSelectionDialog
         open={cardSelectionDialogOpen}
         onOpenChange={setCardSelectionDialogOpen}
@@ -995,106 +1114,101 @@ function TranslationEditor({
   onCancel: () => void;
   onSuccess: () => void;
 }) {
-  const [formData, setFormData] = useState({
-    titleEn: post?.titleEn || '',
-    titleJa: post?.titleJa || '',
-    excerptEn: post?.excerptEn || '',
-    excerptJa: post?.excerptJa || '',
-    contentEn: post?.contentEn || '',
-    contentJa: post?.contentJa || '',
-  });
+  const [enTitle, setEnTitle] = useState(post.translations?.en?.title || '');
+  const [enContent, setEnContent] = useState(post.translations?.en?.content || '');
+  const [enExcerpt, setEnExcerpt] = useState(post.translations?.en?.excerpt || '');
+  const [jaTitle, setJaTitle] = useState(post.translations?.ja?.title || '');
+  const [jaContent, setJaContent] = useState(post.translations?.ja?.content || '');
+  const [jaExcerpt, setJaExcerpt] = useState(post.translations?.ja?.excerpt || '');
+  const [activeTab, setActiveTab] = useState<'en' | 'ja'>('en');
 
   const updateTranslationMutation = trpc.blog.updatePostTranslation.useMutation({
-    onSuccess: () => { toast.success('翻譯已更新'); onSuccess(); },
-    onError: (e) => toast.error(`更新失敗：${e.message}`),
+    onSuccess: () => { toast.success('翻譯已儲存！'); onSuccess(); },
+    onError: (e: any) => toast.error(`儲存失敗：${e.message}`),
   });
 
-  const handleSubmit = () => {
-    updateTranslationMutation.mutate({ id: post.id, ...formData });
+  const handleSave = () => {
+    updateTranslationMutation.mutate({
+      id: post.id,
+      titleEn: enTitle,
+      contentEn: enContent,
+      excerptEn: enExcerpt,
+      titleJa: jaTitle,
+      contentJa: jaContent,
+      excerptJa: jaExcerpt,
+    });
   };
 
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <Globe className="w-5 h-5 text-blue-400" />
-          編輯翻譯
-        </CardTitle>
-        <CardDescription>修改 AI 生成的翻譯，確保專業術語準確性</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Original */}
-        <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
-          <h3 className="text-white font-semibold text-sm flex items-center gap-1.5">
-            <span className="w-5 h-5 bg-red-600 rounded text-[10px] flex items-center justify-center text-white font-bold">中</span>
-            原文
-          </h3>
-          <div>
-            <Label className="text-gray-400 text-xs">標題</Label>
-            <p className="text-white text-sm mt-0.5">{post.title}</p>
-          </div>
-          {post.excerpt && (
-            <div>
-              <Label className="text-gray-400 text-xs">摘要</Label>
-              <p className="text-white text-sm mt-0.5 line-clamp-2">{post.excerpt}</p>
-            </div>
-          )}
-        </div>
-
-        {/* English */}
-        <div className="space-y-3">
-          <h3 className="text-white font-semibold text-sm flex items-center gap-1.5">
-            <span className="w-5 h-5 bg-blue-600 rounded text-[10px] flex items-center justify-center text-white font-bold">EN</span>
-            英文翻譯
-          </h3>
-          <div>
-            <Label className="text-white text-xs">標題</Label>
-            <Input value={formData.titleEn} onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="English title" />
-          </div>
-          <div>
-            <Label className="text-white text-xs">摘要</Label>
-            <Textarea value={formData.excerptEn} onChange={(e) => setFormData({ ...formData, excerptEn: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="English excerpt" rows={2} />
-          </div>
-          <div>
-            <Label className="text-white text-xs">內容 (Markdown)</Label>
-            <Textarea value={formData.contentEn} onChange={(e) => setFormData({ ...formData, contentEn: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white font-mono text-xs mt-1" placeholder="English content" rows={8} />
-          </div>
-        </div>
-
-        {/* Japanese */}
-        <div className="space-y-3">
-          <h3 className="text-white font-semibold text-sm flex items-center gap-1.5">
-            <span className="w-5 h-5 bg-purple-600 rounded text-[10px] flex items-center justify-center text-white font-bold">JA</span>
-            日文翻譯
-          </h3>
-          <div>
-            <Label className="text-white text-xs">標題</Label>
-            <Input value={formData.titleJa} onChange={(e) => setFormData({ ...formData, titleJa: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="日本語タイトル" />
-          </div>
-          <div>
-            <Label className="text-white text-xs">摘要</Label>
-            <Textarea value={formData.excerptJa} onChange={(e) => setFormData({ ...formData, excerptJa: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="日本語概要" rows={2} />
-          </div>
-          <div>
-            <Label className="text-white text-xs">內容 (Markdown)</Label>
-            <Textarea value={formData.contentJa} onChange={(e) => setFormData({ ...formData, contentJa: e.target.value })}
-              className="bg-zinc-800 border-zinc-700 text-white font-mono text-xs mt-1" placeholder="日本語コンテンツ" rows={8} />
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-700">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Languages className="w-5 h-5 text-blue-400" />
+            編輯翻譯
+          </CardTitle>
           <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
-            取消
+            <ChevronLeft className="w-4 h-4 mr-1" /> 返回
           </Button>
-          <BrandButton onClick={handleSubmit} disabled={updateTranslationMutation.isPending}>
-            {updateTranslationMutation.isPending ? '保存中...' : '保存翻譯'}
-          </BrandButton>
+        </div>
+        <CardDescription className="line-clamp-1">{post.title}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Tab Switcher */}
+        <div className="flex gap-2">
+          {[{ key: 'en' as const, label: '🇬🇧 English' }, { key: 'ja' as const, label: '🇯🇵 日本語' }].map(({ key, label }) => (
+            <Button key={key} variant={activeTab === key ? 'default' : 'outline'}
+              onClick={() => setActiveTab(key)}
+              className={activeTab === key ? 'bg-blue-600 hover:bg-blue-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+              size="sm">{label}</Button>
+          ))}
+        </div>
+
+        {activeTab === 'en' && (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-white text-sm">English Title</Label>
+              <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+            <div>
+              <Label className="text-white text-sm">English Excerpt</Label>
+              <Textarea value={enExcerpt} onChange={(e) => setEnExcerpt(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={3} />
+            </div>
+            <div>
+              <Label className="text-white text-sm">English Content</Label>
+              <Textarea value={enContent} onChange={(e) => setEnContent(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={12} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ja' && (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-white text-sm">日本語タイトル</Label>
+              <Input value={jaTitle} onChange={(e) => setJaTitle(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+            <div>
+              <Label className="text-white text-sm">日本語概要</Label>
+              <Textarea value={jaExcerpt} onChange={(e) => setJaExcerpt(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={3} />
+            </div>
+            <div>
+              <Label className="text-white text-sm">日本語コンテンツ</Label>
+              <Textarea value={jaContent} onChange={(e) => setJaContent(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={12} />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-2 border-t border-zinc-700">
+          <Button onClick={handleSave} disabled={updateTranslationMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700">
+            {updateTranslationMutation.isPending ? '儲存中...' : '儲存翻譯'}
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -22,6 +22,7 @@ import { ensureOgImageExists } from "./ogImageComposer";
 import { templatesRouter } from "./routers/templates";
 import { diagnosticsRouter } from "./routers/diagnostics";
 import { emailRouter } from "./routers/email";
+import { blogAiRouter } from "./blogAiProcedures";
 
 export const appRouter = router({
   system: systemRouter,
@@ -31,6 +32,8 @@ export const appRouter = router({
   diagnostics: diagnosticsRouter,
 
   email: emailRouter,
+
+  blogAi: blogAiRouter,
 
   products: router({
     getById: publicProcedure
@@ -3200,8 +3203,16 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         // Generate English translation using JSON schema
         const enResponse = await invokeLLM({
           messages: [
-            { role: 'system', content: 'You are a professional translator. Translate the Chinese blog post to English. Maintain markdown formatting.' },
-            { role: 'user', content: `Translate this blog post to English:\n\nTitle: ${post.title}\n\nExcerpt: ${post.excerpt || ''}\n\nContent:\n${post.content}` }
+            { role: 'system', content: `You are a professional TCG (Trading Card Game) content translator for Boxium PTCG, a Hong Kong-based TCG market information platform. Translate the Traditional Chinese blog post to English.
+
+Translation rules:
+- Maintain all Markdown formatting (## headings, **bold**, lists)
+- Keep TCG terminology in original form: PSA 10, CGC 10, GEM-MT 10, BGS 9.5, etc.
+- Keep card names in their official English names (do not translate card names)
+- Keep currency as HKD$ (do not convert to USD)
+- Maintain the professional yet approachable tone
+- Do not add or remove information, only translate` },
+            { role: 'user', content: `Translate this Boxium PTCG blog post to English:\n\nTitle: ${post.title}\n\nExcerpt: ${post.excerpt || ''}\n\nContent:\n${post.content}` }
           ],
           response_format: {
             type: 'json_schema',
@@ -3230,8 +3241,16 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
         // Generate Japanese translation using JSON schema
         const jaResponse = await invokeLLM({
           messages: [
-            { role: 'system', content: 'You are a professional translator. Translate the Chinese blog post to Japanese. Maintain markdown formatting.' },
-            { role: 'user', content: `Translate this blog post to Japanese:\n\nTitle: ${post.title}\n\nExcerpt: ${post.excerpt || ''}\n\nContent:\n${post.content}` }
+            { role: 'system', content: `あなたは香港のTCG（トレーディングカードゲーム）情報プラットフォーム「Boxium PTCG」のプロフェッショナルな翻訳者です。繁体字中国語のブログ記事を日本語に翻訳してください。
+
+翻訳ルール：
+- Markdownフォーマットを維持する（## 見出し、**太字**、リストなど）
+- TCG用語はそのまま保持：PSA 10、CGC 10、GEM-MT 10、BGS 9.5など
+- カード名は公式の日本語名または英語名を使用（翻訳しない）
+- 通貨はHKD$のまま（JPYに変換しない）
+- プロフェッショナルで親しみやすいトーンを維持
+- 情報を追加・削除せず、翻訳のみ行う` },
+            { role: 'user', content: `このBoxium PTCGブログ記事を日本語に翻訳してください：\n\nタイトル: ${post.title}\n\n概要: ${post.excerpt || ''}\n\n内容:\n${post.content}` }
           ],
           response_format: {
             type: 'json_schema',
@@ -3553,11 +3572,27 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           messages: [
             { 
               role: 'system', 
-              content: 'You are a professional SEO specialist and content categorizer. Analyze the article and generate appropriate category, tags, and SEO keywords. Return the result in JSON format.' 
+              content: `你是 Boxium PTCG 平台的專業 SEO 專家和內容分類師。你的任務是分析文章內容，生成最適合的分類、標籤和 SEO 關鍵字。
+
+平台分類體系（必須從中選擇一個）：
+- 市場分析：價格走勢、市場行情、投資分析
+- 卡牌評測：單卡深度研究、稿件分析、等級評分
+- 市場快報：每日/每週行情、即時動態
+- 收藏指南：新手教學、收藏策略、保存建議
+- 平台新聞：功能更新、活動公告、平台動態
+- 投資指南：投資策略、風險評估、市場預測
+- 新品資訊：新卡發布、新包裝資訊、預售資訊
+- 社群動態：活動資訊、展覽報導、社群新聞
+
+HK SEO 關鍵字策略：
+- 優先使用繁體中文關鍵字（香港用戶主要使用繁體）
+- 加入平台相關關鍵字：Boxium、PTCG、香港卡牌市場
+- 包含具體卡牌名稱或床型名稱（如文章有提及）
+- 包含價格相關關鍵字：PSA 10 價格、HKD 卡牌價格等` 
             },
             { 
               role: 'user', 
-              content: `Analyze this article and generate metadata:\n\nTitle: ${input.title}\n\nExcerpt: ${input.excerpt}\n\nContent:\n${input.content.substring(0, 2000)}...\n\nPlease generate:\n1. A single category (e.g., "市場分析", "卡牌評測", "新聞資訊", "投資指南")\n2. 3-5 relevant tags (e.g., "TCG", "卡牌價格", "市場趨勢")\n3. 5-8 SEO keywords (e.g., "TCG", "集換式卡牌", "市場分析", "投資指南")`
+              content: `請分析以下文章並生成 metadata：\n\n標題：${input.title}\n\n摘要：${input.excerpt}\n\n內容：\n${input.content.substring(0, 2000)}...\n\n請生成：\n1. 分類（必須從平台分類體系中選擇一個）\n2. 3-5 個相關標籤（繁體中文，如：導導、PSA 10、市場走勢）\n3. 5-8 個 SEO 關鍵字（繁體中文為主，如：香港 PTCG 市場、導導 PSA 10 價格）`
             }
           ],
           response_format: {
@@ -3616,11 +3651,21 @@ ${topVolatile.map((card, i) => `${i + 1}. ${card.cardName} - 波動率 ${card.vo
           messages: [
             { 
               role: 'system', 
-              content: 'You are a professional blog editor. Edit the article based on user instructions while maintaining the original style and structure. Return the edited article in JSON format with title, excerpt, and content fields. Keep markdown formatting.' 
+              content: `你是 Boxium PTCG 平台的資深文章編輯。Boxium PTCG 是香港及台灣最專業的集換式卡牌（TCG）資訊平台，主要面向 Pokemon、遊戲王、Magic: The Gathering 等卡牌的玩家、收藏家及投資者。
+
+編輯原則：
+- 繁體中文，香港讀者口吻（自然、專業、有溫度）
+- 所有價格統一使用港幣（HKD$）表示
+- 保留 TCG 術語不翻譯：PSA 10、CGC 10、GEM-MT 10、BGS 9.5、中古 A 級等
+- 保留卡牌官方名稱（英文/日文名稱不翻譯）
+- 保持 Markdown 格式（## 標題、**粗體**、列表）
+- 數據導向：引用具體數字，避免模糊表達
+- 避免過度誇大：不用「最」「絕對」「保證」等字眼
+- 維持文章原有結構和風格，只根據指示修改指定部分` 
             },
             { 
               role: 'user', 
-              content: `Edit this article based on the following instruction:\n\nInstruction: ${input.instruction}\n\nCurrent Article:\nTitle: ${input.article.title}\n\nExcerpt: ${input.article.excerpt}\n\nContent:\n${input.article.content}` 
+              content: `請根據以下指示編輯文章：\n\n編輯指示：${input.instruction}\n\n當前文章：\n標題：${input.article.title}\n\n摘要：${input.article.excerpt}\n\n內容：\n${input.article.content}` 
             }
           ],
           response_format: {

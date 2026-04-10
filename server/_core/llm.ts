@@ -66,6 +66,10 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  /** Force a specific provider: 'gemini' uses Google Gemini API directly, 'forge' uses Manus Forge API */
+  provider?: 'gemini' | 'forge' | 'auto';
+  /** Thinking budget for Forge API (Gemini 2.5 Flash). Higher = better quality but slower. Default: 128 */
+  thinking?: { budget_tokens: number };
 };
 
 export type ToolCall = {
@@ -209,16 +213,16 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
+const resolveForgeApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-};
+/** Google Gemini API OpenAI-compatible endpoint */
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
+/** Default Gemini model for article generation */
+const GEMINI_DEFAULT_MODEL = "gemini-2.0-flash";
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -265,9 +269,41 @@ const normalizeResponseFormat = ({
   };
 };
 
-export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+/**
+ * Determine which provider to use:
+ * - 'forge' (default): Manus Forge API (Gemini 2.5 Flash via proxy, uses Manus credits)
+ * - 'gemini': Google Gemini API directly (requires GEMINI_API_KEY with active quota)
+ *
+ * Default is always 'forge' to avoid Gemini quota issues.
+ * Only use 'gemini' when explicitly requested via provider param.
+ */
+function resolveProvider(provider?: 'gemini' | 'forge' | 'auto'): 'gemini' | 'forge' {
+  const hasGeminiKey = ENV.geminiApiKey && ENV.geminiApiKey.trim().length > 0;
+  const hasForgeKey = ENV.forgeApiKey && ENV.forgeApiKey.trim().length > 0;
 
+  if (provider === 'gemini') {
+    if (!hasGeminiKey) throw new Error("GEMINI_API_KEY is not configured");
+    return 'gemini';
+  }
+
+  // 'forge', 'auto', or undefined: always prefer Forge API (Manus Forge is Gemini 2.5 Flash)
+  if (hasForgeKey) return 'forge';
+
+  // Last resort: try Gemini if Forge key is missing
+  if (hasGeminiKey) return 'gemini';
+  throw new Error("No LLM API key configured. Please set BUILT_IN_FORGE_API_KEY or GEMINI_API_KEY.");
+}
+
+/**
+ * Invoke LLM with automatic provider selection.
+ *
+ * Priority:
+ * 1. If GEMINI_API_KEY is set → use Google Gemini API directly (cheaper, no Manus credits)
+ * 2. Fallback → use Manus Forge API (BUILT_IN_FORGE_API_KEY)
+ *
+ * Pass `provider: 'forge'` to force Forge, or `provider: 'gemini'` to force Gemini.
+ */
+export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const {
     messages,
     tools,
@@ -277,29 +313,13 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     output_schema,
     responseFormat,
     response_format,
+    provider: providerHint,
+    thinking,
   } = params;
 
-  const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
-    messages: messages.map(normalizeMessage),
-  };
+  const selectedProvider = resolveProvider(providerHint);
 
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
+  const normalizedMessages = messages.map(normalizeMessage);
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -308,11 +328,112 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     output_schema,
   });
 
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
+  const normalizedToolChoice = normalizeToolChoice(
+    toolChoice || tool_choice,
+    tools
+  );
+
+  if (selectedProvider === 'gemini') {
+    return invokeGemini({
+      messages: normalizedMessages,
+      tools,
+      toolChoice: normalizedToolChoice,
+      responseFormat: normalizedResponseFormat,
+    });
+  } else {
+    return invokeForge({
+      messages: normalizedMessages,
+      tools,
+      toolChoice: normalizedToolChoice,
+      responseFormat: normalizedResponseFormat,
+      thinking,
+    });
+  }
+}
+
+/** Call Google Gemini API directly via OpenAI-compatible endpoint */
+async function invokeGemini({
+  messages,
+  tools,
+  toolChoice,
+  responseFormat,
+}: {
+  messages: ReturnType<typeof normalizeMessage>[];
+  tools?: Tool[];
+  toolChoice?: "none" | "auto" | ToolChoiceExplicit;
+  responseFormat?: ReturnType<typeof normalizeResponseFormat>;
+}): Promise<InvokeResult> {
+  const payload: Record<string, unknown> = {
+    model: GEMINI_DEFAULT_MODEL,
+    messages,
+    max_tokens: 8192,
+  };
+
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  if (toolChoice) {
+    payload.tool_choice = toolChoice;
+  }
+
+  if (responseFormat) {
+    payload.response_format = responseFormat;
+  }
+
+  const response = await fetch(GEMINI_API_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.geminiApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Gemini API invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+    );
+  }
+
+  return (await response.json()) as InvokeResult;
+}
+
+/** Call Manus Forge API (original behavior) */
+async function invokeForge({
+  messages,
+  tools,
+  toolChoice,
+  responseFormat,
+  thinking,
+}: {
+  messages: ReturnType<typeof normalizeMessage>[];
+  tools?: Tool[];
+  toolChoice?: "none" | "auto" | ToolChoiceExplicit;
+  responseFormat?: ReturnType<typeof normalizeResponseFormat>;
+  thinking?: { budget_tokens: number };
+}): Promise<InvokeResult> {
+  const payload: Record<string, unknown> = {
+    model: "gemini-2.5-flash",
+    messages,
+    max_tokens: 8192,
+    thinking: thinking || { budget_tokens: 512 },
+  };
+
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
+  }
+
+  if (toolChoice) {
+    payload.tool_choice = toolChoice;
+  }
+
+  if (responseFormat) {
+    payload.response_format = responseFormat;
+  }
+
+  const response = await fetch(resolveForgeApiUrl(), {
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -18,6 +18,7 @@ import AdminEmailLogs from "@/components/AdminEmailLogs";
 import AdminEmailTest from "@/components/AdminEmailTest";
 import AdminPlatformSettings from "@/components/AdminPlatformSettings";
 import AdminMessages from "@/components/AdminMessages";
+import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ const STORAGE_KEY_TAB = "boxium_admin_active_tab";
 const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 
 const VALID_TABS = [
-  "dashboard", "users", "datasources", "trending", "blog",
+  "dashboard", "users", "datasources", "trending", "blog", "content-workflow",
   "cache", "schedule", "performance", "taskhistory",
   "sfstations", "emaillogs", "emailtest", "platformsettings", "messages"
 ] as const;
@@ -72,6 +73,7 @@ function useNavItems(): NavItem[] {
     { id: "datasources", label: t("admin.dataSources"), icon: <Database className="w-[18px] h-[18px]" />, group: "content" },
     { id: "trending", label: "熱門卡牌", icon: <TrendingUp className="w-[18px] h-[18px]" />, group: "content" },
     { id: "blog", label: "博客管理", icon: <FileText className="w-[18px] h-[18px]" />, group: "content" },
+    { id: "content-workflow", label: "AI 內容工作流", icon: <Sparkles className="w-[18px] h-[18px]" />, group: "content" },
     { id: "cache", label: "緩存管理", icon: <HardDrive className="w-[18px] h-[18px]" />, group: "system" },
     { id: "schedule", label: "排程管理", icon: <Clock className="w-[18px] h-[18px]" />, group: "system" },
     { id: "performance", label: "性能監控", icon: <Activity className="w-[18px] h-[18px]" />, group: "system" },
@@ -92,6 +94,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "datasources": return <AdminDataSources />;
     case "trending": return <AdminTrendingCards />;
     case "blog": return <AdminBlogManagement />;
+    case "content-workflow": return <ContentWorkflowCenter />;
     case "cache": return <AdminCacheManagement />;
     case "schedule": return <AdminScheduleManagement />;
     case "performance": return <AdminScraperPerformance />;

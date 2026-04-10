@@ -8004,3 +8004,73 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## 🔍 搜尋多關鍵詞 Bug 修復（2026-04-10）
 
 - [ ] 修復多關鍵詞搜尋問題：搜尋「pikachu mario」應找到名稱包含兩詞的卡牌（如 Mario Pikachu）
+
+---
+## 🤖 AI 內容運營系統升級（2026-04-10）
+
+### 後端：新增 AI 程序
+- [ ] 後端：新增 generateStrategy procedure（策略生成：輸入主題/受眾/目的，輸出內容角度/文章類型/標題方案/CTA）
+- [ ] 後端：新增 generateOutline procedure（大綱生成：輸入策略結果，輸出 H1/H2/H3/FAQ/CTA 結構）
+- [ ] 後端：新增 generateSection procedure（分段寫作：輸入大綱+段落名稱，輸出單段內容）
+- [ ] 後端：新增 proofreadArticle procedure（AI 校對：檢查數據引用/重複句/誇大語句/平台語氣/SEO）
+- [ ] 後端：新增 suggestRefresh procedure（內容刷新建議：分析文章年齡+瀏覽數，輸出是否需要更新）
+
+### 後端：優化現有 Prompt
+- [ ] 後端：優化 editArticleWithAI system prompt（改為繁中 + TCG 平台背景 + HKD 貨幣 + 術語規則）
+- [ ] 後端：優化 translatePost system prompt（加入 TCG 術語保留規則、官方卡名、Markdown 格式要求）
+- [ ] 後端：優化 generateMetadata system prompt（改為繁中 + 平台分類體系 + HK SEO 關鍵字策略）
+- [ ] 後端：優化 articleGenerator.ts system prompt（加入平台背景、數據引用規則、分段結構要求）
+- [ ] 後端：提升 Forge API thinking budget（文章生成用 4096，翻譯/校對用 1024）
+- [ ] 後端：新增 4 種輸入模式獨立 prompt 模板（研究模式/資料模式/參考模式/素材模式）
+
+### 前端：重構 AIArticleGenerator 為多步驟工作流
+- [ ] 前端：重構 AIArticleGenerator 為 4 步驟工作流 UI（步驟 1：策略 → 步驟 2：大綱 → 步驟 3：生成 → 步驟 4：校對）
+- [ ] 前端：步驟 1 策略面板（輸入主題/受眾/目的/SEO 關鍵字，顯示 AI 策略建議）
+- [ ] 前端：步驟 2 大綱編輯器（顯示 AI 生成大綱，可手動增刪段落）
+- [ ] 前端：步驟 3 生成面板（選擇輸入模式：研究/資料/參考/素材，顯示事實資料綁定）
+- [ ] 前端：步驟 4 校對面板（顯示 AI 校對結果：數據核實/重複句/誇大語句/SEO 建議）
+
+### 前端：新增內容質量與生命週期功能
+- [ ] 前端：ArticlePreview 加入「AI 校對」按鈕（呼叫 proofreadArticle，顯示問題清單）
+- [ ] 前端：ArticlePreview 加入「事實資料綁定」面板（顯示文章使用的卡牌/成交區間/來源時間）
+- [ ] 前端：AdminBlogManagement 文章列表加入「刷新建議」標籤（超過 30 天且瀏覽量低的文章顯示警示）
+- [ ] 前端：AdminBlogManagement 加入「內容健康度」概覽（顯示平均 SEO 分數、待更新文章數量）
+
+
+---
+## AI 内容运营系统升级（2026-04-10）
+
+### 后端：新增 AI 程序
+- [x] 后端：新增 generateStrategy procedure（策略生成）
+- [x] 后端：新增 generateOutline procedure（大纲生成）
+- [x] 后端：新增 generateSection procedure（分段写作）
+- [x] 后端：新增 proofreadArticle procedure（AI 校对）
+- [x] 后端：新增 suggestRefresh procedure（内容刷新建议）
+
+### 后端：优化现有 Prompt
+- [x] 后端：优化 editArticleWithAI system prompt（繁中 + TCG 平台背景 + HKD + 术语规则）
+- [x] 后端：优化 translatePost system prompt（TCG 术语保留规则）
+- [x] 后端：优化 generateMetadata system prompt（繁中 + 平台分类体系）
+- [x] 后端：优化 articleGenerator.ts system prompt（平台背景 + 数据引用规则）
+- [x] 后端：提升 Forge API thinking budget（文章生成 4096，翻译/校对 1024）
+- [ ] 后端：新增 4 种输入模式独立 prompt 模板（研究/资料/参考/素材）
+
+### 前端：重构 AIArticleGenerator 为多步骤工作流
+- [x] 前端：重构 AIArticleGenerator 为 4 步骤工作流（策略->大纲->生成->校对）
+- [ ] 前端：步骤 1 策略面板（输入主题/受众/目的/SEO 关键字）
+- [ ] 前端：步骤 2 大纲编辑器（显示 AI 大纲，可手动增删段落）
+- [ ] 前端：步骤 3 生成面板（选择输入模式，显示事实资料绑定）
+- [ ] 前端：步骤 4 校对面板（显示 AI 校对结果）
+
+### 前端：新增内容质量与生命周期功能
+- [ ] 前端：ArticlePreview 加入 AI 校对按钮
+- [ ] 前端：ArticlePreview 加入事实资料绑定面板
+- [ ] 前端：AdminBlogManagement 文章列表加入刷新建议标签
+- [ ] 前端：AdminBlogManagement 加入内容健康度概览
+
+### 新增：数据驱动技能（2026-04-10）
+- [x] 后端：新增 researchWithData procedure（数据驱动研究，绑定卡牌成交数据）
+- [x] 后端：新增 generateDailyReport procedure（每日市场快报自动生成）
+- [x] 前端：建立 ContentWorkflowCenter 组件（五大技能卡片）
+- [x] 前端：Admin 加入「AI 内容工作流」tab
+- [x] 测试：blogAiProcedures.test.ts（9 tests passed）
