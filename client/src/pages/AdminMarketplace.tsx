@@ -424,7 +424,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
               <>
                 <div className="space-y-3">
                   {images.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                       {images.map((url, i) => (
                         <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       ))}

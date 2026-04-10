@@ -1960,7 +1960,7 @@ export default function SellerDashboard() {
                   return (
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       {/* Mobile: horizontal scroll tabs (shown on mobile only) */}
-                      <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 w-full flex-shrink-0">
+                      <div className="flex sm:hidden gap-2 overflow-x-auto scrollbar-hide pb-1 w-full flex-shrink-0">
                         {filterCategories.map(cat => (
                           <button
                             key={cat.key}
@@ -3566,7 +3566,7 @@ export default function SellerDashboard() {
               <>
                 <div className="space-y-3">
                   {listingImages.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                       {listingImages.map((url, i) => (
                         <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       ))}

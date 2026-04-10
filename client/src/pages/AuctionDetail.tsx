@@ -834,7 +834,7 @@ export default function AuctionDetail() {
 
               {/* Thumbnails */}
               {images.length > 1 && (
-                <div className="flex gap-2 p-3 overflow-x-auto border-t border-gray-50">
+                <div className="flex gap-2 p-3 overflow-x-auto scrollbar-hide border-t border-gray-50">
                   {images.map((img, i) => (
                     <button
                       key={i}

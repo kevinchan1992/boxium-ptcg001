@@ -225,7 +225,7 @@ export default function Profile() {
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="max-w-6xl mx-auto px-3 py-3 pb-20 md:pb-16 md:px-4 md:py-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-16 md:px-4 md:py-6">
         {/* Mobile: compact icon tabs */}
         <div className="md:hidden mb-3">
           <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
