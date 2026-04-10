@@ -3851,6 +3851,130 @@ HK SEO 關鍵字策略：
         .limit(input.limit);
         return fallback;
       }),
+    // Auto-extract card names from article content and match from DB (Admin only)
+    extractCardsFromArticle: adminProcedure
+      .input(z.object({
+        articleContent: z.string(),
+        articleTitle: z.string().optional(),
+        limit: z.number().min(1).max(6).default(4),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import('./_core/llm');
+        const { getDb } = await import('./db');
+        const dbConn = await getDb();
+        if (!dbConn) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { cards } = await import('../drizzle/schema_new');
+        const { like, and, isNotNull, ne, or } = await import('drizzle-orm');
+
+        // Step 1: Use LLM to extract card names from article
+        const extractionResponse = await invokeLLM({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a Pokemon TCG expert. Extract all specific Pokemon card names mentioned in the article. Return ONLY a JSON array of card name strings. Include the card variant/set info if mentioned (e.g. "Charizard EX SR", "Flareon EX RR"). Return maximum 6 cards, prioritize the most prominently featured ones.',
+            },
+            {
+              role: 'user',
+              content: `Extract Pokemon card names from this article:\n\nTitle: ${input.articleTitle || ''}\n\nContent: ${input.articleContent.slice(0, 3000)}`,
+            },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'card_names',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  cardNames: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'List of Pokemon card names mentioned in the article',
+                  },
+                },
+                required: ['cardNames'],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        let extractedNames: string[] = [];
+        try {
+          const parsed = JSON.parse(extractionResponse.choices[0].message.content as string);
+          extractedNames = parsed.cardNames || [];
+        } catch (_) {
+          extractedNames = [];
+        }
+
+        if (extractedNames.length === 0) {
+          // Fallback: return trending cards
+          const { getTrendingByPriceIncrease } = await import('./db');
+          const trending = await getTrendingByPriceIncrease({ limit: input.limit, days: 30 });
+          return trending
+            .filter((c: any) => c.imageUrl || c.imageUrlHiRes)
+            .slice(0, input.limit)
+            .map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              nameJa: c.nameJa,
+              rarity: c.rarity,
+              setName: c.setName,
+              imageUrl: c.imageUrl,
+              imageUrlHiRes: c.imageUrlHiRes,
+              matchedFrom: 'trending' as const,
+            }));
+        }
+
+        // Step 2: Match each extracted name against DB
+        const matchedCards: any[] = [];
+        for (const cardName of extractedNames.slice(0, input.limit)) {
+          // Try to find exact or close match
+          const nameParts = cardName.split(/[\s\[\]()]+/).filter(p => p.length > 2);
+          const searchTerms = nameParts.slice(0, 2); // Use first 2 meaningful parts
+          if (searchTerms.length === 0) continue;
+
+          const conditions = searchTerms.map(term => like(cards.name, `%${term}%`));
+          const results = await dbConn.select({
+            id: cards.id,
+            name: cards.name,
+            nameJa: cards.nameJa,
+            rarity: cards.rarity,
+            setName: cards.setName,
+            imageUrl: cards.imageUrl,
+            imageUrlHiRes: cards.imageUrlHiRes,
+          })
+          .from(cards)
+          .where(and(
+            isNotNull(cards.imageUrl),
+            ne(cards.imageUrl, ''),
+            or(...conditions),
+          ))
+          .limit(1);
+
+          if (results.length > 0) {
+            const card = results[0];
+            if (!matchedCards.find(c => c.id === card.id)) {
+              matchedCards.push({ ...card, matchedFrom: 'article' as const });
+            }
+          }
+        }
+
+        // If we didn't find enough, pad with trending cards
+        if (matchedCards.length < Math.min(input.limit, 3)) {
+          const { getTrendingByPriceIncrease } = await import('./db');
+          const trending = await getTrendingByPriceIncrease({ limit: 6, days: 30 });
+          for (const t of trending) {
+            if (matchedCards.length >= input.limit) break;
+            if (!matchedCards.find((c: any) => c.id === (t as any).id) && ((t as any).imageUrl || (t as any).imageUrlHiRes)) {
+              matchedCards.push({ ...(t as any), matchedFrom: 'trending' as const });
+            }
+          }
+        }
+
+        return matchedCards.slice(0, input.limit);
+      }),
+
     // Generate AI cover image using card images as reference (Admin only)
     generateCoverImage: adminProcedure
       .input(z.object({
@@ -3862,16 +3986,65 @@ HK SEO 關鍵字策略：
       }))
       .mutation(async ({ input }) => {
         const { generateImage } = await import('./_core/imageGeneration');
+        const cardNamesStr = (input.cardNames || []).slice(0, 3).join(', ') || 'Pokemon TCG cards';
+
+        // Professional style guides with detailed art direction
         const styleGuides: Record<string, string> = {
-          'market-report': 'dynamic financial market style, bold yellow (#FEDD00) and dark navy blue (#06038D) color scheme matching Boxium brand, data visualization elements, energetic composition',
-          'card-analysis': 'premium collector showcase style, elegant dark background, dramatic spotlight lighting on card, luxury TCG card display',
-          'guide': 'clean educational infographic style, bright and welcoming, step-by-step visual flow, friendly layout',
-          'news': 'breaking news banner style, urgent red and white accents, bold typography space, modern editorial design',
+          'market-report': `
+            STYLE: Premium financial magazine cover meets TCG collector culture.
+            BACKGROUND: Deep dark navy (#06038D to #000820 gradient), subtle hexagonal grid pattern at 5% opacity.
+            LIGHTING: Dramatic volumetric light beams in gold (#FEDD00) shooting from bottom-left, creating cinematic god-rays.
+            CARD PRESENTATION: 2-3 featured cards arranged in a dynamic diagonal cascade (right side, 55% of frame), each card slightly rotated, with intense specular highlights and holographic rainbow shimmer effect on card surfaces.
+            ATMOSPHERE: Floating golden particle dust, subtle lens flare, depth-of-field blur on background cards.
+            COLOR ACCENT: Bold yellow-gold (#FEDD00) glow halos behind featured cards, matching Boxium brand.
+            COMPOSITION: Left 45% kept as dark negative space for title text overlay. Cards bleed slightly off right edge for dynamism.
+            QUALITY: Ultra-high detail, 8K photorealistic card textures, professional product photography lighting.`,
+          'card-analysis': `
+            STYLE: Luxury auction house meets TCG premium showcase.
+            BACKGROUND: Near-black (#0A0A0F) with subtle dark purple vignette, fine diagonal line texture at 3% opacity.
+            LIGHTING: Single dramatic spotlight from top-center, creating a theatrical stage effect. Deep shadows with rich contrast.
+            CARD PRESENTATION: Hero card centered and large (60% frame height), perfectly flat-on display with museum-quality presentation. Subtle reflection on dark glass surface below.
+            ATMOSPHERE: Thin wisps of atmospheric haze, microscopic sparkle particles around card edges suggesting rarity.
+            COLOR ACCENT: Electric blue-white (#E8F4FF) rim lighting on card edges, suggesting premium graded card aesthetic.
+            COMPOSITION: Card slightly right of center, left 40% dark for text. Ultra-clean, minimal, prestigious.
+            QUALITY: Studio product photography quality, perfect card surface detail, no distortion.`,
+          'guide': `
+            STYLE: Modern TCG educational platform, clean and inviting.
+            BACKGROUND: Dark slate (#1A1F2E) with subtle warm gradient at bottom, soft geometric shapes.
+            LIGHTING: Soft diffused lighting, friendly and approachable, no harsh shadows.
+            CARD PRESENTATION: 2-3 cards in a gentle fan arrangement, slightly elevated, clean drop shadows.
+            ATMOSPHERE: Light bokeh circles in background, fresh and modern feel.
+            COLOR ACCENT: Teal (#00D4AA) and white accents, suggesting learning and growth.
+            COMPOSITION: Balanced layout, cards on right, generous left space for text.
+            QUALITY: Clean editorial illustration style, professional but accessible.`,
+          'news': `
+            STYLE: Breaking news editorial meets TCG excitement.
+            BACKGROUND: Very dark charcoal (#111111) with subtle red-orange gradient at edges.
+            LIGHTING: High-contrast dramatic lighting, strong directional shadows suggesting urgency.
+            CARD PRESENTATION: 1-2 cards at dynamic angles (15-20 degree tilt), motion blur suggestion, energy lines.
+            ATMOSPHERE: Speed lines, energy burst effect behind main card, sense of breaking news urgency.
+            COLOR ACCENT: Bright red (#FF2D2D) and white accents, bold graphic design elements.
+            COMPOSITION: Dynamic diagonal composition, left space for text overlay.
+            QUALITY: High-impact graphic design quality, bold and attention-grabbing.`,
         };
         const styleGuide = styleGuides[input.style] || styleGuides['market-report'];
-        const cardNamesStr = (input.cardNames || []).slice(0, 3).join(', ') || 'Pokemon TCG cards';
-        const prompt = `Professional blog cover image for a Pokemon TCG article. Title context: "${input.articleTitle}". Style: ${styleGuide}. Featured cards: ${cardNamesStr}. Layout: wide banner (16:9), leave left 40% as dark space for title text overlay. Design: Boxium PTCG Hong Kong platform aesthetic, professional TCG market analysis. NO text in image. High quality photorealistic card showcase.`;
-        const originalImages = input.cardImageUrls.slice(0, 2).map(url => ({
+        const prompt = `TASK: Create a professional 16:9 blog cover image for a Pokemon TCG market platform called "Boxium PTCG".
+
+ARTICLE CONTEXT: "${input.articleTitle}"
+FEATURED CARDS: ${cardNamesStr}
+
+ART DIRECTION:
+${styleGuide}
+
+CRITICAL RULES:
+- NO text, NO words, NO letters, NO numbers anywhere in the image
+- The actual Pokemon card artwork/images provided must be clearly visible and recognizable as the hero elements
+- Maintain card proportions and artwork fidelity - do not distort the cards
+- Left 40-45% of image must remain as dark, clean space suitable for white text overlay
+- Overall mood: Premium, professional, desirable collector platform
+- Final output must look like a high-end TCG magazine or premium platform banner`;
+
+        const originalImages = input.cardImageUrls.slice(0, 3).map(url => ({
           url,
           mimeType: 'image/jpeg' as const,
         }));
