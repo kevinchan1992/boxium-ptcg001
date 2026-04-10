@@ -23,6 +23,7 @@ import { templatesRouter } from "./routers/templates";
 import { diagnosticsRouter } from "./routers/diagnostics";
 import { emailRouter } from "./routers/email";
 import { blogAiRouter } from "./blogAiProcedures";
+import { securityRouter } from "./routers/security";
 
 export const appRouter = router({
   system: systemRouter,
@@ -34,6 +35,8 @@ export const appRouter = router({
   email: emailRouter,
 
   blogAi: blogAiRouter,
+
+  security: securityRouter,
 
   products: router({
     getById: publicProcedure

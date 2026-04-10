@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -19,6 +19,7 @@ import AdminEmailTest from "@/components/AdminEmailTest";
 import AdminPlatformSettings from "@/components/AdminPlatformSettings";
 import AdminMessages from "@/components/AdminMessages";
 import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
+import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 
 const VALID_TABS = [
   "dashboard", "users", "datasources", "trending", "blog", "content-workflow",
-  "cache", "schedule", "performance", "taskhistory",
+  "cache", "schedule", "performance", "taskhistory", "security",
   "sfstations", "emaillogs", "emailtest", "platformsettings", "messages"
 ] as const;
 
@@ -78,6 +79,7 @@ function useNavItems(): NavItem[] {
     { id: "schedule", label: "排程管理", icon: <Clock className="w-[18px] h-[18px]" />, group: "system" },
     { id: "performance", label: "性能監控", icon: <Activity className="w-[18px] h-[18px]" />, group: "system" },
     { id: "taskhistory", label: "任務歷史", icon: <History className="w-[18px] h-[18px]" />, group: "system" },
+    { id: "security", label: "安全監控", icon: <Shield className="w-[18px] h-[18px]" />, group: "system" },
     { id: "emaillogs", label: "電郵日誌", icon: <Mail className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "emailtest", label: "電郵測試", icon: <FlaskConical className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-[18px] h-[18px]" />, group: "communication" },
@@ -104,6 +106,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "emailtest": return <AdminEmailTest />;
     case "platformsettings": return <AdminPlatformSettings />;
     case "messages": return <AdminMessages />;
+    case "security": return <AdminSecurityMonitor />;
     default: return <AdminDashboard />;
   }
 }

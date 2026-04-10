@@ -1,4 +1,49 @@
 # robots.txt for BOXIUM PTCG
+# Last updated: 2026-04-10
+
+# ── Googlebot ─────────────────────────────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /research
+Allow: /trending
+Allow: /pricing
+Allow: /about
+Allow: /marketplace
+Allow: /auctions
+Disallow: /api/
+Disallow: /admin
+Disallow: /seller-dashboard
+Disallow: /profile
+Disallow: /cart
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /messages
+
+# ── Bingbot ───────────────────────────────────────────────────────────────────
+User-agent: Bingbot
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /research
+Allow: /trending
+Allow: /pricing
+Allow: /about
+Allow: /marketplace
+Allow: /auctions
+Disallow: /api/
+Disallow: /admin
+Disallow: /seller-dashboard
+Disallow: /profile
+Disallow: /cart
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /messages
+
+# ── All other bots ────────────────────────────────────────────────────────────
 User-agent: *
 Allow: /
 Allow: /blog
@@ -7,10 +52,25 @@ Allow: /research
 Allow: /trending
 Allow: /pricing
 Allow: /about
-
-# Disallow admin and API endpoints
-Disallow: /admin
+Allow: /marketplace
+Allow: /auctions
+Allow: /sitemap.xml
 Disallow: /api/
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /seller-dashboard
+Disallow: /seller-dashboard/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /cart
+Disallow: /orders
+Disallow: /orders/*
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /messages
+Disallow: /checkout
+Disallow: /payment
+Crawl-delay: 10
 
-# Sitemap location
+# ── Sitemap ───────────────────────────────────────────────────────────────────
 Sitemap: https://boxium.asia/sitemap.xml

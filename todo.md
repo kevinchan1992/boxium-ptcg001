@@ -8112,3 +8112,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] adminManualPayout 加入 audit log（mutation handler 缺少 ctx 解構）
 - [ ] adminBatchManualPayout 加入 audit log（mutation handler 缺少 ctx 解構）
 - [ ] confirmReceipt / dispute / payout 關鍵狀態轉換加入 orderStatusHistory 記錄
+
+## 多層安全防護（2026-04-10）
+
+- [ ] Rate Limiting：登入、搜尋、AI 生成、上傳、下單、出價等敏感路徑
+- [ ] Bot Detection：識別異常請求模式、封鎖決策、降級回應
+- [ ] 上傳安全：MIME 類型驗證、頻率限制
+- [ ] CORS 收緊：限制允許的域名
+- [ ] express.json body limit 從 50MB 降低
+- [ ] robots.txt 強化：保護 API 和私人路徑
+- [ ] Anti-Scrape：卡牌價格資料限制、內容保護
+- [ ] Admin 後台：Anti-Scrape 監控面板

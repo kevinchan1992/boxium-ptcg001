@@ -21,6 +21,16 @@ import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoComplet
 import { startWeeklyBlogReportScheduler } from "../weeklyBlogScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
+import {
+  botDetection,
+  manualBlockCheck,
+  securityHeaders,
+  trpcRateLimitRouter,
+  authLimiter,
+  uploadLimiter,
+  validateImageMime,
+  validatePaymentProofMime,
+} from "../middleware/security";
 import { getListingById, getCardById, getSealedProductById } from "../db";
 import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl, composeAndCacheMarketplaceOgImage } from "../ogImageComposer";
 import Stripe from "stripe";
@@ -49,9 +59,29 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
-  // Configure CORS to allow credentials
+  // ─── Security: global headers + bot detection + manual block ────────────────
+  app.use(securityHeaders);
+  app.use(manualBlockCheck);
+  app.use(botDetection);
+
+  // Configure CORS — allow production domain + dev origins
+  const ALLOWED_ORIGINS: Array<string | RegExp> = [
+    "https://boxiumptcg-mua4eq38.manus.space",
+    "https://boxium.asia",
+    "https://www.boxium.asia",
+    /\.manus\.computer$/,
+    /\.manus\.space$/,
+    /localhost/,
+    /127\.0\.0\.1/,
+  ];
   app.use(cors({
-    origin: true, // Allow all origins in development
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin) return callback(null, true);
+      const allowed = ALLOWED_ORIGINS.some((o) =>
+        typeof o === "string" ? o === origin : o.test(origin)
+      );
+      callback(allowed ? null : new Error("CORS: origin not allowed"), allowed);
+    },
     credentials: true,
   }));
   
@@ -688,13 +718,13 @@ async function startServer() {
     res.json({ received: true });
   });
 
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Configure body parser — 2MB for JSON (upload routes use multipart, not JSON)
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ limit: "2mb", extended: true }));
   // Manus OAuth removed
   
-  // Google OAuth routes under /api/auth/google
-  app.use("/api/auth", googleOAuthRouter);
+  // Google OAuth routes — apply auth rate limiter
+  app.use("/api/auth", authLimiter, googleOAuthRouter);
   
   // Sitemap.xml route
   app.get("/sitemap.xml", async (req, res) => {
@@ -806,7 +836,7 @@ async function startServer() {
   const multer = (await import("multer")).default;
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
   
-  app.post("/api/upload-blog-image", upload.single("file"), async (req, res) => {
+  app.post("/api/upload-blog-image", uploadLimiter, upload.single("file"), validateImageMime, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -833,7 +863,7 @@ async function startServer() {
     }
   });
   // Marketplace listing image upload API (up to 5 images per listing, 10MB each)
-  app.post("/api/upload-marketplace-image", upload.single("file"), async (req, res) => {
+  app.post("/api/upload-marketplace-image", uploadLimiter, upload.single("file"), validateImageMime, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -854,7 +884,7 @@ async function startServer() {
   });
 
   // Payment proof image upload API (for Alipay HK payment verification)
-  app.post("/api/upload-payment-proof", upload.single("file"), async (req, res) => {
+  app.post("/api/upload-payment-proof", uploadLimiter, upload.single("file"), validatePaymentProofMime, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -1304,7 +1334,8 @@ async function startServer() {
     }
   });
 
-  // tRPC API
+  // tRPC API — apply path-based rate limiting
+  app.use("/api/trpc", trpcRateLimitRouter);
   app.use(
     "/api/trpc",
     createExpressMiddleware({
