@@ -8123,3 +8123,22 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] robots.txt 強化：保護 API 和私人路徑
 - [ ] Anti-Scrape：卡牌價格資料限制、內容保護
 - [ ] Admin 後台：Anti-Scrape 監控面板
+
+## 安全強化方案 P0 + P1（2026-04-11）
+
+- [ ] P0-1：新增 securityEvents + blockedIps DB 表，安全記錄持久化
+- [ ] P0-2：修正 trust proxy 設定，getClientIp 改用 req.ip
+- [ ] P1-1：加入 CSP 標頭 + HSTS
+- [ ] P1-2：進階 Bot 行為分析（缺少瀏覽器標頭偵測 + 可疑 IP 累積封鎖）
+- [ ] P1-3：安全事件 Webhook 告警（5分鐘內 20+ 事件自動通知 Owner）
+- [ ] 更新 AdminSecurityMonitor UI（顯示持久化資料 + 告警狀態）
+
+## 安全強化方案 P0 + P1（2026-04-11）
+
+- [x] P0-1：新增 DB schema（security_events + blocked_ips 表）
+- [x] P0-2：安全記錄持久化到資料庫（persistEvent + loadBlockedIpCache）
+- [x] P0-3：trust proxy 設定（app.set('trust proxy', 1)）
+- [x] P1-1：CSP 標頭 + HSTS + X-Frame-Options（取代棄用的 X-XSS-Protection）
+- [x] P1-2：進階 Bot 偵測（缺少瀏覽器標頭偵測 + 可疑 IP 累積封鎖）
+- [x] P1-3：安全事件 Webhook 告警（5分鐘內 20+ 事件自動通知 Owner，10分鐘冷卻）
+- [x] 更新 AdminSecurityMonitor UI（即時日誌 + 資料庫記錄 + 持久化封鎖 IP + 告警狀態）

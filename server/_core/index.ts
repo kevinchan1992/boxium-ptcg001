@@ -58,7 +58,12 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  
+
+  // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
+  // This is required for rate limiting and bot detection to work correctly
+  // Without this, X-Forwarded-For can be spoofed by attackers
+  app.set('trust proxy', 1);
+
   // ─── Security: global headers + bot detection + manual block ────────────────
   app.use(securityHeaders);
   app.use(manualBlockCheck);

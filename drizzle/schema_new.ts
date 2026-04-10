@@ -1471,3 +1471,39 @@ export const sellerRiskProfiles = mysqlTable("sellerRiskProfiles", {
 }));
 export type SellerRiskProfile = typeof sellerRiskProfiles.$inferSelect;
 export type InsertSellerRiskProfile = typeof sellerRiskProfiles.$inferInsert;
+
+/**
+ * Security Events - persistent log of bot blocks, rate limits, upload rejections, manual blocks
+ * Replaces in-memory securityLog array; survives server restarts
+ */
+export const securityEvents = mysqlTable("securityEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  type: mysqlEnum("type", ["BOT_BLOCKED", "RATE_LIMITED", "UPLOAD_REJECTED", "MANUAL_BLOCK"]).notNull(),
+  ip: varchar("ip", { length: 45 }).notNull(),
+  userAgent: text("userAgent"),
+  path: varchar("path", { length: 500 }),
+  reason: varchar("reason", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  ipIdx: index("se_ip_idx").on(table.ip),
+  typeIdx: index("se_type_idx").on(table.type),
+  createdAtIdx: index("se_createdAt_idx").on(table.createdAt),
+}));
+export type DbSecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertDbSecurityEvent = typeof securityEvents.$inferInsert;
+
+/**
+ * Blocked IPs - persistent manual block list; survives server restarts
+ */
+export const blockedIps = mysqlTable("blockedIps", {
+  ip: varchar("ip", { length: 45 }).primaryKey(),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  blockedBy: varchar("blockedBy", { length: 100 }).default("admin").notNull(),
+  blockedAt: timestamp("blockedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+}, (table) => ({
+  isActiveIdx: index("bi_isActive_idx").on(table.isActive),
+}));
+export type BlockedIp = typeof blockedIps.$inferSelect;
+export type InsertBlockedIp = typeof blockedIps.$inferInsert;
