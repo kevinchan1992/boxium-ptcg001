@@ -4036,13 +4036,21 @@ FEATURED CARDS: ${cardNamesStr}
 ART DIRECTION:
 ${styleGuide}
 
+BRAND WATERMARK (MANDATORY):
+- Bottom-right corner: Display the text "BOXIUM" in bold, wide-spaced capital letters, followed by a smaller line "PTCG" below it
+- Font style: Clean, modern sans-serif, slightly condensed — matching a premium brand identity
+- Color: White text at 70% opacity, with a very subtle dark semi-transparent pill/rectangle background (8px padding, 40% black opacity) to ensure legibility on any background
+- Size: "BOXIUM" approximately 2.5% of image height, "PTCG" approximately 1.5% of image height
+- Position: 16px from right edge, 16px from bottom edge
+- This brand mark must ALWAYS appear — it is a non-negotiable brand requirement
+
 CRITICAL RULES:
-- NO text, NO words, NO letters, NO numbers anywhere in the image
 - The actual Pokemon card artwork/images provided must be clearly visible and recognizable as the hero elements
 - Maintain card proportions and artwork fidelity - do not distort the cards
 - Left 40-45% of image must remain as dark, clean space suitable for white text overlay
 - Overall mood: Premium, professional, desirable collector platform
-- Final output must look like a high-end TCG magazine or premium platform banner`;
+- Final output must look like a high-end TCG magazine or premium platform banner
+- NO other text except the BOXIUM PTCG brand watermark described above`;
 
         const originalImages = input.cardImageUrls.slice(0, 3).map(url => ({
           url,
