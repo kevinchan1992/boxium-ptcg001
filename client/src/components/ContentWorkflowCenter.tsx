@@ -971,9 +971,17 @@ export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (ar
   ];
 
   const handleBriefReady = (brief: any) => {
-    // 把研究 Brief 轉換成 AI 工廠的輸入格式
-    toast.success('研究 Brief 已準備好，切換到撰寫技能...');
-    setActiveSkill('write');
+    // 觸發自定義事件，將 Brief 傳遞給 AdminBlogManagement
+    window.dispatchEvent(new CustomEvent('brief-to-write', {
+      detail: {
+        topic: brief.researchTopic || brief.topic || '',
+        outline: brief.outlineSuggestion || [],
+        titleOptions: brief.titleOptions || [],
+      }
+    }));
+    // 導航到博客管理的 AI 內容工廠
+    window.dispatchEvent(new CustomEvent('navigate-to-blog'));
+    toast.success('研究 Brief 已導入 AI 內容工廠！已自動預填主題和大綱。');
   };
 
   const handleArticleReady = (article: any) => {

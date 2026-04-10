@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatHKDate } from "@/lib/formatDate";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
 
 import { ArticlePreview } from "@/components/ArticlePreview";
 import { CardSelectionDialog } from "@/components/CardSelectionDialog";
+import { TopicClusterView } from "@/components/TopicClusterView";
 
 // ─── Share Statistics (Collapsible) ─────────────────────────────
 function ShareStatisticsCard() {
@@ -145,9 +146,10 @@ function ShareStatisticsCard() {
 
 // ─── Main Component ─────────────────────────────────────────────
 export function AdminBlogManagement() {
-  const [activeView, setActiveView] = useState<'list' | 'generate' | 'preview' | 'edit-translation'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'cluster' | 'generate' | 'preview' | 'edit-translation'>('list');
   const [previewArticle, setPreviewArticle] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [initialBrief, setInitialBrief] = useState<{ topic?: string; outline?: string[]; titleOptions?: string[] } | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -274,12 +276,23 @@ export function AdminBlogManagement() {
     setSelectedPostIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  // Listen for brief-to-write events from ContentWorkflowCenter
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const brief = (e as CustomEvent).detail;
+      setInitialBrief(brief);
+      setActiveView('generate');
+    };
+    window.addEventListener('brief-to-write', handler);
+    return () => window.removeEventListener('brief-to-write', handler);
+  }, []);
   if (activeView === 'generate') {
     return (
       <AIArticleGenerator
         categories={categories || []}
-        onCancel={() => setActiveView('list')}
-        onSuccess={handleAISuccess}
+        onCancel={() => { setActiveView('list'); setInitialBrief(undefined); }}
+        onSuccess={(article) => { setInitialBrief(undefined); handleAISuccess(article); }}
+        initialBrief={initialBrief}
       />
     );
   }
@@ -318,7 +331,16 @@ export function AdminBlogManagement() {
               <CardTitle className="text-white">文章管理</CardTitle>
               <CardDescription>共 {posts?.total || 0} 篇文章</CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                onClick={() => setActiveView(activeView === 'cluster' ? 'list' : 'cluster')}
+                variant="outline"
+                className={`border-zinc-600 text-sm ${activeView === 'cluster' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700' : 'text-gray-300 hover:bg-zinc-700'}`}
+                size="sm"
+              >
+                <FolderOpen className="w-4 h-4 mr-1.5" />
+                集群視圖
+              </Button>
               <Button
                 onClick={() => setActiveView('generate')}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -339,7 +361,20 @@ export function AdminBlogManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
+          {/* Cluster View */}
+          {activeView === 'cluster' && (
+            <div className="mb-4">
+              <TopicClusterView
+                onArticleClick={(id) => {
+                  const post = posts?.posts?.find((p: any) => p.id === id);
+                  if (post) handleEdit(post);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Filters - only show in list mode */}
+          {activeView !== 'cluster' && (
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -372,9 +407,10 @@ export function AdminBlogManagement() {
               </SelectContent>
             </Select>
           </div>
+          )}
 
-          {/* Post List */}
-          {isLoading ? (
+          {/* Post List - only show in list mode */}
+          {activeView !== 'cluster' && isLoading ? (
             <div className="text-center py-12 text-gray-400">載入中...</div>
           ) : filteredPosts.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
@@ -499,13 +535,14 @@ function WorkflowStepIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
-// ─── AI Article Generator (Multi-Step Workflow) ──────────────────
+/// ─── AI Article Generator (Multi-Step Workflow) ──────────────────
 function AIArticleGenerator({
-  categories, onCancel, onSuccess,
+  categories, onCancel, onSuccess, initialBrief,
 }: {
   categories: any[];
   onCancel: () => void;
   onSuccess: (article: any) => void;
+  initialBrief?: { topic?: string; outline?: string[]; titleOptions?: string[] };
 }) {
   // ── Workflow State ──
   const [workflowStep, setWorkflowStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -514,15 +551,16 @@ function AIArticleGenerator({
   const [generatedArticle, setGeneratedArticle] = useState<any>(null);
   const [proofreadResult, setProofreadResult] = useState<any>(null);
   const [selectedTitleIndex, setSelectedTitleIndex] = useState(0);
-
   // ── Step 1: Input State ──
   const [inputMethod, setInputMethod] = useState<'topic' | 'url' | 'image' | 'text'>('topic');
   const [articleType, setArticleType] = useState<string>('card-analysis');
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
-  const [textContent, setTextContent] = useState('');
+  // Pre-fill from research brief if provided
+  const briefOutlineText = initialBrief?.outline?.map((s, i) => `${i + 1}. ${s}`).join('\n') || '';
+  const [textContent, setTextContent] = useState(briefOutlineText ? `【來自研究 Brief 的大綱】\n${briefOutlineText}` : '');
   const [urlInput, setUrlInput] = useState('');
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState(initialBrief?.topic || '');
   const [targetAudience, setTargetAudience] = useState('香港及台灣 TCG 玩家和收藏家');
   const [seoKeywords, setSeoKeywords] = useState('');
   const [targetLanguage, setTargetLanguage] = useState<'zh-TW' | 'en' | 'ja'>('zh-TW');
