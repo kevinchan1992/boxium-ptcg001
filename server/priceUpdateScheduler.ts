@@ -1359,55 +1359,41 @@ export async function runHotCardPoll(limit: number = 100): Promise<{ updated: nu
             return;
           }
 
-          // Batch insert price records
-          const records = priceHistory.map(entry => ({
-            cardId: product.cardId,
-            source: 'snkrdunk' as const,
-            price: convertJpyToHkd(entry.price).toString(),
-            currency: 'HKD',
-            jpyPrice: entry.jpyPrice ?? entry.price,
-            grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
-            quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
-            productType,
-            soldAt: entry.soldAt,
-            listingUrl: product.sourceUrl,
-          }));
+          // Assign sourcePosition using PER-GROUP relative position (stable across scrape runs).
+          // Key insight: global index causes duplicates when new records are added at the top
+          // of the API response, shifting all older records' positions.
+          // Per-group position ensures the same transaction always gets the same sourcePosition.
+          const groupCounters = new Map<string, number>();
+          const records = priceHistory.map(entry => {
+            const soldAtStr = entry.soldAt ? entry.soldAt.toISOString().slice(0, 10) : 'unknown';
+            const grade = productType === 'single_card' ? (entry.normalisedGrade ?? 'null') : 'null';
+            const jpyPrice = entry.jpyPrice ?? entry.price;
+            const groupKey = `${soldAtStr}|${grade}|${jpyPrice}`;
+            const pos = groupCounters.get(groupKey) ?? 0;
+            groupCounters.set(groupKey, pos + 1);
+            return {
+              cardId: product.cardId,
+              source: 'snkrdunk' as const,
+              price: convertJpyToHkd(entry.price).toString(),
+              currency: 'HKD',
+              jpyPrice,
+              sourcePosition: pos, // Stable per-group position for deduplication
+              grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
+              quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
+              productType,
+              soldAt: entry.soldAt,
+              listingUrl: product.sourceUrl,
+            };
+          });
 
-          // SNKRDUNK Fuzzy Deduplication: filter out records that already exist within ±7 days
-          const windowMs = 7 * 24 * 60 * 60 * 1000;
-          const filteredRecords: typeof records = [];
-          for (const record of records) {
-            if (record.soldAt && record.jpyPrice) {
-              const soldAtMs = record.soldAt.getTime();
-              const windowStart = new Date(soldAtMs - windowMs);
-              const windowEnd = new Date(soldAtMs + windowMs);
-              const existing = await database
-                .select({ id: priceHistoryTable.id })
-                .from(priceHistoryTable)
-                .where(
-                  and(
-                    eq(priceHistoryTable.cardId, record.cardId),
-                    eq(priceHistoryTable.source, record.source),
-                    record.grade ? eq(priceHistoryTable.grade, record.grade) : sql`${priceHistoryTable.grade} IS NULL`,
-                    sql`${priceHistoryTable.jpyPrice} = ${record.jpyPrice}`,
-                    gte(priceHistoryTable.soldAt, windowStart),
-                    lte(priceHistoryTable.soldAt, windowEnd)
-                  )
-                )
-                .limit(1);
-              if (existing.length === 0) {
-                filteredRecords.push(record);
-              }
-            } else {
-              filteredRecords.push(record);
-            }
-          }
-
-          for (let j = 0; j < filteredRecords.length; j += 50) {
-            const chunk = filteredRecords.slice(j, j + 50);
+          // Rely solely on the UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice, sourcePosition)
+          // for deduplication — no application-level pre-filtering needed.
+          // onDuplicateKeyUpdate with isSuspectedBulk no-op keeps existing records unchanged.
+          for (let j = 0; j < records.length; j += 50) {
+            const chunk = records.slice(j, j + 50);
             await database.insert(priceHistoryTable)
               .values(chunk)
-              .onDuplicateKeyUpdate({ set: { cardId: chunk[0].cardId } });
+              .onDuplicateKeyUpdate({ set: { id: sql`id` } }); // No-op: keep existing record
           }
 
           // Update data source fetch status
@@ -2327,7 +2313,7 @@ export function startDispute3DayReminderScheduler() {
         console.log(`[Dispute3Day] Found ${overdueDisputes.length} dispute(s) open > 3 days.`);
 
         // Build a summary email for admin
-        const disputeList = overdueDisputes.map((d, i) => {
+        const disputeList = overdueDisputes.map((d: any, i: number) => {
           const openedAt = d.disputeOpenedAt
             ? new Date(d.disputeOpenedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })
             : '未知';
