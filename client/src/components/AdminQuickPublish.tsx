@@ -212,11 +212,59 @@ interface CardImageItem {
   matchedFrom?: 'article' | 'trending';
 }
 
+// Cover style definitions with visual metadata
+const COVER_STYLES: Array<{
+  id: "market-report" | "card-analysis" | "guide" | "news";
+  label: string;
+  desc: string;
+  emoji: string;
+  gradient: string;
+  accentColor: string;
+  tagColor: string;
+}> = [
+  {
+    id: "market-report",
+    label: "市場快報風",
+    desc: "金色光束·專業財經風格",
+    emoji: "⚡",
+    gradient: "from-[#06038d] to-[#000820]",
+    accentColor: "#FEDD00",
+    tagColor: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  },
+  {
+    id: "card-analysis",
+    label: "收藏展示風",
+    desc: "拍賣展示·頂級精品風格",
+    emoji: "🏆",
+    gradient: "from-[#0A0A0F] to-[#1a0a2e]",
+    accentColor: "#E8F4FF",
+    tagColor: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  },
+  {
+    id: "guide",
+    label: "入門指南風",
+    desc: "清晰現代·友善教學風格",
+    emoji: "📚",
+    gradient: "from-[#1A1F2E] to-[#0d1520]",
+    accentColor: "#00D4AA",
+    tagColor: "bg-teal-500/20 text-teal-400 border-teal-500/30",
+  },
+  {
+    id: "news",
+    label: "新聞爆料風",
+    desc: "高對比·第一時間続迫感",
+    emoji: "🚨",
+    gradient: "from-[#111111] to-[#1a0505]",
+    accentColor: "#FF2D2D",
+    tagColor: "bg-red-500/20 text-red-400 border-red-500/30",
+  },
+];
+
 function CoverImageSection({
   articleTitle,
   articleContent,
   articleType,
-  coverStyle,
+  coverStyle: defaultCoverStyle,
   coverImageUrl,
   onCoverImageChange,
 }: {
@@ -231,14 +279,17 @@ function CoverImageSection({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [hasExtracted, setHasExtracted] = useState(false);
+  const [activeStyle, setActiveStyle] = useState<"market-report" | "card-analysis" | "guide" | "news">(defaultCoverStyle);
+  const [generatingStyleId, setGeneratingStyleId] = useState<string | null>(null);
 
   const extractCardsMutation = trpc.blog.extractCardsFromArticle.useMutation();
   const generateCoverMutation = trpc.blog.generateCoverImage.useMutation();
 
-  // Auto-extract cards when component mounts (article content is ready)
-  const handleAutoExtract = useCallback(async () => {
-    if (hasExtracted || isExtracting) return;
+  // Auto-extract cards when component mounts
+  const handleAutoExtract = useCallback(async (forceRetry = false) => {
+    if ((hasExtracted || isExtracting) && !forceRetry) return;
     setIsExtracting(true);
+    if (forceRetry) setHasExtracted(false);
     try {
       const cards = await extractCardsMutation.mutateAsync({
         articleContent,
@@ -248,47 +299,43 @@ function CoverImageSection({
       setSelectedCards(cards.slice(0, 3));
       setHasExtracted(true);
     } catch (_) {
-      setHasExtracted(true); // Don't retry on error
+      setHasExtracted(true);
     } finally {
       setIsExtracting(false);
     }
   }, [articleContent, articleTitle, hasExtracted, isExtracting]);
 
   // Trigger extraction on first render
-  useState(() => {
-    handleAutoExtract();
-  });
+  useState(() => { handleAutoExtract(); });
 
   const handleToggleCard = useCallback((card: CardImageItem): void => {
     setSelectedCards((prev) => {
       const exists = prev.find((c) => c.id === card.id);
       if (exists) return prev.filter((c) => c.id !== card.id);
-      if (prev.length >= 3) {
-        toast.info("最多選擇 3 張卡牌");
-        return prev;
-      }
+      if (prev.length >= 3) { toast.info("最多選擇 3 張卡牌"); return prev; }
       return [...prev, card];
     });
   }, []);
 
-  const handleGenerateCover = async () => {
+  // Generate cover with a specific style
+  const handleGenerateCover = async (styleId?: "market-report" | "card-analysis" | "guide" | "news") => {
+    const style = styleId || activeStyle;
     if (selectedCards.length === 0) {
       toast.error("未能找到相關卡牌，請稍後重試");
       return;
     }
     setIsGenerating(true);
+    setGeneratingStyleId(style);
+    if (styleId) setActiveStyle(styleId);
     try {
-      const cardImageUrls = selectedCards
-        .map((c) => c.imageUrlHiRes || c.imageUrl)
-        .filter(Boolean) as string[];
+      const cardImageUrls = selectedCards.map((c) => c.imageUrlHiRes || c.imageUrl).filter(Boolean) as string[];
       const cardNames = selectedCards.map((c) => c.name);
-
       const result = await generateCoverMutation.mutateAsync({
         articleTitle,
         articleType,
         cardImageUrls,
         cardNames,
-        style: coverStyle,
+        style,
       });
       onCoverImageChange(result.url ?? null);
       toast.success("封面圖生成成功！");
@@ -296,10 +343,12 @@ function CoverImageSection({
       toast.error(`封面圖生成失敗：${e.message}`);
     } finally {
       setIsGenerating(false);
+      setGeneratingStyleId(null);
     }
   };
 
   const articleCardCount = selectedCards.filter(c => c.matchedFrom === 'article').length;
+  const activeStyleInfo = COVER_STYLES.find(s => s.id === activeStyle);
 
   return (
     <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 space-y-3">
@@ -310,7 +359,7 @@ function CoverImageSection({
           <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">封面圖</span>
           {articleCardCount > 0 && (
             <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/30">
-              已從文章識別 {articleCardCount} 張卡牌
+              已識別 {articleCardCount} 張卡牌
             </Badge>
           )}
         </div>
@@ -325,19 +374,64 @@ function CoverImageSection({
         )}
       </div>
 
+      {/* Style Selector — always visible */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] text-zinc-500 font-medium">選擇封面風格</p>
+        <div className="grid grid-cols-2 gap-2">
+          {COVER_STYLES.map((style) => {
+            const isActive = activeStyle === style.id;
+            const isThisGenerating = generatingStyleId === style.id && isGenerating;
+            return (
+              <button
+                key={style.id}
+                onClick={() => {
+                  setActiveStyle(style.id);
+                  if (!isGenerating) handleGenerateCover(style.id);
+                }}
+                disabled={isGenerating || isExtracting}
+                className={`relative rounded-xl p-3 text-left transition-all border-2 overflow-hidden ${
+                  isActive
+                    ? "border-[#FEDD00] ring-1 ring-[#FEDD00]/30"
+                    : "border-zinc-700 hover:border-zinc-500"
+                } ${isGenerating ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                {/* Gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-80`} />
+                {/* Accent dot */}
+                <div
+                  className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                  style={{ backgroundColor: style.accentColor, boxShadow: `0 0 6px ${style.accentColor}` }}
+                />
+                {/* Content */}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-base leading-none">{style.emoji}</span>
+                    <span className="text-xs font-semibold text-white">{style.label}</span>
+                    {isActive && !isThisGenerating && (
+                      <Check className="w-3 h-3 text-[#FEDD00] ml-auto" />
+                    )}
+                    {isThisGenerating && (
+                      <Loader2 className="w-3 h-3 text-[#FEDD00] ml-auto animate-spin" />
+                    )}
+                  </div>
+                  <p className="text-[10px] text-zinc-400 leading-tight">{style.desc}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-zinc-600">點選風格即自動生成封面圖</p>
+      </div>
+
       {/* Current Cover Preview */}
-      {coverImageUrl ? (
+      {coverImageUrl && (
         <div className="relative rounded-lg overflow-hidden border border-zinc-700 group">
-          <img
-            src={coverImageUrl}
-            alt="封面圖"
-            className="w-full h-44 object-cover"
-          />
+          <img src={coverImageUrl} alt="封面圖" className="w-full h-44 object-cover" />
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button
               size="sm"
               variant="outline"
-              onClick={handleGenerateCover}
+              onClick={() => handleGenerateCover()}
               disabled={isGenerating}
               className="gap-1.5 text-xs border-white/30 text-white hover:bg-white/10"
             >
@@ -348,93 +442,75 @@ function CoverImageSection({
           <div className="absolute bottom-2 right-2">
             <Badge className="bg-green-500/90 text-white text-[10px]">
               <Check className="w-2.5 h-2.5 mr-1" />
-              已設定封面圖
+              {activeStyleInfo?.label || "已設定封面圖"}
             </Badge>
           </div>
         </div>
-      ) : (
-        /* Auto-generate button area */
-        <div className="space-y-3">
-          {/* Extracted Cards Preview */}
-          {isExtracting ? (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
-              <Loader2 className="w-4 h-4 animate-spin text-[#06038d]" />
-              <span className="text-sm text-zinc-400">AI 正在從文章識別相關卡牌...</span>
-            </div>
-          ) : selectedCards.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs text-zinc-500">已識別的卡牌（將作為封面素材）：</p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {selectedCards.map((card) => {
-                  const imgUrl = card.imageUrlHiRes || card.imageUrl;
-                  return (
-                    <div key={card.id} className="relative flex-shrink-0 group">
-                      <div className={`rounded-lg overflow-hidden border-2 w-16 ${
-                        card.matchedFrom === 'article'
-                          ? 'border-[#FEDD00]/60'
-                          : 'border-zinc-600'
-                      }`}>
-                        {imgUrl ? (
-                          <img
-                            src={imgUrl}
-                            alt={card.name}
-                            className="w-16 aspect-[3/4] object-cover"
-                          />
-                        ) : (
-                          <div className="w-16 aspect-[3/4] bg-zinc-700 flex items-center justify-center">
-                            <Image className="w-4 h-4 text-zinc-500" />
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleToggleCard(card)}
-                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 items-center justify-center hidden group-hover:flex"
-                        >
-                          <X className="w-2.5 h-2.5 text-white" />
-                        </button>
-                      </div>
-                      <p className="text-[9px] text-zinc-500 mt-0.5 w-16 truncate text-center">{card.name.split('[')[0].trim()}</p>
-                      {card.matchedFrom === 'article' && (
-                        <div className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-[#FEDD00] flex items-center justify-center">
-                          <Star className="w-2 h-2 text-black fill-black" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-[10px] text-zinc-600">
-                <Star className="w-2.5 h-2.5 inline text-[#FEDD00] fill-[#FEDD00] mr-0.5" />
-                標示為文章中提及的卡牌，其餘為熱門卡牌補充
-              </p>
-            </div>
-          ) : null}
+      )}
 
-          {/* Generate Button */}
-          <Button
-            onClick={handleGenerateCover}
-            disabled={selectedCards.length === 0 || isGenerating || isExtracting}
-            className="w-full gap-2 bg-gradient-to-r from-[#06038d] to-purple-700 hover:from-[#0804b0] hover:to-purple-600 text-white text-sm"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                AI 生成封面中（約 20 秒）...
-              </>
-            ) : isExtracting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                識別卡牌中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                AI 生成封面圖（使用 {selectedCards.length} 張卡牌）
-              </>
-            )}
-          </Button>
-          <p className="text-xs text-zinc-600 text-center">
-            AI 自動識別文章中的卡牌，合成專業封面設計
+      {/* Extracted Cards Preview */}
+      {isExtracting ? (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+          <Loader2 className="w-4 h-4 animate-spin text-[#06038d]" />
+          <span className="text-sm text-zinc-400">AI 正在從文章識別相關卡牌...</span>
+        </div>
+      ) : selectedCards.length > 0 ? (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-zinc-500 font-medium">封面素材卡牌</p>
+            <button
+              onClick={() => handleAutoExtract(true)}
+              disabled={isExtracting || isGenerating}
+              className="text-[10px] text-zinc-600 hover:text-zinc-400 flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className="w-2.5 h-2.5" />
+              重新識別
+            </button>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {selectedCards.map((card) => {
+              const imgUrl = card.imageUrlHiRes || card.imageUrl;
+              return (
+                <div key={card.id} className="relative flex-shrink-0 group">
+                  <div className={`rounded-lg overflow-hidden border-2 w-14 ${
+                    card.matchedFrom === 'article' ? 'border-[#FEDD00]/60' : 'border-zinc-600'
+                  }`}>
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={card.name} className="w-14 aspect-[3/4] object-cover" />
+                    ) : (
+                      <div className="w-14 aspect-[3/4] bg-zinc-700 flex items-center justify-center">
+                        <Image className="w-4 h-4 text-zinc-500" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleToggleCard(card)}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 items-center justify-center hidden group-hover:flex"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-zinc-500 mt-0.5 w-14 truncate text-center">{card.name.split('[')[0].trim()}</p>
+                  {card.matchedFrom === 'article' && (
+                    <div className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-[#FEDD00] flex items-center justify-center">
+                      <Star className="w-2 h-2 text-black fill-black" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-zinc-600">
+            <Star className="w-2.5 h-2.5 inline text-[#FEDD00] fill-[#FEDD00] mr-0.5" />
+            標示為文章中提及的卡牌，其餘為熱門卡牌補充
           </p>
+        </div>
+      ) : null}
+
+      {/* Generating overlay indicator */}
+      {isGenerating && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-[#06038d]/10 border border-[#06038d]/30">
+          <Loader2 className="w-4 h-4 animate-spin text-[#06038d]" />
+          <span className="text-sm text-zinc-300">AI 正在生成「{activeStyleInfo?.label}」封面圖（約 20 秒）...</span>
         </div>
       )}
     </div>
