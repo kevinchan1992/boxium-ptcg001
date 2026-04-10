@@ -543,6 +543,17 @@ export function scoreCardRelevance(
 
     if (nameUpper.includes(tokenUpper) || (card.name && card.name.toLowerCase().includes(tokenLower))) {
       score = Math.max(score, 45);
+
+      // Bonus: a word in the name starts with the token (e.g. "Mario Pikachu" for query "pikachu")
+      // This ranks cards like "Mario Pikachu" higher than cards where token appears mid-word
+      const nameWords = nameUpper.split(/[\s:,.(\[\-]+/).filter(Boolean);
+      const nameJaWords = nameJaUpper.split(/[\s:,.(\[\-]+/).filter(Boolean);
+      const wordStartsWithToken =
+        nameWords.some(w => w.startsWith(tokenUpper)) ||
+        nameJaWords.some(w => w.startsWith(tokenUpper));
+      if (wordStartsWithToken) {
+        score = Math.max(score, 55);
+      }
     }
   }
 
