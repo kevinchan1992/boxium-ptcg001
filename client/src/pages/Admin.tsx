@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -20,6 +20,7 @@ import AdminPlatformSettings from "@/components/AdminPlatformSettings";
 import AdminMessages from "@/components/AdminMessages";
 import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
+import AdminQuickPublish from "@/components/AdminQuickPublish";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ const STORAGE_KEY_TAB = "boxium_admin_active_tab";
 const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 
 const VALID_TABS = [
-  "dashboard", "users", "datasources", "trending", "blog", "content-workflow",
+  "dashboard", "users", "datasources", "trending", "blog", "quick-publish", "content-workflow",
   "cache", "schedule", "performance", "taskhistory", "security",
   "sfstations", "emaillogs", "emailtest", "platformsettings", "messages"
 ] as const;
@@ -74,7 +75,8 @@ function useNavItems(): NavItem[] {
     { id: "datasources", label: t("admin.dataSources"), icon: <Database className="w-[18px] h-[18px]" />, group: "content" },
     { id: "trending", label: "熱門卡牌", icon: <TrendingUp className="w-[18px] h-[18px]" />, group: "content" },
     { id: "blog", label: "博客管理", icon: <FileText className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "content-workflow", label: "AI 內容工作流", icon: <Sparkles className="w-[18px] h-[18px]" />, group: "content" },
+    { id: "quick-publish", label: "AI 出文章", icon: <Wand2 className="w-[18px] h-[18px]" />, group: "content" },
+    { id: "content-workflow", label: "AI 工作流（進階）", icon: <Sparkles className="w-[18px] h-[18px]" />, group: "content" },
     { id: "cache", label: "緩存管理", icon: <HardDrive className="w-[18px] h-[18px]" />, group: "system" },
     { id: "schedule", label: "排程管理", icon: <Clock className="w-[18px] h-[18px]" />, group: "system" },
     { id: "performance", label: "性能監控", icon: <Activity className="w-[18px] h-[18px]" />, group: "system" },
@@ -96,6 +98,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "datasources": return <AdminDataSources />;
     case "trending": return <AdminTrendingCards />;
     case "blog": return <AdminBlogManagement />;
+    case "quick-publish": return <AdminQuickPublish />;
     case "content-workflow": return <ContentWorkflowCenter />;
     case "cache": return <AdminCacheManagement />;
     case "schedule": return <AdminScheduleManagement />;
