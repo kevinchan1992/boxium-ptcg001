@@ -982,7 +982,7 @@ export default function Marketplace() {
 
           {/* ── Left Sidebar (desktop) - only show for shop tab ── */}
           {marketTab === 'shop' && (
-          <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '1rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
+          <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '240px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>

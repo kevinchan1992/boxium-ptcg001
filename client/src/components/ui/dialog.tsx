@@ -130,7 +130,7 @@ function DialogContent({
           bottomSheet
             ? [
                 // Mobile (<sm): bottom sheet sliding up from bottom
-                "fixed inset-x-0 bottom-0 w-full max-h-[95dvh] overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom,0px)]",
+                "fixed inset-x-0 bottom-0 w-full max-h-[95dvh] overflow-y-auto overscroll-contain rounded-t-2xl pb-[env(safe-area-inset-bottom,0px)]",
                 "data-[state=open]:animate-in data-[state=closed]:animate-out",
                 "data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full",
                 // sm+ (>=640px): centered dialog

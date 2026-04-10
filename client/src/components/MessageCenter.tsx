@@ -245,7 +245,7 @@ function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50/60 min-h-0">
+      <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-3 bg-gray-50/60 min-h-0">
         {!messages || messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
             <MessageCircle className="w-8 h-8 opacity-40" />
@@ -466,7 +466,7 @@ export default function MessageCenter() {
             {/* Thread list — always visible on desktop, hidden on mobile when chat is open */}
             <div
               className={cn(
-                "flex flex-col border-r border-gray-200 overflow-y-auto",
+                "flex flex-col border-r border-gray-200 overflow-y-auto overscroll-contain",
                 // Desktop: always show left column
                 "hidden sm:flex sm:w-[240px] sm:flex-shrink-0",
                 // Mobile: show list or chat
