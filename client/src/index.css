@@ -149,6 +149,14 @@
   input[type="radio"] {
     touch-action: manipulation;
   }
+  /* Prevent iOS Safari from auto-zooming when focusing input fields.
+     iOS zooms in when font-size < 16px. Setting font-size: 16px on all
+     text inputs prevents this behavior while keeping visual size via transform. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 @layer components {
