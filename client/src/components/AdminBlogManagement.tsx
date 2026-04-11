@@ -233,6 +233,22 @@ export function AdminBlogManagement() {
   };
 
   const handleSaveArticle = async (article: any) => {
+    // Normalize tags: convert comma-separated string to array
+    const normalizeTags = (tags: any): string[] | undefined => {
+      if (!tags) return undefined;
+      if (Array.isArray(tags)) return tags.filter(Boolean);
+      if (typeof tags === 'string') {
+        const arr = tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        return arr.length > 0 ? arr : undefined;
+      }
+      return undefined;
+    };
+    // Normalize categoryId: null → undefined
+    const normalizeCategoryId = (id: any): number | undefined => {
+      if (id === null || id === undefined || id === '' || isNaN(Number(id))) return undefined;
+      return Number(id);
+    };
+
     if (article.id) {
       await updatePostMutation.mutateAsync({
         id: article.id,
@@ -240,8 +256,8 @@ export function AdminBlogManagement() {
         excerpt: article.excerpt,
         content: article.content,
         featuredImage: article.featuredImage,
-        tags: article.tags,
-        categoryId: article.categoryId,
+        tags: normalizeTags(article.tags),
+        categoryId: normalizeCategoryId(article.categoryId),
         status: article.status,
         metaTitle: article.seoTitle,
         metaDescription: article.seoDescription,
@@ -253,8 +269,8 @@ export function AdminBlogManagement() {
         excerpt: article.excerpt,
         content: article.content,
         featuredImage: article.featuredImage,
-        tags: article.tags,
-        categoryId: article.categoryId,
+        tags: normalizeTags(article.tags),
+        categoryId: normalizeCategoryId(article.categoryId),
         status: article.status || 'draft',
         dataSource: 'ai-generated' as const,
         metaTitle: article.seoTitle,

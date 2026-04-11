@@ -61,11 +61,35 @@ const memoryLog: SecurityEvent[] = [];
 // In-memory blocked IP cache (loaded from DB on first use, kept in sync)
 const blockedIpCache = new Set<string>();
 let blockedIpCacheLoaded = false;
-
 let eventCounter = 0;
 
-// ─── DB helpers (lazy import to avoid circular deps) ──────────────────────────
+// ─── Admin IP Whitelist (in-memory, survives for session duration) ────────────
+/** Admin IPs that are exempt from all rate limits */
+const adminIpWhitelist = new Set<string>();
 
+/** Register an admin IP to bypass all rate limits */
+export function registerAdminIp(ip: string): void {
+  adminIpWhitelist.add(ip);
+  console.log(`[Security] Admin IP whitelisted: ${ip} (total: ${adminIpWhitelist.size})`);
+}
+
+/** Remove an admin IP from the whitelist */
+export function unregisterAdminIp(ip: string): void {
+  adminIpWhitelist.delete(ip);
+  console.log(`[Security] Admin IP removed from whitelist: ${ip}`);
+}
+
+/** Check if an IP is in the admin whitelist */
+export function isAdminWhitelisted(ip: string): boolean {
+  return adminIpWhitelist.has(ip);
+}
+
+/** Get all whitelisted admin IPs */
+export function getAdminWhitelistIps(): string[] {
+  return Array.from(adminIpWhitelist);
+}
+
+// ─── DB helpers (lazy import to avoid circular deps) ────────────────────────────────────────────
 async function getDb() {
   const { getDb: _getDb } = await import("../db");
   return await _getDb();
@@ -319,7 +343,7 @@ function makeLimiter(windowMs: number, max: number, message: string): RateLimitR
       recordEvent("RATE_LIMITED", req, message);
       jsonError(res, 429, "RATE_LIMITED", message);
     },
-    skip: (req) => req.path === "/api/dev/health",
+    skip: (req) => req.path === "/api/dev/health" || adminIpWhitelist.has(getClientIp(req)),
   });
 }
 

@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Shield, Ban, Unlock, RefreshCw, AlertTriangle, Activity, Globe, Bot,
-  Database, Wifi, ChevronLeft, ChevronRight,
+  Database, Wifi, ChevronLeft, ChevronRight, ShieldCheck, Zap, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -170,11 +170,12 @@ function Pagination({ page, total, limit, onPage }: { page: number; total: numbe
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────────────── */
+/* ─── Main Component ────────────────────────────────────────────────────── */
 export default function AdminSecurityMonitor() {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [logLimit, setLogLimit] = useState(100);
   const [dbPage, setDbPage] = useState(1);
+  const [rlPage, setRlPage] = useState(1);
   const DB_LIMIT = 50;
 
   const utils = trpc.useUtils();
@@ -194,6 +195,29 @@ export default function AdminSecurityMonitor() {
     { activeOnly: true },
     { refetchInterval: 30_000 }
   );
+
+  // Rate Limit monitoring
+  const rlQuery = trpc.security.getRateLimitLog.useQuery(
+    { limit: DB_LIMIT, offset: (rlPage - 1) * DB_LIMIT },
+    { refetchInterval: 30_000 }
+  );
+
+  // Admin IP Whitelist
+  const whitelistQuery = trpc.security.getWhitelistedIps.useQuery(undefined, { refetchInterval: 30_000 });
+  const whitelistMyIpMutation = trpc.security.whitelistMyIp.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      utils.security.getWhitelistedIps.invalidate();
+    },
+    onError: (err) => toast.error(`白名單失敗：${err.message}`),
+  });
+  const removeFromWhitelistMutation = trpc.security.removeFromWhitelist.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      utils.security.getWhitelistedIps.invalidate();
+    },
+    onError: (err) => toast.error(`移除失敗：${err.message}`),
+  });
 
   // Alert: 20+ events in last 5 min
   const stats = statsQuery.data as any;
@@ -227,6 +251,8 @@ export default function AdminSecurityMonitor() {
     utils.security.getTopUserAgents.invalidate();
     utils.security.getDbLog.invalidate();
     utils.security.getDbBlockedIps.invalidate();
+    utils.security.getRateLimitLog.invalidate();
+    utils.security.getWhitelistedIps.invalidate();
   };
 
   return (
@@ -282,6 +308,14 @@ export default function AdminSecurityMonitor() {
           </TabsTrigger>
           <TabsTrigger value="blocked">已封鎖 IP（持久化）</TabsTrigger>
           <TabsTrigger value="useragents">可疑 User-Agent</TabsTrigger>
+          <TabsTrigger value="ratelimit" className="gap-1.5">
+            <Zap className="w-3.5 h-3.5" />
+            限流監控
+          </TabsTrigger>
+          <TabsTrigger value="whitelist" className="gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            白名單管理
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Live Log (in-memory) ── */}
@@ -493,11 +527,199 @@ export default function AdminSecurityMonitor() {
         </TabsContent>
       </Tabs>
 
-      {/* Block IP Dialog */}
-      <BlockIpDialog
-        open={blockDialogOpen}
-        onClose={() => setBlockDialogOpen(false)}
-        onBlock={(ip, reason) => blockMutation.mutate({ ip, reason })}
+        {/* ── Rate Limit Monitor ── */}
+        <TabsContent value="ratelimit">
+          <div className="space-y-4">
+            {/* Top IPs */}
+            {(rlQuery.data?.topIps ?? []).length > 0 && (
+              <Card className="bg-white/[0.02] border-white/[0.08]">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    高頻限流 IP 排行（前 20 名）
+                  </CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">觸發限流次數最多的 IP，可判斷是否為真實攻擊行為</p>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-white/[0.06] hover:bg-transparent">
+                          <TableHead className="text-gray-400 text-xs">#</TableHead>
+                          <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
+                          <TableHead className="text-gray-400 text-xs w-28">觸發次數</TableHead>
+                          <TableHead className="text-gray-400 text-xs w-36">最後時間</TableHead>
+                          <TableHead className="text-gray-400 text-xs w-24">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(rlQuery.data?.topIps ?? []).map((item: any, i: number) => (
+                          <TableRow key={item.ip} className="border-white/[0.04] hover:bg-white/[0.02]">
+                            <TableCell className="text-xs text-gray-500">{i + 1}</TableCell>
+                            <TableCell className="text-sm text-yellow-300 font-mono">{item.ip}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={`text-xs border-yellow-500/30 ${item.hitCount >= 50 ? 'text-red-400 border-red-500/30' : item.hitCount >= 20 ? 'text-orange-400 border-orange-500/30' : 'text-yellow-400'}`}>
+                                {item.hitCount} 次
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                              {item.lastSeen ? formatTs(item.lastSeen) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => blockMutation.mutate({ ip: item.ip, reason: `高頻限流自動封鎖（${item.hitCount}次）` })}
+                                disabled={blockMutation.isPending}
+                                className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              >
+                                <Ban className="w-3 h-3 mr-1" />
+                                封鎖
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Rate Limit Event Log */}
+            <Card className="bg-white/[0.02] border-white/[0.08]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-300">限流觸發記錄（資料庫持久化）</CardTitle>
+                <p className="text-xs text-gray-500 mt-0.5">所有 RATE_LIMITED 事件，可判斷是否為真實攻擊行為而非正常用戶被誤封</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/[0.06] hover:bg-transparent">
+                        <TableHead className="text-gray-400 text-xs w-36">時間</TableHead>
+                        <TableHead className="text-gray-400 text-xs">IP</TableHead>
+                        <TableHead className="text-gray-400 text-xs">路徑</TableHead>
+                        <TableHead className="text-gray-400 text-xs">原因</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rlQuery.isLoading ? (
+                        <TableRow><TableCell colSpan={4} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      ) : (rlQuery.data?.events ?? []).length === 0 ? (
+                        <TableRow><TableCell colSpan={4} className="text-center text-gray-500 py-8">暫無限流觸發記錄</TableCell></TableRow>
+                      ) : (rlQuery.data?.events ?? []).map((event: any) => (
+                        <TableRow key={event.id} className="border-white/[0.04] hover:bg-white/[0.02]">
+                          <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                            {formatTs(event.createdAt)}
+                          </TableCell>
+                          <TableCell className="text-xs text-yellow-300 font-mono">{event.ip}</TableCell>
+                          <TableCell className="text-xs text-gray-400 max-w-[200px] truncate" title={event.path ?? ''}>{event.path}</TableCell>
+                          <TableCell className="text-xs text-gray-500 max-w-[240px] truncate" title={event.reason ?? ''}>{event.reason}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {(rlQuery.data?.total ?? 0) > 0 && (
+                  <Pagination
+                    page={rlPage}
+                    total={rlQuery.data?.total ?? 0}
+                    limit={DB_LIMIT}
+                    onPage={setRlPage}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* ── Admin IP Whitelist ── */}
+        <TabsContent value="whitelist">
+          <Card className="bg-white/[0.02] border-white/[0.08]">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-green-400" />
+                    管理員 IP 白名單
+                    <Badge variant="outline" className="ml-1 text-xs text-green-400 border-green-500/30">
+                      {(whitelistQuery.data ?? []).length} 個
+                    </Badge>
+                  </CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">白名單內的 IP 將豁免所有請求限流。注意：白名單在伺服器重啟後會清空。</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => whitelistMyIpMutation.mutate()}
+                  disabled={whitelistMyIpMutation.isPending}
+                  className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {whitelistMyIpMutation.isPending ? '處理中...' : '將我的 IP 加入白名單'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/[0.06] hover:bg-transparent">
+                      <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
+                      <TableHead className="text-gray-400 text-xs">狀態</TableHead>
+                      <TableHead className="text-gray-400 text-xs w-24">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {whitelistQuery.isLoading ? (
+                      <TableRow><TableCell colSpan={3} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                    ) : (whitelistQuery.data ?? []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8">
+                          <div className="text-gray-500 text-sm">白名單為空</div>
+                          <div className="text-gray-600 text-xs mt-1">點擊「將我的 IP 加入白名單」以豁免限流</div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (whitelistQuery.data ?? []).map((ip: string) => (
+                      <TableRow key={ip} className="border-white/[0.04] hover:bg-white/[0.02]">
+                        <TableCell className="text-sm text-green-300 font-mono">{ip}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs text-green-400 border-green-500/30">
+                            豁免限流中
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFromWhitelistMutation.mutate({ ip })}
+                            disabled={removeFromWhitelistMutation.isPending}
+                            className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            移除
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="px-4 py-3 border-t border-white/[0.06] bg-yellow-500/5">
+                <p className="text-xs text-yellow-400/80 flex items-start gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  白名單僅儲存在記憶體中，伺服器重啟後會清空。若需永久豁免，請將 IP 加入伺服器的 trusted proxy 設定。
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Block IP Dialog */}
+        <BlockIpDialog
+          open={blockDialogOpen}
+          onClose={() => setBlockDialogOpen(false)}
+          onBlock={(ip, reason) => blockMutation.mutate({ ip, reason })}
         loading={blockMutation.isPending}
       />
     </div>

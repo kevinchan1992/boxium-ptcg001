@@ -8154,3 +8154,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 一鍵發布或存草稿，自動分類和標籤
 - [x] 在 Admin sidebar 加入「AI 出文章」入口（Wand2 圖示）
 - [x] 原有「AI 內容工作流」改名為「AI 工作流（進階）」保留進階功能
+
+## Rate Limit 監控面板 + 管理員白名單 + 博客 Bug 修復（2026-04-11）
+- [x] security router 新增 whitelistMyIp / removeFromWhitelist / getWhitelistedIps procedures
+- [x] security router 新增 getRateLimitLog procedure（含 topIps 排行）
+- [x] security middleware makeLimiter 整合白名單跳過邏輯（admin IP 豁免所有限流）
+- [x] AdminSecurityMonitor 新增「限流監控」分頁（高頻 IP 排行 + 詳細事件記錄 + 一鍵封鎖）
+- [x] AdminSecurityMonitor 新增「白名單管理」分頁（將當前 IP 加入白名單 / 移除）
+- [x] 修復博客管理 tags 型別錯誤（前端逗號字串 → 後端 string[]）
+- [x] 修復博客管理 categoryId 型別錯誤（null → undefined，符合 z.number().optional()）
