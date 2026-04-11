@@ -3987,70 +3987,186 @@ HK SEO 關鍵字策略：
       .mutation(async ({ input }) => {
         const { generateImage } = await import('./_core/imageGeneration');
         const cardNamesStr = (input.cardNames || []).slice(0, 3).join(', ') || 'Pokemon TCG cards';
+        const cardCount = input.cardImageUrls.length;
 
-        // Professional style guides with detailed art direction
+        // ─── PROFESSIONAL STYLE GUIDES v2 ─────────────────────────────────
+        // Each style is a complete cinematic art direction brief.
+        // Designed for maximum visual impact and brand consistency.
         const styleGuides: Record<string, string> = {
+
+          // ── MARKET REPORT ── Financial power meets collector culture
           'market-report': `
-            STYLE: Premium financial magazine cover meets TCG collector culture.
-            BACKGROUND: Deep dark navy (#06038D to #000820 gradient), subtle hexagonal grid pattern at 5% opacity.
-            LIGHTING: Dramatic volumetric light beams in gold (#FEDD00) shooting from bottom-left, creating cinematic god-rays.
-            CARD PRESENTATION: 2-3 featured cards arranged in a dynamic diagonal cascade (right side, 55% of frame), each card slightly rotated, with intense specular highlights and holographic rainbow shimmer effect on card surfaces.
-            ATMOSPHERE: Floating golden particle dust, subtle lens flare, depth-of-field blur on background cards.
-            COLOR ACCENT: Bold yellow-gold (#FEDD00) glow halos behind featured cards, matching Boxium brand.
-            COMPOSITION: Left 45% kept as dark negative space for title text overlay. Cards bleed slightly off right edge for dynamism.
-            QUALITY: Ultra-high detail, 8K photorealistic card textures, professional product photography lighting.`,
+STYLE IDENTITY: "Bloomberg Terminal meets Pokémon TCG" — the authoritative voice of the market.
+
+CANVAS: 1920×1080px, 16:9 ratio. Pure cinematic widescreen.
+
+BACKGROUND CONSTRUCTION:
+- Base layer: Deep navy-to-black gradient (#06038D → #000820), top-left to bottom-right.
+- Mid layer: Subtle hexagonal honeycomb grid at 4% opacity, suggesting data infrastructure.
+- Accent layer: Thin horizontal scan lines at 2% opacity (like a Bloomberg terminal).
+- Depth layer: A faint radial glow of electric blue (#0066FF) at 15% opacity centered behind the cards.
+
+LIGHTING SYSTEM:
+- PRIMARY: Two dramatic volumetric god-ray beams in gold-yellow (#FEDD00) emanating from bottom-left corner at 35° angle, traveling across the full image. Each beam is 80px wide with soft feathered edges and 60% opacity.
+- SECONDARY: Ambient fill light in cool blue (#001AFF) at 20% intensity from top-right, creating depth.
+- CARD LIGHTING: Each card receives a sharp specular highlight on its top-left edge (white, 90% opacity, 3px wide) simulating studio strobe.
+
+CARD PRESENTATION (${cardCount} card${cardCount > 1 ? 's' : ''}):
+- Arrangement: Dynamic diagonal cascade on the RIGHT HALF of the frame (x: 55%–95%).
+- Primary card: Largest, front-most, 45% frame height, rotated +8°, positioned at x:72%, y:50%.
+- Secondary card (if present): 35% frame height, rotated -5°, positioned at x:60%, y:45%, partially behind primary.
+- Tertiary card (if present): 28% frame height, rotated +12°, positioned at x:82%, y:55%, partially behind primary.
+- Each card surface: Holographic rainbow shimmer effect (iridescent overlay at 25% opacity), intense specular glare on top edge.
+- Behind each card: Soft golden halo glow (#FEDD00 at 30% opacity, 40px blur radius).
+- Cards bleed 5% off the right edge for dynamism.
+
+ATMOSPHERE:
+- 200+ tiny golden particle specks (#FEDD00, 1–3px, varying opacity 20–80%) scattered across the image, denser near the cards.
+- 3 subtle lens flare artifacts (hexagonal aperture shape) in the god-ray path.
+- Depth-of-field: Background elements slightly defocused (2px blur).
+
+COMPOSITION LAW:
+- LEFT 45% of frame: COMPLETELY CLEAR dark space. No cards, no particles, no decorative elements. This is the text overlay zone.
+- The visual weight must pull the eye from left-to-right, from darkness to light.
+
+QUALITY: Photorealistic 8K render quality. Cards must look like physical objects under professional studio lighting.`,
+
+          // ── CARD ANALYSIS ── Museum-grade luxury showcase
           'card-analysis': `
-            STYLE: Luxury auction house meets TCG premium showcase.
-            BACKGROUND: Near-black (#0A0A0F) with subtle dark purple vignette, fine diagonal line texture at 3% opacity.
-            LIGHTING: Single dramatic spotlight from top-center, creating a theatrical stage effect. Deep shadows with rich contrast.
-            CARD PRESENTATION: Hero card centered and large (60% frame height), perfectly flat-on display with museum-quality presentation. Subtle reflection on dark glass surface below.
-            ATMOSPHERE: Thin wisps of atmospheric haze, microscopic sparkle particles around card edges suggesting rarity.
-            COLOR ACCENT: Electric blue-white (#E8F4FF) rim lighting on card edges, suggesting premium graded card aesthetic.
-            COMPOSITION: Card slightly right of center, left 40% dark for text. Ultra-clean, minimal, prestigious.
-            QUALITY: Studio product photography quality, perfect card surface detail, no distortion.`,
+STYLE IDENTITY: "Christie's Auction House meets PSA Grading Lab" — the pinnacle of collector prestige.
+
+CANVAS: 1920×1080px, 16:9 ratio.
+
+BACKGROUND CONSTRUCTION:
+- Base layer: Near-black (#080810) with a very subtle dark purple vignette at the edges (radial gradient, #1a0a2e at 40% opacity).
+- Texture layer: Ultra-fine diagonal crosshatch at 2% opacity, suggesting premium paper or fabric.
+- Depth layer: A single large soft radial glow of deep indigo (#2D1B69) at 20% opacity, centered at x:65%, y:50%.
+
+LIGHTING SYSTEM:
+- PRIMARY: Single theatrical spotlight from directly above (top-center), creating a dramatic cone of light 400px wide at the card surface. Sharp falloff to deep shadow.
+- SECONDARY: Subtle rim light in electric blue-white (#C8E6FF) along the right edge of the hero card (3px wide, 70% opacity).
+- REFLECTION: The card casts a perfect mirror reflection on a dark glass surface below it (reflection at 35% opacity, slightly blurred).
+- AMBIENT: Deep, rich shadows with almost no fill light — maximum contrast and drama.
+
+CARD PRESENTATION (${cardCount} card${cardCount > 1 ? 's' : ''}):
+- Hero card: Perfectly flat-on (0° rotation), centered at x:65%, y:48%, 55% frame height. Museum display quality.
+- If 2+ cards: Second card partially visible behind hero (x:58%, y:52%, 35% frame height, 10° rotation, 50% opacity).
+- If 3 cards: Third card barely visible as a ghost (x:72%, y:52%, 25% frame height, -8° rotation, 30% opacity).
+- Card surface: Ultra-sharp detail, microscopic holographic foil texture visible on card surface.
+- Around card edges: 15–20 microscopic sparkle particles (#FFFFFF, 1–2px) suggesting extreme rarity.
+- Card shadow: Long, soft shadow cast to the bottom-right (45° angle, 60px blur, 50% opacity).
+
+ATMOSPHERE:
+- Thin wisps of atmospheric haze (white, 5% opacity) drifting across the lower third.
+- The overall mood is hushed, reverent, like a museum at night.
+
+COMPOSITION LAW:
+- LEFT 42% of frame: COMPLETELY CLEAR dark space for text overlay.
+- The single hero card is the undisputed focal point — nothing competes with it.
+
+QUALITY: Studio product photography quality. Every pixel of the card artwork must be crisp and faithful.`,
+
+          // ── GUIDE ── Welcoming, modern, educational
           'guide': `
-            STYLE: Modern TCG educational platform, clean and inviting.
-            BACKGROUND: Dark slate (#1A1F2E) with subtle warm gradient at bottom, soft geometric shapes.
-            LIGHTING: Soft diffused lighting, friendly and approachable, no harsh shadows.
-            CARD PRESENTATION: 2-3 cards in a gentle fan arrangement, slightly elevated, clean drop shadows.
-            ATMOSPHERE: Light bokeh circles in background, fresh and modern feel.
-            COLOR ACCENT: Teal (#00D4AA) and white accents, suggesting learning and growth.
-            COMPOSITION: Balanced layout, cards on right, generous left space for text.
-            QUALITY: Clean editorial illustration style, professional but accessible.`,
+STYLE IDENTITY: "Apple Education meets TCG Community" — approachable expertise, clean and trustworthy.
+
+CANVAS: 1920×1080px, 16:9 ratio.
+
+BACKGROUND CONSTRUCTION:
+- Base layer: Deep slate blue (#1A1F2E) to dark teal (#0d1a24) gradient, top to bottom.
+- Geometric layer: 3–4 large, very subtle rounded rectangles (outline only, 4% opacity, teal #00D4AA) at various rotations, creating a modern geometric feel.
+- Warm accent: A gentle warm glow (#FF8C42 at 8% opacity) at the bottom-center, suggesting warmth and welcome.
+
+LIGHTING SYSTEM:
+- PRIMARY: Soft, diffused overhead lighting — no harsh shadows. Even, friendly illumination.
+- CARD LIGHTING: Clean, even studio lighting on cards. Soft drop shadows (20px blur, 30% opacity).
+- ACCENT: Subtle teal (#00D4AA) edge glow on the primary card (2px, 50% opacity).
+
+CARD PRESENTATION (${cardCount} card${cardCount > 1 ? 's' : ''}):
+- Arrangement: Gentle fan/spread on the RIGHT side (x: 55%–90%), cards fanned out at -10°, 0°, +10° rotations.
+- Primary card: Front and center of the fan, 42% frame height, clean and clear.
+- Cards slightly elevated with clean drop shadows, as if laid on a clean table.
+- Card surfaces: Clean, no special effects — just crisp, clear artwork.
+- Between cards: Small teal sparkle dots (#00D4AA, 2px) suggesting learning and discovery.
+
+ATMOSPHERE:
+- 8–10 soft bokeh circles (teal and white, 20–60px diameter, 15–25% opacity) in the background.
+- Clean, airy, modern feel. No darkness, no drama — just clarity.
+
+COMPOSITION LAW:
+- LEFT 45% of frame: COMPLETELY CLEAR for text overlay.
+- The overall feel must be inviting and non-intimidating for newcomers.
+
+QUALITY: Clean editorial illustration quality. Professional but warm and accessible.`,
+
+          // ── NEWS ── Urgency, impact, breaking moment
           'news': `
-            STYLE: Breaking news editorial meets TCG excitement.
-            BACKGROUND: Very dark charcoal (#111111) with subtle red-orange gradient at edges.
-            LIGHTING: High-contrast dramatic lighting, strong directional shadows suggesting urgency.
-            CARD PRESENTATION: 1-2 cards at dynamic angles (15-20 degree tilt), motion blur suggestion, energy lines.
-            ATMOSPHERE: Speed lines, energy burst effect behind main card, sense of breaking news urgency.
-            COLOR ACCENT: Bright red (#FF2D2D) and white accents, bold graphic design elements.
-            COMPOSITION: Dynamic diagonal composition, left space for text overlay.
-            QUALITY: High-impact graphic design quality, bold and attention-grabbing.`,
+STYLE IDENTITY: "Reuters Breaking News meets TCG Hype Drop" — first-to-know urgency and raw excitement.
+
+CANVAS: 1920×1080px, 16:9 ratio.
+
+BACKGROUND CONSTRUCTION:
+- Base layer: Very dark charcoal (#0D0D0D) to near-black (#050505).
+- Edge layer: Subtle dark red-orange vignette at all four corners (#3D0000 at 25% opacity).
+- Energy layer: 5–7 sharp diagonal speed lines (white, 1px, 15% opacity) sweeping from bottom-left to top-right, suggesting motion and urgency.
+- Tension layer: A faint radial burst pattern (like a shockwave) centered behind the main card, in deep red (#8B0000 at 20% opacity).
+
+LIGHTING SYSTEM:
+- PRIMARY: High-contrast, hard directional light from top-left (45° angle). Creates dramatic shadows and highlights.
+- CARD LIGHTING: Harsh, high-contrast lighting. Strong specular highlight on top-left edge (white, 100% opacity, 4px).
+- ACCENT: Bright red (#FF2D2D) rim light on the right edge of the primary card (3px, 80% opacity).
+- URGENCY GLOW: A red-orange energy burst (#FF4500 at 35% opacity, 80px blur) emanating from directly behind the primary card.
+
+CARD PRESENTATION (${cardCount} card${cardCount > 1 ? 's' : ''}):
+- Primary card: Dynamic tilt at +15° rotation, positioned at x:68%, y:48%, 48% frame height. Slight motion blur on edges (2px directional blur in the direction of tilt).
+- Secondary card (if present): Behind primary, -10° rotation, x:58%, y:52%, 35% frame height, 60% opacity.
+- Cards feel like they are in motion, just captured at a dramatic moment.
+- Energy lines: 3–4 sharp white speed lines (1px, 40% opacity) radiating from behind the primary card.
+
+ATMOSPHERE:
+- 3–4 sharp debris/spark particles (white, 2–4px, 60% opacity) near the cards.
+- The mood is electric, urgent, "you need to see this NOW".
+
+COMPOSITION LAW:
+- LEFT 45% of frame: COMPLETELY CLEAR dark space for text overlay.
+- The image must create an immediate sense of urgency and importance.
+
+QUALITY: High-impact graphic design quality. Bold, punchy, attention-commanding.`,
         };
+
         const styleGuide = styleGuides[input.style] || styleGuides['market-report'];
-        const prompt = `TASK: Create a professional 16:9 blog cover image for a Pokemon TCG market platform called "Boxium PTCG".
+        const prompt = `You are a world-class digital art director creating a professional cover image for "Boxium PTCG" — Hong Kong's premier Pokémon TCG market intelligence platform.
 
-ARTICLE CONTEXT: "${input.articleTitle}"
+ARTICLE: "${input.articleTitle}"
 FEATURED CARDS: ${cardNamesStr}
+COVER STYLE: ${input.style.toUpperCase().replace('-', ' ')}
 
-ART DIRECTION:
+═══════════════════════════════════════════
+ART DIRECTION BRIEF:
+═══════════════════════════════════════════
 ${styleGuide}
 
-BRAND WATERMARK (MANDATORY):
-- Bottom-right corner: Display the text "BOXIUM" in bold, wide-spaced capital letters, followed by a smaller line "PTCG" below it
-- Font style: Clean, modern sans-serif, slightly condensed — matching a premium brand identity
-- Color: White text at 70% opacity, with a very subtle dark semi-transparent pill/rectangle background (8px padding, 40% black opacity) to ensure legibility on any background
-- Size: "BOXIUM" approximately 2.5% of image height, "PTCG" approximately 1.5% of image height
-- Position: 16px from right edge, 16px from bottom edge
-- This brand mark must ALWAYS appear — it is a non-negotiable brand requirement
+═══════════════════════════════════════════
+BRAND WATERMARK — MANDATORY, NON-NEGOTIABLE:
+═══════════════════════════════════════════
+Bottom-right corner placement:
+- Line 1: "BOXIUM" — bold, wide-tracked capital letters, clean modern sans-serif
+- Line 2: "PTCG" — smaller, same typeface, centered below "BOXIUM"
+- Both lines: White at 75% opacity
+- Background: Semi-transparent dark pill shape (12px padding H, 8px padding V, #000000 at 50% opacity, 6px border-radius)
+- Sizing: BOXIUM = ~22px equivalent, PTCG = ~14px equivalent at 1080p
+- Position: 20px from right edge, 20px from bottom edge
+- This watermark MUST appear on EVERY generated image, no exceptions.
 
-CRITICAL RULES:
-- The actual Pokemon card artwork/images provided must be clearly visible and recognizable as the hero elements
-- Maintain card proportions and artwork fidelity - do not distort the cards
-- Left 40-45% of image must remain as dark, clean space suitable for white text overlay
-- Overall mood: Premium, professional, desirable collector platform
-- Final output must look like a high-end TCG magazine or premium platform banner
-- NO other text except the BOXIUM PTCG brand watermark described above`;
+═══════════════════════════════════════════
+UNBREAKABLE RULES:
+═══════════════════════════════════════════
+1. The Pokémon card artwork from the provided reference images MUST be the hero elements — clearly visible, recognizable, and faithful to the original artwork.
+2. Card proportions must be maintained — no stretching, squishing, or distorting the cards.
+3. The LEFT 40–45% of the image MUST remain as clean, dark negative space — no cards, no major decorative elements. This zone is reserved for text overlay in post-production.
+4. NO text of any kind except the BOXIUM PTCG brand watermark.
+5. The final image must look like it belongs on a premium TCG media platform — not a generic stock photo.
+6. Overall dimensions and aspect ratio: 16:9 widescreen.`;
 
         const originalImages = input.cardImageUrls.slice(0, 3).map(url => ({
           url,

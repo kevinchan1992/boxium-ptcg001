@@ -212,53 +212,266 @@ interface CardImageItem {
   matchedFrom?: 'article' | 'trending';
 }
 
-// Cover style definitions with visual metadata
+// Cover style definitions with rich visual metadata for thumbnail preview
 const COVER_STYLES: Array<{
   id: "market-report" | "card-analysis" | "guide" | "news";
   label: string;
-  desc: string;
-  emoji: string;
-  gradient: string;
+  tagline: string;
+  keywords: string[];
+  bgGradient: string;
   accentColor: string;
-  tagColor: string;
+  accentColorHex: string;
+  textColor: string;
+  borderActiveColor: string;
+  // SVG thumbnail descriptor for the mock preview
+  thumbnailBg: string;
+  thumbnailAccent: string;
+  thumbnailRays: boolean;
+  thumbnailSpotlight: boolean;
+  thumbnailSpeedLines: boolean;
+  thumbnailBokeh: boolean;
 }> = [
   {
     id: "market-report",
     label: "市場快報風",
-    desc: "金色光束·專業財經風格",
-    emoji: "⚡",
-    gradient: "from-[#06038d] to-[#000820]",
+    tagline: "Bloomberg × TCG",
+    keywords: ["金色光束", "財經風格", "動態卡牌"],
+    bgGradient: "linear-gradient(135deg, #06038D 0%, #000820 100%)",
     accentColor: "#FEDD00",
-    tagColor: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    accentColorHex: "FEDD00",
+    textColor: "text-yellow-400",
+    borderActiveColor: "border-yellow-400",
+    thumbnailBg: "#06038D",
+    thumbnailAccent: "#FEDD00",
+    thumbnailRays: true,
+    thumbnailSpotlight: false,
+    thumbnailSpeedLines: false,
+    thumbnailBokeh: false,
   },
   {
     id: "card-analysis",
     label: "收藏展示風",
-    desc: "拍賣展示·頂級精品風格",
-    emoji: "🏆",
-    gradient: "from-[#0A0A0F] to-[#1a0a2e]",
-    accentColor: "#E8F4FF",
-    tagColor: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    tagline: "Christie's × PSA Lab",
+    keywords: ["劇場聚光燈", "玻璃倒影", "頂級精品"],
+    bgGradient: "linear-gradient(135deg, #080810 0%, #1a0a2e 100%)",
+    accentColor: "#C8E6FF",
+    accentColorHex: "C8E6FF",
+    textColor: "text-blue-300",
+    borderActiveColor: "border-blue-300",
+    thumbnailBg: "#080810",
+    thumbnailAccent: "#C8E6FF",
+    thumbnailRays: false,
+    thumbnailSpotlight: true,
+    thumbnailSpeedLines: false,
+    thumbnailBokeh: false,
   },
   {
     id: "guide",
     label: "入門指南風",
-    desc: "清晰現代·友善教學風格",
-    emoji: "📚",
-    gradient: "from-[#1A1F2E] to-[#0d1520]",
+    tagline: "Apple Education × TCG",
+    keywords: ["清晰現代", "友善教學", "柔和光效"],
+    bgGradient: "linear-gradient(135deg, #1A1F2E 0%, #0d1a24 100%)",
     accentColor: "#00D4AA",
-    tagColor: "bg-teal-500/20 text-teal-400 border-teal-500/30",
+    accentColorHex: "00D4AA",
+    textColor: "text-teal-400",
+    borderActiveColor: "border-teal-400",
+    thumbnailBg: "#1A1F2E",
+    thumbnailAccent: "#00D4AA",
+    thumbnailRays: false,
+    thumbnailSpotlight: false,
+    thumbnailSpeedLines: false,
+    thumbnailBokeh: true,
   },
   {
     id: "news",
     label: "新聞爆料風",
-    desc: "高對比·第一時間続迫感",
-    emoji: "🚨",
-    gradient: "from-[#111111] to-[#1a0505]",
+    tagline: "Reuters × TCG Hype",
+    keywords: ["高對比衝擊", "速度線條", "緊迫感"],
+    bgGradient: "linear-gradient(135deg, #0D0D0D 0%, #1a0505 100%)",
     accentColor: "#FF2D2D",
-    tagColor: "bg-red-500/20 text-red-400 border-red-500/30",
+    accentColorHex: "FF2D2D",
+    textColor: "text-red-400",
+    borderActiveColor: "border-red-400",
+    thumbnailBg: "#0D0D0D",
+    thumbnailAccent: "#FF2D2D",
+    thumbnailRays: false,
+    thumbnailSpotlight: false,
+    thumbnailSpeedLines: true,
+    thumbnailBokeh: false,
   },
 ];
+
+/* ─── Style Thumbnail SVG ─────────────────────────────────────────────── */
+// Renders a miniature mock-up of each cover style's visual language
+function StyleThumbnail({
+  style,
+  isActive,
+  isGenerating,
+}: {
+  style: typeof COVER_STYLES[0];
+  isActive: boolean;
+  isGenerating: boolean;
+}) {
+  const accent = `#${style.accentColorHex}`;
+  return (
+    <div
+      className="relative w-full rounded-lg overflow-hidden"
+      style={{ aspectRatio: "16/9", background: style.bgGradient }}
+    >
+      {/* ── Market Report: god-rays from bottom-left ── */}
+      {style.thumbnailRays && (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={`ray-${style.id}`} x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.7" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Two god-ray beams */}
+          <polygon points="0,90 140,0 160,0 160,10 20,90" fill={`url(#ray-${style.id})`} opacity="0.5" />
+          <polygon points="0,90 100,0 130,0 30,90" fill={`url(#ray-${style.id})`} opacity="0.3" />
+          {/* Hex grid dots */}
+          {[20,40,60,80,100,120,140].map((x, i) => (
+            <circle key={i} cx={x} cy={i % 2 === 0 ? 20 : 40} r="1" fill={accent} opacity="0.3" />
+          ))}
+          {/* Particle specks */}
+          {[30,55,75,95,115,135].map((x, i) => (
+            <circle key={`p${i}`} cx={x} cy={10 + (i * 12) % 70} r="0.8" fill={accent} opacity="0.6" />
+          ))}
+          {/* Mock card silhouettes on right */}
+          <rect x="95" y="15" width="28" height="38" rx="2" fill="white" opacity="0.12" transform="rotate(8, 109, 34)" />
+          <rect x="108" y="18" width="28" height="38" rx="2" fill="white" opacity="0.18" transform="rotate(3, 122, 37)" />
+          <rect x="118" y="22" width="28" height="38" rx="2" fill="white" opacity="0.22" transform="rotate(-5, 132, 41)" />
+          {/* Glow behind cards */}
+          <ellipse cx="125" cy="45" rx="25" ry="20" fill={accent} opacity="0.12" />
+        </svg>
+      )}
+
+      {/* ── Card Analysis: spotlight from above ── */}
+      {style.thumbnailSpotlight && (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="none">
+          <defs>
+            <radialGradient id={`spot-${style.id}`} cx="62%" cy="0%" r="60%">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.25" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={`indigo-${style.id}`} cx="65%" cy="50%" r="40%">
+              <stop offset="0%" stopColor="#2D1B69" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#2D1B69" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="160" height="90" fill={`url(#indigo-${style.id})`} />
+          <rect x="0" y="0" width="160" height="90" fill={`url(#spot-${style.id})`} />
+          {/* Hero card — flat on, centered right */}
+          <rect x="88" y="12" width="32" height="44" rx="2" fill="white" opacity="0.22" />
+          {/* Rim light on card right edge */}
+          <rect x="120" y="12" width="1.5" height="44" rx="0.5" fill={accent} opacity="0.8" />
+          {/* Glass reflection */}
+          <rect x="88" y="57" width="32" height="14" rx="1" fill="white" opacity="0.06" />
+          {/* Sparkle particles */}
+          {[89,102,115,120,95,108].map((x, i) => (
+            <circle key={i} cx={x} cy={10 + (i * 7) % 50} r="0.6" fill="white" opacity="0.7" />
+          ))}
+        </svg>
+      )}
+
+      {/* ── Guide: bokeh circles ── */}
+      {style.thumbnailBokeh && (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="none">
+          <defs>
+            <radialGradient id={`warm-${style.id}`} cx="50%" cy="100%" r="50%">
+              <stop offset="0%" stopColor="#FF8C42" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#FF8C42" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="160" height="90" fill={`url(#warm-${style.id})`} />
+          {/* Bokeh circles */}
+          {[
+            { cx: 20, cy: 20, r: 12, op: 0.12 },
+            { cx: 50, cy: 60, r: 18, op: 0.08 },
+            { cx: 130, cy: 15, r: 10, op: 0.15 },
+            { cx: 145, cy: 70, r: 14, op: 0.1 },
+            { cx: 75, cy: 10, r: 8, op: 0.18 },
+          ].map((b, i) => (
+            <circle key={i} cx={b.cx} cy={b.cy} r={b.r} fill={accent} opacity={b.op} />
+          ))}
+          {/* Geometric outlines */}
+          <rect x="10" y="10" width="40" height="30" rx="4" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.2" transform="rotate(-5, 30, 25)" />
+          {/* Fan of cards */}
+          <rect x="90" y="18" width="26" height="36" rx="2" fill="white" opacity="0.14" transform="rotate(-10, 103, 36)" />
+          <rect x="100" y="16" width="26" height="36" rx="2" fill="white" opacity="0.18" transform="rotate(0, 113, 34)" />
+          <rect x="110" y="18" width="26" height="36" rx="2" fill="white" opacity="0.14" transform="rotate(10, 123, 36)" />
+          {/* Teal accent dots */}
+          {[95,108,121].map((x, i) => (
+            <circle key={i} cx={x} cy={56 + i * 3} r="1" fill={accent} opacity="0.7" />
+          ))}
+        </svg>
+      )}
+
+      {/* ── News: speed lines + energy burst ── */}
+      {style.thumbnailSpeedLines && (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="none">
+          <defs>
+            <radialGradient id={`burst-${style.id}`} cx="65%" cy="50%" r="35%">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id={`vignette-${style.id}`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#3D0000" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#3D0000" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="160" height="90" fill={`url(#vignette-${style.id})`} />
+          <rect x="0" y="0" width="160" height="90" fill={`url(#burst-${style.id})`} />
+          {/* Speed lines */}
+          {[0, 15, 30, 45, 60, 75].map((y, i) => (
+            <line key={i} x1="0" y1={y} x2="160" y2={y + 15} stroke="white" strokeWidth="0.5" opacity="0.1" />
+          ))}
+          {/* Tilted card */}
+          <rect x="95" y="14" width="30" height="42" rx="2" fill="white" opacity="0.2" transform="rotate(15, 110, 35)" />
+          {/* Red rim light */}
+          <rect x="95" y="14" width="1.5" height="42" rx="0.5" fill={accent} opacity="0.9" transform="rotate(15, 110, 35)" />
+          {/* Energy burst lines from card */}
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle, i) => {
+            const rad = (angle * Math.PI) / 180;
+            const x2 = 110 + Math.cos(rad) * 20;
+            const y2 = 35 + Math.sin(rad) * 20;
+            return <line key={i} x1="110" y1="35" x2={x2} y2={y2} stroke={accent} strokeWidth="0.5" opacity="0.3" />;
+          })}
+          {/* Spark particles */}
+          {[100, 125, 88, 115].map((x, i) => (
+            <circle key={i} cx={x} cy={20 + i * 15} r="1" fill="white" opacity="0.8" />
+          ))}
+        </svg>
+      )}
+
+      {/* Left text zone indicator */}
+      <div className="absolute left-0 top-0 bottom-0 w-[44%] flex flex-col justify-end p-2">
+        <div className="space-y-1">
+          <div className="h-1.5 rounded-full opacity-30" style={{ background: accent, width: '80%' }} />
+          <div className="h-1 rounded-full opacity-20" style={{ background: accent, width: '60%' }} />
+          <div className="h-1 rounded-full opacity-15" style={{ background: accent, width: '45%' }} />
+        </div>
+      </div>
+
+      {/* BOXIUM watermark mock */}
+      <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/50 flex flex-col items-center">
+        <span className="text-[5px] font-bold text-white/70 tracking-widest leading-none">BOXIUM</span>
+        <span className="text-[3.5px] text-white/50 tracking-wider leading-none">PTCG</span>
+      </div>
+
+      {/* Active overlay */}
+      {isActive && !isGenerating && (
+        <div className="absolute inset-0 ring-2 rounded-lg pointer-events-none" style={{ boxShadow: `inset 0 0 0 2px ${accent}` }} />
+      )}
+      {isGenerating && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: accent }} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CoverImageSection({
   articleTitle,
@@ -374,10 +587,13 @@ function CoverImageSection({
         )}
       </div>
 
-      {/* Style Selector — always visible */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] text-zinc-500 font-medium">選擇封面風格</p>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Style Selector — with thumbnail previews */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">選擇封面風格</p>
+          <span className="text-[10px] text-zinc-600">點選即自動生成</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
           {COVER_STYLES.map((style) => {
             const isActive = activeStyle === style.id;
             const isThisGenerating = generatingStyleId === style.id && isGenerating;
@@ -389,38 +605,63 @@ function CoverImageSection({
                   if (!isGenerating) handleGenerateCover(style.id);
                 }}
                 disabled={isGenerating || isExtracting}
-                className={`relative rounded-xl p-3 text-left transition-all border-2 overflow-hidden ${
+                className={`group relative rounded-xl text-left transition-all duration-200 overflow-hidden border-2 ${
                   isActive
-                    ? "border-[#FEDD00] ring-1 ring-[#FEDD00]/30"
-                    : "border-zinc-700 hover:border-zinc-500"
-                } ${isGenerating ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                    ? `ring-1`
+                    : "border-zinc-700/80 hover:border-zinc-500"
+                } ${isGenerating ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"}`}
+                style={isActive ? {
+                  borderColor: style.accentColor,
+                  boxShadow: `0 0 12px ${style.accentColor}30`,
+                } : {}}
               >
-                {/* Gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-80`} />
-                {/* Accent dot */}
-                <div
-                  className="absolute top-2 right-2 w-2 h-2 rounded-full"
-                  style={{ backgroundColor: style.accentColor, boxShadow: `0 0 6px ${style.accentColor}` }}
+                {/* Thumbnail preview */}
+                <StyleThumbnail
+                  style={style}
+                  isActive={isActive}
+                  isGenerating={isThisGenerating}
                 />
-                {/* Content */}
-                <div className="relative z-10">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-base leading-none">{style.emoji}</span>
+
+                {/* Info bar below thumbnail */}
+                <div
+                  className="px-2.5 py-2 space-y-0.5"
+                  style={{ background: `${style.thumbnailBg}ee` }}
+                >
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-white">{style.label}</span>
                     {isActive && !isThisGenerating && (
-                      <Check className="w-3 h-3 text-[#FEDD00] ml-auto" />
+                      <div
+                        className="w-4 h-4 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: style.accentColor }}
+                      >
+                        <Check className="w-2.5 h-2.5 text-black" />
+                      </div>
                     )}
                     {isThisGenerating && (
-                      <Loader2 className="w-3 h-3 text-[#FEDD00] ml-auto animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: style.accentColor }} />
                     )}
                   </div>
-                  <p className="text-[10px] text-zinc-400 leading-tight">{style.desc}</p>
+                  <p className="text-[9px] font-medium" style={{ color: style.accentColor }}>{style.tagline}</p>
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {style.keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="text-[8px] px-1 py-0.5 rounded-full border leading-none"
+                        style={{
+                          color: style.accentColor,
+                          borderColor: `${style.accentColor}40`,
+                          backgroundColor: `${style.accentColor}12`,
+                        }}
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </button>
             );
           })}
         </div>
-        <p className="text-[10px] text-zinc-600">點選風格即自動生成封面圖</p>
       </div>
 
       {/* Current Cover Preview */}
