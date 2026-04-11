@@ -50,7 +50,18 @@ if (sentryDsn) {
   });
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache auth.me and other queries for 5 minutes to avoid rate limiting
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      // Disable refetch on window focus to reduce unnecessary requests
+      refetchOnWindowFocus: false,
+      // Retry failed requests only once
+      retry: 1,
+    },
+  },
+});
 
 // Error logging for debugging
 queryClient.getQueryCache().subscribe(event => {

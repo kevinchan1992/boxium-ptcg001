@@ -123,7 +123,16 @@ export async function getTrendingFromCache(
     // Parse and return cached data
     const data = JSON.parse(cache.rankingData);
     console.log(`[TrendingCache] Retrieved ${rankingType} from cache (${data.length} items)`);
-    return data;
+    // Normalize numeric fields to ensure consistent number types (MySQL decimal returns strings)
+    const normalized = data.map((item: any) => ({
+      ...item,
+      oldPrice: item.oldPrice != null ? parseFloat(item.oldPrice) : null,
+      currentPrice: item.currentPrice != null ? parseFloat(item.currentPrice) : null,
+      priceChange: item.priceChange != null ? parseFloat(item.priceChange) : null,
+      priceChangePercent: item.priceChangePercent != null ? parseFloat(item.priceChangePercent) : null,
+      priceChange7d: item.priceChange7d != null ? parseFloat(item.priceChange7d) : null,
+    }));
+    return normalized;
   } catch (error) {
     console.error(`[TrendingCache] Failed to get cache for ${rankingType}:`, error);
     return null;
@@ -143,7 +152,7 @@ export async function getTrendingCacheStatus() {
       .from(trendingRankingsCache)
       .orderBy(trendingRankingsCache.calculatedAt);
     
-    return allCaches.map(cache => ({
+    return allCaches.map((cache: typeof allCaches[0]) => ({
       rankingType: cache.rankingType,
       timeRange: cache.timeRange,
       calculatedAt: cache.calculatedAt,
