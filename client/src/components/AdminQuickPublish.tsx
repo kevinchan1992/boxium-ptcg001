@@ -22,6 +22,7 @@ import {
   ChevronRight, CheckCircle, Loader2, Eye, Send,
   RotateCcw, Sparkles, ArrowLeft, Edit3, Tag,
   BarChart3, Star, Info, Image, X, RefreshCw, Check,
+  Wand2, Type, ImageIcon, Upload,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -214,7 +215,7 @@ interface CardImageItem {
 
 // Cover style definitions with rich visual metadata for thumbnail preview
 const COVER_STYLES: Array<{
-  id: "market-report" | "card-analysis" | "guide" | "news";
+  id: "market-report" | "card-analysis" | "guide" | "news" | "custom";
   label: string;
   tagline: string;
   keywords: string[];
@@ -297,6 +298,23 @@ const COVER_STYLES: Array<{
     thumbnailRays: false,
     thumbnailSpotlight: false,
     thumbnailSpeedLines: true,
+    thumbnailBokeh: false,
+  },
+  {
+    id: "custom",
+    label: "自訂風格",
+    tagline: "Your Vision × AI",
+    keywords: ["文字描述", "參考圖片", "AI 分析"],
+    bgGradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+    accentColor: "#e94560",
+    accentColorHex: "e94560",
+    textColor: "text-pink-400",
+    borderActiveColor: "border-pink-400",
+    thumbnailBg: "#1a1a2e",
+    thumbnailAccent: "#e94560",
+    thumbnailRays: false,
+    thumbnailSpotlight: false,
+    thumbnailSpeedLines: false,
     thumbnailBokeh: false,
   },
 ];
@@ -445,6 +463,51 @@ function StyleThumbnail({
         </svg>
       )}
 
+      {/* ── Custom: creative palette / AI sparks ── */}
+      {style.id === 'custom' && (
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="none">
+          <defs>
+            <radialGradient id="custom-glow" cx="65%" cy="50%" r="45%">
+              <stop offset="0%" stopColor="#e94560" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#e94560" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="custom-shimmer" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#e94560" stopOpacity="0.6" />
+              <stop offset="50%" stopColor="#a855f7" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.6" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="160" height="90" fill="url(#custom-glow)" />
+          {/* Dashed creative border on right panel */}
+          <rect x="85" y="10" width="65" height="70" rx="4" fill="none" stroke="#e94560" strokeWidth="0.8" strokeDasharray="3,2" opacity="0.3" />
+          {/* Pencil / edit icon in center-right */}
+          <g transform="translate(108, 35) rotate(-30)">
+            <rect x="-3" y="-12" width="6" height="18" rx="1" fill="url(#custom-shimmer)" opacity="0.7" />
+            <polygon points="-3,6 3,6 0,12" fill="#e94560" opacity="0.8" />
+            <rect x="-3" y="-14" width="6" height="3" rx="0.5" fill="#a855f7" opacity="0.9" />
+          </g>
+          {/* Sparkle stars around the pencil */}
+          {[
+            { x: 95, y: 20 }, { x: 130, y: 25 }, { x: 140, y: 55 }, { x: 92, y: 65 }, { x: 125, y: 70 }
+          ].map((p, i) => (
+            <g key={i} transform={`translate(${p.x}, ${p.y})`}>
+              <line x1="0" y1="-3" x2="0" y2="3" stroke="#e94560" strokeWidth="0.8" opacity="0.7" />
+              <line x1="-3" y1="0" x2="3" y2="0" stroke="#e94560" strokeWidth="0.8" opacity="0.7" />
+              <line x1="-2" y1="-2" x2="2" y2="2" stroke="#a855f7" strokeWidth="0.5" opacity="0.5" />
+              <line x1="2" y1="-2" x2="-2" y2="2" stroke="#a855f7" strokeWidth="0.5" opacity="0.5" />
+            </g>
+          ))}
+          {/* Color swatches row */}
+          {['#e94560','#a855f7','#3b82f6','#10b981','#f59e0b'].map((c, i) => (
+            <circle key={i} cx={96 + i * 10} cy={78} r="3.5" fill={c} opacity="0.75" />
+          ))}
+          {/* Upload image icon hint */}
+          <rect x="88" y="14" width="20" height="14" rx="2" fill="white" opacity="0.08" />
+          <polyline points="91,25 95,19 99,23 102,20 106,25" fill="none" stroke="white" strokeWidth="0.8" opacity="0.4" />
+          <circle cx="93" cy="18" r="1.5" fill="white" opacity="0.4" />
+        </svg>
+      )}
+
       {/* Left text zone indicator */}
       <div className="absolute left-0 top-0 bottom-0 w-[44%] flex flex-col justify-end p-2">
         <div className="space-y-1">
@@ -492,8 +555,12 @@ function CoverImageSection({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [hasExtracted, setHasExtracted] = useState(false);
-  const [activeStyle, setActiveStyle] = useState<"market-report" | "card-analysis" | "guide" | "news">(defaultCoverStyle);
+  const [activeStyle, setActiveStyle] = useState<"market-report" | "card-analysis" | "guide" | "news" | "custom">(defaultCoverStyle);
   const [generatingStyleId, setGeneratingStyleId] = useState<string | null>(null);
+  // Custom style state
+  const [customStyleDesc, setCustomStyleDesc] = useState("");
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
+  const [isUploadingRef, setIsUploadingRef] = useState(false);
 
   const extractCardsMutation = trpc.blog.extractCardsFromArticle.useMutation();
   const generateCoverMutation = trpc.blog.generateCoverImage.useMutation();
@@ -530,9 +597,36 @@ function CoverImageSection({
     });
   }, []);
 
+  // Upload reference image to S3 and return URL
+  const handleReferenceImageUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('圖片大小不能超過 5MB');
+      return;
+    }
+    setIsUploadingRef(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload-blog-image', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setReferenceImageUrl(data.url);
+      toast.success('參考圖片已上傳，AI 將分析其風格');
+    } catch {
+      toast.error('圖片上傳失敗，請重試');
+    } finally {
+      setIsUploadingRef(false);
+    }
+  };
+
   // Generate cover with a specific style
-  const handleGenerateCover = async (styleId?: "market-report" | "card-analysis" | "guide" | "news") => {
+  const handleGenerateCover = async (styleId?: "market-report" | "card-analysis" | "guide" | "news" | "custom") => {
     const style = styleId || activeStyle;
+    // For custom style, validate that at least one input is provided
+    if (style === 'custom' && !customStyleDesc.trim() && !referenceImageUrl) {
+      toast.error('請輸入風格描述或上傳參考圖片');
+      return;
+    }
     if (selectedCards.length === 0) {
       toast.error("未能找到相關卡牌，請稍後重試");
       return;
@@ -548,7 +642,11 @@ function CoverImageSection({
         articleType,
         cardImageUrls,
         cardNames,
-        style,
+        style: style as any,
+        ...(style === 'custom' && {
+          customStyleDesc: customStyleDesc.trim() || undefined,
+          referenceImageUrl: referenceImageUrl || undefined,
+        }),
       });
       onCoverImageChange(result.url ?? null);
       toast.success("封面圖生成成功！");
@@ -662,6 +760,120 @@ function CoverImageSection({
             );
           })}
         </div>
+
+        {/* Custom Style Expansion Panel — shown when 'custom' is selected */}
+        {activeStyle === 'custom' && (
+          <div className="mt-2 p-3 rounded-xl border border-[#e94560]/30 bg-[#e94560]/5 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#e94560]/20 flex items-center justify-center flex-shrink-0">
+                <Wand2 className="w-3 h-3 text-[#e94560]" />
+              </div>
+              <p className="text-xs font-semibold text-white">自訂風格設定</p>
+              <span className="text-[10px] text-zinc-500">至少填寫一項</span>
+            </div>
+
+            {/* Text description */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+                <Type className="w-3 h-3" />
+                風格描述
+                <span className="text-[10px] text-zinc-600">(選填)</span>
+              </label>
+              <div className="relative">
+                <textarea
+                  value={customStyleDesc}
+                  onChange={(e) => setCustomStyleDesc(e.target.value)}
+                  placeholder="例：日系漫畫風、貽赛宣傳風、水彩淡雅風、香港街頭射影風..."
+                  rows={2}
+                  maxLength={500}
+                  className="w-full text-xs bg-zinc-900/80 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-600 resize-none focus:outline-none focus:border-[#e94560]/60 transition-colors"
+                />
+                <span className="absolute bottom-1.5 right-2 text-[9px] text-zinc-600">{customStyleDesc.length}/500</span>
+              </div>
+              {/* Quick style chips */}
+              <div className="flex flex-wrap gap-1.5">
+                {['日系漫畫風','賽博宣傳風','水彩淡雅風','赛博尼未來風','香港街頭風','極簡白底風'].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setCustomStyleDesc(chip)}
+                    className="text-[10px] px-2 py-0.5 rounded-full border border-[#e94560]/30 text-[#e94560]/80 hover:bg-[#e94560]/10 transition-colors"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reference image upload */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+                <ImageIcon className="w-3 h-3" />
+                參考圖片
+                <span className="text-[10px] text-zinc-600">(選上傳)</span>
+              </label>
+              {referenceImageUrl ? (
+                <div className="relative rounded-lg overflow-hidden border border-[#e94560]/30 group">
+                  <img src={referenceImageUrl} alt="參考圖片" className="w-full h-24 object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      onClick={() => setReferenceImageUrl(null)}
+                      className="text-xs text-white bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded-lg flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />移除
+                    </button>
+                  </div>
+                  <div className="absolute top-1.5 left-1.5">
+                    <Badge className="text-[9px] bg-[#e94560]/80 text-white border-0">AI 將分析此圖風風格</Badge>
+                  </div>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                  isUploadingRef
+                    ? 'border-[#e94560]/40 bg-[#e94560]/5 cursor-wait'
+                    : 'border-zinc-700 hover:border-[#e94560]/50 hover:bg-[#e94560]/5'
+                }`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploadingRef}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleReferenceImageUpload(file);
+                    }}
+                  />
+                  {isUploadingRef ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin text-[#e94560]" />
+                      <span className="text-xs text-zinc-400">上傳中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-zinc-500" />
+                      <span className="text-xs text-zinc-500">點擊上傳參考圖片</span>
+                      <span className="text-[10px] text-zinc-600">AI 將分析圖片風格並應用至封面圖</span>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+
+            {/* Generate button for custom */}
+            <Button
+              onClick={() => handleGenerateCover('custom')}
+              disabled={isGenerating || isExtracting || isUploadingRef || (!customStyleDesc.trim() && !referenceImageUrl)}
+              className="w-full h-9 text-xs gap-1.5 font-semibold"
+              style={{ background: 'linear-gradient(135deg, #e94560, #a855f7)', color: 'white' }}
+            >
+              {isGenerating && generatingStyleId === 'custom' ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" />生成中...</>
+              ) : (
+                <><Wand2 className="w-3.5 h-3.5" />以自訂風格生成封面圖</>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Current Cover Preview */}

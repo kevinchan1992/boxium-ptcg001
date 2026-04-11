@@ -3982,7 +3982,9 @@ HK SEO 關鍵字策略：
         articleType: z.string(),
         cardImageUrls: z.array(z.string()).min(1).max(4),
         cardNames: z.array(z.string()).optional(),
-        style: z.enum(['market-report', 'card-analysis', 'guide', 'news']).default('market-report'),
+        style: z.enum(['market-report', 'card-analysis', 'guide', 'news', 'custom']).default('market-report'),
+        customStyleDesc: z.string().max(500).optional(), // Free-text style description for 'custom' mode
+        referenceImageUrl: z.string().url().optional(),  // Optional reference image URL for style analysis
       }))
       .mutation(async ({ input }) => {
         const { generateImage } = await import('./_core/imageGeneration');
@@ -4134,12 +4136,54 @@ COMPOSITION LAW:
 QUALITY: High-impact graphic design quality. Bold, punchy, attention-commanding.`,
         };
 
-        const styleGuide = styleGuides[input.style] || styleGuides['market-report'];
+        // ── CUSTOM STYLE GUIDE ─────────────────────────────────────────────
+        // Build a dynamic art direction brief from the admin's free-text description
+        // and/or a reference image they uploaded for style analysis.
+        let customStyleGuide = '';
+        if (input.style === 'custom') {
+          const descPart = input.customStyleDesc?.trim()
+            ? `ADMIN-SPECIFIED STYLE DESCRIPTION: "${input.customStyleDesc.trim()}"
+
+Interpret this description as a complete art direction brief. Extract:
+- Color palette and mood (e.g., warm pastels, neon cyberpunk, ink wash)
+- Lighting style (e.g., soft diffused, dramatic rim light, flat manga shading)
+- Compositional energy (e.g., dynamic action, serene display, editorial clean)
+- Texture and material language (e.g., watercolor paper, cel-shaded, photorealistic)
+- Cultural/genre references (e.g., anime, Western editorial, Hong Kong street style)
+
+Apply this style language to the Pokémon TCG card showcase while maintaining:
+- Professional quality suitable for a premium TCG media platform
+- 16:9 widescreen canvas
+- LEFT 40–45% of frame kept as clean negative space for text overlay
+- Cards as the hero visual elements`
+            : `STYLE: Versatile premium editorial — clean dark background, dramatic card lighting, professional composition.`;
+
+          const refPart = input.referenceImageUrl
+            ? `\n\nREFERENCE IMAGE PROVIDED: The admin has uploaded a reference image to guide the visual style. Analyze it carefully and extract:
+- Dominant color palette and tonal range
+- Lighting quality and direction
+- Compositional structure and visual hierarchy
+- Texture, grain, or material qualities
+- Overall mood and atmosphere
+Then apply these extracted style elements to the Pokémon TCG cover image.`
+            : '';
+
+          customStyleGuide = `${descPart}${refPart}
+
+CANVAS: 1920×1080px, 16:9 ratio.
+COMPOSITION LAW: LEFT 40–45% of frame COMPLETELY CLEAR dark space for text overlay. Cards on the right half.`;
+        }
+
+        const styleGuide = input.style === 'custom' ? customStyleGuide : (styleGuides[input.style] || styleGuides['market-report']);
+        const styleLabel = input.style === 'custom'
+          ? `CUSTOM (${input.customStyleDesc?.slice(0, 40) || 'Admin-defined'})`
+          : input.style.toUpperCase().replace('-', ' ');
+
         const prompt = `You are a world-class digital art director creating a professional cover image for "Boxium PTCG" — Hong Kong's premier Pokémon TCG market intelligence platform.
 
 ARTICLE: "${input.articleTitle}"
 FEATURED CARDS: ${cardNamesStr}
-COVER STYLE: ${input.style.toUpperCase().replace('-', ' ')}
+COVER STYLE: ${styleLabel}
 
 ═══════════════════════════════════════════
 ART DIRECTION BRIEF:
@@ -4168,10 +4212,13 @@ UNBREAKABLE RULES:
 5. The final image must look like it belongs on a premium TCG media platform — not a generic stock photo.
 6. Overall dimensions and aspect ratio: 16:9 widescreen.`;
 
-        const originalImages = input.cardImageUrls.slice(0, 3).map(url => ({
-          url,
-          mimeType: 'image/jpeg' as const,
-        }));
+        const originalImages: Array<{ url: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' }> = [
+          ...input.cardImageUrls.slice(0, 3).map(url => ({ url, mimeType: 'image/jpeg' as const })),
+          // Append reference image last (if provided in custom mode) so AI can analyze its style
+          ...(input.style === 'custom' && input.referenceImageUrl
+            ? [{ url: input.referenceImageUrl, mimeType: 'image/jpeg' as const }]
+            : []),
+        ];
         const result = await generateImage({ prompt, originalImages });
         return { url: result.url, prompt };
       }),
