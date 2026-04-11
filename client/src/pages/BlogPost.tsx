@@ -163,9 +163,8 @@ export default function BlogPost() {
             </div>
 
             {/* Share Buttons - 專業設計 */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-gray-700 font-semibold text-sm md:text-base">分享文章：</span>
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-row flex-wrap items-center gap-3">
+              <span className="text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap">分享文章：</span>
                 <Button
                   size="lg"
                   variant="outline"
@@ -192,7 +191,6 @@ export default function BlogPost() {
                 >
                   複製連結
                 </Button>
-              </div>
             </div>
           </div>
         </div>

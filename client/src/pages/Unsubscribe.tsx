@@ -150,13 +150,13 @@ export default function Unsubscribe() {
           <p className="text-red-400 text-sm mb-4">{error}</p>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-row flex-wrap gap-3 justify-center">
           <Button
             onClick={handleAction}
             disabled={unsubscribeMutation.isPending || resubscribeMutation.isPending}
-            className={isUnsubscribe
+            className={`min-w-[120px] whitespace-nowrap ${isUnsubscribe
               ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-[#1a0dab] hover:bg-[#0804b8] text-white"}
+              : "bg-[#1a0dab] hover:bg-[#0804b8] text-white"}`}
           >
             {(unsubscribeMutation.isPending || resubscribeMutation.isPending) ? (
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -164,7 +164,7 @@ export default function Unsubscribe() {
             {isUnsubscribe ? "確認退訂" : "確認重新訂閱"}
           </Button>
           <a href="/">
-            <Button variant="outline" className="border-white/20 text-gray-300 hover:bg-white/10">
+            <Button variant="outline" className="min-w-[120px] whitespace-nowrap border-white/20 text-gray-300 hover:bg-white/10">
               取消
             </Button>
           </a>
