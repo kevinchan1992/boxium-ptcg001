@@ -24,7 +24,7 @@ interface ArticlePreviewProps {
     content: string;
     featuredImage?: string;
     category?: string;
-    tags?: string;
+    tags?: string | string[];
     seoKeywords?: string;
     dataSource?: string;
   };
@@ -35,10 +35,15 @@ interface ArticlePreviewProps {
 }
 
 export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEditMode = false }: ArticlePreviewProps) {
-  const [currentArticle, setCurrentArticle] = useState(article);
+  // Normalize tags: convert array to comma-separated string for editing
+  const normalizeArticle = (a: typeof article) => ({
+    ...a,
+    tags: Array.isArray(a.tags) ? a.tags.join(', ') : (a.tags || ''),
+  });
+  const [currentArticle, setCurrentArticle] = useState(() => normalizeArticle(article));
   // Sync article prop changes (e.g., when AI generates a new article and parent updates the prop)
   useEffect(() => {
-    setCurrentArticle(article);
+    setCurrentArticle(normalizeArticle(article));
   }, [article.title, article.content]);
   const [showAIEditDialog, setShowAIEditDialog] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
@@ -271,7 +276,10 @@ export function ArticlePreview({ article, onPublish, onEdit, onCancel, initialEd
           {currentArticle.tags && (
             <div className="flex flex-wrap items-center gap-2">
               <Tag className="w-4 h-4 text-gray-400" />
-              {currentArticle.tags.split(',').map((tag, index) => (
+              {(Array.isArray(currentArticle.tags)
+                ? currentArticle.tags
+                : currentArticle.tags.split(',')
+              ).map((tag, index) => (
                 <Badge key={index} variant="secondary" className="bg-gray-100 text-gray-700">
                   {tag.trim()}
                 </Badge>
@@ -882,7 +890,7 @@ function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogP
     if (!postId) return;
     
     await restoreMutation.mutateAsync({ postId, versionId });
-    const version = versions?.find(v => v.id === versionId);
+    const version = versions?.find((v: { id: number }) => v.id === versionId);
     if (version) {
       onRestore(version);
     }
@@ -903,7 +911,7 @@ function HistoryDialog({ postId, open, onOpenChange, onRestore }: HistoryDialogP
           </div>
         ) : versions && versions.length > 0 ? (
           <div className="space-y-4">
-            {versions.map((version) => (
+            {versions.map((version: any) => (
               <Card key={version.id} className="bg-zinc-800 border-zinc-700">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
