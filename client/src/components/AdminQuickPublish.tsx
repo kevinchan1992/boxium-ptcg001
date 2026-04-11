@@ -9,7 +9,7 @@
  * 取代原有複雜的 A/B/C/D 技能選擇流程。
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1195,8 +1195,43 @@ export default function AdminQuickPublish() {
   const [generatedArticle, setGeneratedArticle] = useState<any>(null);
   const [editedFields, setEditedFields] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [briefBanner, setBriefBanner] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
+
+  // Read pending brief from ContentWorkflowCenter (Research Skill)
+  useEffect(() => {
+    const applyBrief = (data: { topic?: string; titleOptions?: string[]; _timestamp?: number }) => {
+      if (!data?.topic) return;
+      setTopic(data.topic);
+      // Auto-select card-research type if topic looks like a card name, else beginner-guide
+      setSelectedType('card-research');
+      setBriefBanner(`研究 Brief 已導入：「${data.topic}」——已自動預填主題，點擊「一鍵生成」即可出文章`);
+    };
+
+    // Check localStorage for pending brief
+    try {
+      const pending = localStorage.getItem('pending-brief-to-quick-publish');
+      if (pending) {
+        const data = JSON.parse(pending);
+        if (data._timestamp && Date.now() - data._timestamp < 30000) {
+          localStorage.removeItem('pending-brief-to-quick-publish');
+          applyBrief(data);
+          return;
+        } else {
+          localStorage.removeItem('pending-brief-to-quick-publish');
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Also listen for real-time events
+    const handler = (e: Event) => {
+      const data = (e as CustomEvent).detail;
+      applyBrief(data);
+    };
+    window.addEventListener('brief-to-quick-publish', handler);
+    return () => window.removeEventListener('brief-to-quick-publish', handler);
+  }, []);
 
   // Mutations
   const generateReportMutation = trpc.blogAi.generateDailyReport.useMutation();
@@ -1398,6 +1433,19 @@ export default function AdminQuickPublish() {
 
       {/* Step Indicator */}
       <StepIndicator step={step} />
+
+      {/* Brief Banner — shown when research brief is imported from AI Workflow */}
+      {briefBanner && step === 1 && (
+        <div className="flex items-start gap-3 px-4 py-3 mb-4 rounded-xl bg-purple-900/30 border border-purple-700/50">
+          <div className="mt-0.5 w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-3 h-3 text-purple-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-purple-200 leading-snug">{briefBanner}</p>
+          </div>
+          <button onClick={() => setBriefBanner(null)} className="text-purple-500 hover:text-purple-300 flex-shrink-0 text-xs mt-0.5">×</button>
+        </div>
+      )}
 
       {/* ── STEP 1: 選擇類型 ── */}
       {step === 1 && (

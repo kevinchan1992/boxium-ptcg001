@@ -977,13 +977,13 @@ export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (ar
       titleOptions: brief.titleOptions || [],
       _timestamp: Date.now(),
     };
-    // Store in localStorage so AdminBlogManagement can read it after mounting
-    try { localStorage.setItem('pending-brief-to-write', JSON.stringify(briefData)); } catch { /* ignore */ }
-    // Also dispatch event in case AdminBlogManagement is already mounted
-    window.dispatchEvent(new CustomEvent('brief-to-write', { detail: briefData }));
-    // Navigate to blog tab (Admin.tsx listens for this)
-    window.dispatchEvent(new CustomEvent('navigate-to-blog'));
-    toast.success('研究 Brief 已導入 AI 內容工廠！已自動預填主題和大綱。');
+    // Store in localStorage so AdminQuickPublish can read it after mounting
+    try { localStorage.setItem('pending-brief-to-quick-publish', JSON.stringify(briefData)); } catch { /* ignore */ }
+    // Also dispatch event in case AdminQuickPublish is already mounted
+    window.dispatchEvent(new CustomEvent('brief-to-quick-publish', { detail: briefData }));
+    // Navigate to AI 出文章 tab (Admin.tsx listens for this)
+    window.dispatchEvent(new CustomEvent('navigate-to-quick-publish'));
+    toast.success('研究 Brief 已導入 AI 出文章！已自動預填主題，點擊生成即可出文章。');
   };
 
   const handleArticleReady = (article: any) => {
