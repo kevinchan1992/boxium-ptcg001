@@ -1280,6 +1280,27 @@ export default function AdminQuickPublish() {
               預計生成時間：{selectedTypeInfo?.estimatedTime}，全程自動完成
             </p>
           )}
+
+          {/* Divider + Manual Create */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex-1 h-px bg-zinc-800" />
+            <span className="text-xs text-zinc-600">或</span>
+            <div className="flex-1 h-px bg-zinc-800" />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              // Navigate to blog management > new article
+              const adminEl = document.querySelector('[data-admin-tab="blog"]') as HTMLElement | null;
+              if (adminEl) adminEl.click();
+              // Fallback: dispatch custom event
+              window.dispatchEvent(new CustomEvent('admin:navigate', { detail: { tab: 'blog', action: 'new' } }));
+            }}
+            className="w-full h-10 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 gap-2 bg-transparent"
+          >
+            <FileText className="w-4 h-4" />
+            手動新增文章
+          </Button>
         </div>
       )}
 

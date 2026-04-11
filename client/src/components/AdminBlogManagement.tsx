@@ -423,11 +423,20 @@ export function AdminBlogManagement() {
           ) : (
             <div className="space-y-2">
               {filteredPosts.map((post: any) => (
-                <div key={post.id} className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors group">
+                <div
+                  key={post.id}
+                  className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors group cursor-pointer"
+                  onClick={(e) => {
+                    // Only trigger if not clicking a button
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    handleEdit(post);
+                  }}
+                >
                   {isSelectMode && (
                     <input type="checkbox" checked={selectedPostIds.includes(post.id)}
                       onChange={() => toggleSelectPost(post.id)}
-                      className="w-4 h-4 accent-[#FEDD00]" />
+                      className="w-4 h-4 accent-[#FEDD00]"
+                      onClick={(e) => e.stopPropagation()} />
                   )}
                   {post.featuredImage && (
                     <img src={post.featuredImage} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0 hidden sm:block" />
@@ -454,21 +463,22 @@ export function AdminBlogManagement() {
                       })()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(post)}
+                  {/* Action buttons — always visible (not hover-only) for touch devices */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
                       className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
-                      <PenLine className="w-3 h-3 mr-1" />編輯
+                      <PenLine className="w-3 h-3 sm:mr-1" /><span className="hidden sm:inline">編輯</span>
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleTogglePublish(post.id)}
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleTogglePublish(post.id); }}
                       className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
                       {post.status === 'published' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleTranslate(post.id)}
-                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs"
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleTranslate(post.id); }}
+                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs hidden sm:flex"
                       disabled={translatePostMutation.isPending}>
                       <Globe className="w-3 h-3" />
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(post.id)}
+                    <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
                       className="h-7 px-2 text-xs">
                       <Trash2 className="w-3 h-3" />
                     </Button>
