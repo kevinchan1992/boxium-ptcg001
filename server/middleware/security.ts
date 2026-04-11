@@ -484,6 +484,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
 export function trpcRateLimitRouter(req: Request, res: Response, next: NextFunction) {
   const url = req.url ?? "";
 
+  // auth.me is a read-only session check called on every page load — use general limiter
+  if (url.includes("auth.me") || url.includes("auth.logout")) {
+    return trpcGeneralLimiter(req, res, next);
+  }
+  // auth.login, auth.register, auth.callback etc. are sensitive — use strict limiter
   if (url.includes("auth.login") || url.includes("auth.register") || url.includes("auth.")) {
     return authLimiter(req, res, next);
   }

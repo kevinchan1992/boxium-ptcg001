@@ -371,6 +371,24 @@ export function startTrendingCardsScheduler() {
   );
 
   console.log('[TrendingCardsScheduler] Trending cards scheduler started successfully');
+
+  // Warmup on startup: check if cache is stale and trigger calculation if needed
+  setTimeout(async () => {
+    try {
+      const { getCachedTrendingCards } = await import('./db');
+      const cached = await getCachedTrendingCards();
+      if (!cached || cached.length === 0) {
+        console.log('[TrendingCardsScheduler] No trending cache found on startup — triggering warmup calculation...');
+        const { calculateAndCacheTrendingCards } = await import('./db');
+        await calculateAndCacheTrendingCards();
+        console.log('[TrendingCardsScheduler] Startup warmup completed');
+      } else {
+        console.log(`[TrendingCardsScheduler] Trending cache already warm (${cached.length} cards), skipping warmup`);
+      }
+    } catch (err) {
+      console.error('[TrendingCardsScheduler] Startup warmup failed:', err);
+    }
+  }, 5000); // Delay 5s to let DB connections stabilise
 }
 
 /**
