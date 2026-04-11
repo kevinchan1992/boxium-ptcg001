@@ -277,14 +277,69 @@ export function AdminBlogManagement() {
   };
 
   // Listen for brief-to-write events from ContentWorkflowCenter
+  // Also check localStorage on mount in case the event fired before this component mounted
   useEffect(() => {
-    const handler = (e: Event) => {
-      const brief = (e as CustomEvent).detail;
+    const applyBrief = (brief: any) => {
+      if (!brief) return;
       setInitialBrief(brief);
       setActiveView('generate');
     };
+
+    // Check localStorage for pending brief (set by ContentWorkflowCenter before navigation)
+    try {
+      const pending = localStorage.getItem('pending-brief-to-write');
+      if (pending) {
+        const data = JSON.parse(pending);
+        // Only use if fresh (within last 30 seconds)
+        if (data._timestamp && Date.now() - data._timestamp < 30000) {
+          localStorage.removeItem('pending-brief-to-write');
+          applyBrief(data);
+          return; // Don't add event listener if we already applied
+        } else {
+          localStorage.removeItem('pending-brief-to-write');
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Also listen for real-time events (if already on the blog tab)
+    const handler = (e: Event) => {
+      const brief = (e as CustomEvent).detail;
+      applyBrief(brief);
+    };
     window.addEventListener('brief-to-write', handler);
     return () => window.removeEventListener('brief-to-write', handler);
+  }, []);
+
+  // Listen for article-to-blog events from ContentWorkflowCenter (DailyReport / Template skills)
+  useEffect(() => {
+    const applyArticle = (article: any) => {
+      if (!article) return;
+      // Set article as preview so user can review and publish
+      setPreviewArticle(article);
+      setActiveView('preview');
+    };
+
+    // Check localStorage for pending article
+    try {
+      const pending = localStorage.getItem('pending-article-to-blog');
+      if (pending) {
+        const data = JSON.parse(pending);
+        if (data._timestamp && Date.now() - data._timestamp < 30000) {
+          localStorage.removeItem('pending-article-to-blog');
+          applyArticle(data);
+          return;
+        } else {
+          localStorage.removeItem('pending-article-to-blog');
+        }
+      }
+    } catch { /* ignore */ }
+
+    const handler = (e: Event) => {
+      const article = (e as CustomEvent).detail;
+      applyArticle(article);
+    };
+    window.addEventListener('article-to-blog', handler);
+    return () => window.removeEventListener('article-to-blog', handler);
   }, []);
   if (activeView === 'generate') {
     return (

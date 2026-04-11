@@ -971,21 +971,33 @@ export function ContentWorkflowCenter({ onArticleReady }: { onArticleReady?: (ar
   ];
 
   const handleBriefReady = (brief: any) => {
-    // 觸發自定義事件，將 Brief 傳遞給 AdminBlogManagement
-    window.dispatchEvent(new CustomEvent('brief-to-write', {
-      detail: {
-        topic: brief.researchTopic || brief.topic || '',
-        outline: brief.outlineSuggestion || [],
-        titleOptions: brief.titleOptions || [],
-      }
-    }));
-    // 導航到博客管理的 AI 內容工廠
+    const briefData = {
+      topic: brief.researchTopic || brief.topic || '',
+      outline: brief.outlineSuggestion || [],
+      titleOptions: brief.titleOptions || [],
+      _timestamp: Date.now(),
+    };
+    // Store in localStorage so AdminBlogManagement can read it after mounting
+    try { localStorage.setItem('pending-brief-to-write', JSON.stringify(briefData)); } catch { /* ignore */ }
+    // Also dispatch event in case AdminBlogManagement is already mounted
+    window.dispatchEvent(new CustomEvent('brief-to-write', { detail: briefData }));
+    // Navigate to blog tab (Admin.tsx listens for this)
     window.dispatchEvent(new CustomEvent('navigate-to-blog'));
     toast.success('研究 Brief 已導入 AI 內容工廠！已自動預填主題和大綱。');
   };
 
   const handleArticleReady = (article: any) => {
     if (onArticleReady) onArticleReady(article);
+    // Store article in localStorage for AdminBlogManagement to pick up
+    const articleData = {
+      ...article,
+      _timestamp: Date.now(),
+    };
+    try { localStorage.setItem('pending-article-to-blog', JSON.stringify(articleData)); } catch { /* ignore */ }
+    // Dispatch event in case AdminBlogManagement is already mounted
+    window.dispatchEvent(new CustomEvent('article-to-blog', { detail: articleData }));
+    // Navigate to blog tab
+    window.dispatchEvent(new CustomEvent('navigate-to-blog'));
     toast.success('文章已準備好，已傳送到博客管理！');
   };
 

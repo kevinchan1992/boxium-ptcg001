@@ -266,6 +266,24 @@ export default function Admin() {
     return () => mql.removeEventListener("change", handler);
   }, []);
 
+  // Listen for cross-component navigation events from ContentWorkflowCenter
+  useEffect(() => {
+    const handleNavigateToBlog = () => {
+      setActiveTab('blog');
+      setMobileMenuOpen(false);
+    };
+    const handleNavigateToQuickPublish = () => {
+      setActiveTab('quick-publish');
+      setMobileMenuOpen(false);
+    };
+    window.addEventListener('navigate-to-blog', handleNavigateToBlog);
+    window.addEventListener('navigate-to-quick-publish', handleNavigateToQuickPublish);
+    return () => {
+      window.removeEventListener('navigate-to-blog', handleNavigateToBlog);
+      window.removeEventListener('navigate-to-quick-publish', handleNavigateToQuickPublish);
+    };
+  }, []);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
