@@ -8163,3 +8163,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] AdminSecurityMonitor 新增「白名單管理」分頁（將當前 IP 加入白名單 / 移除）
 - [x] 修復博客管理 tags 型別錯誤（前端逗號字串 → 後端 string[]）
 - [x] 修復博客管理 categoryId 型別錯誤（null → undefined，符合 z.number().optional()）
+
+## 管理員 IP 白名單持久化（2026-04-11）
+- [x] 新增 adminIpWhitelist DB 表（schema_new.ts）並推送 migration
+- [x] security middleware 啟動時從 DB 載入白名單到記憶體
+- [x] registerAdminIp / unregisterAdminIp 同步寫入/刪除 DB
+- [x] 更新 AdminSecurityMonitor 白名單分頁顯示添加者、添加時間，提示文字改為「已持久化」

@@ -136,23 +136,24 @@ export const securityRouter = router({
   // ─── Admin IP Whitelist ──────────────────────────────────────────────────────
 
   /** Get all whitelisted admin IPs */
-  getWhitelistedIps: adminProcedure.query(() => {
-    return getAdminWhitelistIps();
+  getWhitelistedIps: adminProcedure.query(async () => {
+    return await getAdminWhitelistIps();
   }),
 
-  /** Register current admin's IP to bypass all rate limits */
-  whitelistMyIp: adminProcedure.mutation(({ ctx }) => {
+  /** Register current admin's IP to bypass all rate limits (persisted to DB) */
+  whitelistMyIp: adminProcedure.mutation(async ({ ctx }) => {
     const ip = getClientIp(ctx.req);
-    registerAdminIp(ip);
-    return { success: true, ip, message: `您的 IP ${ip} 已加入白名單，將豁免所有請求限流。` };
+    const adminEmail = (ctx as any).user?.email ?? "admin";
+    await registerAdminIp(ip, adminEmail);
+    return { success: true, ip, message: `您的 IP ${ip} 已加入白名單（已持久化到資料庫），伺服器重啟後仍然有效。` };
   }),
 
-  /** Remove an IP from admin whitelist */
+  /** Remove an IP from admin whitelist (persisted to DB) */
   removeFromWhitelist: adminProcedure
     .input(z.object({ ip: z.string().min(1).max(45) }))
-    .mutation(({ input }) => {
-      unregisterAdminIp(input.ip);
-      return { success: true, message: `IP ${input.ip} 已從白名單移除。` };
+    .mutation(async ({ input }) => {
+      await unregisterAdminIp(input.ip);
+      return { success: true, message: `IP ${input.ip} 已從白名單移除（已從資料庫刪除）。` };
     }),
 
   // ─── Rate Limit Monitoring ───────────────────────────────────────────────────

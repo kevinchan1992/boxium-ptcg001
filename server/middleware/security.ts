@@ -63,20 +63,56 @@ const blockedIpCache = new Set<string>();
 let blockedIpCacheLoaded = false;
 let eventCounter = 0;
 
-// ─── Admin IP Whitelist (in-memory, survives for session duration) ────────────
-/** Admin IPs that are exempt from all rate limits */
+// ─── Admin IP Whitelist (in-memory + DB-persisted) ───────────────────────────
+/** Admin IPs that are exempt from all rate limits (in-memory cache, loaded from DB on startup) */
 const adminIpWhitelist = new Set<string>();
+let adminWhitelistLoaded = false;
 
-/** Register an admin IP to bypass all rate limits */
-export function registerAdminIp(ip: string): void {
-  adminIpWhitelist.add(ip);
-  console.log(`[Security] Admin IP whitelisted: ${ip} (total: ${adminIpWhitelist.size})`);
+/** Load admin IP whitelist from DB into memory (called on server startup) */
+export async function loadAdminWhitelistFromDb(): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+    const { adminIpWhitelist: whitelistTable } = await import("../../drizzle/schema_new");
+    const rows = await db.select().from(whitelistTable);
+    for (const row of rows) {
+      adminIpWhitelist.add(row.ip);
+    }
+    adminWhitelistLoaded = true;
+    console.log(`[Security] Loaded ${rows.length} admin IPs from DB whitelist`);
+  } catch (e: any) {
+    console.error("[Security] Failed to load admin whitelist from DB:", e.message);
+  }
 }
 
-/** Remove an admin IP from the whitelist */
-export function unregisterAdminIp(ip: string): void {
+/** Register an admin IP to bypass all rate limits (persisted to DB) */
+export async function registerAdminIp(ip: string, addedBy = "admin", note?: string): Promise<void> {
+  adminIpWhitelist.add(ip);
+  console.log(`[Security] Admin IP whitelisted: ${ip} (total: ${adminIpWhitelist.size})`);
+  try {
+    const db = await getDb();
+    if (!db) return;
+    const { adminIpWhitelist: whitelistTable } = await import("../../drizzle/schema_new");
+    await db.insert(whitelistTable).values({ ip, addedBy, note: note ?? null })
+      .onDuplicateKeyUpdate({ set: { addedBy, note: note ?? null } });
+  } catch (e: any) {
+    console.error("[Security] Failed to persist admin whitelist to DB:", e.message);
+  }
+}
+
+/** Remove an admin IP from the whitelist (persisted to DB) */
+export async function unregisterAdminIp(ip: string): Promise<void> {
   adminIpWhitelist.delete(ip);
   console.log(`[Security] Admin IP removed from whitelist: ${ip}`);
+  try {
+    const db = await getDb();
+    if (!db) return;
+    const { adminIpWhitelist: whitelistTable } = await import("../../drizzle/schema_new");
+    const { eq } = await import("drizzle-orm");
+    await db.delete(whitelistTable).where(eq(whitelistTable.ip, ip));
+  } catch (e: any) {
+    console.error("[Security] Failed to remove admin whitelist from DB:", e.message);
+  }
 }
 
 /** Check if an IP is in the admin whitelist */
@@ -84,9 +120,18 @@ export function isAdminWhitelisted(ip: string): boolean {
   return adminIpWhitelist.has(ip);
 }
 
-/** Get all whitelisted admin IPs */
-export function getAdminWhitelistIps(): string[] {
-  return Array.from(adminIpWhitelist);
+/** Get all whitelisted admin IPs with DB metadata */
+export async function getAdminWhitelistIps(): Promise<Array<{ ip: string; addedBy: string; note: string | null; addedAt: Date }>> {
+  try {
+    const db = await getDb();
+    if (!db) return Array.from(adminIpWhitelist).map(ip => ({ ip, addedBy: "admin", note: null, addedAt: new Date() }));
+    const { adminIpWhitelist: whitelistTable } = await import("../../drizzle/schema_new");
+    const { desc } = await import("drizzle-orm");
+    return await db.select().from(whitelistTable).orderBy(desc(whitelistTable.addedAt));
+  } catch (e: any) {
+    console.error("[Security] Failed to get admin whitelist from DB:", e.message);
+    return Array.from(adminIpWhitelist).map(ip => ({ ip, addedBy: "admin", note: null, addedAt: new Date() }));
+  }
 }
 
 // ─── DB helpers (lazy import to avoid circular deps) ────────────────────────────────────────────
@@ -136,8 +181,9 @@ async function loadBlockedIpCache() {
   }
 }
 
-// Initialise cache on module load (non-blocking)
+// Initialise caches on module load (non-blocking)
 loadBlockedIpCache().catch(() => {});
+loadAdminWhitelistFromDb().catch(() => {});
 
 // ─── Alert system ─────────────────────────────────────────────────────────────
 

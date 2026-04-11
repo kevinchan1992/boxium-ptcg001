@@ -1507,3 +1507,12 @@ export const blockedIps = mysqlTable("blockedIps", {
 }));
 export type BlockedIp = typeof blockedIps.$inferSelect;
 export type InsertBlockedIp = typeof blockedIps.$inferInsert;
+
+export const adminIpWhitelist = mysqlTable("adminIpWhitelist", {
+  ip: varchar("ip", { length: 45 }).primaryKey(),
+  addedBy: varchar("addedBy", { length: 100 }).default("admin").notNull(),
+  note: varchar("note", { length: 200 }),
+  addedAt: timestamp("addedAt").defaultNow().notNull(),
+});
+export type AdminIpWhitelist = typeof adminIpWhitelist.$inferSelect;
+export type InsertAdminIpWhitelist = typeof adminIpWhitelist.$inferInsert;

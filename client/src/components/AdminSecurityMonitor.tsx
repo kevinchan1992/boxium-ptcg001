@@ -647,7 +647,7 @@ export default function AdminSecurityMonitor() {
                       {(whitelistQuery.data ?? []).length} 個
                     </Badge>
                   </CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">白名單內的 IP 將豁免所有請求限流。注意：白名單在伺服器重啟後會清空。</p>
+                  <p className="text-xs text-gray-500 mt-0.5">白名單內的 IP 將豁免所有請求限流。已持久化到資料庫，伺服器重啟後自動載入。</p>
                 </div>
                 <Button
                   size="sm"
@@ -666,7 +666,8 @@ export default function AdminSecurityMonitor() {
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
                       <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
-                      <TableHead className="text-gray-400 text-xs">狀態</TableHead>
+                      <TableHead className="text-gray-400 text-xs">添加者</TableHead>
+                      <TableHead className="text-gray-400 text-xs">添加時間</TableHead>
                       <TableHead className="text-gray-400 text-xs w-24">操作</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -680,35 +681,37 @@ export default function AdminSecurityMonitor() {
                           <div className="text-gray-600 text-xs mt-1">點擊「將我的 IP 加入白名單」以豁免限流</div>
                         </TableCell>
                       </TableRow>
-                    ) : (whitelistQuery.data ?? []).map((ip: string) => (
-                      <TableRow key={ip} className="border-white/[0.04] hover:bg-white/[0.02]">
-                        <TableCell className="text-sm text-green-300 font-mono">{ip}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs text-green-400 border-green-500/30">
-                            豁免限流中
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFromWhitelistMutation.mutate({ ip })}
-                            disabled={removeFromWhitelistMutation.isPending}
-                            className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            移除
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    ) : (whitelistQuery.data ?? []).map((entry: any) => {
+                      const ip = typeof entry === 'string' ? entry : entry.ip;
+                      const addedBy = typeof entry === 'object' ? entry.addedBy : 'admin';
+                      const addedAt = typeof entry === 'object' && entry.addedAt ? new Date(entry.addedAt).toLocaleString() : '-';
+                      return (
+                        <TableRow key={ip} className="border-white/[0.04] hover:bg-white/[0.02]">
+                          <TableCell className="text-sm text-green-300 font-mono">{ip}</TableCell>
+                          <TableCell className="text-xs text-gray-400">{addedBy}</TableCell>
+                          <TableCell className="text-xs text-gray-400">{addedAt}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromWhitelistMutation.mutate({ ip })}
+                              disabled={removeFromWhitelistMutation.isPending}
+                              className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              移除
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
               <div className="px-4 py-3 border-t border-white/[0.06] bg-yellow-500/5">
-                <p className="text-xs text-yellow-400/80 flex items-start gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                  白名單僅儲存在記憶體中，伺服器重啟後會清空。若需永久豁免，請將 IP 加入伺服器的 trusted proxy 設定。
+                  <p className="text-xs text-green-400/80 flex items-start gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  白名單已持久化到資料庫，伺服器重啟後會自動載入，豁免設定永久有效。
                 </p>
               </div>
             </CardContent>
