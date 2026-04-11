@@ -572,16 +572,16 @@ export default function AuctionTerms() {
             <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-2">BOXIUM PTCG</p>
             <h3 className="text-white font-black text-xl mb-2">準備好開始交易了嗎？</h3>
             <p className="text-white/60 text-sm mb-6">閱讀並同意以上條款後，即可開始在 Boxium PTCG 買賣卡牌。</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-row flex-wrap gap-3 justify-center">
               <Link href="/marketplace">
-                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center transition-all hover:scale-105 active:scale-95"
+                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
                   style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
                   <ShoppingCart className="w-4 h-4" />
                   瀏覽商品
                 </button>
               </Link>
               <Link href="/seller">
-                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center border-2 border-white/30 text-white transition-all hover:bg-white/10">
+                <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center border-2 border-white/30 text-white transition-all hover:bg-white/10 whitespace-nowrap">
                   <Gavel className="w-4 h-4" />
                   開始出售
                 </button>
