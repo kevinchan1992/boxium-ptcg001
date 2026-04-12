@@ -8169,3 +8169,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] security middleware 啟動時從 DB 載入白名單到記憶體
 - [x] registerAdminIp / unregisterAdminIp 同步寫入/刪除 DB
 - [x] 更新 AdminSecurityMonitor 白名單分頁顯示添加者、添加時間，提示文字改為「已持久化」
+
+## 廢棄代碼清理（2026-04-12）
+- [x] 刪除 marketplace.ts 廢棄 procedures：createOrder（舊版）、getOrderDetails（舊版）、createSellerListing（舊版）、getMyDefaultShippingAddress、adminProcessAlipayRefund、adminCompleteAlipayRefund、getAlipayRefundOrders、adminFixPlatformOrderFees、adminGetSellerRiskProfile（query）、adminGetListingModerationLogs、adminGetReportsEnhanced（共 11 個，約 400 行）
+- [x] 恢復 adminUpdateSellerRiskProfile（mutation，前端有呼叫，被誤刪）
+- [x] 刪除 db.ts 廢棄 helper：getUserDefaultShippingAddress（13 行）
+- [x] 更新 p0-payment-method-restriction.test.ts：createOrder 測試改為 createAlipayOrder + createStripeOrder
+- [x] 移除 marketplace.ts import 中的 getUserDefaultShippingAddress

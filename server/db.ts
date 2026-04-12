@@ -4130,19 +4130,6 @@ export async function getUserShippingAddresses(userId: number) {
     .orderBy(desc(userShippingAddresses.isDefault), asc(userShippingAddresses.createdAt));
 }
 
-export async function getUserDefaultShippingAddress(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select().from(userShippingAddresses)
-    .where(and(eq(userShippingAddresses.userId, userId), eq(userShippingAddresses.isDefault, true)))
-    .limit(1);
-  if (rows.length > 0) return rows[0];
-  // Fall back to first address
-  const all = await db.select().from(userShippingAddresses)
-    .where(eq(userShippingAddresses.userId, userId))
-    .orderBy(asc(userShippingAddresses.createdAt)).limit(1);
-  return all[0] ?? null;
-}
 
 export async function createUserShippingAddress(data: InsertUserShippingAddress) {
   const db = await getDb();

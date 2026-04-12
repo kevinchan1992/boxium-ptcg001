@@ -2,7 +2,7 @@
  * P0 Payment Method Restriction Tests
  *
  * Validates that:
- * 1. createOrder rejects Alipay HK for C2C seller listings
+ * 1. createAlipayOrder rejects Alipay HK for C2C seller listings
  * 2. createBatchAlipayOrder rejects if any item is from a C2C seller
  * 3. switchOrderPaymentToAlipay rejects for C2C seller orders
  * 4. createOfferCheckout rejects Alipay HK for C2C seller orders
@@ -133,8 +133,8 @@ describe("P0: Payment Method Restriction", () => {
     vi.clearAllMocks();
   });
 
-  // ── createOrder ──────────────────────────────────────────────────────────────
-  describe("createOrder", () => {
+  // ── createAlipayOrder ─────────────────────────────────────────────────────────
+  describe("createAlipayOrder", () => {
     const shippingAddress = {
       name: "Test Buyer",
       phone: "12345678",
@@ -145,42 +145,47 @@ describe("P0: Payment Method Restriction", () => {
       vi.mocked(getListingById).mockResolvedValue(makeListing("seller") as any);
 
       await expect(
-        caller.marketplace.createOrder({
+        caller.marketplace.createAlipayOrder({
           listingId: 1,
-          paymentMethod: "alipay_hk",
           shippingAddress,
         })
       ).rejects.toThrow(TRPCError);
 
       await expect(
-        caller.marketplace.createOrder({
+        caller.marketplace.createAlipayOrder({
           listingId: 1,
-          paymentMethod: "alipay_hk",
           shippingAddress,
         })
       ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    });
-
-    it("should ALLOW Stripe for a C2C seller listing", async () => {
-      vi.mocked(getListingById).mockResolvedValue(makeListing("seller") as any);
-
-      // Should not throw (Stripe is always allowed)
-      await expect(
-        caller.marketplace.createOrder({
-          listingId: 1,
-          paymentMethod: "stripe",
-          shippingAddress,
-        })
-      ).resolves.toBeDefined();
     });
 
     it("should ALLOW Alipay HK for a platform listing", async () => {
       vi.mocked(getListingById).mockResolvedValue(makeListing("platform") as any);
 
       await expect(
-        caller.marketplace.createOrder({
+        caller.marketplace.createAlipayOrder({
           listingId: 1,
-          paymentMethod: "alipay_hk",
+          shippingAddress,
+        })
+      ).resolves.toBeDefined();
+    });
+  });
+
+  // ── createStripeOrder ─────────────────────────────────────────────────────────
+  describe("createStripeOrder", () => {
+    const shippingAddress = {
+      name: "Test Buyer",
+      phone: "12345678",
+      address: "Test Address",
+    };
+
+    it("should ALLOW Stripe for a C2C seller listing", async () => {
+      vi.mocked(getListingById).mockResolvedValue(makeListing("seller") as any);
+
+      // Stripe is always allowed regardless of seller type
+      await expect(
+        caller.marketplace.createStripeOrder({
+          listingId: 1,
           shippingAddress,
         })
       ).resolves.toBeDefined();
@@ -190,9 +195,8 @@ describe("P0: Payment Method Restriction", () => {
       vi.mocked(getListingById).mockResolvedValue(makeListing("platform") as any);
 
       await expect(
-        caller.marketplace.createOrder({
+        caller.marketplace.createStripeOrder({
           listingId: 1,
-          paymentMethod: "stripe",
           shippingAddress,
         })
       ).resolves.toBeDefined();

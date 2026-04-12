@@ -15,7 +15,7 @@ import { getPublicListings, getListingById, createListing, updateListing,
   getUserWishlist, isInWishlist, addToWishlistListing, removeFromWishlistListing, getWishlistListingIds,
   getDisputedOrders, getSellerProfileByStripeConnectId,
   createReview, getSellerReviews, getReviewByOrderId,
-  getUserShippingAddresses, getUserDefaultShippingAddress,
+  getUserShippingAddresses,
   createUserShippingAddress, updateUserShippingAddress,
   deleteUserShippingAddress, setDefaultShippingAddress,
   getDb,
@@ -240,176 +240,13 @@ export const marketplaceRouter = router({
     }),
 
   // ============================================================
-  // PROTECTED - Buyer Actions
+  // BUYER - Orders
   // ============================================================
-  createOrder: protectedProcedure
-    .input(z.object({
-      listingId: z.number().int(),
-      quantity: z.number().int().min(1).default(1),
-      paymentMethod: z.enum(["stripe", "alipay_hk"]),
-      shippingAddress: z.object({
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-        district: z.string().optional(),
-        region: z.string().optional(),
-        sfStationCode: z.string().optional(),
-        sfStationName: z.string().optional(),
-      }),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const listing = await getListingById(input.listingId);
-      if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
-      if (listing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "商品已下架或售出" });
-      // First-come-first-served: check availability but don't lock stock
-      const available = await reserveListingStock(listing.id, input.quantity ?? 1);
-      if (!available) throw new TRPCError({ code: "BAD_REQUEST", message: "庫存不足，商品可能已被其他買家搶購" });
-
-      const price = parseFloat(listing.priceHkd as string);
-      const subtotal = price * input.quantity;
-      // Platform fee is deducted from seller's payout (buyer pays listing price only)
-      const feeRate = await getPlatformFeeRate(subtotal);
-      const platformFee = calcPlatformFeeWithRate(listing.sellerType, subtotal, feeRate);
-      const total = subtotal; // Buyer pays listing price only, no extra fees
-
-      // P0: Payment method restriction — C2C seller items cannot use Alipay HK
-      if (input.paymentMethod === "alipay_hk" && listing.sellerType === "seller") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "此商品為個人賣家商品，僅支援 Stripe 信用卡付款。支付寶 HK 僅適用於本公司自營商品。",
-        });
-      }
-      // Stripe requires minimum HKD 4.00 for card payments
-      if (input.paymentMethod === "stripe" && total < 4.00) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `此商品金額 HKD ${total.toFixed(2)} 低於 Stripe 最低付款金額 HKD 4.00。`,
-        });
-      }
-
-      const orderNo = await generateOrderNo();
-
-      const order = await createMarketplaceOrder({
-        orderNo,
-        buyerId: ctx.user.id,
-        paymentMethod: input.paymentMethod,
-        paymentStatus: "pending",
-        listingId: listing.id,
-        sellerId: listing.sellerId ?? null,
-        sellerType: listing.sellerType as any,
-        unitPriceHkd: price.toFixed(2),
-        quantity: input.quantity ?? 1,
-        subtotalHkd: subtotal.toFixed(2),
-        platformFeeRate: feeRate.toFixed(4),
-        platformFeeHkd: platformFee.toFixed(2),
-        sellerReceivableHkd: calcSellerReceivableWithRate(listing.sellerType, subtotal, feeRate).toFixed(2),
-        shippingName: input.shippingAddress.name,
-        shippingPhone: input.shippingAddress.phone,
-        shippingAddress: JSON.stringify(input.shippingAddress),
-        orderStatus: "pending_payment",
-        autoCompleteAt: null as any,
-      });
-
-      if (!order) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "建立訂單失敗" });
-
-      await createOrderItems([{
-        orderId: order.id,
-        listingId: listing.id,
-        sellerId: listing.sellerId ?? undefined,
-        sellerType: listing.sellerType,
-        title: listing.title,
-        price: listing.priceHkd as string,
-        quantity: input.quantity ?? 1,
-        payoutStatus: "pending",
-      }]);
-
-      // For Alipay HK, return static payment link + order info
-      if (input.paymentMethod === "alipay_hk") {
-        return {
-          order,
-          paymentMethod: "alipay_hk",
-          alipayLink: ALIPAY_HK_STATIC_LINK,
-          amount: total.toFixed(2),
-          orderNo,
-        };
-      }
-
-      // For Stripe, create Checkout Session
-      const stripe = getStripe();
-      const origin = (ctx.req.headers.origin as string) || "https://boxiumptcg-mua4eq38.manus.space";
-      // Build payment_intent_data - use Destination Charge for C2C listings with active Stripe Connect
-      const paymentIntentData: any = {
-        metadata: {
-          orderId: order.id.toString(),
-          orderNo,
-          buyerId: ctx.user.id.toString(),
-          listingId: listing.id.toString(),
-        },
-      };
-      // NOTE: We use Separate Charges and Transfers (NOT Destination Charge)
-      // Funds stay in platform account until buyer confirms receipt (or 14-day auto-complete)
-      // Transfer to seller happens in confirmReceipt / auto-complete cron job
-      // No transfer_data or application_fee_amount here — platform keeps full amount until order completes
-      if (listing.sellerType === "seller" && listing.sellerId) {
-        const sellerProfile = await getSellerProfileById(listing.sellerId);
-        if (sellerProfile?.stripeConnectId && sellerProfile.stripeConnectStatus === "active") {
-          console.log(`[Checkout] Separate Charges mode for seller ${sellerProfile.stripeConnectId}. Funds held in platform until buyer confirms receipt. Buyer pays HKD ${total.toFixed(2)}, seller will receive HKD ${(subtotal - platformFee).toFixed(2)} after order completes.`);
-        }
-      }
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card", "alipay"],
-        line_items: [{
-          price_data: {
-            currency: "hkd",
-            product_data: { name: listing.title },
-            unit_amount: Math.round(total * 100),
-          },
-          quantity: 1,
-        }],
-        mode: "payment",
-        customer_email: ctx.user.email ?? undefined,
-        client_reference_id: ctx.user.id.toString(),
-        metadata: {
-          orderId: order.id.toString(),
-          orderNo,
-          buyerId: ctx.user.id.toString(),
-          listingId: listing.id.toString(),
-        },
-        payment_intent_data: paymentIntentData,
-        success_url: `${origin}/orders?payment=success&orderNo=${orderNo}`,
-        cancel_url: `${origin}/shop/${listing.id}?payment=cancelled`,
-        allow_promotion_codes: true,
-      });
-
-      await updateMarketplaceOrder(order.id, {
-        stripeSessionId: session.id,
-        stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
-      });
-
-      return {
-        order,
-        paymentMethod: "stripe",
-        checkoutUrl: session.url,
-        orderNo,
-      };
-    }),
-
   getMyOrders: protectedProcedure
     .query(async ({ ctx }) => {
       return getBuyerOrders(ctx.user.id);
     }),
 
-  getOrderDetails: protectedProcedure
-    .input(z.object({ orderId: z.number().int() }))
-    .query(async ({ ctx, input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      const items = await getOrderItems(input.orderId);
-      return { order, items };
-    }),
-
-  // Get or create Stripe checkout URL for a pending_payment order
   getOrderCheckoutUrl: protectedProcedure
     .input(z.object({ orderId: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
@@ -1718,43 +1555,6 @@ export const marketplaceRouter = router({
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)
-  adminFixPlatformOrderFees: adminProcedure
-    .mutation(async () => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
-      const { sql: drizzleSql } = await import('drizzle-orm');
-      const { marketplaceOrders } = await import('../../drizzle/schema_new');
-      // Find all platform orders with incorrect fees
-      const platformOrders = await db.select({
-        id: marketplaceOrders.id,
-        orderNo: marketplaceOrders.orderNo,
-        subtotalHkd: marketplaceOrders.subtotalHkd,
-        platformFeeHkd: marketplaceOrders.platformFeeHkd,
-        sellerReceivableHkd: marketplaceOrders.sellerReceivableHkd,
-      }).from(marketplaceOrders)
-        .where(and(
-          eq(marketplaceOrders.sellerType, 'platform' as any),
-          drizzleSql`${marketplaceOrders.platformFeeHkd} != '0.00'`
-        ));
-      if (platformOrders.length === 0) {
-        return { fixed: 0, message: '所有平台訂單手續費已正確，無需修復' };
-      }
-      // Fix each order: set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd
-      let fixedCount = 0;
-      for (const order of platformOrders) {
-        await db.update(marketplaceOrders)
-          .set({
-            platformFeeHkd: '0.00',
-            sellerReceivableHkd: order.subtotalHkd,
-            platformFeeRate: '0.0000',
-          })
-          .where(eq(marketplaceOrders.id, order.id));
-        fixedCount++;
-      }
-      console.log(`[AdminFix] Fixed ${fixedCount} platform orders with incorrect fees`);
-      return { fixed: fixedCount, message: `已修復 ${fixedCount} 筆平台訂單的手續費記錄` };
-    }),
-
   adminGetAlipayPending: adminProcedure
     .input(z.object({
       dateFilter: z.enum(['all', 'today', 'week', 'month']).optional().default('all'),
@@ -3343,29 +3143,6 @@ All three checks must pass for verified to be true. Respond with JSON only match
       }
       return { order, items, listing, review, isBuyer, isSeller: isSeller || isPlatformSeller, sellerPhone, buyerContactPhone, isMeetup, isCompleted };
     }),
-
-  // ============================================================
-  // SELLER - Create Listing (legacy)
-  // ============================================================
-  createSellerListing: protectedProcedure
-    .input(z.object({
-      title: z.string().min(1).max(200),
-      description: z.string().optional(),
-      condition: z.enum(["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]),
-      price: z.number().positive(),
-      quantity: z.number().int().positive(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const profile = await getSellerProfileByUserId(ctx.user.id);
-      if (!profile || !profile.isActive) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "你尚未成為賣家或帳號未激活" });
-      }
-      return { success: true };
-    }),
-
-  // ============================================================
-  // PUBLIC - Banners
-  // ============================================================
   getBanners: publicProcedure
     .query(async () => {
       return getActiveBanners();
@@ -4133,11 +3910,6 @@ All three checks must pass for verified to be true. Respond with JSON only match
   getMyShippingAddresses: protectedProcedure
     .query(async ({ ctx }) => {
       return getUserShippingAddresses(ctx.user.id);
-    }),
-
-  getMyDefaultShippingAddress: protectedProcedure
-    .query(async ({ ctx }) => {
-      return getUserDefaultShippingAddress(ctx.user.id);
     }),
 
   addShippingAddress: protectedProcedure
@@ -5412,70 +5184,6 @@ IMPORTANT:
   // ============================================================
   // P1 Fix #5: Alipay HK Refund Tracking
   // ============================================================
-  adminProcessAlipayRefund: adminProcedure
-    .input(z.object({ orderId: z.number().int() }))
-    .mutation(async ({ ctx, input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (order.paymentMethod !== 'alipay_hk') throw new TRPCError({ code: 'BAD_REQUEST', message: '僅適用於支付寶 HK 訂單' });
-      if (order.alipayRefundStatus !== 'pending') throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不在待退款狀態' });
-      await updateMarketplaceOrder(input.orderId, { alipayRefundStatus: 'processing' });
-      await createAuditLog({ adminId: ctx.user.id, action: 'alipay_refund_processing', targetType: 'order', targetId: input.orderId, details: `訂單 ${order.orderNo} Alipay 退款處理中` });
-      return { success: true };
-    }),
-
-  adminCompleteAlipayRefund: adminProcedure
-    .input(z.object({
-      orderId: z.number().int(),
-      proofUrl: z.string().url().optional(),
-      note: z.string().max(500).optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (order.paymentMethod !== 'alipay_hk') throw new TRPCError({ code: 'BAD_REQUEST', message: '僅適用於支付寶 HK 訂單' });
-      if (!['pending', 'processing'].includes(order.alipayRefundStatus ?? '')) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不在待退款/處理中狀態' });
-      }
-      const updateData: Record<string, any> = {
-        alipayRefundStatus: 'completed',
-        alipayRefundCompletedAt: new Date(),
-        paymentStatus: 'refunded',
-      };
-      if (input.proofUrl) updateData.alipayRefundProofUrl = input.proofUrl;
-      if (input.note) updateData.alipayRefundNote = (order.alipayRefundNote ?? '') + `\n[已完成] ${input.note}`;
-      await updateMarketplaceOrder(input.orderId, updateData);
-      // Notify buyer
-      await createNotification({
-        userId: order.buyerId,
-        type: 'trade',
-        title: '退款已完成 ✅',
-        body: `訂單 ${order.orderNo} 的支付寶 HK 退款 HKD ${parseFloat(order.alipayRefundAmount as string ?? order.subtotalHkd as string).toFixed(2)} 已處理完成。`,
-        linkUrl: `/orders/${order.orderNo}`,
-      }).catch(() => {});
-      await createAuditLog({ adminId: ctx.user.id, action: 'alipay_refund_completed', targetType: 'order', targetId: input.orderId, details: `訂單 ${order.orderNo} Alipay 退款已完成` });
-      return { success: true };
-    }),
-
-  getAlipayRefundOrders: adminProcedure
-    .query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-      return db.select()
-        .from(marketplaceOrders)
-        .where(
-          and(
-            eq(marketplaceOrders.paymentMethod, 'alipay_hk'),
-            inArray(marketplaceOrders.alipayRefundStatus, ['pending', 'processing'])
-          )
-        )
-        .orderBy(desc(marketplaceOrders.alipayRefundRequestedAt));
-    }),
-
-  // ============================================================
-  // P1 Fix #4: Order Messages — Internal messaging system
-  // Allows buyers, sellers, and admins to communicate within order context
-  // ============================================================
   getOrderMessages: protectedProcedure
     .input(z.object({ orderNo: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -5940,16 +5648,8 @@ IMPORTANT:
     }),
 
   // ============================================================
-  // GOVERNANCE: SELLER RISK PROFILES
+  // GOVERNANCE: SELLER RISK PROFILE (update only)
   // ============================================================
-  adminGetSellerRiskProfile: adminProcedure
-    .input(z.object({ sellerId: z.number().int() }))
-    .query(async ({ input }) => {
-      const { getOrCreateSellerRiskProfile, recalculateSellerRiskProfile } = await import('../governance-helpers');
-      await recalculateSellerRiskProfile(input.sellerId).catch(() => {});
-      return getOrCreateSellerRiskProfile(input.sellerId);
-    }),
-
   adminUpdateSellerRiskProfile: adminProcedure
     .input(z.object({
       sellerId: z.number().int(),
@@ -5964,24 +5664,6 @@ IMPORTANT:
       await updateSellerRiskProfile(sellerId, { ...data, lastReviewAt: new Date() });
       return { success: true };
     }),
-
-  // ============================================================
-  // GOVERNANCE: LISTING MODERATION LOGS
-  // ============================================================
-  adminGetListingModerationLogs: adminProcedure
-    .input(z.object({
-      page: z.number().int().min(1).default(1),
-      pageSize: z.number().int().min(1).max(100).default(50),
-      listingId: z.number().int().optional(),
-      adminId: z.number().int().optional(),
-      action: z.string().optional(),
-      listingMode: z.enum(['direct', 'auction']).optional(),
-    }))
-    .query(async ({ input }) => {
-      const { getListingModerationLogs } = await import('../governance-helpers');
-      return getListingModerationLogs(input);
-    }),
-
   // ============================================================
   // GOVERNANCE: ANOMALY DETECTION
   // ============================================================
@@ -6003,19 +5685,5 @@ IMPORTANT:
     .query(async () => {
       const { getReportStats } = await import('../governance-helpers');
       return getReportStats();
-    }),
-
-  // ============================================================
-  // GOVERNANCE: ENHANCED REPORTS (with listing info)
-  // ============================================================
-  adminGetReportsEnhanced: adminProcedure
-    .input(z.object({
-      page: z.number().int().min(1).default(1),
-      pageSize: z.number().int().min(1).max(50).default(20),
-      status: z.string().optional(),
-    }))
-    .query(async ({ input }) => {
-      const { getAdminListingReportsEnhanced } = await import('../governance-helpers');
-      return getAdminListingReportsEnhanced(input);
     }),
 });
