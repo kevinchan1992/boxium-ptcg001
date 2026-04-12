@@ -910,6 +910,9 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
   orderStatusIdx: index("mo_orderStatus_idx").on(table.orderStatus),
   paymentStatusIdx: index("mo_paymentStatus_idx").on(table.paymentStatus),
+  // P0-3 Fix: Prevent duplicate auction orders (race condition protection)
+  // Each auction listing can only have one order
+  auctionListingUniqueIdx: uniqueIndex("mo_unique_auction_listing").on(table.auctionListingId),
 }));
 export type MarketplaceOrder = typeof marketplaceOrders.$inferSelect;
 export type InsertMarketplaceOrder = typeof marketplaceOrders.$inferInsert;

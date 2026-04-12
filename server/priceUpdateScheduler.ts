@@ -957,7 +957,13 @@ export function startPaymentTimeoutCancelScheduler() {
         const timeoutSetting = await getSystemSetting('payment_timeout_minutes').catch(() => null);
         const timeoutMinutes = timeoutSetting ? parseInt(timeoutSetting.settingValue) : 30;
         const cutoff = new Date(now.getTime() - timeoutMinutes * 60 * 1000);
+        // P2-1 Fix: Alipay orders use a longer timeout (24 hours) since admin must manually confirm
+        const alipayTimeoutSetting = await getSystemSetting('alipay_payment_timeout_minutes').catch(() => null);
+        const alipayTimeoutMinutes = alipayTimeoutSetting ? parseInt(alipayTimeoutSetting.settingValue) : 24 * 60; // 24 hours default
+        const alipayCutoff = new Date(now.getTime() - alipayTimeoutMinutes * 60 * 1000);
+
         // Find pending_payment orders older than timeout
+        // P1-1 Fix: Also select paymentMethod and alipayProofStatus to exclude submitted Alipay orders
         const timedOutOrders = await db.select({
           id: marketplaceOrders.id,
           orderNo: marketplaceOrders.orderNo,
@@ -967,6 +973,8 @@ export function startPaymentTimeoutCancelScheduler() {
           createdAt: marketplaceOrders.createdAt,
           orderSource: marketplaceOrders.orderSource,
           auctionListingId: marketplaceOrders.auctionListingId,
+          paymentMethod: marketplaceOrders.paymentMethod,
+          alipayProofStatus: marketplaceOrders.alipayProofStatus,
         })
           .from(marketplaceOrders)
           .where(
@@ -979,6 +987,18 @@ export function startPaymentTimeoutCancelScheduler() {
         console.log(`[PaymentTimeout] Found ${timedOutOrders.length} timed-out orders to cancel`);
         for (const order of timedOutOrders) {
           try {
+            // P1-1 Fix: Skip Alipay orders that have submitted proof (pending_review) — admin needs to confirm
+            if (order.paymentMethod === 'alipay_hk') {
+              if (order.alipayProofStatus === 'pending_review') {
+                console.log(`[PaymentTimeout] Skipping Alipay order ${order.orderNo} — proof submitted, awaiting admin review`);
+                continue;
+              }
+              // P2-1 Fix: Alipay orders without proof use a longer timeout (24 hours)
+              if (order.createdAt && order.createdAt > alipayCutoff) {
+                console.log(`[PaymentTimeout] Skipping Alipay order ${order.orderNo} — within 24h Alipay timeout window`);
+                continue;
+              }
+            }
             // Cancel the order
             await db.update(marketplaceOrders)
               .set({ orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: now })
@@ -2073,8 +2093,8 @@ export function startPayoutHoldScheduler() {
           .from(marketplaceOrders)
           .where(
             and(
+              // orderStatus='completed' already excludes 'disputed' (P3-1: removed redundant ne condition)
               eq(marketplaceOrders.orderStatus, 'completed'),
-              ne(marketplaceOrders.orderStatus, 'disputed'),  // CRITICAL: exclude disputed orders
               eq(marketplaceOrders.payoutStatus, 'processing'),
               eq(marketplaceOrders.sellerType, 'seller'),
               isNotNull(marketplaceOrders.payoutHoldUntil),

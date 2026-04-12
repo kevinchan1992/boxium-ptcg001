@@ -64,12 +64,27 @@ export async function executeSellerPayout(orderId: number): Promise<PayoutResult
     };
   }
 
-  // Check if already paid out
+  // P0-2 Fix: Check if already paid out OR currently processing (prevents concurrent double-payout)
   const currentPayoutStatus = (order as any).payoutStatus;
   if (currentPayoutStatus === "paid") {
     return {
       success: false,
       error: `Order ${order.orderNo} already paid out`,
+      retryable: false,
+    };
+  }
+  if (currentPayoutStatus === "processing") {
+    return {
+      success: false,
+      error: `Order ${order.orderNo} payout already in progress (status: processing). Skipping to prevent double-payout.`,
+      retryable: false,
+    };
+  }
+  // P0-2 Fix: Block payout if order is disputed
+  if (order.orderStatus === "disputed") {
+    return {
+      success: false,
+      error: `Order ${order.orderNo} is under dispute. Payout blocked until dispute is resolved.`,
       retryable: false,
     };
   }
@@ -234,6 +249,17 @@ export async function executeSellerPayout(orderId: number): Promise<PayoutResult
 
     // Determine if retryable
     const retryable = err.type === "StripeConnectionError" || err.code === "lock_timeout";
+
+    // P2-4 Fix: Notify admin when payout fails so it can be handled manually
+    try {
+      const { notifyAdmin } = await import('./emailService');
+      await notifyAdmin({
+        title: `❌ 賣家放款失敗 — 訂單 #${order.orderNo}`,
+        content: `訂單 #${order.orderNo} 的 Stripe 轉帳失敗，請到管理後台手動放款。\n錢額：HKD ${sellerReceivable}\n賣家 ID: ${order.sellerId}\n錯誤：${err.message}\n可重試：${retryable ? '是' : '否'}`,
+      });
+    } catch (notifyErr) {
+      console.warn('[Payout] Admin notification failed:', notifyErr);
+    }
 
     return {
       success: false,

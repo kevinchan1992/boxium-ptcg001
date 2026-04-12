@@ -468,15 +468,17 @@ export const marketplaceRouter = router({
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
       const { url } = await storagePut(key, buffer, input.mimeType);
       // Save proof URL; if order was cancelled, reactivate it to pending_payment so Admin sees it again
+      // P1-4 Fix: Always set alipayProofStatus=pending_review on proof submission
+      // (previously only set for cancelled-retry; now also set for first-time submission)
       const reactivateFields = isCancelledRetry ? {
         orderStatus: 'pending_payment' as const,
         paymentStatus: 'pending' as const,
-        alipayProofStatus: 'pending_review' as const,
       } : {};
       await updateMarketplaceOrder(input.orderId, {
         alipayProofImageUrl: url,
         alipayProofSubmittedAt: new Date(),
         alipayReviewReminderSentAt: null,
+        alipayProofStatus: 'pending_review' as any,
         ...reactivateFields,
       });
       // Notify owner that a new Alipay HK payment proof has been submitted
@@ -1612,6 +1614,20 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      // P1-2 Fix: Validate orderStatus and paymentStatus before confirming
+      // Prevent confirming already-cancelled, already-paid, or non-Alipay orders
+      if (order.paymentMethod !== 'alipay_hk') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不是支付寶 HK 訂單" });
+      }
+      if (order.paymentStatus === 'paid') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `訂單 ${order.orderNo} 已付款確認，無法重複操作` });
+      }
+      if (order.orderStatus === 'cancelled') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `訂單 ${order.orderNo} 已取消，無法確認付款。如買家已重新提交截圖，訂單會自動重新激活` });
+      }
+      if (!['pending_payment', 'payment_received'].includes(order.orderStatus)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `訂單狀態為 ${order.orderStatus}，無法確認付款` });
+      }
       // First-pay-first-served: atomically claim the listing stock before confirming Alipay order
       if (order.listingId) {
         const claimed = await claimListingAsSold(order.listingId, order.quantity ?? 1);
@@ -1795,6 +1811,10 @@ export const marketplaceRouter = router({
       if (order.paymentMethod !== 'alipay_hk' && order.sellerType !== 'seller') {
         throw new TRPCError({ code: "BAD_REQUEST", message: "僅支付寶 HK 訂單或 C2C 訂單可手動標記放款" });
       }
+      // P0-1 Fix: Block payout for disputed orders — must be checked BEFORE orderStatus allow-list
+      if (order.orderStatus === 'disputed') {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單正在爭議處理中，無法放款。請先解決爭議。" });
+      }
       // Additional guard: only allow payout for completed orders
       if (!['completed', 'payment_received', 'shipped', 'delivered'].includes(order.orderStatus)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `訂單狀態為 ${order.orderStatus}，無法標記放款。僅已完成/已付款/已出貨/已送達的訂單可放款。` });
@@ -1841,6 +1861,10 @@ export const marketplaceRouter = router({
           const order = await getMarketplaceOrderById(orderId);
           if (!order) { results.push({ orderId, orderNo: '', success: false, error: '訂單不存在' }); continue; }
           if (order.paymentMethod !== 'alipay_hk') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '非支付寶 HK 訂單' }); continue; }
+          // P1-6 Fix: Block payout for disputed orders
+          if (order.orderStatus === 'disputed') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '訂單正在爭議中，無法放款' }); continue; }
+          // P1-6 Fix: Validate orderStatus before payout
+          if (!['completed', 'payment_received', 'shipped', 'delivered'].includes(order.orderStatus)) { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: `訂單狀態 ${order.orderStatus} 不允許放款` }); continue; }
           if (order.payoutStatus === 'paid') { results.push({ orderId, orderNo: order.orderNo ?? '', success: false, error: '已放款' }); continue; }
           const batchUpdateData: Record<string, any> = {
             payoutStatus: "paid",
@@ -3278,12 +3302,25 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
-      const allowedStatuses = ["shipped", "delivered", "payment_received", "processing", "paid_held"];
+      // P1-7 Fix: Allow 'completed' status within 48-hour buyer protection window
+      const allowedStatuses = ["shipped", "delivered", "payment_received", "processing", "paid_held", "completed"];
       if (!allowedStatuses.includes(order.orderStatus)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單狀態不允許申請爭議" });
       }
       if (order.orderStatus === "disputed") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已在爭議處理中" });
+      }
+      // P1-7 Fix: For 'completed' orders, enforce 48-hour buyer protection window
+      if (order.orderStatus === "completed") {
+        const BUYER_PROTECTION_HOURS = 48;
+        const completedAt = order.completedAt ? new Date(order.completedAt) : null;
+        if (!completedAt) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "訂單已完成，無法確認完成時間，無法申請爭議" });
+        }
+        const protectionDeadline = new Date(completedAt.getTime() + BUYER_PROTECTION_HOURS * 60 * 60 * 1000);
+        if (new Date() > protectionDeadline) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `買家保護期已過（完成後 ${BUYER_PROTECTION_HOURS} 小時內），如有問題請聯絡客服` });
+        }
       }
       // Enforce 7-day dispute window: can only open dispute within 7 days of shipment
       if (order.shippedAt) {
@@ -3548,6 +3585,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
             console.log(`[Dispute] Stripe refund created for order ${order.orderNo}`);
           } catch (err: any) {
             console.error(`[Dispute] Stripe refund failed for order ${order.orderNo}:`, err.message);
+            // P1-3 Fix: Notify admin when Stripe refund fails so it can be handled manually
+            notifyAdmin({
+              title: `❌ Stripe 退款失敗 — 訂單 #${order.orderNo}`,
+              content: `訂單 #${order.orderNo} 的 Stripe 退款失敗，請到 Stripe Dashboard 手動退款。\n錢額：HKD ${order.subtotalHkd}\n買家 ID: ${order.buyerId}\n錯誤：${err.message}`,
+            }).catch(() => {});
           }
         }
         // P1 Fix #5: Track Alipay HK refund status

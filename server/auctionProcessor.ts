@@ -29,6 +29,7 @@ import {
   sendAuctionWonEmail,
   sendAuctionSoldEmail,
   sendAuctionPaymentReminderEmail,
+  notifyAdmin,
 } from "./emailService";
 
 let endingSoonNotified = new Set<number>(); // listing IDs already notified this cycle
@@ -337,8 +338,13 @@ async function finalizeAuction(listing: any): Promise<void> {
       auctionListingId: listing.id,
       auctionWinningBidId: winningBid.id,
     } as any);
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[AuctionProcessor] CRITICAL: Failed to create order for auction ${listing.id} (${orderNo}). Auction marked as ended_sold but no order exists. Manual intervention required.`, err);
+    // P2-2 Fix: Notify admin when auction order creation fails
+    notifyAdmin({
+      title: `❌ 拍賣訂單建立失敗 — 拍賣 #${listing.id}`,
+      content: `拍賣 #${listing.id} 結束後訂單建立失敗，需要手動處理。\n訂單號：${orderNo}\n得標者 ID: ${winningBid.bidderId}\n錢額：HKD ${winAmount}\n錯誤：${err?.message ?? err}`,
+    }).catch(() => {});
     throw err;
   }
 

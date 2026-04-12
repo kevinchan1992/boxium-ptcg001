@@ -8176,3 +8176,32 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 刪除 db.ts 廢棄 helper：getUserDefaultShippingAddress（13 行）
 - [x] 更新 p0-payment-method-restriction.test.ts：createOrder 測試改為 createAlipayOrder + createStripeOrder
 - [x] 移除 marketplace.ts import 中的 getUserDefaultShippingAddress
+
+
+---
+
+## 🔍 審計修復（2026-04-12）
+
+### P0 嚴重問題
+- [x] P0-1: adminManualPayout 缺少 disputed 訂單防護 ✅
+- [x] P0-2: executeSellerPayout 並發雙重放款風險（只檢查 paid，未排除 processing）✅
+- [x] P0-3: finalizeAuction 缺少冪等性保護（auctionListingId 無 UNIQUE 約束）✅
+
+### P1 高優先級問題
+- [x] P1-1: paymentTimeoutCancelScheduler 排除已提交截圖的 Alipay 訂單 ✅
+- [x] P1-2: adminConfirmAlipayPayment 增加 orderStatus 前置驗證 ✅
+- [x] P1-3: adminResolveDispute Stripe 退款失敗時通知管理員 ✅
+- [x] P1-4: submitAlipayProof 首次提交時更新 alipayProofStatus=pending_review ✅
+- [x] P1-5: executeSellerPayout 放款失敗時通知管理員 ✅
+- [x] P1-6: adminBatchManualPayout 缺少 disputed 訂單防護和 orderStatus 前置驗證 ✅
+- [x] P1-7: openDispute 允許 completed 狀態（48 小時冷靜期內）申請爭議 ✅
+
+### P2 中優先級問題
+- [x] P2-1: paymentTimeoutCancelScheduler 支付寶訂單使用獨立超時時間（24 小時）✅
+- [x] P2-2: finalizeAuction 訂單建立失敗時通知管理員 ✅
+- [x] P2-3: adminResolveDispute Stripe 退款失敗時通知管理員（P1-3 一併處理）✅
+- [x] P2-4: executeSellerPayout 失敗時通知管理員 ✅
+- [x] P2-5: adminManualPayout audit log（已存在）✅
+
+### P3 低優先級問題
+- [x] P3-1: payoutHoldScheduler 移除多餘的 ne(orderStatus, 'disputed') 條件 ✅
