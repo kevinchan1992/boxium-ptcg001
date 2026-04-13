@@ -1534,6 +1534,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   const [statusFilter, setStatusFilter] = useState("all");
   const [sellerTypeFilter, setSellerTypeFilter] = useState<'all' | 'platform' | 'seller'>('all');
   const [proofStatusFilter, setProofStatusFilter] = useState<'all' | 'pending_review' | 'rejected'>('all');
+  const [shippingMethodFilter, setShippingMethodFilter] = useState<'all' | 'sf_express' | 'hk_post'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [viewListingId, setViewListingId] = useState<number | null>(null);
@@ -1573,6 +1574,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
     dateTo: qDateTo,
     listingId: listingFilter ?? undefined,
     proofStatus: proofStatusFilter === 'all' ? undefined : proofStatusFilter,
+    shippingMethod: shippingMethodFilter === 'all' ? undefined : shippingMethodFilter,
   });
   const updateStatusMutation = trpc.marketplace.adminUpdateOrderStatus.useMutation({
     onSuccess: () => { toast.success("訂單狀態已更新"); refetch(); setSelectedOrder(null); setTrackingNumber(""); invalidateStats(); },
@@ -1657,6 +1659,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       '手續費 (HKD)': parseFloat(o.platformFeeHkd || '0').toFixed(2),
       '賣家應收 (HKD)': parseFloat(o.sellerReceivableHkd || '0').toFixed(2),
       '訂單日期': new Date(o.createdAt).toLocaleDateString('zh-HK'),
+      '送貨方式': o.shippingMethod === 'sf_express' ? '順豐速運' : o.shippingMethod === 'hk_post' ? '香港郵政' : (o.shippingMethod ?? ''),
       '追蹤號': o.trackingNumber ?? '',
       '收件人': o.shippingName ?? '',
       '收件電話': o.shippingPhone ?? '',
@@ -1730,6 +1733,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
       '手續費 (HKD)': parseFloat(o.platformFeeHkd || '0').toFixed(2),
       '賣家應收 (HKD)': parseFloat(o.sellerReceivableHkd || '0').toFixed(2),
       '訂單日期': new Date(o.createdAt).toLocaleDateString('zh-HK'),
+      '送貨方式': o.shippingMethod === 'sf_express' ? '順豐速運' : o.shippingMethod === 'hk_post' ? '香港郵政' : (o.shippingMethod ?? ''),
       '追蹤號': o.trackingNumber ?? '',
       '收件人': o.shippingName ?? '',
       '收件電話': o.shippingPhone ?? '',
@@ -1777,6 +1781,23 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
               onClick={() => { setSellerTypeFilter(opt.value); setPage(1); }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 sellerTypeFilter === opt.value ? 'bg-[#06038d] text-white' : 'bg-white text-gray-900 hover:bg-gray-50'
+              }`}>{opt.label}</button>
+          ))}
+        </div>
+      </div>
+      {/* Row 1d: Shipping Method filter */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-600 font-medium">送貨方式：</span>
+        <div className="flex rounded-lg overflow-hidden border border-gray-200">
+          {([
+            { value: 'all', label: '全部', activeClass: 'bg-[#06038d] text-white' },
+            { value: 'sf_express', label: '🚚 順豐', activeClass: 'bg-orange-500 text-white' },
+            { value: 'hk_post', label: '📮 香港郵政', activeClass: 'bg-green-600 text-white' },
+          ] as const).map(opt => (
+            <button key={opt.value}
+              onClick={() => { setShippingMethodFilter(opt.value); setPage(1); }}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                shippingMethodFilter === opt.value ? opt.activeClass : 'bg-white text-gray-900 hover:bg-gray-50'
               }`}>{opt.label}</button>
           ))}
         </div>

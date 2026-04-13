@@ -1489,9 +1489,10 @@ export const marketplaceRouter = router({
       payoutFilter: z.string().optional(), // 'pending_alipay' for unpaid alipay orders
       listingId: z.number().int().optional(), // filter by specific listing
       proofStatus: z.string().optional(), // 'pending_review' | 'approved' | 'rejected'
+      shippingMethod: z.string().optional(), // 'sf_express' | 'hk_post'
     }))
     .query(async ({ input }) => {
-      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter, input.listingId, input.proofStatus);
+      return getAdminOrders(input.page, input.pageSize, input.status, input.sellerType === 'all' ? undefined : input.sellerType, input.dateFrom, input.dateTo, input.payoutFilter, input.listingId, input.proofStatus, input.shippingMethod);
     }),
 
   // Fix historical platform order fees (set platformFeeHkd=0, sellerReceivableHkd=subtotalHkd for all platform orders)
@@ -1630,7 +1631,7 @@ export const marketplaceRouter = router({
       try {
         const { sendOrderEmail, buildOrderPaymentReceivedBuyerEmail, getOrderEmailData } = await import("../emailService");
         const emailData = await getOrderEmailData(order);
-        const { subject: bs, html: bh } = buildOrderPaymentReceivedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined });
+        const { subject: bs, html: bh } = buildOrderPaymentReceivedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, listingId: order.listingId ?? undefined, shippingMethod: order.shippingMethod ?? undefined });
         await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_paid_buyer_${order.id}` });
       } catch (e: any) { console.warn("[adminConfirmAlipay] buyer email failed:", e.message); }
       // AT1: Audit log

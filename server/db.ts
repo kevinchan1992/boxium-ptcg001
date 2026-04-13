@@ -3516,7 +3516,7 @@ export async function getBuyerOrders(buyerId: number) {
     .orderBy(desc(marketplaceOrders.createdAt));
   return rows;
 }
-export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string, payoutFilter?: string, listingId?: number, proofStatus?: string) {
+export async function getAdminOrders(page = 1, pageSize = 20, status?: string, sellerType?: string, dateFrom?: string, dateTo?: string, payoutFilter?: string, listingId?: number, proofStatus?: string, shippingMethod?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const offset = (page - 1) * pageSize;
@@ -3555,6 +3555,10 @@ export async function getAdminOrders(page = 1, pageSize = 20, status?: string, s
   // Optional proofStatus filter: 'pending_review' | 'approved' | 'rejected'
   if (proofStatus) {
     conditions.push(eq(marketplaceOrders.alipayProofStatus, proofStatus as any));
+  }
+  // Optional shippingMethod filter: 'sf_express' | 'hk_post'
+  if (shippingMethod) {
+    conditions.push(eq(marketplaceOrders.shippingMethod, shippingMethod as any));
   }
   // Exclude auction orders — auctions have their own order management in the Auction Admin tab
   // This join-based filter ensures only direct-purchase (non-auction) orders appear here

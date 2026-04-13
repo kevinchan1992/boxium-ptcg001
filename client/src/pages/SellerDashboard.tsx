@@ -3887,13 +3887,26 @@ export default function SellerDashboard() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">追蹤號碼 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">追蹤號碼 {shipForm.shippingMethod !== 'hk_post' && <span className="text-red-500">*</span>}</Label>
               <Input
                 className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
-                placeholder="例：SF1234567890"
+                placeholder={shipForm.shippingMethod === 'hk_post' ? '平郵可留空（如有追蹤號可填入）' : '例：SF1234567890'}
                 value={shipForm.trackingNumber}
                 onChange={(e) => setShipForm(f => ({ ...f, trackingNumber: e.target.value }))}
               />
+              {/* Tracking link preview */}
+              {shipForm.trackingNumber.trim() && (() => {
+                const carrier = CARRIERS.find(c => c.value === shipForm.shippingMethod);
+                if (!carrier) return null;
+                const url = carrier.trackingUrl + encodeURIComponent(shipForm.trackingNumber.trim());
+                return (
+                  <a href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#06038d] hover:underline mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    點擊預覽追蹤連結
+                  </a>
+                );
+              })()}
             </div>
             {/* Shipping proof image upload */}
             <div className="space-y-1.5">
@@ -3959,7 +3972,7 @@ export default function SellerDashboard() {
             <Button variant="outline" className="border-red-400 text-red-600 hover:bg-red-50" onClick={() => setShipDialog(d => ({ ...d, open: false }))}>{t("seller.auctions.editRejected.cancel")}</Button>
             <Button
               className="bg-[#06038d] hover:bg-[#0804b8] text-white"
-              disabled={!shipForm.shippingMethod || !shipForm.trackingNumber || !shipForm.shippingImageUrl || markShippedMutation.isPending || shipImageUploading}
+              disabled={!shipForm.shippingMethod || (shipForm.shippingMethod !== 'hk_post' && !shipForm.trackingNumber) || !shipForm.shippingImageUrl || markShippedMutation.isPending || shipImageUploading}
               onClick={() => markShippedMutation.mutate({
                 orderId: shipDialog.orderId,
                 shippingMethod: shipForm.shippingMethod,

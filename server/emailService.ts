@@ -204,16 +204,26 @@ export interface OrderEmailData {
   trackingNo?: string;
   note?: string;
   siteUrl?: string;
+  shippingMethod?: string; // 'sf_express' | 'hk_post'
 }
 
 /** Order confirmed / payment received — to buyer */
 export function buildOrderConfirmedEmail(data: OrderEmailData): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `✅ 訂單確認 — ${data.orderNo}`;
+  const shippingMethodLabel = data.shippingMethod === 'sf_express'
+    ? '順豐速運（運費到付）'
+    : data.shippingMethod === 'hk_post'
+    ? '香港郵政（平郵）'
+    : null;
+  const shippingBlock = shippingMethodLabel
+    ? `<p style="background:#e8f4fd;border-left:4px solid #06038d;padding:10px 14px;border-radius:4px;margin:12px 0;font-size:14px;color:#333;"><strong>📦 送貨方式：</strong>${shippingMethodLabel}</p>`
+    : '';
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">訂單已確認 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">感謝您的購買！您的付款已成功，賣家將盡快為您處理訂單。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
+    ${shippingBlock}
     <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您。如有任何問題，請透過平台聯絡賣家。</p>
     ${ctaButton("查看訂單", `${siteUrl}/orders`)}
   `);
@@ -798,10 +808,19 @@ export function buildOrderPaymentReceivedSellerEmail(data: OrderEmailData): { su
 export function buildOrderPaymentReceivedBuyerEmail(data: OrderEmailData): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `✅ 付款確認 — 訂單 ${data.orderNo} 已進入處理中`;
+  const shippingMethodLabel = data.shippingMethod === 'sf_express'
+    ? '順豐速運（運費到付）'
+    : data.shippingMethod === 'hk_post'
+    ? '香港郵政（平郵）'
+    : null;
+  const shippingBlock = shippingMethodLabel
+    ? `<p style="background:#e8f4fd;border-left:4px solid #06038d;padding:10px 14px;border-radius:4px;margin:12px 0;font-size:14px;color:#333;"><strong>📦 送貨方式：</strong>${shippingMethodLabel}</p>`
+    : '';
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">付款已確認 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">您的付款已成功確認！賣家將盡快為您安排出貨。</p>
     ${orderInfoBlock(data.orderNo, data.itemName, data.priceHkd, data.listingId)}
+    ${shippingBlock}
     <p style="color:#555;font-size:14px;">我們會在訂單出貨後再次通知您，請留意追蹤號碼。如有任何問題，請透過平台聯絡賣家。</p>
     ${ctaButton("查看訂單詳情", `${siteUrl}/orders/${data.orderNo}`)}
   `);

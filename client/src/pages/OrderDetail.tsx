@@ -375,6 +375,7 @@ function useAutoCompleteCountdown(autoCompleteAt: Date | string | null | undefin
 // Carrier tracking URL mapping
 const CARRIER_TRACKING: Record<string, { label: string; url: string | null }> = {
   sf_express: { label: "順豐速運 (SF Express)", url: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
+  hk_post: { label: "香港郵政 (HK Post)", url: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
   hkpost: { label: "香港郵政 (HK Post)", url: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
   dhl: { label: "DHL", url: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=" },
   fedex: { label: "FedEx", url: "https://www.fedex.com/fedextrack/?trknbr=" },
