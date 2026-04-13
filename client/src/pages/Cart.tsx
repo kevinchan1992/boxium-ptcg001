@@ -949,6 +949,7 @@ function CheckoutDialog({
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
   const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [alipayOrderNos, setAlipayOrderNos] = useState<string[]>([]);
   // Step 4: Payment proof upload
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -1731,8 +1732,8 @@ function CheckoutDialog({
                     <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" disabled={hasSellerItems} />
                     <Label htmlFor="alipay_hk2" className={`flex-1 min-w-0 ${hasSellerItems ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       <div className="flex items-center gap-2 flex-nowrap">
-                        <CreditCard className="w-4 h-4 text-gray-400 shrink-0" />
-                        <span className="font-semibold text-sm text-gray-500 shrink-0">支付寶 HK（AlipayHK）</span>
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-5 w-auto shrink-0 object-contain" style={{maxWidth:'72px'}} />
+                        <span className="font-semibold text-sm text-gray-500 shrink-0">支付寶 HK</span>
                         {hasSellerItems && (
                           <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">不可用</span>
                         )}
@@ -1751,7 +1752,7 @@ function CheckoutDialog({
                     <RadioGroupItem value="stripe" id="stripe2" className="mt-0.5" />
                     <Label htmlFor="stripe2" className="cursor-pointer flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-nowrap">
-                        <CreditCard className="w-4 h-4 text-[#06038D] shrink-0" />
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/visa-mastercard-logo_9a6481e0.png" alt="Visa Mastercard" className="h-5 w-auto shrink-0 object-contain" style={{maxWidth:'72px'}} />
                         <span className="font-semibold text-sm text-gray-800 shrink-0">信用卡（Stripe）</span>
                         {hasSellerItems && (
                           <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">推薦</span>
@@ -1942,9 +1943,32 @@ function CheckoutDialog({
             <Button
               variant="outline"
               className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white"
-              onClick={() => setCheckoutStep((checkoutStep - 1) as 1 | 2 | 3 | 4 | 5)}
+              onClick={() => {
+                // If on step 2 and address has been filled, show confirmation
+                const hasFilledAddress = checkoutStep === 2 && (
+                  form.sfStationCode || form.recipientName || form.recipientPhone || form.manualAddress || form.hkPostAddress
+                );
+                if (hasFilledAddress) {
+                  setShowBackConfirm(true);
+                } else {
+                  setCheckoutStep((checkoutStep - 1) as 1 | 2 | 3 | 4 | 5);
+                }
+              }}
               disabled={isProcessing}
             >上一步</Button>
+          )}
+          {/* Back confirmation dialog */}
+          {showBackConfirm && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40" onClick={() => setShowBackConfirm(false)}>
+              <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                <h3 className="text-base font-bold text-gray-900 mb-2">返回上一步？</h3>
+                <p className="text-sm text-gray-600 mb-5">已填寫的送貨資料將不會保留，確定要返回送貨方式選擇頁面嗎？</p>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1 border-gray-200 text-gray-700 bg-white" onClick={() => setShowBackConfirm(false)}>繼續填寫</Button>
+                  <Button className="flex-1 font-bold" style={{background:'#06038D',color:'#fff'}} onClick={() => { setShowBackConfirm(false); setCheckoutStep(1); }}>確定返回</Button>
+                </div>
+              </div>
+            </div>
           )}
           {checkoutStep === 1 && (
             <Button
