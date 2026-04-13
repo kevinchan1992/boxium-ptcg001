@@ -32,6 +32,7 @@ import * as db from './db';
 import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
 import { getRecentlyViewedCardIds } from './db';
+import { computeRecordHash } from './utils/recordHash';
 
 // ─── Configuration (v7.3 - Higher Parallelism) ──────────────
 const CONFIG = {
@@ -200,11 +201,22 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
         const groupCounters = new Map<string, number>();
         const records = priceHistory.map((entry) => {
           const soldAtStr = entry.soldAt ? entry.soldAt.toISOString().slice(0, 10) : 'unknown';
-          const grade = productType === 'single_card' ? (entry.normalisedGrade ?? 'null') : 'null';
+          const gradeNorm = productType === 'single_card' ? (entry.normalisedGrade ?? null) : null;
           const jpyPrice = entry.jpyPrice ?? entry.price;
-          const groupKey = `${soldAtStr}|${grade}|${jpyPrice}`;
+          // Use normalised grade string for groupKey (null → 'null' for key only)
+          const gradeKey = gradeNorm ?? 'null';
+          const groupKey = `${soldAtStr}|${gradeKey}|${jpyPrice}`;
           const pos = groupCounters.get(groupKey) ?? 0;
           groupCounters.set(groupKey, pos + 1);
+          // Compute stable recordHash for idempotent upsert
+          const recordHash = computeRecordHash({
+            cardId: product.id,
+            source: 'snkrdunk',
+            grade: gradeNorm,
+            soldAt: entry.soldAt,
+            jpyPrice,
+            sourcePosition: pos,
+          });
           return {
             cardId: product.id,
             source: "snkrdunk" as const,
@@ -212,11 +224,12 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
             currency: "HKD",
             jpyPrice,
             sourcePosition: pos, // Relative position within same (soldAt, grade, jpyPrice) group
-            grade: productType === 'single_card' ? (entry.normalisedGrade ?? null) : null,
+            grade: gradeNorm,
             quantity: productType === 'sealed_product' ? (entry.quantity || null) : null,
             productType,
             soldAt: entry.soldAt,
             listingUrl: product.sourceUrl,
+            recordHash,
           };
         });
         
@@ -255,16 +268,27 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
         });
 
         // Batch insert in chunks of 50 to avoid query size limits.
-        // The UNIQUE INDEX (cardId, source, grade, soldAt, jpyPrice, sourcePosition) handles deduplication.
-        // onDuplicateKeyUpdate with isSuspectedBulk updates the flag on re-runs.
+        // Deduplication strategy (3 layers):
+        //   1. recordHash UNIQUE INDEX: primary idempotent key (stable across re-runs)
+        //   2. uniq_price_card_source_grade_soldAt_jpyPrice_pos: legacy fallback UNIQUE INDEX
+        //   3. onDuplicateKeyUpdate: updates isSuspectedBulk + recordHash without inserting duplicate
+        // Pre-deduplicate within this batch by recordHash to avoid sending duplicate rows
+        // in the same INSERT statement (MySQL rejects batches with duplicate UNIQUE keys)
         const { sql } = await import('drizzle-orm');
-        for (let i = 0; i < flaggedRecords.length; i += 50) {
-          const chunk = flaggedRecords.slice(i, i + 50);
+        const seenHashes = new Set<string>();
+        const dedupedRecords = flaggedRecords.filter(rec => {
+          if (!rec.recordHash) return true; // No hash → let DB handle it
+          if (seenHashes.has(rec.recordHash)) return false;
+          seenHashes.add(rec.recordHash);
+          return true;
+        });
+        for (let i = 0; i < dedupedRecords.length; i += 50) {
+          const chunk = dedupedRecords.slice(i, i + 50);
           try {
             await database
               .insert(priceHistoryTable)
               .values(chunk)
-              .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)` } });
+              .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)`, recordHash: sql`VALUES(recordHash)` } });
           } catch (insertErr: any) {
             // If batch fails, fall back to individual inserts with no-op dedup
             for (const record of chunk) {
@@ -272,14 +296,13 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
                 await database
                   .insert(priceHistoryTable)
                   .values(record)
-                  .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)` } });
+                  .onDuplicateKeyUpdate({ set: { isSuspectedBulk: sql`VALUES(isSuspectedBulk)`, recordHash: sql`VALUES(recordHash)` } });
               } catch (e) {
                 // Skip silently
               }
             }
           }
-        }
-      }
+        }      }
     }
     
     // Step 3: Update data source status (1 DB op)

@@ -123,6 +123,9 @@ export const priceHistory = mysqlTable("priceHistory", {
   listingUrl: text("listingUrl"), // URL to the listing
   soldAt: timestamp("soldAt"), // Transaction timestamp
   isSuspectedBulk: boolean("isSuspectedBulk").default(false).notNull(), // Auto-flagged: price exceeds 4x the 30-day median for same grade → likely a bulk/lot transaction
+  // SHA-256 stable deduplication key: hex(sha256(cardId|source|grade|soldAtDate|jpyPrice|sourcePosition))
+  // Computed deterministically from normalised fields; NULL until backfill migration runs.
+  recordHash: varchar("recordHash", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   // UNIQUE index to prevent duplicate price history records
@@ -136,6 +139,8 @@ export const priceHistory = mysqlTable("priceHistory", {
     table.jpyPrice,
     table.sourcePosition
   ),
+  // Secondary UNIQUE index on recordHash for fast idempotent upsert (NULL values are excluded from uniqueness)
+  uniqueRecordHash: uniqueIndex("uniq_price_record_hash").on(table.recordHash),
   // Composite index for trending calculations (cardId + soldAt + source + grade)
   // Optimizes queries that filter by cardId, time range, source, and grade
   cardIdSoldAtSourceGradeIdx: index("cardId_soldAt_source_grade_idx").on(

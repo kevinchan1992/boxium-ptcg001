@@ -8224,3 +8224,18 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 前端：香港郵政選項顯示說明文字「需額外支付 HK$10 郵費」
 - [ ] 後端：createStripeOrder / createAlipayOrder 加入香港郵政 $10 運費邏輯
 - [ ] 後端：移除面交（meetup）相關的訂單建立邏輯
+
+---
+
+## ✅ SNKRDUNK priceHistory 重複入庫三層防重修復
+
+- [x] 新增 recordHash 欄位到 priceHistory schema（VARCHAR 64, UNIQUE INDEX）
+- [x] 建立 server/utils/recordHash.ts（SHA-256 穩定唯一鍵，grade 標準化 + jpyPrice 四捨五入）
+- [x] 修復爬取層：persistentSnkrdunkBatchUpdate 加入 recordHash 計算和批量去重（seenHashes Set）
+- [x] 修復入庫層：addPriceHistory 加入 recordHash 快速查重 + onDuplicateKeyUpdate 回填
+- [x] 修復查詢層：getPriceHistory 加入雙重去重（recordHash + legacy key fallback）
+- [x] 執行 SQL migration：加入 recordHash 欄位和 uniq_price_record_hash UNIQUE INDEX
+- [x] 執行 cleanup-duplicate-price-history.mjs：清理 1 筆重複資料，回填 50,000 筆 recordHash
+- [x] 執行 backfill-record-hash.mjs（背景）：回填剩餘 1,077,875 筆 recordHash（進行中）
+- [x] 撰寫 server/recordHash.dedup.test.ts：17 個測試全部通過
+- [x] 保存 checkpoint

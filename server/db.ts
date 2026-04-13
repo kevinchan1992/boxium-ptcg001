@@ -359,14 +359,44 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
   // 排除疑似批量成交的記錄（超過同評級中位數 4 倍）
   conditions.push(eq(priceHistory.isSuspectedBulk, false));
 
-  const result = await db
+  // Fetch more than needed so we can deduplicate in-memory
+  const fetchLimit = limit * 3;
+  const rows = await db
     .select()
     .from(priceHistory)
     .where(and(...conditions))
     .orderBy(desc(priceHistory.soldAt))
-    .limit(limit);
+    .limit(fetchLimit);
 
-  return result;
+  // Query-layer deduplication: remove rows that share the same recordHash
+  // (catches any duplicates that slipped through the DB UNIQUE INDEX due to
+  // legacy rows without recordHash, or race conditions during parallel inserts)
+  const seenHashes = new Set<string>();
+  const seenLegacyKeys = new Set<string>();
+  const deduped = rows.filter(row => {
+    // Primary dedup: by recordHash (preferred, stable)
+    if (row.recordHash) {
+      if (seenHashes.has(row.recordHash)) return false;
+      seenHashes.add(row.recordHash);
+      return true;
+    }
+    // Fallback dedup for legacy rows without recordHash:
+    // use (cardId|source|grade|soldAtDate|jpyPrice|sourcePosition) as key
+    const soldAtDate = row.soldAt ? row.soldAt.toISOString().slice(0, 10) : '__nodate__';
+    const legacyKey = [
+      row.cardId,
+      row.source,
+      row.grade ?? '__none__',
+      soldAtDate,
+      row.jpyPrice ?? 0,
+      row.sourcePosition ?? 0,
+    ].join('|');
+    if (seenLegacyKeys.has(legacyKey)) return false;
+    seenLegacyKeys.add(legacyKey);
+    return true;
+  });
+
+  return deduped.slice(0, limit);
 }
 
 export async function getPriceStatistics(cardId: number, source?: string, grade?: string) {
@@ -962,39 +992,33 @@ export async function addPriceHistory(data: {
   productType?: "single_card" | "sealed_product"; // Product type
   soldAt?: Date;
   listingUrl?: string;
+  recordHash?: string; // Pre-computed SHA-256 dedup key (optional, computed here if absent)
 }) {
   const db = await getDb();
   if (!db) return null;
-
-  // Deduplication: rely on the database UNIQUE INDEX
-  // (cardId, source, grade, soldAt, jpyPrice, sourcePosition)
-  // sourcePosition differentiates multiple transactions on the same day with the same grade and price.
-  // onDuplicateKeyUpdate is a no-op that silently ignores constraint violations.
-  //
-  // IMPORTANT: When sourcePosition is not provided (defaults to 0), apply application-level
-  // deduplication to prevent inserting duplicates of existing records that may have
-  // been stored with a different sourcePosition in a previous scrape run.
+  const { computeRecordHash } = await import('./utils/recordHash');
   const sourcePosition = data.sourcePosition ?? 0;
-  if (sourcePosition === 0 && data.source === 'snkrdunk' && data.soldAt && data.jpyPrice != null) {
-    // Check if any record with same (cardId, source, grade, soldAt, jpyPrice) already exists
-    // regardless of sourcePosition — this catches cross-run duplicates
+  // Compute stable recordHash for idempotent upsert
+  const recordHash = data.recordHash ?? computeRecordHash({
+    cardId: data.cardId,
+    source: data.source,
+    grade: data.grade,
+    soldAt: data.soldAt,
+    jpyPrice: data.jpyPrice,
+    sourcePosition,
+  });
+  // Fast-path: check recordHash first (O(1) index lookup) before inserting
+  if (data.source === 'snkrdunk') {
     const existing = await db
       .select({ id: priceHistory.id })
       .from(priceHistory)
-      .where(and(
-        eq(priceHistory.cardId, data.cardId),
-        eq(priceHistory.source, data.source),
-        data.grade ? eq(priceHistory.grade, data.grade) : sql`${priceHistory.grade} IS NULL`,
-        eq(priceHistory.soldAt, data.soldAt),
-        eq(priceHistory.jpyPrice, data.jpyPrice),
-      ))
+      .where(eq(priceHistory.recordHash, recordHash))
       .limit(1);
     if (existing.length > 0) {
       // Already exists — skip insert to avoid duplicate
       return null;
     }
   }
-
   const result = await db.insert(priceHistory).values({
     cardId: data.cardId,
     source: data.source,
@@ -1007,10 +1031,11 @@ export async function addPriceHistory(data: {
     productType: data.productType || "single_card", // Default to single_card
     soldAt: data.soldAt,
     listingUrl: data.listingUrl,
+    recordHash,
   }).onDuplicateKeyUpdate({
-    set: { id: sql`id` }, // No-op: keep existing record unchanged
+    // Backfill recordHash on legacy rows that were inserted without it
+    set: { id: sql`id`, recordHash: sql`VALUES(recordHash)` },
   });
-
   return result;
 }
 
