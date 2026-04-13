@@ -1242,7 +1242,7 @@ function CheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[92vh]">
+        <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[96vh] mt-2">
         <VisuallyHidden><DialogTitle>{t("cart.checkoutDialog.title")}</DialogTitle></VisuallyHidden>
         {/* Header - /seller style */}
         <div className="px-5 pt-5 pb-4 flex-shrink-0" style={{ backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00' }}>
@@ -1722,43 +1722,49 @@ function CheckoutDialog({
                   className="space-y-2"
                 >
                   {/* Alipay HK option — disabled when cart has seller items */}
-                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 transition-all ${
+                  <div className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                     hasSellerItems
                       ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
                       : form.paymentMethod === "alipay_hk"
                         ? "border-[#06038D] bg-[#06038D]/5 cursor-pointer"
                         : "border-gray-200 hover:border-[#06038D]/40 cursor-pointer"
                   }`}>
-                    <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" disabled={hasSellerItems} />
+                    <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="shrink-0" disabled={hasSellerItems} />
                     <Label htmlFor="alipay_hk2" className={`flex-1 min-w-0 ${hasSellerItems ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-5 w-auto shrink-0 object-contain" style={{maxWidth:'72px'}} />
-                        <span className="font-semibold text-sm text-gray-500 shrink-0">支付寶 HK</span>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-6 w-auto object-contain" style={{maxWidth:'80px'}} />
+                        <div className="text-center">
+                          <div className="font-semibold text-sm text-gray-700">支付寶 HK</div>
+                          <div className="text-xs text-gray-400">AlipayHK</div>
+                        </div>
                         {hasSellerItems && (
-                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">不可用</span>
+                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap">不可用</span>
                         )}
                       </div>
                       {hasSellerItems ? (
-                        <p className="text-xs text-amber-600 mt-0.5 ml-6">包含個人賣家商品，不可使用此付款方式</p>
+                        <p className="text-xs text-amber-600 mt-1.5 text-center">包含個人賣家商品，不可使用此付款方式</p>
                       ) : (
-                        <p className="text-xs text-gray-500 mt-0.5 ml-6">確認後跳轉至付款二維碼頁面，請用 AlipayHK App 揃描完成付款</p>
+                        <p className="text-xs text-gray-500 mt-1.5 text-center">揃描二維碼完成付款</p>
                       )}
                     </Label>
                   </div>
                   {/* Stripe option — always available */}
-                  <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                  <div className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     form.paymentMethod === "stripe" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
                   }`}>
-                    <RadioGroupItem value="stripe" id="stripe2" className="mt-0.5" />
+                    <RadioGroupItem value="stripe" id="stripe2" className="shrink-0" />
                     <Label htmlFor="stripe2" className="cursor-pointer flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/visa-mastercard-logo_9a6481e0.png" alt="Visa Mastercard" className="h-5 w-auto shrink-0 object-contain" style={{maxWidth:'72px'}} />
-                        <span className="font-semibold text-sm text-gray-800 shrink-0">信用卡（Stripe）</span>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/visa-mastercard-logo_9a6481e0.png" alt="Visa Mastercard" className="h-6 w-auto object-contain" style={{maxWidth:'80px'}} />
+                        <div className="text-center">
+                          <div className="font-semibold text-sm text-gray-800">信用卡</div>
+                          <div className="text-xs text-gray-400">Stripe</div>
+                        </div>
                         {hasSellerItems && (
-                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">推薦</span>
+                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full whitespace-nowrap">推薦</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 ml-6">支援 Visa、Mastercard 等主要信用卡</p>
+                      <p className="text-xs text-gray-500 mt-1.5 text-center">支援 Visa、Mastercard 等主要信用卡</p>
                     </Label>
                   </div>
                 </RadioGroup>
