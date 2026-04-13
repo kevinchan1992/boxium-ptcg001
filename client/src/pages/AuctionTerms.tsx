@@ -407,12 +407,19 @@ export default function AuctionTerms() {
         {/* Section 6: Shipping */}
         <Section id="shipping" icon={<Package className="w-5 h-5" />} title="六、交收安排" isOpen={openSectionId === "shipping"} onToggle={handleToggle}>
           <div className="space-y-3">
-            <p>買賣雙方須在訂單確認後，透過平台訊息功能協商交收方式。本平台目前支援以下交收方式：</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <p>本平台採用郵寄方式進行交收，<strong>不支援面交或門市自取</strong>。買家在結帳時選擇以下寄送方式：</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { icon: "🤝", title: "面交", desc: "雙方協定地點及時間，親身交收。建議選擇公共場所。" },
-                { icon: "📦", title: "郵寄", desc: "賣家負責安全包裝及寄出，運費由雙方協議承擔。" },
-                { icon: "🏪", title: "門市自取", desc: "如賣家設有實體門市，買家可預約自取。" },
+                {
+                  icon: "🚚",
+                  title: "順豐速運（運費到付）",
+                  desc: "賣家負責安全包裝及寄出，運費由順豐速運收取，買家於取件時支付。運費金額視貨件重量及地址而定。"
+                },
+                {
+                  icon: "📮",
+                  title: "香港郵政（平郵）",
+                  desc: "賣家負責安全包裝及寄出，運費 HK$10 將自動計入訂單總額，以平郵方式寄出。"
+                },
               ].map((m, i) => (
                 <div key={i} className="rounded-xl p-3.5 border border-blue-100 bg-blue-50">
                   <div className="text-2xl mb-1.5">{m.icon}</div>
@@ -422,7 +429,7 @@ export default function AuctionTerms() {
               ))}
             </div>
             <InfoBox type="warning">
-              郵寄交收時，賣家建議使用掛號或有追蹤號碼的寄件方式，以保障雙方利益。如商品在運送途中損毀或遺失，責任歸屬由雙方協商解決，平台不承擔相關責任。
+              本平台不支援面交及門市自取。如商品在運送途中損毀或遺失，責任歸屬由雙方協商解決，平台不承擔相關責任。
             </InfoBox>
           </div>
         </Section>
