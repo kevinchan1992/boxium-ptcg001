@@ -11,7 +11,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, adminProcedure } from "../_core/trpc";
 import {
   getSecurityLog,
   getBlockedIpSummaries,
@@ -25,15 +25,6 @@ import {
   getClientIp,
 } from "../middleware/security";
 import { getDb as getDbAsync } from "../db";
-
-/** Admin-only guard */
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (process.env.NODE_ENV === "development") return next({ ctx: { ...ctx, user: ctx.user ?? { id: 0, role: "admin" as const, email: "", name: "" } } });
-  if (!ctx.user || ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required." });
-  }
-  return next({ ctx });
-});
 
 export const securityRouter = router({
   /** Get security stats summary (event counts by type, last 1h/24h) */
