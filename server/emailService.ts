@@ -234,11 +234,23 @@ export function buildOrderConfirmedEmail(data: OrderEmailData): { subject: strin
 export function buildOrderShippedEmail(data: OrderEmailData & { shippingMethodName?: string; shippingImageUrl?: string }): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
   const subject = `📦 訂單已出貨 — ${data.orderNo}`;
+  // Build tracking URL based on shippingMethod
+  const CARRIER_TRACKING_URLS: Record<string, string> = {
+    sf_express: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/",
+    hk_post: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=",
+    dhl: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=",
+    fedex: "https://www.fedex.com/fedextrack/?trknbr=",
+    ups: "https://www.ups.com/track?tracknum=",
+  };
+  const trackingUrl = (data.shippingMethod && data.trackingNo && CARRIER_TRACKING_URLS[data.shippingMethod])
+    ? CARRIER_TRACKING_URLS[data.shippingMethod] + encodeURIComponent(data.trackingNo)
+    : null;
   const trackingBlock = (data.trackingNo || data.shippingMethodName)
-    ? `<p style="background:#fff8e1;border-left:4px solid ${BRAND_YELLOW};padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;">
-        ${data.shippingMethodName ? `<strong>物流公司：</strong>${data.shippingMethodName}<br/>` : ''}
-        ${data.trackingNo ? `<strong>追蹤號碼：</strong>${data.trackingNo}` : ''}
-       </p>`
+    ? `<div style="background:#fff8e1;border-left:4px solid ${BRAND_YELLOW};padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;">
+        ${data.shippingMethodName ? `<p style="margin:0 0 6px;"><strong>物流公司：</strong>${data.shippingMethodName}</p>` : ''}
+        ${data.trackingNo ? `<p style="margin:0 0 6px;"><strong>追蹤號碼：</strong><span style="font-family:monospace;font-weight:bold;">${data.trackingNo}</span></p>` : ''}
+        ${trackingUrl ? `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:4px;padding:6px 14px;background:#06038d;color:#ffffff;text-decoration:none;border-radius:4px;font-size:13px;font-weight:600;">🔍 點擊查詢追蹤狀態</a>` : ''}
+       </div>`
     : "";
   const proofBlock = data.shippingImageUrl
     ? `<p style="margin:8px 0 4px;font-size:13px;color:#666;">出貨憑證：</p>

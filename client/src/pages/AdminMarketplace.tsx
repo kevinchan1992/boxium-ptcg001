@@ -2009,7 +2009,17 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                   <p className="text-xs font-semibold text-gray-500 mb-1.5">賣家資料</p>
                   <p className="text-sm font-medium text-gray-900">{order.sellerType === 'platform' ? '平台自有商品' : (order.sellerName ?? '不明')}</p>
                   <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
-                    {order.shippingMethod && <p>物流：{order.shippingMethod === 'sf_express' ? '順豐' : order.shippingMethod === 'hk_post' ? '香港郵政' : order.shippingMethod === 'pickup' ? '自取' : order.shippingMethod}</p>}
+                    {order.shippingMethod && (
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        order.shippingMethod === 'sf_express'
+                          ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                          : order.shippingMethod === 'hk_post'
+                          ? 'bg-green-100 text-green-700 border border-green-200'
+                          : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      }`}>
+                        {order.shippingMethod === 'sf_express' ? '🚚 順豐' : order.shippingMethod === 'hk_post' ? '📮 香港郵政' : order.shippingMethod === 'pickup' ? '🏠 自取' : order.shippingMethod}
+                      </span>
+                    )}
                     {order.trackingNumber && <p>追蹤號：{order.trackingNumber}</p>}
                     {order.shippedAt && <p>出貨日：{new Date(order.shippedAt).toLocaleDateString('zh-HK')}</p>}
                   </div>

@@ -1182,6 +1182,7 @@ export const marketplaceRouter = router({
           itemName: emailData.itemName,
           priceHkd: emailData.priceHkd,
           trackingNo: input.trackingNo,
+          shippingMethod: input.shippingMethod ?? undefined,
           shippingMethodName,
           shippingImageUrl: input.shippingImageUrl,
         });
