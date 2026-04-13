@@ -930,7 +930,7 @@ export default function OrderDetail() {
     );
   }
 
-  const { order, items, listing, review, isBuyer, isSeller, sellerPhone, buyerContactPhone, isMeetup } = data;
+  const { order, items, listing, review, isBuyer, isSeller } = data;
 
   const shippingAddr = (() => {
     if (!order.shippingAddress) return null;
@@ -978,11 +978,7 @@ export default function OrderDetail() {
             <div className="text-center md:text-left pb-1 flex-1">
               <div className="flex items-center gap-2 justify-center md:justify-start">
                 <h1 className="text-2xl md:text-3xl font-bold text-white">{t("orderDetail.orderDetails")}</h1>
-                {order.shippingMethod === 'meetup' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-400 text-amber-900 flex-shrink-0">
-                    🤝 面交
-                  </span>
-                )}
+
               </div>
               <button
                 className="text-white/70 text-sm font-mono flex items-center gap-1 mt-1 hover:text-white transition-colors mx-auto md:mx-0"
@@ -1271,7 +1267,6 @@ export default function OrderDetail() {
               shippedAt: order.shippedAt,
               deliveredAt: (order as any).deliveredAt,
               completedAt: order.buyerConfirmedAt,
-              meetupCompletedAt: order.buyerConfirmedAt,
             }}
           />
         </div>
@@ -1452,44 +1447,7 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Meetup Contact Info - shown after order completed */}
-        {isMeetup && isCompleted && (isBuyer ? sellerPhone : buyerContactPhone) && (
-          <div className="bg-white rounded-xl border-2 shadow-sm p-4" style={{ borderColor: '#FEDD00' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#FEDD00' }}>
-                <Phone className="w-3.5 h-3.5" style={{ color: '#06038D' }} />
-              </div>
-              <h2 className="font-bold text-sm" style={{ color: '#06038D' }}>面交聯絡資料</h2>
-            </div>
-            <div className="space-y-2 text-sm">
-              {isBuyer && sellerPhone && (
-                <div className="flex items-center justify-between p-3 bg-[#06038D]/5 rounded-lg">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">賣家電話</p>
-                    <p className="font-bold text-[#06038D] text-base">{sellerPhone}</p>
-                  </div>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(sellerPhone!); toast.success('已複製賣家電話'); }}
-                    className="text-xs text-[#06038D] underline hover:no-underline"
-                  >{t("orderDetail.copy")}</button>
-                </div>
-              )}
-              {isSeller && buyerContactPhone && (
-                <div className="flex items-center justify-between p-3 bg-[#06038D]/5 rounded-lg">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">買家電話</p>
-                    <p className="font-bold text-[#06038D] text-base">{buyerContactPhone}</p>
-                  </div>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(buyerContactPhone!); toast.success('已複製買家電話'); }}
-                    className="text-xs text-[#06038D] underline hover:no-underline"
-                  >{t("orderDetail.copy")}</button>
-                </div>
-              )}
-              <p className="text-xs text-gray-400 mt-1">論電話僅於訂單完成後顯示，請自行與對方協商面交地點</p>
-            </div>
-          </div>
-        )}
+
 
         {/* Payment Summary */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -1498,6 +1456,14 @@ export default function OrderDetail() {
             <div className="flex justify-between">
               <span className="text-gray-500">商品金額</span>
               <span className="text-gray-800">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">送貨方式</span>
+              <span className="text-gray-800">
+                {order.shippingMethod === 'sf_express' ? '🚚 順豐速運（運費到付）' :
+                 order.shippingMethod === 'hk_post' ? '📮 香港郵政（平郵）' :
+                 order.shippingMethod ? order.shippingMethod : '未設定'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">{t("orderDetail.paymentMethod")}</span>

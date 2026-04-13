@@ -232,11 +232,9 @@ function SellerOrderStepper({ item }: { item: any }) {
     if (s === 'cancelled') return '訂單已取消';
     if (s === 'dispute' || s === 'disputed') return '爭議處理中';
     if (s === 'refunded') return '已退款';
-    if (s === 'meetup_pending') return '等待面交';
-    if (s === 'meetup_completed') return '面交已完成';
     return s;
   })();
-  const isTerminal = ['completed', 'cancelled', 'refunded', 'meetup_completed'].includes(item.orderStatus);
+  const isTerminal = ['completed', 'cancelled', 'refunded'].includes(item.orderStatus);
   const isDispute = ['dispute', 'disputed'].includes(item.orderStatus);
   return (
     <div>
@@ -1282,7 +1280,7 @@ export default function SellerDashboard() {
   });
   const [activeTab, setActiveTab] = useState<string>('listings');
   // ─── Order filter state ─────────────────────────────────────────
-  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done' | 'meetup'>('all');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'active' | 'done'>('all');
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // ─── Edit / Deactivate / Batch state ─────────────────────────────────────
@@ -1575,24 +1573,10 @@ export default function SellerDashboard() {
   const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
   const [shipImageUploading, setShipImageUploading] = useState(false);
   const CARRIERS = [
-    { value: "sf_express", label: "順豐速運 (SF Express)", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
-    { value: "hkpost", label: "香港郵政 (HK Post)", trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
-    { value: "dhl", label: "DHL", trackingUrl: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=" },
-    { value: "fedex", label: "FedEx", trackingUrl: "https://www.fedex.com/fedextrack/?trknbr=" },
-    { value: "ups", label: "UPS", trackingUrl: "https://www.ups.com/track?tracknum=" },
-    { value: "chunghwa_post", label: "中華郵政", trackingUrl: "https://postserv.post.gov.tw/pstmail/main_mail.jsp?targetTxn=EB100&query_type=1&searchItem=" },
-    { value: "black_cat", label: "黑貓宅急", trackingUrl: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=" },
-    { value: "other", label: "其他", trackingUrl: null },
+    { value: "sf_express", label: "🚚 順豐速運（運費到付）", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
+    { value: "hk_post", label: "📮 香港郵政（平郵）", trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
   ];
-  const [meetupConfirmDialog, setMeetupConfirmDialog] = useState<{ open: boolean; orderId: number; orderNo: string }>({ open: false, orderId: 0, orderNo: '' });
-  const confirmMeetupMutation = trpc.marketplace.confirmMeetupOrder.useMutation({
-    onSuccess: () => {
-      toast.success('面交已確認，訂單已完成！');
-      setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' });
-      utils.marketplace.getMySellerOrders.invalidate();
-    },
-    onError: (e) => toast.error(parseApiError(e)),
-  });
+
   const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
@@ -2219,23 +2203,19 @@ export default function SellerDashboard() {
                         { key: 'pending', label: '待確認' },
                         { key: 'active', label: '進行中' },
                         { key: 'done', label: '已完成' },
-                        { key: 'meetup', label: '🤝 面交' },
                       ] as const).map(f => (
                         <button
                           key={f.key}
                           onClick={() => setOrderStatusFilter(f.key)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
                             orderStatusFilter === f.key
-                              ? f.key === 'meetup' ? 'bg-amber-400 text-amber-900 border-amber-400' : 'bg-[#06038d] text-white border-[#06038d]'
-                              : f.key === 'meetup' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]'
+                              ? 'bg-[#06038d] text-white border-[#06038d]'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-[#06038d] hover:text-[#06038d]'
                           }`}
                         >
                           {f.label}
                           {f.key === 'all' && (
                             <span className="ml-1 opacity-60">({myOrders?.length ?? 0})</span>
-                          )}
-                          {f.key === 'meetup' && (
-                            <span className="ml-1 opacity-70">({(myOrders as any[])?.filter((o: any) => o.shippingMethod === 'meetup').length ?? 0})</span>
                           )}
                         </button>
                       ))}
@@ -2265,12 +2245,9 @@ export default function SellerDashboard() {
                     pending: ['payment_submitted', 'alipay_pending', 'pending_payment'],
                     active: ['payment_confirmed', 'payment_received', 'paid_held', 'processing', 'shipped', 'delivered'],
                     done: ['completed', 'cancelled', 'disputed'],
-                    meetup: [],
                   };
                   let filtered = (myOrders as any[]) ?? [];
-                  if (orderStatusFilter === 'meetup') {
-                    filtered = filtered.filter(o => o.shippingMethod === 'meetup');
-                  } else if (orderStatusFilter !== 'all') {
+                  if (orderStatusFilter !== 'all') {
                     filtered = filtered.filter(o => SELLER_ORDER_STATUS_GROUPS[orderStatusFilter]?.includes(o.orderStatus));
                   }
                   if (orderSearchQuery.trim()) {
@@ -2296,12 +2273,6 @@ export default function SellerDashboard() {
                             {item.orderNo ? `#${item.orderNo}` : `#${item.id}`}
                           </span>
                           <div className="flex items-center gap-1.5">
-                            {/* Meetup badge */}
-                            {item.shippingMethod === 'meetup' && (
-                              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-400/30 text-amber-200 border border-amber-400/40">
-                                <Users className="w-3 h-3" />面交
-                              </span>
-                            )}
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               item.orderStatus === "completed" ? "bg-green-400/20 text-green-200 border border-green-400/30" :
                               item.orderStatus === "payment_received" ? "bg-yellow-400/20 text-yellow-200 border border-yellow-400/30" :
@@ -2344,22 +2315,15 @@ export default function SellerDashboard() {
                               {(() => {
                                 try {
                                   const addr = typeof item.shippingAddress === 'string' ? JSON.parse(item.shippingAddress) : item.shippingAddress;
-                                  const isMeetup = addr?.addressType === 'normal' || (!addr?.sfStationCode && !addr?.district);
-                                  if (isMeetup && (item as any).buyerPhone) {
-                                    return (
-                                      <>
-                                        <p>🤝 面交訂單</p>
-                                        <p className="font-semibold text-[#06038D]">📞 買家電話：{(item as any).buyerPhone}</p>
-                                        {addr?.address && addr.address !== '面交/其他' && <p>📍 備註：{addr.address}</p>}
-                                      </>
-                                    );
-                                  }
                                   return (
                                     <>
                                       <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
                                       <p>📍 地址：{(() => {
-                                        const parts = [addr?.address, addr?.district, addr?.region].filter(Boolean);
-                                        return parts.length > 0 ? parts.join(', ') : String(item.shippingAddress);
+                                        if (addr && typeof addr === 'object') {
+                                          const parts = [addr?.address, addr?.district, addr?.region].filter(Boolean);
+                                          return parts.length > 0 ? parts.join(', ') : String(item.shippingAddress);
+                                        }
+                                        return String(item.shippingAddress ?? '');
                                       })()}</p>
                                     </>
                                   );
@@ -2436,51 +2400,27 @@ export default function SellerDashboard() {
                                   </div>
                                 );
                               })()}
-                              {/* Show buyer phone for completed meetup orders */}
-                              {item.shippingMethod === 'meetup' && (item as any).buyerPhone && (
-                                <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                                  <p className="font-semibold text-amber-800 flex items-center gap-1 mb-0.5">
-                                    <Phone className="w-3 h-3" />買家聯絡電話
-                                  </p>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-amber-900">{(item as any).buyerPhone}</span>
-                                    <button
-                                      onClick={() => { navigator.clipboard.writeText((item as any).buyerPhone); toast.success('已複製電話號碼'); }}
-                                      className="text-amber-600 hover:text-amber-800 transition-colors"
-                                      title="複製電話號碼"
-                                    >
-                                      <Check className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+
                             </div>
                           )}
                           {/* Bottom Action Bar */}
                           <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                            {/* Primary action: ship or meetup confirm */}
+                            {/* Primary action: ship */}
                             {["processing", "payment_received", "paid_held"].includes(item.orderStatus) && (
-                              item.shippingMethod === 'meetup' ? (
-                                <Button size="sm" className="flex-1 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white"
-                                  onClick={() => setMeetupConfirmDialog({ open: true, orderId: item.orderId ?? item.id, orderNo: item.orderNo ?? '' })}>
-                                  <Users className="w-3 h-3 mr-1" />確認已面交
-                                </Button>
-                              ) : (
-                                <Button size="sm" className="flex-1 h-8 text-xs bg-[#06038d] hover:bg-[#0804b8] text-white"
-                                  onClick={() => {
-                                    setShipDialog({
-                                      open: true,
-                                      orderId: item.orderId ?? item.id,
-                                      orderNo: item.orderNo ?? "",
-                                      shippingName: item.shippingName ?? undefined,
-                                      shippingPhone: item.shippingPhone ?? undefined,
-                                      shippingAddress: item.shippingAddress ?? undefined,
-                                    });
-                                    setShipForm({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
-                                  }}>
-                                  <Package className="w-3 h-3 mr-1" />填寫出貨資料
-                                </Button>
-                              )
+                              <Button size="sm" className="flex-1 h-8 text-xs bg-[#06038d] hover:bg-[#0804b8] text-white"
+                                onClick={() => {
+                                  setShipDialog({
+                                    open: true,
+                                    orderId: item.orderId ?? item.id,
+                                    orderNo: item.orderNo ?? "",
+                                    shippingName: item.shippingName ?? undefined,
+                                    shippingPhone: item.shippingPhone ?? undefined,
+                                    shippingAddress: item.shippingAddress ?? undefined,
+                                  });
+                                  setShipForm({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
+                                }}>
+                                <Package className="w-3 h-3 mr-1" />填寫出貨資料
+                              </Button>
                             )}
                             {/* View detail link */}
                             {item.orderNo && (
@@ -3928,10 +3868,19 @@ export default function SellerDashboard() {
                 )}
               </div>
             )}
+            {/* 送貨方式提示 */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <p className="text-xs font-semibold text-[#06038d] mb-1">📦 送貨方式說明</p>
+              <p className="text-xs text-gray-700">本平台僅支援以下兩種送貨方式，<strong>不支援面交或門市自取</strong>：</p>
+              <ul className="text-xs text-gray-600 mt-1 space-y-0.5 pl-2">
+                <li>🚚 <strong>順豐速運</strong>（運費到付）：買家收貨時支付運費，請填寫有效追蹤號碼</li>
+                <li>📮 <strong>香港郵政（平郵）</strong>：訂單金額已包含 HK$10 郵費，平郵無追蹤號碼，追蹤號碼欄可留空</li>
+              </ul>
+            </div>
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">物流公司 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">送貨方式 <span className="text-red-500">*</span></Label>
               <Select value={shipForm.shippingMethod} onValueChange={(v) => setShipForm(f => ({ ...f, shippingMethod: v }))}>
-                <SelectTrigger className="bg-white border-gray-300 text-gray-900"><SelectValue placeholder="選擇物流公司" /></SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300 text-gray-900"><SelectValue placeholder="選擇送貨方式" /></SelectTrigger>
                 <SelectContent>
                   {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
@@ -4024,38 +3973,7 @@ export default function SellerDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Meetup Confirm Dialog */}
-      <Dialog open={meetupConfirmDialog.open} onOpenChange={(open) => !open && setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' })}>
-        <DialogContent bottomSheet className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-amber-500" />
-              確認已面交
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-700">
-              確認已與買家完成面交？訂單將直接標記為「已完成」。
-            </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-              訂單號：{meetupConfirmDialog.orderNo}
-            </div>
-            <p className="text-xs text-gray-500">此操作不可復原，請確認已完成面交再進行。</p>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setMeetupConfirmDialog({ open: false, orderId: 0, orderNo: '' })}>
-              取消
-            </Button>
-            <Button
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-              disabled={confirmMeetupMutation.isPending}
-              onClick={() => confirmMeetupMutation.mutate({ orderId: meetupConfirmDialog.orderId })}
-            >
-              {confirmMeetupMutation.isPending ? '處理中...' : '確認已面交'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Batch Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

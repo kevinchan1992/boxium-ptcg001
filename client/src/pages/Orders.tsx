@@ -212,7 +212,7 @@ function OrderRowDetail({ order, onClose }: { order: any; onClose: () => void })
       <div className="bg-white rounded-xl border border-gray-100 p-3">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "#06038d" }}>訂單進度</p>
         <OrderStatusStepper orderStatus={order.orderStatus} shippingMethod={order.shippingMethod} role="buyer"
-          timestamps={{ createdAt: order.createdAt, paidAt: order.paidAt ?? null, shippedAt: order.shippedAt, deliveredAt: order.autoCompleteAt ?? null, completedAt: order.buyerConfirmedAt ?? null, meetupCompletedAt: order.buyerConfirmedAt ?? null }} />
+          timestamps={{ createdAt: order.createdAt, paidAt: order.paidAt ?? null, shippedAt: order.shippedAt, deliveredAt: order.autoCompleteAt ?? null, completedAt: order.buyerConfirmedAt ?? null }} />
       </div>
 
       {/* Status Banners */}
@@ -227,7 +227,7 @@ function OrderRowDetail({ order, onClose }: { order: any; onClose: () => void })
         {(order.orderStatus === "shipped" || order.orderStatus === "delivered" || isCompleted) && order.trackingNumber && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-2 text-indigo-800">
             <Truck className="w-3.5 h-3.5 flex-shrink-0" />
-            <div className="text-xs"><span className="font-semibold">{order.shippingMethod ?? "快遞"}</span><span className="mx-1.5 text-indigo-300">|</span>追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span></div>
+            <div className="text-xs"><span className="font-semibold">{order.shippingMethod === 'sf_express' ? '🚚 順豐速運' : order.shippingMethod === 'hk_post' ? '📮 香港郵政（平郵）' : order.shippingMethod ?? '快遞'}</span><span className="mx-1.5 text-indigo-300">|</span>追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span></div>
           </div>
         )}
         {order.orderStatus === "shipped" && order.autoCompleteAt && (

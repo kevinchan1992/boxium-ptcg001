@@ -1,4 +1,4 @@
-import { Check, Clock, CreditCard, Package, Truck, CheckCircle2, XCircle, AlertTriangle, RotateCcw, Users } from "lucide-react";
+import { Check, Clock, CreditCard, Package, Truck, CheckCircle2, XCircle, AlertTriangle, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -20,7 +20,6 @@ export interface OrderTimestamps {
   shippedAt?: Date | string | null;
   deliveredAt?: Date | string | null;
   completedAt?: Date | string | null;
-  meetupCompletedAt?: Date | string | null;
 }
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -73,35 +72,6 @@ const SHIPPING_STEPS: StepDef[] = [
   },
 ];
 
-const MEETUP_STEPS: StepDef[] = [
-  {
-    key: "pending_payment",
-    buyerLabel: "待付款",
-    sellerLabel: "待付款",
-    buyerDesc: "等待完成付款",
-    sellerDesc: "等待買家付款",
-    icon: <Clock className="w-4 h-4" />,
-    activeIcon: <Clock className="w-4 h-4" />,
-  },
-  {
-    key: "paid_held",
-    buyerLabel: "已付款",
-    sellerLabel: "待確認",
-    buyerDesc: "付款已確認，安排面交",
-    sellerDesc: "請聯絡買家安排面交",
-    icon: <CreditCard className="w-4 h-4" />,
-    activeIcon: <CreditCard className="w-4 h-4" />,
-  },
-  {
-    key: "completed",
-    buyerLabel: "面交完成",
-    sellerLabel: "面交完成",
-    buyerDesc: "交易完成",
-    sellerDesc: "交易完成",
-    icon: <Users className="w-4 h-4" />,
-    activeIcon: <Users className="w-4 h-4" />,
-  },
-];
 
 // Map raw orderStatus → canonical step key
 function toCanonical(status: string): string {
@@ -122,15 +92,14 @@ function formatTs(ts: Date | string | null | undefined, short = false): string |
 }
 
 // Get timestamp for a step key
-function getStepTimestamp(stepKey: string, isMeetup: boolean, timestamps?: OrderTimestamps): string | null {
+function getStepTimestamp(stepKey: string, timestamps?: OrderTimestamps): string | null {
   if (!timestamps) return null;
   switch (stepKey) {
     case "pending_payment": return formatTs(timestamps.createdAt, true);
     case "paid_held": return formatTs(timestamps.paidAt, true);
     case "shipped": return formatTs(timestamps.shippedAt, true);
     case "delivered": return formatTs(timestamps.deliveredAt, true);
-    case "completed":
-      return formatTs(isMeetup ? (timestamps.meetupCompletedAt ?? timestamps.completedAt) : timestamps.completedAt, true);
+    case "completed": return formatTs(timestamps.completedAt, true);
     default: return null;
   }
 }
@@ -152,7 +121,6 @@ export function OrderStatusStepper({
   timestamps,
 }: OrderStatusStepperProps) {
   const { t } = useTranslation();
-  const isMeetup = shippingMethod === "meetup";
   const isCancelled = orderStatus === "cancelled";
   const isDisputed = orderStatus === "disputed";
   const isRefunded = orderStatus === "refunded";
@@ -202,7 +170,7 @@ export function OrderStatusStepper({
   }
 
   // ── Normal flow ────────────────────────────────────────────────────────────
-  const steps = isMeetup ? MEETUP_STEPS : SHIPPING_STEPS;
+  const steps = SHIPPING_STEPS;
   const canonical = toCanonical(orderStatus);
   const activeIdx = steps.findIndex((s) => s.key === canonical);
   const safeActiveIdx = activeIdx === -1 ? 0 : activeIdx;
@@ -239,7 +207,7 @@ export function OrderStatusStepper({
 
           const label = role === "seller" ? step.sellerLabel : step.buyerLabel;
           const desc = role === "seller" ? step.sellerDesc : step.buyerDesc;
-          const ts = getStepTimestamp(step.key, isMeetup, timestamps);
+          const ts = getStepTimestamp(step.key, timestamps);
           const isLast = idx === steps.length - 1;
 
           return (
@@ -367,7 +335,7 @@ export function OrderStatusStepper({
           else state = "upcoming";
 
           const label = role === "seller" ? step.sellerLabel : step.buyerLabel;
-          const ts = getStepTimestamp(step.key, isMeetup, timestamps);
+          const ts = getStepTimestamp(step.key, timestamps);
 
           return (
             <div key={step.key} className="flex flex-col items-center flex-1 z-10 gap-1">

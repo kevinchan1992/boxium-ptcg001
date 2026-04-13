@@ -1154,15 +1154,15 @@ export const marketplaceRouter = router({
         orderStatus: "shipped",
         shippedAt: new Date(),
         trackingNumber: input.trackingNo ?? null,
-        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hk_post" | "sf_cod" | null,
         shippingImageUrl: input.shippingImageUrl ?? null,
         autoCompleteAt,
       });
       // Map shippingMethod code to display name
       const SHIPPING_METHOD_NAMES: Record<string, string> = {
-        sf_express: '順豐速運 (SF Express)', hkpost: '香港郵政 (HK Post)', dhl: 'DHL',
-        fedex: 'FedEx', ups: 'UPS', chunghwa_post: '中華郵政', black_cat: '黑貓宅急',
-        sf_cod: '順豐到付', other: '其他', meetup: '面交',
+        sf_express: '🚚 順豐速運（運費到付）',
+        hk_post: '📮 香港郵政（平郵）',
+        sf_cod: '🚚 順豐速運（運費到付）',
       };
       const shippingMethodName = SHIPPING_METHOD_NAMES[input.shippingMethod] || input.shippingMethod;
       // Notify buyer of shipment
@@ -1216,68 +1216,6 @@ export const marketplaceRouter = router({
       const { url } = await storagePut(key, buffer, input.mimeType);
       await updateMarketplaceOrder(input.orderId, { shippingImageUrl: url });
       return { url };
-    }),
-
-  // ============================================================
-  // SELLER - Confirm Meetup (skip shipped, directly complete)
-  // ============================================================
-  confirmMeetupOrder: protectedProcedure
-    .input(z.object({ orderId: z.number().int() }))
-    .mutation(async ({ ctx, input }) => {
-      const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: 'NOT_FOUND' });
-      // Only the seller of this order can confirm meetup
-      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
-      if (!sellerProfile || order.sellerId !== sellerProfile.id) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: '只有賣家可以確認面交' });
-      }
-      // Only meetup orders in payment_received / paid_held / processing can be confirmed
-      if (!['payment_received', 'paid_held', 'processing'].includes(order.orderStatus)) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: '訂單狀態不允許此操作' });
-      }
-      if (order.shippingMethod !== 'meetup') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: '此訂單不是面交訂單' });
-      }
-      // Complete the order directly (skip shipped)
-      await updateMarketplaceOrder(input.orderId, {
-        orderStatus: 'completed',
-        buyerConfirmedAt: new Date(),
-        payoutStatus: 'processing',
-      });
-      // P2: Handle payout for C2C meetup orders via executeSellerPayout (centralized logic)
-      if (order.sellerType === 'seller' && order.sellerId) {
-        try {
-          const { executeSellerPayout } = await import('../sellerPayout');
-          const payoutResult = await executeSellerPayout(input.orderId);
-          if (payoutResult.success) {
-            console.log(`[Payout] P2 Meetup Transfer ${payoutResult.transferId} (HKD ${payoutResult.amountHkd}) for order ${order.orderNo}`);
-          } else {
-            console.error(`[Payout] P2 Meetup payout failed for order ${order.orderNo}: ${payoutResult.error}`);
-          }
-        } catch (payoutErr: any) {
-          console.error('[Payout] executeSellerPayout (meetup) threw:', payoutErr.message);
-        }
-      }
-      // Notify buyer that order is completed
-      await createNotification({
-        userId: order.buyerId,
-        type: 'trade',
-        title: '面交訂單已完成 🎉',
-        body: `訂單 ${order.orderNo} 賣家已確認面交完成，感謝您的支持！`,
-        linkUrl: `/orders/${order.orderNo}`,
-      }).catch(() => {});
-      // Send completed emails
-      try {
-        const { sendOrderEmail, buildOrderCompletedBuyerEmail, buildOrderCompletedSellerEmail, getOrderEmailData } = await import('../emailService');
-        const emailData = await getOrderEmailData(order);
-        const { subject: bs, html: bh } = buildOrderCompletedBuyerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd });
-        await sendOrderEmail({ userId: order.buyerId, subject: bs, html: bh, emailType: 'order', dedupeKey: `order_completed_buyer_${order.id}` });
-        const { subject: ss, html: sh } = buildOrderCompletedSellerEmail({ orderNo: order.orderNo, itemName: emailData.itemName, priceHkd: emailData.priceHkd, receivableHkd: emailData.receivableHkd });
-        await sendOrderEmail({ userId: sellerProfile.userId, subject: ss, html: sh, emailType: 'order', dedupeKey: `order_completed_seller_${order.id}` });
-      } catch (emailErr: any) {
-        console.warn('[Order] Meetup completed email failed:', emailErr.message);
-      }
-      return { success: true };
     }),
 
   // ============================================================
@@ -2354,11 +2292,11 @@ export const marketplaceRouter = router({
     .input(z.object({
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
-      buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
-      shippingMethod: z.string().optional(), // 'meetup' or 'sf_cod'
+      buyerPhone: z.string().optional().default(""), // Buyer's contact phone
+      shippingMethod: z.string().optional(), // 'sf_express' or 'hk_post'
       shippingAddress: z.object({
         name: z.string().min(1),
-        phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
+        phone: z.string().optional().default(""),
         address: z.string().min(1),
         district: z.string().optional(),
         region: z.string().optional(),
@@ -2519,23 +2457,9 @@ export const marketplaceRouter = router({
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
-        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hk_post" | "sf_cod" | null,
         buyerPhone: input.buyerPhone || null,
       });
-      // Notify seller for meetup orders
-      if (input.shippingMethod === 'meetup' && listing.sellerType === 'seller' && listing.sellerId) {
-        const sellerProfileForNotify = await getSellerProfileById(listing.sellerId);
-        if (sellerProfileForNotify?.userId) {
-          const buyerPhoneDisplay = input.buyerPhone ? `買家電話：${input.buyerPhone}` : '買家未提供電話';
-          await createNotification({
-            userId: sellerProfileForNotify.userId,
-            type: 'trade',
-            title: '新面交訂單 🤝',
-            body: `訂單 ${orderNo} 買家選擇面交付款，請將商品備好。${buyerPhoneDisplay}。請將訂單狀態更新為「確認已面交」完成訂單。`,
-            linkUrl: '/seller',
-          }).catch(() => {});
-        }
-      }
       return { checkoutUrl: session.url, orderNo };
     }),
 
@@ -2636,11 +2560,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
       listingId: z.number().int(),
       offerId: z.number().int().optional(), // If provided, use offer price instead of listing price
       proofImageUrl: z.string().optional().default(""), // Optional: empty string allowed for orders without proof
-      buyerPhone: z.string().optional().default(""), // Buyer's contact phone (for meetup orders)
-      shippingMethod: z.string().optional(), // 'meetup' or 'sf_cod'
+      buyerPhone: z.string().optional().default(""), // Buyer's contact phone
+      shippingMethod: z.string().optional(), // 'sf_express' or 'hk_post'
       shippingAddress: z.object({
         name: z.string().min(1),
-        phone: z.string().optional().default(""), // Optional: phone not required for meetup orders
+        phone: z.string().optional().default(""),
         address: z.string().min(1),
         district: z.string().optional(),
         region: z.string().optional().default("香港"),
@@ -2723,23 +2647,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
         shippingName: input.shippingAddress?.name ?? null,
         shippingPhone: input.shippingAddress?.phone ?? null,
         shippingAddress: input.shippingAddress ? JSON.stringify(input.shippingAddress) : null,
-        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hongkong_post" | "other" | "sf_cod" | "meetup" | null,
+        shippingMethod: (input.shippingMethod ?? null) as "sf_express" | "hk_post" | "sf_cod" | null,
         buyerPhone: input.buyerPhone || null,
       });
-      // Notify seller for meetup orders (defensive: currently unreachable due to P0 #1 seller check above)
-      if (input.shippingMethod === 'meetup' && (listing.sellerType as string) === 'seller' && listing.sellerId) {
-        const sellerProfileForNotifyAlipay = await getSellerProfileById(listing.sellerId);
-        if (sellerProfileForNotifyAlipay?.userId) {
-          const buyerPhoneDisplayAlipay = input.buyerPhone ? `買家電話：${input.buyerPhone}` : '買家未提供電話';
-          await createNotification({
-            userId: sellerProfileForNotifyAlipay.userId,
-            type: 'trade',
-            title: '新面交訂單 🤝',
-            body: `訂單 ${orderNo} 買家選擇面交付款，請將商品備好。${buyerPhoneDisplayAlipay}。請將訂單狀態更新為「確認已面交」完成訂單。`,
-            linkUrl: '/seller',
-          }).catch(() => {});
-        }
-      }
       // Notify admin of new Alipay order pending review
       await notifyAdmin({
         title: "支付寶 HK 訂單待審核 💰",
@@ -3161,24 +3071,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const items = await getOrderItems(order.id);
       const listing = order.listingId ? await getListingById(order.listingId) : null;
       const review = await getReviewByOrderId(order.id);
-      // For meetup orders that are completed, reveal contact phones
-      let sellerPhone: string | null = null;
-      let buyerContactPhone: string | null = null;
-      const isMeetup = order.shippingMethod === 'meetup' || order.shippingAddress?.includes('面交');
       const isCompleted = order.orderStatus === 'completed';
-      if (isMeetup && isCompleted) {
-        // Get seller's phone
-        if (sellerProfile?.userId) {
-          const db = await getDb();
-          if (db) {
-            const sellerUserRows = await db.select({ phone: users.phone }).from(users).where(eq(users.id, sellerProfile.userId)).limit(1);
-            sellerPhone = sellerUserRows[0]?.phone ?? null;
-          }
-        }
-        // Buyer phone from order record
-        buyerContactPhone = order.buyerPhone ?? null;
-      }
-      return { order, items, listing, review, isBuyer, isSeller: isSeller || isPlatformSeller, sellerPhone, buyerContactPhone, isMeetup, isCompleted };
+      return { order, items, listing, review, isBuyer, isSeller: isSeller || isPlatformSeller, isCompleted };
     }),
   getBanners: publicProcedure
     .query(async () => {

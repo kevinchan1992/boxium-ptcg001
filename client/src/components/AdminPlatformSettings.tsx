@@ -28,7 +28,6 @@ interface MoreSettings {
   maxOffersPerDay: number;
   alipayReviewSlaHours: number;
   disputeSlaHours: number;
-  meetupCancelDays: number;
   paymentTimeoutMinutes: number;
   offerPaymentTimeoutHours: number;
   paymentReminderMinutes: number;
@@ -90,7 +89,6 @@ export default function AdminPlatformSettings() {
     maxOffersPerDay: "3",
     alipayReviewSlaHours: "24",
     disputeSlaHours: "72",
-    meetupCancelDays: "7",
     paymentTimeoutMinutes: "30",
     offerPaymentTimeoutHours: "24",
     paymentReminderMinutes: "60",
@@ -122,7 +120,6 @@ export default function AdminPlatformSettings() {
         maxOffersPerDay: moreData.maxOffersPerDay.toString(),
         alipayReviewSlaHours: moreData.alipayReviewSlaHours.toString(),
         disputeSlaHours: moreData.disputeSlaHours.toString(),
-        meetupCancelDays: moreData.meetupCancelDays.toString(),
         paymentTimeoutMinutes: moreData.paymentTimeoutMinutes.toString(),
         offerPaymentTimeoutHours: moreData.offerPaymentTimeoutHours.toString(),
         paymentReminderMinutes: moreData.paymentReminderMinutes.toString(),
@@ -195,7 +192,6 @@ export default function AdminPlatformSettings() {
       maxOffersPerDay: parseInt(more.maxOffersPerDay),
       alipayReviewSlaHours: parseInt(more.alipayReviewSlaHours),
       disputeSlaHours: parseInt(more.disputeSlaHours),
-      meetupCancelDays: parseInt(more.meetupCancelDays),
       paymentTimeoutMinutes: parseInt(more.paymentTimeoutMinutes),
       offerPaymentTimeoutHours: parseInt(more.offerPaymentTimeoutHours),
       paymentReminderMinutes: parseInt(more.paymentReminderMinutes),
@@ -218,7 +214,6 @@ export default function AdminPlatformSettings() {
         maxOffersPerDay: moreData.maxOffersPerDay.toString(),
         alipayReviewSlaHours: moreData.alipayReviewSlaHours.toString(),
         disputeSlaHours: moreData.disputeSlaHours.toString(),
-        meetupCancelDays: moreData.meetupCancelDays.toString(),
         paymentTimeoutMinutes: moreData.paymentTimeoutMinutes.toString(),
         offerPaymentTimeoutHours: moreData.offerPaymentTimeoutHours.toString(),
         paymentReminderMinutes: moreData.paymentReminderMinutes.toString(),
@@ -475,13 +470,7 @@ export default function AdminPlatformSettings() {
                     onChange={v => updateMoreField("autoCompleteDays", v)}
                     min={1} max={90} suffix="天"
                   />
-                  <SettingField
-                    label="面交訂單自動取消天數"
-                    hint="面交訂單未確認收貨後 N 天自動取消"
-                    value={more.meetupCancelDays}
-                    onChange={v => updateMoreField("meetupCancelDays", v)}
-                    min={1} max={30} suffix="天"
-                  />
+
                   <SettingField
                     label="待付款自動取消時限"
                     hint="訂單建立後 N 分鐘內未付款，自動取消"

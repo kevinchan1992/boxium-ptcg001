@@ -140,7 +140,6 @@ export const systemRouter = router({
         maxOffersPerDay,
         alipayReviewSlaHours,
         disputeSlaHours,
-        meetupCancelDays,
         paymentTimeout,
         offerPaymentTimeout,
         reminderMinutes,
@@ -152,7 +151,6 @@ export const systemRouter = router({
         getSystemSetting('max_offers_per_day'),
         getSystemSetting('alipay_review_sla_hours'),
         getSystemSetting('dispute_sla_hours'),
-        getSystemSetting('meetup_cancel_days'),
         getSystemSetting('payment_timeout_minutes'),
         getSystemSetting('offer_payment_timeout_hours'),
         getSystemSetting('payment_reminder_minutes'),
@@ -165,7 +163,6 @@ export const systemRouter = router({
         maxOffersPerDay: maxOffersPerDay ? parseInt(maxOffersPerDay.settingValue) : 3,
         alipayReviewSlaHours: alipayReviewSlaHours ? parseInt(alipayReviewSlaHours.settingValue) : 24,
         disputeSlaHours: disputeSlaHours ? parseInt(disputeSlaHours.settingValue) : 72,
-        meetupCancelDays: meetupCancelDays ? parseInt(meetupCancelDays.settingValue) : 7,
         paymentTimeoutMinutes: paymentTimeout ? parseInt(paymentTimeout.settingValue) : 30,
         offerPaymentTimeoutHours: offerPaymentTimeout ? parseInt(offerPaymentTimeout.settingValue) : 24,
         paymentReminderMinutes: reminderMinutes ? parseInt(reminderMinutes.settingValue) : 60,
@@ -183,7 +180,6 @@ export const systemRouter = router({
         maxOffersPerDay: z.number().int().min(1).max(999).optional(),
         alipayReviewSlaHours: z.number().int().min(1).max(720).optional(),
         disputeSlaHours: z.number().int().min(1).max(2160).optional(),
-        meetupCancelDays: z.number().int().min(1).max(90).optional(),
         paymentTimeoutMinutes: z.number().int().min(5).max(10080).optional(),
         offerPaymentTimeoutHours: z.number().int().min(1).max(720).optional(),
         paymentReminderMinutes: z.number().int().min(5).max(10080).optional(),
@@ -205,8 +201,6 @@ export const systemRouter = router({
         updates.push(setSystemSetting('alipay_review_sla_hours', input.alipayReviewSlaHours.toString(), 'Alipay 審核 SLA 時限小時 (default: 24)'));
       if (input.disputeSlaHours !== undefined)
         updates.push(setSystemSetting('dispute_sla_hours', input.disputeSlaHours.toString(), '爭議處理 SLA 時限小時 (default: 72)'));
-      if (input.meetupCancelDays !== undefined)
-        updates.push(setSystemSetting('meetup_cancel_days', input.meetupCancelDays.toString(), '面交訂單未確認自動取消天數 (default: 7)'));
       if (input.paymentTimeoutMinutes !== undefined)
         updates.push(setSystemSetting('payment_timeout_minutes', input.paymentTimeoutMinutes.toString(), '待付款訂單自動取消時限分鐘 (default: 30)'));
       if (input.offerPaymentTimeoutHours !== undefined)

@@ -867,9 +867,9 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   // Shipping
   shippingName: varchar("shippingName", { length: 100 }),
   shippingPhone: varchar("shippingPhone", { length: 30 }),
-  buyerPhone: varchar("buyerPhone", { length: 30 }), // Buyer's contact phone (for meetup orders)
+  buyerPhone: varchar("buyerPhone", { length: 30 }),
   shippingAddress: text("shippingAddress"), // JSON
-  shippingMethod: mysqlEnum("shippingMethod", ["sf_express", "hongkong_post", "other", "sf_cod", "meetup"]),
+  shippingMethod: mysqlEnum("shippingMethod", ["sf_express", "hk_post", "sf_cod", "hongkong_post", "other", "meetup"]),
   trackingNumber: varchar("trackingNumber", { length: 100 }),
   shippedAt: timestamp("shippedAt"),
   autoCompleteAt: timestamp("autoCompleteAt"), // 14 days after delivered
