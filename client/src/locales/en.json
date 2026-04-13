@@ -414,9 +414,10 @@
     "checkout": "Proceed to Checkout",
     "checkoutDialog": {
       "step1": "Shipping",
-      "step2": "Confirmation",
-      "step3": "Scan to Pay",
-      "step4": "Upload Screenshot",
+      "step2": "Address",
+      "step3": "Confirmation",
+      "step4": "Scan to Pay",
+      "step5": "Upload Screenshot",
       "title": "Checkout"
     },
     "clearCart": "Clear Cart",

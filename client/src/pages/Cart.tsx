@@ -48,7 +48,8 @@ const ALL_SF_POINTS: SFPoint[] = [
 ];
 const SF_DISTRICTS = Array.from(new Set(ALL_SF_POINTS.map((s) => s.district))).sort();
 
-type ShippingMethod = "sf_cod" | "meetup";
+type ShippingMethod = "sf_cod" | "hk_post";
+const HK_POST_FEE = 10; // HK$10 郵費（香港郵政）
 type PaymentMethod = "stripe" | "alipay_hk";
 
 interface CheckoutForm {
@@ -59,8 +60,11 @@ interface CheckoutForm {
   sfStationCode: string | null;
   recipientName: string;
   recipientPhone: string;
-  // Meetup
-  meetupNote: string;
+  manualAddress: string; // SF 上門派送手動地址
+  // HK Post address
+  hkPostAddress: string;
+  hkPostRecipientName: string;
+  hkPostRecipientPhone: string;
 }
 
 export default function Cart() {
@@ -122,10 +126,13 @@ export default function Cart() {
     shippingMethod: "sf_cod",
     paymentMethod: "alipay_hk",
     sfDistrict: "",
-      sfStationCode: null,
+    sfStationCode: null,
     recipientName: "",
     recipientPhone: "",
-    meetupNote: "",
+    manualAddress: "",
+    hkPostAddress: "",
+    hkPostRecipientName: "",
+    hkPostRecipientPhone: "",
   });
 
   const filteredStations = useMemo(
@@ -406,7 +413,7 @@ export default function Cart() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  {recommendedListings.data.listings.map((item) => {
+                  {recommendedListings.data.listings.map((item: any) => {
                     const imgs: string[] | null = (() => { try { return item.images ? JSON.parse(item.images) : null; } catch { return null; } })();
                     return (
                     <Link key={item.id} href={`/marketplace/${item.id}`}>
@@ -502,7 +509,7 @@ export default function Cart() {
                     <span className="text-xs text-amber-600 ml-1">— 請在時限內完成付款</span>
                   </div>
                   <div className="divide-y divide-yellow-50 overscroll-contain">
-                    {pendingAuctionOrders.map((order) => (
+                    {pendingAuctionOrders.map((order: PendingAuctionOrder) => (
                       <AuctionOrderRow
                         key={order.orderId}
                         order={order}
@@ -562,7 +569,7 @@ export default function Cart() {
                   {pendingAuctionOrders && pendingAuctionOrders.length > 0 && (
                     <div className="flex justify-between text-amber-700">
                       <span>🏆 拍賣得標（{pendingAuctionOrders.length} 件）</span>
-                      <span>HK${pendingAuctionOrders.reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0).toFixed(0)}</span>
+                      <span>HK${pendingAuctionOrders.reduce((s: number, o: { subtotalHkd: string | number }) => s + parseFloat(String(o.subtotalHkd)), 0).toFixed(0)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-gray-500">
@@ -573,7 +580,7 @@ export default function Cart() {
                 <Separator className="my-3" />
                 <div className="flex justify-between font-bold text-base text-[#06038D]">
                   <span>{t("cart.total")}</span>
-                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)}</span>
+                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s: number, o: { subtotalHkd: string | number }) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)}</span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{t("cart.totalDisclaimer")}</p>
 
@@ -941,7 +948,7 @@ function CheckoutDialog({
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [isValidatingStock, setIsValidatingStock] = React.useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3 | 4>(1);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [alipayOrderNos, setAlipayOrderNos] = useState<string[]>([]);
   // Step 4: Payment proof upload
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -978,14 +985,17 @@ function CheckoutDialog({
   }, [open, savedAddresses]);
 
   const applyAddress = (addr: any) => {
+    const method: ShippingMethod = addr.addressType === "sf_station" ? "sf_cod" : "hk_post";
     setForm((f) => ({
       ...f,
-      shippingMethod: addr.addressType === "sf_station" ? "sf_cod" : "meetup",
+      shippingMethod: method,
       recipientName: addr.recipientName || "",
       recipientPhone: addr.phone || "",
       sfDistrict: addr.district || "",
       sfStationCode: addr.sfStationCode || null,
-      meetupNote: addr.addressType === "normal" ? (addr.address || "") : "",
+      hkPostAddress: addr.addressType === "normal" ? (addr.address || "") : "",
+      hkPostRecipientName: addr.recipientName || "",
+      hkPostRecipientPhone: addr.phone || "",
     }));
   };
 
@@ -1068,22 +1078,26 @@ function CheckoutDialog({
     }
   }, [hasSellerItems, form.paymentMethod, setForm]);
 
+  // Step 1: just need a shipping method selected (always true since default is sf_cod)
   const canProceedStep1 = useMemo(() => {
     const hasItems = activeItems.length > 0 || (pendingAuctionOrders && pendingAuctionOrders.length > 0);
-    if (!hasItems) return false;
+    return hasItems; // shipping method is always selected (sf_cod or hk_post)
+  }, [activeItems, pendingAuctionOrders]);
+
+  // Step 2: address details must be filled
+  const canProceedStep2 = useMemo(() => {
     if (selectedAddressId !== null) return true;
     if (form.shippingMethod === "sf_cod") {
       if (!form.recipientName.trim() || !form.recipientPhone.trim()) return false;
       if (sfAddressMode === "sf_station") return !!(form.sfStationCode);
-      if (sfAddressMode === "manual") return !!(form.meetupNote.trim());
+      if (sfAddressMode === "manual") return !!(form.manualAddress.trim());
       return false;
     }
-    // BUG-8 Fix: meetup mode should require recipientPhone for contact purposes
-    if (form.shippingMethod === "meetup") {
-      return !!(form.recipientPhone.trim());
+    if (form.shippingMethod === "hk_post") {
+      return !!(form.hkPostRecipientName.trim() && form.hkPostRecipientPhone.trim() && form.hkPostAddress.trim());
     }
     return true;
-  }, [form, activeItems, selectedAddressId, sfAddressMode]);
+  }, [form, selectedAddressId, sfAddressMode]);
 
   const buildShippingAddress = () => {
     if (form.shippingMethod === "sf_cod") {
@@ -1103,16 +1117,17 @@ function CheckoutDialog({
           name: form.recipientName,
           phone: form.recipientPhone,
           district: "",
-          address: form.meetupNote,
+          address: form.manualAddress,
           addressType: "normal" as const,
         };
       }
     }
+    // hk_post
     return {
-      name: form.recipientName || user?.name || "面交",
-      phone: form.recipientPhone || user?.phone || "",
+      name: form.hkPostRecipientName || form.recipientName || user?.name || "",
+      phone: form.hkPostRecipientPhone || form.recipientPhone || user?.phone || "",
       district: "",
-      address: form.meetupNote || "面交/其他",
+      address: form.hkPostAddress,
       addressType: "normal" as const,
     };
   };
@@ -1200,7 +1215,7 @@ function CheckoutDialog({
         setBatchProgress(null);
         // Show QR code step
         setAlipayOrderNos(result.orderNos);
-        setCheckoutStep(3);
+        setCheckoutStep(4);
       } catch {
         setBatchProgress(null);
         // Error already shown by mutation onError
@@ -1209,8 +1224,8 @@ function CheckoutDialog({
   };
 
   const handleAlipayDone = () => {
-    // Go to Step 4 to upload payment proof instead of navigating away
-    setCheckoutStep(4);
+    // Go to Step 5 to upload payment proof
+    setCheckoutStep(5);
   };
 
   const handleFinishAndGoToOrders = () => {
@@ -1241,9 +1256,9 @@ function CheckoutDialog({
           </div>
           {/* Step Indicator */}
           <div className="flex items-center gap-0">
-            {(checkoutStep <= 2
-              ? [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }]
-              : [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }, { n: 3 as const, label: t("cart.checkoutDialog.step3") }, { n: 4 as const, label: t("cart.checkoutDialog.step4") }]
+            {(checkoutStep <= 3
+              ? [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }, { n: 3 as const, label: t("cart.checkoutDialog.step3") }]
+              : [{ n: 1 as const, label: t("cart.checkoutDialog.step1") }, { n: 2 as const, label: t("cart.checkoutDialog.step2") }, { n: 3 as const, label: t("cart.checkoutDialog.step3") }, { n: 4 as const, label: t("cart.checkoutDialog.step4") }, { n: 5 as const, label: t("cart.checkoutDialog.step5") }]
             ).map(({ n, label }, idx, arr) => (
               <React.Fragment key={n}>
                 <div className="flex flex-col items-center gap-1">
@@ -1271,15 +1286,65 @@ function CheckoutDialog({
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-white">
 
-          {/* ── Step 1: Shipping ── */}
+          {/* ── Step 1: Choose Shipping Method ── */}
           {checkoutStep === 1 && (
+            <>
+              <div>
+                <p className="text-xs text-gray-500 mb-3">請選擇送貨方式，然後在下一步填寫送貨地址。</p>
+                <RadioGroup
+                  value={form.shippingMethod}
+                  onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
+                  className="space-y-3"
+                >
+                  {/* SF Express */}
+                  <div className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    form.shippingMethod === "sf_cod" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                  }`}>
+                    <RadioGroupItem value="sf_cod" id="sf_cod_step1" className="mt-0.5 flex-shrink-0" />
+                    <Label htmlFor="sf_cod_step1" className="cursor-pointer flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
+                        <span className="font-bold text-sm text-gray-800">{t("cart.shipping.sfExpressTitle")}</span>
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">運費到付</span>
+                      </div>
+                      <p className="text-xs text-gray-500 ml-6">{t("cart.shipping.sfExpressDescription")}</p>
+                      <p className="text-xs text-gray-400 ml-6 mt-1">運費由順豐速運收取，取件時支付，金額視重量及地址而定</p>
+                    </Label>
+                  </div>
+
+                  {/* HK Post */}
+                  <div className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    form.shippingMethod === "hk_post" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
+                  }`}>
+                    <RadioGroupItem value="hk_post" id="hk_post_step1" className="mt-0.5 flex-shrink-0" />
+                    <Label htmlFor="hk_post_step1" className="cursor-pointer flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MapPin className="w-4 h-4 text-[#06038D] flex-shrink-0" />
+                        <span className="font-bold text-sm text-gray-800">香港郵政</span>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">+HK$10 運費</span>
+                      </div>
+                      <p className="text-xs text-gray-500 ml-6">本地平郵寄送，運費 HK$10 將計入訂單總額</p>
+                      <div className="ml-6 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-xs text-amber-700 font-medium">📮 注意：選擇香港郵政將自動在訂單金額加收 HK$10 運費服務費</p>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </>
+          )}
+
+          {/* ── Step 2: Address ── */}
+          {checkoutStep === 2 && (
             <>
               {/* Saved Addresses */}
               {savedAddresses && savedAddresses.length > 0 && (
                 <div>
                   <Label className="text-xs font-semibold text-[#06038D] mb-2 block">{t("cart.address.savedAddresses")}</Label>
                   <div className="space-y-2">
-                    {savedAddresses.map((addr: any) => (
+                    {savedAddresses.filter((addr: any) =>
+                      form.shippingMethod === "sf_cod" ? addr.addressType === "sf_station" : addr.addressType === "normal"
+                    ).map((addr: any) => (
                       <button
                         key={addr.id}
                         type="button"
@@ -1310,7 +1375,7 @@ function CheckoutDialog({
                               </p>
                             ) : (
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                <MapPin className="w-3 h-3" />{addr.address || "面交/其他"}
+                                <MapPin className="w-3 h-3" />{addr.address || "地址"}
                               </p>
                             )}
                           </div>
@@ -1334,7 +1399,9 @@ function CheckoutDialog({
               )}
 
               {/* No saved addresses - quick link to profile */}
-              {(!savedAddresses || savedAddresses.length === 0) && (
+              {(!savedAddresses || savedAddresses.filter((addr: any) =>
+                form.shippingMethod === "sf_cod" ? addr.addressType === "sf_station" : addr.addressType === "normal"
+              ).length === 0) && (
                 <div className="flex items-center justify-between p-3 rounded-xl border border-dashed border-[#06038D]/30 bg-[#06038D]/5">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#06038D]" />
@@ -1351,137 +1418,101 @@ function CheckoutDialog({
                 </div>
               )}
 
-              {/* Manual Address / Shipping Method */}
-              {(!savedAddresses || savedAddresses.length === 0 || selectedAddressId === null) && (<>
-                <div>
-                  <Label className="text-xs font-semibold text-[#06038D] mb-2 block">{t("cart.checkoutDialog.step1")}</Label>
-                  <RadioGroup
-                    value={form.shippingMethod}
-                    onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
-                    className="space-y-2"
-                  >
-                    <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      form.shippingMethod === "sf_cod" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
-                    }`}>
-                      <RadioGroupItem value="sf_cod" id="sf_cod2" className="mt-0.5 flex-shrink-0" />
-                      <Label htmlFor="sf_cod2" className="cursor-pointer flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                          <span className="font-semibold text-sm text-gray-800 whitespace-nowrap">{t("cart.shipping.sfExpressTitle")}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5 ml-6">{t("cart.shipping.sfExpressDescription")}</p>
-                      </Label>
+              {/* Manual Address Fields */}
+              {selectedAddressId === null && (<>
+                {/* SF COD Details */}
+                {form.shippingMethod === "sf_cod" && (
+                  <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
+                    {/* SF Notice */}
+                    <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
+                      <p className="font-semibold text-[#06038D] mb-1">📦 順豐速運條款</p>
+                      <p className="leading-relaxed">【如寄順豐自提網點可享運費優惠】請於下單時提供收件人名、電話，並選擇你的順豐網點。運費金額將自動根據貨件重量、材積、收件地址計算。運費由順豐速運收取，於取件時支付。運費詳情可參考<a href="https://htm.sf-express.com/hk/tc/" target="_blank" rel="noopener noreferrer" className="text-[#06038D] underline">順豐速運香港官方網站</a>。</p>
+                      <p className="mt-1 leading-relaxed">【客戶須知】由於順豐已暫停經SMS短訊方式發送取件訊息，所有取件訊息已改為透過順豐香港官方手機應用程式「SFHK APP」推送，客戶請提前下載「SFHK APP」，並開啟手機推送通知，以免錯過貨件運送提醒，同時客戶可透過「SFHK APP」隨時查看快件的最新狀態。</p>
                     </div>
-                    <div className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      form.shippingMethod === "meetup" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
-                    }`}>
-                      <RadioGroupItem value="meetup" id="meetup2" className="mt-0.5" />
-                      <Label htmlFor="meetup2" className="cursor-pointer flex-1">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-[#06038D]" />
-                          <span className="font-semibold text-sm text-gray-800">{t("cart.shipping.meetupTitle")}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5 ml-6">{t("cart.shipping.meetupDescription")}</p>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </>
-              )}
 
-              {/* SF COD Details */}
-              {form.shippingMethod === "sf_cod" && selectedAddressId === null && (
-                <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
-                  {/* SF Notice */}
-                  <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
-                    <p className="font-semibold text-[#06038D] mb-1">📦 順豐速運條款</p>
-                    <p className="leading-relaxed">【如寄順豐自提網點可享運費優惠】請於下單時提供收件人名、電話，並選擇你的順豐網點。運費金額將自動根據貨件重量、材積、收件地址計算。運費由順豐速運收取，於取件時支付。運費詳情可參考<a href="https://htm.sf-express.com/hk/tc/" target="_blank" rel="noopener noreferrer" className="text-[#06038D] underline">順豐速運香港官方網站</a>。</p>
-                    <p className="mt-1 leading-relaxed">【客戶須知】由於順豐已暫停經SMS短訊方式發送取件訊息，所有取件訊息已改為透過順豐香港官方手機應用程式「SFHK APP」推送，客戶請提前下載「SFHK APP」，並開啟手機推送通知，以免錯過貨件運送提醒，同時客戶可透過「SFHK APP」隨時查看快件的最新狀態。</p>
-                  </div>
-
-                  {/* Recipient Info */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
-                      <Input
-                        placeholder="收件人全名"
-                        value={form.recipientName}
-                        onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
-                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
-                      <Input
-                        placeholder="+852 XXXX XXXX"
-                        value={form.recipientPhone}
-                        onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
-                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* SF Address Mode Toggle */}
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-2 block">收件地址方式</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => { setSfAddressMode("sf_station"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
-                          sfAddressMode === "sf_station"
-                            ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
-                            : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
-                        }`}
-                      >
-                        <Truck className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>順豐點 / 智能櫃</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setSfAddressMode("manual"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
-                          sfAddressMode === "manual"
-                            ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
-                            : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
-                        }`}
-                      >
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>手動輸入地址</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* SF Station Selection */}
-                  {sfAddressMode === "sf_station" && (
-                    <>
+                    {/* Recipient Info */}
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
-                        <Select
-                          value={form.sfDistrict}
-                          onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
-                        >
-                          <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
-                            <SelectValue placeholder="選擇地區" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {sfDistricts.map((d) => (
-                              <SelectItem key={d} value={d}>{d}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
+                        <Input
+                          placeholder="收件人全名"
+                          value={form.recipientName}
+                          onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
+                          className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                        />
                       </div>
-                      {form.sfDistrict && (
+                      <div>
+                        <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
+                        <Input
+                          placeholder="+852 XXXX XXXX"
+                          value={form.recipientPhone}
+                          onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
+                          className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* SF Address Mode Toggle */}
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-2 block">收件地址方式</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setSfAddressMode("sf_station"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
+                          className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
+                            sfAddressMode === "sf_station"
+                              ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
+                              : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
+                          }`}
+                        >
+                          <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>順豐點 / 智能櫃</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setSfAddressMode("manual"); setForm((f) => ({ ...f, sfDistrict: "", sfStationCode: null })); }}
+                          className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
+                            sfAddressMode === "manual"
+                              ? "border-[#06038D] bg-[#06038D]/5 text-[#06038D]"
+                              : "border-gray-200 text-gray-600 hover:border-[#06038D]/40"
+                          }`}
+                        >
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>手動輸入地址</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SF Station Selection */}
+                    {sfAddressMode === "sf_station" && (
+                      <>
                         <div>
-                          <Label className="text-xs text-gray-600 mb-1 block">
-                            順豐點 / 智能櫃 *
-                            {form.sfDistrict && (
-                              <span className="ml-1 text-gray-400">（{filteredStations.length} 個）</span>
-                            )}
-                          </Label>
+                          <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
                           <Select
-                            value={form.sfStationCode ?? ""}
-                            onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
+                            value={form.sfDistrict}
+                            onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
+                          >
+                            <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
+                              <SelectValue placeholder="選擇地區" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sfDistricts.map((d) => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {form.sfDistrict && (
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">
+                              順豐點 / 智能櫃 *
+                              {form.sfDistrict && (
+                                <span className="ml-1 text-gray-400">（{filteredStations.length} 個）</span>
+                              )}
+                            </Label>
+                            <Select
+                              value={form.sfStationCode ?? ""}
+                              onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
                           >
                             <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
                               <SelectValue placeholder="選擇順豐點 / 智能櫃" />
@@ -1514,8 +1545,8 @@ function CheckoutDialog({
                       <Label className="text-xs text-gray-600 mb-1 block">詳細地址 *</Label>
                       <Input
                         placeholder="例：新界東涌達東路1號東薈城2樓201室"
-                        value={form.meetupNote}
-                        onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
+                        value={form.manualAddress}
+                        onChange={(e) => setForm((f) => ({ ...f, manualAddress: e.target.value }))}
                         className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                       />
                       <p className="text-xs text-gray-400 mt-1">順豐上門派送，請填寫完整地址（包括大廈名稱、樓層及室號）</p>
@@ -1524,55 +1555,52 @@ function CheckoutDialog({
                 </div>
               )}
 
-              {/* Meetup Details */}
-              {form.shippingMethod === "meetup" && selectedAddressId === null && (
-                <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
-                  {/* Buyer phone info */}
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-[#06038D]/10">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#06038D' }}>
-                      <Phone className="w-4 h-4 text-white" />
+                {/* HK Post Address */}
+                {form.shippingMethod === "hk_post" && (
+                  <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
+                    <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
+                      <p className="font-semibold text-[#06038D] mb-1">📮 香港郵政 - 掛號郵件</p>
+                      <p className="leading-relaxed">運費 <span className="font-bold text-[#06038D]">HK$10</span> 將自動加入訂單總額。郵件將以掛號方式寄出，提供追蹤號碼。</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-[#06038D] mb-0.5">你的聯絡電話（賣家可見）</p>
-                      {buyerPhone ? (
-                        <p className="text-sm font-bold text-gray-800">{buyerPhone}</p>
-                      ) : (
-                        <p className="text-xs text-amber-600">⚠️ 你尚未在個人中心設定電話，賣家將無法主動聯絡你。建議前往個人中心設定電話後再結帳。</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-0.5">面交訂單建立後，賣家可在訂單詳情中查看你的電話</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
+                        <Input
+                          placeholder="收件人全名"
+                          value={form.hkPostRecipientName}
+                          onChange={(e) => setForm((f) => ({ ...f, hkPostRecipientName: e.target.value }))}
+                          className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
+                        <Input
+                          placeholder="+852 XXXX XXXX"
+                          value={form.hkPostRecipientPhone}
+                          onChange={(e) => setForm((f) => ({ ...f, hkPostRecipientPhone: e.target.value }))}
+                          className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 mb-1 block">送貨地址 *</Label>
+                      <Input
+                        placeholder="例：新界東涌達東路1號東薈城2樓201室"
+                        value={form.hkPostAddress}
+                        onChange={(e) => setForm((f) => ({ ...f, hkPostAddress: e.target.value }))}
+                        className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">請填寫完整地址（包括大廈名稱、樓層及室號）</p>
                     </div>
                   </div>
+                )}
+              </>)}
 
-                  {/* BUG-8 Fix: meetup requires phone for contact */}
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">購買人聯絡電話 *</Label>
-                    <Input
-                      placeholder="+852 XXXX XXXX"
-                      value={form.recipientPhone}
-                      onChange={(e) => setForm((f) => ({ ...f, recipientPhone: e.target.value }))}
-                      className={`text-sm h-9 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400 ${!form.recipientPhone.trim() ? 'border-red-300' : 'border-[#06038D]/30'}`}
-                    />
-                    {!form.recipientPhone.trim() && (
-                      <p className="text-xs text-red-500 mt-1">請填寫聯絡電話，方便賣家安排面交</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">偏好交收地點（可選）</Label>
-                    <Input
-                      placeholder="例：旺角地鐵站 B 出口、荘灣廣場門口..."
-                      value={form.meetupNote}
-                      onChange={(e) => setForm((f) => ({ ...f, meetupNote: e.target.value }))}
-                      className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">此備註將顯示在訂單詳情中，供雙方溝通安排交收地點</p>
-                  </div>
-                </div>
-              )}
             </>
           )}
 
-          {/* ── Step 2: Payment + Summary ── */}
-          {checkoutStep === 2 && (
+          {/* ── Step 3: Payment + Summary ── */}
+          {checkoutStep === 3 && (
             <>
               {/* Order Summary */}
               <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-4 space-y-2">
@@ -1607,9 +1635,15 @@ function CheckoutDialog({
                     ))}
                   </>
                 )}
+                {form.shippingMethod === "hk_post" && (
+                  <div className="flex justify-between text-sm text-amber-700">
+                    <span>📮 香港郵政運費</span>
+                    <span className="font-medium">+HK${HK_POST_FEE}</span>
+                  </div>
+                )}
                 <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
-                  <span>合計（不含運費）</span>
-                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)}</span>
+                  <span>合計{form.shippingMethod === "hk_post" ? "（含運費）" : "（不含運費）"}</span>
+                  <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s: number, o: { subtotalHkd: string | number }) => s + parseFloat(String(o.subtotalHkd)), 0) + (form.shippingMethod === "hk_post" ? HK_POST_FEE : 0)).toFixed(0)}</span>
                 </div>
               </div>
 
@@ -1652,22 +1686,16 @@ function CheckoutDialog({
                   ) : (
                   <>
                   <p className="text-xs font-semibold text-gray-700">
-                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "面交 / 其他"}
+                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "香港郵政（+HK$10）"}
                   </p>
                   {form.shippingMethod === "sf_cod" && selectedStation && (
                     <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {selectedStation.name}</p>
                   )}
-                  {form.shippingMethod === "sf_cod" && sfAddressMode === "manual" && form.meetupNote && (
-                    <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {form.meetupNote}</p>
+                  {form.shippingMethod === "sf_cod" && sfAddressMode === "manual" && form.manualAddress && (
+                    <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {form.manualAddress}</p>
                   )}
-                  {form.shippingMethod === "meetup" && (
-                    <div className="mt-1 space-y-1">
-                      <p className="text-xs text-gray-500">
-                        {buyerPhone ? `你的電話：${buyerPhone}` : "⚠️ 未設定電話（請先在個人中心設定）"}
-                        {form.meetupNote ? ` · 交收地點：${form.meetupNote}` : ""}
-                      </p>
-                      <p className="text-xs text-gray-400">付款完成後，訂單詳情頁面將顯示賣家聯絡電話</p>
-                    </div>
+                  {form.shippingMethod === "hk_post" && (
+                    <p className="text-xs text-gray-500 mt-0.5">{form.hkPostRecipientName} · {form.hkPostRecipientPhone} · {form.hkPostAddress}</p>
                   )}
                   </>
                   )}
@@ -1776,8 +1804,8 @@ function CheckoutDialog({
             </>
           )}
 
-          {/* ── Step 3: AlipayHK QR Code ── */}
-          {checkoutStep === 3 && (
+          {/* ── Step 4: AlipayHK QR Code ── */}
+          {checkoutStep === 4 && (
             <div className="space-y-4">
               {/* Amount summary */}
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
@@ -1835,8 +1863,8 @@ function CheckoutDialog({
               </div>
             </div>
           )}
-          {/* Step 4: Upload Payment Proof */}
-          {checkoutStep === 4 && (
+          {/* Step 5: Upload Payment Proof */}
+          {checkoutStep === 5 && (
             <div className="space-y-4">
               {proofSubmitted ? (
                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
@@ -1914,11 +1942,11 @@ function CheckoutDialog({
               onClick={onClose}
             >取消</Button>
           )}
-          {checkoutStep === 2 && (
+          {(checkoutStep === 2 || checkoutStep === 3) && (
             <Button
               variant="outline"
               className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white"
-              onClick={() => setCheckoutStep(1)}
+              onClick={() => setCheckoutStep((checkoutStep - 1) as 1 | 2 | 3 | 4 | 5)}
               disabled={isProcessing}
             >上一步</Button>
           )}
@@ -1928,9 +1956,17 @@ function CheckoutDialog({
               style={{ background: '#FEDD00', color: '#06038D' }}
               disabled={!canProceedStep1}
               onClick={() => setCheckoutStep(2)}
-            >下一步</Button>
+            >下一步：填寫地址</Button>
           )}
           {checkoutStep === 2 && (
+            <Button
+              className="flex-1 font-bold"
+              style={{ background: '#FEDD00', color: '#06038D' }}
+              disabled={!canProceedStep2}
+              onClick={() => setCheckoutStep(3)}
+            >下一步：確認付款</Button>
+          )}
+          {checkoutStep === 3 && (
             <Button
               className="flex-1 font-bold"
               style={{ background: '#FEDD00', color: '#06038D' }}
@@ -1948,7 +1984,7 @@ function CheckoutDialog({
                 : "確認結帳"}
             </Button>
           )}
-          {checkoutStep === 3 && (
+          {checkoutStep === 4 && (
             <Button
               className="flex-1 font-bold"
               style={{ background: '#FEDD00', color: '#06038D' }}
@@ -1957,15 +1993,15 @@ function CheckoutDialog({
               我已完成付款 → 上傳截圖
             </Button>
           )}
-          {checkoutStep === 4 && !proofSubmitted && (
+          {checkoutStep === 5 && !proofSubmitted && (
             <Button
               variant="outline"
               className="flex-shrink-0 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white px-4"
-              onClick={() => setCheckoutStep(3)}
+              onClick={() => setCheckoutStep(4)}
               disabled={isSubmittingProof}
             >{t("cart.back")}</Button>
           )}
-          {checkoutStep === 4 && !proofSubmitted && (
+          {checkoutStep === 5 && !proofSubmitted && (
             <Button
               className="flex-1 font-bold"
               style={{ background: proofFile ? '#FEDD00' : '#e5e7eb', color: proofFile ? '#06038D' : '#9ca3af' }}
@@ -1977,7 +2013,7 @@ function CheckoutDialog({
               ) : "提交付款截圖"}
             </Button>
           )}
-          {checkoutStep === 4 && proofSubmitted && (
+          {checkoutStep === 5 && proofSubmitted && (
             <Button
               className="flex-1 font-bold"
               style={{ background: '#FEDD00', color: '#06038D' }}

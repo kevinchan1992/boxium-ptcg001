@@ -414,9 +414,10 @@
     "checkout": "前往結帳",
     "checkoutDialog": {
       "step1": "送貨方式",
-      "step2": "付款確認",
-      "step3": "掃碼付款",
-      "step4": "上傳截圖",
+      "step2": "送貨地址",
+      "step3": "付款確認",
+      "step4": "揃碼付款",
+      "step5": "上傳截圖",
       "title": "結帳"
     },
     "clearCart": "清空購物車",

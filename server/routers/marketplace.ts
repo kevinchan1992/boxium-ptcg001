@@ -2866,7 +2866,9 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // Tiered fee: fetch tiers once, apply per-item based on each item's price
       const feeTiers = await getPlatformFeeTiers();
       const auctionTotal = auctionOrders.reduce((sum, o) => sum + parseFloat(o.subtotalHkd), 0);
-      const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0) + auctionTotal;
+      const HK_POST_FEE = 10; // HK$10 香港郵政運費
+      const shippingFee = input.shippingMethod === "hk_post" ? HK_POST_FEE : 0;
+      const totalAmount = orderItems.reduce((sum, o) => sum + o.effectivePrice, 0) + auctionTotal + shippingFee;
       const totalPlatformFee = orderItems.reduce((sum, { listing, effectivePrice }) =>
         sum + calcPlatformFeeWithRate(listing.sellerType, effectivePrice, getFeeRateForAmount(effectivePrice, feeTiers)), 0);
       const totalSellerReceivable = totalAmount - totalPlatformFee;
@@ -2962,6 +2964,15 @@ All three checks must pass for verified to be true. Respond with JSON only match
           },
           quantity: 1,
         })),
+        // HK Post shipping fee
+        ...(shippingFee > 0 ? [{
+          price_data: {
+            currency: "hkd",
+            product_data: { name: "📮 香港郵政運費", description: "本地平郵寄送服務" },
+            unit_amount: Math.round(shippingFee * 100),
+          },
+          quantity: 1,
+        }] : []),
       ];
 
       const session = await stripe.checkout.sessions.create({
@@ -3119,13 +3130,15 @@ All three checks must pass for verified to be true. Respond with JSON only match
         createdOrders.push({ orderNo, listingTitle: listing.title, effectivePrice });
         totalAmount += effectivePrice;
       }
-
+      // Add HK Post shipping fee if applicable
+      const alipayShippingFee = input.shippingMethod === "hk_post" ? 10 : 0;
+      totalAmount += alipayShippingFee;
       // Notify admin
       const orderSummary = createdOrders.map(o => `${o.listingTitle} HKD ${o.effectivePrice.toFixed(2)}`).join("、");
       await notifyAdmin({
-        title: `支付寶 HK 批量訂單待審核 💰（${createdOrders.length} 件）`,
-        content: `買家已提交支付寶 HK 付款，共 ${createdOrders.length} 個訂單，合計 HKD ${totalAmount.toFixed(2)}。商品：${orderSummary}。請前往管理後台審核。`,
-      }).catch(() => {});
+        title: `支付寳 HK 批量訂單待審核 💰（${createdOrders.length} 件）`,
+        content: `買家已提交支付寳 HK 付款，共 ${createdOrders.length} 個訂單，合計 HKD ${totalAmount.toFixed(2)}${alipayShippingFee > 0 ? `（含香港郵政運費 HKD ${alipayShippingFee}）` : ""}。商品：${orderSummary}。請前往管理後台審核。`,
+      }).catch(() => {});;
 
       console.log(`[createBatchAlipayOrder] Created ${createdOrders.length} orders, total HKD ${totalAmount}`);
       return { orderNos: createdOrders.map(o => o.orderNo), totalAmount, firstOrderNo: createdOrders[0]?.orderNo };
