@@ -605,7 +605,7 @@ function WatchlistSection() {
           style={activeTab === "cards" ? { background: BRAND_BLUE, color: "white" } : { color: BRAND_BLUE }}
         >
           <Heart className="w-4 h-4" />
-          卡牧追蹤
+          卡牌追蹤
           {cardCount > 0 && (
             <span className="text-xs rounded-full px-1.5 py-0.5" style={activeTab === "cards" ? { background: "rgba(255,255,255,0.25)" } : { background: `${BRAND_BLUE}20` }}>
               {cardCount}
