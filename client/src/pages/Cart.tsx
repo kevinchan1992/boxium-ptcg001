@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy, Upload, Loader2, CheckCircle, Trophy, XCircle } from "lucide-react";
+import { ShoppingCart, Trash2, AlertCircle, Package, ChevronRight, ArrowLeft, Clock, Check, X, Phone, MapPin, CreditCard, Truck, Users, ChevronDown, Smartphone, Copy, Upload, Loader2, CheckCircle, Trophy, XCircle, Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -1302,13 +1302,12 @@ function CheckoutDialog({
                   }`}>
                     <RadioGroupItem value="sf_cod" id="sf_cod_step1" className="mt-0.5 flex-shrink-0" />
                     <Label htmlFor="sf_cod_step1" className="cursor-pointer flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                        <span className="font-bold text-sm text-gray-800">{t("cart.shipping.sfExpressTitle")}</span>
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">運費到付</span>
+                        <span className="font-bold text-sm text-gray-800">順豐速運</span>
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">運費到付</span>
                       </div>
-                      <p className="text-xs text-gray-500 ml-6">{t("cart.shipping.sfExpressDescription")}</p>
-                      <p className="text-xs text-gray-400 ml-6 mt-1">運費由順豐速運收取，取件時支付，金額視重量及地址而定</p>
+                      <p className="text-xs text-gray-500 ml-6">運費由順豐速運收取，取件時支付，金額視重量及地址而定</p>
                     </Label>
                   </div>
 
@@ -1318,15 +1317,12 @@ function CheckoutDialog({
                   }`}>
                     <RadioGroupItem value="hk_post" id="hk_post_step1" className="mt-0.5 flex-shrink-0" />
                     <Label htmlFor="hk_post_step1" className="cursor-pointer flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MapPin className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                        <span className="font-bold text-sm text-gray-800">香港郵政</span>
-                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">+HK$10 運費</span>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Mail className="w-4 h-4 text-[#06038D] flex-shrink-0" />
+                        <span className="font-bold text-sm text-gray-800">香港郵政（平郵）</span>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">+HK$10</span>
                       </div>
-                      <p className="text-xs text-gray-500 ml-6">本地平郵寄送，運費 HK$10 將計入訂單總額</p>
-                      <div className="ml-6 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-700 font-medium">📮 注意：選擇香港郵政將自動在訂單金額加收 HK$10 運費服務費</p>
-                      </div>
+                      <p className="text-xs text-gray-500 ml-6">本地平郵寄送，運費 HK$10 將自動計入訂單總額</p>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -1559,8 +1555,8 @@ function CheckoutDialog({
                 {form.shippingMethod === "hk_post" && (
                   <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
                     <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
-                      <p className="font-semibold text-[#06038D] mb-1">📮 香港郵政 - 掛號郵件</p>
-                      <p className="leading-relaxed">運費 <span className="font-bold text-[#06038D]">HK$10</span> 將自動加入訂單總額。郵件將以掛號方式寄出，提供追蹤號碼。</p>
+                      <p className="font-semibold text-[#06038D] mb-1">📮 香港郵政 - 平郵</p>
+                      <p className="leading-relaxed">運費 <span className="font-bold text-[#06038D]">HK$10</span> 將自動加入訂單總額，以平郵方式寄出。</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -1662,7 +1658,7 @@ function CheckoutDialog({
                 ) : form.shippingMethod === "sf_cod" ? (
                   <Truck className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
                 ) : (
-                  <Users className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
+                  <Mail className="w-4 h-4 text-[#06038D] mt-0.5 flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   {selectedAddressId !== null ? (
@@ -1672,7 +1668,7 @@ function CheckoutDialog({
                       return (
                         <>
                           <p className="text-xs font-semibold text-gray-700">
-                            {isSfStation ? "順豐速運（運費到付）" : "面交 / 其他"}
+                            {isSfStation ? "順豐速運（運費到付）" : "香港郵政（平郵）"}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {selAddr?.recipientName} · {selAddr?.phone}
@@ -1686,7 +1682,7 @@ function CheckoutDialog({
                   ) : (
                   <>
                   <p className="text-xs font-semibold text-gray-700">
-                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "香港郵政（+HK$10）"}
+                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "香港郵政（平郵，+HK$10）"}
                   </p>
                   {form.shippingMethod === "sf_cod" && selectedStation && (
                     <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {selectedStation.name}</p>
