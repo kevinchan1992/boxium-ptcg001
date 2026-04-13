@@ -525,7 +525,6 @@ export default function AdminSecurityMonitor() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
         {/* ── Rate Limit Monitor ── */}
         <TabsContent value="ratelimit">
@@ -717,6 +716,7 @@ export default function AdminSecurityMonitor() {
             </CardContent>
           </Card>
         </TabsContent>
+      </Tabs>
 
         {/* Block IP Dialog */}
         <BlockIpDialog
