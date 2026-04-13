@@ -1729,12 +1729,12 @@ function CheckoutDialog({
                         : "border-gray-200 hover:border-[#06038D]/40 cursor-pointer"
                   }`}>
                     <RadioGroupItem value="alipay_hk" id="alipay_hk2" className="mt-0.5" disabled={hasSellerItems} />
-                    <Label htmlFor="alipay_hk2" className={`flex-1 ${hasSellerItems ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-400" />
-                        <span className="font-semibold text-sm text-gray-500">支付寶 HK（AlipayHK）</span>
+                    <Label htmlFor="alipay_hk2" className={`flex-1 min-w-0 ${hasSellerItems ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                      <div className="flex items-center gap-2 flex-nowrap">
+                        <CreditCard className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="font-semibold text-sm text-gray-500 shrink-0">支付寶 HK（AlipayHK）</span>
                         {hasSellerItems && (
-                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">不可用</span>
+                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">不可用</span>
                         )}
                       </div>
                       {hasSellerItems ? (
@@ -1749,12 +1749,12 @@ function CheckoutDialog({
                     form.paymentMethod === "stripe" ? "border-[#06038D] bg-[#06038D]/5" : "border-gray-200 hover:border-[#06038D]/40"
                   }`}>
                     <RadioGroupItem value="stripe" id="stripe2" className="mt-0.5" />
-                    <Label htmlFor="stripe2" className="cursor-pointer flex-1">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-[#06038D]" />
-                        <span className="font-semibold text-sm text-gray-800">信用卡（Stripe）</span>
+                    <Label htmlFor="stripe2" className="cursor-pointer flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-nowrap">
+                        <CreditCard className="w-4 h-4 text-[#06038D] shrink-0" />
+                        <span className="font-semibold text-sm text-gray-800 shrink-0">信用卡（Stripe）</span>
                         {hasSellerItems && (
-                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full">推薦</span>
+                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">推薦</span>
                         )}
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5 ml-6">支援 Visa、Mastercard 等主要信用卡</p>
