@@ -475,7 +475,7 @@ export default function AuctionTerms() {
               </div>
             </div>
             <InfoBox type="info">
-              如需申請退款，請於收貨後 <strong>3 日內</strong>透過平台訊息功能聯絡賣家，並提供相關證明（如照片）。如雙方未能達成協議，可向平台客服申請介入調解。
+              如商品出現問題需申請退款，請於收貨後 <strong>48 小時</strong>內透過平台客服提交申請介入調解，並提供相關證明（如照片）。平台客服將協助處理您的退款事宜。
             </InfoBox>
           </div>
         </Section>
