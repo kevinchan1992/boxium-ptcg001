@@ -277,7 +277,7 @@ export default function GradingSubmit() {
   const submitMutation = trpc.grading.submitApplication.useMutation({
     onSuccess: (data: any) => {
       toast.success("申請提交成功！請查看確認通知以獲取送件地址。");
-      navigate(`/grading/orders/${data.id}`);
+      navigate(`/grading/orders/${data.submissionId}`);
     },
     onError: (err: any) => {
       toast.error(`提交失敗：${err.message}`);
