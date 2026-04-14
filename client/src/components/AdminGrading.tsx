@@ -331,6 +331,9 @@ function BatchManagement() {
                         {new Date(batch.shippedDate).toLocaleDateString("zh-HK")}
                       </span>
                     )}
+                    <span className="text-xs text-[#06038d] font-semibold">
+                      已分配 {batch.submissionCount ?? 0} 個申請
+                    </span>
                   </div>
                 </div>
                 {batch.status === "open" && (
@@ -404,6 +407,11 @@ function SubmissionManagement() {
     { id: cardListSubId! },
     { enabled: !!cardListSubId }
   );
+  const [detailSubId, setDetailSubId] = useState<number | null>(null);
+  const { data: detailFull, isLoading: detailLoading } = trpc.grading.admin.getSubmissionDetail.useQuery(
+    { id: detailSubId! },
+    { enabled: !!detailSubId }
+  );
 
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -438,13 +446,10 @@ function SubmissionManagement() {
   });
 
   const openDetail = (sub: any) => {
+    setDetailSubId(sub.id);
     setDetailSubmission({
       ...sub,
-      itemResults: (sub.items ?? []).map((item: any) => ({
-        id: item.id,
-        psaGrade: item.psaGrade ?? "",
-        psaCertNo: item.psaCertNo ?? "",
-      })),
+      itemResults: [],
       newStatus: sub.status,
       notifNote: "",
       trackingNo: sub.trackingNo ?? "",
@@ -452,6 +457,26 @@ function SubmissionManagement() {
     });
     setShowDetail(true);
   };
+
+  // Sync detailFull into detailSubmission when loaded
+  const prevDetailFullRef = React.useRef<any>(null);
+  React.useEffect(() => {
+    if (detailFull && detailFull !== prevDetailFullRef.current) {
+      prevDetailFullRef.current = detailFull;
+      setDetailSubmission((prev: any) => prev ? {
+        ...prev,
+        ...detailFull,
+        itemResults: (detailFull.items ?? []).map((item: any) => ({
+          id: item.id,
+          psaGrade: item.psaGrade ?? "",
+          psaCertNo: item.psaCertNo ?? "",
+        })),
+        newStatus: prev.newStatus,
+        notifNote: prev.notifNote,
+        trackingNo: prev.trackingNo,
+      } : prev);
+    }
+  }, [detailFull]);
 
   return (
     <div>

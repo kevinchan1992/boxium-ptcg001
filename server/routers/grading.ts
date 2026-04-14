@@ -17,7 +17,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, count, isNotNull } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -486,7 +486,15 @@ export const gradingRouter = router({
     getAllBatches: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      return db.select().from(gradingBatches).orderBy(desc(gradingBatches.cutoffDate));
+      const batches = await db.select().from(gradingBatches).orderBy(desc(gradingBatches.cutoffDate));
+      // Count assigned submissions per batch
+      const counts = await db
+        .select({ batchId: gradingSubmissions.batchId, cnt: count(gradingSubmissions.id) })
+        .from(gradingSubmissions)
+        .where(isNotNull(gradingSubmissions.batchId))
+        .groupBy(gradingSubmissions.batchId);
+      const countMap = new Map<number, number>(counts.map((r) => [r.batchId!, Number(r.cnt)]));
+      return batches.map((b) => ({ ...b, submissionCount: countMap.get(b.id) ?? 0 }));
     }),
 
     upsertBatch: adminProcedure
