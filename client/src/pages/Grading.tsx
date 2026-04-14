@@ -176,9 +176,20 @@ export default function Grading() {
           <Badge className="bg-yellow-400 text-[#06038d] font-bold mb-4 text-sm px-3 py-1">
             PSA 官方認可代送服務
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            BOXIUM × PSA
-            <br />
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo-white_32a1e418.png"
+              alt="BOXIUM"
+              className="h-12 sm:h-16 md:h-20 w-auto object-contain"
+            />
+            <span className="text-white text-3xl sm:text-4xl font-bold">×</span>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/psa-logo_e1ed218d.png"
+              alt="PSA"
+              className="h-10 sm:h-14 md:h-16 w-auto object-contain"
+            />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
             <span className="text-yellow-400">代客鑑定服務</span>
           </h1>
           <p className="text-lg md:text-xl text-blue-200 mb-8 max-w-2xl mx-auto">
