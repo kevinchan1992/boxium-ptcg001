@@ -62,99 +62,142 @@ const STATUS_LABEL: Record<string, string> = {
 // ─── Printable Slip ───────────────────────────────────────────────────────────
 function PrintableSlip({ submission }: { submission: any }) {
   return (
-    <div className="hidden print:block p-8 font-sans text-black bg-white">
-      {/* Header */}
-      <div className="border-2 border-black p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">BOXIUM × PSA 代客鑑定申請單</h1>
-            <p className="text-sm mt-1">請將此申請單打印後連同卡牌一起寄出</p>
+    <div className="hidden print:block font-sans text-black bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* ── Header Banner ── */}
+      <div style={{ background: '#06038d', padding: '18px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* BOXIUM Logo SVG */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            background: '#FEDD00',
+            border: '2px solid #FEDD00',
+            borderRadius: '6px',
+            padding: '4px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ color: '#06038d', fontWeight: '900', fontSize: '20px', letterSpacing: '2px' }}>BOXIUM</span>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-bold font-mono">{submission.orderNo}</p>
-            <p className="text-sm">
-              {new Date(submission.createdAt).toLocaleDateString("zh-HK", {
-                year: "numeric", month: "long", day: "numeric"
-              })}
-            </p>
+          <div>
+            <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>PSA 代客鑑定申請單</div>
+            <div style={{ color: '#b0b8e8', fontSize: '11px', marginTop: '2px' }}>請將此申請單打印後連同卡牌一起寄出</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ color: '#FEDD00', fontWeight: '700', fontSize: '14px', fontFamily: 'monospace', letterSpacing: '1px' }}>{submission.orderNo}</div>
+          <div style={{ color: '#b0b8e8', fontSize: '11px', marginTop: '3px' }}>
+            {new Date(submission.createdAt).toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
         </div>
       </div>
 
-      {/* Shipping address */}
-      <div className="border border-black p-4 mb-4">
-        <h2 className="font-bold text-base mb-2">📦 送件地址</h2>
-        <p className="font-bold">順豐站 852Z351</p>
-        <p>香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
-        <p className="text-sm mt-2 font-semibold text-red-600">
-          ⚠️ 請確保此申請單與卡牌一同寄出，否則無法處理您的申請
-        </p>
-      </div>
+      {/* ── Body ── */}
+      <div style={{ padding: '20px 28px' }}>
 
-      {/* Card list */}
-      <div className="border border-black p-4 mb-4">
-        <h2 className="font-bold text-base mb-3">卡牌清單（共 {submission.items.length} 張）</h2>
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-black">
-              <th className="text-left py-1 pr-3 w-8">#</th>
-              <th className="text-left py-1 pr-3">卡牌名稱</th>
-              <th className="text-left py-1 pr-3">系列 / 編號</th>
-              <th className="text-left py-1 pr-3">服務層級</th>
-              <th className="text-left py-1 pr-3">狀況</th>
-              <th className="text-right py-1">費用</th>
-            </tr>
-          </thead>
-          <tbody>
-            {submission.items.map((item: any, idx: number) => (
-              <tr key={item.id} className="border-b border-gray-300">
-                <td className="py-2 pr-3">{idx + 1}</td>
-                <td className="py-2 pr-3 font-semibold">{item.cardName}</td>
-                <td className="py-2 pr-3 text-xs">
-                  {[item.cardSet, item.cardNumber].filter(Boolean).join(" / ") || "—"}
-                </td>
-                <td className="py-2 pr-3">{item.tier?.name ?? "—"}</td>
-                <td className="py-2 pr-3">{item.condition}</td>
-                <td className="py-2 text-right">
-                  HK${item.tier ? parseFloat(item.tier.feeHkd).toLocaleString() : "—"}
+        {/* Applicant Info */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+          <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>申請人</div>
+            <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d' }}>{submission.user?.name ?? '—'}</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{submission.user?.email ?? ''}</div>
+          </div>
+          <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>服務層級</div>
+            <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d' }}>{submission.items?.[0]?.tier?.name ?? '—'}</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>HK${submission.items?.[0]?.tier ? parseFloat(submission.items[0].tier.feeHkd).toLocaleString() : '—'} / 張 · 共 {submission.items.length} 張</div>
+          </div>
+          <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>申請編號</div>
+            <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d', fontFamily: 'monospace' }}>{submission.orderNo}</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>共 {submission.items.length} 張卡牌</div>
+          </div>
+        </div>
+
+        {/* Shipping Address */}
+        <div style={{ border: '1.5px solid #06038d', borderRadius: '8px', padding: '14px 16px', marginBottom: '16px', background: '#f0f2ff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ width: '20px', height: '20px', background: '#06038d', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'white', fontSize: '11px' }}>📦</span>
+            </div>
+            <span style={{ fontWeight: '700', fontSize: '13px', color: '#06038d' }}>送件地址</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: '12px' }}>
+            <div><span style={{ color: '#6b7280' }}>收件人：</span><span style={{ fontWeight: '600' }}>BOXIUM</span></div>
+            <div><span style={{ color: '#6b7280' }}>聯絡電話：</span><span style={{ fontWeight: '600' }}>55090102</span></div>
+            <div><span style={{ color: '#6b7280' }}>寄件方式：</span><span style={{ fontWeight: '600' }}>順豐站 852Z351</span></div>
+            <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#6b7280' }}>地址：</span><span style={{ fontWeight: '600' }}>香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</span></div>
+          </div>
+          <div style={{ marginTop: '10px', padding: '6px 10px', background: '#fff3cd', borderRadius: '4px', fontSize: '11px', fontWeight: '600', color: '#92400e' }}>
+            ⚠️ 請確保此申請單與卡牌一同寄出，否則無法處理您的申請
+          </div>
+        </div>
+
+        {/* Card List */}
+        <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+          <div style={{ background: '#06038d', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'white', fontWeight: '700', fontSize: '13px' }}>卡牌清單</span>
+            <span style={{ color: '#FEDD00', fontWeight: '600', fontSize: '12px' }}>共 {submission.items.length} 張</span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ background: '#eef0ff', borderBottom: '1px solid #c7d2fe' }}>
+                <th style={{ padding: '8px 12px', textAlign: 'left', width: '28px', color: '#374151', fontWeight: '600' }}>#</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left', color: '#374151', fontWeight: '600' }}>卡牌名稱</th>
+                <th style={{ padding: '8px 12px', textAlign: 'left', width: '100px', color: '#374151', fontWeight: '600' }}>系列 / 編號</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center', width: '80px', color: '#374151', fontWeight: '600' }}>服務層級</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right', width: '70px', color: '#374151', fontWeight: '600' }}>費用</th>
+              </tr>
+            </thead>
+            <tbody>
+              {submission.items.map((item: any, idx: number) => (
+                <tr key={item.id} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                  <td style={{ padding: '10px 12px', color: '#6b7280', textAlign: 'center' }}>{idx + 1}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <div style={{ fontWeight: '600', color: '#111827', lineHeight: '1.4', wordBreak: 'break-word' }}>{item.cardName}</div>
+                  </td>
+                  <td style={{ padding: '10px 12px', color: '#6b7280', fontSize: '11px' }}>
+                    {[item.cardSet, item.cardNumber].filter(Boolean).join(' / ') || '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                    <span style={{ background: '#eef0ff', color: '#06038d', padding: '2px 8px', borderRadius: '4px', fontWeight: '600', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                      {item.tier?.name ?? '—'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600', color: '#06038d' }}>
+                    HK${item.tier ? parseFloat(item.tier.feeHkd).toLocaleString() : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2px solid #06038d', background: '#f0f2ff' }}>
+                <td colSpan={4} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: '#06038d', fontSize: '13px' }}>代送 PSA 費用合計（鑑定後付款）</td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: '#06038d', fontSize: '14px' }}>
+                  HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
                 </td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={5} className="pt-3 font-bold text-right">代送 PSA 費用合計（鑑定後付款）</td>
-              <td className="pt-3 font-bold text-right">
-                HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+            </tfoot>
+          </table>
+        </div>
 
-      {/* Notes */}
-      <div className="border border-black p-4 mb-4 text-sm">
-        <h2 className="font-bold mb-2">重要事項</h2>
-        <ol className="list-decimal list-inside space-y-1">
-          <li>請使用有追蹤號碼的寄件方式，並自行購買保險。</li>
-          <li>卡片請妥善包裝，建議使用硬卡套及泡泡紙保護。</li>
-          <li>鑑定完成後，系統將通知您付款，請於 <strong>30 天內</strong> 完成付款。</li>
-          <li>逾期未付款，平台保留對相關卡片自行處理之權利。</li>
-          <li>如有查詢，請透過平台訊息聯絡 BOXIUM。</li>
-        </ol>
-      </div>
+        {/* Notes */}
+        <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', padding: '14px 16px', fontSize: '12px' }}>
+          <div style={{ fontWeight: '700', color: '#06038d', marginBottom: '8px', fontSize: '13px' }}>重要事項</div>
+          <ol style={{ paddingLeft: '16px', margin: 0, lineHeight: '1.8', color: '#374151' }}>
+            <li>請使用有追蹤號碼的寄件方式，並自行購買保險。</li>
+            <li>卡片請妥善包裝，建議使用硬卡套及泡泡紙保護。</li>
+            <li>鑑定完成後，系統將通知您付款，請於 <strong>30 天內</strong> 完成付款。</li>
+            <li>逾期未付款，平台保留對相關卡片自行處理之權利。</li>
+            <li>如有查詢，請透過平台訊息聯絡 BOXIUM。</li>
+          </ol>
+        </div>
 
-      {/* Signature */}
-      <div className="flex gap-8 mt-6">
-        <div className="flex-1 border-t border-black pt-2">
-          <p className="text-sm">客人簽署：</p>
+        {/* Footer */}
+        <div style={{ marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '10px', color: '#9ca3af' }}>BOXIUM × PSA 代客鑑定服務 · boxium.asia</div>
+          <div style={{ fontSize: '10px', color: '#9ca3af' }}>此申請單由系統自動生成，如有疑問請聯絡 BOXIUM</div>
         </div>
-        <div className="flex-1 border-t border-black pt-2">
-          <p className="text-sm">日期：</p>
-        </div>
-        <div className="flex-1 border-t border-black pt-2">
-          <p className="text-sm">BOXIUM 收件確認：</p>
-        </div>
+
       </div>
     </div>
   );
