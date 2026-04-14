@@ -2176,7 +2176,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     <span className="text-gray-500">姓名</span><span className="text-gray-800">{selectedOrder.sellerUserName || '—'}</span>
                     <span className="text-gray-500">電郵</span><span className="text-xs break-all text-gray-800">{selectedOrder.sellerUserEmail || '—'}</span>
                     <span className="text-gray-500">電話</span><span className="text-gray-800">{selectedOrder.sellerUserPhone || '—'}</span>
-                    {selectedOrder.sellerStripeConnectId && <><span className="text-gray-500">Stripe Connect</span><span className="font-mono text-xs">{selectedOrder.sellerStripeConnectId}</span></>}
+                    {selectedOrder.sellerStripeConnectId && <><span className="text-gray-500">Stripe Connect</span><span className="font-mono text-xs text-gray-900">{selectedOrder.sellerStripeConnectId}</span></>}
                   </div>
                 </div>
               )}
