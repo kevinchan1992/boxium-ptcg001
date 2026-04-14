@@ -44,6 +44,7 @@ import Cart from "./pages/Cart";
 import Unsubscribe from "./pages/Unsubscribe";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
+import GradingMaintenanceGuard from "./components/GradingMaintenanceGuard";
 import MessageCenter from "./components/MessageCenter";
 import { trpc } from "./lib/trpc";
 
@@ -123,10 +124,18 @@ function Router() {
         <Redirect to="/profile?tab=orders" />
       </Route>
       <Route path="/orders/:orderNo" component={OrderDetail} />
-      <Route path="/grading" component={Grading} />
-      <Route path="/grading/submit" component={GradingSubmit} />
-      <Route path="/grading/orders" component={GradingOrders} />
-      <Route path="/grading/orders/:id" component={GradingOrderDetail} />
+      <Route path="/grading">
+        <GradingMaintenanceGuard><Grading /></GradingMaintenanceGuard>
+      </Route>
+      <Route path="/grading/submit">
+        <GradingMaintenanceGuard><GradingSubmit /></GradingMaintenanceGuard>
+      </Route>
+      <Route path="/grading/orders">
+        <GradingMaintenanceGuard><GradingOrders /></GradingMaintenanceGuard>
+      </Route>
+      <Route path="/grading/orders/:id">
+        <GradingMaintenanceGuard><GradingOrderDetail /></GradingMaintenanceGuard>
+      </Route>
       <Route path="/cart" component={Cart} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/seller/:id" component={SellerPublicProfile} />

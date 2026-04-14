@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
-import { getDb } from "../db";
+import { getDb, getSystemSetting, setSystemSetting, isGradingMaintenanceMode, isGradingWhitelisted } from "../db";
 import {
   gradingServiceTiers,
   gradingBatches,
@@ -883,4 +883,28 @@ export const gradingRouter = router({
       });
       return { qrDataUrl, url };
     }),
+
+  // ─── Public: Check grading access (maintenance mode guard) ───────────────
+  getGradingAccess: publicProcedure.query(async ({ ctx }) => {
+    const maintenanceMode = await isGradingMaintenanceMode();
+    if (!maintenanceMode) return { allowed: true, maintenanceMode: false };
+    if (!ctx.user) return { allowed: false, maintenanceMode: true };
+    if (ctx.user.role === 'admin') return { allowed: true, maintenanceMode: true };
+    const whitelisted = await isGradingWhitelisted(ctx.user.id);
+    return { allowed: whitelisted, maintenanceMode: true };
+  }),
+
+  // ─── Admin: Set grading maintenance mode ─────────────────────────────────
+  setGradingMaintenanceMode: adminProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await setSystemSetting('grading_maintenance_mode', input.enabled ? 'true' : 'false', '鑑定服務維護模式開關');
+      return { success: true, enabled: input.enabled };
+    }),
+
+  // ─── Admin: Get grading maintenance mode status ───────────────────────────
+  getGradingMaintenanceMode: adminProcedure.query(async () => {
+    const enabled = await isGradingMaintenanceMode();
+    return { enabled };
+  }),
 });

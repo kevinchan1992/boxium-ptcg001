@@ -4934,6 +4934,22 @@ export async function removeMarketplaceWhitelist(userId: number) {
   await db.delete(mwTable).where(eq(mwTable.userId, userId));
 }
 
+// ============================================================
+// Grading Maintenance Mode
+// ============================================================
+export async function isGradingMaintenanceMode(): Promise<boolean> {
+  const row = await getSystemSetting('grading_maintenance_mode');
+  return row?.settingValue === 'true';
+}
+
+export async function isGradingWhitelisted(userId: number): Promise<boolean> {
+  // Reuse the same marketplaceWhitelist table — one whitelist for all modules
+  const db = await getDb();
+  if (!db) return false;
+  const [row] = await db.select({ id: mwTable.id }).from(mwTable).where(eq(mwTable.userId, userId)).limit(1);
+  return !!row;
+}
+
 
 // ============================================================
 // P1 Fix #4: Order Messages — Internal messaging for order communication

@@ -8356,3 +8356,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] SalesReportTab：平台收入來源加入 PSA 代客鑑定（紫色）
 - [x] SalesReportTab：損益表收入欄加入 PSA 代客鑑定收入行
 - [x] SalesReportTab：CSV 匯出加入 PSA 鑑定收入欄位
+
+---
+## 鑑定服務維護模式（2026-04-14）
+- [x] server/db.ts：新增 isGradingMaintenanceMode / isGradingWhitelisted helper（共用 marketplaceWhitelist 表）
+- [x] server/routers/grading.ts：新增 getGradingAccess / setGradingMaintenanceMode / getGradingMaintenanceMode procedures
+- [x] client/src/components/GradingMaintenanceGuard.tsx：建立維護守衛組件（顯示「鑑定服務維護中」頁面）
+- [x] client/src/App.tsx：/grading, /grading/submit, /grading/orders, /grading/orders/:id 路由包裹 GradingMaintenanceGuard
+- [x] AdminMarketplace.tsx 維護模式 Tab：加入 PSA 代客鑑定維護模式開關，標題改為「維護模式管理」

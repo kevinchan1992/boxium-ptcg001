@@ -8049,7 +8049,10 @@ export default function AdminMarketplace() {
 // ============================================================
 function MaintenanceModeTab() {
   const utils = trpc.useUtils();
+  // Marketplace maintenance
   const { data: modeData, isLoading: modeLoading } = trpc.marketplace.getMarketplaceMaintenanceMode.useQuery();
+  // Grading maintenance
+  const { data: gradingModeData, isLoading: gradingModeLoading } = trpc.grading.getGradingMaintenanceMode.useQuery();
   const { data: whitelistData, isLoading: whitelistLoading } = trpc.marketplace.getMarketplaceWhitelist.useQuery();
   const [searchEmail, setSearchEmail] = useState('');
   const [searchResult, setSearchResult] = useState<{ id: number; name: string; email: string } | null | 'not_found'>(null);
@@ -8061,6 +8064,13 @@ function MaintenanceModeTab() {
     onSuccess: (data) => {
       toast.success(data.enabled ? '市集維護模式已開啟' : '市集維護模式已關閉');
       utils.marketplace.getMarketplaceMaintenanceMode.invalidate();
+    },
+    onError: (e: any) => toast.error(parseApiError(e)),
+  });
+  const toggleGradingMaintenanceMutation = trpc.grading.setGradingMaintenanceMode.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.enabled ? '鑑定服務維護模式已開啟' : '鑑定服務維護模式已關閉');
+      utils.grading.getGradingMaintenanceMode.invalidate();
     },
     onError: (e: any) => toast.error(parseApiError(e)),
   });
@@ -8088,16 +8098,19 @@ function MaintenanceModeTab() {
   };
   const isSearching = searchQuery.isFetching;
   const isMaintenanceOn = modeData?.enabled ?? false;
+  const isGradingMaintenanceOn = gradingModeData?.enabled ?? false;
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-xl font-bold text-[#06038d] mb-1">市集維護模式</h2>
-        <p className="text-sm text-gray-500">開啟後，只有管理員和白名單用戶可以訪問市集。非白名單用戶將看到「開發中」提示頁面。</p>
+        <h2 className="text-xl font-bold text-[#06038d] mb-1">維護模式管理</h2>
+        <p className="text-sm text-gray-500">開啟後，只有管理員和白名單用戶可以訪問對應功能。非白名單用戶將看到「維護中」提示頁面。</p>
       </div>
+
+      {/* ── 市集維護模式 ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">維護模式開關</h3>
+            <h3 className="text-base font-semibold text-gray-900">🛍️ 市集維護模式</h3>
             <p className="text-sm text-gray-500 mt-0.5">
               {modeLoading ? '載入中...' : isMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前市集正常開放'}
             </p>
@@ -8113,7 +8126,32 @@ function MaintenanceModeTab() {
         </div>
         {isMaintenanceOn && (
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
-            ⚠️ 維護模式已開啟。只有管理員和白名單用戶可以訪問市集。
+            ⚠️ 市集維護模式已開啟。只有管理員和白名單用戶可以訪問市集。
+          </div>
+        )}
+      </div>
+
+      {/* ── 鑑定服務維護模式 ── */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">🏆 PSA 代客鑑定維護模式</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {gradingModeLoading ? '載入中...' : isGradingMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前鑑定服務正常開放'}
+            </p>
+          </div>
+          <Button
+            onClick={() => toggleGradingMaintenanceMutation.mutate({ enabled: !isGradingMaintenanceOn })}
+            disabled={gradingModeLoading || toggleGradingMaintenanceMutation.isPending}
+            className={isGradingMaintenanceOn ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+          >
+            {toggleGradingMaintenanceMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : isGradingMaintenanceOn ? <ShieldOff className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+            {isGradingMaintenanceOn ? '關閉維護模式' : '開啟維護模式'}
+          </Button>
+        </div>
+        {isGradingMaintenanceOn && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+            ⚠️ 鑑定服務維護模式已開啟。只有管理員和白名單用戶可以訪問 /grading 相關頁面。
           </div>
         )}
       </div>
