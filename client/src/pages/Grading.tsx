@@ -174,7 +174,7 @@ export default function Grading() {
         </div>
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <Badge className="bg-yellow-400 text-[#06038d] font-bold mb-4 text-sm px-3 py-1">
-            PSA 官方認可代送服務
+            PSA 送評服務
           </Badge>
           <div className="flex items-center justify-center gap-4 mb-4">
             <img
