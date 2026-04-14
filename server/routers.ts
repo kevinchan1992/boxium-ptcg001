@@ -1,4 +1,5 @@
 import { marketplaceRouter } from "./routers/marketplace";
+import { gradingRouter } from "./routers/grading";
 import { notificationsRouter } from "./routers/notifications";
 import { auctionRouter } from "./routers/auction";
 import { COOKIE_NAME } from "@shared/const";
@@ -4439,6 +4440,7 @@ UNBREAKABLE RULES:
   marketplace: marketplaceRouter,
   notifications: notificationsRouter,
   auction: auctionRouter,
+  grading: gradingRouter,
 });
 
 export type AppRouter = typeof appRouter;

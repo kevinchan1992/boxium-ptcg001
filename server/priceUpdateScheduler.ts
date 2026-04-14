@@ -2552,3 +2552,96 @@ export function stopOrphanAuctionRepairScheduler() {
     orphanAuctionRepairCronJob = null;
   }
 }
+
+// ─── PSA Grading Overdue Payment Reminder ────────────────────────────────────
+let gradingOverdueCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+/**
+ * PSA Grading Overdue Payment Reminder Scheduler
+ * Runs daily at 10:00 HKT (02:00 UTC).
+ * - Day 15: sends first reminder
+ * - Day 25: sends final warning
+ * - Day 30+: marks submission as overdue
+ */
+export function startGradingOverdueReminderScheduler() {
+  if (gradingOverdueCronJob) return;
+  gradingOverdueCronJob = cron.schedule(
+    '0 2 * * *', // 10:00 HKT = 02:00 UTC
+    async () => {
+      try {
+        const { getDb } = await import('./db');
+        const { gradingSubmissions } = await import('../drizzle/schema_new');
+        const { and, eq, isNotNull } = await import('drizzle-orm');
+        const { createNotification } = await import('./db/notifications');
+        const { sendEmail } = await import('./emailService');
+        const { getUserById } = await import('./userManagement');
+        const db = await getDb();
+        if (!db) return;
+
+        const now = new Date();
+        const pendingSubmissions = await db.select({
+          id: gradingSubmissions.id,
+          orderNo: gradingSubmissions.orderNo,
+          userId: gradingSubmissions.userId,
+          paymentDueAt: gradingSubmissions.paymentDueAt,
+          totalFeeHkd: gradingSubmissions.totalFeeHkd,
+          day15ReminderSentAt: gradingSubmissions.day15ReminderSentAt,
+          day25ReminderSentAt: gradingSubmissions.day25ReminderSentAt,
+        })
+          .from(gradingSubmissions)
+          .where(and(eq(gradingSubmissions.status, 'graded'), isNotNull(gradingSubmissions.paymentDueAt)))
+          .limit(200);
+
+        if (pendingSubmissions.length === 0) return;
+        console.log(`[GradingOverdue] Checking ${pendingSubmissions.length} pending payment submissions`);
+
+        for (const sub of pendingSubmissions) {
+          try {
+            if (!sub.paymentDueAt) continue;
+            const dueAt = new Date(sub.paymentDueAt);
+            const daysUntilDue = Math.ceil((dueAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (daysUntilDue <= 0) {
+              await db.update(gradingSubmissions).set({ status: 'payment_overdue' }).where(eq(gradingSubmissions.id, sub.id));
+              const user = await getUserById(sub.userId);
+              if (user) {
+                await createNotification({ userId: sub.userId, type: 'system', title: '⚠️ PSA 鑑定費用逾期未付', content: `您的鑑定申請 ${sub.orderNo} 付款期限已過，BOXIUM 將依條款對相關卡片自行處理。`, linkUrl: `/grading/orders/${sub.id}` });
+                await sendEmail({ to: user.email, subject: `[BOXIUM] PSA 鑑定費用逾期 — ${sub.orderNo}`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 付款期限已過，BOXIUM 將依服務條款處理相關卡片。如有疑問請聯絡客服。</p><p>BOXIUM 團隊</p>` });
+              }
+              console.log(`[GradingOverdue] Marked ${sub.orderNo} as overdue`);
+            } else if (daysUntilDue <= 5 && !sub.day25ReminderSentAt) {
+              await db.update(gradingSubmissions).set({ day25ReminderSentAt: now }).where(eq(gradingSubmissions.id, sub.id));
+              const user = await getUserById(sub.userId);
+              if (user) {
+                await createNotification({ userId: sub.userId, type: 'payment', title: '🚨 最後警告：PSA 鑑定費用即將逾期', content: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請盡快付款。`, linkUrl: `/grading/orders/${sub.id}` });
+                await sendEmail({ to: user.email, subject: `[BOXIUM] 最後警告：PSA 鑑定費用還有 ${daysUntilDue} 天到期`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 付款期限還有 <strong>${daysUntilDue} 天</strong>，費用 HK$${sub.totalFeeHkd}，請盡快完成付款。</p><p>BOXIUM 團隊</p>` });
+              }
+              console.log(`[GradingOverdue] Sent day-25 final warning for ${sub.orderNo}`);
+            } else if (daysUntilDue <= 15 && !sub.day15ReminderSentAt) {
+              await db.update(gradingSubmissions).set({ day15ReminderSentAt: now }).where(eq(gradingSubmissions.id, sub.id));
+              const user = await getUserById(sub.userId);
+              if (user) {
+                await createNotification({ userId: sub.userId, type: 'payment', title: '📢 提醒：PSA 鑑定費用待付款', content: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請記得在期限前付款。`, linkUrl: `/grading/orders/${sub.id}` });
+                await sendEmail({ to: user.email, subject: `[BOXIUM] PSA 鑑定費用提醒：還有 ${daysUntilDue} 天到期`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 鑑定已完成，付款期限還有 <strong>${daysUntilDue} 天</strong>，費用 HK$${sub.totalFeeHkd}。</p><p>BOXIUM 團隊</p>` });
+              }
+              console.log(`[GradingOverdue] Sent day-15 reminder for ${sub.orderNo}`);
+            }
+          } catch (err) {
+            console.error(`[GradingOverdue] Error processing ${sub.orderNo}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[GradingOverdue] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[GradingOverdue] PSA grading overdue reminder scheduler started (daily at 10:00 HKT)');
+}
+
+export function stopGradingOverdueReminderScheduler() {
+  if (gradingOverdueCronJob) {
+    gradingOverdueCronJob.stop();
+    gradingOverdueCronJob = null;
+  }
+}

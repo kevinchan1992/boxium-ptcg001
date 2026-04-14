@@ -34,6 +34,10 @@ import ResendVerification from "./pages/ResendVerification";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
+import Grading from "./pages/Grading";
+import GradingSubmit from "./pages/GradingSubmit";
+import GradingOrders from "./pages/GradingOrders";
+import GradingOrderDetail from "./pages/GradingOrderDetail";
 import Notifications from "./pages/Notifications";
 import SellerPublicProfile from "./pages/SellerPublicProfile";
 import Cart from "./pages/Cart";
@@ -119,6 +123,10 @@ function Router() {
         <Redirect to="/profile?tab=orders" />
       </Route>
       <Route path="/orders/:orderNo" component={OrderDetail} />
+      <Route path="/grading" component={Grading} />
+      <Route path="/grading/submit" component={GradingSubmit} />
+      <Route path="/grading/orders" component={GradingOrders} />
+      <Route path="/grading/orders/:id" component={GradingOrderDetail} />
       <Route path="/cart" component={Cart} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/seller/:id" component={SellerPublicProfile} />

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2, Award
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -21,6 +21,7 @@ import AdminMessages from "@/components/AdminMessages";
 import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import AdminQuickPublish from "@/components/AdminQuickPublish";
+import AdminGrading from "@/components/AdminGrading";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,8 @@ const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 const VALID_TABS = [
   "dashboard", "users", "datasources", "trending", "blog", "quick-publish", "content-workflow",
   "cache", "schedule", "performance", "taskhistory", "security",
-  "sfstations", "emaillogs", "emailtest", "platformsettings", "messages"
+  "sfstations", "emaillogs", "emailtest", "platformsettings", "messages",
+  "grading"
 ] as const;
 
 type TabId = typeof VALID_TABS[number];
@@ -87,6 +89,7 @@ function useNavItems(): NavItem[] {
     { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-[18px] h-[18px]" />, group: "other" },
     { id: "platformsettings", label: "平台設定", icon: <Settings className="w-[18px] h-[18px]" />, group: "other" },
+    { id: "grading", label: "PSA 鑑定管理", icon: <Award className="w-[18px] h-[18px]" />, group: "other" },
   ];
 }
 
@@ -110,6 +113,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "platformsettings": return <AdminPlatformSettings />;
     case "messages": return <AdminMessages />;
     case "security": return <AdminSecurityMonitor />;
+    case "grading": return <AdminGrading />;
     default: return <AdminDashboard />;
   }
 }

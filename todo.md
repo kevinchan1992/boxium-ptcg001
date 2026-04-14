@@ -8285,3 +8285,56 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 - [x] Admin 訂單管理列表：在「買家資料」欄位加入順豐站編號顯示（當 shippingMethod 為 sf_cod/sf_express 時）
 - [ ] 保存 checkpoint
+
+---
+
+## 🏆 PSA 代客鑑定服務
+
+### Phase 1: 資料庫
+- [x] 新增 grading_service_tiers 資料表
+- [x] 新增 grading_submissions 資料表
+- [x] 新增 grading_submission_items 資料表
+- [x] 新增 grading_batches 資料表
+- [x] 執行 db:push migration
+- [x] 插入初始 3 個服務層級（Value Bulk HK$275、Regular HK$835、Express HK$1670）
+
+### Phase 2: 後端 API
+- [x] grading.getServiceTiers（公開）
+- [x] grading.submitApplication（登入用戶）
+- [x] grading.getMySubmissions（登入用戶）
+- [x] grading.getSubmissionDetail（登入用戶）
+- [x] grading.createPaymentIntent（登入用戶，鑑定完成後付款）
+- [x] admin.grading.listSubmissions
+- [x] admin.grading.updateStatus
+- [x] admin.grading.fillGradingResult（填入 PSA 評分 + 觸發付款通知）
+- [x] admin.grading.manageTiers（CRUD）
+- [x] admin.grading.manageBatches（CRUD）
+
+### Phase 3: 前台展示頁
+- [x] /grading 頁面（Hero、流程、收費表、FAQ、倒數）
+- [x] Nav 加入「鑑定服務」入口
+
+### Phase 4: 提交申請 Wizard
+- [x] /grading/submit 頁面（Step 1 卡牌選擇器）
+- [x] 卡牌搜尋（平台現有資料庫）+ 手動填寫 fallback
+- [x] Step 2 確認費用 + 條款
+- [x] Step 3 提交成功 + 申請單號 + 打印按鈕
+
+### Phase 5: 用戶訂單頁
+- [x] /grading/orders 列表頁
+- [x] /grading/orders/:id 詳情頁（狀態時間軸 + 卡牌清單 + 付款按鈕）
+- [x] /grading/orders/:id/print 可打印申請單（含卡牌圖片）
+
+### Phase 6: Admin 後台
+- [x] Admin 服務層級管理（新增/編輯/停用/排序）
+- [x] Admin 鑑定申請管理（列表/詳情/狀態更新/填入評分）
+- [x] Admin 出團批次管理
+
+### Phase 7: 通知 + 逾期排程
+- [x] 提交成功通知（站內 + Email）
+- [x] 各狀態變更通知
+- [x] 第 15/25 天催繳提醒排程
+- [x] 第 30 天自動標記逾期
+
+### Phase 8: 整合測試
+- [x] 保存 Checkpoint

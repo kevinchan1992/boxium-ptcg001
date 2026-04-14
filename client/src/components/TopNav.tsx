@@ -147,6 +147,7 @@ export function TopNav() {
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
     { href: "/marketplace", label: t("topnav.marketplace") },
+    { href: "/grading", label: "PSA 鑑定" },
     { href: "/blog", label: t("common.blog") },
     { href: "/auction/terms", label: t("common.auctionTerms", "買賣條款") },
   ];

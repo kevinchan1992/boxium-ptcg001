@@ -1524,3 +1524,124 @@ export const adminIpWhitelist = mysqlTable("adminIpWhitelist", {
 });
 export type AdminIpWhitelist = typeof adminIpWhitelist.$inferSelect;
 export type InsertAdminIpWhitelist = typeof adminIpWhitelist.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PSA Grading Service Tables
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PSA Grading Service Tiers - Admin-manageable service levels
+ */
+export const gradingServiceTiers = mysqlTable("gradingServiceTiers", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 64 }).notNull(),
+  feeHkd: decimal("feeHkd", { precision: 10, scale: 2 }).notNull(),
+  maxDeclaredValueUsd: decimal("maxDeclaredValueUsd", { precision: 10, scale: 2 }).notNull(),
+  estimatedDaysMin: int("estimatedDaysMin").notNull(),
+  estimatedDaysMax: int("estimatedDaysMax").notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  isActiveIdx: index("gst_isActive_idx").on(table.isActive),
+  sortOrderIdx: index("gst_sortOrder_idx").on(table.sortOrder),
+}));
+export type GradingServiceTier = typeof gradingServiceTiers.$inferSelect;
+export type InsertGradingServiceTier = typeof gradingServiceTiers.$inferInsert;
+
+/**
+ * PSA Grading Batches - Submission batches (出團批次)
+ */
+export const gradingBatches = mysqlTable("gradingBatches", {
+  id: int("id").autoincrement().primaryKey(),
+  batchName: varchar("batchName", { length: 128 }).notNull(),
+  cutoffDate: timestamp("cutoffDate").notNull(),
+  shippedDate: timestamp("shippedDate"),
+  expectedReturnDate: timestamp("expectedReturnDate"),
+  status: mysqlEnum("status", ["open", "closed", "shipped", "returned"]).default("open").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  statusIdx: index("gb_status_idx").on(table.status),
+  cutoffDateIdx: index("gb_cutoffDate_idx").on(table.cutoffDate),
+}));
+export type GradingBatch = typeof gradingBatches.$inferSelect;
+export type InsertGradingBatch = typeof gradingBatches.$inferInsert;
+
+/**
+ * PSA Grading Submissions - Customer grading applications
+ */
+export const gradingSubmissions = mysqlTable("gradingSubmissions", {
+  id: int("id").autoincrement().primaryKey(),
+  orderNo: varchar("orderNo", { length: 32 }).notNull().unique(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", [
+    "pending_shipment",
+    "received",
+    "submitted_to_psa",
+    "grading",
+    "graded",
+    "payment_overdue",
+    "paid",
+    "returned",
+    "completed",
+    "cancelled"
+  ]).default("pending_shipment").notNull(),
+  totalFeeHkd: decimal("totalFeeHkd", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "alipay_hk"]),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 128 }),
+  batchId: int("batchId"),
+  shippingDeadline: timestamp("shippingDeadline"),
+  paymentDeadline: timestamp("paymentDeadline"),
+  gradedAt: timestamp("gradedAt"),
+  adminNotes: text("adminNotes"),
+  returnTrackingNo: varchar("returnTrackingNo", { length: 128 }),
+  paymentDueAt: timestamp("paymentDueAt"),
+  day15ReminderSentAt: timestamp("day15ReminderSentAt"),
+  day25ReminderSentAt: timestamp("day25ReminderSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("gs_userId_idx").on(table.userId),
+  statusIdx: index("gs_status_idx").on(table.status),
+  orderNoIdx: index("gs_orderNo_idx").on(table.orderNo),
+  batchIdIdx: index("gs_batchId_idx").on(table.batchId),
+}));
+export type GradingSubmission = typeof gradingSubmissions.$inferSelect;
+export type InsertGradingSubmission = typeof gradingSubmissions.$inferInsert;
+
+/**
+ * PSA Grading Submission Items - Individual cards in each submission
+ */
+export const gradingSubmissionItems = mysqlTable("gradingSubmissionItems", {
+  id: int("id").autoincrement().primaryKey(),
+  submissionId: int("submissionId").notNull(),
+  cardName: varchar("cardName", { length: 256 }).notNull(),
+  cardSet: varchar("cardSet", { length: 256 }),
+  cardNumber: varchar("cardNumber", { length: 64 }),
+  cardLanguage: mysqlEnum("cardLanguage", ["zh_tw", "ja", "en", "ko", "other"]).default("en").notNull(),
+  cardImageUrl: text("cardImageUrl"),
+  tierId: int("tierId").notNull(),
+  feeHkd: decimal("feeHkd", { precision: 10, scale: 2 }).notNull(),
+  condition: mysqlEnum("condition", ["mint", "near_mint", "excellent"]).default("near_mint").notNull(),
+  notes: text("notes"),
+  psaCertNumber: varchar("psaCertNumber", { length: 64 }),
+  psaGrade: varchar("psaGrade", { length: 16 }),
+  itemStatus: mysqlEnum("itemStatus", [
+    "pending",
+    "received",
+    "submitted",
+    "graded",
+    "returned"
+  ]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  submissionIdIdx: index("gsi_submissionId_idx").on(table.submissionId),
+  tierIdIdx: index("gsi_tierId_idx").on(table.tierId),
+}));
+export type GradingSubmissionItem = typeof gradingSubmissionItems.$inferSelect;
+export type InsertGradingSubmissionItem = typeof gradingSubmissionItems.$inferInsert;

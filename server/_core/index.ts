@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler } from "../priceUpdateScheduler";
 import { startWeeklyBlogReportScheduler } from "../weeklyBlogScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
@@ -1449,6 +1449,8 @@ async function startServer() {
     startDispute3DayReminderScheduler();
     // Start the orphan auction order repair scheduler (every 2 hours)
     startOrphanAuctionRepairScheduler();
+    // Start the PSA grading overdue payment reminder scheduler (daily at 10:00 HKT)
+    startGradingOverdueReminderScheduler();
     // Start the weekly blog report scheduler (every Monday at 08:00 HKT)
     startWeeklyBlogReportScheduler();
     // Start the cache preloader service
