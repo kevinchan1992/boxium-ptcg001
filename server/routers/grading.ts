@@ -235,7 +235,7 @@ export const gradingRouter = router({
       // Send notification
       const linkUrl = `/grading/orders/${submissionId}`;
       const printUrl = `/grading/orders/${submissionId}/print`;
-      const baseUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace("/oauth", "") || "https://boxium.asia";
+      const baseUrl = "https://boxium.asia";
 
       await sendGradingNotification({
         userId: ctx.user.id,
@@ -685,7 +685,7 @@ export const gradingRouter = router({
         if (!user) return { success: true };
 
         const linkUrl = `/grading/orders/${submission.id}`;
-        const baseUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace("/oauth", "") || "https://boxium.asia";
+        const baseUrl = "https://boxium.asia";
 
         const statusMessages: Record<string, { title: string; body: string; ctaText: string }> = {
           received: {
@@ -804,7 +804,7 @@ export const gradingRouter = router({
         if (!user) return { success: true };
 
         const linkUrl = `/grading/orders/${submission.id}`;
-        const baseUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace("/oauth", "") || "https://boxium.asia";
+        const baseUrl = "https://boxium.asia";
 
         // Build grading results summary
         const gradedItems = input.items.filter((i) => i.psaGrade);
@@ -882,7 +882,7 @@ export const gradingRouter = router({
       if (submission.userId !== ctx.user.id && ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const baseUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace("/oauth", "") || "https://boxium.asia";
+      const baseUrl = "https://boxium.asia";
       const url = `${baseUrl}/grading/orders/${input.submissionId}`;
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 120,
