@@ -631,12 +631,24 @@ export default function GradingSubmit() {
                 ))}
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={agreedTerms}
-                  onCheckedChange={(v) => setAgreedTerms(!!v)}
-                  className="flex-shrink-0"
-                  style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px' }}
-                />
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={agreedTerms}
+                  onClick={() => setAgreedTerms(!agreedTerms)}
+                  className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                    agreedTerms
+                      ? 'border-[#06038d] bg-white'
+                      : 'border-gray-400 bg-white'
+                  }`}
+                  style={{ minWidth: '16px', minHeight: '16px' }}
+                >
+                  {agreedTerms && (
+                    <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+                      <path d="M2 6l3 3 5-5" stroke="#06038d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
                 <span className="text-sm text-gray-700">
                   我已閱讀並同意以上所有服務條款，並確認所提交資料屬實。
                 </span>
