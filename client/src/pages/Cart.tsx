@@ -1828,7 +1828,7 @@ function CheckoutDialog({
                 <div className="flex-1 flex items-start gap-2">
                   <label htmlFor="agree-terms" className="text-xs text-gray-700 cursor-pointer leading-relaxed select-none flex-1">
                     我已閱讀並同意平台的{" "}
-                    <Link href="/auction-terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
+                    <Link href="/auction/terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
                       買賣條款
                     </Link>
                     ，包括退款政策（收貨後 48 小時內申請）及平台規則。

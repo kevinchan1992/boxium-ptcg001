@@ -8268,4 +8268,4 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] Stripe 成功頁：加入「查看訂單狀態」按鈕，每個訂單卡片顯示「查看訂單狀態」CTA
 - [x] Stripe 成功頁：加入出貨進度說明（等待賣家出貨提示）
 - [x] 條款 Checkbox：勾選後加入綠色打勾動畫（CheckCircle 圖示淡入 + 邊框變綠）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint
