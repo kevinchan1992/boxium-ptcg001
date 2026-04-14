@@ -472,7 +472,7 @@ function SubmissionManagement() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {sub.userName ?? "—"} · 共 {sub.totalItems ?? 0} 張 ·
+                    {sub.userName ? `${sub.userName} · ` : ""}共 {sub.totalItems ?? 0} 張 ·
                     {new Date(sub.createdAt).toLocaleDateString("zh-HK")}
                   </p>
                 </div>
