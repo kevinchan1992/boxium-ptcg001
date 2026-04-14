@@ -433,8 +433,8 @@ export default function GradingSubmit() {
                           className="accent-[#06038d]"
                         />
                         <div>
-                          <p className="font-bold text-gray-900">{tier.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-bold text-black">{tier.name}</p>
+                          <p className="text-xs text-black/60">
                             最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
                             約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
                           </p>
@@ -630,11 +630,11 @@ export default function GradingSubmit() {
                   <p key={i}>{i + 1}. {term}</p>
                 ))}
               </div>
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
                   checked={agreedTerms}
                   onCheckedChange={(v) => setAgreedTerms(!!v)}
-                  className="mt-0.5"
+                  className="h-4 w-4 flex-shrink-0"
                 />
                 <span className="text-sm text-gray-700">
                   我已閱讀並同意以上所有服務條款，並確認所提交資料屬實。
