@@ -165,7 +165,7 @@ function ServiceTierManagement() {
                 <p className="text-sm text-gray-500 mt-0.5">
                   HK${parseFloat(tier.feeHkd).toLocaleString()} / 張 ·
                   最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·
-                  約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
+                  約 {tier.estimatedDaysMin} - {tier.estimatedDaysMax} 工作天
                 </p>
               </div>
               <div className="flex items-center gap-2">

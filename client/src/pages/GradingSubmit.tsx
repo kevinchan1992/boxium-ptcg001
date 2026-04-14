@@ -436,7 +436,7 @@ export default function GradingSubmit() {
                           <p className="font-bold text-black">{tier.name}</p>
                           <p className="text-xs text-black/60">
                             最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
-                            約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
+                            約 {tier.estimatedDaysMin} - {tier.estimatedDaysMax} 工作天
                           </p>
                         </div>
                       </div>
