@@ -326,18 +326,30 @@ export default function Cart() {
             <div className="p-6">
               {stripeOrderNos.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-gray-700 mb-3">已建立訂單：</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">已建立 {stripeOrderNos.length} 個訂單：</p>
                   {stripeOrderNos.map((orderNo) => (
-                    <Link key={orderNo} href={`/orders/${orderNo}`}>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-[#06038d]/30 transition-colors cursor-pointer">
+                    <div key={orderNo} className="rounded-xl border border-gray-100 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
                         <div>
                           <p className="text-xs text-gray-500">訂單編號</p>
-                          <p className="font-mono font-medium text-gray-800">#{orderNo}</p>
+                          <p className="font-mono font-semibold text-gray-800 text-sm">#{orderNo}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">等待出貨</span>
                       </div>
-                    </Link>
+                      <Link href={`/orders/${orderNo}`}>
+                        <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-[#06038D]/5 transition-colors cursor-pointer border-t border-gray-100">
+                          <Package className="w-3.5 h-3.5 text-[#06038D]" />
+                          <span className="text-xs font-semibold text-[#06038D]">查看訂單狀態</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-[#06038D]" />
+                        </div>
+                      </Link>
+                    </div>
                   ))}
+                  {/* Shipping progress hint */}
+                  <div className="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-2">
+                    <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 leading-relaxed">賣家將於確認後安排出貨，你可在訂單詳情頁查看物流追蹤號碼。</p>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-4">
@@ -346,11 +358,12 @@ export default function Cart() {
               )}
               <div className="mt-6 space-y-3">
                 <button
-                  onClick={() => setLocation('/profile?tab=orders')}
-                  className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-colors"
+                  onClick={() => stripeOrderNos.length === 1 ? setLocation(`/orders/${stripeOrderNos[0]}`) : setLocation('/profile?tab=orders')}
+                  className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                   style={{ backgroundColor: '#06038D' }}
                 >
-                  前往我的訂單
+                  <Package className="w-4 h-4" />
+                  {stripeOrderNos.length === 1 ? '查看訂單狀態' : '前往我的訂單'}
                 </button>
                 <button
                   onClick={() => setLocation('/marketplace')}
@@ -1793,20 +1806,42 @@ function CheckoutDialog({
               )}
 
               {/* Terms agreement checkbox */}
-              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <Checkbox
-                  id="agree-terms"
-                  checked={agreeTerms}
-                  onCheckedChange={(checked) => setAgreeTerms(checked === true)}
-                  className="mt-0.5 flex-shrink-0"
-                />
-                <label htmlFor="agree-terms" className="text-xs text-gray-700 cursor-pointer leading-relaxed select-none">
-                  我已閱讀並同意平台的{" "}
-                  <Link href="/auction-terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
-                    買賣條款
-                  </Link>
-                  ，包括退款政策（收貨後 48 小時內申請）及平台規則。
-                </label>
+              <div
+                className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                  agreeTerms
+                    ? 'bg-green-50 border-green-300'
+                    : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <Checkbox
+                    id="agree-terms"
+                    checked={agreeTerms}
+                    onCheckedChange={(checked) => setAgreeTerms(checked === true)}
+                    className={`transition-all duration-200 ${
+                      agreeTerms
+                        ? 'border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500'
+                        : ''
+                    }`}
+                  />
+                </div>
+                <div className="flex-1 flex items-start gap-2">
+                  <label htmlFor="agree-terms" className="text-xs text-gray-700 cursor-pointer leading-relaxed select-none flex-1">
+                    我已閱讀並同意平台的{" "}
+                    <Link href="/auction-terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
+                      買賣條款
+                    </Link>
+                    ，包括退款政策（收貨後 48 小時內申請）及平台規則。
+                  </label>
+                  {/* Animated check icon on agree */}
+                  <div
+                    className={`transition-all duration-300 flex-shrink-0 ${
+                      agreeTerms ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+                    }`}
+                  >
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                </div>
               </div>
 
               {batchProgress && (
