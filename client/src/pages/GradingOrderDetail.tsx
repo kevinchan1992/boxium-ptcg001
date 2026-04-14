@@ -62,12 +62,13 @@ const STATUS_LABEL: Record<string, string> = {
 // ─── Printable Slip ───────────────────────────────────────────────────────────
 function PrintableSlip({ submission }: { submission: any }) {
   return (
-    <div className="hidden print:block font-sans text-black bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div id="printable-slip-root" className="hidden print:block font-sans text-black bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
       <style>{`
         @media print {
           body > *:not(#printable-slip-root) { display: none !important; }
+          #printable-slip-root { display: block !important; }
           nav, header, button, [data-print-hide] { display: none !important; }
-          @page { margin: 0; size: A4; }
+          @page { margin: 10mm; size: A4; }
         }
       `}</style>
       {/* ── Header Banner ── */}
@@ -231,6 +232,111 @@ export default function GradingOrderDetail() {
     },
   });
 
+  const handlePrint = () => {
+    if (!submission) return;
+    const totalFee = parseFloat(submission.totalFeeHkd).toLocaleString();
+    const tierName = (submission as any).items?.[0]?.tier?.name ?? '—';
+    const tierFee = (submission as any).items?.[0]?.tier ? parseFloat((submission as any).items[0].tier.feeHkd).toLocaleString() : '—';
+    const userName = (submission as any).user?.name ?? '—';
+    const userId = (submission as any).userId ?? (submission as any).user?.id ?? '—';
+    const orderDate = new Date(submission.createdAt).toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' });
+    const itemsHtml = (submission as any).items.map((item: any, idx: number) => `
+      <tr style="border-bottom:1px solid #e5e7eb;background:${idx % 2 === 0 ? '#ffffff' : '#f9fafb'}">
+        <td style="padding:10px 12px;color:#6b7280;text-align:center">${idx + 1}</td>
+        <td style="padding:10px 12px;font-weight:600;color:#111827;word-break:break-word">${item.cardName}</td>
+        <td style="padding:10px 12px;color:#6b7280;font-size:11px">${[item.cardSet, item.cardNumber].filter(Boolean).join(' / ') || '—'}</td>
+        <td style="padding:10px 12px;text-align:center"><span style="background:#eef0ff;color:#06038d;padding:2px 8px;border-radius:4px;font-weight:600;font-size:11px;white-space:nowrap">${item.tier?.name ?? '—'}</span></td>
+        <td style="padding:10px 12px;text-align:right;font-weight:600;color:#111827">HK$${item.tier ? parseFloat(item.tier.feeHkd).toLocaleString() : '—'}</td>
+      </tr>
+    `).join('');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>申請單 ${submission.orderNo}</title>
+    <style>body{margin:0;padding:0;font-family:Arial,sans-serif;color:#111;background:#fff}@page{margin:10mm;size:A4}*{box-sizing:border-box}</style>
+    </head><body>
+    <div style="background:#06038d;padding:16px 28px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:16px">
+        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_62cbf293.webp" alt="BOXIUM" style="height:52px;width:auto;object-fit:contain;border-radius:6px" />
+        <div>
+          <div style="color:#fff;font-weight:700;font-size:16px">PSA 代客鑑定申請單</div>
+          <div style="color:#b0b8e8;font-size:11px;margin-top:2px">請將此申請單打印後連同卡牌一起寄出</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:#FEDD00;font-weight:700;font-size:14px;font-family:monospace">${submission.orderNo}</div>
+        <div style="color:#b0b8e8;font-size:11px;margin-top:3px">${orderDate}</div>
+      </div>
+    </div>
+    <div style="padding:20px 28px">
+      <div style="display:flex;gap:16px;margin-bottom:16px">
+        <div style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;background:#f8faff">
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">申請人</div>
+          <div style="font-weight:700;font-size:14px;color:#06038d">${userName}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">用戶 ID：#${userId}</div>
+        </div>
+        <div style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;background:#f8faff">
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">服務層級</div>
+          <div style="font-weight:700;font-size:14px;color:#06038d">${tierName}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">HK$${tierFee} / 張 · 共 ${(submission as any).items.length} 張</div>
+        </div>
+        <div style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;background:#f8faff">
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">申請編號</div>
+          <div style="font-weight:700;font-size:14px;color:#06038d;font-family:monospace">${submission.orderNo}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">共 ${(submission as any).items.length} 張卡牌</div>
+        </div>
+      </div>
+      <div style="border:1.5px solid #06038d;border-radius:8px;padding:14px 16px;margin-bottom:16px;background:#f0f2ff">
+        <div style="font-weight:700;font-size:13px;color:#06038d;margin-bottom:8px">📦 送件地址</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px">
+          <div><span style="color:#6b7280">收件人：</span><span style="font-weight:600">BOXIUM</span></div>
+          <div><span style="color:#6b7280">聯絡電話：</span><span style="font-weight:600">55090102</span></div>
+          <div><span style="color:#6b7280">寄件方式：</span><span style="font-weight:600">順豐站 852Z351</span></div>
+          <div style="grid-column:1/-1"><span style="color:#6b7280">地址：</span><span style="font-weight:600">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</span></div>
+        </div>
+        <div style="margin-top:10px;padding:6px 10px;background:#fff3cd;border-radius:4px;font-size:11px;font-weight:600;color:#92400e">⚠️ 請確保此申請單與卡牌一同寄出，否則無法處理您的申請</div>
+      </div>
+      <div style="border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:16px">
+        <div style="background:#06038d;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="color:white;font-weight:700;font-size:13px">卡牌清單</span>
+          <span style="color:#FEDD00;font-weight:600;font-size:12px">共 ${(submission as any).items.length} 張</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#eef0ff;border-bottom:1px solid #c7d2fe">
+            <th style="padding:8px 12px;text-align:left;width:28px;color:#374151;font-weight:600">#</th>
+            <th style="padding:8px 12px;text-align:left;color:#374151;font-weight:600">卡牌名稱</th>
+            <th style="padding:8px 12px;text-align:left;width:100px;color:#374151;font-weight:600">系列 / 編號</th>
+            <th style="padding:8px 12px;text-align:center;width:80px;color:#374151;font-weight:600">服務層級</th>
+            <th style="padding:8px 12px;text-align:right;width:70px;color:#374151;font-weight:600">費用</th>
+          </tr></thead>
+          <tbody>${itemsHtml}</tbody>
+          <tfoot><tr style="border-top:2px solid #06038d;background:#f0f2ff">
+            <td colspan="4" style="padding:10px 12px;text-align:right;font-weight:700;color:#06038d;font-size:13px">代送 PSA 費用合計（鑑定後付款）</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:700;color:#06038d;font-size:14px">HK$${totalFee}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div style="border:1px solid #d1d5db;border-radius:8px;padding:14px 16px;font-size:12px">
+        <div style="font-weight:700;color:#06038d;margin-bottom:8px;font-size:13px">重要事項</div>
+        <ol style="padding-left:16px;margin:0;line-height:1.8;color:#374151">
+          <li>請使用有追蹤號碼的寄件方式，並自行購買保險。</li>
+          <li>卡片請妥善包裝，建議使用硬卡套及泡泡紙保護。</li>
+          <li>鑑定完成後，系統將通知您付款，請於 <strong>30 天內</strong> 完成付款。</li>
+          <li>逾期未付款，平台保留對相關卡片自行處理之權利。</li>
+          <li>如有查詢，請透過平台訊息聯絡 BOXIUM。</li>
+        </ol>
+      </div>
+      <div style="margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between">
+        <div style="font-size:10px;color:#9ca3af">BOXIUM × PSA 代客鑑定服務 · boxium.asia</div>
+        <div style="font-size:10px;color:#9ca3af">此申請單由系統自動生成，如有疑問請聯絡 BOXIUM</div>
+      </div>
+    </div>
+    <script>window.onload=function(){window.print();}<\/script>
+    </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
   const handlePay = () => {
     setPayingLoading(true);
     createPaymentMutation.mutate({
@@ -287,7 +393,7 @@ export default function GradingOrderDetail() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="border-[#06038d] text-[#06038d] hover:bg-blue-50"
             >
               <Printer className="h-4 w-4 mr-2" />
@@ -366,7 +472,7 @@ export default function GradingOrderDetail() {
                     size="sm"
                     variant="outline"
                     className="mt-2 border-amber-400 text-amber-700 hover:bg-amber-100 h-8 text-xs"
-                    onClick={() => window.print()}
+                    onClick={handlePrint}
                   >
                     <Printer className="h-3 w-3 mr-1.5" />
                     打印申請單
