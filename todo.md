@@ -8385,3 +8385,7 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## Email 修復（2026-04-14）
 - [x] 鑑定申請確認 Email：打印申請單按鈕連結 404 修復（改為 /grading/orders/{id} 詳情頁）
 - [x] 鑑定申請確認 Email：統一為 BOXIUM 藍白品牌風格（使用 wrapHtmlTest 包裝，深藍標題+白底+黃色按鈕）
+
+---
+## Admin 確認支付寶收款後發送 Email（2026-04-14）
+- [x] adminConfirmGradingAlipayPayment：確認收款後發送 Email 通知客人付款已確認、申請繼續處理

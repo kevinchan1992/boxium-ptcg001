@@ -561,6 +561,7 @@ export const gradingRouter = router({
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
 
+      // In-app notification
       await createNotification({
         userId: submission.userId,
         type: "system",
@@ -568,6 +569,58 @@ export const gradingRouter = router({
         body: `申請單 ${submission.orderNo} 的支付寶 HK 付款已確認，訂單已完成。`,
         linkUrl: `/grading/orders/${submission.id}`,
       }).catch(() => {});
+
+      // Email notification to customer
+      try {
+        const [user] = await db
+          .select({ email: users.email, name: users.name })
+          .from(users)
+          .where(eq(users.id, submission.userId))
+          .limit(1);
+
+        if (user?.email) {
+          const baseUrl = "https://boxium.asia";
+          const orderUrl = `${baseUrl}/grading/orders/${submission.id}`;
+          const BRAND_BLUE = "#06038d";
+          const BRAND_YELLOW = "#FFD700";
+
+          const extraHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:2px solid #86efac;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#16a34a;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">✅ 付款確認詳情</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;color:#333;">付款方式：支付寶 HK</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#333;">確認時間：${new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}</p>
+    ${input.notes ? `<p style="margin:8px 0 0;font-size:13px;color:#555;">備註：${input.notes}</p>` : ""}
+  </td></tr>
+</table>
+<p style="color:#555;font-size:14px;margin:12px 0;">您的申請現已進入正式處理流程，我們將盡快為您的卡牌進行鑑定。如有任何查詢，請聯絡 BOXIUM 客服。</p>
+<div style="text-align:center;margin:16px 0;">
+  <a href="${orderUrl}" style="display:inline-block;background:${BRAND_BLUE};color:${BRAND_YELLOW};padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">查看申請詳情</a>
+</div>`;
+
+          const html = buildGradingEmail({
+            userName: user.name || user.email,
+            title: "付款已確認，申請處理中 ✅",
+            body: `您的支付寶 HK 付款已由 BOXIUM 確認收款，申請單 ${submission.orderNo} 現已進入正式鑑定處理流程。`,
+            orderNo: submission.orderNo,
+            linkUrl: orderUrl,
+            ctaText: "查看申請詳情",
+            extraHtml,
+          });
+
+          await sendEmail({
+            to: user.email,
+            subject: `【BOXIUM PSA 鑑定】付款已確認 ✅ — ${submission.orderNo}`,
+            html,
+            emailType: "grading",
+            toUserId: submission.userId,
+          });
+        }
+      } catch (e) {
+        console.error("[Grading] Failed to send payment confirmation email:", e);
+      }
 
       return { success: true };
     }),
