@@ -192,9 +192,8 @@ export default function Grading() {
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             <span className="text-yellow-400">代客鑑定服務</span>
           </h1>
-          <p className="text-lg md:text-xl text-blue-200 mb-8 max-w-2xl mx-auto">
-            讓您的珍藏卡片獲得 PSA 官方認證，提升收藏價值。
-            <br />
+          <p className="text-base md:text-xl text-blue-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+            讓您的珍藏卡片獲得 PSA 官方認證，提升收藏價值。<br />
             一條龍代辦，省心省力，直送美國 PSA。
           </p>
           <div className="flex flex-row gap-3 justify-center">
@@ -313,10 +312,10 @@ export default function Grading() {
               <table className="w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <thead>
                   <tr className="bg-[#06038d] text-white">
-                    <th className="text-left p-4 font-semibold">服務層級</th>
-                    <th className="text-right p-4 font-semibold">代送 PSA 費用</th>
-                    <th className="text-right p-4 font-semibold hidden sm:table-cell">最高申報價值</th>
-                    <th className="text-right p-4 font-semibold hidden md:table-cell">預計完成時間</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold whitespace-nowrap">服務層級</th>
+                    <th className="text-right p-3 sm:p-4 font-semibold whitespace-nowrap">費用 / 張</th>
+                    <th className="text-right p-3 sm:p-4 font-semibold whitespace-nowrap">送評時間</th>
+                    <th className="text-right p-3 sm:p-4 font-semibold whitespace-nowrap hidden sm:table-cell">最高申報價值</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,23 +324,22 @@ export default function Grading() {
                       key={tier.id}
                       className={`border-t border-gray-100 hover:bg-blue-50 transition-colors ${idx % 2 === 0 ? "" : "bg-gray-50/50"}`}
                     >
-                      <td className="p-4">
-                        <div className="font-bold text-gray-900">{tier.name}</div>
+                      <td className="p-3 sm:p-4">
+                        <div className="font-bold text-gray-900 whitespace-nowrap">{tier.name}</div>
                         {tier.description && (
                           <div className="text-xs text-gray-500 mt-0.5">{tier.description}</div>
                         )}
                       </td>
-                      <td className="p-4 text-right">
-                        <span className="text-xl font-bold text-[#06038d]">HK${parseFloat(tier.feeHkd).toLocaleString()}</span>
-                        <span className="text-sm text-gray-500"> / 張</span>
+                      <td className="p-3 sm:p-4 text-right whitespace-nowrap">
+                        <span className="text-lg sm:text-xl font-bold text-[#06038d]">HK${parseFloat(tier.feeHkd).toLocaleString()}</span>
                       </td>
-                      <td className="p-4 text-right hidden sm:table-cell">
-                        <span className="text-gray-700">USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()}</span>
-                      </td>
-                      <td className="p-4 text-right hidden md:table-cell">
-                        <span className="text-gray-700">
+                      <td className="p-3 sm:p-4 text-right whitespace-nowrap">
+                        <span className="text-sm text-gray-700">
                           約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
                         </span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-right hidden sm:table-cell whitespace-nowrap">
+                        <span className="text-gray-700">USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()}</span>
                       </td>
                     </tr>
                   ))}
