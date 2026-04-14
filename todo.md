@@ -8338,3 +8338,21 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 
 ### Phase 8: 整合測試
 - [x] 保存 Checkpoint
+---
+## 🏆 PSA 代客鑑定 Admin 後台整合（2026-04-14）
+- [x] AdminMarketplace.tsx：PSA 代客鑑定分頁已加入側邊欄（grading tab → AdminGrading 組件）
+- [x] Admin.tsx：確認無 PSA 鑑定獨立側邊欄項目（已整合至 AdminMarketplace）
+- [x] server/db.ts：getSalesReport 加入 PSA 鑑定收益統計（gradingRevenueHkd、gradingCount）
+- [x] AdminMarketplace.tsx SalesReportTab：平台收入來源加入 PSA 代客鑑定（紫色）
+- [x] AdminMarketplace.tsx SalesReportTab：損益表收入欄加入 PSA 代客鑑定收入行
+- [x] AdminMarketplace.tsx SalesReportTab：CSV 匯出加入 PSA 鑑定收入欄位
+- [x] 保存 Checkpoint
+
+---
+## PSA Admin 後台整合（2026-04-14）
+- [x] AdminMarketplace.tsx：PSA 代客鑑定分頁已加入側邊欄
+- [x] Admin.tsx：確認無 PSA 鑑定獨立側邊欄項目
+- [x] server/db.ts：getSalesReport 加入 PSA 鑑定收益統計
+- [x] SalesReportTab：平台收入來源加入 PSA 代客鑑定（紫色）
+- [x] SalesReportTab：損益表收入欄加入 PSA 代客鑑定收入行
+- [x] SalesReportTab：CSV 匯出加入 PSA 鑑定收入欄位

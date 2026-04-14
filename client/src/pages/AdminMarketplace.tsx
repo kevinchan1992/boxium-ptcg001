@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer, Shield, ShieldOff, ScrollText, Bot, Gavel } from "lucide-react";
+import { ShoppingBag, Package, Users, AlertCircle, CheckCircle, Clock, History, ArrowLeft, Plus, Eye, Edit, DollarSign, ImagePlus, X, Loader2, Trash2, Flag, TrendingUp, TrendingDown, BarChart3, ChevronLeft, ChevronRight, User2, Calendar, Tag, Check, Layers, Download, FileText, Search, Filter, RefreshCw, ExternalLink, PhoneCall, Mail, MapPin, CreditCard, Banknote, Copy, CheckSquare, Square, MessageSquare, Printer, XCircle, Settings, Timer, Shield, ShieldOff, ScrollText, Bot, Gavel, Award } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { ImageLightbox } from "@/components/ImageLightbox";
+import AdminGrading from "@/components/AdminGrading";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, LineChart, Line, ComposedChart } from "recharts";
 // PDF export is now server-side via /api/admin/financial-report-pdf
 
@@ -4557,6 +4558,10 @@ function SalesReportTab() {
     ? (totalFees / overall.sellerSalesHkd) * 100
     : 0;
 
+  // PSA Grading Revenue
+  const gradingRevenue = (overall as any)?.gradingRevenueHkd ?? 0;
+  const gradingOrderCount = (overall as any)?.gradingCount ?? 0;
+
   // Auction vs Direct breakdown
   const auctionSales = (overall as any)?.auctionSalesHkd ?? 0;
   const auctionCount = (overall as any)?.auctionCount ?? 0;
@@ -4598,6 +4603,7 @@ function SalesReportTab() {
   const incomePieData = [
     { name: '平台直售', value: platformSales, color: '#3b82f6' },
     { name: 'C2C 手續費', value: totalFees, color: '#10b981' },
+    { name: 'PSA 代客鑑定', value: gradingRevenue, color: '#8b5cf6' },
   ].filter(d => d.value > 0);
 
   const reportDate = new Date().toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -4671,12 +4677,13 @@ function SalesReportTab() {
           onClick={() => {
             const rows = monthly.map(r => ({
               '月份': fmtYearMonth(r.yearMonth),
-              '銷售總額 (HKD)': r.totalSalesHkd.toFixed(2),
+              '销售總額 (HKD)': r.totalSalesHkd.toFixed(2),
               '退款金額 (HKD)': ((r as any).refundedAmountHkd ?? 0).toFixed(2),
               '淨收入 (HKD)': ((r as any).netRevenueHkd ?? r.totalSalesHkd).toFixed(2),
               '平台直售 (HKD)': r.platformSalesHkd.toFixed(2),
-              'C2C 銷售 (HKD)': r.sellerSalesHkd.toFixed(2),
+              'C2C 销售 (HKD)': r.sellerSalesHkd.toFixed(2),
               '手續費收入 (HKD)': r.sellerFeesHkd.toFixed(2),
+              'PSA 鑑定收入 (HKD)': ((r as any).gradingRevenueHkd ?? 0).toFixed(2),
               '平台收入合計 (HKD)': ((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)).toFixed(2),
               '訂單數': r.orderCount,
               'Stripe 訂單': r.stripeCount,
@@ -4765,7 +4772,7 @@ function SalesReportTab() {
             {/* Income breakdown card */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <p className="text-sm font-semibold text-gray-800 mb-1">平台收入來源</p>
-              <p className="text-xs text-gray-400 mb-4">平台直售 + C2C 手續費</p>
+              <p className="text-xs text-gray-400 mb-4">平台直售 + C2C 手續費 + PSA 鑑定</p>
               {incomePieData.length > 0 ? (
                 <div className="flex items-center gap-4">
                   <ResponsiveContainer width={100} height={100}>
@@ -4992,6 +4999,13 @@ function SalesReportTab() {
                       <p className="text-xs text-gray-400">C2C 交易手續費（費率 {feeRate.toFixed(2)}%）</p>
                     </div>
                     <p className="text-sm font-semibold text-gray-900">HKD {fmtHkd(totalFees)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">PSA 代客鑑定收入</p>
+                      <p className="text-xs text-gray-400">PSA 鑑定服務費用（{gradingOrderCount} 筆）</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">HKD {fmtHkd(gradingRevenue)}</p>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t border-emerald-200">
                     <p className="text-sm font-bold text-emerald-800">平台收入合計</p>
@@ -7802,6 +7816,7 @@ type SidebarItem = { key: string; label: string; icon: any; badgeKey?: string };
 const sidebarMenuItems: SidebarItem[] = [
   { key: 'listings', label: '商品管理', icon: Package },
   { key: 'auctions', label: '拍賣管理', icon: Package, badgeKey: 'pendingAuctionReview' },
+  { key: 'grading', label: 'PSA 代客鑑定', icon: Award },
   { key: 'auction_orders', label: '拍賣訂單', icon: ShoppingBag },
   { key: 'auction_violations', label: '拍賣違規', icon: Shield },
   { key: 'orders', label: '訂單管理', icon: ShoppingBag },
@@ -7850,6 +7865,7 @@ export default function AdminMarketplace() {
     switch (activeSection) {
       case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
       case 'auctions': return <AuctionsAdminTab />;
+      case 'grading': return <AdminGrading />;
       case 'auction_orders': return <AuctionOrdersAdminTab />;
       case 'auction_violations': return <AuctionViolationsAdminTab />;
       case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} onViewOrders={handleViewOrders} />;

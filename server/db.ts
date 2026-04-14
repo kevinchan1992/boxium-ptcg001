@@ -4351,6 +4351,10 @@ export async function getSalesReport(months: number = 12) {
   const paidStatuses = ['payment_received', 'processing', 'shipped', 'delivered', 'completed'];
   const refundCancelStatuses = ['refunded', 'cancelled'];
 
+  // Import gradingSubmissions for PSA grading revenue
+  const { gradingSubmissions } = await import("../drizzle/schema_new");
+  const gradingPaidStatuses = ['paid', 'returned', 'completed'];
+
   // Monthly breakdown: group by year-month (paid orders)
   const monthlyRows = await db.select({
     yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
@@ -4434,6 +4438,36 @@ export async function getSalesReport(months: number = 12) {
     refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN orderStatus = 'refunded' THEN subtotalHkd ELSE 0 END), 0)`,
   }).from(marketplaceOrders).where(inArray(marketplaceOrders.orderStatus, refundCancelStatuses as any[]));
 
+  // PSA Grading Revenue: monthly breakdown
+  const gradingMonthlyRows = await db.select({
+    yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+    gradingRevenue: sql<string>`COALESCE(SUM(totalFeeHkd), 0)`,
+    gradingCount: sql<number>`count(*)`,
+  })
+    .from(gradingSubmissions)
+    .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]))
+    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
+    .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m') DESC`);
+
+  // Build grading revenue map keyed by yearMonth
+  const gradingMonthlyMap = new Map<string, { gradingRevenue: number; gradingCount: number }>();
+  for (const r of gradingMonthlyRows) {
+    if (r.yearMonth) {
+      gradingMonthlyMap.set(r.yearMonth, {
+        gradingRevenue: parseFloat(r.gradingRevenue ?? '0'),
+        gradingCount: Number(r.gradingCount ?? 0),
+      });
+    }
+  }
+
+  // PSA Grading Revenue: overall totals
+  const [gradingOverall] = await db.select({
+    totalGradingRevenue: sql<string>`COALESCE(SUM(totalFeeHkd), 0)`,
+    totalGradingCount: sql<number>`count(*)`,
+  })
+    .from(gradingSubmissions)
+    .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]));
+
   // Payout totals: how much has been paid out to sellers, how much is pending
   const [payoutStats] = await db.select({
     paidOutAmount: sql<string>`COALESCE(SUM(CASE WHEN payoutStatus = 'paid' THEN sellerReceivableHkd ELSE 0 END), 0)`,
@@ -4446,8 +4480,10 @@ export async function getSalesReport(months: number = 12) {
   const totalRefundedHkd = parseFloat(overallRefund?.refundedAmount ?? '0');
   const totalFeesHkd = parseFloat(overall?.totalFees ?? '0');
   const platformSalesHkd = parseFloat(overall?.platformSales ?? '0');
-  // Platform income = platform direct sales + C2C fees
-  const platformIncomeHkd = platformSalesHkd + totalFeesHkd;
+  const gradingRevenueHkd = parseFloat(gradingOverall?.totalGradingRevenue ?? '0');
+  const gradingCount = Number(gradingOverall?.totalGradingCount ?? 0);
+  // Platform income = platform direct sales + C2C fees + PSA grading revenue
+  const platformIncomeHkd = platformSalesHkd + totalFeesHkd + gradingRevenueHkd;
   // Platform payout (outcome) = seller receivable paid out + refunds
   const paidOutHkd = parseFloat(payoutStats?.paidOutAmount ?? '0');
   const pendingPayoutHkd = parseFloat(payoutStats?.pendingPayoutAmount ?? '0');
@@ -4455,6 +4491,7 @@ export async function getSalesReport(months: number = 12) {
   return {
     monthly: monthlyRows.map(r => {
       const refund = refundMap.get(r.yearMonth) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
+      const grading = gradingMonthlyMap.get(r.yearMonth) ?? { gradingRevenue: 0, gradingCount: 0 };
       const salesHkd = parseFloat(r.totalSales ?? '0');
       const feesHkd = parseFloat(r.sellerFees ?? '0');
       const platSalesHkd = parseFloat(r.platformSales ?? '0');
@@ -4467,7 +4504,9 @@ export async function getSalesReport(months: number = 12) {
         platformSalesHkd: platSalesHkd,
         sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
         sellerFeesHkd: feesHkd,
-        platformIncomeHkd: platSalesHkd + feesHkd,
+        platformIncomeHkd: platSalesHkd + feesHkd + grading.gradingRevenue,
+        gradingRevenueHkd: grading.gradingRevenue,
+        gradingCount: grading.gradingCount,
         refundedCount: refund.refundedCount,
         cancelledCount: refund.cancelledCount,
         refundedAmountHkd: refund.refundedAmountHkd,
@@ -4506,6 +4545,9 @@ export async function getSalesReport(months: number = 12) {
       pendingPayoutHkd,
       pendingPayoutCount: Number(payoutStats?.pendingPayoutCount ?? 0),
       paidOutCount: Number(payoutStats?.paidOutCount ?? 0),
+      // PSA Grading Revenue
+      gradingRevenueHkd,
+      gradingCount,
       // Net platform profit = income - refunds
       platformNetProfitHkd: platformIncomeHkd - totalRefundedHkd,
       // Auction vs Direct breakdown
