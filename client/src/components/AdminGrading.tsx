@@ -399,6 +399,11 @@ function SubmissionManagement() {
   const [notifNote, setNotifNote] = useState("");
   const [cardListSub, setCardListSub] = useState<any>(null);
   const [showCardList, setShowCardList] = useState(false);
+  const [cardListSubId, setCardListSubId] = useState<number | null>(null);
+  const { data: cardListDetail, isLoading: cardListLoading } = trpc.grading.admin.getSubmissionDetail.useQuery(
+    { id: cardListSubId! },
+    { enabled: !!cardListSubId }
+  );
 
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -491,7 +496,7 @@ function SubmissionManagement() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {sub.userName ? `${sub.userName} · ` : ""}共 {sub.totalItems ?? 0} 張 ·
+                    {sub.userName ? `${sub.userName} · ` : ""}共 {sub.itemCount ?? 0} 張 ·
                     {new Date(sub.createdAt).toLocaleDateString("zh-HK")}
                   </p>
                 </div>
@@ -530,11 +535,11 @@ function SubmissionManagement() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => { setCardListSub(sub); setShowCardList(true); }}
+                      onClick={() => { setCardListSub(sub); setCardListSubId(sub.id); setShowCardList(true); }}
                       className="h-8 text-xs border-[#06038d] text-[#06038d] hover:bg-[#06038d]/5"
                     >
                       <List className="h-3.5 w-3.5 mr-1.5" />
-                      查看 {sub.totalItems ?? (sub.items ?? []).length} 張卡牌
+                      查看 {sub.itemCount ?? 0} 張卡牌
                     </Button>
                     <Button
                       size="sm"
@@ -560,10 +565,12 @@ function SubmissionManagement() {
           </DialogHeader>
           {cardListSub && (
             <div className="space-y-2">
-              {(cardListSub.items ?? []).length === 0 ? (
+              {cardListLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#06038d]" /></div>
+              ) : (cardListDetail?.items ?? []).length === 0 ? (
                 <p className="text-center text-gray-400 py-6 text-sm">沒有卡牌資料</p>
               ) : (
-                (cardListSub.items ?? []).map((item: any, idx: number) => (
+                (cardListDetail?.items ?? []).map((item: any, idx: number) => (
                   <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50">
                     <span className="text-xs text-gray-400 font-mono mt-0.5 w-5 shrink-0">#{idx + 1}</span>
                     <div className="flex-1 min-w-0">
