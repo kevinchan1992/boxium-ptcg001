@@ -109,7 +109,7 @@ const FEATURES = [
   {
     icon: Shield,
     title: "安全可靠",
-    desc: "專業包裝保護，全程妥善保管，BOXIUM 收件後負責任何處理過程中的損壞",
+    desc: "專業包裝保護，全程妥善保管，BOXIUM 收件後負責送評的一條龍服務",
   },
   {
     icon: Package,
@@ -257,7 +257,7 @@ export default function Grading() {
           <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-3">
             服務流程
           </h2>
-          <p className="text-center text-gray-500 mb-10">您只需完成步驟 1、3、6，其餘由 BOXIUM 全程代辦</p>
+          <p className="text-center text-gray-500 mb-10">您只需完成 3 個步驟 ，其餘由 BOXIUM 全程代辦跟進</p>
           <div className="relative">
             {/* Vertical line */}
             <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 hidden sm:block" />
@@ -335,7 +335,7 @@ export default function Grading() {
                       </td>
                       <td className="p-3 sm:p-4 text-right whitespace-nowrap">
                         <span className="text-sm text-gray-700">
-                          約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
+                          約 {tier.estimatedDaysMin} - {tier.estimatedDaysMax} 工作天
                         </span>
                       </td>
                       <td className="p-3 sm:p-4 text-right hidden sm:table-cell whitespace-nowrap">
