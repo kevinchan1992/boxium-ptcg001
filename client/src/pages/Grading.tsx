@@ -259,8 +259,7 @@ export default function Grading() {
           </h2>
           <p className="text-center text-gray-500 mb-10">您只需完成 3 個步驟 ，其餘由 BOXIUM 全程代辦跟進</p>
           <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 hidden sm:block" />
+
             <div className="space-y-4">
               {STEPS.map(({ step, title, desc, icon: Icon, highlight }) => (
                 <div
