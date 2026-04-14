@@ -584,39 +584,72 @@ function SubmissionManagement() {
 
       {/* Card list dialog */}
       <Dialog open={showCardList} onOpenChange={setShowCardList}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>卡牌明細 — {cardListSub?.orderNo}</DialogTitle>
           </DialogHeader>
           {cardListSub && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {cardListLoading ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#06038d]" /></div>
               ) : (cardListDetail?.items ?? []).length === 0 ? (
                 <p className="text-center text-gray-400 py-6 text-sm">沒有卡牌資料</p>
               ) : (
                 (cardListDetail?.items ?? []).map((item: any, idx: number) => (
-                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50">
-                    <span className="text-xs text-gray-400 font-mono mt-0.5 w-5 shrink-0">#{idx + 1}</span>
+                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
+                    {/* Card image */}
+                    <div className="shrink-0 w-16 h-22 rounded-md overflow-hidden bg-gray-200 border border-gray-300" style={{ minHeight: '88px' }}>
+                      {item.cardImageUrl ? (
+                        <img
+                          src={item.cardImageUrl}
+                          alt={item.cardName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center px-1">無圖片</div>
+                      )}
+                    </div>
+                    {/* Card info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{item.cardName}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-sm text-gray-900 leading-snug">{item.cardName}</p>
+                        <span className="text-xs font-mono text-gray-400 shrink-0">#{idx + 1}</span>
+                      </div>
+                      {(item.cardSet || item.cardNumber) && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {[item.cardSet, item.cardNumber].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {item.tier?.name && (
-                          <span className="text-xs text-gray-500">{item.tier.name}</span>
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded text-xs font-medium">{item.tier.name}</span>
                         )}
                         {item.declaredValueUsd && (
-                          <span className="text-xs text-gray-400">USD ${item.declaredValueUsd}</span>
+                          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">申報 USD ${item.declaredValueUsd}</span>
                         )}
                         {item.psaGrade && (
-                          <span className="bg-[#06038d] text-white px-1.5 py-0.5 rounded text-xs font-bold">PSA {item.psaGrade}</span>
+                          <span className="bg-[#06038d] text-white px-2 py-0.5 rounded text-xs font-bold">PSA {item.psaGrade}</span>
                         )}
                         {item.psaCertNo && (
-                          <span className="text-xs text-gray-400">#{item.psaCertNo}</span>
+                          <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs font-mono">#{item.psaCertNo}</span>
                         )}
                       </div>
+                      {item.feeHkd && (
+                        <p className="text-xs text-gray-500 mt-1">費用：HK${parseFloat(item.feeHkd).toLocaleString()}</p>
+                      )}
                     </div>
                   </div>
                 ))
+              )}
+              {/* Summary footer */}
+              {(cardListDetail?.items ?? []).length > 0 && (
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200 text-sm">
+                  <span className="text-gray-500">共 {(cardListDetail?.items ?? []).length} 張卡牌</span>
+                  <span className="font-bold text-gray-900">
+                    總費用：HK${(cardListDetail?.items ?? []).reduce((sum: number, item: any) => sum + parseFloat(item.feeHkd || 0), 0).toLocaleString()}
+                  </span>
+                </div>
               )}
             </div>
           )}
