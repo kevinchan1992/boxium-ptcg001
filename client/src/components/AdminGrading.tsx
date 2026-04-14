@@ -34,10 +34,12 @@ import {
   Calendar,
   Award,
   RefreshCw,
+  List,
 } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
+  { value: "pending_shipment", label: "待寄件" },
   { value: "pending_payment", label: "等待收件" },
   { value: "received", label: "已收件" },
   { value: "submitted_to_psa", label: "已出團" },
@@ -50,6 +52,7 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
+  pending_shipment: "bg-yellow-100 text-yellow-800",
   pending_payment: "bg-amber-100 text-amber-800",
   received: "bg-indigo-100 text-indigo-800",
   submitted_to_psa: "bg-purple-100 text-purple-800",
@@ -375,6 +378,8 @@ function SubmissionManagement() {
   const [detailSubmission, setDetailSubmission] = useState<any>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [notifNote, setNotifNote] = useState("");
+  const [cardListSub, setCardListSub] = useState<any>(null);
+  const [showCardList, setShowCardList] = useState(false);
 
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -467,7 +472,7 @@ function SubmissionManagement() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {sub.userName ?? "—"} · {sub.totalItems} 張 ·
+                    {sub.userName ?? "—"} · 共 {sub.totalItems ?? 0} 張 ·
                     {new Date(sub.createdAt).toLocaleDateString("zh-HK")}
                   </p>
                 </div>
@@ -479,20 +484,6 @@ function SubmissionManagement() {
 
               {expandedId === sub.id && (
                 <div className="border-t border-gray-100 p-4 bg-gray-50">
-                  {/* Card list */}
-                  <div className="space-y-1 mb-3">
-                    {(sub.items ?? []).map((item: any, idx: number) => (
-                      <div key={item.id} className="flex items-center gap-2 text-xs text-gray-700">
-                        <span className="text-gray-400">#{idx + 1}</span>
-                        <span className="font-semibold">{item.cardName}</span>
-                        <span className="text-gray-400">{item.tier?.name}</span>
-                        {item.psaGrade && (
-                          <span className="bg-[#06038d] text-white px-1.5 py-0.5 rounded font-bold">PSA {item.psaGrade}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Batch assignment */}
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs text-gray-500">出團批次：</span>
@@ -516,20 +507,70 @@ function SubmissionManagement() {
                     </Select>
                   </div>
 
-                  <Button
-                    size="sm"
-                    onClick={() => openDetail(sub)}
-                    className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-8 text-xs"
-                  >
-                    <Eye className="h-3.5 w-3.5 mr-1.5" />
-                    管理申請
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setCardListSub(sub); setShowCardList(true); }}
+                      className="h-8 text-xs border-[#06038d] text-[#06038d] hover:bg-[#06038d]/5"
+                    >
+                      <List className="h-3.5 w-3.5 mr-1.5" />
+                      查看 {sub.totalItems ?? (sub.items ?? []).length} 張卡牌
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => openDetail(sub)}
+                      className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-8 text-xs"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />
+                      管理申請
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           ))}
         </div>
       )}
+
+      {/* Card list dialog */}
+      <Dialog open={showCardList} onOpenChange={setShowCardList}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>卡牌明細 — {cardListSub?.orderNo}</DialogTitle>
+          </DialogHeader>
+          {cardListSub && (
+            <div className="space-y-2">
+              {(cardListSub.items ?? []).length === 0 ? (
+                <p className="text-center text-gray-400 py-6 text-sm">沒有卡牌資料</p>
+              ) : (
+                (cardListSub.items ?? []).map((item: any, idx: number) => (
+                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50">
+                    <span className="text-xs text-gray-400 font-mono mt-0.5 w-5 shrink-0">#{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{item.cardName}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.tier?.name && (
+                          <span className="text-xs text-gray-500">{item.tier.name}</span>
+                        )}
+                        {item.declaredValueUsd && (
+                          <span className="text-xs text-gray-400">USD ${item.declaredValueUsd}</span>
+                        )}
+                        {item.psaGrade && (
+                          <span className="bg-[#06038d] text-white px-1.5 py-0.5 rounded text-xs font-bold">PSA {item.psaGrade}</span>
+                        )}
+                        {item.psaCertNo && (
+                          <span className="text-xs text-gray-400">#{item.psaCertNo}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Detail management dialog */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
