@@ -570,7 +570,7 @@ export default function GradingSubmit() {
                           </Badge>
                         </div>
                       </div>
-                      <span className="font-bold text-[#06038d] flex-shrink-0">
+                      <span className="font-bold text-black flex-shrink-0">
                         HK${selectedTier ? parseFloat(selectedTier.feeHkd).toLocaleString() : "—"}
                       </span>
                     </div>
@@ -634,7 +634,7 @@ export default function GradingSubmit() {
                 <Checkbox
                   checked={agreedTerms}
                   onCheckedChange={(v) => setAgreedTerms(!!v)}
-                  className="h-4 w-4 flex-shrink-0"
+                  className="h-3.5 w-3.5 flex-shrink-0"
                 />
                 <span className="text-sm text-gray-700">
                   我已閱讀並同意以上所有服務條款，並確認所提交資料屬實。
