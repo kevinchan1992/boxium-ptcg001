@@ -8364,3 +8364,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] client/src/components/GradingMaintenanceGuard.tsx：建立維護守衛組件（顯示「鑑定服務維護中」頁面）
 - [x] client/src/App.tsx：/grading, /grading/submit, /grading/orders, /grading/orders/:id 路由包裹 GradingMaintenanceGuard
 - [x] AdminMarketplace.tsx 維護模式 Tab：加入 PSA 代客鑑定維護模式開關，標題改為「維護模式管理」
+
+---
+## 鑑定付款頁面 & 送件說明改善（2026-04-14）
+- [x] 鑑定付款頁面：加入信用卡 Visa/Mastercard LOGO 及支付寶 HK LOGO，框內文字改黑色
+- [x] 鑑定付款頁面：支付寶選項改為顯示平台 QR Code（https://w.alipay.hk/s12/3RYKWzGXrQ），用戶掃碼後上傳截圖
+- [x] 後端：新增 submitGradingAlipayProof procedure（上傳截圖至 S3，通知 Admin 審核）
+- [x] 後端：新增 adminConfirmGradingAlipayPayment procedure（Admin 確認收款後訂單標記完成）
+- [x] Admin 後台：管理申請 Dialog 加入支付寶截圖審核區塊（顯示截圖 + 確認收款按鈕）
+- [x] Admin 後台：服務層級時間標籤「月」改為「工作天」
+- [x] /grading 頁面：送件地址區塊加入收件人、聯絡電話、順豐站資訊
+- [x] /grading 頁面：新增包裝要求 & 寄件注意事項區塊（硬卡套、泡泡紙、追蹤寄件、打印申請單）

@@ -356,19 +356,73 @@ export default function Grading() {
 
       {/* ── Shipping Address ── */}
       <section className="py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Address card */}
           <div className="bg-[#06038d] text-white rounded-2xl p-8 text-center">
             <Package className="h-10 w-10 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">BOXIUM 送件地址</h2>
             <p className="text-blue-200 text-sm mb-4">提交申請後，請將卡牌連同打印的申請單一起寄至以下地址</p>
-            <div className="bg-white/10 rounded-xl p-4 text-left">
-              <p className="font-bold text-yellow-400 mb-1">📦 順豐站 852Z351</p>
-              <p className="text-white">香港新界離島區東涌逸東街 8 號</p>
-              <p className="text-white">逸東邨逸東商場 2 樓 201 號舖</p>
+            <div className="bg-white/10 rounded-xl p-5 text-left space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 font-bold text-sm w-20 flex-shrink-0">收件人：</span>
+                <span className="text-white font-bold">BOXIUM</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 font-bold text-sm w-20 flex-shrink-0">聯絡電話：</span>
+                <span className="text-white font-bold">55090102</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-yellow-400 font-bold text-sm w-20 flex-shrink-0 mt-0.5">寄件方式：</span>
+                <span className="text-white font-bold">📦 順豐站 852Z351</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-yellow-400 font-bold text-sm w-20 flex-shrink-0 mt-0.5">地址：</span>
+                <span className="text-white">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</span>
+              </div>
             </div>
             <p className="text-xs text-blue-300 mt-4">
               ⚠️ 請務必打印申請單連同卡牌一起寄出，否則無法處理您的申請
             </p>
+          </div>
+
+          {/* Packaging requirements */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-[#06038d]/10 rounded-lg flex items-center justify-center">
+                <Shield className="h-4 w-4 text-[#06038d]" />
+              </div>
+              <h3 className="font-bold text-gray-900">包裝要求 & 寄件注意事項</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-[#06038d] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">硬卡套保護</p>
+                  <p className="text-xs text-gray-500 mt-0.5">每張卡片必須先裝入硬卡套（Penny Sleeve + Top Loader 或同等保護），避免卡片在運輸中磨損。</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-[#06038d] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">泡泡紙 / 氣泡袋包裝</p>
+                  <p className="text-xs text-gray-500 mt-0.5">將硬卡套卡片用泡泡紙裹裹包裝，再放入硬盒寄出，防止運輸中卡片受對折損壞。</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-[#06038d] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">有追蹤寄件方式</p>
+                  <p className="text-xs text-gray-500 mt-0.5">建議使用順豐寄件（順豐站 852Z351）並自行購買保險，寄件到達前的風險由寄件人自行承擔。</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-yellow-400 text-[#06038d] rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">★</span>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">打印申請單（必須）</p>
+                  <p className="text-xs text-gray-500 mt-0.5">必須將系統生成的申請單打印後連同卡牌一起寄出，否則 BOXIUM 無法辨識您的卡牌而無法處理申請。</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

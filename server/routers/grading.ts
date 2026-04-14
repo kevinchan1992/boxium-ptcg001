@@ -433,6 +433,102 @@ export const gradingRouter = router({
       return { checkoutUrl: session.url };
     }),
 
+  // ─── Submit Alipay HK proof for grading payment ──────────────────────────
+  submitGradingAlipayProof: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        proofImageBase64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if (submission.status !== "graded" && submission.status !== "payment_pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "申請狀態不允許提交付款截圖" });
+      }
+
+      const { storagePut } = await import("../storage");
+      const buffer = Buffer.from(input.proofImageBase64, "base64");
+      const ext = input.mimeType.split("/")[1] || "jpg";
+      const fileKey = `grading-alipay-proof/${submission.orderNo}-${Date.now()}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+
+      await db
+        .update(gradingSubmissions)
+        .set({
+          alipayProofImageUrl: url,
+          alipayProofSubmittedAt: new Date(),
+          alipayProofStatus: "pending_review",
+          paymentMethod: "alipay_hk",
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+
+      // Notify owner
+      await createNotification({
+        userId: ctx.user.id,
+        type: "system",
+        title: "鑑定付款截圖待審核",
+        body: `申請單 ${submission.orderNo} 已提交支付寶 HK 付款截圖，請前往 Admin 確認收款。`,
+        linkUrl: `/admin`,
+      }).catch(() => {});
+
+      return { success: true, proofUrl: url };
+    }),
+
+  // ─── Admin: Confirm Alipay grading payment ───────────────────────────────
+  adminConfirmGradingAlipayPayment: adminProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.submissionId))
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+
+      await db
+        .update(gradingSubmissions)
+        .set({
+          alipayProofStatus: "approved",
+          status: "completed",
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+
+      await createNotification({
+        userId: submission.userId,
+        type: "system",
+        title: "付款已確認 ✅",
+        body: `申請單 ${submission.orderNo} 的支付寶 HK 付款已確認，訂單已完成。`,
+        linkUrl: `/grading/orders/${submission.id}`,
+      }).catch(() => {});
+
+      return { success: true };
+    }),
+
   // ─── Admin: Get all tiers (including inactive) ────────────────────────────
   admin: router({
     getAllTiers: adminProcedure.query(async () => {

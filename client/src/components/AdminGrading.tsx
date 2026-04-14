@@ -216,11 +216,11 @@ function ServiceTierManagement() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">預計最短時間（月）</Label>
+                <Label className="text-xs font-semibold">預計最短時間（工作天）</Label>
                 <Input value={form.estimatedDaysMin} onChange={(e) => setForm({ ...form, estimatedDaysMin: e.target.value })} placeholder="4" type="number" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">預計最長時間（月）</Label>
+                <Label className="text-xs font-semibold">預計最長時間（工作天）</Label>
                 <Input value={form.estimatedDaysMax} onChange={(e) => setForm({ ...form, estimatedDaysMax: e.target.value })} placeholder="5" type="number" />
               </div>
             </div>
@@ -431,6 +431,15 @@ function SubmissionManagement() {
   const updateGradingResultMutation = trpc.grading.admin.fillGradingResult.useMutation({
     onSuccess: () => {
       toast.success("鑑定結果已儲存並通知客人");
+      utils.grading.admin.listSubmissions.invalidate();
+      setShowDetail(false);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const confirmAlipayMutation = trpc.grading.adminConfirmGradingAlipayPayment.useMutation({
+    onSuccess: () => {
+      toast.success("支付寶收款已確認，訂單已完成");
       utils.grading.admin.listSubmissions.invalidate();
       setShowDetail(false);
     },
@@ -714,6 +723,35 @@ function SubmissionManagement() {
                   )}
                 </Button>
               </div>
+
+              {/* Alipay proof review */}
+              {detailSubmission.alipayProofImageUrl && detailSubmission.alipayProofStatus === "pending_review" && (
+                <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <img
+                      src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png"
+                      alt="AlipayHK"
+                      className="h-5 object-contain"
+                    />
+                    <Label className="text-sm font-bold text-amber-800">支付寶 HK 截圖待審核</Label>
+                  </div>
+                  <p className="text-xs text-amber-700 mb-3">客人已提交支付寶 HK 付款截圖，請確認收款後點擊「確認收款」。</p>
+                  <img
+                    src={detailSubmission.alipayProofImageUrl}
+                    alt="支付寶截圖"
+                    className="w-full max-h-64 object-contain rounded-lg border border-amber-200 mb-3 cursor-pointer"
+                    onClick={() => window.open(detailSubmission.alipayProofImageUrl, "_blank")}
+                  />
+                  <p className="text-xs text-gray-500 mb-2">提交時間：{detailSubmission.alipayProofSubmittedAt ? new Date(detailSubmission.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => confirmAlipayMutation.mutate({ submissionId: detailSubmission.id })}
+                    disabled={confirmAlipayMutation.isPending}
+                  >
+                    {confirmAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>✅ 確認收款完成，訂單標記完成</>}
+                  </Button>
+                </div>
+              )}
 
               {/* Grading results */}
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">

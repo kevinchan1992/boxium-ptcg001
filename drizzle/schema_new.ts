@@ -1602,6 +1602,10 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   paymentDueAt: timestamp("paymentDueAt"),
   day15ReminderSentAt: timestamp("day15ReminderSentAt"),
   day25ReminderSentAt: timestamp("day25ReminderSentAt"),
+  alipayProofImageUrl: text("alipayProofImageUrl"),
+  alipayProofStatus: mysqlEnum("alipayProofStatus", ["pending_review", "approved", "rejected"]),
+  alipayProofSubmittedAt: timestamp("alipayProofSubmittedAt"),
+  alipayProofRejectionReason: text("alipayProofRejectionReason"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

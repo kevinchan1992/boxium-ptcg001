@@ -211,6 +211,11 @@ export default function GradingOrderDetail() {
   const [, navigate] = useLocation();
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
   const [payingLoading, setPayingLoading] = useState(false);
+  const [showAlipayQR, setShowAlipayQR] = useState(false);
+  const [alipayProofFile, setAlipayProofFile] = useState<File | null>(null);
+  const [alipayProofPreview, setAlipayProofPreview] = useState<string | null>(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [proofSubmitted, setProofSubmitted] = useState(false);
 
   const submissionId = parseInt(params.id ?? "0", 10);
   const { data: submission, isLoading } = trpc.grading.getSubmissionDetail.useQuery(
@@ -222,6 +227,42 @@ export default function GradingOrderDetail() {
     { submissionId },
     { enabled: submissionId > 0 }
   );
+
+  const submitAlipayProofMutation = trpc.grading.submitGradingAlipayProof.useMutation({
+    onSuccess: () => {
+      setUploadingProof(false);
+      setProofSubmitted(true);
+      toast.success("截圖已提交，等待管理員確認收款");
+    },
+    onError: (err: any) => {
+      setUploadingProof(false);
+      toast.error(`提交失敗：${err.message}`);
+    },
+  });
+
+  const handleAlipayProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAlipayProofFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setAlipayProofPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitAlipayProof = async () => {
+    if (!alipayProofFile) return;
+    setUploadingProof(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = (ev.target?.result as string).split(",")[1];
+      submitAlipayProofMutation.mutate({
+        submissionId,
+        proofImageBase64: base64,
+        mimeType: alipayProofFile.type,
+      });
+    };
+    reader.readAsDataURL(alipayProofFile);
+  };
 
   const createPaymentMutation = trpc.grading.createPaymentIntent.useMutation({
     onSuccess: (data: any) => {
@@ -349,6 +390,10 @@ export default function GradingOrderDetail() {
   };
 
   const handlePay = () => {
+    if (paymentMethod === "alipay_hk") {
+      setShowAlipayQR(true);
+      return;
+    }
     setPayingLoading(true);
     createPaymentMutation.mutate({
       submissionId,
@@ -551,50 +596,155 @@ export default function GradingOrderDetail() {
               )}
 
               {/* Payment method */}
-              <div className="mb-3">
-                <p className="text-sm font-semibold text-gray-700 mb-2">選擇付款方式</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["stripe", "alipay_hk"] as const).map((method) => (
-                    <label
-                      key={method}
-                      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
-                        paymentMethod === method ? "border-[#06038d] bg-blue-50" : "border-gray-200"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        value={method}
-                        checked={paymentMethod === method}
-                        onChange={() => setPaymentMethod(method)}
-                        className="accent-[#06038d]"
-                      />
-                      <span className="text-sm font-semibold">
-                        {method === "stripe" ? "💳 信用卡" : "📱 支付寶 HK"}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              {!showAlipayQR && !proofSubmitted && (
+                <>
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-black mb-2">選擇付款方式</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Stripe / Credit Card */}
+                      <label
+                        className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                          paymentMethod === "stripe" ? "border-[#06038d] bg-blue-50" : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          value="stripe"
+                          checked={paymentMethod === "stripe"}
+                          onChange={() => setPaymentMethod("stripe")}
+                          className="accent-[#06038d]"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-4 object-contain" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-4 object-contain" />
+                          </div>
+                          <span className="text-xs font-semibold text-black">信用卡 / 扣帳卡</span>
+                        </div>
+                      </label>
+                      {/* Alipay HK */}
+                      <label
+                        className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                          paymentMethod === "alipay_hk" ? "border-[#06038d] bg-blue-50" : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          value="alipay_hk"
+                          checked={paymentMethod === "alipay_hk"}
+                          onChange={() => setPaymentMethod("alipay_hk")}
+                          className="accent-[#06038d]"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <img
+                            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png"
+                            alt="AlipayHK"
+                            className="h-6 object-contain"
+                          />
+                          <span className="text-xs font-semibold text-black">支付寶 HK</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-green-200">
-                <div>
-                  <p className="text-sm text-gray-600">應付金額</p>
-                  <p className="text-2xl font-bold text-[#06038d]">
-                    HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
-                  </p>
+                  <div className="flex items-center justify-between pt-3 border-t border-green-200">
+                    <div>
+                      <p className="text-sm text-black">應付金額</p>
+                      <p className="text-2xl font-bold text-[#06038d]">
+                        HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handlePay}
+                      disabled={payingLoading}
+                      className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-6"
+                    >
+                      {payingLoading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                      ) : (
+                        <><CreditCard className="h-4 w-4 mr-2" />立即付款</>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Alipay QR Code flow */}
+              {showAlipayQR && !proofSubmitted && (
+                <div className="space-y-4">
+                  <div className="bg-white border border-blue-200 rounded-xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <img
+                        src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png"
+                        alt="AlipayHK"
+                        className="h-7 object-contain"
+                      />
+                      <span className="font-bold text-black text-sm">掃描支付寶 HK QR Code 付款</span>
+                    </div>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("https://w.alipay.hk/s12/3RYKWzGXrQ")}`}
+                      alt="Alipay HK QR Code"
+                      className="w-44 h-44 mx-auto rounded-xl border-4 border-white shadow-lg object-contain"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">或點擊連結付款：</p>
+                    <a
+                      href="https://w.alipay.hk/s12/3RYKWzGXrQ"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-[#06038d] underline font-semibold"
+                    >
+                      https://w.alipay.hk/s12/3RYKWzGXrQ
+                    </a>
+                    <div className="mt-3 bg-blue-50 rounded-lg p-3 text-left">
+                      <p className="text-xs font-bold text-black mb-1">付款金額</p>
+                      <p className="text-xl font-bold text-[#06038d]">HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</p>
+                      <p className="text-xs text-gray-500 mt-1">備注請填寫申請單號：{submission.orderNo}</p>
+                    </div>
+                  </div>
+
+                  {/* Upload proof */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-sm font-bold text-black mb-2">上傳付款截圖</p>
+                    <p className="text-xs text-gray-500 mb-3">完成付款後，請上傳支付寶 HK 付款成功截圖，管理員確認後訂單將自動完成。</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAlipayProofChange}
+                      className="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#06038d] file:text-white hover:file:bg-[#06038d]/90 cursor-pointer"
+                    />
+                    {alipayProofPreview && (
+                      <img src={alipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setShowAlipayQR(false); setAlipayProofFile(null); setAlipayProofPreview(null); }}
+                        className="flex-1 border-gray-300 text-black"
+                      >
+                        返回
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSubmitAlipayProof}
+                        disabled={!alipayProofFile || uploadingProof}
+                        className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                      >
+                        {uploadingProof ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />上傳中...</> : "提交截圖"}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <Button
-                  onClick={handlePay}
-                  disabled={payingLoading}
-                  className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-6"
-                >
-                  {payingLoading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
-                  ) : (
-                    <><CreditCard className="h-4 w-4 mr-2" />立即付款</>
-                  )}
-                </Button>
-              </div>
+              )}
+
+              {/* Proof submitted */}
+              {proofSubmitted && (
+                <div className="bg-green-50 border border-green-300 rounded-xl p-4 text-center">
+                  <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                  <p className="font-bold text-green-800 mb-1">截圖已提交！</p>
+                  <p className="text-sm text-green-700">管理員確認收款後，訂單將自動完成。如有查詢請聯絡 BOXIUM。</p>
+                </div>
+              )}
             </div>
           )}
 
