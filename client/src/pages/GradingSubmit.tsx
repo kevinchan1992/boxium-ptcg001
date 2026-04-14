@@ -159,7 +159,7 @@ function ItemCard({
                 {item.card ? (
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     {item.card.imageUrl && (
-                      <img src={item.card.imageUrl} alt={item.card.name} className="w-10 h-14 object-contain rounded" />
+                      <img src={item.card.imageUrl} alt={item.card.name} className="w-20 h-28 object-contain rounded" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{item.card.name}</p>
@@ -519,7 +519,7 @@ export default function GradingSubmit() {
             )}
 
             <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+              <Button variant="outline" onClick={() => setStep(1)} className="flex-1 text-black">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 返回
               </Button>
@@ -646,7 +646,7 @@ export default function GradingSubmit() {
               <Button
                 variant="outline"
                 onClick={() => setStep(2)}
-                className="flex-1"
+                className="flex-1 text-black"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 返回修改
