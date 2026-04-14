@@ -8278,3 +8278,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] OrderDetail.tsx：加入物流進度時間軸（待付款 → 付款確認 → 賣家出貨 → 已送達）
 - [x] 物流時間軸：根據訂單狀態高亮顯示當前步驟，已完成步驟顯示完成時間
 - [ ] 保存 checkpoint
+
+---
+
+## 📦 Admin 訂單卡片顯示順豐站編號
+
+- [x] Admin 訂單管理列表：在「買家資料」欄位加入順豐站編號顯示（當 shippingMethod 為 sf_cod/sf_express 時）
+- [ ] 保存 checkpoint

@@ -6090,6 +6090,17 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
                 try {
                   const addr = typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : o.shippingAddress;
                   if (addr && typeof addr === 'object') {
+                    if (addr.sfStationCode) {
+                      return (
+                        <>
+                          <p className="text-gray-600">
+                            📦 {addr.sfStationName ? `${addr.sfStationName}` : '順豐自提站'}
+                            {addr.district ? ` · ${addr.district}` : ''}
+                          </p>
+                          <p className="font-bold text-[#06038d] text-sm tracking-wide">{addr.sfStationCode}</p>
+                        </>
+                      );
+                    }
                     return <p>{[addr.address, addr.district, addr.region].filter(Boolean).join(', ')}</p>;
                   }
                   return <p>{o.shippingAddress}</p>;
