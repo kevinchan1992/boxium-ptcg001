@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import { ChevronDown, ChevronUp, ShoppingCart, Gavel, DollarSign, Shield, AlertTriangle, CheckCircle, ArrowRight, Package, CreditCard, RotateCcw, Clock, Scale, FileText } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ChevronDown, ChevronUp, ShoppingCart, Gavel, DollarSign, Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, Package, CreditCard, RotateCcw, Clock, Scale, FileText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 const BRAND_BLUE = "#06038D";
@@ -93,6 +93,14 @@ export default function AuctionTerms() {
   const [openSectionId, setOpenSectionId] = useState<string | null>("overview");
   const handleToggle = (id: string) => setOpenSectionId(prev => prev === id ? null : id);
   const { data: feeTiersData, isLoading: feeTiersLoading } = trpc.marketplace.getFeeTiers.useQuery();
+  const [, navigate] = useLocation();
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/");
+    }
+  };
 
   // Build display tiers from API data or fall back to defaults
   const displayTiers = feeTiersData ? feeTiersData.map((t, i) => {
@@ -148,7 +156,17 @@ export default function AuctionTerms() {
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white transform translate-x-1/3 -translate-y-1/3" />
           <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white transform -translate-x-1/3 translate-y-1/3" />
         </div>
-        <div className="relative max-w-3xl mx-auto px-4 py-12 text-center">
+        {/* Back button */}
+        <div className="relative max-w-3xl mx-auto px-4 pt-4">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            返回上一頁
+          </button>
+        </div>
+        <div className="relative max-w-3xl mx-auto px-4 pb-12 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4"
             style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
             <Shield className="w-3 h-3" />

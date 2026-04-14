@@ -1257,6 +1257,68 @@ export default function OrderDetail() {
           <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#06038d" }}>
             <ShieldCheck className="w-4 h-4" style={{ color: "#06038d" }} />訂單進度
           </h2>
+          {/* Horizontal progress bar - quick visual overview */}
+          {!(["cancelled", "disputed", "refunded"].includes(order.orderStatus)) && (() => {
+            const hSteps = [
+              { key: "pending_payment", label: "待付款" },
+              { key: "paid_held", label: "付款確認" },
+              { key: "shipped", label: "已出貨" },
+              { key: "completed", label: "已完成" },
+            ];
+            const statusToIdx: Record<string, number> = {
+              pending_payment: 0,
+              paid_held: 1, payment_received: 1, processing: 1,
+              shipped: 2, delivered: 2,
+              completed: 3,
+            };
+            const activeIdx = statusToIdx[order.orderStatus] ?? 0;
+            return (
+              <div className="mb-5 pb-5 border-b border-gray-100">
+                <div className="relative flex items-center justify-between">
+                  {/* Background line */}
+                  <div className="absolute top-4 left-4 right-4 h-1 bg-gray-100 rounded-full" />
+                  {/* Filled progress line */}
+                  <div
+                    className="absolute top-4 left-4 h-1 rounded-full transition-all duration-700 ease-out"
+                    style={{
+                      background: "linear-gradient(90deg, #06038d 0%, #3b30d4 100%)",
+                      width: activeIdx === 0 ? "0%" : `calc(${(activeIdx / (hSteps.length - 1)) * 100}% - 8px)`,
+                    }}
+                  />
+                  {hSteps.map((step, idx) => {
+                    const isDone = idx < activeIdx;
+                    const isCurrent = idx === activeIdx;
+                    return (
+                      <div key={step.key} className="flex flex-col items-center gap-1.5 z-10 flex-1">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                            isDone
+                              ? "bg-[#06038d] border-[#06038d] text-white"
+                              : isCurrent
+                              ? "bg-[#06038d] border-[#06038d] text-white shadow-[0_0_0_4px_rgba(6,3,141,0.15)]"
+                              : "bg-white border-gray-200 text-gray-300"
+                          }`}
+                        >
+                          {isDone ? (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                              <path d="M3 8l3.5 3.5L13 5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <span className="text-[10px] font-bold">{idx + 1}</span>
+                          )}
+                        </div>
+                        <span className={`text-[11px] font-medium text-center leading-tight ${
+                          isDone || isCurrent ? "text-[#06038d]" : "text-gray-400"
+                        }`}>
+                          {step.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
           <OrderStatusStepper
             orderStatus={order.orderStatus}
             shippingMethod={order.shippingMethod}
