@@ -14,6 +14,7 @@ import {
   Trash2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Search,
   CheckCircle2,
   AlertCircle,
@@ -21,28 +22,18 @@ import {
   Package,
   DollarSign,
   Loader2,
-  ExternalLink,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface GradingItem {
-  id: string; // local temp id
+  id: string;
   card: SelectedCard | null;
   manualCardName: string;
   manualCardSet: string;
   manualCardNumber: string;
-  tierId: number | null;
-  condition: "mint" | "near_mint" | "excellent" | "good";
   notes: string;
   isManual: boolean;
 }
-
-const CONDITIONS = [
-  { value: "mint", label: "Mint (M)", desc: "完美無瑕" },
-  { value: "near_mint", label: "Near Mint (NM)", desc: "接近完美" },
-  { value: "excellent", label: "Excellent (EX)", desc: "輕微磨損" },
-  { value: "good", label: "Good (G)", desc: "明顯磨損" },
-] as const;
 
 function newItem(): GradingItem {
   return {
@@ -51,8 +42,6 @@ function newItem(): GradingItem {
     manualCardName: "",
     manualCardSet: "",
     manualCardNumber: "",
-    tierId: null,
-    condition: "near_mint",
     isManual: false,
     notes: "",
   };
@@ -60,7 +49,7 @@ function newItem(): GradingItem {
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 function StepIndicator({ step }: { step: number }) {
-  const steps = ["填寫卡牌資料", "確認費用", "完成提交"];
+  const steps = ["選擇服務層級", "填寫卡牌資料", "確認提交"];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {steps.map((label, i) => {
@@ -95,17 +84,19 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
-// ─── Item Card ────────────────────────────────────────────────────────────────
+// ─── Item Card (Accordion) ────────────────────────────────────────────────────
 function ItemCard({
   item,
   index,
-  tiers,
+  isExpanded,
+  onToggle,
   onUpdate,
   onRemove,
 }: {
   item: GradingItem;
   index: number;
-  tiers: any[];
+  isExpanded: boolean;
+  onToggle: () => void;
   onUpdate: (id: string, updates: Partial<GradingItem>) => void;
   onRemove: (id: string) => void;
 }) {
@@ -118,194 +109,141 @@ function ItemCard({
     [item.id, onUpdate]
   );
 
-  const handleSwitchToManual = () => {
-    onUpdate(item.id, { isManual: true, card: null });
-  };
+  const cardLabel = item.isManual
+    ? item.manualCardName || "（未填寫）"
+    : item.card?.name || "（未選擇）";
 
-  const selectedTier = tiers.find((t) => t.id === item.tierId);
+  const isFilled = item.isManual ? !!item.manualCardName.trim() : !!item.card;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-      {/* Card header */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-bold text-[#06038d] text-sm">卡牌 #{index + 1}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRemove(item.id)}
-          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-7 px-2"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      {/* Accordion Header */}
+      <div
+        className="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-gray-50 transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-bold text-[#06038d] text-sm flex-shrink-0">卡牌 #{index + 1}</span>
+          {!isExpanded && (
+            <span className={`text-sm truncate ${isFilled ? "text-gray-700" : "text-gray-400"}`}>
+              {cardLabel}
+            </span>
+          )}
+          {!isExpanded && isFilled && (
+            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
+            className="text-red-400 hover:text-red-600 hover:bg-red-50 h-7 px-2"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          />
+        </div>
       </div>
 
-      {/* Card selection */}
-      <div className="mb-4">
-        <Label className="text-xs font-semibold text-gray-600 mb-2 block">卡牌資料 *</Label>
-        {!item.isManual ? (
-          <>
-            {item.card ? (
-              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                {item.card.imageUrl && (
-                  <img src={item.card.imageUrl} alt={item.card.name} className="w-10 h-14 object-contain rounded" />
+      {/* Accordion Body */}
+      {isExpanded && (
+        <div className="px-4 pb-4 border-t border-gray-100">
+          {/* Card selection */}
+          <div className="mt-4 mb-4">
+            <Label className="text-xs font-semibold text-gray-600 mb-2 block">卡牌資料 *</Label>
+            {!item.isManual ? (
+              <>
+                {item.card ? (
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    {item.card.imageUrl && (
+                      <img src={item.card.imageUrl} alt={item.card.name} className="w-10 h-14 object-contain rounded" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{item.card.name}</p>
+                      {item.card.cardNumber && (
+                        <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
+                      )}
+                      {item.card.series && (
+                        <p className="text-xs text-gray-500">{item.card.series}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPickerOpen(true)}
+                      className="text-[#06038d] h-7 px-2 text-xs"
+                    >
+                      更換
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full border-dashed border-[#06038d] text-[#06038d] hover:bg-blue-50 h-12"
+                    onClick={() => setPickerOpen(true)}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    搜尋並選擇卡牌
+                  </Button>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{item.card.name}</p>
-                  {item.card.cardNumber && (
-                    <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
-                  )}
-                  {item.card.series && (
-                    <p className="text-xs text-gray-500">{item.card.series}</p>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPickerOpen(true)}
-                  className="text-[#06038d] h-7 px-2 text-xs"
+                <button
+                  type="button"
+                  onClick={() => onUpdate(item.id, { isManual: true, card: null })}
+                  className="text-xs text-gray-400 hover:text-gray-600 mt-1 underline"
                 >
-                  更換
-                </Button>
-              </div>
+                  找不到您要找的卡牌？手動填寫
+                </button>
+              </>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full border-dashed border-[#06038d] text-[#06038d] hover:bg-blue-50 h-12"
-                onClick={() => setPickerOpen(true)}
-              >
-                <Search className="h-4 w-4 mr-2" />
-                搜尋並選擇卡牌
-              </Button>
-            )}
-            <button
-              type="button"
-              onClick={handleSwitchToManual}
-              className="text-xs text-gray-400 hover:text-gray-600 mt-1 underline"
-            >
-              找不到您要找的卡牌？手動填寫
-            </button>
-          </>
-        ) : (
-          <div className="space-y-2">
-            <Input
-              placeholder="卡牌名稱 *"
-              value={item.manualCardName}
-              onChange={(e) => onUpdate(item.id, { manualCardName: e.target.value })}
-              className="text-sm"
-            />
-            <Input
-              placeholder="卡牌系列 / 套組"
-              value={item.manualCardSet}
-              onChange={(e) => onUpdate(item.id, { manualCardSet: e.target.value })}
-              className="text-sm"
-            />
-            <Input
-              placeholder="卡牌編號（如 001/100）"
-              value={item.manualCardNumber}
-              onChange={(e) => onUpdate(item.id, { manualCardNumber: e.target.value })}
-              className="text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => onUpdate(item.id, { isManual: false })}
-              className="text-xs text-[#06038d] hover:underline"
-            >
-              返回搜尋
-            </button>
-          </div>
-        )}
-        <CardPickerDialog
-          open={pickerOpen}
-          onOpenChange={setPickerOpen}
-          onSelect={handleCardSelect}
-          selectedCardId={item.card?.id ?? null}
-        />
-      </div>
-
-      {/* Tier selection */}
-      <div className="mb-4">
-        <Label className="text-xs font-semibold text-gray-600 mb-2 block">服務層級 *</Label>
-        <div className="grid grid-cols-1 gap-2">
-          {tiers.map((tier: any) => (
-            <label
-              key={tier.id}
-              className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                item.tierId === tier.id
-                  ? "border-[#06038d] bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name={`tier-${item.id}`}
-                  value={tier.id}
-                  checked={item.tierId === tier.id}
-                  onChange={() => onUpdate(item.id, { tierId: tier.id })}
-                  className="accent-[#06038d]"
+              <div className="space-y-2">
+                <Input
+                  placeholder="卡牌名稱 *"
+                  value={item.manualCardName}
+                  onChange={(e) => onUpdate(item.id, { manualCardName: e.target.value })}
+                  className="text-sm"
                 />
-                <div>
-                  <p className="font-semibold text-sm text-gray-900">{tier.name}</p>
-                  <p className="text-xs text-gray-500">
-                    最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
-                    約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
-                  </p>
-                </div>
+                <Input
+                  placeholder="卡牌系列 / 套組"
+                  value={item.manualCardSet}
+                  onChange={(e) => onUpdate(item.id, { manualCardSet: e.target.value })}
+                  className="text-sm"
+                />
+                <Input
+                  placeholder="卡牌編號（如 001/100）"
+                  value={item.manualCardNumber}
+                  onChange={(e) => onUpdate(item.id, { manualCardNumber: e.target.value })}
+                  className="text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => onUpdate(item.id, { isManual: false })}
+                  className="text-xs text-[#06038d] hover:underline"
+                >
+                  返回搜尋
+                </button>
               </div>
-              <span className="font-bold text-[#06038d] text-sm">
-                HK${parseFloat(tier.feeHkd).toLocaleString()}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
+            )}
+            <CardPickerDialog
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              onSelect={handleCardSelect}
+              selectedCardId={item.card?.id ?? null}
+            />
+          </div>
 
-      {/* Condition */}
-      <div className="mb-3">
-        <Label className="text-xs font-semibold text-gray-600 mb-2 block">卡牌狀況自評</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {CONDITIONS.map(({ value, label, desc }) => (
-            <label
-              key={value}
-              className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-all ${
-                item.condition === value
-                  ? "border-[#06038d] bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name={`condition-${item.id}`}
-                value={value}
-                checked={item.condition === value}
-                onChange={() => onUpdate(item.id, { condition: value })}
-                className="accent-[#06038d]"
-              />
-              <div>
-                <p className="font-semibold text-gray-800">{label}</p>
-                <p className="text-gray-500">{desc}</p>
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Notes */}
-      <div>
-        <Label className="text-xs font-semibold text-gray-600 mb-1 block">備註（可選）</Label>
-        <Textarea
-          placeholder="如有特別說明請填寫..."
-          value={item.notes}
-          onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
-          className="text-sm resize-none h-16"
-        />
-      </div>
-
-      {/* Fee summary for this item */}
-      {selectedTier && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-          <span className="text-xs text-gray-500">此卡費用</span>
-          <span className="font-bold text-[#06038d]">HK${parseFloat(selectedTier.feeHkd).toLocaleString()}</span>
+          {/* Notes */}
+          <div>
+            <Label className="text-xs font-semibold text-gray-600 mb-1 block">備註（可選）</Label>
+            <Textarea
+              placeholder="如有特別說明請填寫..."
+              value={item.notes}
+              onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
+              className="text-sm resize-none h-16"
+            />
+          </div>
         </div>
       )}
     </div>
@@ -328,7 +266,10 @@ export default function GradingSubmit() {
   const [, navigate] = useLocation();
   const { data: user, isLoading: authLoading } = trpc.auth.me.useQuery();
   const [step, setStep] = useState(1);
+  // Order-level tier selection
+  const [selectedTierId, setSelectedTierId] = useState<number | null>(null);
   const [items, setItems] = useState<GradingItem[]>([newItem()]);
+  const [expandedItemId, setExpandedItemId] = useState<string>(items[0].id);
   const [agreedTerms, setAgreedTerms] = useState(false);
 
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
@@ -344,20 +285,43 @@ export default function GradingSubmit() {
   });
 
   // ── Item management ──
-  const addItem = () => setItems((prev) => [...prev, newItem()]);
+  const addItem = () => {
+    const newI = newItem();
+    setItems((prev) => [...prev, newI]);
+    setExpandedItemId(newI.id); // expand new, collapse others
+  };
   const removeItem = (id: string) => {
     if (items.length === 1) {
       toast.error("至少需要一張卡牌");
       return;
     }
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const next = prev.filter((i) => i.id !== id);
+      // If we removed the expanded one, expand the last remaining
+      if (expandedItemId === id) {
+        setExpandedItemId(next[next.length - 1].id);
+      }
+      return next;
+    });
   };
   const updateItem = useCallback((id: string, updates: Partial<GradingItem>) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
   }, []);
 
+  const toggleItem = (id: string) => {
+    setExpandedItemId((prev) => (prev === id ? "" : id));
+  };
+
   // ── Validation ──
   const validateStep1 = () => {
+    if (!selectedTierId) {
+      toast.error("請選擇服務層級");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
     for (const item of items) {
       if (!item.isManual && !item.card) {
         toast.error("請為每張卡牌選擇卡牌資料");
@@ -367,16 +331,13 @@ export default function GradingSubmit() {
         toast.error("請填寫卡牌名稱");
         return false;
       }
-      if (!item.tierId) {
-        toast.error("請為每張卡牌選擇服務層級");
-        return false;
-      }
     }
     return true;
   };
 
   const handleNext = () => {
     if (step === 1 && validateStep1()) setStep(2);
+    if (step === 2 && validateStep2()) setStep(3);
   };
 
   const handleSubmit = () => {
@@ -390,8 +351,8 @@ export default function GradingSubmit() {
         cardSet: item.isManual ? item.manualCardSet : (item.card?.series ?? ""),
         cardNumber: item.isManual ? item.manualCardNumber : (item.card?.cardNumber ?? ""),
         cardImageUrl: item.card?.imageUrl ?? undefined,
-        tierId: item.tierId!,
-        condition: (item.condition === "good" ? "excellent" : item.condition) as "mint" | "near_mint" | "excellent",
+        tierId: selectedTierId!,
+        condition: "near_mint" as "mint" | "near_mint" | "excellent",
         notes: item.notes,
       })),
       agreedToTerms: true,
@@ -399,10 +360,8 @@ export default function GradingSubmit() {
   };
 
   // ── Fee calculation ──
-  const totalFee = items.reduce((sum, item) => {
-    const tier = tiers?.find((t: any) => t.id === item.tierId);
-    return sum + (tier ? parseFloat(tier.feeHkd) : 0);
-  }, 0);
+  const selectedTier = tiers?.find((t: any) => t.id === selectedTierId);
+  const totalFee = selectedTier ? parseFloat(selectedTier.feeHkd) * items.length : 0;
 
   // ── Auth guard ──
   if (authLoading) {
@@ -410,7 +369,6 @@ export default function GradingSubmit() {
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#06038d]" />
       </div>
-    
     );
   }
 
@@ -442,53 +400,142 @@ export default function GradingSubmit() {
 
         <StepIndicator step={step} />
 
-        {/* ── Step 1: Card Details ── */}
+        {/* ── Step 1: Select Service Tier ── */}
         {step === 1 && (
           <div className="space-y-4">
-            {tiersLoading ? (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-48 bg-gray-200 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              <>
-                {items.map((item, index) => (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    tiers={tiers ?? []}
-                    onUpdate={updateItem}
-                    onRemove={removeItem}
-                  />
-                ))}
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed border-[#06038d] text-[#06038d] hover:bg-blue-50 h-12"
-                  onClick={addItem}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  新增卡牌
-                </Button>
-              </>
-            )}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-bold text-gray-900 mb-1">選擇服務層級</h2>
+              <p className="text-xs text-gray-500 mb-4">此次申請的所有卡牌將使用相同服務層級</p>
+              {tiersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 bg-gray-200 rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {tiers?.map((tier: any) => (
+                    <label
+                      key={tier.id}
+                      className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        selectedTierId === tier.id
+                          ? "border-[#06038d] bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300 bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="tier"
+                          value={tier.id}
+                          checked={selectedTierId === tier.id}
+                          onChange={() => setSelectedTierId(tier.id)}
+                          className="accent-[#06038d]"
+                        />
+                        <div>
+                          <p className="font-bold text-gray-900">{tier.name}</p>
+                          <p className="text-xs text-gray-500">
+                            最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
+                            約 {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 個月
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-[#06038d] text-lg">HK${parseFloat(tier.feeHkd).toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">/ 張</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-end pt-2">
               <Button
                 onClick={handleNext}
                 className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-8"
-                disabled={tiersLoading}
+                disabled={tiersLoading || !selectedTierId}
               >
-                下一步：確認費用
+                下一步：填寫卡牌資料
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* ── Step 2: Confirm & Terms ── */}
+        {/* ── Step 2: Card Details ── */}
         {step === 2 && (
+          <div className="space-y-4">
+            {/* Selected tier summary */}
+            {selectedTier && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-blue-600 font-semibold">已選服務層級</span>
+                  <p className="font-bold text-[#06038d]">{selectedTier.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-[#06038d]">HK${parseFloat(selectedTier.feeHkd).toLocaleString()} / 張</p>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="text-xs text-blue-500 hover:underline"
+                  >
+                    更改
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Card list */}
+            {items.map((item, index) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                index={index}
+                isExpanded={expandedItemId === item.id}
+                onToggle={() => toggleItem(item.id)}
+                onUpdate={updateItem}
+                onRemove={removeItem}
+              />
+            ))}
+
+            <Button
+              variant="outline"
+              className="w-full border-dashed border-[#06038d] text-[#06038d] hover:bg-blue-50 h-12"
+              onClick={addItem}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              新增卡牌
+            </Button>
+
+            {/* Fee preview */}
+            {selectedTier && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {items.length} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
+                </span>
+                <span className="font-bold text-[#06038d]">合計 HK${totalFee.toLocaleString()}</span>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                返回
+              </Button>
+              <Button
+                onClick={handleNext}
+                className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+              >
+                下一步：確認提交
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: Confirm & Terms ── */}
+        {step === 3 && (
           <div className="space-y-4">
             {/* Fee breakdown */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -498,7 +545,6 @@ export default function GradingSubmit() {
               </div>
               <div className="p-4 space-y-3">
                 {items.map((item, idx) => {
-                  const tier = tiers?.find((t: any) => t.id === item.tierId);
                   const cardName = item.isManual
                     ? item.manualCardName
                     : (item.card?.name ?? "未知卡牌");
@@ -520,12 +566,12 @@ export default function GradingSubmit() {
                             <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
                           )}
                           <Badge variant="outline" className="text-xs mt-0.5">
-                            {tier?.name ?? "—"}
+                            {selectedTier?.name ?? "—"}
                           </Badge>
                         </div>
                       </div>
                       <span className="font-bold text-[#06038d] flex-shrink-0">
-                        HK${tier ? parseFloat(tier.feeHkd).toLocaleString() : "—"}
+                        HK${selectedTier ? parseFloat(selectedTier.feeHkd).toLocaleString() : "—"}
                       </span>
                     </div>
                   );
@@ -599,7 +645,7 @@ export default function GradingSubmit() {
             <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="flex-1"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
