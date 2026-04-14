@@ -260,14 +260,14 @@ function BatchManagement() {
   const utils = trpc.useUtils();
   const { data: batches, isLoading } = trpc.grading.admin.getAllBatches.useQuery();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", deadline: "", shippedAt: "", estimatedReturnAt: "" });
+  const [form, setForm] = useState({ name: "", deadline: "", shippedAt: "" });
 
   const createMutation = trpc.grading.admin.upsertBatch.useMutation({
     onSuccess: () => {
       toast.success("出團批次已建立");
       utils.grading.admin.getAllBatches.invalidate();
       setShowForm(false);
-      setForm({ name: "", deadline: "", shippedAt: "", estimatedReturnAt: "" });
+      setForm({ name: "", deadline: "", shippedAt: "" });
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -345,10 +345,6 @@ function BatchManagement() {
               <Label className="text-xs font-semibold">出團日期</Label>
               <Input type="date" value={form.shippedAt} onChange={(e) => setForm({ ...form, shippedAt: e.target.value })} />
             </div>
-            <div>
-              <Label className="text-xs font-semibold">預計回件日期</Label>
-              <Input type="date" value={form.estimatedReturnAt} onChange={(e) => setForm({ ...form, estimatedReturnAt: e.target.value })} />
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>取消</Button>
@@ -357,7 +353,6 @@ function BatchManagement() {
                 batchName: form.name,
                 cutoffDate: form.deadline || new Date().toISOString().split('T')[0],
                 shippedDate: form.shippedAt || undefined,
-                expectedReturnDate: form.estimatedReturnAt || undefined,
                 status: 'open' as const,
               })}
               disabled={!form.name || createMutation.isPending}
