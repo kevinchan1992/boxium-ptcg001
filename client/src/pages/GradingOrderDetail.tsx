@@ -46,8 +46,9 @@ function getStepIndex(status: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  pending_payment: "等待收件",
-  paid: "等待收件",
+  pending_shipment: "待收件",
+  pending_payment: "待收件",
+  paid: "待收件",
   received: "已收件",
   submitted_to_psa: "已出團",
   grading: "鑑定中",
@@ -464,7 +465,7 @@ export default function GradingOrderDetail() {
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">{item.tier?.name ?? "—"}</Badge>
+                      <Badge variant="outline" className="text-xs text-black border-gray-400">{item.tier?.name ?? "—"}</Badge>
                       <span className="text-xs text-gray-400">{item.condition}</span>
                     </div>
                     {item.psaGrade && (
