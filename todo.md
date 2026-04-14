@@ -8375,3 +8375,8 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] Admin 後台：服務層級時間標籤「月」改為「工作天」
 - [x] /grading 頁面：送件地址區塊加入收件人、聯絡電話、順豐站資訊
 - [x] /grading 頁面：新增包裝要求 & 寄件注意事項區塊（硬卡套、泡泡紙、追蹤寄件、打印申請單）
+
+---
+## Gmail 通知：支付寶截圖上傳（2026-04-14）
+- [ ] 在 submitGradingAlipayProof procedure 加入 Gmail 通知至 BoxIum.asia@gmail.com
+- [ ] 通知內容：申請單號、用戶名稱、金額、截圖連結、Admin 後台連結

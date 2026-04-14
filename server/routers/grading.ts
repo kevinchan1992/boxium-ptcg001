@@ -21,7 +21,7 @@ import { eq, and, desc, asc, or, inArray, count, isNotNull } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
-import { sendEmail } from "../emailService";
+import { sendEmail, wrapHtmlTest } from "../emailService";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
@@ -478,7 +478,7 @@ export const gradingRouter = router({
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
 
-      // Notify owner
+      // Notify owner (in-app)
       await createNotification({
         userId: ctx.user.id,
         type: "system",
@@ -486,6 +486,50 @@ export const gradingRouter = router({
         body: `申請單 ${submission.orderNo} 已提交支付寶 HK 付款截圖，請前往 Admin 確認收款。`,
         linkUrl: `/admin`,
       }).catch(() => {});
+
+      // Notify admin via Gmail
+      const adminEmail = "BoxIum.asia@gmail.com";
+      const totalFee = parseFloat(submission.totalFeeHkd || "0").toLocaleString();
+      const submittedAt = new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" });
+      const adminBodyHtml = `
+        <h2 style="margin:0 0 8px;color:#06038d;font-size:20px;">📸 支付寶 HK 付款截圖待審核</h2>
+        <p style="margin:0 0 16px;color:#555;font-size:14px;">有客人已提交支付寶 HK 付款截圖，請盡快登入 Admin 後台確認收款。</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:16px 0;overflow:hidden;">
+          <tr><td style="background:#06038d;padding:10px 16px;">
+            <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">申請單號</p>
+            <p style="margin:2px 0 0;font-size:14px;font-weight:bold;color:#ffffff;font-family:monospace;">${submission.orderNo}</p>
+          </td></tr>
+          <tr><td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+            <p style="margin:0;font-size:12px;color:#888;">客人名稱</p>
+            <p style="margin:4px 0 0;font-size:14px;color:#1a1a2e;">${ctx.user.name || ctx.user.email}</p>
+          </td></tr>
+          <tr><td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+            <p style="margin:0;font-size:12px;color:#888;">應付金額</p>
+            <p style="margin:4px 0 0;font-size:16px;font-weight:bold;color:#06038d;">HK$${totalFee}</p>
+          </td></tr>
+          <tr><td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+            <p style="margin:0;font-size:12px;color:#888;">提交時間</p>
+            <p style="margin:4px 0 0;font-size:14px;color:#1a1a2e;">${submittedAt}</p>
+          </td></tr>
+          <tr><td style="padding:10px 16px;border-top:1px solid #dde0f5;">
+            <p style="margin:0;font-size:12px;color:#888;">付款截圖</p>
+            <a href="${url}" style="display:inline-block;margin-top:6px;">
+              <img src="${url}" alt="付款截圖" style="max-width:300px;max-height:200px;border-radius:8px;border:1px solid #dde0f5;" />
+            </a>
+          </td></tr>
+        </table>
+        <div style="text-align:center;margin:24px 0;">
+          <a href="https://boxium.asia/admin" style="display:inline-block;background:#FFD700;color:#06038d;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;">前往 Admin 確認收款</a>
+        </div>
+      `;
+      const adminHtml = wrapHtmlTest(`📸 鑑定付款截圖待審核 — ${submission.orderNo}`, adminBodyHtml);
+      await sendEmail({
+        to: adminEmail,
+        subject: `📸 [BOXIUM] 鑑定付款截圖待審核 — ${submission.orderNo}`,
+        html: adminHtml,
+        skipUnsubscribeCheck: true,
+        dedupeKey: `grading-alipay-proof-${submission.id}-${Date.now()}`,
+      }).catch((e) => console.error("[Grading] Failed to send admin Gmail notification:", e));
 
       return { success: true, proofUrl: url };
     }),
