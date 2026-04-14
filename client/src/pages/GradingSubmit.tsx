@@ -565,7 +565,7 @@ export default function GradingSubmit() {
                           {!item.isManual && item.card?.cardNumber && (
                             <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
                           )}
-                          <Badge variant="outline" className="text-xs mt-0.5">
+                          <Badge variant="outline" className="text-xs mt-0.5 text-black border-gray-400">
                             {selectedTier?.name ?? "—"}
                           </Badge>
                         </div>
@@ -634,7 +634,8 @@ export default function GradingSubmit() {
                 <Checkbox
                   checked={agreedTerms}
                   onCheckedChange={(v) => setAgreedTerms(!!v)}
-                  className="h-3.5 w-3.5 flex-shrink-0"
+                  className="flex-shrink-0"
+                  style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px' }}
                 />
                 <span className="text-sm text-gray-700">
                   我已閱讀並同意以上所有服務條款，並確認所提交資料屬實。
