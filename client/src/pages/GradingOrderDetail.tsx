@@ -218,6 +218,11 @@ export default function GradingOrderDetail() {
     { enabled: submissionId > 0 }
   );
 
+  const { data: qrData } = trpc.grading.getSubmissionQrCode.useQuery(
+    { submissionId },
+    { enabled: submissionId > 0 }
+  );
+
   const createPaymentMutation = trpc.grading.createPaymentIntent.useMutation({
     onSuccess: (data: any) => {
       setPayingLoading(false);
@@ -240,6 +245,9 @@ export default function GradingOrderDetail() {
     const userName = (submission as any).user?.name ?? '—';
     const userId = (submission as any).userId ?? (submission as any).user?.id ?? '—';
     const orderDate = new Date(submission.createdAt).toLocaleDateString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric' });
+    const qrCodeHtml = qrData?.qrDataUrl
+      ? `<div style="text-align:center;margin-top:4px"><img src="${qrData.qrDataUrl}" alt="QR Code" style="width:80px;height:80px" /><div style="color:#b0b8e8;font-size:9px;margin-top:2px">掃描查看申請詳情</div></div>`
+      : '';
     const itemsHtml = (submission as any).items.map((item: any, idx: number) => `
       <tr style="border-bottom:1px solid #e5e7eb;background:${idx % 2 === 0 ? '#ffffff' : '#f9fafb'}">
         <td style="padding:10px 12px;color:#6b7280;text-align:center">${idx + 1}</td>
@@ -257,12 +265,15 @@ export default function GradingOrderDetail() {
         <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_62cbf293.webp" alt="BOXIUM" style="height:52px;width:auto;object-fit:contain;border-radius:6px" />
         <div>
           <div style="color:#fff;font-weight:700;font-size:16px">PSA 代客鑑定申請單</div>
-          <div style="color:#b0b8e8;font-size:11px;margin-top:2px">請將此申請單打印後連同卡牌一起寄出</div>
+          <div style="color:#b0b8e8;font-size:11px;margin-top:2px">請將此申請單打印後連同卡牧一起寄出</div>
         </div>
       </div>
-      <div style="text-align:right">
-        <div style="color:#FEDD00;font-weight:700;font-size:14px;font-family:monospace">${submission.orderNo}</div>
-        <div style="color:#b0b8e8;font-size:11px;margin-top:3px">${orderDate}</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        ${qrCodeHtml}
+        <div style="text-align:right">
+          <div style="color:#FEDD00;font-weight:700;font-size:14px;font-family:monospace">${submission.orderNo}</div>
+          <div style="color:#b0b8e8;font-size:11px;margin-top:3px">${orderDate}</div>
+        </div>
       </div>
     </div>
     <div style="padding:20px 28px">

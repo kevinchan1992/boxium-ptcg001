@@ -19,6 +19,7 @@ import {
 } from "../../drizzle/schema_new";
 import { eq, and, desc, asc, or, inArray } from "drizzle-orm";
 import Stripe from "stripe";
+import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
 import { sendEmail } from "../emailService";
 
@@ -856,4 +857,30 @@ export const gradingRouter = router({
         .orderBy(asc(gradingSubmissions.paymentDeadline));
     }),
   }),
+
+  // ─── Protected: Get QR Code for submission ───────────────────────────────
+  getSubmissionQrCode: protectedProcedure
+    .input(z.object({ submissionId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Verify ownership
+      const [submission] = await db
+        .select({ id: gradingSubmissions.id, userId: gradingSubmissions.userId })
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.submissionId))
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+      if (submission.userId !== ctx.user.id && ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const baseUrl = process.env.VITE_OAUTH_PORTAL_URL?.replace("/oauth", "") || "https://boxium.asia";
+      const url = `${baseUrl}/grading/orders/${input.submissionId}`;
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 120,
+        margin: 1,
+        color: { dark: "#06038d", light: "#ffffff" },
+      });
+      return { qrDataUrl, url };
+    }),
 });
