@@ -63,21 +63,22 @@ const STATUS_LABEL: Record<string, string> = {
 function PrintableSlip({ submission }: { submission: any }) {
   return (
     <div className="hidden print:block font-sans text-black bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <style>{`
+        @media print {
+          body > *:not(#printable-slip-root) { display: none !important; }
+          nav, header, button, [data-print-hide] { display: none !important; }
+          @page { margin: 0; size: A4; }
+        }
+      `}</style>
       {/* ── Header Banner ── */}
-      <div style={{ background: '#06038d', padding: '18px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* BOXIUM Logo SVG */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            background: '#FEDD00',
-            border: '2px solid #FEDD00',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <span style={{ color: '#06038d', fontWeight: '900', fontSize: '20px', letterSpacing: '2px' }}>BOXIUM</span>
-          </div>
+      <div style={{ background: '#06038d', padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* BOXIUM Logo Image */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_62cbf293.webp"
+            alt="BOXIUM"
+            style={{ height: '52px', width: 'auto', objectFit: 'contain', borderRadius: '6px' }}
+          />
           <div>
             <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>PSA 代客鑑定申請單</div>
             <div style={{ color: '#b0b8e8', fontSize: '11px', marginTop: '2px' }}>請將此申請單打印後連同卡牌一起寄出</div>
@@ -99,7 +100,7 @@ function PrintableSlip({ submission }: { submission: any }) {
           <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>申請人</div>
             <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d' }}>{submission.user?.name ?? '—'}</div>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{submission.user?.email ?? ''}</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>用戶 ID：#{submission.userId ?? submission.user?.id ?? '—'}</div>
           </div>
           <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>服務層級</div>

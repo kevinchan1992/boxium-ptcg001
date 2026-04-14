@@ -340,8 +340,16 @@ export const gradingRouter = router({
         batch = b || null;
       }
 
+      // Get user info for printable slip
+      const [userInfo] = await db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, submission.userId))
+        .limit(1);
+
       return {
         ...submission,
+        user: userInfo || null,
         items: (items as GradingSubmissionItem[]).map((item) => ({ ...item, tier: tierMap.get(item.tierId) || null })),
         batch,
       };
