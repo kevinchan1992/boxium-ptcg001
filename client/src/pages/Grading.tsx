@@ -186,15 +186,15 @@ export default function Grading() {
             <br />
             一條龍代辦，省心省力，直送美國 PSA。
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/grading/submit">
-              <Button size="lg" className="bg-yellow-400 text-[#06038d] hover:bg-yellow-300 font-bold text-base px-8">
+          <div className="flex flex-row gap-3 justify-center">
+            <Link href="/grading/submit" className="flex-1 max-w-[180px]">
+              <Button size="lg" className="w-full bg-yellow-400 text-[#06038d] hover:bg-yellow-300 font-bold text-sm sm:text-base px-4 sm:px-8">
                 立即提交申請
-                <ChevronRight className="ml-2 h-5 w-5" />
+                <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/grading/orders">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-bold text-base px-8">
+            <Link href="/grading/orders" className="flex-1 max-w-[180px]">
+              <Button size="lg" variant="outline" className="w-full border-white text-white hover:bg-white/10 font-bold text-sm sm:text-base px-4 sm:px-8">
                 查看我的申請
               </Button>
             </Link>
