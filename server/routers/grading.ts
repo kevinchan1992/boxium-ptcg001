@@ -73,7 +73,7 @@ async function sendGradingNotification(params: {
   }
 }
 
-/** Build grading email HTML */
+/** Build grading email HTML using BOXIUM brand template */
 function buildGradingEmail(params: {
   userName: string;
   title: string;
@@ -83,31 +83,24 @@ function buildGradingEmail(params: {
   ctaText?: string;
   extraHtml?: string;
 }): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>${params.title}</title></head>
-<body style="font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
-  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-    <div style="background: #06038d; color: white; padding: 24px 32px;">
-      <h1 style="margin: 0; font-size: 22px;">BOXIUM × PSA 代客鑑定</h1>
+  const BRAND_BLUE = "#06038d";
+  const BRAND_YELLOW = "#FFD700";
+  const bodyHtml = `
+    <h2 style="margin:0 0 8px;color:${BRAND_BLUE};font-size:20px;">${params.title}</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">親愛的 ${params.userName}，</p>
+    <p style="margin:0 0 20px;color:#333;font-size:15px;">${params.body}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:16px 0 20px;overflow:hidden;">
+      <tr><td style="background:${BRAND_BLUE};padding:10px 16px;">
+        <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">申請單號</p>
+        <p style="margin:2px 0 0;font-size:16px;font-weight:bold;color:#ffffff;font-family:monospace;">${params.orderNo}</p>
+      </td></tr>
+    </table>
+    ${params.extraHtml || ""}
+    <div style="text-align:center;margin:24px 0 8px;">
+      <a href="${params.linkUrl}" style="display:inline-block;background:${BRAND_YELLOW};color:${BRAND_BLUE};font-size:15px;font-weight:bold;padding:14px 36px;border-radius:50px;text-decoration:none;letter-spacing:0.5px;">${params.ctaText || "查看申請詳情"}</a>
     </div>
-    <div style="padding: 32px;">
-      <p style="color: #333; font-size: 16px;">親愛的 ${params.userName}，</p>
-      <p style="color: #333; font-size: 16px;">${params.body}</p>
-      <div style="background: #f8f9fa; border-radius: 6px; padding: 16px; margin: 20px 0;">
-        <p style="margin: 0; color: #666; font-size: 14px;">申請單號</p>
-        <p style="margin: 4px 0 0; color: #06038d; font-size: 18px; font-weight: bold;">${params.orderNo}</p>
-      </div>
-      ${params.extraHtml || ""}
-      <a href="${params.linkUrl}" style="display: inline-block; background: #06038d; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 15px; margin-top: 16px;">${params.ctaText || "查看申請詳情"}</a>
-    </div>
-    <div style="background: #f8f9fa; padding: 16px 32px; border-top: 1px solid #eee;">
-      <p style="margin: 0; color: #999; font-size: 12px;">如有查詢，請聯絡 BOXIUM 客服。此電郵由系統自動發送，請勿直接回覆。</p>
-    </div>
-  </div>
-</body>
-</html>`;
+  `;
+  return wrapHtmlTest(params.title, bodyHtml);
 }
 
 export const gradingRouter = router({
@@ -234,7 +227,7 @@ export const gradingRouter = router({
 
       // Send notification
       const linkUrl = `/grading/orders/${submissionId}`;
-      const printUrl = `/grading/orders/${submissionId}/print`;
+      const printUrl = `/grading/orders/${submissionId}`;  // print button on detail page
       const baseUrl = "https://boxium.asia";
 
       await sendGradingNotification({
@@ -254,14 +247,20 @@ export const gradingRouter = router({
           linkUrl: `${baseUrl}${linkUrl}`,
           ctaText: "查看申請詳情",
           extraHtml: `
-<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 16px; margin: 16px 0;">
-  <p style="margin: 0 0 8px; font-weight: bold; color: #856404;">📦 送件地址</p>
-  <p style="margin: 0; color: #333;">順豐站 852Z351</p>
-  <p style="margin: 4px 0 0; color: #333;">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
-  ${nextBatch ? `<p style="margin: 8px 0 0; color: #dc3545; font-weight: bold;">⏰ 寄件截止日期：${new Date(nextBatch.cutoffDate).toLocaleDateString("zh-HK")}</p>` : ""}
-</div>
-<p style="color: #dc3545; font-size: 14px;">⚠️ 請務必打印申請單連同卡牌一起寄出，否則無法處理您的申請。</p>
-<a href="${baseUrl}${printUrl}" style="display: inline-block; background: #28a745; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; margin-bottom: 8px;">🖨️ 打印申請單</a>`,
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#06038d;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#FFD700;">📦 送件地址</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#06038d;">順豐站 852Z351</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#333;">香港新界離島區東淌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
+    ${nextBatch ? `<p style="margin:8px 0 0;font-size:13px;font-weight:bold;color:#dc3545;">⏰ 寄件截止日期：${new Date(nextBatch.cutoffDate).toLocaleDateString("zh-HK")}</p>` : ""}
+  </td></tr>
+</table>
+<p style="color:#dc3545;font-size:14px;margin:12px 0;">⚠️ 請務必打印申請單連同卡牌一起寄出，否則無法處理您的申請。</p>
+<div style="text-align:center;margin:16px 0;">
+  <a href="${baseUrl}${printUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">🖨️ 打印申請單</a>
+</div>`,
         }),
       });
 

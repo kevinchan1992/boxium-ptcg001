@@ -8380,3 +8380,8 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## Gmail 通知：支付寶截圖上傳（2026-04-14）
 - [ ] 在 submitGradingAlipayProof procedure 加入 Gmail 通知至 BoxIum.asia@gmail.com
 - [ ] 通知內容：申請單號、用戶名稱、金額、截圖連結、Admin 後台連結
+
+---
+## Email 修復（2026-04-14）
+- [x] 鑑定申請確認 Email：打印申請單按鈕連結 404 修復（改為 /grading/orders/{id} 詳情頁）
+- [x] 鑑定申請確認 Email：統一為 BOXIUM 藍白品牌風格（使用 wrapHtmlTest 包裝，深藍標題+白底+黃色按鈕）
