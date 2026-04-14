@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -956,6 +957,7 @@ function CheckoutDialog({
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   // Fetch saved addresses
   const { data: savedAddresses } = trpc.marketplace.getMyShippingAddresses.useQuery(undefined, {
@@ -1790,6 +1792,23 @@ function CheckoutDialog({
                 </div>
               )}
 
+              {/* Terms agreement checkbox */}
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <Checkbox
+                  id="agree-terms"
+                  checked={agreeTerms}
+                  onCheckedChange={(checked) => setAgreeTerms(checked === true)}
+                  className="mt-0.5 flex-shrink-0"
+                />
+                <label htmlFor="agree-terms" className="text-xs text-gray-700 cursor-pointer leading-relaxed select-none">
+                  我已閱讀並同意平台的{" "}
+                  <Link href="/auction-terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
+                    買賣條款
+                  </Link>
+                  ，包括退款政策（收貨後 48 小時內申請）及平台規則。
+                </label>
+              </div>
+
               {batchProgress && (
                 <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-3">
                   <div className="flex justify-between text-sm text-[#06038D] font-medium mb-2">
@@ -1997,7 +2016,7 @@ function CheckoutDialog({
               className="flex-1 font-bold"
               style={{ background: '#FEDD00', color: '#06038D' }}
               onClick={handleCheckout}
-              disabled={isProcessing || !!batchProgress || isValidatingStock}
+              disabled={isProcessing || !!batchProgress || isValidatingStock || !agreeTerms}
             >
               {isValidatingStock
                 ? "驗證庫存中..."
