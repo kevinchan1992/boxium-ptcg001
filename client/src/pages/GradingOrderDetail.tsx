@@ -466,7 +466,6 @@ export default function GradingOrderDetail() {
                     )}
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs text-black border-gray-400">{item.tier?.name ?? "—"}</Badge>
-                      <span className="text-xs text-gray-400">{item.condition}</span>
                     </div>
                     {item.psaGrade && (
                       <div className="flex items-center gap-1.5 mt-1">
