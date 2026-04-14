@@ -1015,21 +1015,40 @@ export const gradingRouter = router({
           subject: `【BOXIUM PSA 鑑定】鑑定完成，請完成付款 - ${submission.orderNo}`,
           html: buildGradingEmail({
             userName: user.name || user.email,
-            title: "PSA 鑑定完成！請完成付款",
-            body: `您的 PSA 鑑定已完成，請於 30 天內完成付款以取回您的卡牌。`,
+            title: "PSA 鑑定完成！請完成付款 🏆",
+            body: `您的 PSA 鑑定已完成！應付金額為 HK$${submission.totalFeeHkd}，請於 ${paymentDeadline.toLocaleDateString("zh-HK")} 前完成付款，逾期平台保留對卡片自行處理之權利。`,
             orderNo: submission.orderNo,
             linkUrl: `${baseUrl}${linkUrl}`,
-            ctaText: "前往付款",
+            ctaText: "立即付款",
             extraHtml: `
-<div style="background: #d4edda; border: 1px solid #28a745; border-radius: 6px; padding: 16px; margin: 16px 0;">
-  <p style="margin: 0 0 8px; font-weight: bold; color: #155724;">🏆 鑑定結果</p>
-  <p style="margin: 0; color: #333;">${resultsSummary}</p>
-</div>
-<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 16px; margin: 16px 0;">
-  <p style="margin: 0 0 8px; font-weight: bold; color: #856404;">💳 付款資訊</p>
-  <p style="margin: 0; color: #333;">應付金額：<strong>HK$${submission.totalFeeHkd}</strong></p>
-  <p style="margin: 4px 0 0; color: #dc3545; font-weight: bold;">⏰ 付款截止日期：${paymentDeadline.toLocaleDateString("zh-HK")}</p>
-  <p style="margin: 8px 0 0; color: #666; font-size: 13px;">⚠️ 逾期未付款，平台保留對相關卡片自行處理之權利。</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#15803d;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">🏆 鑑定結果摘要</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;color:#333;line-height:1.8;">${resultsSummary}</p>
+  </td></tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#d97706;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">💳 付款資訊</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:4px 0;font-size:14px;color:#555;width:40%;">應付金額</td>
+        <td style="padding:4px 0;font-size:18px;font-weight:bold;color:#06038d;">HK$${submission.totalFeeHkd}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0;font-size:14px;color:#555;">付款截止日期</td>
+        <td style="padding:4px 0;font-size:14px;font-weight:bold;color:#dc2626;">${paymentDeadline.toLocaleDateString("zh-HK")}</td>
+      </tr>
+    </table>
+    <p style="margin:10px 0 0;font-size:12px;color:#92400e;background:#fef3c7;border-radius:6px;padding:8px 12px;">⚠️ 請於截止日期前完成付款，逾期平台保留對相關卡片自行處理之權利。</p>
+  </td></tr>
+</table>
+<div style="text-align:center;margin:20px 0;">
+  <a href="${baseUrl}${linkUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:14px 36px;border-radius:50px;text-decoration:none;font-size:16px;font-weight:bold;">立即前往付款</a>
 </div>`,
           }),
         });
