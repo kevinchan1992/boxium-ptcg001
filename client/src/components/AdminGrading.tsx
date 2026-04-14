@@ -301,30 +301,49 @@ function BatchManagement() {
             <p className="text-center text-gray-400 py-8 text-sm">尚無出團批次</p>
           )}
           {(batches ?? []).map((batch: any) => (
-            <div key={batch.id} className="flex items-center justify-between p-4 rounded-xl border bg-white border-gray-200">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900">{batch.name}</span>
-                  <Badge variant={batch.status === "open" ? "default" : "outline"} className={batch.status === "open" ? "bg-green-500 text-white text-xs" : "text-xs"}>
-                    {batch.status === "open" ? "開放中" : batch.status === "shipped" ? "已出團" : "已完成"}
-                  </Badge>
+            <div key={batch.id} className="rounded-xl border bg-white border-gray-200 overflow-hidden">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-gray-900">{batch.batchName}</span>
+                    <Badge className={
+                      batch.status === "open" ? "bg-green-500 text-white text-xs" :
+                      batch.status === "shipped" ? "bg-purple-100 text-purple-800 text-xs" :
+                      batch.status === "closed" ? "bg-gray-100 text-gray-600 text-xs" :
+                      "bg-blue-100 text-blue-800 text-xs"
+                    }>
+                      {batch.status === "open" ? "開放中" :
+                       batch.status === "shipped" ? "已出團" :
+                       batch.status === "closed" ? "已關閉" :
+                       batch.status === "returned" ? "已回件" : batch.status}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
+                    {batch.cutoffDate && (
+                      <span className="text-xs text-gray-500">
+                        <span className="text-gray-400">收件截止：</span>
+                        {new Date(batch.cutoffDate).toLocaleDateString("zh-HK")}
+                      </span>
+                    )}
+                    {batch.shippedDate && (
+                      <span className="text-xs text-gray-500">
+                        <span className="text-gray-400">出團日期：</span>
+                        {new Date(batch.shippedDate).toLocaleDateString("zh-HK")}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5 space-x-3">
-                  {batch.deadline && <span>截止：{new Date(batch.deadline).toLocaleDateString("zh-HK")}</span>}
-                  {batch.shippedAt && <span>出團：{new Date(batch.shippedAt).toLocaleDateString("zh-HK")}</span>}
-                  {batch.estimatedReturnAt && <span>預計回件：{new Date(batch.estimatedReturnAt).toLocaleDateString("zh-HK")}</span>}
-                </div>
+                {batch.status === "open" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => closeMutation.mutate({ id: batch.id })}
+                    className="text-xs shrink-0 ml-3"
+                  >
+                    關閉批次
+                  </Button>
+                )}
               </div>
-              {batch.status === "open" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => closeMutation.mutate({ id: batch.id })}
-                  className="text-xs"
-                >
-                  關閉批次
-                </Button>
-              )}
             </div>
           ))}
         </div>
@@ -501,7 +520,7 @@ function SubmissionManagement() {
                       <SelectContent>
                         <SelectItem value="none">未分配</SelectItem>
                         {(batches ?? []).map((b: any) => (
-                          <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                          <SelectItem key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
