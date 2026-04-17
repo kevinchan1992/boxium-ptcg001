@@ -8393,3 +8393,15 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ---
 ## 鑑定完成 Email 優化（2026-04-14）
 - [ ] - [x] 鑑定完成通知 Email：加入應付金額及付款截止日期（30 天），提醒客人盡快完成付款
+
+---
+## 內部系統排程繞過安全檢控（2026-04-17）
+- [ ] 找到 rate limiting / security middleware，為內部系統請求（價格更新排程等）加入白名單或 bypass 標記
+
+---
+## 內部系統排程繞過安全檢控（2026-04-17）
+- [x] 在 security.ts 加入 isInternalSystemRequest() 函數，識別內部系統請求
+- [x] trpcRateLimitRouter：內部系統請求（admin.processBatch、batchUpdateSnkrdunkPrices 等）繞過所有 rate limiting
+- [x] botDetection：內部系統請求繞過 bot detection（排程不送瀏覽器 headers）
+- [x] manualBlockCheck：內部系統請求繞過 IP 封鎖檢查
+- [x] 支援 x-internal-token header 方式（server-to-server 調用）

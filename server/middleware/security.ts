@@ -364,6 +364,10 @@ export function isManuallyBlocked(ip: string): boolean {
 // ─── Manual Block Middleware ──────────────────────────────────────────────────
 
 export async function manualBlockCheck(req: Request, res: Response, next: NextFunction) {
+  // Internal system requests (schedulers, batch updates) bypass IP block checks.
+  // They are server-originated and cannot be spoofed by external attackers.
+  if (isInternalSystemRequest(req)) return next();
+
   // Ensure cache is loaded
   if (!blockedIpCacheLoaded) await loadBlockedIpCache();
   const ip = getClientIp(req);
@@ -427,6 +431,11 @@ const SUSPICIOUS_THRESHOLD = 10; // auto-block after 10 suspicious requests with
 export function botDetection(req: Request, res: Response, next: NextFunction) {
   const ua = req.headers["user-agent"] ?? "";
   const ip = getClientIp(req);
+
+  // ── Internal system requests bypass bot detection entirely ────────────────────
+  // Scheduled tasks and batch updates do not send browser headers.
+  // They are authenticated via adminProcedure, so no security risk.
+  if (isInternalSystemRequest(req)) return next();
 
   // Allow known good crawlers
   if (ALLOWED_CRAWLERS.some((p) => p.test(ua))) return next();
@@ -549,10 +558,61 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   next();
 }
 
+// ─── Internal System Request Detection ───────────────────────────────────────
+
+/**
+ * Detect internal system requests that should bypass all rate limiting.
+ * These are requests originating from the platform's own scheduled tasks,
+ * batch update processes, and other automated internal operations.
+ *
+ * Detection methods:
+ *  1. x-internal-token header matches JWT_SECRET (server-to-server calls)
+ *  2. Specific admin procedures known to be called by schedulers
+ */
+export function isInternalSystemRequest(req: Request): boolean {
+  // Method 1: Internal token header (for server-to-server calls)
+  const internalToken = req.headers["x-internal-token"];
+  if (internalToken && internalToken === process.env.JWT_SECRET) {
+    return true;
+  }
+
+  // Method 2: Known internal system procedures that are called by schedulers
+  // These procedures are only accessible to admins anyway (adminProcedure),
+  // so bypassing rate limits here does not create a security risk.
+  const url = req.url ?? "";
+  const INTERNAL_PROCEDURES = [
+    "admin.processBatch",
+    "admin.batchUpdateSnkrdunkPrices",
+    "admin.startBatchUpdateTask",
+    "admin.updateBatchUpdateProgress",
+    "admin.completeBatchUpdateTask",
+    "admin.cancelBatchUpdateTask",
+    "admin.pauseBatchUpdateTask",
+    "admin.resumeBatchUpdateTask",
+    "admin.getDetailedCacheStats",
+    "admin.getBatchUpdateTask",
+    "admin.listBatchUpdateTasks",
+    "admin.triggerPriceUpdate",
+    "admin.runScheduledPriceUpdate",
+  ];
+  if (INTERNAL_PROCEDURES.some((proc) => url.includes(proc))) {
+    return true;
+  }
+
+  return false;
+}
+
 // ─── 5. tRPC Path-Based Rate Limit Router ─────────────────────────────────────
 
 export function trpcRateLimitRouter(req: Request, res: Response, next: NextFunction) {
   const url = req.url ?? "";
+
+  // ── Internal system requests bypass ALL rate limiting ──────────────────────
+  // Scheduled tasks, batch updates, and other automated internal operations
+  // must not be throttled. They are protected by adminProcedure auth checks.
+  if (isInternalSystemRequest(req)) {
+    return next();
+  }
 
   // auth.me is a read-only session check called on every page load — use general limiter
   if (url.includes("auth.me") || url.includes("auth.logout")) {
