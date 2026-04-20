@@ -210,43 +210,43 @@ function ServiceTierManagement() {
       )}
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) { setEditTier(null); resetForm(); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
-            <DialogTitle>{editTier ? "編輯服務層級" : "新增服務層級"}</DialogTitle>
+            <DialogTitle className="text-gray-900">{editTier ? "編輯服務層級" : "新增服務層級"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs font-semibold">層級名稱 *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="如 Value Bulk" />
+              <Label className="text-xs font-semibold text-gray-700">層級名稱 *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="如 Value Bulk" className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">代送費用（HKD）*</Label>
-                <Input value={form.feeHkd} onChange={(e) => setForm({ ...form, feeHkd: e.target.value })} placeholder="275" type="number" />
+                <Label className="text-xs font-semibold text-gray-700">代送費用（HKD）*</Label>
+                <Input value={form.feeHkd} onChange={(e) => setForm({ ...form, feeHkd: e.target.value })} placeholder="275" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">最高申報價值（USD）*</Label>
-                <Input value={form.maxDeclaredValueUsd} onChange={(e) => setForm({ ...form, maxDeclaredValueUsd: e.target.value })} placeholder="499" type="number" />
+                <Label className="text-xs font-semibold text-gray-700">最高申報價値（USD）*</Label>
+                <Input value={form.maxDeclaredValueUsd} onChange={(e) => setForm({ ...form, maxDeclaredValueUsd: e.target.value })} placeholder="499" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">預計最短時間（工作天）</Label>
-                <Input value={form.estimatedDaysMin} onChange={(e) => setForm({ ...form, estimatedDaysMin: e.target.value })} placeholder="4" type="number" />
+                <Label className="text-xs font-semibold text-gray-700">預計最短時間（工作天）</Label>
+                <Input value={form.estimatedDaysMin} onChange={(e) => setForm({ ...form, estimatedDaysMin: e.target.value })} placeholder="4" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div>
-                <Label className="text-xs font-semibold">預計最長時間（工作天）</Label>
-                <Input value={form.estimatedDaysMax} onChange={(e) => setForm({ ...form, estimatedDaysMax: e.target.value })} placeholder="5" type="number" />
+                <Label className="text-xs font-semibold text-gray-700">預計最長時間（工作天）</Label>
+                <Input value={form.estimatedDaysMax} onChange={(e) => setForm({ ...form, estimatedDaysMax: e.target.value })} placeholder="5" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
             </div>
             <div>
-              <Label className="text-xs font-semibold">說明（可選）</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="層級說明..." className="resize-none h-16" />
+              <Label className="text-xs font-semibold text-gray-700">說明（可選）</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="層級說明..." className="resize-none h-16 bg-white border-gray-200 text-gray-900" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">排序</Label>
-                <Input value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} type="number" />
+              <Label className="text-xs font-semibold text-gray-700">排序</Label>
+              <Input value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div className="flex items-end pb-1">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -256,7 +256,7 @@ function ServiceTierManagement() {
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                     className="accent-[#06038d]"
                   />
-                  <span className="text-sm">開放申請</span>
+                  <span className="text-sm text-gray-700">開放申請</span>
                 </label>
               </div>
             </div>
@@ -344,9 +344,9 @@ function SubmissionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border border-gray-200">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-gray-900">
             <Package className="h-5 w-5 text-[#06038d]" />
             管理申請 — {detail?.orderNo ?? "載入中..."}
           </DialogTitle>
@@ -442,34 +442,35 @@ function SubmissionDetailDialog({
             )}
 
             {/* Status update */}
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <Label className="text-xs font-semibold text-gray-600 mb-2 block">更新狀態</Label>
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <Label className="text-xs font-semibold text-gray-700 mb-2 block">更新狀態</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-200 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200">
                   {STATUS_OPTIONS.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="mt-2">
-                <Label className="text-xs font-semibold text-gray-600 mb-1 block">通知備注（發送給客人）</Label>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">通知備注（發送給客人）</Label>
                 <Textarea
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder="可選：附加說明文字..."
-                  className="resize-none h-16 text-sm"
+                  className="resize-none h-16 text-sm bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               {newStatus === "returned" && (
                 <div className="mt-2">
-                  <Label className="text-xs font-semibold text-gray-600 mb-1 block">追蹤號碼</Label>
+                  <Label className="text-xs font-semibold text-gray-700 mb-1 block">追蹤號碼</Label>
                   <Input
                     value={trackingNo}
                     onChange={(e) => setTrackingNo(e.target.value)}
                     placeholder="寄回追蹤號碼"
+                    className="bg-white border-gray-200 text-gray-900"
                   />
                 </div>
               )}
@@ -490,23 +491,23 @@ function SubmissionDetailDialog({
             </div>
 
             {/* Grading results */}
-            <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
               <div className="flex items-center gap-2 mb-3">
-                <Award className="h-4 w-4 text-green-600" />
-                <Label className="text-sm font-bold text-green-800">填寫鑑定結果</Label>
+                <Award className="h-4 w-4 text-emerald-700" />
+                <Label className="text-sm font-bold text-emerald-800">填寫鑑定結果</Label>
               </div>
-              <p className="text-xs text-green-700 mb-3">填寫後按「儲存並通知客人付款」，系統將自動通知客人評分結果及付款連結。</p>
+              <p className="text-xs text-emerald-700 mb-3">填寫後按「儲存並通知客人付款」，系統將自動通知客人評分結果及付款連結。</p>
               <div className="space-y-2">
                 {itemResults.map((ir: any, idx: number) => {
                   const item = (detail.items ?? [])[idx];
                   return (
-                    <div key={ir.id} className="bg-white rounded-lg p-3 border border-green-100">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">
+                    <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-100">
+                      <p className="text-xs font-semibold text-gray-800 mb-2">
                         #{idx + 1} {item?.cardName}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <Label className="text-xs text-gray-500">PSA 評分</Label>
+                          <Label className="text-xs text-gray-600">PSA 評分</Label>
                           <Select
                             value={ir.psaGrade || "none"}
                             onValueChange={(v) => {
@@ -515,10 +516,10 @@ function SubmissionDetailDialog({
                               setItemResults(updated);
                             }}
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger className="h-8 text-xs bg-white border-gray-200 text-gray-900">
                               <SelectValue placeholder="選擇評分" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border-gray-200">
                               <SelectItem value="none">—</SelectItem>
                               {["10", "9.5", "9", "8.5", "8", "7.5", "7", "6", "5", "4", "3", "2", "1", "A"].map((g) => (
                                 <SelectItem key={g} value={g}>PSA {g}</SelectItem>
@@ -527,7 +528,7 @@ function SubmissionDetailDialog({
                           </Select>
                         </div>
                         <div>
-                          <Label className="text-xs text-gray-500">PSA 認證號碼</Label>
+                          <Label className="text-xs text-gray-600">PSA 認證號碼</Label>
                           <Input
                             value={ir.psaCertNo}
                             onChange={(e) => {
@@ -536,7 +537,7 @@ function SubmissionDetailDialog({
                               setItemResults(updated);
                             }}
                             placeholder="認證號碼"
-                            className="h-8 text-xs"
+                            className="h-8 text-xs bg-white border-gray-200 text-gray-900"
                           />
                         </div>
                       </div>
@@ -821,27 +822,27 @@ function BatchOverview() {
 
       {/* Create batch dialog */}
       <Dialog open={showCreateBatch} onOpenChange={setShowCreateBatch}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
-            <DialogTitle>新增出團批次</DialogTitle>
+            <DialogTitle className="text-gray-900">新增出團批次</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs font-semibold">批次名稱 *</Label>
-              <Input value={batchForm.name} onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })} placeholder="如 2026年4月下半月團" />
+              <Label className="text-xs font-semibold text-gray-700">批次名稱 *</Label>
+              <Input value={batchForm.name} onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })} placeholder="如 2026年4月下半月團" className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div>
-              <Label className="text-xs font-semibold">收件截止日期 *</Label>
-              <Input type="date" value={batchForm.deadline} onChange={(e) => setBatchForm({ ...batchForm, deadline: e.target.value })} />
+              <Label className="text-xs font-semibold text-gray-700">收件截止日期 *</Label>
+              <Input type="date" value={batchForm.deadline} onChange={(e) => setBatchForm({ ...batchForm, deadline: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
               <p className="text-xs text-gray-400 mt-1">截止日期前提交的申請將自動分配到此批次</p>
             </div>
             <div>
-              <Label className="text-xs font-semibold">預計出團日期</Label>
-              <Input type="date" value={batchForm.shippedAt} onChange={(e) => setBatchForm({ ...batchForm, shippedAt: e.target.value })} />
+              <Label className="text-xs font-semibold text-gray-700">預計出團日期</Label>
+              <Input type="date" value={batchForm.shippedAt} onChange={(e) => setBatchForm({ ...batchForm, shippedAt: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div>
-              <Label className="text-xs font-semibold">預計回件日期</Label>
-              <Input type="date" value={batchForm.expectedReturn} onChange={(e) => setBatchForm({ ...batchForm, expectedReturn: e.target.value })} />
+              <Label className="text-xs font-semibold text-gray-700">預計回件日期</Label>
+              <Input type="date" value={batchForm.expectedReturn} onChange={(e) => setBatchForm({ ...batchForm, expectedReturn: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
             </div>
           </div>
           <DialogFooter>
@@ -910,10 +911,10 @@ function SubmissionManagement() {
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36 h-8 text-xs">
+          <SelectTrigger className="w-36 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white border-gray-200">
             <SelectItem value="all">全部狀態</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -921,10 +922,10 @@ function SubmissionManagement() {
           </SelectContent>
         </Select>
         <Select value={batchFilter} onValueChange={setBatchFilter}>
-          <SelectTrigger className="w-40 h-8 text-xs">
+          <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white border-gray-200">
             <SelectItem value="all">全部批次</SelectItem>
             <SelectItem value="0">未分配批次</SelectItem>
             {batches.map((b: any) => (
@@ -982,7 +983,7 @@ function SubmissionManagement() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Select
+                      <Select
                       value={sub.batchId ? String(sub.batchId) : "none"}
                       onValueChange={(v) => assignBatchMutation.mutate({
                         id: sub.id,
@@ -990,10 +991,10 @@ function SubmissionManagement() {
                         batchId: v === "none" ? undefined : parseInt(v),
                       })}
                     >
-                      <SelectTrigger className="h-7 text-xs w-36">
+                      <SelectTrigger className="h-7 text-xs w-36 bg-white border-gray-200 text-gray-900">
                         <SelectValue placeholder="未分配" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-gray-200">
                         <SelectItem value="none">未分配</SelectItem>
                         {batches.map((b: any) => (
                           <SelectItem key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
