@@ -271,18 +271,28 @@ export default function GradingSubmit() {
   const [items, setItems] = useState<GradingItem[]>([newItem()]);
   const [expandedItemId, setExpandedItemId] = useState<string>(items[0].id);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
 
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
-  const submitMutation = trpc.grading.submitApplication.useMutation({
+  const checkoutMutation = trpc.grading.createSubmissionCheckout.useMutation({
     onSuccess: (data: any) => {
-      toast.success("申請提交成功！請查看確認通知以獲取送件地址。");
-      navigate(`/grading/orders/${data.submissionId}`);
+      if (paymentMethod === "stripe" && data.checkoutUrl) {
+        toast.success("申請已建立！正在跳轉至 Stripe 付款頁面...");
+        window.open(data.checkoutUrl, "_blank");
+        navigate(`/grading/orders/${data.submissionId}`);
+      } else {
+        toast.success("申請已建立！請按照頁面指示上傳支付寶 HK 截圖。");
+        navigate(`/grading/orders/${data.submissionId}`);
+      }
     },
     onError: (err: any) => {
       toast.error(`提交失敗：${err.message}`);
     },
   });
+
+  // Keep old submitMutation for backward compat (not used in new flow)
+  const submitMutation = checkoutMutation;
 
   // ── Item management ──
   const addItem = () => {
@@ -345,7 +355,7 @@ export default function GradingSubmit() {
       toast.error("請先閱讀並同意服務條款");
       return;
     }
-    submitMutation.mutate({
+    checkoutMutation.mutate({
       items: items.map((item: GradingItem) => ({
         cardName: item.isManual ? item.manualCardName : (item.card?.name ?? ""),
         cardSet: item.isManual ? item.manualCardSet : (item.card?.series ?? ""),
@@ -356,6 +366,8 @@ export default function GradingSubmit() {
         notes: item.notes,
       })),
       agreedToTerms: true,
+      paymentMethod,
+      origin: window.location.origin,
     });
   };
 
@@ -603,20 +615,60 @@ export default function GradingSubmit() {
               </div>
             </div>
 
-            {/* Payment notice */}
-            <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-amber-800 mb-1">付款方式</p>
-                  <p className="text-sm text-amber-700">
-                    鑑定完成後，系統將通知您評分結果及付款連結，請於 <strong>30 天內</strong> 完成付款（支援 Visa / Mastercard 信用卡及支付寶 HK）。
-                  </p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    逾期未付款，平台保留對相關卡片自行處理之權利。
-                  </p>
-                </div>
+            {/* Payment method selection */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-4 w-4 text-[#06038d]" />
+                <span className="font-bold text-gray-900">選擇付款方式</span>
               </div>
+              <p className="text-xs text-gray-500 mb-3">確認提交後需先完成付款，申請才會正式啟動</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === "stripe"
+                      ? "border-[#06038d] bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="stripe"
+                    checked={paymentMethod === "stripe"}
+                    onChange={() => setPaymentMethod("stripe")}
+                    className="accent-[#06038d]"
+                  />
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">💳 信用卡</p>
+                    <p className="text-xs text-gray-500">Visa / Mastercard</p>
+                  </div>
+                </label>
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === "alipay_hk"
+                      ? "border-[#06038d] bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="alipay_hk"
+                    checked={paymentMethod === "alipay_hk"}
+                    onChange={() => setPaymentMethod("alipay_hk")}
+                    className="accent-[#06038d]"
+                  />
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">📱 支付寶 HK</p>
+                    <p className="text-xs text-gray-500">上傳截圖確認</p>
+                  </div>
+                </label>
+              </div>
+              {paymentMethod === "alipay_hk" && (
+                <div className="mt-3 bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
+                  選擇支付寶 HK 後，系統將建立申請並發送支付寶 HK 收款資訊。請於 24 小時內上傳付款截圖，否則申請將被自動取消。
+                </div>
+              )}
             </div>
 
             {/* Terms */}
@@ -666,17 +718,22 @@ export default function GradingSubmit() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!agreedTerms || submitMutation.isPending}
+                disabled={!agreedTerms || checkoutMutation.isPending}
                 className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
               >
-                {submitMutation.isPending ? (
+                {checkoutMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    提交中...
+                    處理中...
+                  </>
+                ) : paymentMethod === "stripe" ? (
+                  <>
+                    提交並前往付款
+                    <ChevronRight className="ml-2 h-4 w-4" />
                   </>
                 ) : (
                   <>
-                    確認提交申請
+                    提交申請
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </>
                 )}

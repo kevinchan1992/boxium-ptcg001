@@ -1579,6 +1579,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   orderNo: varchar("orderNo", { length: 32 }).notNull().unique(),
   userId: int("userId").notNull(),
   status: mysqlEnum("status", [
+    "awaiting_payment",
     "pending_shipment",
     "received",
     "submitted_to_psa",

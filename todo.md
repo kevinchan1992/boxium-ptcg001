@@ -8441,3 +8441,7 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 ## ✅ PSA 鑑定訂單管理 - 支付寶截圖待審
 
 - [x] 鑑定訂單管理頁加入支付寶 HK 截圖待審訂單（alipayProofStatus === "pending_review"）
+
+- [x] GradingSubmit checkbox 改為顯示錢號（不放大）
+- [x] GradingSubmit 確認提交後先付款再建立申請（createSubmissionCheckout + Stripe Checkout）
+

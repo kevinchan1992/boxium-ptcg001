@@ -343,6 +343,52 @@ async function startServer() {
           return res.json({ received: true });
         }
 
+        // Handle grading submission payment (pay-first flow)
+        const gradingMetaType = session.metadata?.type;
+        if (gradingMetaType === "grading_submission_payment") {
+          const submissionId = session.metadata?.submission_id;
+          const gradingOrderNo = session.metadata?.order_no;
+          console.log(`[Webhook] grading_submission_payment: submissionId=${submissionId}, orderNo=${gradingOrderNo}`);
+          if (submissionId) {
+            try {
+              const { getDb: _gDb } = await import("../db");
+              const { gradingSubmissions: _gSubs } = await import("../../drizzle/schema_new");
+              const { eq: _geq } = await import("drizzle-orm");
+              const _gdb = await _gDb();
+              if (_gdb) {
+                const [sub] = await _gdb.select().from(_gSubs).where(_geq(_gSubs.id, parseInt(submissionId))).limit(1);
+                if (sub && sub.status === "awaiting_payment") {
+                  await _gdb.update(_gSubs)
+                    .set({
+                      status: "pending_shipment",
+                      paymentMethod: "stripe",
+                      stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : session.id,
+                      paidAt: new Date(),
+                    } as any)
+                    .where(_geq(_gSubs.id, parseInt(submissionId)));
+                  console.log(`[Webhook] Grading submission #${submissionId} (${gradingOrderNo}) activated: awaiting_payment -> pending_shipment`);
+                  // Notify user
+                  const userId = parseInt(session.metadata?.user_id ?? "0");
+                  if (userId) {
+                    await createNotification({
+                      userId,
+                      type: "system",
+                      title: "PSA 代客鑑定申請已確認 ✅",
+                      body: `申請單 ${gradingOrderNo} 的費用已收到，申請已正式啟動。請按指示寄出卡牌。`,
+                      linkUrl: `/grading/orders/${submissionId}`,
+                    }).catch(() => {});
+                  }
+                } else {
+                  console.log(`[Webhook] Grading submission #${submissionId} status=${sub?.status}, skipping activation`);
+                }
+              }
+            } catch (gradingPayErr: any) {
+              console.error(`[Webhook] Grading submission payment processing error:`, gradingPayErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
+
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));

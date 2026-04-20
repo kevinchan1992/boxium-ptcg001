@@ -267,6 +267,148 @@ export const gradingRouter = router({
       return { submissionId, orderNo };
     }),
 
+  // ─── Protected: Create submission checkout (pay first, then activate) ────
+  createSubmissionCheckout: protectedProcedure
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            cardName: z.string().min(1),
+            cardSet: z.string().optional(),
+            cardNumber: z.string().optional(),
+            cardLanguage: z.enum(["zh_tw", "ja", "en", "ko", "other"]).default("en"),
+            cardImageUrl: z.string().optional(),
+            tierId: z.number().int().positive(),
+            condition: z.enum(["mint", "near_mint", "excellent"]).default("near_mint"),
+            notes: z.string().optional(),
+          })
+        ).min(1),
+        paymentMethod: z.enum(["stripe", "alipay_hk"]),
+        agreedToTerms: z.boolean().refine((v) => v === true, { message: "必須同意服務條款" }),
+        origin: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Validate tiers and calculate fees
+      const tierIdSet = new Set<number>(input.items.map((i) => i.tierId));
+      const tierIds = Array.from(tierIdSet);
+      const tiers = await db
+        .select()
+        .from(gradingServiceTiers)
+        .where(and(inArray(gradingServiceTiers.id, tierIds), eq(gradingServiceTiers.isActive, true)));
+
+      const tierMap = new Map<number, GradingServiceTier>(tiers.map((t: GradingServiceTier) => [t.id, t]));
+      for (const item of input.items) {
+        if (!tierMap.has(item.tierId)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `服務層級 ${item.tierId} 不存在或已停用` });
+        }
+      }
+
+      const totalFeeHkd = input.items.reduce((sum, item) => {
+        const tier = tierMap.get(item.tierId)!;
+        return sum + parseFloat(tier.feeHkd);
+      }, 0);
+
+      // Get next open batch
+      const [nextBatch] = await db
+        .select()
+        .from(gradingBatches)
+        .where(eq(gradingBatches.status, "open"))
+        .orderBy(asc(gradingBatches.cutoffDate))
+        .limit(1);
+
+      // Generate unique order number
+      let orderNo = generateGradingOrderNo();
+      let attempts = 0;
+      while (attempts < 5) {
+        const existing = await db
+          .select({ id: gradingSubmissions.id })
+          .from(gradingSubmissions)
+          .where(eq(gradingSubmissions.orderNo, orderNo))
+          .limit(1);
+        if (existing.length === 0) break;
+        orderNo = generateGradingOrderNo();
+        attempts++;
+      }
+
+      // Create submission with awaiting_payment status
+      const [submissionResult] = await db.insert(gradingSubmissions).values({
+        orderNo,
+        userId: ctx.user.id,
+        status: "awaiting_payment",
+        totalFeeHkd: totalFeeHkd.toFixed(2),
+        batchId: nextBatch?.id || null,
+        shippingDeadline: nextBatch?.cutoffDate || null,
+        paymentMethod: input.paymentMethod,
+      }).$returningId();
+
+      const submissionId = submissionResult.id;
+
+      // Create submission items
+      await db.insert(gradingSubmissionItems).values(
+        input.items.map((item) => ({
+          submissionId,
+          cardName: item.cardName,
+          cardSet: item.cardSet || null,
+          cardNumber: item.cardNumber || null,
+          cardLanguage: item.cardLanguage,
+          cardImageUrl: item.cardImageUrl || null,
+          tierId: item.tierId,
+          feeHkd: tierMap.get(item.tierId)!.feeHkd,
+          condition: item.condition,
+          notes: item.notes || null,
+          itemStatus: "pending" as const,
+        }))
+      );
+
+      // Create Stripe checkout session
+      const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const stripe = getStripe();
+      const amountCents = Math.round(totalFeeHkd * 100);
+      const paymentMethodTypes: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
+        input.paymentMethod === "alipay_hk" ? ["alipay"] : ["card"];
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: paymentMethodTypes,
+        line_items: [
+          {
+            price_data: {
+              currency: "hkd",
+              product_data: {
+                name: `PSA 代客鑑定服務 - ${orderNo}`,
+                description: `申請單號：${orderNo}，共 ${input.items.length} 張卡牌`,
+              },
+              unit_amount: amountCents,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        customer_email: user.email,
+        client_reference_id: ctx.user.id.toString(),
+        allow_promotion_codes: true,
+        metadata: {
+          type: "grading_submission_payment",
+          submission_id: submissionId.toString(),
+          order_no: orderNo,
+          user_id: ctx.user.id.toString(),
+        },
+        success_url: `${input.origin}/grading/orders/${submissionId}?payment=success`,
+        cancel_url: `${input.origin}/grading/submit?payment=cancelled&submission_id=${submissionId}`,
+      });
+
+      // Save stripe session ID
+      await db
+        .update(gradingSubmissions)
+        .set({ stripePaymentIntentId: session.id })
+        .where(eq(gradingSubmissions.id, submissionId));
+
+      return { checkoutUrl: session.url, submissionId, orderNo };
+    }),
+
   // ─── Protected: Get my submissions ───────────────────────────────────────
   getMySubmissions: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
@@ -685,8 +827,8 @@ export const gradingRouter = router({
         .from(gradingSubmissions)
         .where(isNotNull(gradingSubmissions.batchId))
         .groupBy(gradingSubmissions.batchId);
-      const countMap = new Map<number, number>(counts.map((r) => [r.batchId!, Number(r.cnt)]));
-      return batches.map((b) => ({ ...b, submissionCount: countMap.get(b.id) ?? 0 }));
+      const countMap = new Map<number, number>(counts.map((r: { batchId: number | null; cnt: unknown }) => [r.batchId!, Number(r.cnt)]));
+      return batches.map((b: typeof batches[number]) => ({ ...b, submissionCount: countMap.get(b.id) ?? 0 }));
     }),
 
     // ─── Batch stats: per-batch submission list with payment status ──────────
@@ -707,7 +849,7 @@ export const gradingRouter = router({
         .where(isNotNull(gradingSubmissions.batchId))
         .orderBy(asc(gradingSubmissions.createdAt));
       // Get item counts per submission
-      const submissionIds = allSubmissions.map((s) => s.submission.id);
+      const submissionIds = allSubmissions.map((s: { submission: { id: number } }) => s.submission.id);
       let itemCountMap = new Map<number, number>();
       if (submissionIds.length > 0) {
         const itemCounts = await db
@@ -715,7 +857,7 @@ export const gradingRouter = router({
           .from(gradingSubmissionItems)
           .where(inArray(gradingSubmissionItems.submissionId, submissionIds))
           .groupBy(gradingSubmissionItems.submissionId);
-        itemCountMap = new Map<number, number>(itemCounts.map((r) => [r.submissionId, Number(r.cnt)]));
+        itemCountMap = new Map<number, number>(itemCounts.map((r: { submissionId: number; cnt: unknown }) => [r.submissionId, Number(r.cnt)]));
       }
       // Group submissions by batchId
       const submissionsByBatch = new Map<number, any[]>();
@@ -730,12 +872,12 @@ export const gradingRouter = router({
         });
       }
       // Build result
-      return batches.map((batch) => {
+      return batches.map((batch: typeof batches[number]) => {
         const subs = submissionsByBatch.get(batch.id) ?? [];
-        const totalCards = subs.reduce((sum: number, s: any) => sum + s.itemCount, 0);
-        const paidCount = subs.filter((s: any) => s.status === "paid" || s.status === "completed").length;
-        const unpaidCount = subs.filter((s: any) => s.status === "graded" || s.status === "payment_overdue").length;
-        const pendingCount = subs.filter((s: any) => !(["paid", "completed", "graded", "payment_overdue", "cancelled"].includes(s.status))).length;
+        const totalCards = subs.reduce((sum: number, s: { itemCount: number }) => sum + s.itemCount, 0);
+        const paidCount = subs.filter((s: { status: string }) => s.status === "paid" || s.status === "completed").length;
+        const unpaidCount = subs.filter((s: { status: string }) => s.status === "graded" || s.status === "payment_overdue").length;
+        const pendingCount = subs.filter((s: { status: string }) => !["paid", "completed", "graded", "payment_overdue", "cancelled"].includes(s.status)).length;
         return {
           ...batch,
           submissions: subs,
