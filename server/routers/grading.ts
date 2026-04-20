@@ -792,6 +792,7 @@ export const gradingRouter = router({
         z.object({
           status: z.string().optional(),
           batchId: z.number().int().optional(),
+          alipayProofPending: z.boolean().optional(), // filter by alipayProofStatus = 'pending_review'
           limit: z.number().int().default(50),
           offset: z.number().int().default(0),
         })
@@ -803,6 +804,7 @@ export const gradingRouter = router({
         const conditions = [];
         if (input.status) conditions.push(eq(gradingSubmissions.status, input.status as any));
         if (input.batchId) conditions.push(eq(gradingSubmissions.batchId, input.batchId));
+        if (input.alipayProofPending) conditions.push(eq(gradingSubmissions.alipayProofStatus, "pending_review"));
 
         const submissions = await db
           .select({

@@ -1086,15 +1086,25 @@ function GradingOrdersTab() {
     offset: 0,
   }, { refetchInterval: 30000 });
 
-  const isLoading = loadingGraded || loadingOverdue;
+  // Fetch alipay proof pending review (any status with pending screenshot)
+  const { data: alipayPendingData, isLoading: loadingAlipayPending } = trpc.grading.admin.listSubmissions.useQuery({
+    alipayProofPending: true,
+    limit: 200,
+    offset: 0,
+  }, { refetchInterval: 30000 });
 
-  // Merge and sort by createdAt desc
+  const isLoading = loadingGraded || loadingOverdue || loadingAlipayPending;
+
+  // Merge all three sets, deduplicate by id, sort by createdAt desc
   const allPaymentPending = [
     ...(gradedData?.submissions ?? []),
     ...(overdueData?.submissions ?? []),
-  ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ...(alipayPendingData?.submissions ?? []),
+  ].reduce((acc: any[], sub: any) => {
+    if (!acc.find((s: any) => s.id === sub.id)) acc.push(sub);
+    return acc;
+  }, []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // Also include alipay proof pending review (from either set)
   const submissions = allPaymentPending;
   const total = submissions.length;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -1113,7 +1123,7 @@ function GradingOrdersTab() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
-          <p className="text-sm text-gray-700 mt-0.5">顯示鑑定完成待付款及付款逾期的訂單，方便追蹤收款狀態</p>
+          <p className="text-sm text-gray-700 mt-0.5">顯示鑑定完成待付款、付款逾期及支付寶截圖待審的訂單，方便追蹤收款狀態</p>
           <div className="flex gap-2 mt-2">
             <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800">鑑定完成（待付款）</span>
             <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">付款逾期</span>

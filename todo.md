@@ -8435,3 +8435,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - [x] 點擊「管理」開啟 SubmissionDetailDialog（更新狀態、填寫鑑定結果、確認支付寶收款）
 - [x] 確認 AdminGrading.tsx 無 TypeScript 錯誤
 
+
+---
+
+## ✅ PSA 鑑定訂單管理 - 支付寶截圖待審
+
+- [x] 鑑定訂單管理頁加入支付寶 HK 截圖待審訂單（alipayProofStatus === "pending_review"）
