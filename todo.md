@@ -8455,3 +8455,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 批次統計排除 awaiting_payment 狀態
 - [x] 申請詳情頁加入「取消申請」按鈕（awaiting_payment 狀態）
 - [x] 付款成功頁面優化（顯示申請摘要、寄件地址、下一步指引）
+
+---
+
+## Admin 鑑定結果填寫 - 服務層級升級流程
+
+- [x] 後端：upgradeTier procedure（計算差價、建立補付 Stripe Checkout、通知用戶）
+- [x] 後端：getUpgradeCheckoutStatus procedure（查詢補付狀態）
+- [x] 後端：Stripe webhook 處理補付成功事件（更新 tier 和 totalFeeHkd）
+- [x] 前端：改造 SubmissionDetailDialog 填寫鑑定結果步驟加入三步驟流程
+  - 步驟一：詢問是否需要更改服務層級（不需要 / 需要升級）
+  - 步驟二（如需要）：顯示所有層級供選擇，計算並顯示差價，確認後發送補付通知
+  - 步驟三：填寫鑑定結果（PSA 分數、證書號）
+- [x] 儲存 checkpoint

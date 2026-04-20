@@ -389,6 +389,60 @@ async function startServer() {
           return res.json({ received: true });
         }
 
+        // Handle grading tier upgrade payment
+        if (gradingMetaType === "grading_tier_upgrade_payment") {
+          const submissionId = session.metadata?.submission_id;
+          const newTierId = session.metadata?.new_tier_id;
+          const diffFeeHkd = session.metadata?.diff_fee_hkd;
+          const gradingOrderNo = session.metadata?.order_no;
+          console.log(`[Webhook] grading_tier_upgrade_payment: submissionId=${submissionId}, newTierId=${newTierId}, diff=${diffFeeHkd}`);
+          if (submissionId && newTierId) {
+            try {
+              const { getDb: _gDb2 } = await import("../db");
+              const { gradingSubmissions: _gSubs2, gradingSubmissionItems: _gItems2, gradingServiceTiers: _gTiers2 } = await import("../../drizzle/schema_new");
+              const { eq: _geq2, inArray: _inArray2 } = await import("drizzle-orm");
+              const _gdb2 = await _gDb2();
+              if (_gdb2) {
+                // Get submission and new tier
+                const [sub2] = await _gdb2.select().from(_gSubs2).where(_geq2(_gSubs2.id, parseInt(submissionId))).limit(1);
+                const [tier2] = await _gdb2.select().from(_gTiers2).where(_geq2(_gTiers2.id, parseInt(newTierId))).limit(1);
+                if (sub2 && tier2) {
+                  // Update all items to new tier and fee
+                  const items2 = await _gdb2.select().from(_gItems2).where(_geq2(_gItems2.submissionId, parseInt(submissionId)));
+                  if (items2.length > 0) {
+                    const itemIds = items2.map((i: any) => i.id);
+                    await _gdb2.update(_gItems2).set({ tierId: parseInt(newTierId), feeHkd: tier2.feeHkd }).where(_inArray2(_gItems2.id, itemIds));
+                  }
+                  // Update submission total fee and mark upgrade as paid
+                  const newTotal = items2.length * parseFloat(tier2.feeHkd);
+                  await _gdb2.update(_gSubs2)
+                    .set({
+                      totalFeeHkd: newTotal.toFixed(2),
+                      upgradePaidAt: new Date(),
+                      upgradeCheckoutSessionId: null,
+                    } as any)
+                    .where(_geq2(_gSubs2.id, parseInt(submissionId)));
+                  console.log(`[Webhook] Grading submission #${submissionId} tier upgraded to ${tier2.name}, new total HK$${newTotal.toFixed(2)}`);
+                  // Notify user
+                  const userId = parseInt(session.metadata?.user_id ?? "0");
+                  if (userId) {
+                    await createNotification({
+                      userId,
+                      type: "system",
+                      title: "PSA 鑑定服務層級升級差價已收到 ✅",
+                      body: `申請單 ${gradingOrderNo} 的升級差價已收到，服務層級已更新至 ${tier2.name}。`,
+                      linkUrl: `/grading/orders/${submissionId}`,
+                    }).catch(() => {});
+                  }
+                }
+              }
+            } catch (upgradePayErr: any) {
+              console.error(`[Webhook] Grading tier upgrade payment processing error:`, upgradePayErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
+
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));

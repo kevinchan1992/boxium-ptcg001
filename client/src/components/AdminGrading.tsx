@@ -296,6 +296,15 @@ function SubmissionDetailDialog({
   const [trackingNo, setTrackingNo] = useState("");
   const [itemResults, setItemResults] = useState<any[]>([]);
 
+  // Tier upgrade flow state
+  // gradingStep: 'ask_upgrade' | 'select_tier' | 'fill_result'
+  const [gradingStep, setGradingStep] = useState<'ask_upgrade' | 'select_tier' | 'fill_result'>('ask_upgrade');
+  const [selectedUpgradeTierId, setSelectedUpgradeTierId] = useState<number | null>(null);
+  const [upgradeResult, setUpgradeResult] = useState<{ checkoutUrl: string | null; diffFeeHkd: string; newTierName: string } | null>(null);
+
+  // Fetch all active tiers for upgrade selection
+  const { data: allTiers } = trpc.grading.getServiceTiers.useQuery(undefined, { enabled: open && gradingStep === 'select_tier' });
+
   React.useEffect(() => {
     if (detail) {
       setNewStatus(detail.status);
@@ -308,6 +317,15 @@ function SubmissionDetailDialog({
       })));
     }
   }, [detail]);
+
+  // Reset grading step when dialog opens/closes
+  React.useEffect(() => {
+    if (open) {
+      setGradingStep('ask_upgrade');
+      setSelectedUpgradeTierId(null);
+      setUpgradeResult(null);
+    }
+  }, [open, submissionId]);
 
   const updateStatusMutation = trpc.grading.admin.updateStatus.useMutation({
     onSuccess: () => {
@@ -327,6 +345,15 @@ function SubmissionDetailDialog({
       utils.grading.admin.listBatchesWithStats.invalidate();
       onUpdated();
       onClose();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const upgradeTierMutation = trpc.grading.admin.upgradeTier.useMutation({
+    onSuccess: (data) => {
+      setUpgradeResult(data);
+      setGradingStep('fill_result');
+      toast.success(`已發送升級差價付款連結至客人，差價 HK$${data.diffFeeHkd}`);
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -490,77 +517,201 @@ function SubmissionDetailDialog({
               </Button>
             </div>
 
-            {/* Grading results */}
+            {/* Grading results - 3-step flow */}
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
               <div className="flex items-center gap-2 mb-3">
                 <Award className="h-4 w-4 text-gray-900" />
                 <Label className="text-sm font-bold text-gray-900">填寫鑑定結果</Label>
+                {/* Step indicator */}
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'ask_upgrade' ? 'bg-[#06038d] text-white' : 'bg-gray-200 text-gray-500'}`}>1</span>
+                  <span className="text-gray-300">→</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'select_tier' ? 'bg-[#06038d] text-white' : 'bg-gray-200 text-gray-500'}`}>2</span>
+                  <span className="text-gray-300">→</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'fill_result' ? 'bg-[#06038d] text-white' : 'bg-gray-200 text-gray-500'}`}>3</span>
+                </div>
               </div>
-              <p className="text-xs text-gray-900 mb-3">填寫後按「儲存並通知客人付款」，系統將自動通知客人評分結果及付款連結。</p>
-              <div className="space-y-2">
-                {itemResults.map((ir: any, idx: number) => {
-                  const item = (detail.items ?? [])[idx];
-                  return (
-                    <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-100">
-                      <p className="text-xs font-semibold text-gray-800 mb-2">
-                        #{idx + 1} {item?.cardName}
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs text-gray-600">PSA 評分</Label>
-                          <Select
-                            value={ir.psaGrade || "none"}
-                            onValueChange={(v) => {
-                              const updated = [...itemResults];
-                              updated[idx] = { ...ir, psaGrade: v === "none" ? "" : v };
-                              setItemResults(updated);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-xs bg-white border-gray-200 text-gray-900">
-                              <SelectValue placeholder="選擇評分" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border-gray-200 text-gray-900">
-                              <SelectItem className="text-gray-900" value="none">—</SelectItem>
-                              {["10", "9.5", "9", "8.5", "8", "7.5", "7", "6", "5", "4", "3", "2", "1", "A"].map((g) => (
-                                <SelectItem className="text-gray-900" key={g} value={g}>PSA {g}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-gray-600">PSA 認證號碼</Label>
-                          <Input
-                            value={ir.psaCertNo}
-                            onChange={(e) => {
-                              const updated = [...itemResults];
-                              updated[idx] = { ...ir, psaCertNo: e.target.value };
-                              setItemResults(updated);
-                            }}
-                            placeholder="認證號碼"
-                            className="h-8 text-xs bg-white border-gray-200 text-gray-900"
-                          />
-                        </div>
-                      </div>
+
+              {/* Step 1: Ask if tier upgrade needed */}
+              {gradingStep === 'ask_upgrade' && (
+                <div className="space-y-3">
+                  <div className="bg-white rounded-lg p-4 border border-emerald-100">
+                    <p className="text-sm font-semibold text-gray-900 mb-1">是否需要更改服務層級？</p>
+                    <p className="text-xs text-gray-500 mb-4">如果客人的卡牌鑑定結果需要升級服務（例如從 Value 升級至 Regular），選擇「需要升級」。系統將計算差價並發送付款連結至客人。</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
+                        onClick={() => setGradingStep('fill_result')}
+                      >
+                        不需要，直接填寫結果
+                      </Button>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setGradingStep('select_tier')}
+                      >
+                        需要升級服務層級
+                      </Button>
                     </div>
-                  );
-                })}
-              </div>
-              <Button
-                className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => fillGradingResultMutation.mutate({
-                  submissionId: detail.id,
-                  items: itemResults.map((ir: any) => ({
-                    itemId: ir.id,
-                    psaGrade: ir.psaGrade || undefined,
-                    psaCertNumber: ir.psaCertNo || undefined,
-                  })),
-                })}
-                disabled={fillGradingResultMutation.isPending}
-              >
-                {fillGradingResultMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                  <><CheckCircle2 className="h-4 w-4 mr-2" />儲存鑑定結果並通知客人付款</>
-                )}
-              </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Select new tier and confirm diff */}
+              {gradingStep === 'select_tier' && (
+                <div className="space-y-3">
+                  <div className="bg-white rounded-lg p-4 border border-blue-100">
+                    <p className="text-sm font-semibold text-gray-900 mb-1">選擇新服務層級</p>
+                    <p className="text-xs text-gray-500 mb-3">目前費用：<strong>HK${parseFloat(detail.totalFeeHkd).toLocaleString()}</strong>（{detail.items?.length ?? 0} 張卡牌）。選擇升級後的層級，系統將計算差價並發送付款連結給客人。</p>
+                    <div className="space-y-2 mb-3">
+                      {(allTiers ?? []).map((tier: any) => {
+                        const newTotal = (detail.items?.length ?? 0) * parseFloat(tier.feeHkd);
+                        const diff = newTotal - parseFloat(detail.totalFeeHkd);
+                        const isSelected = selectedUpgradeTierId === tier.id;
+                        const isCurrentOrLower = diff <= 0;
+                        return (
+                          <button
+                            key={tier.id}
+                            onClick={() => !isCurrentOrLower && setSelectedUpgradeTierId(tier.id)}
+                            disabled={isCurrentOrLower}
+                            className={`w-full text-left rounded-lg p-3 border-2 transition-all ${
+                              isCurrentOrLower
+                                ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                                : isSelected
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 bg-white hover:border-blue-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{tier.name}</p>
+                                <p className="text-xs text-gray-500">HK${parseFloat(tier.feeHkd).toLocaleString()} / 張</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500">新總費用</p>
+                                <p className="text-sm font-bold text-gray-900">HK${newTotal.toLocaleString()}</p>
+                                {!isCurrentOrLower && (
+                                  <p className="text-xs font-bold text-red-600">差價 +HK${diff.toLocaleString()}</p>
+                                )}
+                                {isCurrentOrLower && (
+                                  <p className="text-xs text-gray-400">目前層級或更低</p>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-gray-300 text-gray-700 bg-white"
+                        onClick={() => setGradingStep('ask_upgrade')}
+                      >
+                        返回
+                      </Button>
+                      <Button
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        disabled={!selectedUpgradeTierId || upgradeTierMutation.isPending}
+                        onClick={() => {
+                          if (!selectedUpgradeTierId) return;
+                          upgradeTierMutation.mutate({
+                            submissionId: detail.id,
+                            newTierId: selectedUpgradeTierId,
+                            origin: window.location.origin,
+                          });
+                        }}
+                      >
+                        {upgradeTierMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>確認升級並發送差價連結</>}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upgrade success banner (shown in step 3 if upgrade was done) */}
+              {gradingStep === 'fill_result' && upgradeResult && (
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mb-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue-800">升級差價連結已發送</p>
+                      <p className="text-xs text-blue-600">已升級至 {upgradeResult.newTierName}，客人需補付 HK${upgradeResult.diffFeeHkd}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Fill grading results */}
+              {gradingStep === 'fill_result' && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-600 mb-2">填寫後按「儲存並通知客人付款」，系統將自動通知客人評分結果及付款連結。</p>
+                  <div className="space-y-2">
+                    {itemResults.map((ir: any, idx: number) => {
+                      const item = (detail.items ?? [])[idx];
+                      return (
+                        <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-100">
+                          <p className="text-xs font-semibold text-gray-800 mb-2">
+                            #{idx + 1} {item?.cardName}
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-gray-600">PSA 評分</Label>
+                              <Select
+                                value={ir.psaGrade || "none"}
+                                onValueChange={(v) => {
+                                  const updated = [...itemResults];
+                                  updated[idx] = { ...ir, psaGrade: v === "none" ? "" : v };
+                                  setItemResults(updated);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-white border-gray-200 text-gray-900">
+                                  <SelectValue placeholder="選擇評分" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                  <SelectItem className="text-gray-900" value="none">—</SelectItem>
+                                  {["10", "9.5", "9", "8.5", "8", "7.5", "7", "6", "5", "4", "3", "2", "1", "A"].map((g) => (
+                                    <SelectItem className="text-gray-900" key={g} value={g}>PSA {g}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600">PSA 認證號碼</Label>
+                              <Input
+                                value={ir.psaCertNo}
+                                onChange={(e) => {
+                                  const updated = [...itemResults];
+                                  updated[idx] = { ...ir, psaCertNo: e.target.value };
+                                  setItemResults(updated);
+                                }}
+                                placeholder="認證號碼"
+                                className="h-8 text-xs bg-white border-gray-200 text-gray-900"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => fillGradingResultMutation.mutate({
+                      submissionId: detail.id,
+                      items: itemResults.map((ir: any) => ({
+                        itemId: ir.id,
+                        psaGrade: ir.psaGrade || undefined,
+                        psaCertNumber: ir.psaCertNo || undefined,
+                      })),
+                    })}
+                    disabled={fillGradingResultMutation.isPending}
+                  >
+                    {fillGradingResultMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                      <><CheckCircle2 className="h-4 w-4 mr-2" />儲存鑑定結果並通知客人付款</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         ) : null}

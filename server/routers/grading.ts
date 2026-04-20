@@ -1313,6 +1313,157 @@ export const gradingRouter = router({
         )
         .orderBy(asc(gradingSubmissions.paymentDeadline));
     }),
+
+    // ─── Admin: Upgrade tier for a submission (calculate diff, create Stripe checkout, notify user) ───
+    upgradeTier: adminProcedure
+      .input(
+        z.object({
+          submissionId: z.number().int().positive(),
+          newTierId: z.number().int().positive(),
+          origin: z.string().default("https://boxium.asia"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Get submission
+        const [submission] = await db
+          .select()
+          .from(gradingSubmissions)
+          .where(eq(gradingSubmissions.id, input.submissionId))
+          .limit(1);
+        if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+
+        // Get new tier
+        const [newTier] = await db
+          .select()
+          .from(gradingServiceTiers)
+          .where(and(eq(gradingServiceTiers.id, input.newTierId), eq(gradingServiceTiers.isActive, true)))
+          .limit(1);
+        if (!newTier) throw new TRPCError({ code: "NOT_FOUND", message: "服務層級不存在或已停用" });
+
+        // Get all items to calculate current total and new total
+        const items = await db
+          .select()
+          .from(gradingSubmissionItems)
+          .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
+        if (items.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "申請沒有卡牌" });
+
+        const currentTotal = parseFloat(submission.totalFeeHkd);
+        const newTotal = items.length * parseFloat(newTier.feeHkd);
+        const diffFee = newTotal - currentTotal;
+
+        if (diffFee <= 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `新層級費用 HK$${newTotal.toFixed(2)} 不高於原費用 HK$${currentTotal.toFixed(2)}，無需補付差價` });
+        }
+
+        // Get user
+        const [user] = await db.select().from(users).where(eq(users.id, submission.userId)).limit(1);
+        if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "用戶不存在" });
+
+        // Create Stripe checkout for the diff amount
+        const stripe = getStripe();
+        const amountCents = Math.round(diffFee * 100);
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "hkd",
+                product_data: {
+                  name: `PSA 鑑定服務升級差價 - ${submission.orderNo}`,
+                  description: `升級至 ${newTier.name}，共 ${items.length} 張卡牌，差價補付`,
+                },
+                unit_amount: amountCents,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: "payment",
+          customer_email: user.email,
+          client_reference_id: user.id.toString(),
+          allow_promotion_codes: false,
+          metadata: {
+            type: "grading_tier_upgrade_payment",
+            submission_id: input.submissionId.toString(),
+            order_no: submission.orderNo,
+            user_id: user.id.toString(),
+            new_tier_id: input.newTierId.toString(),
+            diff_fee_hkd: diffFee.toFixed(2),
+          },
+          success_url: `${input.origin}/grading/orders/${input.submissionId}?upgrade_payment=success`,
+          cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
+        });
+
+        // Save upgrade info to submission
+        await db
+          .update(gradingSubmissions)
+          .set({
+            upgradeCheckoutSessionId: session.id,
+            upgradeDiffFeeHkd: diffFee.toFixed(2),
+            upgradeNewTierId: input.newTierId,
+          })
+          .where(eq(gradingSubmissions.id, input.submissionId));
+
+        // Notify user
+        const linkUrl = `/grading/orders/${submission.id}`;
+        const baseUrl = "https://boxium.asia";
+        await sendGradingNotification({
+          userId: user.id,
+          userEmail: user.email,
+          userName: user.name || user.email,
+          type: "grading_tier_upgrade",
+          title: "PSA 鑑定服務層級升級通知",
+          body: `您的申請 ${submission.orderNo} 服務層級已升級至 ${newTier.name}，需補付差價 HK$${diffFee.toFixed(2)}，請點擊連結完成付款。`,
+          linkUrl,
+          subject: `【BOXIUM PSA 鑑定】服務層級升級，請補付差價 - ${submission.orderNo}`,
+          html: buildGradingEmail({
+            userName: user.name || user.email,
+            title: "PSA 鑑定服務層級升級通知 🔼",
+            body: `您的申請服務層級已由管理員升級至 <strong>${newTier.name}</strong>，需補付差價 <strong>HK$${diffFee.toFixed(2)}</strong>（原費用 HK$${currentTotal.toFixed(2)} → 新費用 HK$${newTotal.toFixed(2)}），請點擊下方按鈕完成付款。`,
+            orderNo: submission.orderNo,
+            linkUrl: `${baseUrl}${linkUrl}`,
+            ctaText: "立即補付差價",
+            extraHtml: `
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border:2px solid #7dd3fc;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#0369a1;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">🔼 升級詳情</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;width:40%;">新服務層級</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${newTier.name}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">原費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${currentTotal.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${newTotal.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">需補付差價</td><td style="padding:4px 0;font-size:18px;font-weight:bold;color:#dc2626;">HK$${diffFee.toFixed(2)}</td></tr>
+    </table>
+  </td></tr>
+</table>`,
+          }),
+        });
+
+        return { success: true, checkoutUrl: session.url, diffFeeHkd: diffFee.toFixed(2), newTierName: newTier.name };
+      }),
+
+    // ─── Admin: Get upgrade checkout status ──────────────────────────────────
+    getUpgradeCheckoutStatus: adminProcedure
+      .input(z.object({ submissionId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [submission] = await db
+          .select({
+            upgradeCheckoutSessionId: gradingSubmissions.upgradeCheckoutSessionId,
+            upgradeDiffFeeHkd: gradingSubmissions.upgradeDiffFeeHkd,
+            upgradeNewTierId: gradingSubmissions.upgradeNewTierId,
+            upgradePaidAt: gradingSubmissions.upgradePaidAt,
+          })
+          .from(gradingSubmissions)
+          .where(eq(gradingSubmissions.id, input.submissionId))
+          .limit(1);
+        if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+        return submission;
+      }),
   }),
 
   // ─── Protected: Get QR Code for submission ───────────────────────────────
