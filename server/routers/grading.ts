@@ -17,7 +17,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray, count, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, lt } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -497,6 +497,37 @@ export const gradingRouter = router({
       };
     }),
 
+  // ─── Protected: Cancel awaiting_payment submission ────────────────────────
+  cancelSubmission: protectedProcedure
+    .input(z.object({ submissionId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if (submission.status !== "awaiting_payment") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有待付款狀態的申請可以取消" });
+      }
+
+      await db
+        .update(gradingSubmissions)
+        .set({ status: "cancelled" })
+        .where(eq(gradingSubmissions.id, submission.id));
+
+      return { success: true };
+    }),
+
   // ─── Protected: Create payment intent (after grading completed) ───────────
   createPaymentIntent: protectedProcedure
     .input(
@@ -846,7 +877,12 @@ export const gradingRouter = router({
         })
         .from(gradingSubmissions)
         .leftJoin(users, eq(gradingSubmissions.userId, users.id))
-        .where(isNotNull(gradingSubmissions.batchId))
+        .where(
+          and(
+            isNotNull(gradingSubmissions.batchId),
+            notInArray(gradingSubmissions.status, ["awaiting_payment", "cancelled"])
+          )
+        )
         .orderBy(asc(gradingSubmissions.createdAt));
       // Get item counts per submission
       const submissionIds = allSubmissions.map((s: { submission: { id: number } }) => s.submission.id);

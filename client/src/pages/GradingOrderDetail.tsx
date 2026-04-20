@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import {
   AlertCircle,
   MapPin,
   ExternalLink,
+  XCircle,
+  PartyPopper,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,6 +34,8 @@ const STATUS_ORDER = [
 
 function getStepIndex(status: string) {
   const map: Record<string, number> = {
+    awaiting_payment: 0,
+    pending_shipment: 0,
     pending_payment: 0,
     paid: 0,
     received: 1,
@@ -46,7 +50,8 @@ function getStepIndex(status: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  pending_shipment: "待收件",
+  awaiting_payment: "待付款確認",
+  pending_shipment: "待寄件",
   pending_payment: "待收件",
   paid: "待收件",
   received: "已收件",
@@ -54,6 +59,7 @@ const STATUS_LABEL: Record<string, string> = {
   grading: "鑑定中",
   graded: "鑑定完成",
   payment_pending: "待付款",
+  payment_overdue: "付款逾期",
   returned: "已寄回",
   completed: "已完成",
   cancelled: "已取消",
@@ -173,7 +179,7 @@ function PrintableSlip({ submission }: { submission: any }) {
             </tbody>
             <tfoot>
               <tr style={{ borderTop: '2px solid #06038d', background: '#f0f2ff' }}>
-                <td colSpan={4} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: '#06038d', fontSize: '13px' }}>代送 PSA 費用合計（鑑定後付款）</td>
+                <td colSpan={4} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: '#06038d', fontSize: '13px' }}>代送 PSA 費用合計（已預付）</td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: '#06038d', fontSize: '14px' }}>
                   HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
                 </td>
@@ -188,18 +194,12 @@ function PrintableSlip({ submission }: { submission: any }) {
           <ol style={{ paddingLeft: '16px', margin: 0, lineHeight: '1.8', color: '#374151' }}>
             <li>請使用有追蹤號碼的寄件方式，並自行購買保險。</li>
             <li>卡片請妥善包裝，建議使用硬卡套及泡泡紙保護。</li>
-            <li>鑑定完成後，系統將通知您付款，請於 <strong>30 天內</strong> 完成付款。</li>
-            <li>逾期未付款，平台保留對相關卡片自行處理之權利。</li>
+            <li>鑑定費用已於申請時預付，鑑定完成後無需額外付款。</li>
             <li>如有查詢，請透過平台訊息聯絡 BOXIUM。</li>
           </ol>
         </div>
 
-        {/* Footer */}
-        <div style={{ marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '10px', color: '#9ca3af' }}>BOXIUM × PSA 代客鑑定服務 · boxium.asia</div>
-          <div style={{ fontSize: '10px', color: '#9ca3af' }}>此申請單由系統自動生成，如有疑問請聯絡 BOXIUM</div>
-        </div>
-
+    
       </div>
     </div>
   );
@@ -209,6 +209,10 @@ function PrintableSlip({ submission }: { submission: any }) {
 export default function GradingOrderDetail() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const isPaymentSuccess = searchParams.get("payment") === "success";
+
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
   const [payingLoading, setPayingLoading] = useState(false);
   const [showAlipayQR, setShowAlipayQR] = useState(false);
@@ -216,8 +220,11 @@ export default function GradingOrderDetail() {
   const [alipayProofPreview, setAlipayProofPreview] = useState<string | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
 
   const submissionId = parseInt(params.id ?? "0", 10);
+  const utils = trpc.useUtils();
+
   const { data: submission, isLoading } = trpc.grading.getSubmissionDetail.useQuery(
     { id: submissionId },
     { enabled: submissionId > 0 }
@@ -237,6 +244,18 @@ export default function GradingOrderDetail() {
     onError: (err: any) => {
       setUploadingProof(false);
       toast.error(`提交失敗：${err.message}`);
+    },
+  });
+
+  const cancelSubmissionMutation = trpc.grading.cancelSubmission.useMutation({
+    onSuccess: () => {
+      toast.success("申請已取消");
+      utils.grading.getSubmissionDetail.invalidate({ id: submissionId });
+      setCancelConfirm(false);
+    },
+    onError: (err: any) => {
+      toast.error(`取消失敗：${err.message}`);
+      setCancelConfirm(false);
     },
   });
 
@@ -306,7 +325,7 @@ export default function GradingOrderDetail() {
         <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_62cbf293.webp" alt="BOXIUM" style="height:52px;width:auto;object-fit:contain;border-radius:6px" />
         <div>
           <div style="color:#fff;font-weight:700;font-size:16px">PSA 代客鑑定申請單</div>
-          <div style="color:#b0b8e8;font-size:11px;margin-top:2px">請將此申請單打印後連同卡牧一起寄出</div>
+          <div style="color:#b0b8e8;font-size:11px;margin-top:2px">請將此申請單打印後連同卡牌一起寄出</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:16px">
@@ -360,7 +379,7 @@ export default function GradingOrderDetail() {
           </tr></thead>
           <tbody>${itemsHtml}</tbody>
           <tfoot><tr style="border-top:2px solid #06038d;background:#f0f2ff">
-            <td colspan="4" style="padding:10px 12px;text-align:right;font-weight:700;color:#06038d;font-size:13px">代送 PSA 費用合計（鑑定後付款）</td>
+            <td colspan="4" style="padding:10px 12px;text-align:right;font-weight:700;color:#06038d;font-size:13px">代送 PSA 費用合計（已預付）</td>
             <td style="padding:10px 12px;text-align:right;font-weight:700;color:#06038d;font-size:14px">HK$${totalFee}</td>
           </tr></tfoot>
         </table>
@@ -370,8 +389,7 @@ export default function GradingOrderDetail() {
         <ol style="padding-left:16px;margin:0;line-height:1.8;color:#374151">
           <li>請使用有追蹤號碼的寄件方式，並自行購買保險。</li>
           <li>卡片請妥善包裝，建議使用硬卡套及泡泡紙保護。</li>
-          <li>鑑定完成後，系統將通知您付款，請於 <strong>30 天內</strong> 完成付款。</li>
-          <li>逾期未付款，平台保留對相關卡片自行處理之權利。</li>
+          <li>鑑定費用已於申請時預付，鑑定完成後無需額外付款。</li>
           <li>如有查詢，請透過平台訊息聯絡 BOXIUM。</li>
         </ol>
       </div>
@@ -426,6 +444,7 @@ export default function GradingOrderDetail() {
 
   const currentStepIdx = getStepIndex(submission.status);
   const isCancelled = submission.status === "cancelled";
+  const isAwaitingPayment = submission.status === "awaiting_payment";
   const isGraded = submission.status === "graded" || submission.status === "payment_pending";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 
@@ -457,6 +476,59 @@ export default function GradingOrderDetail() {
             </Button>
           </div>
 
+          {/* ── Payment Success Banner ── */}
+          {isPaymentSuccess && !isCancelled && (
+            <div className="bg-green-50 border-2 border-green-400 rounded-xl p-5 mb-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <PartyPopper className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-green-800 text-base">付款成功！申請已確認</p>
+                  <p className="text-sm text-green-600">申請單號：<span className="font-mono font-bold">{submission.orderNo}</span></p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-green-200 p-4 mb-3">
+                <p className="text-sm font-bold text-gray-800 mb-2">申請摘要</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">卡牌數量：</span>
+                    <span className="font-semibold text-gray-800">{submission.items.length} 張</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">服務層級：</span>
+                    <span className="font-semibold text-gray-800">{(submission as any).items?.[0]?.tier?.name ?? '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">已付金額：</span>
+                    <span className="font-bold text-[#06038d]">HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">申請日期：</span>
+                    <span className="font-semibold text-gray-800">
+                      {new Date(submission.createdAt).toLocaleDateString("zh-HK")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm font-bold text-amber-800 mb-1">📦 下一步：寄出您的卡牌</p>
+                <p className="text-xs text-amber-700 mb-1">請打印申請單，連同卡牌一起寄至：</p>
+                <p className="text-xs font-semibold text-amber-800">順豐站 852Z351 · BOXIUM · 55090102</p>
+                <p className="text-xs text-amber-700">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 border-amber-400 text-amber-700 hover:bg-amber-100 h-7 text-xs"
+                  onClick={handlePrint}
+                >
+                  <Printer className="h-3 w-3 mr-1.5" />
+                  立即打印申請單
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Order header */}
           <div className="bg-[#06038d] text-white rounded-xl p-5 mb-4">
             <div className="flex items-start justify-between">
@@ -470,15 +542,60 @@ export default function GradingOrderDetail() {
                 </p>
               </div>
               <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                isCancelled ? "bg-red-500" : isCompleted ? "bg-green-500" : "bg-yellow-400 text-[#06038d]"
+                isCancelled ? "bg-red-500" : isCompleted ? "bg-green-500" : isAwaitingPayment ? "bg-yellow-300 text-gray-900" : "bg-yellow-400 text-[#06038d]"
               }`}>
                 {STATUS_LABEL[submission.status] ?? submission.status}
               </span>
             </div>
           </div>
 
+          {/* Awaiting payment notice */}
+          {isAwaitingPayment && (
+            <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-4">
+              <div className="flex gap-3">
+                <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-yellow-800 mb-1">等待付款確認中</p>
+                  <p className="text-sm text-yellow-700">您的申請已建立，請完成 Stripe 付款流程。付款確認後申請將自動進入處理。</p>
+                  <p className="text-xs text-yellow-600 mt-1">⚠️ 未付款申請將於 24 小時後自動取消。</p>
+                  {!cancelConfirm ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs"
+                      onClick={() => setCancelConfirm(true)}
+                    >
+                      <XCircle className="h-3 w-3 mr-1.5" />
+                      取消申請
+                    </Button>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-xs text-red-700 font-semibold">確定要取消此申請？</span>
+                      <Button
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3"
+                        disabled={cancelSubmissionMutation.isPending}
+                        onClick={() => cancelSubmissionMutation.mutate({ submissionId })}
+                      >
+                        {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-300 text-gray-700 h-7 text-xs px-3"
+                        onClick={() => setCancelConfirm(false)}
+                      >
+                        返回
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress stepper */}
-          {!isCancelled && (
+          {!isCancelled && !isAwaitingPayment && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
               <h3 className="font-bold text-gray-900 mb-4 text-sm">申請進度</h3>
               <div className="flex items-start">
@@ -513,7 +630,7 @@ export default function GradingOrderDetail() {
           )}
 
           {/* Shipping notice (before received) */}
-          {(submission.status === "pending_payment" || submission.status === "paid") && (
+          {(submission.status === "pending_shipment" || submission.status === "pending_payment" || submission.status === "paid") && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -657,7 +774,7 @@ export default function GradingOrderDetail() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-green-200">
+                  <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
                     <div>
                       <p className="text-sm text-black">應付金額</p>
                       <p className="text-2xl font-bold text-[#06038d]">

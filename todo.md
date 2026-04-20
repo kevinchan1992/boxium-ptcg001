@@ -8445,3 +8445,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] GradingSubmit checkbox 改為顯示錢號（不放大）
 - [x] GradingSubmit 確認提交後先付款再建立申請（createSubmissionCheckout + Stripe Checkout）
 
+
+---
+
+## PSA 鑑定三項新功能
+
+- [x] cancelSubmission procedure（awaiting_payment 狀態可取消）
+- [x] 定期清理超過 24 小時未付款的 awaiting_payment 申請（每小時 :10 執行）
+- [x] 批次統計排除 awaiting_payment 狀態
+- [x] 申請詳情頁加入「取消申請」按鈕（awaiting_payment 狀態）
+- [x] 付款成功頁面優化（顯示申請摘要、寄件地址、下一步指引）

@@ -2605,7 +2605,7 @@ export function startGradingOverdueReminderScheduler() {
               await db.update(gradingSubmissions).set({ status: 'payment_overdue' }).where(eq(gradingSubmissions.id, sub.id));
               const user = await getUserById(sub.userId);
               if (user) {
-                await createNotification({ userId: sub.userId, type: 'system', title: '⚠️ PSA 鑑定費用逾期未付', content: `您的鑑定申請 ${sub.orderNo} 付款期限已過，BOXIUM 將依條款對相關卡片自行處理。`, linkUrl: `/grading/orders/${sub.id}` });
+                await createNotification({ userId: sub.userId, type: 'system', title: '⚠️ PSA 鑑定費用逾期未付', body: `您的鑑定申請 ${sub.orderNo} 付款期限已過，BOXIUM 將依條款對相關卡片自行處理。`, linkUrl: `/grading/orders/${sub.id}` });
                 await sendEmail({ to: user.email, subject: `[BOXIUM] PSA 鑑定費用逾期 — ${sub.orderNo}`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 付款期限已過，BOXIUM 將依服務條款處理相關卡片。如有疑問請聯絡客服。</p><p>BOXIUM 團隊</p>` });
               }
               console.log(`[GradingOverdue] Marked ${sub.orderNo} as overdue`);
@@ -2613,7 +2613,7 @@ export function startGradingOverdueReminderScheduler() {
               await db.update(gradingSubmissions).set({ day25ReminderSentAt: now }).where(eq(gradingSubmissions.id, sub.id));
               const user = await getUserById(sub.userId);
               if (user) {
-                await createNotification({ userId: sub.userId, type: 'payment', title: '🚨 最後警告：PSA 鑑定費用即將逾期', content: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請盡快付款。`, linkUrl: `/grading/orders/${sub.id}` });
+                await createNotification({ userId: sub.userId, type: 'payment', title: '🚨 最後警告：PSA 鑑定費用即將逾期', body: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請盡快付款。`, linkUrl: `/grading/orders/${sub.id}` });
                 await sendEmail({ to: user.email, subject: `[BOXIUM] 最後警告：PSA 鑑定費用還有 ${daysUntilDue} 天到期`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 付款期限還有 <strong>${daysUntilDue} 天</strong>，費用 HK$${sub.totalFeeHkd}，請盡快完成付款。</p><p>BOXIUM 團隊</p>` });
               }
               console.log(`[GradingOverdue] Sent day-25 final warning for ${sub.orderNo}`);
@@ -2621,7 +2621,7 @@ export function startGradingOverdueReminderScheduler() {
               await db.update(gradingSubmissions).set({ day15ReminderSentAt: now }).where(eq(gradingSubmissions.id, sub.id));
               const user = await getUserById(sub.userId);
               if (user) {
-                await createNotification({ userId: sub.userId, type: 'payment', title: '📢 提醒：PSA 鑑定費用待付款', content: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請記得在期限前付款。`, linkUrl: `/grading/orders/${sub.id}` });
+                await createNotification({ userId: sub.userId, type: 'payment', title: '📢 提醒：PSA 鑑定費用待付款', body: `申請 ${sub.orderNo} 還有 ${daysUntilDue} 天到期，費用 HK$${sub.totalFeeHkd}，請記得在期限前付款。`, linkUrl: `/grading/orders/${sub.id}` });
                 await sendEmail({ to: user.email, subject: `[BOXIUM] PSA 鑑定費用提醒：還有 ${daysUntilDue} 天到期`, html: `<p>您好，您的鑑定申請 <strong>${sub.orderNo}</strong> 鑑定已完成，付款期限還有 <strong>${daysUntilDue} 天</strong>，費用 HK$${sub.totalFeeHkd}。</p><p>BOXIUM 團隊</p>` });
               }
               console.log(`[GradingOverdue] Sent day-15 reminder for ${sub.orderNo}`);
@@ -2643,5 +2643,47 @@ export function stopGradingOverdueReminderScheduler() {
   if (gradingOverdueCronJob) {
     gradingOverdueCronJob.stop();
     gradingOverdueCronJob = null;
+  }
+}
+
+// ─── PSA Grading: Clean up awaiting_payment submissions older than 24 hours ──
+let gradingAwaitingPaymentCleanupCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startGradingAwaitingPaymentCleanupScheduler() {
+  if (gradingAwaitingPaymentCleanupCronJob) return;
+  // Run every hour at minute 10 (standard 5-field cron)
+  gradingAwaitingPaymentCleanupCronJob = cron.schedule(
+    '10 * * * *',
+    async () => {
+      try {
+        const { getDb: _getDb } = await import('./db');
+        const db = await _getDb();
+        if (!db) return;
+        const { gradingSubmissions: _gSubs } = await import('../drizzle/schema_new');
+        const { lt: _lt, and: _and, eq: _eq } = await import('drizzle-orm');
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+        await db
+          .update(_gSubs)
+          .set({ status: 'cancelled' })
+          .where(
+            _and(
+              _eq(_gSubs.status, 'awaiting_payment'),
+              _lt(_gSubs.createdAt, cutoff)
+            )
+          );
+        console.log(`[GradingCleanup] Cancelled awaiting_payment submissions older than 24h`);
+      } catch (err) {
+        console.error('[GradingCleanup] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[GradingCleanup] PSA grading awaiting_payment cleanup scheduler started (every hour at :10)');
+}
+
+export function stopGradingAwaitingPaymentCleanupScheduler() {
+  if (gradingAwaitingPaymentCleanupCronJob) {
+    gradingAwaitingPaymentCleanupCronJob.stop();
+    gradingAwaitingPaymentCleanupCronJob = null;
   }
 }
