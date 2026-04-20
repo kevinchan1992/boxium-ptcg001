@@ -448,9 +448,9 @@ function SubmissionDetailDialog({
                 <SelectTrigger className="bg-white border-gray-200 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200">
+                <SelectContent className="bg-white border-gray-200 text-gray-900">
                   {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem className="text-gray-900" key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -519,10 +519,10 @@ function SubmissionDetailDialog({
                             <SelectTrigger className="h-8 text-xs bg-white border-gray-200 text-gray-900">
                               <SelectValue placeholder="選擇評分" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border-gray-200">
-                              <SelectItem value="none">—</SelectItem>
+                            <SelectContent className="bg-white border-gray-200 text-gray-900">
+                              <SelectItem className="text-gray-900" value="none">—</SelectItem>
                               {["10", "9.5", "9", "8.5", "8", "7.5", "7", "6", "5", "4", "3", "2", "1", "A"].map((g) => (
-                                <SelectItem key={g} value={g}>PSA {g}</SelectItem>
+                                <SelectItem className="text-gray-900" key={g} value={g}>PSA {g}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -702,9 +702,9 @@ function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSu
                           <SelectTrigger className={`h-7 text-xs w-28 border-0 font-semibold ${STATUS_COLOR[sub.status] ?? "bg-gray-100 text-gray-700"}`}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-white border-gray-200">
+                          <SelectContent className="bg-white border-gray-200 text-gray-900">
                             {STATUS_OPTIONS.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
+                              <SelectItem className="text-gray-900" key={s.value} value={s.value}>
                                 <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${STATUS_COLOR[s.value] ?? ""}`}>{s.label}</span>
                               </SelectItem>
                             ))}
@@ -940,10 +940,10 @@ function SubmissionManagement() {
           <SelectTrigger className="w-36 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-white border-gray-200">
-            <SelectItem value="all">全部狀態</SelectItem>
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
+            <SelectItem className="text-gray-900" value="all">全部狀態</SelectItem>
             {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              <SelectItem className="text-gray-900" key={s.value} value={s.value}>{s.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -951,11 +951,11 @@ function SubmissionManagement() {
           <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-white border-gray-200">
-            <SelectItem value="all">全部批次</SelectItem>
-            <SelectItem value="0">未分配批次</SelectItem>
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
+            <SelectItem className="text-gray-900" value="all">全部批次</SelectItem>
+            <SelectItem className="text-gray-900" value="0">未分配批次</SelectItem>
             {batches.map((b: any) => (
-              <SelectItem key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
+              <SelectItem className="text-gray-900" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -1020,10 +1020,10 @@ function SubmissionManagement() {
                       <SelectTrigger className="h-7 text-xs w-36 bg-white border-gray-200 text-gray-900">
                         <SelectValue placeholder="未分配" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-gray-200">
-                        <SelectItem value="none">未分配</SelectItem>
+                      <SelectContent className="bg-white border-gray-200 text-gray-900">
+                        <SelectItem className="text-gray-900" value="none">未分配</SelectItem>
                         {batches.map((b: any) => (
-                          <SelectItem key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
+                          <SelectItem className="text-gray-900" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
