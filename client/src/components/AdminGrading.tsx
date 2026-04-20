@@ -1061,7 +1061,6 @@ function SubmissionManagement() {
 
 // // ─── Grading Orders Tab ────────────────────────────────────────────────────────
 function GradingOrdersTab() {
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -1070,63 +1069,58 @@ function GradingOrdersTab() {
   const [showDetail, setShowDetail] = useState(false);
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.grading.admin.listSubmissions.useQuery({
-    status: filterStatus === "all" ? undefined : filterStatus,
-    limit: PAGE_SIZE,
-    offset: (page - 1) * PAGE_SIZE,
+  // Only fetch submissions that need payment action:
+  // graded (awaiting payment), payment_overdue, or alipay proof pending review
+
+  // Fetch graded (awaiting payment)
+  const { data: gradedData, isLoading: loadingGraded } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "graded",
+    limit: 200,
+    offset: 0,
   }, { refetchInterval: 30000 });
 
-  const submissions = data?.submissions ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  // Fetch payment_overdue
+  const { data: overdueData, isLoading: loadingOverdue } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "payment_overdue",
+    limit: 200,
+    offset: 0,
+  }, { refetchInterval: 30000 });
 
-  const statusOptions = [
-    { value: "all", label: "全部" },
-    { value: "pending_shipment", label: "待寄件" },
-    { value: "received", label: "已收件" },
-    { value: "submitted_to_psa", label: "已出團" },
-    { value: "grading", label: "鑑定中" },
-    { value: "graded", label: "鑑定完成" },
-    { value: "payment_overdue", label: "付款逾期" },
-    { value: "paid", label: "已付款" },
-    { value: "returned", label: "已寄回" },
-    { value: "completed", label: "已完成" },
-    { value: "cancelled", label: "已取消" },
-  ];
+  const isLoading = loadingGraded || loadingOverdue;
+
+  // Merge and sort by createdAt desc
+  const allPaymentPending = [
+    ...(gradedData?.submissions ?? []),
+    ...(overdueData?.submissions ?? []),
+  ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Also include alipay proof pending review (from either set)
+  const submissions = allPaymentPending;
+  const total = submissions.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pagedSubmissions = submissions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const filteredBySearch = search
-    ? submissions.filter((s: any) =>
+    ? pagedSubmissions.filter((s: any) =>
         s.orderNo?.toLowerCase().includes(search.toLowerCase()) ||
         s.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
         s.user?.email?.toLowerCase().includes(search.toLowerCase())
       )
-    : submissions;
+    : pagedSubmissions;
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
-        <p className="text-sm text-gray-700 mt-0.5">查看所有鑑定申請的訂單詳情、付款狀態及進度</p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex gap-1.5 flex-wrap">
-          {statusOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => { setFilterStatus(opt.value); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                filterStatus === opt.value
-                  ? "bg-[#06038d] text-white shadow-sm"
-                  : "bg-white text-[#06038d]/70 border border-[#06038d]/20 hover:bg-[#06038d]/5"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
+          <p className="text-sm text-gray-700 mt-0.5">顯示鑑定完成待付款及付款逾期的訂單，方便追蹤收款狀態</p>
+          <div className="flex gap-2 mt-2">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800">鑑定完成（待付款）</span>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">付款逾期</span>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">支付宝HK截圖待審</span>
+          </div>
         </div>
-        <div className="flex gap-2 ml-auto">
+        <div className="flex gap-2">
           <input
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-[#06038d] text-gray-900 bg-white"
             placeholder="搜尋訂單號/申請人..."
