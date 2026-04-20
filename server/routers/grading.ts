@@ -689,6 +689,64 @@ export const gradingRouter = router({
       return batches.map((b) => ({ ...b, submissionCount: countMap.get(b.id) ?? 0 }));
     }),
 
+    // ─── Batch stats: per-batch submission list with payment status ──────────
+    listBatchesWithStats: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Get all batches
+      const batches = await db.select().from(gradingBatches).orderBy(desc(gradingBatches.cutoffDate));
+      if (batches.length === 0) return [];
+      // Get all submissions with user info
+      const allSubmissions = await db
+        .select({
+          submission: gradingSubmissions,
+          user: { id: users.id, name: users.name, email: users.email },
+        })
+        .from(gradingSubmissions)
+        .leftJoin(users, eq(gradingSubmissions.userId, users.id))
+        .where(isNotNull(gradingSubmissions.batchId))
+        .orderBy(asc(gradingSubmissions.createdAt));
+      // Get item counts per submission
+      const submissionIds = allSubmissions.map((s) => s.submission.id);
+      let itemCountMap = new Map<number, number>();
+      if (submissionIds.length > 0) {
+        const itemCounts = await db
+          .select({ submissionId: gradingSubmissionItems.submissionId, cnt: count(gradingSubmissionItems.id) })
+          .from(gradingSubmissionItems)
+          .where(inArray(gradingSubmissionItems.submissionId, submissionIds))
+          .groupBy(gradingSubmissionItems.submissionId);
+        itemCountMap = new Map<number, number>(itemCounts.map((r) => [r.submissionId, Number(r.cnt)]));
+      }
+      // Group submissions by batchId
+      const submissionsByBatch = new Map<number, any[]>();
+      for (const row of allSubmissions) {
+        const batchId = row.submission.batchId!;
+        if (!submissionsByBatch.has(batchId)) submissionsByBatch.set(batchId, []);
+        submissionsByBatch.get(batchId)!.push({
+          ...row.submission,
+          userName: row.user?.name ?? row.user?.email ?? "未知",
+          userEmail: row.user?.email ?? "",
+          itemCount: itemCountMap.get(row.submission.id) ?? 0,
+        });
+      }
+      // Build result
+      return batches.map((batch) => {
+        const subs = submissionsByBatch.get(batch.id) ?? [];
+        const totalCards = subs.reduce((sum: number, s: any) => sum + s.itemCount, 0);
+        const paidCount = subs.filter((s: any) => s.status === "paid" || s.status === "completed").length;
+        const unpaidCount = subs.filter((s: any) => s.status === "graded" || s.status === "payment_overdue").length;
+        const pendingCount = subs.filter((s: any) => !(["paid", "completed", "graded", "payment_overdue", "cancelled"].includes(s.status))).length;
+        return {
+          ...batch,
+          submissions: subs,
+          totalSubmissions: subs.length,
+          totalCards,
+          paidCount,
+          unpaidCount,
+          pendingCount,
+        };
+      });
+    }),
     upsertBatch: adminProcedure
       .input(
         z.object({
