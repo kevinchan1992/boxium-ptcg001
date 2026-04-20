@@ -616,8 +616,18 @@ export default function GradingOrderDetail() {
                         />
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-4 object-contain" />
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-4 object-contain" />
+                            {/* Visa logo */}
+                            <svg height="16" viewBox="0 0 1000 324" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
+                              <rect width="1000" height="324" rx="40" fill="#1A1F71"/>
+                              <text x="500" y="240" fontFamily="Arial Black,Arial" fontWeight="900" fontSize="220" fill="white" textAnchor="middle">VISA</text>
+                            </svg>
+                            {/* Mastercard logo */}
+                            <svg height="16" viewBox="0 0 152 96" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
+                              <rect width="152" height="96" rx="8" fill="#252525"/>
+                              <circle cx="58" cy="48" r="30" fill="#EB001B"/>
+                              <circle cx="94" cy="48" r="30" fill="#F79E1B"/>
+                              <path d="M76 24.5a30 30 0 0 1 0 47 30 30 0 0 1 0-47z" fill="#FF5F00"/>
+                            </svg>
                           </div>
                           <span className="text-xs font-semibold text-black">信用卡 / 扣帳卡</span>
                         </div>

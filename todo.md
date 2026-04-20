@@ -8405,3 +8405,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] botDetection：內部系統請求繞過 bot detection（排程不送瀏覽器 headers）
 - [x] manualBlockCheck：內部系統請求繞過 IP 封鎖檢查
 - [x] 支援 x-internal-token header 方式（server-to-server 調用）
+
+---
+## UI 修復（2026-04-20）
+- [x] 申請列表：狀態標籤英文改中文（pending_shipment→待寄件、submitted→已提交 等）
+- [x] 付款頁面：信用卡/扣帳卡 LOGO 圖片載入失敗修復（改用 inline SVG）
+- [x] Admin 鑑定管理：申請列表展開後加入收款管理（鑑定完成後顯示應付金額、支付寶截圖、確認收款按鈕）
