@@ -5,16 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, ChevronRight, Plus, AlertCircle } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  submitted: { label: "已提交", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  pending_payment: { label: "等待付款", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  paid: { label: "已付款", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  received: { label: "已收件", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+  // 資料庫實際 enum 對應
+  pending_shipment: { label: "待寄件", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  received: { label: "BOXIUM 已收件", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
   submitted_to_psa: { label: "已出團", color: "bg-purple-100 text-purple-800 border-purple-200" },
   grading: { label: "鑑定中", color: "bg-violet-100 text-violet-800 border-violet-200" },
   graded: { label: "鑑定完成", color: "bg-green-100 text-green-800 border-green-200" },
-  payment_pending: { label: "待付款", color: "bg-orange-100 text-orange-800 border-orange-200" },
-  pending_shipment: { label: "待寄件", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  shipped: { label: "已寄出", color: "bg-teal-100 text-teal-800 border-teal-200" },
+  payment_overdue: { label: "付款逾期", color: "bg-red-100 text-red-800 border-red-200" },
+  paid: { label: "已付款", color: "bg-blue-100 text-blue-800 border-blue-200" },
   returned: { label: "已寄回", color: "bg-teal-100 text-teal-800 border-teal-200" },
   completed: { label: "已完成", color: "bg-gray-100 text-gray-700 border-gray-200" },
   cancelled: { label: "已取消", color: "bg-red-100 text-red-700 border-red-200" },
@@ -98,7 +96,7 @@ export default function GradingOrders() {
                           day: "numeric",
                         })}
                         {" · "}
-                        {sub.totalItems} 張卡牌
+                        {sub.itemCount ?? 0} 張卡牌
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
