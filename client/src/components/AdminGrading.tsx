@@ -573,6 +573,16 @@ function SubmissionDetailDialog({
 function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSubmission: (id: number) => void }) {
   const [expanded, setExpanded] = useState(true);
   const submissions = batch.submissions ?? [];
+  const utils = trpc.useUtils();
+
+  const quickUpdateMutation = trpc.grading.admin.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("狀態已更新");
+      utils.grading.admin.listBatchesWithStats.invalidate();
+      utils.grading.admin.listSubmissions.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const getPaymentStatusBadge = (sub: any) => {
     if (sub.status === "paid" || sub.status === "completed") {
@@ -665,7 +675,11 @@ function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSu
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {submissions.map((sub: any) => (
-                    <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr
+                      key={sub.id}
+                      className="hover:bg-blue-50/40 transition-colors cursor-pointer"
+                      onClick={() => onManageSubmission(sub.id)}
+                    >
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
                         <p className="text-xs text-gray-700 mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
@@ -675,15 +689,27 @@ function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSu
                         <p className="text-xs text-gray-700 truncate max-w-[120px]">{sub.userEmail}</p>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-50 text-gray-900 font-bold text-sm">{sub.itemCount}</span>
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-gray-900 font-bold text-sm">{sub.itemCount}</span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-gray-100 text-gray-700"}`}>
-                          {STATUS_OPTIONS.find((s) => s.value === sub.status)?.label ?? sub.status}
-                        </span>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={sub.status}
+                          onValueChange={(v) => quickUpdateMutation.mutate({ id: sub.id, status: v as any })}
+                        >
+                          <SelectTrigger className={`h-7 text-xs w-28 border-0 font-semibold ${STATUS_COLOR[sub.status] ?? "bg-gray-100 text-gray-700"}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white border-gray-200">
+                            {STATUS_OPTIONS.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${STATUS_COLOR[s.value] ?? ""}`}>{s.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="px-4 py-3 text-center">
                         {getPaymentStatusBadge(sub) ?? (
@@ -695,7 +721,7 @@ function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSu
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"
                           onClick={() => onManageSubmission(sub.id)}
@@ -1033,21 +1059,251 @@ function SubmissionManagement() {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// // ─── Grading Orders Tab ────────────────────────────────────────────────────────
+function GradingOrdersTab() {
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.grading.admin.listSubmissions.useQuery({
+    status: filterStatus === "all" ? undefined : filterStatus,
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
+  }, { refetchInterval: 30000 });
+
+  const submissions = data?.submissions ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const statusOptions = [
+    { value: "all", label: "全部" },
+    { value: "pending_shipment", label: "待寄件" },
+    { value: "received", label: "已收件" },
+    { value: "submitted_to_psa", label: "已出團" },
+    { value: "grading", label: "鑑定中" },
+    { value: "graded", label: "鑑定完成" },
+    { value: "payment_overdue", label: "付款逾期" },
+    { value: "paid", label: "已付款" },
+    { value: "returned", label: "已寄回" },
+    { value: "completed", label: "已完成" },
+    { value: "cancelled", label: "已取消" },
+  ];
+
+  const filteredBySearch = search
+    ? submissions.filter((s: any) =>
+        s.orderNo?.toLowerCase().includes(search.toLowerCase()) ||
+        s.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        s.user?.email?.toLowerCase().includes(search.toLowerCase())
+      )
+    : submissions;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
+        <p className="text-sm text-gray-700 mt-0.5">查看所有鑑定申請的訂單詳情、付款狀態及進度</p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex gap-1.5 flex-wrap">
+          {statusOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { setFilterStatus(opt.value); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                filterStatus === opt.value
+                  ? "bg-[#06038d] text-white shadow-sm"
+                  : "bg-white text-[#06038d]/70 border border-[#06038d]/20 hover:bg-[#06038d]/5"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 ml-auto">
+          <input
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-[#06038d] text-gray-900 bg-white"
+            placeholder="搜尋訂單號/申請人..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { setSearch(searchInput); setPage(1); } }}
+          />
+          <button
+            onClick={() => { setSearch(searchInput); setPage(1); }}
+            className="px-3 py-1.5 bg-[#06038d] text-white rounded-lg text-xs font-semibold hover:bg-[#06038d]/90"
+          >搜尋</button>
+          {search && (
+            <button
+              onClick={() => { setSearch(""); setSearchInput(""); setPage(1); }}
+              className="px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs hover:bg-red-50"
+            >清除</button>
+          )}
+        </div>
+      </div>
+
+      <div className="text-sm text-gray-700">共 {total} 筆鑑定訂單</div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-[#06038d]" />
+        </div>
+      ) : filteredBySearch.length === 0 ? (
+        <div className="text-center py-12 text-gray-700">目前沒有符合條件的訂單</div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-700">訂單號</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-700">申請人</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-700">卡牌數</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-700">金額</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-700">進度狀態</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-700">付款狀態</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-700">付款方式</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-700">申請日期</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-700">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredBySearch.map((sub: any) => {
+                  const isPaid = sub.status === "paid" || sub.status === "completed";
+                  const isGraded = sub.status === "graded";
+                  const isOverdue = sub.status === "payment_overdue";
+                  const hasAlipayPending = sub.alipayProofStatus === "pending_review";
+                  return (
+                    <tr
+                      key={sub.id}
+                      className="hover:bg-blue-50/40 transition-colors cursor-pointer"
+                      onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
+                    >
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
+                        {sub.batchId && (
+                          <p className="text-[10px] text-gray-700 mt-0.5">批次 #{sub.batchId}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900 text-sm">{sub.user?.name ?? "—"}</p>
+                        <p className="text-xs text-gray-700 truncate max-w-[140px]">{sub.user?.email ?? ""}</p>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-gray-900 font-bold text-sm">{sub.itemCount ?? 0}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-bold text-[#06038d] whitespace-nowrap">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-gray-100 text-gray-700"}`}>
+                          {STATUS_OPTIONS.find((s) => s.value === sub.status)?.label ?? sub.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {isPaid ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900">
+                            <CheckCheck className="h-3 w-3" />已付款
+                          </span>
+                        ) : isGraded ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                            <Clock className="h-3 w-3" />待付款
+                          </span>
+                        ) : isOverdue ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                            <AlertCircle className="h-3 w-3" />付款逾期
+                          </span>
+                        ) : hasAlipayPending ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-gray-900">
+                            <AlertCircle className="h-3 w-3" />截圖待審
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-700">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {sub.paymentMethod === "stripe" ? (
+                          <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-semibold">Stripe</span>
+                        ) : sub.paymentMethod === "alipay_hk" ? (
+                          <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-semibold">支付宝HK</span>
+                        ) : (
+                          <span className="text-xs text-gray-700">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-700 whitespace-nowrap">
+                          {new Date(sub.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
+                          className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-7 px-3 text-xs"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />管理
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+              <span className="text-xs text-gray-700">第 {page} / {totalPages} 頁</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-900"
+                >上一頁</button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-900"
+                >下一頁</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <SubmissionDetailDialog
+        submissionId={selectedId}
+        open={showDetail}
+        onClose={() => { setShowDetail(false); setSelectedId(null); }}
+        onUpdated={() => {
+          utils.grading.admin.listSubmissions.invalidate();
+          utils.grading.admin.listBatchesWithStats.invalidate();
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────
 export default function AdminGrading() {
-  const [activeSection, setActiveSection] = useState<"batches" | "submissions" | "tiers">("batches");
+  const [activeSection, setActiveSection] = useState<"batches" | "submissions" | "orders" | "tiers">("batches");
 
   const sections = [
     { id: "batches" as const, label: "出團批次管理", icon: <BarChart3 className="h-4 w-4" /> },
     { id: "submissions" as const, label: "申請管理", icon: <Package className="h-4 w-4" /> },
+    { id: "orders" as const, label: "鑑定訂單管理", icon: <CreditCard className="h-4 w-4" /> },
     { id: "tiers" as const, label: "服務層級", icon: <Award className="h-4 w-4" /> },
   ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">PSA 代客鑑定管理</h2>
-        <p className="text-gray-700 text-sm mt-1">管理鑑定申請、出團批次及服務層級</p>
+        <p className="text-gray-700 text-sm mt-1">管理鑑定申請、出團批次、訂單及服務層級</p>
       </div>
 
       {/* Section tabs */}
@@ -1059,7 +1315,7 @@ export default function AdminGrading() {
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               activeSection === s.id
                 ? "border-[#06038d] text-[#06038d]"
-                : "border-transparent text-gray-700 hover:text-gray-700"
+                : "border-transparent text-gray-700 hover:text-[#06038d]"
             }`}
           >
             {s.icon}
@@ -1070,6 +1326,7 @@ export default function AdminGrading() {
 
       {activeSection === "batches" && <BatchOverview />}
       {activeSection === "submissions" && <SubmissionManagement />}
+      {activeSection === "orders" && <GradingOrdersTab />}
       {activeSection === "tiers" && <ServiceTierManagement />}
     </div>
   );
