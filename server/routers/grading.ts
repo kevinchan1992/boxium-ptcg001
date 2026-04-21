@@ -489,11 +489,23 @@ export const gradingRouter = router({
         .where(eq(users.id, submission.userId))
         .limit(1);
 
+      // Fetch upgrade tier name if exists
+      let upgradeNewTierName: string | null = null;
+      if (submission.upgradeNewTierId) {
+        const [upgradeTier] = await db
+          .select({ name: gradingServiceTiers.name })
+          .from(gradingServiceTiers)
+          .where(eq(gradingServiceTiers.id, submission.upgradeNewTierId))
+          .limit(1);
+        upgradeNewTierName = upgradeTier?.name ?? null;
+      }
+
       return {
         ...submission,
         user: userInfo || null,
         items: (items as GradingSubmissionItem[]).map((item) => ({ ...item, tier: tierMap.get(item.tierId) || null })),
         batch,
+        upgradeNewTierName,
       };
     }),
 
@@ -1408,15 +1420,22 @@ export const gradingRouter = router({
           cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
         });
 
-        // Save upgrade info to submission
+        // Save upgrade info to submission AND immediately update totalFeeHkd
         await db
           .update(gradingSubmissions)
           .set({
             upgradeCheckoutSessionId: session.id,
             upgradeDiffFeeHkd: diffFee.toFixed(2),
             upgradeNewTierId: input.newTierId,
+            totalFeeHkd: newTotal.toFixed(2), // Update total fee immediately
           })
           .where(eq(gradingSubmissions.id, input.submissionId));
+
+        // Update all items to new tier
+        await db
+          .update(gradingSubmissionItems)
+          .set({ tierId: input.newTierId })
+          .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
 
         // Notify user
         const linkUrl = `/grading/orders/${submission.id}`;

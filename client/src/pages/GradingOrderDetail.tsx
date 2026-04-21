@@ -671,6 +671,40 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
+          {/* Upgrade diff fee pending banner */}
+          {(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt && (
+            <div className="bg-orange-50 border-2 border-orange-400 rounded-xl p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">⇑</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-orange-800 mb-1">服務層級已升級，請補付差價</p>
+                  <p className="text-sm text-orange-700 mb-1">
+                    您的申請已升級至 <strong>{(submission as any).upgradeNewTierName ?? '新層級'}</strong>，
+                    需補付差價 <strong className="text-orange-900">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</strong>。
+                  </p>
+                  <p className="text-xs text-orange-600 mb-3">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</p>
+                  <Button
+                    size="sm"
+                    className="bg-orange-500 hover:bg-orange-600 text-white h-8 text-xs px-4"
+                    onClick={() => {
+                      const sessionId = (submission as any).upgradeCheckoutSessionId;
+                      if (sessionId) {
+                        window.open(`https://checkout.stripe.com/c/pay/${sessionId}`, '_blank');
+                        toast.info('正在跳轉至 Stripe 補付頁面...');
+                      } else {
+                        toast.error('無法取得付款連結，請聯繫客服');
+                      }
+                    }}
+                  >
+                    立即補付差價
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Grading results + payment */}
           {isGraded && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">

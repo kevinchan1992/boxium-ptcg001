@@ -378,6 +378,11 @@ function SubmissionDetailDialog({
       setUpgradeResult(data);
       setGradingStep('fill_result');
       toast.success(`已發送升級差價付款連結至客人，差價 HK$${data.diffFeeHkd}`);
+      // Invalidate all related queries so totalFeeHkd is refreshed everywhere
+      utils.grading.admin.getSubmissionDetail.invalidate({ id: submissionId! });
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+      onUpdated();
     },
     onError: (err: any) => toast.error(err.message),
   });

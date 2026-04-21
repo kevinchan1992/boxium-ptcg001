@@ -8477,3 +8477,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復：已進行過層級升級的申請，重新開啟時顯示升級資訊橫幅並直接在步驟三
 - [x] 後端 getSubmissionDetail 加入 upgradeNewTierName 回傳
 - [x] 儲存 checkpoint
+
+---
+
+## Bug 修復：升級服務層級後應付金額未同步更新
+
+- [x] 分析：upgradeTier 確認後 totalFeeHkd 的更新時機（原本等待 Stripe 付款成功才更新）
+- [x] 修復：升級確認後立即更新 totalFeeHkd 為新金額（不等待付款）
+- [x] 修復：升級後即時 invalidate 所有相關 query（Admin Dialog、列表、批次統計）
+- [x] 新增：用戶端申請詳情頁加入「服務層級已升級，請補付差價」橫幅（含層級名稱、差價金額、補付按鈕）
+- [x] 後端用戶端 getSubmissionDetail 加入 upgradeNewTierName 回傳
+- [x] 儲存 checkpoint
