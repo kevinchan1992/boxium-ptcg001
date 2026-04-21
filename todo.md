@@ -8498,3 +8498,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：升級差價逾期提醒排程（每天 11:00 HKT 檢查超過 48 小時未補付，發送 Email 和站內通知）
 - [x] 後端：在 schema 加入 upgradeCheckoutAt 欄位並完成 migration
 - [x] 儲存 checkpoint
+
+---
+
+## Bug 修復：升級後應付金額和服務層級未更新（第二次）
+
+- [x] 診斷：根本原因是 Drizzle ORM decimal 欄位更新沒有寫入（需用 sql template literal）
+- [x] 修復：使用 sql template 更新 totalFeeHkd 和 upgradeDiffFeeHkd
+- [x] 修復：同時更新 gradingSubmissionItems 的 feeHkd（原本只更新 tierId）
+- [x] 修復：直接用 SQL 修正現有資料（submission id=2 totalFeeHkd=1680, items tierId=3, feeHkd=1680）
+- [x] 儲存 checkpoint

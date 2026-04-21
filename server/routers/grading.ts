@@ -17,7 +17,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, lt } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, lt, sql } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -1421,21 +1421,22 @@ export const gradingRouter = router({
         });
 
         // Save upgrade info to submission AND immediately update totalFeeHkd
+        // Use sql template to ensure decimal fields are written correctly
         await db
           .update(gradingSubmissions)
           .set({
             upgradeCheckoutSessionId: session.id,
-            upgradeDiffFeeHkd: diffFee.toFixed(2),
+            upgradeDiffFeeHkd: sql`${diffFee.toFixed(2)}`,
             upgradeNewTierId: input.newTierId,
             upgradeCheckoutAt: new Date(), // Record when upgrade checkout was created
-            totalFeeHkd: newTotal.toFixed(2), // Update total fee immediately
+            totalFeeHkd: sql`${newTotal.toFixed(2)}`, // Update total fee immediately
           })
           .where(eq(gradingSubmissions.id, input.submissionId));
 
-        // Update all items to new tier
+        // Update all items to new tier and new fee
         await db
           .update(gradingSubmissionItems)
-          .set({ tierId: input.newTierId })
+          .set({ tierId: input.newTierId, feeHkd: sql`${parseFloat(newTier.feeHkd).toFixed(2)}` })
           .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
 
         // Notify user
