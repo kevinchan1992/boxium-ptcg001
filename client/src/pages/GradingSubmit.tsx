@@ -415,6 +415,16 @@ export default function GradingSubmit() {
         {/* ── Step 1: Select Service Tier ── */}
         {step === 1 && (
           <div className="space-y-4">
+            {/* How to choose tier tip */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+              <span className="text-amber-500 text-lg flex-shrink-0 mt-0.5">💡</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800 mb-1">如何選擇正確層級，避免補付差價？</p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  請選擇「最高申報價值」<strong>高於您卡牌實際市值</strong>的層級。例如卡牌市值約 USD $200，建議選擇最高申報 USD $500 或以上的層級。如鑑定後市值超出申報上限，管理員才會通知補付差價。
+                </p>
+              </div>
+            </div>
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-bold text-gray-900 mb-1">選擇服務層級</h2>
               <p className="text-xs text-gray-500 mb-4">此次申請的所有卡牌將使用相同服務層級</p>
