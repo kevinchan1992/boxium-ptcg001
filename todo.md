@@ -8519,3 +8519,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端：資料庫 tierId 已更新，前端將顯示正確層級名稱
 - [x] 修復 confirmAlipayUpgradeMutation onSuccess invalidate 參數名稱錯誤
 - [ ] 儲存 checkpoint
+
+---
+
+## UI 三項修復
+
+- [ ] Admin 出團批次列表加入「刪除批次」按鈕（含後端 deleteBatch procedure）
+- [ ] 修復用戶端申請詳情頁「出團批次資訊」空白問題（批次名稱沒顯示）
+- [ ] 移除用戶端申請詳情頁「立即補付差價」按鈕（讓用戶使用下方付款方式完成付款）
+- [ ] 儲存 checkpoint

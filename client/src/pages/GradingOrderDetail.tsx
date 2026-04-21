@@ -697,18 +697,18 @@ export default function GradingOrderDetail() {
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
               <p className="font-bold text-purple-800 text-sm mb-1">出團批次資訊</p>
               <div className="text-xs text-purple-700 space-y-0.5">
-                <p>批次：{submission.batch.name}</p>
-                {submission.batch.shippedAt && (
-                  <p>出團日期：{new Date(submission.batch.shippedAt).toLocaleDateString("zh-HK")}</p>
+                <p>批次：{(submission.batch as any).batchName ?? (submission.batch as any).name ?? '未知'}</p>
+                {((submission.batch as any).shippedDate || (submission.batch as any).shippedAt) && (
+                  <p>出團日期：{new Date((submission.batch as any).shippedDate ?? (submission.batch as any).shippedAt).toLocaleDateString("zh-HK")}</p>
                 )}
-                {submission.batch.estimatedReturnAt && (
-                  <p>預計回件：{new Date(submission.batch.estimatedReturnAt).toLocaleDateString("zh-HK")}</p>
+                {((submission.batch as any).expectedReturnDate || (submission.batch as any).estimatedReturnAt) && (
+                  <p>預計回件：{new Date((submission.batch as any).expectedReturnDate ?? (submission.batch as any).estimatedReturnAt).toLocaleDateString("zh-HK")}</p>
                 )}
               </div>
             </div>
           )}
 
-          {/* Upgrade diff fee pending banner */}
+          {/* Upgrade diff fee pending banner - info only, no button */}
           {(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt && (
             <div className="bg-orange-50 border-2 border-orange-400 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-3">
@@ -721,22 +721,7 @@ export default function GradingOrderDetail() {
                     您的申請已升級至 <strong>{(submission as any).upgradeNewTierName ?? '新層級'}</strong>，
                     需補付差價 <strong className="text-orange-900">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</strong>。
                   </p>
-                  <p className="text-xs text-orange-600 mb-3">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</p>
-                  <Button
-                    size="sm"
-                    className="bg-orange-500 hover:bg-orange-600 text-white h-8 text-xs px-4"
-                    onClick={() => {
-                      const sessionId = (submission as any).upgradeCheckoutSessionId;
-                      if (sessionId) {
-                        window.open(`https://checkout.stripe.com/c/pay/${sessionId}`, '_blank');
-                        toast.info('正在跳轉至 Stripe 補付頁面...');
-                      } else {
-                        toast.error('無法取得付款連結，請聯繫客服');
-                      }
-                    }}
-                  >
-                    立即補付差價
-                  </Button>
+                  <p className="text-xs text-orange-600">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}，請在下方鑑定完成付款區塊選擇付款方式完成補付。</p>
                 </div>
               </div>
             </div>

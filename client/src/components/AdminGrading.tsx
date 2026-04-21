@@ -779,7 +779,7 @@ function SubmissionDetailDialog({
 }
 
 // ─── Batch Detail View ────────────────────────────────────────────────────────
-function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSubmission: (id: number) => void }) {
+function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: any; onManageSubmission: (id: number) => void; onDeleteBatch: (id: number, name: string) => void }) {
   const [expanded, setExpanded] = useState(true);
   const submissions = batch.submissions ?? [];
   const utils = trpc.useUtils();
@@ -860,7 +860,16 @@ function BatchDetailView({ batch, onManageSubmission }: { batch: any; onManageSu
           )}
         </div>
 
-        {expanded ? <ChevronUp className="h-5 w-5 text-gray-700 shrink-0" /> : <ChevronDown className="h-5 w-5 text-gray-700 shrink-0" />}
+        <div className="flex items-center gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            title="刪除批次"
+            onClick={() => onDeleteBatch(batch.id, batch.batchName)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          {expanded ? <ChevronUp className="h-5 w-5 text-gray-700 shrink-0" /> : <ChevronDown className="h-5 w-5 text-gray-700 shrink-0" />}
+        </div>
       </div>
 
       {/* Submissions table */}
@@ -982,6 +991,21 @@ function BatchOverview() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const deleteBatchMutation = trpc.grading.admin.deleteBatch.useMutation({
+    onSuccess: () => {
+      toast.success("批次已刪除");
+      utils.grading.admin.getAllBatches.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const handleDeleteBatch = (id: number, name: string) => {
+    if (confirm(`確定刪除批次「${name}」？此操作無法復原，批次內的申請不會被刪除。`)) {
+      deleteBatchMutation.mutate({ id });
+    }
+  };
+
   const handleManageSubmission = (id: number) => {
     setSelectedSubmissionId(id);
     setShowDetailDialog(true);
@@ -1050,6 +1074,7 @@ function BatchOverview() {
               key={batch.id}
               batch={batch}
               onManageSubmission={handleManageSubmission}
+              onDeleteBatch={handleDeleteBatch}
             />
           ))}
         </div>
