@@ -359,7 +359,8 @@ export default function GradingSubmit() {
   const hasDraftWithCards = existingDraft && existingDraft.items && existingDraft.items.length > 0 && (existingDraft.items.length > 1 || existingDraft.items[0].card !== null || existingDraft.items[0].manualCardName !== "");
   const [showDraftBanner, setShowDraftBanner] = useState<boolean>(!!hasDraftWithCards);
 
-  const [step, setStep] = useState(existingDraft && hasDraftWithCards ? existingDraft.step : 1);
+  // Always start at step 1 so user can choose to resume or start fresh
+  const [step, setStep] = useState(1);
   // Order-level tier selection
   const [selectedTierId, setSelectedTierId] = useState<number | null>(existingDraft && hasDraftWithCards ? existingDraft.selectedTierId : null);
   const initialItems = existingDraft && hasDraftWithCards ? existingDraft.items : [newItem()];
@@ -375,10 +376,7 @@ export default function GradingSubmit() {
     const userDraft = loadDraft(userId);
     const userHasDraft = userDraft && userDraft.items && userDraft.items.length > 0 && (userDraft.items.length > 1 || userDraft.items[0].card !== null || userDraft.items[0].manualCardName !== "");
     if (userHasDraft && userDraft) {
-      setStep(userDraft.step);
-      setSelectedTierId(userDraft.selectedTierId);
-      setItems(userDraft.items);
-      setExpandedItemId(userDraft.items[0].id);
+      // Don't auto-restore step; user must choose to resume from Step 1
       setShowDraftBanner(true);
     }
   }, [userId]);
@@ -405,6 +403,19 @@ export default function GradingSubmit() {
     setItems([fresh]);
     setExpandedItemId(fresh.id);
     setAgreedTerms(false);
+  };
+
+  const handleResumeDraft = () => {
+    // Load the latest draft (prefer user-specific key)
+    const draft = loadDraft(userId);
+    if (!draft) return;
+    setSelectedTierId(draft.selectedTierId);
+    setItems(draft.items);
+    setExpandedItemId(draft.items[0]?.id ?? '');
+    setAgreedTerms(false);
+    setShowDraftBanner(false);
+    // Always resume at step 2 (card details), not step 3
+    setStep(2);
   };
 
   const checkoutMutation = trpc.grading.submitApplication.useMutation({
@@ -542,31 +553,51 @@ export default function GradingSubmit() {
 
         <StepIndicator step={step} />
 
-        {/* ── Draft Banner ── */}
-        {showDraftBanner && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-            <div className="text-blue-500 text-lg flex-shrink-0 mt-0.5">💾</div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-blue-800 mb-1">發現上次未完成的申請草稿</p>
-              <p className="text-xs text-blue-700">
-                已自動恢復上次的進度，您可以繼續完成申請。
-                {existingDraft?.savedAt && (
-                  <span className="ml-1 text-blue-500">（{formatDraftAge(existingDraft.savedAt)}儲存）</span>
-                )}
-              </p>
-            </div>
-            <button
-              onClick={handleDiscardDraft}
-              className="text-xs text-red-500 hover:text-red-700 underline flex-shrink-0 mt-0.5"
-            >
-              刪除草稿
-            </button>
-          </div>
-        )}
+        {/* ── Draft Banner: only shown in Step 1 as a choice card ── */}
 
         {/* ── Step 1: Select Service Tier ── */}
         {step === 1 && (
           <div className="space-y-4">
+            {/* ── Draft resume card (Step 1 only) ── */}
+            {showDraftBanner && (() => {
+              const draft = loadDraft(userId);
+              const draftItemCount = draft?.items?.filter((i: any) => i.card !== null || i.manualCardName !== '').length ?? 0;
+              const draftTotalQty = draft?.items?.reduce((sum: number, i: any) => sum + (i.quantity ?? 1), 0) ?? 0;
+              return (
+                <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="text-blue-500 text-xl flex-shrink-0">💾</div>
+                    <div className="flex-1">
+                      <p className="font-bold text-blue-900 mb-0.5">發現上次未完成的申請草稿</p>
+                      <p className="text-xs text-blue-700">
+                        {draftItemCount > 0 ? `共 ${draftItemCount} 種卡牌（${draftTotalQty} 張）` : '已選層級'}
+                        {draft?.savedAt && (
+                          <span className="ml-1 text-blue-500">· {formatDraftAge(draft.savedAt)}儲存</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                      onClick={handleResumeDraft}
+                    >
+                      繼續上次的申請
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-red-300 text-red-600 hover:bg-red-50 bg-white"
+                      onClick={handleDiscardDraft}
+                    >
+                      刪除草稿，開新申請
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* How to choose tier tip */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
               <span className="text-amber-500 text-lg flex-shrink-0 mt-0.5">💡</span>
