@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { toast } from "sonner";
@@ -31,7 +30,7 @@ interface GradingItem {
   manualCardName: string;
   manualCardSet: string;
   manualCardNumber: string;
-  notes: string;
+  quantity: number;
   isManual: boolean;
 }
 
@@ -43,7 +42,7 @@ function newItem(): GradingItem {
     manualCardSet: "",
     manualCardNumber: "",
     isManual: false,
-    notes: "",
+    quantity: 1,
   };
 }
 
@@ -234,15 +233,33 @@ function ItemCard({
             />
           </div>
 
-          {/* Notes */}
+          {/* Quantity */}
           <div>
-            <Label className="text-xs font-semibold text-gray-600 mb-1 block">備註（可選）</Label>
-            <Textarea
-              placeholder="如有特別說明請填寫..."
-              value={item.notes}
-              onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
-              className="text-sm resize-none h-16"
-            />
+            <Label className="text-xs font-semibold text-gray-600 mb-1 block">數量（同一張卡牌需鑑定的張數）</Label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onUpdate(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })}
+                className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-lg select-none"
+              >−</button>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={item.quantity ?? 1}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v) && v >= 1 && v <= 1000) onUpdate(item.id, { quantity: v });
+                }}
+                className="w-20 text-center text-sm border border-gray-300 rounded-lg h-8 focus:outline-none focus:ring-2 focus:ring-[#06038d]/30"
+              />
+              <button
+                type="button"
+                onClick={() => onUpdate(item.id, { quantity: Math.min(1000, (item.quantity ?? 1) + 1) })}
+                className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-lg select-none"
+              >+</button>
+              <span className="text-xs text-gray-400">張（最多 1000）</span>
+            </div>
           </div>
         </div>
       )}
@@ -271,20 +288,13 @@ export default function GradingSubmit() {
   const [items, setItems] = useState<GradingItem[]>([newItem()]);
   const [expandedItemId, setExpandedItemId] = useState<string>(items[0].id);
   const [agreedTerms, setAgreedTerms] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
 
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
   const checkoutMutation = trpc.grading.createSubmissionCheckout.useMutation({
     onSuccess: (data: any) => {
-      if (paymentMethod === "stripe" && data.checkoutUrl) {
-        toast.success("申請已建立！正在跳轉至 Stripe 付款頁面...");
-        window.open(data.checkoutUrl, "_blank");
-        navigate(`/grading/orders/${data.submissionId}`);
-      } else {
-        toast.success("申請已建立！請按照頁面指示上傳支付寶 HK 截圖。");
-        navigate(`/grading/orders/${data.submissionId}`);
-      }
+      toast.success("申請已建立！正在跳轉至購物車付款...");
+      navigate(`/cart?grading_id=${data.submissionId}`);
     },
     onError: (err: any) => {
       toast.error(`提交失敗：${err.message}`);
@@ -363,17 +373,18 @@ export default function GradingSubmit() {
         cardImageUrl: item.card?.imageUrl ?? undefined,
         tierId: selectedTierId!,
         condition: "near_mint" as "mint" | "near_mint" | "excellent",
-        notes: item.notes,
+        quantity: item.quantity ?? 1,
       })),
       agreedToTerms: true,
-      paymentMethod,
+      paymentMethod: "stripe" as const,
       origin: window.location.origin,
     });
   };
 
   // ── Fee calculation ──
   const selectedTier = tiers?.find((t: any) => t.id === selectedTierId);
-  const totalFee = selectedTier ? parseFloat(selectedTier.feeHkd) * items.length : 0;
+  const totalFee = selectedTier ? items.reduce((sum, item) => sum + parseFloat(selectedTier.feeHkd) * (item.quantity ?? 1), 0) : 0;
+  const totalCardCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
 
   // ── Auth guard ──
   if (authLoading) {
@@ -534,7 +545,7 @@ export default function GradingSubmit() {
             {selectedTier && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-gray-600">
-                  {items.length} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
+                  共 {totalCardCount} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
                 </span>
                 <span className="font-bold text-[#06038d]">合計 HK${totalFee.toLocaleString()}</span>
               </div>
@@ -570,6 +581,8 @@ export default function GradingSubmit() {
                   const cardName = item.isManual
                     ? item.manualCardName
                     : (item.card?.name ?? "未知卡牌");
+                  const qty = item.quantity ?? 1;
+                  const itemFee = selectedTier ? parseFloat(selectedTier.feeHkd) * qty : 0;
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2 min-w-0">
@@ -587,13 +600,18 @@ export default function GradingSubmit() {
                           {!item.isManual && item.card?.cardNumber && (
                             <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
                           )}
-                          <Badge variant="outline" className="text-xs mt-0.5 text-black border-gray-400">
-                            {selectedTier?.name ?? "—"}
-                          </Badge>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <Badge variant="outline" className="text-xs text-black border-gray-400">
+                              {selectedTier?.name ?? "—"}
+                            </Badge>
+                            {qty > 1 && (
+                              <span className="text-xs text-[#06038d] font-semibold">{qty} 張</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <span className="font-bold text-black flex-shrink-0">
-                        HK${selectedTier ? parseFloat(selectedTier.feeHkd).toLocaleString() : "—"}
+                        HK${itemFee.toLocaleString()}
                       </span>
                     </div>
                   );
@@ -623,62 +641,6 @@ export default function GradingSubmit() {
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Payment method selection */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <DollarSign className="h-4 w-4 text-[#06038d]" />
-                <span className="font-bold text-gray-900">選擇付款方式</span>
-              </div>
-              <p className="text-xs text-gray-500 mb-3">確認提交後需先完成付款，申請才會正式啟動</p>
-              <div className="grid grid-cols-2 gap-3">
-                <label
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === "stripe"
-                      ? "border-[#06038d] bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="stripe"
-                    checked={paymentMethod === "stripe"}
-                    onChange={() => setPaymentMethod("stripe")}
-                    className="accent-[#06038d]"
-                  />
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">💳 信用卡</p>
-                    <p className="text-xs text-gray-500">Visa / Mastercard</p>
-                  </div>
-                </label>
-                <label
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === "alipay_hk"
-                      ? "border-[#06038d] bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="alipay_hk"
-                    checked={paymentMethod === "alipay_hk"}
-                    onChange={() => setPaymentMethod("alipay_hk")}
-                    className="accent-[#06038d]"
-                  />
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">📱 支付寶 HK</p>
-                    <p className="text-xs text-gray-500">上傳截圖確認</p>
-                  </div>
-                </label>
-              </div>
-              {paymentMethod === "alipay_hk" && (
-                <div className="mt-3 bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
-                  選擇支付寶 HK 後，系統將建立申請並發送支付寶 HK 收款資訊。請於 24 小時內上傳付款截圖，否則申請將被自動取消。
-                </div>
-              )}
             </div>
 
             {/* Terms */}
@@ -735,11 +697,6 @@ export default function GradingSubmit() {
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     處理中...
-                  </>
-                ) : paymentMethod === "stripe" ? (
-                  <>
-                    提交並前往付款
-                    <ChevronRight className="ml-2 h-4 w-4" />
                   </>
                 ) : (
                   <>
