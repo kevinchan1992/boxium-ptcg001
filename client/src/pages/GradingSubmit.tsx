@@ -259,7 +259,7 @@ function ItemCard({
                   const v = parseInt(e.target.value, 10);
                   if (!isNaN(v)) onUpdate(item.id, { quantity: Math.min(1000, Math.max(1, v)) });
                 }}
-                className="w-16 h-8 text-center border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
+                className="w-16 h-8 text-center border border-gray-300 rounded-lg text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
               />
               <button
                 type="button"
