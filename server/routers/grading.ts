@@ -715,6 +715,58 @@ export const gradingRouter = router({
         dedupeKey: `grading-alipay-proof-${submission.id}-${Date.now()}`,
       }).catch((e) => console.error("[Grading] Failed to send admin Gmail notification:", e));
 
+      // Auto-trigger AI verification in background (non-blocking)
+      setImmediate(async () => {
+        try {
+          const { invokeLLM } = await import("../_core/llm");
+          // Determine expected amount: use upgrade diff fee if this is an upgrade payment
+          const isUpgradePayment = !!(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt;
+          const expectedFee = isUpgradePayment
+            ? parseFloat((submission as any).upgradeDiffFeeHkd || "0")
+            : parseFloat(submission.totalFeeHkd || "0");
+          const orderNo = submission.orderNo;
+          const imageDataUrl = `data:${input.mimeType};base64,${input.proofImageBase64}`;
+
+          const systemPrompt = `你是一個專業的支付寶 HK 付款截圖核對助手。你的任務是分析用戶上傳的截圖，判斷是否為有效的支付寶 HK 付款成功記錄。\n\n請以 JSON 格式回覆，不要加入任何其他文字：\n{\n  "isValid": true/false,\n  "confidence": "high"/"medium"/"low",\n  "detectedAmount": "偵測到的金額（如 1680）或 null",\n  "detectedOrderNo": "偵測到的備注單號或 null",\n  "amountMatch": true/false/null,\n  "orderNoMatch": true/false/null,\n  "issues": ["問題列表，如果沒有則為空陣列"],\n  "summary": "簡短的中文核對結果說明"\n}`;
+
+          const userPrompt = `請核對這張支付寶 HK ${isUpgradePayment ? '升級差價補付' : '付款'}截圖：\n\n預期付款金額：HK$${expectedFee.toLocaleString()}\n預期備注單號：${orderNo}\n\n請判斷：\n1. 是否為支付寶 HK 付款成功截圖（顯示「付款成功」或「Payment Successful」等字樣）\n2. 付款金額是否符合預期金額 HK$${expectedFee.toLocaleString()}\n3. 備注是否包含單號 ${orderNo}`;
+
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: [
+                { type: "text", text: userPrompt },
+                { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
+              ]},
+            ],
+          });
+
+          const rawContent = response.choices[0]?.message?.content;
+          const content = typeof rawContent === "string" ? rawContent : "";
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            const aiResult: "pass" | "warning" | "fail" = Boolean(result.isValid) ? "pass" : (result.confidence === "medium" ? "warning" : "fail");
+            const aiConfidence: "high" | "medium" | "low" = (result.confidence || "low") as "high" | "medium" | "low";
+            const aiSummary = result.summary || "核對完成";
+            const db2 = await getDb();
+            if (db2) {
+              await db2
+                .update(gradingSubmissions)
+                .set({
+                  alipayProofAiResult: aiResult,
+                  alipayProofAiConfidence: aiConfidence,
+                  alipayProofAiSummary: aiSummary,
+                  alipayProofAiCheckedAt: new Date(),
+                } as any)
+                .where(eq(gradingSubmissions.id, submission.id));
+            }
+          }
+        } catch (e) {
+          console.error("[Grading] Auto AI proof verification failed:", e);
+        }
+      });
+
       return { success: true, proofUrl: url };
     }),
 

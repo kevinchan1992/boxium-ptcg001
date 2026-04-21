@@ -550,6 +550,29 @@ function SubmissionDetailDialog({
                       onClick={() => window.open(detail.alipayProofImageUrl, "_blank")}
                     />
                     <p className="text-xs text-gray-500 mt-1">提交時間：{detail.alipayProofSubmittedAt ? new Date(detail.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
+                    {/* AI verification result badge */}
+                    {(detail as any).alipayProofAiResult && (
+                      <div className={`mt-2 flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
+                        (detail as any).alipayProofAiResult === 'pass'
+                          ? 'bg-green-50 border-green-200 text-green-800'
+                          : (detail as any).alipayProofAiResult === 'warning'
+                          ? 'bg-amber-50 border-amber-200 text-amber-800'
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      }`}>
+                        <span className="font-semibold">
+                          {(detail as any).alipayProofAiResult === 'pass' ? '✅ AI 核對通過' : (detail as any).alipayProofAiResult === 'warning' ? '⚠️ AI 核對警告' : '❌ AI 核對未通過'}
+                        </span>
+                        {(detail as any).alipayProofAiConfidence && (
+                          <span className="opacity-70">({(detail as any).alipayProofAiConfidence === 'high' ? '高可信度' : (detail as any).alipayProofAiConfidence === 'medium' ? '中可信度' : '低可信度'})</span>
+                        )}
+                        {(detail as any).alipayProofAiSummary && (
+                          <span className="w-full mt-0.5 opacity-80">{(detail as any).alipayProofAiSummary}</span>
+                        )}
+                      </div>
+                    )}
+                    {!(detail as any).alipayProofAiResult && (
+                      <p className="text-xs text-gray-400 mt-1 italic">AI 核對進行中，請稍候刷新查看結果…</p>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-gray-700 mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>

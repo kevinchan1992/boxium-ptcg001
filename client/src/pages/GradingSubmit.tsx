@@ -579,6 +579,7 @@ export default function GradingSubmit() {
                 url: i.card.imageUrl as string,
                 name: i.card.name as string,
               }));
+              const extraCardCount = Math.max(0, draftCardsWithImages.length - 3);
               const firstCardName = draftCardsWithImages[0]?.card?.name ?? (draft?.items?.[0]?.manualCardName || null);
               return (
                 <div className={`border-2 rounded-xl p-4 ${isExpiringSoon ? 'bg-orange-50 border-orange-300' : 'bg-blue-50 border-blue-300'}`}>
@@ -606,6 +607,12 @@ export default function GradingSubmit() {
                             }}
                           >
                             <img src={thumb.url} alt={thumb.name} className="w-full h-full object-contain" />
+                            {/* +N badge on last visible thumb */}
+                            {idx === 2 && extraCardCount > 0 && (
+                              <div className="absolute bottom-0 right-0 bg-[#06038d] text-white text-[9px] font-bold px-1 py-0.5 rounded-tl leading-none">
+                                +{extraCardCount}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
