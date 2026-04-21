@@ -1173,6 +1173,7 @@ function BatchOverview() {
 function SubmissionManagement() {
   const utils = trpc.useUtils();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [pendingUpgradeFilter, setPendingUpgradeFilter] = useState(false);
   const [batchFilter, setBatchFilter] = useState("all");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -1180,6 +1181,7 @@ function SubmissionManagement() {
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
     batchId: batchFilter === "all" ? undefined : parseInt(batchFilter),
+    pendingUpgrade: pendingUpgradeFilter || undefined,
   });
   const submissions: any[] = Array.isArray(submissionsData) ? submissionsData : (submissionsData as any)?.submissions ?? [];
 
@@ -1235,6 +1237,18 @@ function SubmissionManagement() {
             ))}
           </SelectContent>
         </Select>
+        {/* Pending upgrade quick filter */}
+        <button
+          onClick={() => setPendingUpgradeFilter(v => !v)}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+            pendingUpgradeFilter
+              ? 'bg-orange-500 text-white border-orange-500'
+              : 'bg-white text-orange-600 border-orange-300 hover:bg-orange-50'
+          }`}
+        >
+          <span>⇑</span>
+          待補付
+        </button>
         <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆</span>
       </div>
 

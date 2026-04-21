@@ -237,6 +237,13 @@ export default function GradingOrderDetail() {
     summary: string;
   } | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  // Upgrade Alipay payment states
+  const [upgradePayMethod, setUpgradePayMethod] = useState<"stripe" | "alipay_hk">("stripe");
+  const [showUpgradeAlipayQR, setShowUpgradeAlipayQR] = useState(false);
+  const [upgradeAlipayProofFile, setUpgradeAlipayProofFile] = useState<File | null>(null);
+  const [upgradeAlipayProofPreview, setUpgradeAlipayProofPreview] = useState<string | null>(null);
+  const [uploadingUpgradeProof, setUploadingUpgradeProof] = useState(false);
+  const [upgradeProofSubmitted, setUpgradeProofSubmitted] = useState(false);
 
   const submissionId = parseInt(params.id ?? "0", 10);
   const utils = trpc.useUtils();
@@ -825,36 +832,143 @@ export default function GradingOrderDetail() {
           {/* Upgrade diff fee pending banner */}
           {(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt && (
             <div className="bg-orange-50 border-2 border-orange-400 rounded-xl p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-sm">⇑</span>
+              {!showUpgradeAlipayQR && !upgradeProofSubmitted && (
+                <>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">⇑</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-orange-800 mb-1">服務層級已升級，請補付差價</p>
+                      <p className="text-sm text-orange-700 mb-1">
+                        您的申請已升級至 <strong>{(submission as any).upgradeNewTierName ?? '新層級'}</strong>，
+                        需補付差價 <strong className="text-orange-900">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</strong>。
+                      </p>
+                      <p className="text-xs text-orange-600">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {/* Payment method selection */}
+                  <div className="mb-3">
+                    <p className="text-xs font-semibold text-orange-800 mb-2">選擇補付方式</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                        upgradePayMethod === 'stripe' ? 'border-orange-400 bg-orange-100' : 'border-gray-200 bg-white'
+                      }`}>
+                        <input type="radio" className="sr-only" checked={upgradePayMethod === 'stripe'} onChange={() => setUpgradePayMethod('stripe')} />
+                        <CreditCard className="h-4 w-4 text-orange-700" />
+                        <span className="text-xs font-semibold text-orange-900">信用卡 / Stripe</span>
+                      </label>
+                      <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                        upgradePayMethod === 'alipay_hk' ? 'border-orange-400 bg-orange-100' : 'border-gray-200 bg-white'
+                      }`}>
+                        <input type="radio" className="sr-only" checked={upgradePayMethod === 'alipay_hk'} onChange={() => setUpgradePayMethod('alipay_hk')} />
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-4 object-contain" />
+                        <span className="text-xs font-semibold text-orange-900">支付寶 HK</span>
+                      </label>
+                    </div>
+                  </div>
+                  {upgradePayMethod === 'stripe' ? (
+                    <Button
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700 text-white w-full"
+                      onClick={() => {
+                        reopenUpgradeCheckoutMutation.mutate({
+                          submissionId,
+                          origin: window.location.origin,
+                        });
+                      }}
+                      disabled={reopenUpgradeCheckoutMutation.isPending}
+                    >
+                      {reopenUpgradeCheckoutMutation.isPending ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                      ) : (
+                        <><CreditCard className="h-4 w-4 mr-2" />信用卡補付差價</>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700 text-white w-full"
+                      onClick={() => setShowUpgradeAlipayQR(true)}
+                    >
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-4 object-contain mr-2" />
+                      支付寶 HK 補付差價
+                    </Button>
+                  )}
+                </>
+              )}
+              {/* Alipay QR for upgrade */}
+              {showUpgradeAlipayQR && !upgradeProofSubmitted && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-xs">⇑</span>
+                    </div>
+                    <p className="font-bold text-orange-800 text-sm">支付寶 HK 補付差價 HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 rounded-xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-7 object-contain" />
+                      <span className="font-bold text-gray-900">支付寶 HK 付款</span>
+                    </div>
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("https://w.alipay.hk/s12/3RYKWzGXrQ")}`} alt="AlipayHK QR" className="mx-auto rounded-lg border border-gray-200 mb-2" width={160} height={160} />
+                    <a href="https://w.alipay.hk/s12/3RYKWzGXrQ" target="_blank" rel="noopener noreferrer" className="text-xs text-[#06038d] hover:underline block mb-1">https://w.alipay.hk/s12/3RYKWzGXrQ</a>
+                    <p className="text-xs text-gray-500">掃描 QR code 或點擊連結完成付款</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-gray-900 mb-2">上傳付款截圖</p>
+                    <p className="text-xs text-gray-500 mb-3">付款後請上傳截圖，管理員確認後補付將完成。</p>
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setUpgradeAlipayProofFile(f);
+                        const r = new FileReader();
+                        r.onload = (ev) => setUpgradeAlipayProofPreview(ev.target?.result as string);
+                        r.readAsDataURL(f);
+                      }
+                    }} className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#06038d] file:text-white hover:file:bg-[#06038d]/90" />
+                    {upgradeAlipayProofPreview && <img src={upgradeAlipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setShowUpgradeAlipayQR(false)} className="flex-1 text-black border-orange-300">返回</Button>
+                    <Button
+                      onClick={async () => {
+                        if (!upgradeAlipayProofFile) return;
+                        setUploadingUpgradeProof(true);
+                        const reader = new FileReader();
+                        reader.onload = async (ev) => {
+                          const base64 = (ev.target?.result as string).split(',')[1];
+                          try {
+                            await submitAlipayProofMutation.mutateAsync({
+                              submissionId,
+                              proofImageBase64: base64,
+                              mimeType: upgradeAlipayProofFile.type,
+                            });
+                            setUpgradeProofSubmitted(true);
+                          } catch (e: any) {
+                            toast.error(e.message || '提交失敗');
+                          } finally {
+                            setUploadingUpgradeProof(false);
+                          }
+                        };
+                        reader.readAsDataURL(upgradeAlipayProofFile);
+                      }}
+                      disabled={!upgradeAlipayProofFile || uploadingUpgradeProof}
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      {uploadingUpgradeProof ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />上傳中...</> : '提交截圖'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-bold text-orange-800 mb-1">服務層級已升級，請補付差價</p>
-                  <p className="text-sm text-orange-700 mb-1">
-                    您的申請已升級至 <strong>{(submission as any).upgradeNewTierName ?? '新層級'}</strong>，
-                    需補付差價 <strong className="text-orange-900">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</strong>。
-                  </p>
-                  <p className="text-xs text-orange-600 mb-3">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}，如您已關閉付款頁面，可點擊下方按鈕重新進入付款流程。</p>
-                  <Button
-                    size="sm"
-                    className="bg-orange-600 hover:bg-orange-700 text-white"
-                    onClick={() => {
-                      reopenUpgradeCheckoutMutation.mutate({
-                        submissionId,
-                        origin: window.location.origin,
-                      });
-                    }}
-                    disabled={reopenUpgradeCheckoutMutation.isPending}
-                  >
-                    {reopenUpgradeCheckoutMutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
-                    ) : (
-                      <><CreditCard className="h-4 w-4 mr-2" />重新付款差價</>
-                    )}
-                  </Button>
+              )}
+              {/* Upgrade proof submitted */}
+              {upgradeProofSubmitted && (
+                <div className="text-center py-2">
+                  <CheckCircle2 className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                  <p className="font-bold text-orange-800">補付截圖已提交！</p>
+                  <p className="text-sm text-orange-700 mt-1">管理員將於 24 小時內確認補付。</p>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

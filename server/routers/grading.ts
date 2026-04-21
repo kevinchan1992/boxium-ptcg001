@@ -17,7 +17,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, lt, sql } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -1080,6 +1080,7 @@ export const gradingRouter = router({
           status: z.string().optional(),
           batchId: z.number().int().optional(),
           alipayProofPending: z.boolean().optional(), // filter by alipayProofStatus = 'pending_review'
+          pendingUpgrade: z.boolean().optional(), // filter by upgradeCheckoutSessionId IS NOT NULL AND upgradePaidAt IS NULL
           limit: z.number().int().default(50),
           offset: z.number().int().default(0),
         })
@@ -1092,6 +1093,10 @@ export const gradingRouter = router({
         if (input.status) conditions.push(eq(gradingSubmissions.status, input.status as any));
         if (input.batchId) conditions.push(eq(gradingSubmissions.batchId, input.batchId));
         if (input.alipayProofPending) conditions.push(eq(gradingSubmissions.alipayProofStatus, "pending_review"));
+        if (input.pendingUpgrade) {
+          conditions.push(isNotNull(gradingSubmissions.upgradeCheckoutSessionId));
+          conditions.push(isNull(gradingSubmissions.upgradePaidAt));
+        }
 
         const submissions = await db
           .select({
