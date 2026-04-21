@@ -248,10 +248,30 @@ export default function GradingOrderDetail() {
   const submissionId = parseInt(params.id ?? "0", 10);
   const utils = trpc.useUtils();
 
-  const { data: submission, isLoading } = trpc.grading.getSubmissionDetail.useQuery(
+  const { data: submission, isLoading, refetch: refetchSubmission } = trpc.grading.getSubmissionDetail.useQuery(
     { id: submissionId },
     { enabled: submissionId > 0 }
   );
+
+  // Poll for AI verification result after upgrade proof is submitted
+  const [aiPollingActive, setAiPollingActive] = useState(false);
+  useEffect(() => {
+    if (!upgradeProofSubmitted || !aiPollingActive) return;
+    // Already have result, stop polling
+    if ((submission as any)?.alipayProofAiResult) {
+      setAiPollingActive(false);
+      return;
+    }
+    const timer = setInterval(() => {
+      refetchSubmission();
+    }, 3000);
+    // Stop polling after 60s
+    const timeout = setTimeout(() => {
+      clearInterval(timer);
+      setAiPollingActive(false);
+    }, 60000);
+    return () => { clearInterval(timer); clearTimeout(timeout); };
+  }, [upgradeProofSubmitted, aiPollingActive, (submission as any)?.alipayProofAiResult, refetchSubmission]);
 
   const { data: qrData } = trpc.grading.getSubmissionQrCode.useQuery(
     { submissionId },
@@ -945,6 +965,7 @@ export default function GradingOrderDetail() {
                               mimeType: upgradeAlipayProofFile.type,
                             });
                             setUpgradeProofSubmitted(true);
+                            setAiPollingActive(true);
                           } catch (e: any) {
                             toast.error(e.message || '提交失敗');
                           } finally {
@@ -967,6 +988,32 @@ export default function GradingOrderDetail() {
                   <CheckCircle2 className="h-8 w-8 text-orange-500 mx-auto mb-2" />
                   <p className="font-bold text-orange-800">補付截圖已提交！</p>
                   <p className="text-sm text-orange-700 mt-1">管理員將於 24 小時內確認補付。</p>
+                  {/* AI verification status */}
+                  <div className="mt-3">
+                    {(submission as any)?.alipayProofAiResult ? (
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        (submission as any).alipayProofAiResult === 'pass'
+                          ? 'bg-green-100 text-green-800'
+                          : (submission as any).alipayProofAiResult === 'warning'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        <span>{(submission as any).alipayProofAiResult === 'pass' ? '✅' : (submission as any).alipayProofAiResult === 'warning' ? '⚠️' : '❌'}</span>
+                        <span>
+                          {(submission as any).alipayProofAiResult === 'pass'
+                            ? 'AI 核對通過，等待管理員確認'
+                            : (submission as any).alipayProofAiResult === 'warning'
+                            ? 'AI 核對有警告，管理員將人工審核'
+                            : 'AI 核對未通過，請確認截圖是否正確'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>AI 核對中，請稍候…</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
