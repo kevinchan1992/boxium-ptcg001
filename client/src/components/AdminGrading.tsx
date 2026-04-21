@@ -387,6 +387,16 @@ function SubmissionDetailDialog({
     onError: (err: any) => toast.error(err.message),
   });
 
+  const confirmAlipayUpgradeMutation = trpc.grading.adminConfirmGradingAlipayUpgradePayment.useMutation({
+    onSuccess: () => {
+      toast.success("升級差價支付寶收款已確認");
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.getSubmissionDetail.invalidate({ id: detail.id });
+      onUpdated();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const confirmAlipayMutation = trpc.grading.adminConfirmGradingAlipayPayment.useMutation({
     onSuccess: () => {
       toast.success("支付寶收款已確認，訂單已完成");
@@ -493,6 +503,25 @@ function SubmissionDetailDialog({
                   disabled={confirmAlipayMutation.isPending}
                 >
                   {confirmAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認收款完成，訂單標記完成</>}
+                </Button>
+              </div>
+            )}
+
+            {/* Alipay upgrade diff payment confirmation */}
+            {(detail as any).upgradeCheckoutSessionId && !(detail as any).upgradePaidAt && (
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <Label className="text-sm font-bold text-gray-900">升級差價待確認</Label>
+                </div>
+                <p className="text-xs text-gray-700 mb-1">層級升級差價：<span className="font-bold text-orange-700">HK${(detail as any).upgradeDiffFeeHkd ?? '—'}</span></p>
+                <p className="text-xs text-gray-700 mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>
+                <Button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                  onClick={() => confirmAlipayUpgradeMutation.mutate({ submissionId: detail.id })}
+                  disabled={confirmAlipayUpgradeMutation.isPending}
+                >
+                  {confirmAlipayUpgradeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認升級差價已收到</>}
                 </Button>
               </div>
             )}

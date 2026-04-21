@@ -400,7 +400,7 @@ async function startServer() {
             try {
               const { getDb: _gDb2 } = await import("../db");
               const { gradingSubmissions: _gSubs2, gradingSubmissionItems: _gItems2, gradingServiceTiers: _gTiers2 } = await import("../../drizzle/schema_new");
-              const { eq: _geq2, inArray: _inArray2 } = await import("drizzle-orm");
+              const { eq: _geq2, inArray: _inArray2, sql: _sql2 } = await import("drizzle-orm");
               const _gdb2 = await _gDb2();
               if (_gdb2) {
                 // Get submission and new tier
@@ -411,13 +411,14 @@ async function startServer() {
                   const items2 = await _gdb2.select().from(_gItems2).where(_geq2(_gItems2.submissionId, parseInt(submissionId)));
                   if (items2.length > 0) {
                     const itemIds = items2.map((i: any) => i.id);
-                    await _gdb2.update(_gItems2).set({ tierId: parseInt(newTierId), feeHkd: tier2.feeHkd }).where(_inArray2(_gItems2.id, itemIds));
+                    // Use sql template for decimal fields to ensure correct DB write
+                    await _gdb2.update(_gItems2).set({ tierId: parseInt(newTierId), feeHkd: _sql2`${parseFloat(tier2.feeHkd).toFixed(2)}` }).where(_inArray2(_gItems2.id, itemIds));
                   }
                   // Update submission total fee and mark upgrade as paid
                   const newTotal = items2.length * parseFloat(tier2.feeHkd);
                   await _gdb2.update(_gSubs2)
                     .set({
-                      totalFeeHkd: newTotal.toFixed(2),
+                      totalFeeHkd: _sql2`${newTotal.toFixed(2)}`,
                       upgradePaidAt: new Date(),
                       upgradeCheckoutSessionId: null,
                     } as any)

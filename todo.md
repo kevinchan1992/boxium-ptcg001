@@ -8508,3 +8508,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復：同時更新 gradingSubmissionItems 的 feeHkd（原本只更新 tierId）
 - [x] 修復：直接用 SQL 修正現有資料（submission id=2 totalFeeHkd=1680, items tierId=3, feeHkd=1680）
 - [x] 儲存 checkpoint
+
+---
+
+## 升級差價三項修復
+
+- [x] 後端：Stripe Webhook 使用 sql template 更新 upgradePaidAt、feeHkd、totalFeeHkd
+- [x] 後端：確認 upgradeTier success_url 已設為 /grading/orders/:id?upgrade_payment=success
+- [x] 後端：支付寶 HK 補付差價流程（Admin Dialog 加入橙色確認區塊 + adminConfirmGradingAlipayUpgradePayment procedure）
+- [x] 前端：資料庫 tierId 已更新，前端將顯示正確層級名稱
+- [x] 修復 confirmAlipayUpgradeMutation onSuccess invalidate 參數名稱錯誤
+- [ ] 儲存 checkpoint

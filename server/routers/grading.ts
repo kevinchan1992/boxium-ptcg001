@@ -810,6 +810,103 @@ export const gradingRouter = router({
       return { success: true };
     }),
 
+  // ─── Admin: Confirm Alipay HK upgrade diff payment ─────────────────────────
+  adminConfirmGradingAlipayUpgradePayment: adminProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.submissionId))
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!submission.upgradeCheckoutSessionId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此申請沒有待確認的升級差價" });
+      }
+
+      // Mark upgrade as paid and clear checkout session
+      await db
+        .update(gradingSubmissions)
+        .set({
+          upgradePaidAt: new Date(),
+          upgradeCheckoutSessionId: null,
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+
+      // In-app notification
+      await createNotification({
+        userId: submission.userId,
+        type: "system",
+        title: "升級差價付款已確認 ✅",
+        body: `申請單 ${submission.orderNo} 的服務層級升級差價（支付寶 HK）已確認，升級已完成。`,
+        linkUrl: `/grading/orders/${submission.id}`,
+      }).catch(() => {});
+
+      // Email notification
+      try {
+        const [user] = await db
+          .select({ email: users.email, name: users.name })
+          .from(users)
+          .where(eq(users.id, submission.userId))
+          .limit(1);
+
+        if (user?.email) {
+          const baseUrl = "https://boxium.asia";
+          const orderUrl = `${baseUrl}/grading/orders/${submission.id}`;
+          const BRAND_BLUE = "#06038d";
+          const BRAND_YELLOW = "#FFD700";
+
+          const extraHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:2px solid #86efac;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#16a34a;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">✅ 升級差價確認詳情</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;color:#333;">付款方式：支付寶 HK</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#333;">差價金額：HK$${submission.upgradeDiffFeeHkd}</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#333;">確認時間：${new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}</p>
+    ${input.notes ? `<p style="margin:8px 0 0;font-size:13px;color:#555;">備註：${input.notes}</p>` : ""}
+  </td></tr>
+</table>
+<p style="color:#555;font-size:14px;margin:12px 0;">您的服務層級升級差價已確認，升級已完成。如有任何查詢，請聯絡 BOXIUM 客服。</p>
+<div style="text-align:center;margin:16px 0;">
+  <a href="${orderUrl}" style="display:inline-block;background:${BRAND_BLUE};color:${BRAND_YELLOW};padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">查看申請詳情</a>
+</div>`;
+
+          const html = buildGradingEmail({
+            userName: user.name || user.email,
+            title: "服務層級升級差價已確認 ✅",
+            body: `您的申請單 ${submission.orderNo} 的服務層級升級差價（支付寶 HK）已由 BOXIUM 確認收款，升級已完成。`,
+            orderNo: submission.orderNo,
+            linkUrl: orderUrl,
+            ctaText: "查看申請詳情",
+            extraHtml,
+          });
+
+          await sendEmail({
+            to: user.email,
+            subject: `【BOXIUM PSA 鑑定】升級差價已確認 ✅ — ${submission.orderNo}`,
+            html,
+            emailType: "grading",
+            toUserId: submission.userId,
+          });
+        }
+      } catch (e) {
+        console.error("[Grading] Failed to send upgrade payment confirmation email:", e);
+      }
+
+      return { success: true };
+    }),
+
   // ─── Admin: Get all tiers (including inactive) ────────────────────────────
   admin: router({
     getAllTiers: adminProcedure.query(async () => {
