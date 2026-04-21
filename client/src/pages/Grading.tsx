@@ -60,47 +60,47 @@ function CountdownTimer({ deadline }: { deadline: Date }) {
 const STEPS = [
   {
     step: 1,
-    title: "線上提交申請",
-    desc: "在平台填寫卡牌資料，選擇服務層級，確認費用及條款",
+    title: "線上提交申請及付款",
+    desc: "在平台填寫卡牌資料、選擇服務層級、確認費用及條款，然後透過 Stripe 或支付寶 HK 完成付款",
     icon: FileText,
     highlight: true,
   },
   {
     step: 2,
     title: "收到確認通知",
-    desc: "系統自動發送確認通知（站內訊息 + Email），包含 BOXIUM 送件地址及截止日期",
+    desc: "付款成功後，系統自動發送確認通知（站內訊息 + Email），包含 BOXIUM 送件地址、申請單詳情及截止日期",
     icon: Bell,
   },
   {
     step: 3,
     title: "打印申請單並寄卡",
-    desc: "打印申請單，連同卡牌自費寄至 BOXIUM 指定地址（順豐站 852Z351）",
+    desc: "打印申請單，連同卡牌自費寄至 BOXIUM 指定地址（順豐站 852Z351），寄件時請注明申請單號",
     icon: Package,
     highlight: true,
   },
   {
     step: 4,
     title: "BOXIUM 代辦申報",
-    desc: "BOXIUM 確認收件後，代辦 PSA 申報及專業包裝，每月 2 次出團直送美國 PSA",
+    desc: "BOXIUM 確認收件後，代辦 PSA 申報及專業包裝，每月 2 次出團直送美國 PSA（如需升級服務層級，管理員會通知您補付差價）",
     icon: Shield,
   },
   {
     step: 5,
     title: "PSA 鑑定中",
-    desc: "卡牌送往美國 PSA 進行官方鑑定，全程追蹤進度並即時通知",
+    desc: "卡牌送往美國 PSA 進行官方鑑定，全程追蹤進度並即時通知，平均鑑定時間為 60–90 天（依服務層級而異）",
     icon: Clock,
   },
   {
     step: 6,
     title: "鑑定完成，完成付款",
-    desc: "鑑定完成後通知您評分結果，請於 30 天內完成付款",
+    desc: "鑑定完成後通知您評分結果及證書號，請於 30 天內透過 Stripe 或支付寶 HK 完成付款，逾期未付將計算遠期費用",
     icon: DollarSign,
     highlight: true,
   },
   {
     step: 7,
     title: "寄回卡牌",
-    desc: "付款確認後，BOXIUM 安排將鑑定完成的卡牌寄回給您",
+    desc: "付款確認後， BOXIUM 安排將鑑定完成的卡牌寄回給您，附上 PSA 鑑定證書",
     icon: Truck,
   },
 ];
@@ -142,8 +142,8 @@ const FAQS = [
     a: "每個狀態更新（收件確認、出團、鑑定完成等）均會透過站內訊息及 Email 通知您。您也可以隨時登入平台查看申請詳情頁面的即時狀態。",
   },
   {
-    q: "鑑定完成後何時需要付款？",
-    a: "鑑定完成後，系統會通知您評分結果及付款金額，請於 30 天內完成付款。逾期未付款，平台保留對相關卡片自行處理之權利。",
+    q: "付款流程是怎樣的？",
+    a: "付款分兩階段：(1) 提交申請時需先付服務費用（支援 Stripe 信用卡 / 支付寶 HK），付款成功後才會收到寄件地址；(2) 鑑定完成後如需升級服務層級，會需補付差價。鑑定完成後請於 30 天內完成差價付款，逾期將計算遠期費用。",
   },
   {
     q: "卡片評分不如預期怎麼辦？",
@@ -155,7 +155,7 @@ const FAQS = [
   },
   {
     q: "可以取消申請嗎？",
-    a: "卡片一經提交 PSA 後不可取消。若在 BOXIUM 收件後 48 小時內以書面通知取消，需支付 HK$50 行政費。",
+    a: "如尚未付款（awaiting_payment 狀態），可在申請詳情頁面自行取消。一旦付款完成後，卡片一經提交 PSA 就不可取消。若在 BOXIUM 收件後 48 小時內以書面通知取消，需支付 HK$50 行政費。",
   },
 ];
 
@@ -257,7 +257,7 @@ export default function Grading() {
           <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-3">
             服務流程
           </h2>
-          <p className="text-center text-gray-500 mb-10">您只需完成 3 個步驟 ，其餘由 BOXIUM 全程代辦跟進</p>
+          <p className="text-center text-gray-500 mb-10">您只需完成 3 個步驟（付款、寄卡、完成付款），其餘由 BOXIUM 全程代辦跟進</p>
           <div className="relative">
 
             <div className="space-y-4">

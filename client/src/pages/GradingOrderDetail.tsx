@@ -16,6 +16,10 @@ import {
   ExternalLink,
   XCircle,
   PartyPopper,
+  Bot,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldQuestion,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -221,6 +225,17 @@ export default function GradingOrderDetail() {
   const [alipayProofPreview, setAlipayProofPreview] = useState<string | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [aiVerifying, setAiVerifying] = useState(false);
+  const [aiVerifyResult, setAiVerifyResult] = useState<{
+    isValid: boolean;
+    confidence: "high" | "medium" | "low";
+    detectedAmount: string | null;
+    detectedOrderNo: string | null;
+    amountMatch: boolean | null;
+    orderNoMatch: boolean | null;
+    issues: string[];
+    summary: string;
+  } | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
 
   const submissionId = parseInt(params.id ?? "0", 10);
@@ -260,12 +275,34 @@ export default function GradingOrderDetail() {
     },
   });
 
+  const verifyAlipayProofMutation = trpc.grading.verifyAlipayProofWithAI.useMutation({
+    onSuccess: (result) => {
+      setAiVerifying(false);
+      setAiVerifyResult(result as any);
+    },
+    onError: (err: any) => {
+      setAiVerifying(false);
+      toast.error(`AI 核對失敗：${err.message}`);
+    },
+  });
+
   const handleAlipayProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAlipayProofFile(file);
+    setAiVerifyResult(null); // Reset AI result when new file selected
     const reader = new FileReader();
-    reader.onload = (ev) => setAlipayProofPreview(ev.target?.result as string);
+    reader.onload = (ev) => {
+      setAlipayProofPreview(ev.target?.result as string);
+      // Auto-trigger AI verification after file is loaded
+      const base64 = (ev.target?.result as string).split(",")[1];
+      setAiVerifying(true);
+      verifyAlipayProofMutation.mutate({
+        submissionId,
+        proofImageBase64: base64,
+        mimeType: file.type,
+      });
+    };
     reader.readAsDataURL(file);
   };
 
@@ -887,8 +924,14 @@ export default function GradingOrderDetail() {
 
                   {/* Upload proof */}
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-sm font-bold text-black mb-2">上傳付款截圖</p>
-                    <p className="text-xs text-gray-500 mb-3">完成付款後，請上傳支付寶 HK 付款成功截圖，管理員確認後訂單將自動完成。</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-bold text-black">上傳付款截圖</p>
+                      <div className="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                        <Bot className="h-3 w-3 text-[#06038d]" />
+                        <span className="text-xs text-[#06038d] font-semibold">AI 自動核對</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">完成付款後，請上傳支付寶 HK 付款成功截圖。系統將自動使用 AI 核對金額和單號。</p>
                     <input
                       type="file"
                       accept="image/*"
@@ -898,11 +941,86 @@ export default function GradingOrderDetail() {
                     {alipayProofPreview && (
                       <img src={alipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />
                     )}
+
+                    {/* AI Verification Status */}
+                    {aiVerifying && (
+                      <div className="mt-3 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <Loader2 className="h-4 w-4 text-[#06038d] animate-spin flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-[#06038d]">AI 核對中...</p>
+                          <p className="text-xs text-blue-600">正在分析截圖內容，核對金額和單號</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI Verification Result */}
+                    {!aiVerifying && aiVerifyResult && (
+                      <div className={`mt-3 rounded-lg p-3 border ${
+                        aiVerifyResult.isValid && aiVerifyResult.confidence !== 'low'
+                          ? 'bg-green-50 border-green-300'
+                          : aiVerifyResult.isValid
+                          ? 'bg-yellow-50 border-yellow-300'
+                          : 'bg-red-50 border-red-300'
+                      }`}>
+                        <div className="flex items-start gap-2">
+                          {aiVerifyResult.isValid && aiVerifyResult.confidence !== 'low' ? (
+                            <ShieldCheck className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          ) : aiVerifyResult.isValid ? (
+                            <ShieldQuestion className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <ShieldAlert className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-bold mb-1 ${
+                              aiVerifyResult.isValid && aiVerifyResult.confidence !== 'low' ? 'text-green-800' :
+                              aiVerifyResult.isValid ? 'text-yellow-800' : 'text-red-800'
+                            }`}>
+                              {aiVerifyResult.isValid && aiVerifyResult.confidence !== 'low' ? '✅ AI 核對通過' :
+                               aiVerifyResult.isValid ? '⚠️ AI 核對小心' : '❌ AI 核對未通過'}
+                              <span className="font-normal ml-1 opacity-70">(可信度: {aiVerifyResult.confidence === 'high' ? '高' : aiVerifyResult.confidence === 'medium' ? '中' : '低'})</span>
+                            </p>
+                            <p className={`text-xs mb-2 ${
+                              aiVerifyResult.isValid && aiVerifyResult.confidence !== 'low' ? 'text-green-700' :
+                              aiVerifyResult.isValid ? 'text-yellow-700' : 'text-red-700'
+                            }`}>{aiVerifyResult.summary}</p>
+                            <div className="grid grid-cols-2 gap-1.5 text-xs">
+                              {aiVerifyResult.detectedAmount !== null && (
+                                <div className={`flex items-center gap-1 ${
+                                  aiVerifyResult.amountMatch ? 'text-green-700' : 'text-red-700'
+                                }`}>
+                                  {aiVerifyResult.amountMatch ? '✔' : '✖'}
+                                  <span>金額: HK${aiVerifyResult.detectedAmount}</span>
+                                </div>
+                              )}
+                              {aiVerifyResult.detectedOrderNo !== null && (
+                                <div className={`flex items-center gap-1 ${
+                                  aiVerifyResult.orderNoMatch ? 'text-green-700' : 'text-red-700'
+                                }`}>
+                                  {aiVerifyResult.orderNoMatch ? '✔' : '✖'}
+                                  <span>單號: {aiVerifyResult.detectedOrderNo}</span>
+                                </div>
+                              )}
+                            </div>
+                            {aiVerifyResult.issues.length > 0 && (
+                              <ul className="mt-1.5 space-y-0.5">
+                                {aiVerifyResult.issues.map((issue, i) => (
+                                  <li key={i} className="text-xs text-red-700">• {issue}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {!aiVerifyResult.isValid && (
+                              <p className="text-xs text-gray-500 mt-1.5">如確認付款已完成，仍可提交截圖由管理員手動核對。</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-2 mt-3">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setShowAlipayQR(false); setAlipayProofFile(null); setAlipayProofPreview(null); }}
+                        onClick={() => { setShowAlipayQR(false); setAlipayProofFile(null); setAlipayProofPreview(null); setAiVerifyResult(null); }}
                         className="flex-1 border-gray-300 text-black"
                       >
                         返回
@@ -910,7 +1028,7 @@ export default function GradingOrderDetail() {
                       <Button
                         size="sm"
                         onClick={handleSubmitAlipayProof}
-                        disabled={!alipayProofFile || uploadingProof}
+                        disabled={!alipayProofFile || uploadingProof || aiVerifying}
                         className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
                       >
                         {uploadingProof ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />上傳中...</> : "提交截圖"}

@@ -1640,9 +1640,128 @@ export const gradingRouter = router({
       return { success: true, enabled: input.enabled };
     }),
 
-  // ─── Admin: Get grading maintenance mode status ───────────────────────────
+  // ─── Admin: Get grading maintenance mode status ───────────────────────────────────────────
   getGradingMaintenanceMode: adminProcedure.query(async () => {
     const enabled = await isGradingMaintenanceMode();
     return { enabled };
   }),
+
+  // ─── AI: Verify Alipay HK payment screenshot ───────────────────────────────────
+  /**
+   * AI 核對支付寶 HK 付款截圖
+   * 分析截圖是否為有效的支付寶 HK 付款成功記錄，並比對金額和備注
+   */
+  verifyAlipayProofWithAI: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        proofImageBase64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+
+      const { invokeLLM } = await import("../_core/llm");
+
+      const totalFee = parseFloat(submission.totalFeeHkd || "0");
+      const orderNo = submission.orderNo;
+
+      const imageDataUrl = `data:${input.mimeType};base64,${input.proofImageBase64}`;
+
+      const systemPrompt = `你是一個專業的支付寶 HK 付款截圖核對助手。你的任務是分析用戶上傳的截圖，判斷是否為有效的支付寶 HK 付款成功記錄。
+
+請以 JSON 格式回覆，不要加入任何其他文字：
+{
+  "isValid": true/false,
+  "confidence": "high"/"medium"/"low",
+  "detectedAmount": "偵測到的金額（如 1680）或 null",
+  "detectedOrderNo": "偵測到的備注單號或 null",
+  "amountMatch": true/false/null,
+  "orderNoMatch": true/false/null,
+  "issues": ["問題列表，如果沒有則為空陣列"],
+  "summary": "簡短的中文核對結果說明"
+}`;
+
+      const userPrompt = `請核對這張支付寶 HK 付款截圖：
+
+預期付款金額：HK$${totalFee.toLocaleString()}
+預期備注單號：${orderNo}
+
+請判斷：
+1. 是否為支付寶 HK 付款成功截圖（顯示「付款成功」或「Payment Successful」等字樣）
+2. 付款金額是否符合預期金額 HK$${totalFee.toLocaleString()}
+3. 備注是否包含單號 ${orderNo}`;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userPrompt },
+                { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
+              ],
+            },
+          ],
+        });
+
+        const rawContent = response.choices[0]?.message?.content;
+        const content = typeof rawContent === "string" ? rawContent : "";
+
+        // Parse JSON response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          return {
+            isValid: false,
+            confidence: "low" as const,
+            detectedAmount: null,
+            detectedOrderNo: null,
+            amountMatch: null,
+            orderNoMatch: null,
+            issues: ["無法解析 AI 回履"],
+            summary: "無法分析截圖，請確認上傳圖片正確",
+          };
+        }
+
+        const result = JSON.parse(jsonMatch[0]);
+        return {
+          isValid: Boolean(result.isValid),
+          confidence: (result.confidence || "low") as "high" | "medium" | "low",
+          detectedAmount: result.detectedAmount ?? null,
+          detectedOrderNo: result.detectedOrderNo ?? null,
+          amountMatch: result.amountMatch ?? null,
+          orderNoMatch: result.orderNoMatch ?? null,
+          issues: Array.isArray(result.issues) ? result.issues : [],
+          summary: result.summary || "核對完成",
+        };
+      } catch (err: any) {
+        console.error("[Grading] AI verify alipay proof error:", err);
+        return {
+          isValid: false,
+          confidence: "low" as const,
+          detectedAmount: null,
+          detectedOrderNo: null,
+          amountMatch: null,
+          orderNoMatch: null,
+          issues: ["AI 核對服務暫時不可用"],
+          summary: "AI 核對服務暫時不可用，您仍可提交截圖由管理員手動核對",
+        };
+      }
+    }),
 });
