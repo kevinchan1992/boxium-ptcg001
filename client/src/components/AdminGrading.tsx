@@ -318,14 +318,38 @@ function SubmissionDetailDialog({
     }
   }, [detail]);
 
-  // Reset grading step when dialog opens/closes
+  // Initialize grading step based on existing data when dialog opens
   React.useEffect(() => {
-    if (open) {
+    if (open && detail) {
+      // If any item already has a PSA grade saved, go directly to fill_result (step 3)
+      const hasGradedItems = (detail.items ?? []).some((item: any) => item.psaGrade);
+      // If upgrade was already done (upgradeCheckoutSessionId exists), show upgrade banner in step 3
+      const hasUpgrade = !!(detail as any).upgradeCheckoutSessionId;
+
+      if (hasGradedItems || hasUpgrade) {
+        setGradingStep('fill_result');
+        if (hasUpgrade) {
+          // Restore upgrade result banner from saved data
+          setUpgradeResult({
+            checkoutUrl: null,
+            diffFeeHkd: String((detail as any).upgradeDiffFeeHkd ?? '0'),
+            newTierName: String((detail as any).upgradeNewTierName ?? '升級層級'),
+          });
+        } else {
+          setUpgradeResult(null);
+        }
+      } else {
+        setGradingStep('ask_upgrade');
+        setUpgradeResult(null);
+      }
+      setSelectedUpgradeTierId(null);
+    } else if (!open) {
+      // Reset when dialog closes
       setGradingStep('ask_upgrade');
       setSelectedUpgradeTierId(null);
       setUpgradeResult(null);
     }
-  }, [open, submissionId]);
+  }, [open, submissionId, detail]);
 
   const updateStatusMutation = trpc.grading.admin.updateStatus.useMutation({
     onSuccess: () => {

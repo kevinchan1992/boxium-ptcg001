@@ -1062,11 +1062,23 @@ export const gradingRouter = router({
           batch = b || null;
         }
 
+        // Fetch upgrade tier name if exists
+        let upgradeNewTierName: string | null = null;
+        if (row.submission.upgradeNewTierId) {
+          const [upgradeTier] = await db
+            .select({ name: gradingServiceTiers.name })
+            .from(gradingServiceTiers)
+            .where(eq(gradingServiceTiers.id, row.submission.upgradeNewTierId))
+            .limit(1);
+          upgradeNewTierName = upgradeTier?.name ?? null;
+        }
+
         return {
           ...row.submission,
           user: row.user,
           items: (items as GradingSubmissionItem[]).map((item: GradingSubmissionItem) => ({ ...item, tier: tierMap.get(item.tierId) || null })),
           batch,
+          upgradeNewTierName,
         };
       }),
 

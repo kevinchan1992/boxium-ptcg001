@@ -8468,3 +8468,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
   - 步驟二（如需要）：顯示所有層級供選擇，計算並顯示差價，確認後發送補付通知
   - 步驟三：填寫鑑定結果（PSA 分數、證書號）
 - [x] 儲存 checkpoint
+
+---
+
+## Bug 修復：SubmissionDetailDialog 步驟狀態記憶
+
+- [x] 修復：重新開啟已填寫鑑定結果的申請時，自動跳到步驟三（偵測 items.psaGrade）
+- [x] 修復：已進行過層級升級的申請，重新開啟時顯示升級資訊橫幅並直接在步驟三
+- [x] 後端 getSubmissionDetail 加入 upgradeNewTierName 回傳
+- [x] 儲存 checkpoint
