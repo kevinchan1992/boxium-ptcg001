@@ -2687,3 +2687,103 @@ export function stopGradingAwaitingPaymentCleanupScheduler() {
     gradingAwaitingPaymentCleanupCronJob = null;
   }
 }
+
+// ─── PSA Grading: Upgrade diff fee overdue reminder (48 hours) ────────────────
+let gradingUpgradeOverdueCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startGradingUpgradeOverdueReminderScheduler() {
+  if (gradingUpgradeOverdueCronJob) return;
+  // Run every day at 11:00 HKT
+  gradingUpgradeOverdueCronJob = cron.schedule(
+    '0 11 * * *',
+    async () => {
+      try {
+        const { getDb: _getDb } = await import('./db');
+        const db = await _getDb();
+        if (!db) return;
+        const { gradingSubmissions: _gSubs } = await import('../drizzle/schema_new');
+        const { isNotNull, isNull, lt: _lt, and: _and } = await import('drizzle-orm');
+        const { getUserById } = await import('./userManagement');
+        const { createNotification } = await import('./db/notifications');
+        const { sendEmail } = await import('./emailService');
+
+        // Find submissions with upgrade checkout but not yet paid, created > 48h ago
+        const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+        const overdueUpgrades = await db
+          .select()
+          .from(_gSubs)
+          .where(
+            _and(
+              isNotNull(_gSubs.upgradeCheckoutSessionId),
+              isNull(_gSubs.upgradePaidAt),
+              _lt(_gSubs.upgradeCheckoutAt, cutoff48h)
+            )
+          );
+
+        for (const sub of overdueUpgrades) {
+          try {
+            const user = await getUserById(sub.userId);
+            if (!user) continue;
+
+            const diffFee = parseFloat(sub.upgradeDiffFeeHkd ?? '0');
+            const newTotal = parseFloat(sub.totalFeeHkd ?? '0');
+
+            // Send in-app notification
+            await createNotification({
+              userId: sub.userId,
+              type: 'payment',
+              title: '⚠️ 提醒：PSA 鑑定服務升級差價待補付',
+              body: `申請 ${sub.orderNo} 的服務層級已升級，差價 HK$${diffFee.toLocaleString()} 尚未補付，新總費用 HK$${newTotal.toLocaleString()}，請盡快完成付款。`,
+              linkUrl: `/grading/orders/${sub.id}`,
+            });
+
+            // Send email reminder
+            await sendEmail({
+              to: user.email,
+              subject: `[BOXIUM] 提醒：PSA 鑑定服務升級差價待補付 - ${sub.orderNo}`,
+              html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #06038d;">PSA 鑑定服務升級差價提醒</h2>
+                  <p>您好 ${user.name ?? '客戶'}，</p>
+                  <p>您的 PSA 代客鑑定申請 <strong>${sub.orderNo}</strong> 的服務層級已升級，但差價尚未補付。</p>
+                  <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+                    <tr style="background: #f5f5f5;">
+                      <td style="padding: 8px 12px; font-weight: bold;">申請單號</td>
+                      <td style="padding: 8px 12px;">${sub.orderNo}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 12px; font-weight: bold;">待補付差價</td>
+                      <td style="padding: 8px 12px; color: #e65c00; font-weight: bold;">HK$${diffFee.toLocaleString()}</td>
+                    </tr>
+                    <tr style="background: #f5f5f5;">
+                      <td style="padding: 8px 12px; font-weight: bold;">新總費用</td>
+                      <td style="padding: 8px 12px; font-weight: bold;">HK$${newTotal.toLocaleString()}</td>
+                    </tr>
+                  </table>
+                  <p>請盡快登入 BOXIUM 完成差價補付，以確保您的鑑定申請順利進行。</p>
+                  <a href="https://boxium.asia/grading/orders/${sub.id}" style="display: inline-block; background: #06038d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-top: 8px;">立即補付差價</a>
+                  <p style="margin-top: 24px; color: #888; font-size: 12px;">BOXIUM 團隊</p>
+                </div>
+              `,
+            });
+
+            console.log(`[GradingUpgradeOverdue] Sent 48h reminder for ${sub.orderNo}`);
+          } catch (err) {
+            console.error(`[GradingUpgradeOverdue] Error processing ${sub.orderNo}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[GradingUpgradeOverdue] Scheduler error:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+  console.log('[GradingUpgradeOverdue] PSA grading upgrade overdue reminder scheduler started (daily at 11:00 HKT)');
+}
+
+export function stopGradingUpgradeOverdueReminderScheduler() {
+  if (gradingUpgradeOverdueCronJob) {
+    gradingUpgradeOverdueCronJob.stop();
+    gradingUpgradeOverdueCronJob = null;
+  }
+}

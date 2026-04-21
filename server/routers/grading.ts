@@ -1427,6 +1427,7 @@ export const gradingRouter = router({
             upgradeCheckoutSessionId: session.id,
             upgradeDiffFeeHkd: diffFee.toFixed(2),
             upgradeNewTierId: input.newTierId,
+            upgradeCheckoutAt: new Date(), // Record when upgrade checkout was created
             totalFeeHkd: newTotal.toFixed(2), // Update total fee immediately
           })
           .where(eq(gradingSubmissions.id, input.submissionId));

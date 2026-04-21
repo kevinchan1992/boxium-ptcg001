@@ -1611,6 +1611,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   upgradeCheckoutSessionId: varchar("upgradeCheckoutSessionId", { length: 128 }),
   upgradeDiffFeeHkd: decimal("upgradeDiffFeeHkd", { precision: 10, scale: 2 }),
   upgradeNewTierId: int("upgradeNewTierId"),
+  upgradeCheckoutAt: timestamp("upgradeCheckoutAt"), // When the upgrade checkout was created
   upgradePaidAt: timestamp("upgradePaidAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

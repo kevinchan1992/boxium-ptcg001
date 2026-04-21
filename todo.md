@@ -8488,3 +8488,13 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 新增：用戶端申請詳情頁加入「服務層級已升級，請補付差價」橫幅（含層級名稱、差價金額、補付按鈕）
 - [x] 後端用戶端 getSubmissionDetail 加入 upgradeNewTierName 回傳
 - [x] 儲存 checkpoint
+
+---
+
+## 升級差價三項後續功能
+
+- [x] 用戶端：/grading/orders/:id?upgrade_payment=success 加入綠色補付成功橫幅（顯示新層級、差價、新總費用）
+- [x] Admin：申請管理列表對「已升級但差價未付」的申請加入「⇑ 待補付」橙色標籤
+- [x] 後端：升級差價逾期提醒排程（每天 11:00 HKT 檢查超過 48 小時未補付，發送 Email 和站內通知）
+- [x] 後端：在 schema 加入 upgradeCheckoutAt 欄位並完成 migration
+- [x] 儲存 checkpoint

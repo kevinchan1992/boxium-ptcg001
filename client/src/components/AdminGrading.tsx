@@ -1187,6 +1187,11 @@ function SubmissionManagement() {
                         <AlertCircle className="h-2.5 w-2.5" />截圖
                       </span>
                     )}
+                    {sub.upgradeCheckoutSessionId && !sub.upgradePaidAt && (
+                      <span className="mt-1 flex items-center justify-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                        ⇑ 待補付
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                       <Select

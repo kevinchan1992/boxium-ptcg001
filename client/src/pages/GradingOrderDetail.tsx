@@ -212,6 +212,7 @@ export default function GradingOrderDetail() {
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const isPaymentSuccess = searchParams.get("payment") === "success";
+  const isUpgradePaymentSuccess = searchParams.get("upgrade_payment") === "success";
 
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
   const [payingLoading, setPayingLoading] = useState(false);
@@ -475,6 +476,42 @@ export default function GradingOrderDetail() {
               打印申請單
             </Button>
           </div>
+
+          {/* ── Upgrade Payment Success Banner ── */}
+          {isUpgradePaymentSuccess && !isCancelled && (
+            <div className="bg-green-50 border-2 border-green-400 rounded-xl p-5 mb-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-green-800 text-base">升級差價補付成功！</p>
+                  <p className="text-sm text-green-600">申請單號：<span className="font-mono font-bold">{submission.orderNo}</span></p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-green-200 p-4">
+                <p className="text-sm font-bold text-gray-800 mb-2">補付摘要</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">新服務層級：</span>
+                    <span className="font-semibold text-gray-800">{(submission as any).upgradeNewTierName ?? '已升級'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">補付差價：</span>
+                    <span className="font-bold text-green-700">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">新總費用：</span>
+                    <span className="font-bold text-[#06038d]">HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">卡牌數量：</span>
+                    <span className="font-semibold text-gray-800">{submission.items.length} 張</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── Payment Success Banner ── */}
           {isPaymentSuccess && !isCancelled && (
