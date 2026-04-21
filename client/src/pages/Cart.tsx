@@ -78,23 +78,7 @@ export default function Cart() {
   const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const isStripeSuccess = urlParams.get('success') === 'true';
   const stripeOrderNos = urlParams.get('orders')?.split(',').filter(Boolean) ?? [];
-  const gradingIdParam = urlParams.get('grading_id');
-  const gradingSubmissionId = gradingIdParam ? parseInt(gradingIdParam, 10) : null;
   const utils = trpc.useUtils();
-  // ── Grading submission payment (from grading_id URL param) ──
-  const { data: gradingSubmission, isLoading: gradingLoading } = trpc.grading.getSubmissionDetail.useQuery(
-    { id: gradingSubmissionId! },
-    { enabled: !!user && !!gradingSubmissionId && !isNaN(gradingSubmissionId!) }
-  );
-  const gradingCheckoutMutation = trpc.grading.createGradingCartCheckout.useMutation({
-    onSuccess: (data: any) => {
-      if (data.checkoutUrl) {
-        toast.success('正在跳轉至 Stripe 付款頁面...');
-        window.open(data.checkoutUrl, '_blank');
-      }
-    },
-    onError: (err: any) => toast.error(`付款失敗：${err.message}`),
-  });
 
   const { data: cartItems, isLoading } = trpc.marketplace.getMyCart.useQuery(undefined, {
     enabled: !!user,
@@ -206,8 +190,8 @@ export default function Cart() {
   }, [activeItems]);
 
   // isEmpty must be computed before hooks that depend on it
-  // Cart is empty only if both regular cart items AND pending auction orders are empty AND no grading submission
-  const isEmpty = (!cartItems || cartItems.length === 0) && (!pendingAuctionOrders || pendingAuctionOrders.length === 0) && !gradingSubmissionId;
+  // Cart is empty only if both regular cart items AND pending auction orders are empty
+  const isEmpty = (!cartItems || cartItems.length === 0) && (!pendingAuctionOrders || pendingAuctionOrders.length === 0);
 
   // Fetch watchlist for personalized recommendations (always call hooks, use enabled to control)
   const { data: watchlist } = trpc.profile.getWatchlist.useQuery(undefined, {
@@ -490,75 +474,6 @@ export default function Cart() {
             )}
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {/* ── Grading Submission Payment ── */}
-              {gradingSubmissionId && (
-                <div className="bg-white rounded-xl shadow-sm border border-[#06038d]/30 overflow-hidden">
-                  <div className="flex items-center gap-2 px-5 py-3 border-b border-[#06038d]/10 bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <span className="text-lg">🔍</span>
-                    <span className="font-semibold text-[#06038d] text-sm">PSA 代客鑑定付款</span>
-                  </div>
-                  {gradingLoading ? (
-                    <div className="p-6 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#06038d]" />
-                    </div>
-                  ) : gradingSubmission ? (
-                    <div className="p-4 space-y-3">
-                      {/* Submission info */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">申請單號：{gradingSubmission.orderNo}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">共 {gradingSubmission.items?.length ?? 0} 張卡牌</p>
-                          {gradingSubmission.status !== 'awaiting_payment' && (
-                            <p className="text-xs text-amber-600 mt-1">此申請已不需要付款（狀態：{gradingSubmission.status}）</p>
-                          )}
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-[#06038d] text-lg">HK${parseFloat(gradingSubmission.totalFeeHkd ?? '0').toLocaleString()}</p>
-                          <p className="text-xs text-gray-400">待付款</p>
-                        </div>
-                      </div>
-                      {/* Card list preview */}
-                      {gradingSubmission.items && gradingSubmission.items.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg p-3 space-y-1 max-h-32 overflow-y-auto">
-                          {gradingSubmission.items.slice(0, 5).map((item: any, idx: number) => (
-                            <div key={item.id} className="flex items-center gap-2 text-xs text-gray-600">
-                              <span className="text-[#06038d] font-semibold flex-shrink-0">#{idx + 1}</span>
-                              {item.cardImageUrl && <img src={item.cardImageUrl} alt={item.cardName} className="w-6 h-8 object-contain flex-shrink-0" />}
-                              <span className="truncate">{item.cardName}</span>
-                              <span className="text-gray-400 flex-shrink-0">{item.tier?.name ?? ''}</span>
-                            </div>
-                          ))}
-                          {gradingSubmission.items.length > 5 && (
-                            <p className="text-xs text-gray-400">及其他 {gradingSubmission.items.length - 5} 張...</p>
-                          )}
-                        </div>
-                      )}
-                      {/* Payment buttons */}
-                      {gradingSubmission.status === 'awaiting_payment' && (
-                        <div className="space-y-2 pt-1">
-                          <button
-                            onClick={() => gradingCheckoutMutation.mutate({ submissionId: gradingSubmission.id, origin: window.location.origin })}
-                            disabled={gradingCheckoutMutation.isPending}
-                            className="w-full h-10 rounded-lg text-sm font-bold bg-[#06038d] text-white hover:bg-[#06038d]/90 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-                          >
-                            {gradingCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                            💳 信用卡付款 (Stripe)
-                          </button>
-                          <button
-                            onClick={() => setLocation(`/grading/orders/${gradingSubmission.id}`)}
-                            className="w-full h-10 rounded-lg text-sm font-semibold border border-[#06038d] text-[#06038d] hover:bg-blue-50 flex items-center justify-center gap-2 transition-all"
-                          >
-                            📱 支付寳 HK 付款
-                          </button>
-                          <p className="text-xs text-gray-400 text-center">選擇支付寳 HK 將跳轉至申請詳情頁面</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">找不到申請記錄</div>
-                  )}
-                </div>
-              )}
               {/* Available items */}
               {activeItems.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

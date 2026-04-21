@@ -309,9 +309,8 @@ export const gradingRouter = router({
 
       const totalFeeHkd = input.items.reduce((sum, item) => {
         const tier = tierMap.get(item.tierId)!;
-        return sum + parseFloat(tier.feeHkd) * (item.quantity ?? 1);
+        return sum + parseFloat(tier.feeHkd);
       }, 0);
-      const totalCardCount = input.items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
 
       // Get next open batch
       const [nextBatch] = await db
@@ -348,39 +347,22 @@ export const gradingRouter = router({
 
       const submissionId = submissionResult.id;
 
-      // Create submission items (expand by quantity)
-      const expandedItems: Array<{
-        submissionId: number;
-        cardName: string;
-        cardSet: string | null;
-        cardNumber: string | null;
-        cardLanguage: string;
-        cardImageUrl: string | null;
-        tierId: number;
-        feeHkd: string;
-        condition: string;
-        notes: string | null;
-        itemStatus: "pending";
-      }> = [];
-      for (const item of input.items) {
-        const qty = item.quantity ?? 1;
-        for (let q = 0; q < qty; q++) {
-          expandedItems.push({
-            submissionId,
-            cardName: item.cardName,
-            cardSet: item.cardSet || null,
-            cardNumber: item.cardNumber || null,
-            cardLanguage: item.cardLanguage,
-            cardImageUrl: item.cardImageUrl || null,
-            tierId: item.tierId,
-            feeHkd: tierMap.get(item.tierId)!.feeHkd,
-            condition: item.condition,
-            notes: null,
-            itemStatus: "pending" as const,
-          });
-        }
-      }
-      await db.insert(gradingSubmissionItems).values(expandedItems);
+      // Create submission items
+      await db.insert(gradingSubmissionItems).values(
+        input.items.map((item) => ({
+          submissionId,
+          cardName: item.cardName,
+          cardSet: item.cardSet || null,
+          cardNumber: item.cardNumber || null,
+          cardLanguage: item.cardLanguage,
+          cardImageUrl: item.cardImageUrl || null,
+          tierId: item.tierId,
+          feeHkd: tierMap.get(item.tierId)!.feeHkd,
+          condition: item.condition,
+          notes: item.notes || null,
+          itemStatus: "pending" as const,
+        }))
+      );
 
       // Create Stripe checkout session
       const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
@@ -397,7 +379,7 @@ export const gradingRouter = router({
               currency: "hkd",
               product_data: {
                 name: `PSA 代客鑑定服務 - ${orderNo}`,
-                description: `申請單號：${orderNo}，共 ${totalCardCount} 張卡牌`,
+                description: `申請單號：${orderNo}，共 ${input.items.length} 張卡牌`,
               },
               unit_amount: amountCents,
             },
@@ -558,83 +540,7 @@ export const gradingRouter = router({
       return { success: true };
     }),
 
-  // ─── Protected: Create Stripe checkout for awaiting_payment submission (from cart) ───
-  createGradingCartCheckout: protectedProcedure
-    .input(
-      z.object({
-        submissionId: z.number().int().positive(),
-        origin: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const [submission] = await db
-        .select()
-        .from(gradingSubmissions)
-        .where(
-          and(
-            eq(gradingSubmissions.id, input.submissionId),
-            eq(gradingSubmissions.userId, ctx.user.id),
-            eq(gradingSubmissions.status, "awaiting_payment")
-          )
-        )
-        .limit(1);
-
-      if (!submission) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在或已不需要付款" });
-      }
-
-      const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
-      const stripe = getStripe();
-      const amountCents = Math.round(parseFloat(submission.totalFeeHkd) * 100);
-
-      // Get item count
-      const items = await db
-        .select({ id: gradingSubmissionItems.id })
-        .from(gradingSubmissionItems)
-        .where(eq(gradingSubmissionItems.submissionId, submission.id));
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "hkd",
-              product_data: {
-                name: `PSA 代客鑑定服務 - ${submission.orderNo}`,
-                description: `申請單號：${submission.orderNo}，共 ${items.length} 張卡牌`,
-              },
-              unit_amount: amountCents,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        customer_email: user.email,
-        client_reference_id: ctx.user.id.toString(),
-        allow_promotion_codes: true,
-        metadata: {
-          type: "grading_submission_payment",
-          submission_id: submission.id.toString(),
-          order_no: submission.orderNo,
-          user_id: ctx.user.id.toString(),
-        },
-        success_url: `${input.origin}/grading/orders/${submission.id}?payment=success`,
-        cancel_url: `${input.origin}/cart?grading_id=${submission.id}`,
-      });
-
-      // Update stripe session ID
-      await db
-        .update(gradingSubmissions)
-        .set({ stripePaymentIntentId: session.id })
-        .where(eq(gradingSubmissions.id, submission.id));
-
-      return { checkoutUrl: session.url, submissionId: submission.id, orderNo: submission.orderNo };
-    }),
-
-  // ─── Protected: Create payment intent (after grading completed) ─────────────────────
+  // ─── Protected: Create payment intent (after grading completed) ───────────
   createPaymentIntent: protectedProcedure
     .input(
       z.object({
