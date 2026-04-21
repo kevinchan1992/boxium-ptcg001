@@ -265,6 +265,18 @@ const TERMS = [
 const DRAFT_KEY_PREFIX = "boxium_grading_draft_v2";
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+function formatDraftAge(savedAt: number): string {
+  const diffMs = Date.now() - savedAt;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffMins < 1) return "剛才";
+  if (diffMins < 60) return `${diffMins} 分鐘前`;
+  if (diffHours < 24) return `${diffHours} 小時前`;
+  if (diffDays === 1) return "昨天";
+  return `${diffDays} 天前`;
+}
+
 function getDraftKey(userId?: number | string): string {
   return userId ? `${DRAFT_KEY_PREFIX}_${userId}` : `${DRAFT_KEY_PREFIX}_guest`;
 }
@@ -502,7 +514,12 @@ export default function GradingSubmit() {
             <div className="text-blue-500 text-lg flex-shrink-0 mt-0.5">💾</div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-blue-800 mb-1">發現上次未完成的申請草稿</p>
-              <p className="text-xs text-blue-700">已自動恢復上次的進度，您可以繼續完成申請。</p>
+              <p className="text-xs text-blue-700">
+                已自動恢復上次的進度，您可以繼續完成申請。
+                {existingDraft?.savedAt && (
+                  <span className="ml-1 text-blue-500">（{formatDraftAge(existingDraft.savedAt)}儲存）</span>
+                )}
+              </p>
             </div>
             <button
               onClick={handleDiscardDraft}
@@ -671,6 +688,8 @@ export default function GradingSubmit() {
                   const cardName = item.isManual
                     ? item.manualCardName
                     : (item.card?.name ?? "未知卡牌");
+                  const qty = (item as any).quantity ?? 1;
+                  const itemFee = selectedTier ? parseFloat(selectedTier.feeHkd) * qty : 0;
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2 min-w-0">
@@ -683,7 +702,7 @@ export default function GradingSubmit() {
                         )}
                         <div className="min-w-0">
                           <p className="font-semibold text-sm text-gray-900 truncate">
-                            #{idx + 1} {cardName}
+                            #{idx + 1} {cardName}{qty > 1 ? <span className="text-[#06038d] font-bold"> × {qty}</span> : null}
                           </p>
                           {!item.isManual && item.card?.cardNumber && (
                             <p className="text-xs text-gray-500">{item.card.cardNumber}</p>
@@ -694,7 +713,7 @@ export default function GradingSubmit() {
                         </div>
                       </div>
                       <span className="font-bold text-black flex-shrink-0">
-                        HK${selectedTier ? parseFloat(selectedTier.feeHkd).toLocaleString() : "—"}
+                        HK${selectedTier ? itemFee.toLocaleString() : "—"}
                       </span>
                     </div>
                   );
@@ -702,7 +721,9 @@ export default function GradingSubmit() {
                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                   <div>
                     <p className="font-bold text-gray-900">代送 PSA 費用合計</p>
-                    <p className="text-xs text-gray-500">費用已包含 BOXIUM 代辦服務費</p>
+                    <p className="text-xs text-gray-500">
+                      共 {items.reduce((sum, i) => sum + ((i as any).quantity ?? 1), 0)} 張卡牌 · 費用已包含 BOXIUM 代辦服務費
+                    </p>
                   </div>
                   <span className="text-2xl font-bold text-[#06038d]">
                     HK${totalFee.toLocaleString()}
