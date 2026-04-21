@@ -128,6 +128,11 @@ function ItemCard({
               {cardLabel}
             </span>
           )}
+          {!isExpanded && (item.quantity ?? 1) > 1 && (
+            <span className="text-xs font-bold text-[#06038d] bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 flex-shrink-0">
+              × {item.quantity}
+            </span>
+          )}
           {!isExpanded && isFilled && (
             <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
           )}
