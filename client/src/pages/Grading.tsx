@@ -100,7 +100,7 @@ const STEPS = [
   {
     step: 7,
     title: "寄回卡牌",
-    desc: "付款確認後， BOXIUM 安排將鑑定完成的卡牌寄回給您，附上 PSA 鑑定證書",
+    desc: "付款確認後， BOXIUM 安排將鑑定完成的卡牌寄回給您",
     icon: Truck,
   },
 ];
