@@ -410,7 +410,7 @@ function SubmissionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border border-gray-200">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-white text-gray-900 border border-gray-200 w-[calc(100vw-2rem)] sm:w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gray-900">
             <Package className="h-5 w-5 text-[#06038d]" />
@@ -472,7 +472,7 @@ function SubmissionDetailDialog({
                         <p className="text-sm font-medium text-gray-900 truncate">{item.cardName}</p>
                         <p className="text-xs text-gray-700">{[item.cardSet, item.cardNumber].filter(Boolean).join(" · ")}</p>
                       </div>
-                      <div className="shrink-0 flex items-center gap-1.5">
+                      <div className="shrink-0 flex flex-wrap items-center gap-1 max-w-[110px] justify-end">
                         {item.tier?.name && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">{item.tier.name}</span>}
                         {item.psaGrade && <span className="text-xs bg-[#06038d] text-white px-1.5 py-0.5 rounded font-bold">PSA {item.psaGrade}</span>}
                       </div>

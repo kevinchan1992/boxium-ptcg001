@@ -1808,7 +1808,7 @@ export const gradingRouter = router({
   // ─── Admin: Seller Center maintenance mode ────────────────────────────────
   getSellerCenterAccess: publicProcedure.query(async ({ ctx }) => {
     const enabled = await getSystemSetting("seller_center_maintenance_mode");
-    const maintenanceMode = enabled === "true";
+    const maintenanceMode = enabled?.settingValue === "true";
     if (!maintenanceMode) return { allowed: true, maintenanceMode: false };
     if (!ctx.user) return { allowed: false, maintenanceMode: true };
     if (ctx.user.role === "admin") return { allowed: true, maintenanceMode: true };
@@ -1831,6 +1831,6 @@ export const gradingRouter = router({
 
   getSellerCenterMaintenanceMode: adminProcedure.query(async () => {
     const val = await getSystemSetting("seller_center_maintenance_mode");
-    return { enabled: val === "true" };
+    return { enabled: val?.settingValue === "true" };
   }),
 });
