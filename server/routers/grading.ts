@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
-import { getDb, getSystemSetting, setSystemSetting, isGradingMaintenanceMode, isGradingWhitelisted } from "../db";
+import { getDb, getSystemSetting, setSystemSetting, isGradingMaintenanceMode, isGradingWhitelisted, createAuditLog } from "../db";
 import {
   gradingServiceTiers,
   gradingBatches,
@@ -1779,4 +1779,58 @@ export const gradingRouter = router({
         };
       }
     }),
+
+  // ─── Admin: Delete grading submission ────────────────────────────────────
+  adminDeleteSubmission: adminProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [sub] = await db
+        .select({ id: gradingSubmissions.id, orderNo: gradingSubmissions.orderNo })
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.id))
+        .limit(1);
+      if (!sub) throw new TRPCError({ code: "NOT_FOUND", message: "申請單不存在" });
+      // Delete items first, then submission
+      await db.delete(gradingSubmissionItems).where(eq(gradingSubmissionItems.submissionId, input.id));
+      await db.delete(gradingSubmissions).where(eq(gradingSubmissions.id, input.id));
+      await createAuditLog({
+        adminId: ctx.user.id,
+        action: "delete_grading_submission",
+        targetType: "grading_submission",
+        targetId: input.id,
+        details: `管理員刪除鑑定申請 ${sub.orderNo}`,
+      });
+      return { success: true, orderNo: sub.orderNo };
+    }),
+
+  // ─── Admin: Seller Center maintenance mode ────────────────────────────────
+  getSellerCenterAccess: publicProcedure.query(async ({ ctx }) => {
+    const enabled = await getSystemSetting("seller_center_maintenance_mode");
+    const maintenanceMode = enabled === "true";
+    if (!maintenanceMode) return { allowed: true, maintenanceMode: false };
+    if (!ctx.user) return { allowed: false, maintenanceMode: true };
+    if (ctx.user.role === "admin") return { allowed: true, maintenanceMode: true };
+    return { allowed: false, maintenanceMode: true };
+  }),
+
+  setSellerCenterMaintenanceMode: adminProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await setSystemSetting("seller_center_maintenance_mode", input.enabled ? "true" : "false", "賣家中心維護模式開關");
+      await createAuditLog({
+        adminId: ctx.user.id,
+        action: input.enabled ? "seller_center_maintenance_on" : "seller_center_maintenance_off",
+        targetType: "system",
+        targetId: null,
+        details: `賣家中心維護模式已${input.enabled ? "開啟" : "關閉"}`,
+      });
+      return { success: true, enabled: input.enabled };
+    }),
+
+  getSellerCenterMaintenanceMode: adminProcedure.query(async () => {
+    const val = await getSystemSetting("seller_center_maintenance_mode");
+    return { enabled: val === "true" };
+  }),
 });

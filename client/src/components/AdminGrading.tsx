@@ -1194,6 +1194,16 @@ function SubmissionManagement() {
     },
     onError: (err: any) => toast.error(err.message),
   });
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; orderNo: string } | null>(null);
+  const deleteMutation = trpc.grading.adminDeleteSubmission.useMutation({
+    onSuccess: (data) => {
+      toast.success(`申請單 ${data.orderNo} 已刪除`);
+      setDeleteTarget(null);
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   return (
     <div className="space-y-4">
@@ -1309,14 +1319,25 @@ function SubmissionManagement() {
                     </Select>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <Button
-                      size="sm"
-                      onClick={() => { setSelectedSubmissionId(sub.id); setShowDetailDialog(true); }}
-                      className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-7 px-3 text-xs"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      管理
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        size="sm"
+                        onClick={() => { setSelectedSubmissionId(sub.id); setShowDetailDialog(true); }}
+                        className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-7 px-3 text-xs"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        管理
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDeleteTarget({ id: sub.id, orderNo: sub.orderNo })}
+                        className="h-7 px-2 text-red-400 hover:text-red-600 hover:bg-red-50"
+                        title="刪除申請單"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1335,6 +1356,34 @@ function SubmissionManagement() {
           utils.grading.admin.listBatchesWithStats.invalidate();
         }}
       />
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              刪除申請單
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-700">
+            確定要刪除申請單 <span className="font-mono font-bold text-gray-900">{deleteTarget?.orderNo}</span> 嗎？
+          </p>
+          <p className="text-xs text-red-500">此操作無法復原，申請單及所有卡牌資料將被永久刪除。</p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="text-gray-700">
+              取消
+            </Button>
+            <Button
+              onClick={() => deleteTarget && deleteMutation.mutate({ id: deleteTarget.id })}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              確定刪除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

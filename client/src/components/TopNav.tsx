@@ -59,6 +59,8 @@ export function TopNav() {
   };
 
   const { data: user } = trpc.auth.me.useQuery();
+  const { data: sellerCenterAccess } = trpc.grading.getSellerCenterAccess.useQuery(undefined, { staleTime: 60000 });
+  const showSellButton = user?.role === 'admin' || sellerCenterAccess?.allowed !== false;
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
@@ -278,14 +280,16 @@ export function TopNav() {
             <div className="flex-1" />
 
             {/* 出售商品 button */}
-            <motion.button
-              onClick={handleSellClick}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
-            >
-              <Tag className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>{t("topnav.sellItem")}</span>
-            </motion.button>
+            {showSellButton && (
+              <motion.button
+                onClick={handleSellClick}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
+              >
+                <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{t("topnav.sellItem")}</span>
+              </motion.button>
+            )}
 
             {/* Shopping Cart — logged-in only */}
             {user && (
@@ -556,6 +560,7 @@ export function TopNav() {
               ))}
 
               {/* Sell link in hamburger menu — no icon */}
+              {showSellButton && (
               <motion.div
                 initial={{ x: -16, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -568,6 +573,7 @@ export function TopNav() {
                   出售商品
                 </button>
               </motion.div>
+              )}
 
               {/* Admin link */}
               {user?.role === "admin" && (

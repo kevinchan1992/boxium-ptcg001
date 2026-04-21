@@ -45,6 +45,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 import GradingMaintenanceGuard from "./components/GradingMaintenanceGuard";
+import SellerCenterMaintenanceGuard from "./components/SellerCenterMaintenanceGuard";
 import MessageCenter from "./components/MessageCenter";
 import { trpc } from "./lib/trpc";
 
@@ -119,7 +120,9 @@ function Router() {
         }}
       </Route>
       <Route path="/wishlist" component={Wishlist} />
-      <Route path="/seller" component={SellerDashboard} />
+      <Route path="/seller">
+        <SellerCenterMaintenanceGuard><SellerDashboard /></SellerCenterMaintenanceGuard>
+      </Route>
       <Route path="/orders">
         <Redirect to="/profile?tab=orders" />
       </Route>

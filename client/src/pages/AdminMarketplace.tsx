@@ -8174,6 +8174,8 @@ function MaintenanceModeTab() {
   const { data: modeData, isLoading: modeLoading } = trpc.marketplace.getMarketplaceMaintenanceMode.useQuery();
   // Grading maintenance
   const { data: gradingModeData, isLoading: gradingModeLoading } = trpc.grading.getGradingMaintenanceMode.useQuery();
+  // Seller center maintenance
+  const { data: sellerModeData, isLoading: sellerModeLoading } = trpc.grading.getSellerCenterMaintenanceMode.useQuery();
   const { data: whitelistData, isLoading: whitelistLoading } = trpc.marketplace.getMarketplaceWhitelist.useQuery();
   const [searchEmail, setSearchEmail] = useState('');
   const [searchResult, setSearchResult] = useState<{ id: number; name: string; email: string } | null | 'not_found'>(null);
@@ -8192,6 +8194,13 @@ function MaintenanceModeTab() {
     onSuccess: (data) => {
       toast.success(data.enabled ? '鑑定服務維護模式已開啟' : '鑑定服務維護模式已關閉');
       utils.grading.getGradingMaintenanceMode.invalidate();
+    },
+    onError: (e: any) => toast.error(parseApiError(e)),
+  });
+  const toggleSellerMaintenanceMutation = trpc.grading.setSellerCenterMaintenanceMode.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.enabled ? '賣家中心維護模式已開啟' : '賣家中心維護模式已關閉');
+      utils.grading.getSellerCenterMaintenanceMode.invalidate();
     },
     onError: (e: any) => toast.error(parseApiError(e)),
   });
@@ -8220,6 +8229,7 @@ function MaintenanceModeTab() {
   const isSearching = searchQuery.isFetching;
   const isMaintenanceOn = modeData?.enabled ?? false;
   const isGradingMaintenanceOn = gradingModeData?.enabled ?? false;
+  const isSellerMaintenanceOn = sellerModeData?.enabled ?? false;
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
@@ -8276,6 +8286,32 @@ function MaintenanceModeTab() {
           </div>
         )}
       </div>
+
+      {/* ── 賣家中心維護模式 ── */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">🛒 賣家中心維護模式</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {sellerModeLoading ? '載入中...' : isSellerMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前賣家中心正常開放'}
+            </p>
+          </div>
+          <Button
+            onClick={() => toggleSellerMaintenanceMutation.mutate({ enabled: !isSellerMaintenanceOn })}
+            disabled={sellerModeLoading || toggleSellerMaintenanceMutation.isPending}
+            className={isSellerMaintenanceOn ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+          >
+            {toggleSellerMaintenanceMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : isSellerMaintenanceOn ? <ShieldOff className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+            {isSellerMaintenanceOn ? '關閉維護模式' : '開啟維護模式'}
+          </Button>
+        </div>
+        {isSellerMaintenanceOn && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+            ⚠️ 賣家中心維護模式已開啟。非管理員用戶將看不到賣家中心頁面及「出售商品」按鈕。
+          </div>
+        )}
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900 mb-3">白名單管理</h3>
         <p className="text-sm text-gray-500 mb-4">白名單用戶在維護模式下仍可正常訪問市集。管理員自動擁有訪問權限，無需加入白名單。</p>
