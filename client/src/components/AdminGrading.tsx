@@ -538,6 +538,20 @@ function SubmissionDetailDialog({
                   <Label className="text-sm font-bold text-gray-900">升級差價待確認</Label>
                 </div>
                 <p className="text-xs text-gray-700 mb-1">層級升級差價：<span className="font-bold text-orange-700">HK${(detail as any).upgradeDiffFeeHkd ?? '—'}</span></p>
+                <p className="text-xs text-gray-700 mb-1">升級至：<span className="font-bold text-orange-700">{(detail as any).upgradeNewTierName ?? '—'}</span></p>
+                {/* Show Alipay proof screenshot if submitted for upgrade */}
+                {detail.alipayProofImageUrl && detail.alipayProofStatus === "pending_review" && (
+                  <div className="mt-2 mb-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-1">支付寶補付截圖：</p>
+                    <img
+                      src={detail.alipayProofImageUrl}
+                      alt="補付截圖"
+                      className="w-full max-h-48 object-contain rounded-lg border border-orange-200 cursor-pointer"
+                      onClick={() => window.open(detail.alipayProofImageUrl, "_blank")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">提交時間：{detail.alipayProofSubmittedAt ? new Date(detail.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
+                  </div>
+                )}
                 <p className="text-xs text-gray-700 mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>
                 <Button
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white"

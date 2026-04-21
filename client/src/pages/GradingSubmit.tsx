@@ -573,10 +573,13 @@ export default function GradingSubmit() {
               // Check if draft is expiring soon (within 24h of 7-day expiry)
               const draftAgeDays = draft?.savedAt ? (Date.now() - draft.savedAt) / (1000 * 60 * 60 * 24) : 0;
               const isExpiringSoon = draftAgeDays >= 6;
-              // First card thumbnail for preview
-              const firstCard = draft?.items?.find((i: any) => i.card !== null)?.card ?? null;
-              const firstCardThumb = firstCard?.imageUrl ?? null;
-              const firstCardName = firstCard?.name ?? (draft?.items?.[0]?.manualCardName || null);
+              // First 3 card thumbnails for preview
+              const draftCardsWithImages = (draft?.items ?? []).filter((i: any) => i.card?.imageUrl);
+              const previewThumbs = draftCardsWithImages.slice(0, 3).map((i: any) => ({
+                url: i.card.imageUrl as string,
+                name: i.card.name as string,
+              }));
+              const firstCardName = draftCardsWithImages[0]?.card?.name ?? (draft?.items?.[0]?.manualCardName || null);
               return (
                 <div className={`border-2 rounded-xl p-4 ${isExpiringSoon ? 'bg-orange-50 border-orange-300' : 'bg-blue-50 border-blue-300'}`}>
                   {/* Expiry warning */}
@@ -587,10 +590,24 @@ export default function GradingSubmit() {
                     </div>
                   )}
                   <div className="flex items-start gap-3 mb-3">
-                    {/* Card thumbnail preview */}
-                    {firstCardThumb ? (
-                      <div className="flex-shrink-0 w-10 h-14 rounded overflow-hidden border border-blue-200 bg-white shadow-sm">
-                        <img src={firstCardThumb} alt={firstCardName ?? '卡牌'} className="w-full h-full object-contain" />
+                    {/* Card thumbnails preview - up to 3 stacked */}
+                    {previewThumbs.length > 0 ? (
+                      <div className="flex-shrink-0 relative" style={{ width: previewThumbs.length === 1 ? 40 : previewThumbs.length === 2 ? 52 : 60, height: 56 }}>
+                        {previewThumbs.map((thumb, idx) => (
+                          <div
+                            key={idx}
+                            className="absolute rounded overflow-hidden border border-blue-200 bg-white shadow-sm"
+                            style={{
+                              width: 40,
+                              height: 56,
+                              left: idx * 10,
+                              zIndex: previewThumbs.length - idx,
+                              top: 0,
+                            }}
+                          >
+                            <img src={thumb.url} alt={thumb.name} className="w-full h-full object-contain" />
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className={`text-xl flex-shrink-0 mt-1 ${isExpiringSoon ? 'text-orange-500' : 'text-blue-500'}`}>💾</div>
