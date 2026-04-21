@@ -528,8 +528,8 @@ export const gradingRouter = router({
         .limit(1);
 
       if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
-      if (submission.status !== "awaiting_payment") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "只有待付款狀態的申請可以取消" });
+      if (submission.status !== "awaiting_payment" && submission.status !== "pending_shipment") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有待付款或待寄件狀態的申請可以取消" });
       }
 
       await db
@@ -560,13 +560,13 @@ export const gradingRouter = router({
           and(
             eq(gradingSubmissions.id, input.submissionId),
             eq(gradingSubmissions.userId, ctx.user.id),
-            eq(gradingSubmissions.status, "graded")
+            inArray(gradingSubmissions.status, ["pending_shipment", "graded", "payment_pending", "payment_overdue"])
           )
         )
         .limit(1);
 
       if (!submission) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在或尚未完成鑑定" });
+        throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在或狀態不允許付款" });
       }
 
       const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
@@ -642,7 +642,7 @@ export const gradingRouter = router({
         .limit(1);
 
       if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
-      if (submission.status !== "graded" && submission.status !== "payment_pending") {
+      if (!["pending_shipment", "graded", "payment_pending", "payment_overdue"].includes(submission.status)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "申請狀態不允許提交付款截圖" });
       }
 

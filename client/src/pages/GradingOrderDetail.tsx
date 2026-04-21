@@ -482,7 +482,7 @@ export default function GradingOrderDetail() {
 
   const currentStepIdx = getStepIndex(submission.status);
   const isCancelled = submission.status === "cancelled";
-  const isAwaitingPayment = submission.status === "awaiting_payment";
+  const isAwaitingPayment = submission.status === "awaiting_payment" || submission.status === "pending_shipment";
   const isGraded = submission.status === "graded" || submission.status === "payment_pending";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 
@@ -625,45 +625,103 @@ export default function GradingOrderDetail() {
 
           {/* Awaiting payment notice */}
           {isAwaitingPayment && (
-            <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-4">
-              <div className="flex gap-3">
-                <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-bold text-yellow-800 mb-1">等待付款確認中</p>
-                  <p className="text-sm text-yellow-700">您的申請已建立，請完成 Stripe 付款流程。付款確認後申請將自動進入處理。</p>
-                  <p className="text-xs text-yellow-600 mt-1">⚠️ 未付款申請將於 24 小時後自動取消。</p>
-                  {!cancelConfirm ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-3 border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs"
-                      onClick={() => setCancelConfirm(true)}
-                    >
-                      <XCircle className="h-3 w-3 mr-1.5" />
-                      取消申請
-                    </Button>
-                  ) : (
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="text-xs text-red-700 font-semibold">確定要取消此申請？</span>
-                      <Button
-                        size="sm"
-                        className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3"
-                        disabled={cancelSubmissionMutation.isPending}
-                        onClick={() => cancelSubmissionMutation.mutate({ submissionId })}
-                      >
-                        {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-gray-300 text-gray-700 h-7 text-xs px-3"
-                        onClick={() => setCancelConfirm(false)}
-                      >
-                        返回
-                      </Button>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <p className="font-bold text-green-800">申請已建立！請完成付款</p>
+              </div>
+              <p className="text-sm text-green-700 mb-4">付款確認後申請將自動進入處理。</p>
+              {/* Payment method selection */}
+              {!showAlipayQR && !proofSubmitted && (
+                <>
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-black mb-2">選擇付款方式</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                        paymentMethod === "stripe" ? "border-[#06038d] bg-blue-50" : "border-gray-200 bg-white"
+                      }`}>
+                        <input type="radio" value="stripe" checked={paymentMethod === "stripe"} onChange={() => setPaymentMethod("stripe")} className="accent-[#06038d]" />
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            <svg height="16" viewBox="0 0 1000 324" xmlns="http://www.w3.org/2000/svg" aria-label="Visa"><path d="M651.19.5c-70.933 0-134.32 36.766-134.32 104.69 0 77.9 112.42 83.28 112.42 122.42 0 16.478-18.884 31.229-51.137 31.229-45.773 0-79.984-20.611-79.984-20.611l-14.638 68.547S519.72 324 584.94 324c77.406 0 138.67-38.333 138.67-107.66 0-82.316-112.89-87.536-112.89-123.86 0-12.908 15.555-27.052 47.675-27.052 36.315 0 65.888 14.987 65.888 14.987L737.86 23.5S706.13.5 651.19.5zm-648.97 5L.5 19.053s29.784 5.457 56.553 16.356c34.44 12.422 36.861 19.747 42.643 42.228L155.48 314.5h79.994L366.69 5.5H286.85L203.19 220.71 170.98 38.507C168.22 15.623 150.96 5.5 129.45 5.5H2.22zm411.87 0L345.3 314.5h76.165L490.15 5.5h-76.06zm451.76 0L713.56 314.5h74.228l14.338-45.494H886.5l8.25 45.494H969L905.04 5.5h-38.19zm32.55 68.281l19.5 117.72H814.96l52.44-117.72z" fill="#1A1F71"/></svg>
+                            <svg height="16" viewBox="0 0 131.39 86.9" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard"><rect width="131.39" height="86.9" rx="8" fill="none"/><circle cx="43.45" cy="43.45" r="43.45" fill="#eb001b"/><circle cx="87.94" cy="43.45" r="43.45" fill="#f79e1b"/><path d="M65.7 14.15a43.43 43.43 0 0 1 0 58.6 43.43 43.43 0 0 1 0-58.6z" fill="#ff5f00"/></svg>
+                          </div>
+                          <span className="text-xs text-gray-600">信用卡 / 扣帳卡</span>
+                        </div>
+                      </label>
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                        paymentMethod === "alipay_hk" ? "border-[#06038d] bg-blue-50" : "border-gray-200 bg-white"
+                      }`}>
+                        <input type="radio" value="alipay_hk" checked={paymentMethod === "alipay_hk"} onChange={() => setPaymentMethod("alipay_hk")} className="accent-[#06038d]" />
+                        <div className="flex flex-col gap-1">
+                          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-5 object-contain" />
+                          <span className="text-xs text-gray-600">支付寳 HK</span>
+                        </div>
+                      </label>
                     </div>
-                  )}
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
+                    <div>
+                      <p className="text-sm text-black">應付金額</p>
+                      <p className="text-2xl font-bold text-[#06038d]">HK${parseFloat(submission.totalFeeHkd).toLocaleString()}</p>
+                    </div>
+                    <Button onClick={handlePay} disabled={payingLoading} className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-6">
+                      {payingLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</> : <><CreditCard className="h-4 w-4 mr-2" />立即付款</>}
+                    </Button>
+                  </div>
+                </>
+              )}
+              {/* Alipay QR Code flow */}
+              {showAlipayQR && !proofSubmitted && (
+                <div className="space-y-4">
+                  <div className="bg-white border border-blue-200 rounded-xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-7 object-contain" />
+                      <span className="font-bold text-gray-900">支付寳 HK 付款</span>
+                    </div>
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("https://w.alipay.hk/s12/3RYKWzGXrQ")}`} alt="AlipayHK QR" className="mx-auto rounded-lg border border-gray-200 mb-2" width={160} height={160} />
+                    <a href="https://w.alipay.hk/s12/3RYKWzGXrQ" target="_blank" rel="noopener noreferrer" className="text-xs text-[#06038d] hover:underline block mb-1">https://w.alipay.hk/s12/3RYKWzGXrQ</a>
+                    <p className="text-xs text-gray-500">掃描 QR code 或點擊連結完成付款</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-gray-900 mb-2">上傳付款截圖</p>
+                    <p className="text-xs text-gray-500 mb-3">付款後請上傳截圖，管理員確認後申請將自動進入處理。</p>
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) { setAlipayProofFile(f); const r = new FileReader(); r.onload = (ev) => setAlipayProofPreview(ev.target?.result as string); r.readAsDataURL(f); }
+                    }} className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#06038d] file:text-white hover:file:bg-[#06038d]/90" />
+                    {alipayProofPreview && <img src={alipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setShowAlipayQR(false)} className="flex-1 text-black">返回</Button>
+                    <Button onClick={handleAlipayProofUpload} disabled={!alipayProofFile || uploadingProof} className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white">
+                      {uploadingProof ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />上傳中...</> : "提交截圖"}
+                    </Button>
+                  </div>
                 </div>
+              )}
+              {proofSubmitted && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <CheckCircle2 className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                  <p className="font-bold text-blue-800">截圖已提交！</p>
+                  <p className="text-sm text-blue-700 mt-1">管理員將於 24 小時內確認付款。</p>
+                </div>
+              )}
+              {/* Cancel button */}
+              <div className="mt-4 pt-3 border-t border-green-200">
+                {!cancelConfirm ? (
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs" onClick={() => setCancelConfirm(true)}>
+                    <XCircle className="h-3 w-3 mr-1.5" />取消申請
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-700 font-semibold">確定要取消此申請？</span>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
+                      {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
