@@ -358,6 +358,8 @@ export default function GradingSubmit() {
   const existingDraft = loadDraft(userId);
   const hasDraftWithCards = existingDraft && existingDraft.items && existingDraft.items.length > 0 && (existingDraft.items.length > 1 || existingDraft.items[0].card !== null || existingDraft.items[0].manualCardName !== "");
   const [showDraftBanner, setShowDraftBanner] = useState<boolean>(!!hasDraftWithCards);
+  // Track whether user has already chosen to resume draft (hide card if they go back to Step 1)
+  const [draftResumed, setDraftResumed] = useState(false);
 
   // Always start at step 1 so user can choose to resume or start fresh
   const [step, setStep] = useState(1);
@@ -414,6 +416,7 @@ export default function GradingSubmit() {
     setExpandedItemId(draft.items[0]?.id ?? '');
     setAgreedTerms(false);
     setShowDraftBanner(false);
+    setDraftResumed(true); // Mark as resumed so banner won't reappear on back
     // Always resume at step 2 (card details), not step 3
     setStep(2);
   };
@@ -558,21 +561,38 @@ export default function GradingSubmit() {
         {/* ── Step 1: Select Service Tier ── */}
         {step === 1 && (
           <div className="space-y-4">
-            {/* ── Draft resume card (Step 1 only) ── */}
-            {showDraftBanner && (() => {
+            {/* ── Draft resume card (Step 1 only, hidden after user resumes) ── */}
+            {showDraftBanner && !draftResumed && (() => {
               const draft = loadDraft(userId);
               const draftItemCount = draft?.items?.filter((i: any) => i.card !== null || i.manualCardName !== '').length ?? 0;
               const draftTotalQty = draft?.items?.reduce((sum: number, i: any) => sum + (i.quantity ?? 1), 0) ?? 0;
+              // Find tier name from loaded tiers
+              const draftTierName = draft?.selectedTierId && tiers
+                ? (tiers as any[]).find((t: any) => t.id === draft.selectedTierId)?.name
+                : null;
+              // Check if draft is expiring soon (within 24h of 7-day expiry)
+              const draftAgeDays = draft?.savedAt ? (Date.now() - draft.savedAt) / (1000 * 60 * 60 * 24) : 0;
+              const isExpiringSoon = draftAgeDays >= 6;
               return (
-                <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+                <div className={`border-2 rounded-xl p-4 ${isExpiringSoon ? 'bg-orange-50 border-orange-300' : 'bg-blue-50 border-blue-300'}`}>
+                  {/* Expiry warning */}
+                  {isExpiringSoon && (
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-orange-700 bg-orange-100 border border-orange-200 rounded-lg px-2.5 py-1.5">
+                      <span>⚠️</span>
+                      <span>草稿將於{draftAgeDays >= 6.5 ? '明天' : '1 天內'}自動刪除，請盡快繼續申請</span>
+                    </div>
+                  )}
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="text-blue-500 text-xl flex-shrink-0">💾</div>
+                    <div className={`text-xl flex-shrink-0 ${isExpiringSoon ? 'text-orange-500' : 'text-blue-500'}`}>💾</div>
                     <div className="flex-1">
-                      <p className="font-bold text-blue-900 mb-0.5">發現上次未完成的申請草稿</p>
-                      <p className="text-xs text-blue-700">
+                      <p className={`font-bold mb-0.5 ${isExpiringSoon ? 'text-orange-900' : 'text-blue-900'}`}>發現上次未完成的申請草稿</p>
+                      <p className={`text-xs ${isExpiringSoon ? 'text-orange-700' : 'text-blue-700'}`}>
                         {draftItemCount > 0 ? `共 ${draftItemCount} 種卡牌（${draftTotalQty} 張）` : '已選層級'}
+                        {draftTierName && (
+                          <span className="ml-1">· 已選層級：<strong>{draftTierName}</strong></span>
+                        )}
                         {draft?.savedAt && (
-                          <span className="ml-1 text-blue-500">· {formatDraftAge(draft.savedAt)}儲存</span>
+                          <span className={`ml-1 ${isExpiringSoon ? 'text-orange-500' : 'text-blue-500'}`}>· {formatDraftAge(draft.savedAt)}儲存</span>
                         )}
                       </p>
                     </div>
