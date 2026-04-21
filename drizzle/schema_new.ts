@@ -1618,6 +1618,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   upgradeNewTierId: int("upgradeNewTierId"),
   upgradeCheckoutAt: timestamp("upgradeCheckoutAt"), // When the upgrade checkout was created
   upgradePaidAt: timestamp("upgradePaidAt"),
+  upgradeReminderSentAt: timestamp("upgradeReminderSentAt"), // Last time overdue reminder was sent (for dedup)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

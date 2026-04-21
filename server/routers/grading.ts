@@ -1596,6 +1596,89 @@ export const gradingRouter = router({
       }),
   }),
 
+  // ─── Protected: Reopen upgrade diff checkout (user-facing) ─────────────────
+  reopenUpgradeCheckout: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        origin: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if (!submission.upgradeCheckoutSessionId && !submission.upgradeNewTierId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "此申請沒有待補付的升級差價" });
+      }
+      if (submission.upgradePaidAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "升級差價已補付完成" });
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const stripe = getStripe();
+
+      const diffFee = parseFloat(submission.upgradeDiffFeeHkd ?? '0');
+      if (diffFee <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "差價金額無效" });
+      const amountCents = Math.round(diffFee * 100);
+
+      // Get new tier name
+      let newTierName = '升級層級';
+      if (submission.upgradeNewTierId) {
+        const [tier] = await db.select({ name: gradingServiceTiers.name }).from(gradingServiceTiers).where(eq(gradingServiceTiers.id, submission.upgradeNewTierId)).limit(1);
+        if (tier) newTierName = tier.name;
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "hkd",
+            product_data: {
+              name: `PSA 鑑定服務升級差價 - ${submission.orderNo}`,
+              description: `升級至 ${newTierName}，差價補付`,
+            },
+            unit_amount: amountCents,
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        customer_email: user.email,
+        client_reference_id: user.id.toString(),
+        allow_promotion_codes: false,
+        metadata: {
+          type: "grading_tier_upgrade_payment",
+          submission_id: input.submissionId.toString(),
+          order_no: submission.orderNo,
+          user_id: user.id.toString(),
+          new_tier_id: (submission.upgradeNewTierId ?? '').toString(),
+          diff_fee_hkd: diffFee.toFixed(2),
+        },
+        success_url: `${input.origin}/grading/orders/${input.submissionId}?upgrade_payment=success`,
+        cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
+      });
+
+      // Update checkout session ID
+      await db
+        .update(gradingSubmissions)
+        .set({ upgradeCheckoutSessionId: session.id, upgradeCheckoutAt: new Date() })
+        .where(eq(gradingSubmissions.id, input.submissionId));
+
+      return { checkoutUrl: session.url };
+    }),
+
   // ─── Protected: Get QR Code for submission ───────────────────────────────
   getSubmissionQrCode: protectedProcedure
     .input(z.object({ submissionId: z.number().int().positive() }))

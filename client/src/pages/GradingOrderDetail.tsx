@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useParams, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -334,6 +334,25 @@ export default function GradingOrderDetail() {
       toast.error(`付款失敗：${err.message}`);
     },
   });
+
+  const reopenUpgradeCheckoutMutation = trpc.grading.reopenUpgradeCheckout.useMutation({
+    onSuccess: (data: any) => {
+      if (data.checkoutUrl) {
+        window.open(data.checkoutUrl, "_blank");
+        toast.success("正在跳轉至補付差價頁面...");
+      }
+    },
+    onError: (err: any) => {
+      toast.error(`重新付款失敗：${err.message}`);
+    },
+  });
+
+  // Auto-invalidate when returning from upgrade payment success
+  useEffect(() => {
+    if (isUpgradePaymentSuccess && submissionId > 0) {
+      utils.grading.getSubmissionDetail.invalidate({ id: submissionId });
+    }
+  }, [isUpgradePaymentSuccess, submissionId]);
 
   const handlePrint = () => {
     if (!submission) return;
@@ -803,7 +822,7 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
-          {/* Upgrade diff fee pending banner - info only, no button */}
+          {/* Upgrade diff fee pending banner */}
           {(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt && (
             <div className="bg-orange-50 border-2 border-orange-400 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-3">
@@ -816,7 +835,24 @@ export default function GradingOrderDetail() {
                     您的申請已升級至 <strong>{(submission as any).upgradeNewTierName ?? '新層級'}</strong>，
                     需補付差價 <strong className="text-orange-900">HK${parseFloat((submission as any).upgradeDiffFeeHkd || '0').toLocaleString()}</strong>。
                   </p>
-                  <p className="text-xs text-orange-600">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}，請在下方鑑定完成付款區塊選擇付款方式完成補付。</p>
+                  <p className="text-xs text-orange-600 mb-3">新總費用：HK${parseFloat(submission.totalFeeHkd).toLocaleString()}，如您已關閉付款頁面，可點擊下方按鈕重新進入付款流程。</p>
+                  <Button
+                    size="sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    onClick={() => {
+                      reopenUpgradeCheckoutMutation.mutate({
+                        submissionId,
+                        origin: window.location.origin,
+                      });
+                    }}
+                    disabled={reopenUpgradeCheckoutMutation.isPending}
+                  >
+                    {reopenUpgradeCheckoutMutation.isPending ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                    ) : (
+                      <><CreditCard className="h-4 w-4 mr-2" />重新付款差價</>
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>

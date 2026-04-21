@@ -2702,13 +2702,15 @@ export function startGradingUpgradeOverdueReminderScheduler() {
         const db = await _getDb();
         if (!db) return;
         const { gradingSubmissions: _gSubs } = await import('../drizzle/schema_new');
-        const { isNotNull, isNull, lt: _lt, and: _and } = await import('drizzle-orm');
+        const { isNotNull, isNull, lt: _lt, and: _and, or: _or } = await import('drizzle-orm');
         const { getUserById } = await import('./userManagement');
         const { createNotification } = await import('./db/notifications');
         const { sendEmail } = await import('./emailService');
 
         // Find submissions with upgrade checkout but not yet paid, created > 48h ago
+        // Also check upgradeReminderSentAt to avoid sending duplicate reminders within 24h
         const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+        const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const overdueUpgrades = await db
           .select()
           .from(_gSubs)
@@ -2716,7 +2718,12 @@ export function startGradingUpgradeOverdueReminderScheduler() {
             _and(
               isNotNull(_gSubs.upgradeCheckoutSessionId),
               isNull(_gSubs.upgradePaidAt),
-              _lt(_gSubs.upgradeCheckoutAt, cutoff48h)
+              _lt(_gSubs.upgradeCheckoutAt, cutoff48h),
+              // Only send if never reminded OR last reminder was > 24h ago
+              _or(
+                isNull(_gSubs.upgradeReminderSentAt),
+                _lt(_gSubs.upgradeReminderSentAt, cutoff24h)
+              )
             )
           );
 
@@ -2767,6 +2774,9 @@ export function startGradingUpgradeOverdueReminderScheduler() {
               `,
             });
 
+            // Update upgradeReminderSentAt to prevent duplicate reminders within 24h
+            const { eq: _eq } = await import('drizzle-orm');
+            await db.update(_gSubs).set({ upgradeReminderSentAt: new Date() } as any).where(_eq(_gSubs.id, sub.id));
             console.log(`[GradingUpgradeOverdue] Sent 48h reminder for ${sub.orderNo}`);
           } catch (err) {
             console.error(`[GradingUpgradeOverdue] Error processing ${sub.orderNo}:`, err);
