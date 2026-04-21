@@ -92,8 +92,8 @@ const STEPS = [
   },
   {
     step: 6,
-    title: "鑑定完成，完成付款",
-    desc: "鑑定完成後通知您評分結果及證書號，請於 30 天內透過 Stripe 或支付寶 HK 完成付款，逾期未付將計算遠期費用",
+    title: "鑑定完成（如需升級才補付差價）",
+    desc: "鑑定完成後通知您評分結果及證書號。如您在第 1 步已完成全額付款，則無需再付任何費用。僅當鑑定後發現需升級服務層級時，管理員才會通知您補付差價（請於 30 天內完成，逾期將計算遠期費用）",
     icon: DollarSign,
     highlight: true,
   },
@@ -143,7 +143,7 @@ const FAQS = [
   },
   {
     q: "付款流程是怎樣的？",
-    a: "付款分兩階段：(1) 提交申請時需先付服務費用（支援 Stripe 信用卡 / 支付寶 HK），付款成功後才會收到寄件地址；(2) 鑑定完成後如需升級服務層級，會需補付差價。鑑定完成後請於 30 天內完成差價付款，逾期將計算遠期費用。",
+    a: "付款主要分兩階段：(1) 提交申請時需先付全額服務費用（支援 Stripe 信用卡 / 支付寶 HK），付款成功後才會收到寄件地址；(2) 鑑定完成後，如您在第 1 步已付全額，則無需再付任何費用。僅當鑑定後發現需升級服務層級時，管理員才會另行通知您補付差價（請於 30 天內完成，逾期將計算遠期費用）。",
   },
   {
     q: "卡片評分不如預期怎麼辦？",
@@ -257,7 +257,7 @@ export default function Grading() {
           <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-3">
             服務流程
           </h2>
-          <p className="text-center text-gray-500 mb-10">您只需完成 3 個步驟（付款、寄卡、完成付款），其餘由 BOXIUM 全程代辦跟進</p>
+          <p className="text-center text-gray-500 mb-10">您只需完成 2 個步驟（付款、寄卡），其餘由 BOXIUM 全程代辦跟進（如鑑定後需升級則另行通知補付差價）</p>
           <div className="relative">
 
             <div className="space-y-4">
