@@ -262,29 +262,44 @@ const TERMS = [
 ];
 
 // ─── Draft helpers ───────────────────────────────────────────────────────────
-const DRAFT_KEY = "boxium_grading_draft_v1";
+const DRAFT_KEY_PREFIX = "boxium_grading_draft_v2";
+const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function getDraftKey(userId?: number | string): string {
+  return userId ? `${DRAFT_KEY_PREFIX}_${userId}` : `${DRAFT_KEY_PREFIX}_guest`;
+}
+
 interface DraftData {
   step: number;
   selectedTierId: number | null;
   items: GradingItem[];
+  savedAt: number; // Unix timestamp ms
 }
-function loadDraft(): DraftData | null {
+function loadDraft(userId?: number | string): DraftData | null {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = localStorage.getItem(getDraftKey(userId));
     if (!raw) return null;
-    return JSON.parse(raw) as DraftData;
+    const parsed = JSON.parse(raw) as DraftData;
+    // Expire drafts older than 7 days
+    if (!parsed.savedAt || Date.now() - parsed.savedAt > DRAFT_EXPIRY_MS) {
+      localStorage.removeItem(getDraftKey(userId));
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
-function saveDraft(data: DraftData) {
+function saveDraft(data: DraftData, userId?: number | string) {
   try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    localStorage.setItem(getDraftKey(userId), JSON.stringify({ ...data, savedAt: Date.now() }));
   } catch {}
 }
-function clearDraft() {
+function clearDraft(userId?: number | string) {
   try {
-    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(getDraftKey(userId));
+    // Also clear old v1 key if exists
+    localStorage.removeItem("boxium_grading_draft_v1");
   } catch {}
 }
 
@@ -294,10 +309,15 @@ export default function GradingSubmit() {
   const { data: user, isLoading: authLoading } = trpc.auth.me.useQuery();
 
   // ── Draft restore ──
-  const existingDraft = loadDraft();
+  // userId is used to isolate drafts per account on the same device
+  const userId = user?.id;
+  const draftInitialized = useRef(false);
+  const isFirstRender = useRef(true);
+
+  // Load draft with userId (or guest key before auth loads)
+  const existingDraft = loadDraft(userId);
   const hasDraftWithCards = existingDraft && existingDraft.items && existingDraft.items.length > 0 && (existingDraft.items.length > 1 || existingDraft.items[0].card !== null || existingDraft.items[0].manualCardName !== "");
   const [showDraftBanner, setShowDraftBanner] = useState<boolean>(!!hasDraftWithCards);
-  const isFirstRender = useRef(true);
 
   const [step, setStep] = useState(existingDraft && hasDraftWithCards ? existingDraft.step : 1);
   // Order-level tier selection
@@ -308,6 +328,21 @@ export default function GradingSubmit() {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
+  // Once userId is available, re-check draft with user-specific key
+  useEffect(() => {
+    if (!userId || draftInitialized.current) return;
+    draftInitialized.current = true;
+    const userDraft = loadDraft(userId);
+    const userHasDraft = userDraft && userDraft.items && userDraft.items.length > 0 && (userDraft.items.length > 1 || userDraft.items[0].card !== null || userDraft.items[0].manualCardName !== "");
+    if (userHasDraft && userDraft) {
+      setStep(userDraft.step);
+      setSelectedTierId(userDraft.selectedTierId);
+      setItems(userDraft.items);
+      setExpandedItemId(userDraft.items[0].id);
+      setShowDraftBanner(true);
+    }
+  }, [userId]);
+
   // ── Auto-save draft ──
   useEffect(() => {
     if (isFirstRender.current) {
@@ -317,12 +352,12 @@ export default function GradingSubmit() {
     // Only save if user has started filling (step > 1 or has cards)
     const hasContent = step > 1 || selectedTierId !== null || items.some(i => i.card !== null || i.manualCardName !== "");
     if (hasContent) {
-      saveDraft({ step, selectedTierId, items });
+      saveDraft({ step, selectedTierId, items, savedAt: Date.now() }, userId);
     }
-  }, [step, selectedTierId, items]);
+  }, [step, selectedTierId, items, userId]);
 
   const handleDiscardDraft = () => {
-    clearDraft();
+    clearDraft(userId);
     setShowDraftBanner(false);
     setStep(1);
     setSelectedTierId(null);
@@ -334,7 +369,7 @@ export default function GradingSubmit() {
 
   const checkoutMutation = trpc.grading.submitApplication.useMutation({
     onSuccess: (data: any) => {
-      clearDraft();
+      clearDraft(userId);
       toast.success("申請已提交！請前往申請詳情頁完成付款。");
       navigate(`/grading/orders/${data.submissionId}`);
     },
