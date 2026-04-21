@@ -2812,10 +2812,109 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
   );
 }
 
+function GradingAlipaySection({ submissions, isLoading, refetch }: { submissions: any[]; isLoading: boolean; refetch: () => void }) {
+  const utils = trpc.useUtils();
+  const confirmAlipayMutation = trpc.grading.adminConfirmGradingAlipayPayment.useMutation({
+    onSuccess: () => {
+      toast.success('支付寶 HK 收款已確認，訂單已完成');
+      refetch();
+      utils.grading.admin.listSubmissions.invalidate();
+    },
+    onError: (e) => toast.error(parseApiError(e)),
+  });
+
+  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>;
+  if (submissions.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <CheckCircle className="h-10 w-10 text-green-400 mb-3" />
+      <p className="text-gray-700 font-medium">暫無待核對的支付寶 HK 鑑定訂單</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">共 {submissions.length} 筆待核對的鑑定申請支付寶 HK 截圖</p>
+      {submissions.map((sub: any) => (
+        <div key={sub.id} className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-amber-50 border-b border-amber-100">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-[#06038d]">{sub.orderNo}</span>
+              <span className="text-xs text-gray-500">{new Date(sub.createdAt).toLocaleDateString('zh-HK')}</span>
+              {sub.alipayProofAiResult && (
+                <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                  sub.alipayProofAiResult === 'pass' ? 'bg-green-100 text-green-800' :
+                  sub.alipayProofAiResult === 'warning' ? 'bg-amber-100 text-amber-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {sub.alipayProofAiResult === 'pass' ? '✅ AI通過' : sub.alipayProofAiResult === 'warning' ? '⚠️ AI警告' : '❌ AI未通過'}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd ?? '0').toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">申請人</p>
+              <p className="text-sm font-medium text-gray-900">{sub.user?.name ?? '—'}</p>
+              <p className="text-xs text-gray-500">{sub.user?.email ?? ''}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">提交時間</p>
+              <p className="text-sm text-gray-900">{sub.alipayProofSubmittedAt ? new Date(sub.alipayProofSubmittedAt).toLocaleString('zh-HK') : '—'}</p>
+            </div>
+            {sub.alipayProofImageUrl && (
+              <div className="md:col-span-2">
+                <p className="text-xs text-gray-500 mb-1">支付寶 HK 截圖</p>
+                <img
+                  src={sub.alipayProofImageUrl}
+                  alt="支付寶截圖"
+                  className="max-h-40 rounded-lg border border-amber-200 cursor-pointer object-contain"
+                  onClick={() => window.open(sub.alipayProofImageUrl, '_blank')}
+                />
+                {sub.alipayProofAiSummary && (
+                  <p className="text-xs text-gray-600 mt-1">{sub.alipayProofAiSummary}</p>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="px-4 pb-4 flex gap-2">
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={confirmAlipayMutation.isPending}
+              onClick={() => confirmAlipayMutation.mutate({ submissionId: sub.id })}
+            >
+              <CheckCheck className="h-3.5 w-3.5 mr-1" />確認收款完成
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 text-gray-700"
+              onClick={() => window.open(`/admin/grading?id=${sub.id}`, '_blank')}
+            >
+              查看詳情
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AlipayPendingTab() {
+  const [subTab, setSubTab] = useState<'marketplace' | 'grading'>('marketplace');
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: orders, isLoading, refetch } = trpc.marketplace.adminGetAlipayPending.useQuery({ dateFilter });
+  // Grading alipay pending
+  const { data: gradingAlipayData, isLoading: loadingGradingAlipay, refetch: refetchGrading } = trpc.grading.admin.listSubmissions.useQuery({
+    alipayProofPending: true,
+    limit: 100,
+    offset: 0,
+  });
+  const gradingAlipaySubmissions = gradingAlipayData?.submissions ?? [];
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [note, setNote] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -2934,7 +3033,29 @@ function AlipayPendingTab() {
           </div>
         </div>
       </div>
-
+      {/* Sub-tab switcher */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        <button
+          onClick={() => setSubTab('marketplace')}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            subTab === 'marketplace' ? 'bg-white text-[#06038d] shadow-sm' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          商品訂單 {orders ? `(${orders.length})` : ''}
+        </button>
+        <button
+          onClick={() => setSubTab('grading')}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            subTab === 'grading' ? 'bg-white text-[#06038d] shadow-sm' : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          PSA 鑑定申請 {gradingAlipaySubmissions.length > 0 ? `(${gradingAlipaySubmissions.length})` : ''}
+        </button>
+      </div>
+      {subTab === 'grading' && (
+        <GradingAlipaySection submissions={gradingAlipaySubmissions} isLoading={loadingGradingAlipay} refetch={refetchGrading} />
+      )}
+      {subTab === 'marketplace' && (<>
       {/* Date filter + Search */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-gray-600 font-medium">日期篩選：</span>
@@ -3486,10 +3607,10 @@ function AlipayPendingTab() {
           </div>
         </DialogContent>
       </Dialog>
+      </>)}
     </div>
   );
 }
-
 function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; onClose: () => void }) {
   const { data, isLoading } = trpc.marketplace.adminGetSellerDetail.useQuery(
     { sellerId: sellerId! },

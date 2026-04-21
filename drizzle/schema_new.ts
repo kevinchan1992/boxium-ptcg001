@@ -1607,6 +1607,11 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   alipayProofStatus: mysqlEnum("alipayProofStatus", ["pending_review", "approved", "rejected"]),
   alipayProofSubmittedAt: timestamp("alipayProofSubmittedAt"),
   alipayProofRejectionReason: text("alipayProofRejectionReason"),
+  // AI verification fields for alipay proof
+  alipayProofAiResult: mysqlEnum("alipayProofAiResult", ["pass", "warning", "fail"]),
+  alipayProofAiConfidence: mysqlEnum("alipayProofAiConfidence", ["high", "medium", "low"]),
+  alipayProofAiSummary: text("alipayProofAiSummary"),
+  alipayProofAiCheckedAt: timestamp("alipayProofAiCheckedAt"),
   // Tier upgrade fields (admin can upgrade tier after grading, user pays the diff)
   upgradeCheckoutSessionId: varchar("upgradeCheckoutSessionId", { length: 128 }),
   upgradeDiffFeeHkd: decimal("upgradeDiffFeeHkd", { precision: 10, scale: 2 }),

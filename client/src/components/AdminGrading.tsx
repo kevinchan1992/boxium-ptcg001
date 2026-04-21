@@ -497,6 +497,29 @@ function SubmissionDetailDialog({
                   onClick={() => window.open(detail.alipayProofImageUrl, "_blank")}
                 />
                 <p className="text-xs text-gray-700 mb-2">提交時間：{detail.alipayProofSubmittedAt ? new Date(detail.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
+                {/* AI verification result badge */}
+                {(detail as any).alipayProofAiResult && (
+                  <div className={`mb-3 flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
+                    (detail as any).alipayProofAiResult === 'pass'
+                      ? 'bg-green-50 border-green-200 text-green-800'
+                      : (detail as any).alipayProofAiResult === 'warning'
+                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    <span className="font-semibold">
+                      {(detail as any).alipayProofAiResult === 'pass' ? '✅ AI 核對通過' : (detail as any).alipayProofAiResult === 'warning' ? '⚠️ AI 核對警告' : '❌ AI 核對未通過'}
+                    </span>
+                    {(detail as any).alipayProofAiConfidence && (
+                      <span className="opacity-70">({(detail as any).alipayProofAiConfidence === 'high' ? '高可信度' : (detail as any).alipayProofAiConfidence === 'medium' ? '中可信度' : '低可信度'})</span>
+                    )}
+                    {(detail as any).alipayProofAiSummary && (
+                      <span className="w-full mt-0.5 opacity-80">{(detail as any).alipayProofAiSummary}</span>
+                    )}
+                    {(detail as any).alipayProofAiCheckedAt && (
+                      <span className="w-full opacity-50">AI 核對時間：{new Date((detail as any).alipayProofAiCheckedAt).toLocaleString('zh-HK')}</span>
+                    )}
+                  </div>
+                )}
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => confirmAlipayMutation.mutate({ submissionId: detail.id })}
@@ -938,6 +961,15 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                             <AlertCircle className="h-2.5 w-2.5" />截圖待審
                           </span>
                         )}
+                        {(sub as any).alipayProofAiResult && (
+                          <span className={`ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                            (sub as any).alipayProofAiResult === 'pass' ? 'bg-green-100 text-green-800' :
+                            (sub as any).alipayProofAiResult === 'warning' ? 'bg-amber-100 text-amber-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {(sub as any).alipayProofAiResult === 'pass' ? '✅ AI通過' : (sub as any).alipayProofAiResult === 'warning' ? '⚠️ AI警告' : '❌ AI未通過'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <Button
@@ -1239,6 +1271,15 @@ function SubmissionManagement() {
                     {sub.alipayProofStatus === "pending_review" && (
                       <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-gray-900">
                         <AlertCircle className="h-2.5 w-2.5" />截圖
+                      </span>
+                    )}
+                    {(sub as any).alipayProofAiResult && (
+                      <span className={`mt-0.5 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                        (sub as any).alipayProofAiResult === 'pass' ? 'bg-green-100 text-green-800' :
+                        (sub as any).alipayProofAiResult === 'warning' ? 'bg-amber-100 text-amber-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {(sub as any).alipayProofAiResult === 'pass' ? '✅ AI通過' : (sub as any).alipayProofAiResult === 'warning' ? '⚠️ AI警告' : '❌ AI未通過'}
                       </span>
                     )}
                     {sub.upgradeCheckoutSessionId && !sub.upgradePaidAt && (

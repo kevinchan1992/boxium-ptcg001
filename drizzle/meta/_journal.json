@@ -421,6 +421,13 @@
       "when": 1774950001000,
       "tag": "0059_auction_deposit_highvalue",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1776741600000,
+      "tag": "0061_grading_ai_verify",
+      "breakpoints": true
     }
   ]
 }

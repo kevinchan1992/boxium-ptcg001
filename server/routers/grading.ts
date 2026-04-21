@@ -1740,15 +1740,30 @@ export const gradingRouter = router({
         }
 
         const result = JSON.parse(jsonMatch[0]);
+        const aiResult: "pass" | "warning" | "fail" = Boolean(result.isValid) ? "pass" : (result.confidence === "medium" ? "warning" : "fail");
+        const aiConfidence: "high" | "medium" | "low" = (result.confidence || "low") as "high" | "medium" | "low";
+        const aiSummary = result.summary || "核對完成";
+
+        // Persist AI result to DB
+        await db
+          .update(gradingSubmissions)
+          .set({
+            alipayProofAiResult: aiResult,
+            alipayProofAiConfidence: aiConfidence,
+            alipayProofAiSummary: aiSummary,
+            alipayProofAiCheckedAt: new Date(),
+          } as any)
+          .where(eq(gradingSubmissions.id, submission.id));
+
         return {
           isValid: Boolean(result.isValid),
-          confidence: (result.confidence || "low") as "high" | "medium" | "low",
+          confidence: aiConfidence,
           detectedAmount: result.detectedAmount ?? null,
           detectedOrderNo: result.detectedOrderNo ?? null,
           amountMatch: result.amountMatch ?? null,
           orderNoMatch: result.orderNoMatch ?? null,
           issues: Array.isArray(result.issues) ? result.issues : [],
-          summary: result.summary || "核對完成",
+          summary: aiSummary,
         };
       } catch (err: any) {
         console.error("[Grading] AI verify alipay proof error:", err);

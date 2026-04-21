@@ -1025,6 +1025,30 @@ export default function GradingOrderDetail() {
                       >
                         返回
                       </Button>
+                      {alipayProofFile && !aiVerifying && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (!alipayProofFile || !submission?.id) return;
+                            setAiVerifyResult(null);
+                            setAiVerifying(true);
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const base64 = (e.target?.result as string).split(',')[1];
+                              verifyAlipayProofMutation.mutate({
+                                submissionId: submission.id,
+                                proofImageBase64: base64,
+                                mimeType: alipayProofFile.type || 'image/jpeg',
+                              });
+                            };
+                            reader.readAsDataURL(alipayProofFile);
+                          }}
+                          className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                        >
+                          重新核對
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         onClick={handleSubmitAlipayProof}
