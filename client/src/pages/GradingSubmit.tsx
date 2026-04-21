@@ -23,15 +23,14 @@ import {
   DollarSign,
   Loader2,
 } from "lucide-react";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────────────
 interface GradingItem {
   id: string;
   card: SelectedCard | null;
   manualCardName: string;
   manualCardSet: string;
   manualCardNumber: string;
-  notes: string;
+  quantity: number;
   isManual: boolean;
 }
 
@@ -43,11 +42,11 @@ function newItem(): GradingItem {
     manualCardSet: "",
     manualCardNumber: "",
     isManual: false,
-    notes: "",
+    quantity: 1,
   };
 }
 
-// ─── Step Indicator ───────────────────────────────────────────────────────────
+// ─── Step Indicator ─────────────────────────────────────────────────────────────────────────────
 function StepIndicator({ step }: { step: number }) {
   const steps = ["選擇服務層級", "填寫卡牌資料", "確認提交"];
   return (
@@ -234,15 +233,39 @@ function ItemCard({
             />
           </div>
 
-          {/* Notes */}
+          {/* Quantity */}
           <div>
-            <Label className="text-xs font-semibold text-gray-600 mb-1 block">備註（可選）</Label>
-            <Textarea
-              placeholder="如有特別說明請填寫..."
-              value={item.notes}
-              onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
-              className="text-sm resize-none h-16"
-            />
+            <Label className="text-xs font-semibold text-gray-600 mb-2 block">數量</Label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onUpdate(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })}
+                className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors font-bold text-lg select-none"
+                disabled={(item.quantity ?? 1) <= 1}
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={item.quantity ?? 1}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v)) onUpdate(item.id, { quantity: Math.min(1000, Math.max(1, v)) });
+                }}
+                className="w-16 h-8 text-center border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
+              />
+              <button
+                type="button"
+                onClick={() => onUpdate(item.id, { quantity: Math.min(1000, (item.quantity ?? 1) + 1) })}
+                className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors font-bold text-lg select-none"
+                disabled={(item.quantity ?? 1) >= 1000}
+              >
+                +
+              </button>
+              <span className="text-xs text-gray-400 ml-1">張（1–1000）</span>
+            </div>
           </div>
         </div>
       )}
@@ -453,23 +476,29 @@ export default function GradingSubmit() {
       toast.error("請先閱讀並同意服務條款");
       return;
     }
-    checkoutMutation.mutate({
-      items: items.map((item: GradingItem) => ({
+    // Expand items by quantity: each item with qty=3 becomes 3 separate submission items
+    const expandedItems = items.flatMap((item: GradingItem) => {
+      const qty = item.quantity ?? 1;
+      return Array.from({ length: qty }, () => ({
         cardName: item.isManual ? item.manualCardName : (item.card?.name ?? ""),
         cardSet: item.isManual ? item.manualCardSet : (item.card?.series ?? ""),
         cardNumber: item.isManual ? item.manualCardNumber : (item.card?.cardNumber ?? ""),
         cardImageUrl: item.card?.imageUrl ?? undefined,
         tierId: selectedTierId!,
         condition: "near_mint" as "mint" | "near_mint" | "excellent",
-        notes: item.notes,
-      })),
+        notes: "",
+      }));
+    });
+    checkoutMutation.mutate({
+      items: expandedItems,
       agreedToTerms: true,
     });
   };
 
   // ── Fee calculation ──
   const selectedTier = tiers?.find((t: any) => t.id === selectedTierId);
-  const totalFee = selectedTier ? parseFloat(selectedTier.feeHkd) * items.length : 0;
+  const totalQuantity = items.reduce((sum, i) => sum + (i.quantity ?? 1), 0);
+  const totalFee = selectedTier ? parseFloat(selectedTier.feeHkd) * totalQuantity : 0;
 
   // ── Auth guard ──
   if (authLoading) {
@@ -652,7 +681,7 @@ export default function GradingSubmit() {
             {selectedTier && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-gray-600">
-                  {items.length} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
+                  {totalQuantity} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
                 </span>
                 <span className="font-bold text-[#06038d]">合計 HK${totalFee.toLocaleString()}</span>
               </div>
