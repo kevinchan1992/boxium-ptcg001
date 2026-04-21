@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -261,20 +261,80 @@ const TERMS = [
   "本人明白價格或會因應官方調整而更改，恕不另行通知。鑑定期以工作天計算，實際時間會根據官方實際情況而定，不包括運輸時間。",
 ];
 
+// ─── Draft helpers ───────────────────────────────────────────────────────────
+const DRAFT_KEY = "boxium_grading_draft_v1";
+interface DraftData {
+  step: number;
+  selectedTierId: number | null;
+  items: GradingItem[];
+}
+function loadDraft(): DraftData | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as DraftData;
+  } catch {
+    return null;
+  }
+}
+function saveDraft(data: DraftData) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+  } catch {}
+}
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function GradingSubmit() {
   const [, navigate] = useLocation();
   const { data: user, isLoading: authLoading } = trpc.auth.me.useQuery();
-  const [step, setStep] = useState(1);
+
+  // ── Draft restore ──
+  const existingDraft = loadDraft();
+  const hasDraftWithCards = existingDraft && existingDraft.items && existingDraft.items.length > 0 && (existingDraft.items.length > 1 || existingDraft.items[0].card !== null || existingDraft.items[0].manualCardName !== "");
+  const [showDraftBanner, setShowDraftBanner] = useState<boolean>(!!hasDraftWithCards);
+  const isFirstRender = useRef(true);
+
+  const [step, setStep] = useState(existingDraft && hasDraftWithCards ? existingDraft.step : 1);
   // Order-level tier selection
-  const [selectedTierId, setSelectedTierId] = useState<number | null>(null);
-  const [items, setItems] = useState<GradingItem[]>([newItem()]);
-  const [expandedItemId, setExpandedItemId] = useState<string>(items[0].id);
+  const [selectedTierId, setSelectedTierId] = useState<number | null>(existingDraft && hasDraftWithCards ? existingDraft.selectedTierId : null);
+  const initialItems = existingDraft && hasDraftWithCards ? existingDraft.items : [newItem()];
+  const [items, setItems] = useState<GradingItem[]>(initialItems);
+  const [expandedItemId, setExpandedItemId] = useState<string>(initialItems[0].id);
   const [agreedTerms, setAgreedTerms] = useState(false);
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
+  // ── Auto-save draft ──
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // Only save if user has started filling (step > 1 or has cards)
+    const hasContent = step > 1 || selectedTierId !== null || items.some(i => i.card !== null || i.manualCardName !== "");
+    if (hasContent) {
+      saveDraft({ step, selectedTierId, items });
+    }
+  }, [step, selectedTierId, items]);
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setShowDraftBanner(false);
+    setStep(1);
+    setSelectedTierId(null);
+    const fresh = newItem();
+    setItems([fresh]);
+    setExpandedItemId(fresh.id);
+    setAgreedTerms(false);
+  };
+
   const checkoutMutation = trpc.grading.submitApplication.useMutation({
     onSuccess: (data: any) => {
+      clearDraft();
       toast.success("申請已提交！請前往申請詳情頁完成付款。");
       navigate(`/grading/orders/${data.submissionId}`);
     },
@@ -400,6 +460,23 @@ export default function GradingSubmit() {
         </div>
 
         <StepIndicator step={step} />
+
+        {/* ── Draft Banner ── */}
+        {showDraftBanner && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="text-blue-500 text-lg flex-shrink-0 mt-0.5">💾</div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-800 mb-1">發現上次未完成的申請草稿</p>
+              <p className="text-xs text-blue-700">已自動恢復上次的進度，您可以繼續完成申請。</p>
+            </div>
+            <button
+              onClick={handleDiscardDraft}
+              className="text-xs text-red-500 hover:text-red-700 underline flex-shrink-0 mt-0.5"
+            >
+              刪除草稿
+            </button>
+          </div>
+        )}
 
         {/* ── Step 1: Select Service Tier ── */}
         {step === 1 && (
