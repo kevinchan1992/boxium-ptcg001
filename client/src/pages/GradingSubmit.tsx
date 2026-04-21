@@ -288,13 +288,19 @@ export default function GradingSubmit() {
   const [items, setItems] = useState<GradingItem[]>([newItem()]);
   const [expandedItemId, setExpandedItemId] = useState<string>(items[0].id);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "alipay_hk">("stripe");
 
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
   const checkoutMutation = trpc.grading.createSubmissionCheckout.useMutation({
     onSuccess: (data: any) => {
-      toast.success("申請已建立！正在跳轉至購物車付款...");
-      navigate(`/cart?grading_id=${data.submissionId}`);
+      if (data.checkoutUrl) {
+        toast.success("申請已建立！正在跳轉至付款頁面...");
+        window.open(data.checkoutUrl, '_blank');
+      } else {
+        toast.success("申請已建立！");
+      }
+      navigate(`/grading/orders/${data.submissionId}`);
     },
     onError: (err: any) => {
       toast.error(`提交失敗：${err.message}`);
@@ -376,7 +382,7 @@ export default function GradingSubmit() {
         quantity: item.quantity ?? 1,
       })),
       agreedToTerms: true,
-      paymentMethod: "stripe" as const,
+      paymentMethod: paymentMethod,
       origin: window.location.origin,
     });
   };
@@ -641,6 +647,52 @@ export default function GradingSubmit() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Payment Method */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-4 w-4 text-[#06038d]" />
+                <span className="font-bold text-gray-900">選擇付款方式</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">確認提交後需先完成付款，申請才會正式啟動</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("stripe")}
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    paymentMethod === "stripe"
+                      ? "border-[#06038d] bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <span className="text-lg">💳</span>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm text-gray-900">信用卡</p>
+                    <p className="text-xs text-gray-500">Visa / Mastercard</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("alipay_hk")}
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    paymentMethod === "alipay_hk"
+                      ? "border-[#06038d] bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <span className="text-lg">🔵</span>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm text-gray-900">支付寳 HK</p>
+                    <p className="text-xs text-gray-500">上傳截圖確認</p>
+                  </div>
+                </button>
+              </div>
+              {paymentMethod === "alipay_hk" && (
+                <p className="text-xs text-amber-600 mt-2">
+                  選擇支付寳 HK 後，系統將建立申請並發送支付寳 HK 收款資訊，請於 24 小時內上傳付款截圖，否則申請將被自動取消。
+                </p>
+              )}
             </div>
 
             {/* Terms */}
