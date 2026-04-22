@@ -37,6 +37,8 @@ jobs:
           MAX_CONSECUTIVE_ERR: '50'
           NODE_ENV: 'production'
         run: |
+          echo "Starting SNKRDUNK batch update..."
+          echo "PARALLEL=$PARALLEL, SKIP_HOURS=$SKIP_HOURS"
           node scripts/githubActionsBatchUpdate.mjs
       - name: Upload failure logs
         if: failure()
