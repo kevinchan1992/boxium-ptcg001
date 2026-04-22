@@ -31,6 +31,7 @@ interface GradingItem {
   manualCardSet: string;
   manualCardNumber: string;
   quantity: number;
+  quantityInput?: string; // Temporary string for input editing (allows empty/backspace)
   isManual: boolean;
 }
 
@@ -251,13 +252,27 @@ function ItemCard({
                 −
               </button>
               <input
-                type="number"
-                min={1}
-                max={1000}
-                value={item.quantity ?? 1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={item.quantityInput !== undefined ? item.quantityInput : String(item.quantity ?? 1)}
                 onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  // Allow empty string (user backspaced all digits)
+                  if (raw === '') {
+                    onUpdate(item.id, { quantityInput: '', quantity: item.quantity ?? 1 });
+                    return;
+                  }
+                  const v = parseInt(raw, 10);
+                  if (!isNaN(v)) {
+                    onUpdate(item.id, { quantityInput: raw, quantity: Math.min(1000, Math.max(1, v)) });
+                  }
+                }}
+                onBlur={(e) => {
+                  // On blur: if empty or 0, reset to 1
                   const v = parseInt(e.target.value, 10);
-                  if (!isNaN(v)) onUpdate(item.id, { quantity: Math.min(1000, Math.max(1, v)) });
+                  const final = isNaN(v) || v < 1 ? 1 : Math.min(1000, v);
+                  onUpdate(item.id, { quantityInput: undefined, quantity: final });
                 }}
                 className="w-16 h-8 text-center border border-gray-300 rounded-lg text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
               />
