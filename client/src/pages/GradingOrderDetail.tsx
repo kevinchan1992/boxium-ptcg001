@@ -33,7 +33,7 @@ const STATUS_STEPS = [
 ];
 
 const STATUS_ORDER = [
-  "pending_payment", "paid", "received", "submitted_to_psa", "grading", "graded", "payment_pending", "returned", "completed"
+  "pending_payment", "paid", "received", "submitted_to_psa", "grading", "graded", "returned", "completed"
 ];
 
 function getStepIndex(status: string) {
@@ -46,7 +46,6 @@ function getStepIndex(status: string) {
     submitted_to_psa: 2,
     grading: 3,
     graded: 4,
-    payment_pending: 4,
     returned: 5,
     completed: 5,
   };
@@ -62,7 +61,6 @@ const STATUS_LABEL: Record<string, string> = {
   submitted_to_psa: "已出團",
   grading: "鑑定中",
   graded: "鑑定完成",
-  payment_pending: "待付款",
   payment_overdue: "付款逾期",
   returned: "已寄回",
   completed: "已完成",
@@ -634,7 +632,7 @@ export default function GradingOrderDetail() {
   const isAlipayRejected = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "rejected";
   // 付款已確認（Stripe 付款成功 或 AlipayHK 截圖已批准）
   const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayPendingReview && !isAlipayRejected;
-  const isGraded = submission.status === "graded" || submission.status === "payment_pending";
+  const isGraded = submission.status === "graded";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 
   return (

@@ -1291,6 +1291,16 @@ function SubmissionManagement() {
     onError: (err: any) => toast.error(err.message),
   });
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; orderNo: string } | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const bulkDeleteMutation = trpc.grading.adminBulkDeleteAwaitingPayment.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已批量刪除 ${data.deleted} 筆未付款申請`);
+      setShowBulkDeleteDialog(false);
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
   const deleteMutation = trpc.grading.adminDeleteSubmission.useMutation({
     onSuccess: (data) => {
       toast.success(`申請單 ${data.orderNo} 已刪除`);
@@ -1356,6 +1366,15 @@ function SubmissionManagement() {
           待審核截圖
         </button>
         <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆</span>
+        {/* Bulk delete awaiting_payment button */}
+        <button
+          onClick={() => setShowBulkDeleteDialog(true)}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all bg-white text-red-600 border-red-300 hover:bg-red-50"
+          title="批量刪除所有未付款申請"
+        >
+          <Trash2 className="h-3 w-3" />
+          清除未付款
+        </button>
       </div>
 
       {/* Submissions list */}
@@ -1500,6 +1519,35 @@ function SubmissionManagement() {
             >
               {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
               確定刪除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk delete awaiting_payment confirmation dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={(v) => { if (!v) setShowBulkDeleteDialog(false); }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              清除所有未付款申請
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-700">
+            確定要刪除所有「未付款（awaiting_payment）」狀態的申請嗎？用戶頁面將同步移除這些申請。
+          </p>
+          <p className="text-xs text-red-500">此操作無法復原，所有未付款申請及其卡牌資料將被永久刪除。</p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)} className="text-gray-700">
+              取消
+            </Button>
+            <Button
+              onClick={() => bulkDeleteMutation.mutate()}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {bulkDeleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              確定清除
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -550,7 +550,7 @@ export const gradingRouter = router({
           and(
             eq(gradingSubmissions.id, input.submissionId),
             eq(gradingSubmissions.userId, ctx.user.id),
-            inArray(gradingSubmissions.status, ["awaiting_payment", "pending_shipment", "graded", "payment_pending", "payment_overdue"])
+            inArray(gradingSubmissions.status, ["awaiting_payment", "pending_shipment", "graded", "payment_overdue"])
           )
         )
         .limit(1);
@@ -1941,6 +1941,31 @@ export const gradingRouter = router({
         details: `管理員刪除鑑定申請 ${sub.orderNo}`,
       });
       return { success: true, orderNo: sub.orderNo };
+    }),
+
+  // ─── Admin: Bulk delete awaiting_payment submissions ─────────────────────
+  adminBulkDeleteAwaitingPayment: adminProcedure
+    .mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Find all awaiting_payment submissions
+      const subs = await db
+        .select({ id: gradingSubmissions.id, orderNo: gradingSubmissions.orderNo })
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.status, "awaiting_payment" as any));
+      if (subs.length === 0) return { deleted: 0 };
+      const ids = subs.map((s: { id: number; orderNo: string }) => s.id);
+      // Delete items first, then submissions
+      await db.delete(gradingSubmissionItems).where(inArray(gradingSubmissionItems.submissionId, ids));
+      await db.delete(gradingSubmissions).where(inArray(gradingSubmissions.id, ids));
+      await createAuditLog({
+        adminId: ctx.user.id,
+        action: "bulk_delete_awaiting_payment_submissions",
+        targetType: "grading_submission",
+        targetId: 0,
+        details: `管理員批量刪除 ${subs.length} 筆未付款申請：${subs.map((s: { id: number; orderNo: string }) => s.orderNo).join(", ")}`
+      });
+      return { deleted: subs.length };
     }),
 
   // ─── Admin: Seller Center maintenance mode ────────────────────────────────
