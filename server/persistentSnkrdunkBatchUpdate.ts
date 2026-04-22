@@ -1,4 +1,15 @@
 /**
+ * @DEPRECATED - 此檔案已由 GitHub Actions 方案取代（Plan C）
+ *
+ * 新方案位置：scripts/githubActionsBatchUpdate.mjs
+ * 新方案 Workflow：.github/workflows/snkrdunk-batch-update.yml
+ *
+ * 此檔案保留供參考，日後確認 GitHub Actions 方案穩定後可刪除。
+ * 標記日期：2026-04-22
+ * ─────────────────────────────────────────────────────────────────
+ */
+
+/**
  * SNKRDUNK Persistent Batch Update (v7.3 - PARALLEL=8)
  * 
  * v7 proved controlled 2-parallel is STABLE and FAST (~3.6/s, 0 failures).

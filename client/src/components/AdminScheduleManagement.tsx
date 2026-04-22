@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCircle, ChevronDown, ChevronUp, XCircle } from "lucide-react";
+import { Clock, Save, RefreshCw, Play, AlertCircle, CheckCircle2, Pause, PlayCircle, ChevronDown, ChevronUp, XCircle, Github, ExternalLink, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 
@@ -785,11 +785,113 @@ export function AdminScheduleManagement() {
         </CardContent>
       </Card>
 
+      {/* GitHub Actions 批次更新說明 */}
+      <GitHubActionsGuide />
+
       {/* 排程健康統計 */}
       <ScheduleHealthStats />
 
       {/* 排程執行歷史 */}
       <ExecutionHistory />
     </div>
+  );
+}
+
+/**
+ * GitHubActionsGuide - 說明如何設定 GitHub Actions 沙盒獨立批次更新
+ */
+function GitHubActionsGuide() {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardHeader
+        className="cursor-pointer select-none"
+        onClick={() => setExpanded(v => !v)}
+      >
+        <CardTitle className="flex items-center justify-between text-white text-base sm:text-lg">
+          <span className="flex items-center gap-2">
+            <Github className="w-5 h-5" />
+            GitHub Actions 批次更新（沙盒獨立方案）
+          </span>
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </CardTitle>
+        <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          此方案讓批次更新在 GitHub 雲端執行，完全不依賴本平台伺服器是否在線
+        </CardDescription>
+      </CardHeader>
+      {expanded && (
+        <CardContent className="space-y-4">
+          {/* 狀態說明 */}
+          <div className="flex items-start gap-3 p-3 bg-green-900/20 border border-green-800 rounded-lg">
+            <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-green-300 text-sm font-medium">Workflow 已就緒</p>
+              <p className="text-green-400/80 text-xs mt-1">
+                <code className="bg-gray-800 px-1 rounded">.github/workflows/snkrdunk-batch-update.yml</code> 已加入倉庫，
+                每日凌晨 01:00 HKT 自動執行。
+              </p>
+            </div>
+          </div>
+
+          {/* 設定步驟 */}
+          <div className="space-y-3">
+            <h3 className="text-white font-medium text-sm flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-400" />
+              必要設定步驟（一次性）
+            </h3>
+            <ol className="space-y-3 text-sm text-gray-300">
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                <div>
+                  <p className="font-medium text-white">前往 GitHub 倉庫設定</p>
+                  <p className="text-gray-400 text-xs mt-1">在 GitHub 倉庫頁面，點擊 <strong>Settings → Secrets and variables → Actions</strong></p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                <div>
+                  <p className="font-medium text-white">新增 Secret：DATABASE_URL</p>
+                  <p className="text-gray-400 text-xs mt-1">點擊 <strong>New repository secret</strong>，名稱填 <code className="bg-gray-800 px-1 rounded">DATABASE_URL</code>，值填入 MySQL 連接字串</p>
+                  <p className="text-yellow-400 text-xs mt-1">⚠️ 連接字串格式：<code className="bg-gray-800 px-1 rounded">mysql://用戶名:密碼@主機:埠/資料庫名</code></p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
+                <div>
+                  <p className="font-medium text-white">手動測試執行</p>
+                  <p className="text-gray-400 text-xs mt-1">前往 GitHub 倉庫 → <strong>Actions → SNKRDUNK Batch Price Update → Run workflow</strong></p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          {/* 快速連結 */}
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-md transition-colors"
+            >
+              <Github className="w-3.5 h-3.5" />
+              前往 GitHub
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          {/* 技術說明 */}
+          <div className="p-3 bg-gray-800 rounded-lg space-y-2">
+            <p className="text-gray-400 text-xs font-medium">技術說明</p>
+            <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+              <li>腳本位置：<code className="bg-gray-700 px-1 rounded">scripts/githubActionsBatchUpdate.mjs</code></li>
+              <li>每次執行：8 個並行工作者，跳過 12 小時內已更新的卡牌</li>
+              <li>預計時間：約 2 小時完成 55,000+ 張卡牌</li>
+              <li>GitHub Actions 免費額度：每月 2,000 分鐘（約 33 小時），足夠每日執行</li>
+              <li>可在 GitHub Actions 頁面手動觸發，並自訂 PARALLEL 和 SKIP_HOURS 參數</li>
+            </ul>
+          </div>
+        </CardContent>
+      )}
+    </Card>
   );
 }

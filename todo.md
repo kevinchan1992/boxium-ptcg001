@@ -8528,3 +8528,12 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復用戶端申請詳情頁「出團批次資訊」空白問題（批次名稱沒顯示）
 - [x] 移除用戶端申請詳情頁「立即補付差價」按鈕（讓用戶使用下方付款方式完成付款）
 - [x] 儲存 checkpoint (d58b298a)
+
+---
+## Plan C：GitHub Actions 沙盒獨立批次更新
+- [x] 建立 scripts/githubActionsBatchUpdate.mjs（獨立 Node.js 腳本，直接連接 MySQL）
+- [x] 建立 .github/workflows/snkrdunk-batch-update.yml（每日 01:00 HKT 自動執行）
+- [x] Admin UI 加入 GitHubActionsGuide 說明卡片（含設定步驟）
+- [x] 標記 server/persistentSnkrdunkBatchUpdate.ts 為 @DEPRECATED
+- [x] 標記 server/batchUpdateScheduler.ts 為 @DEPRECATED
+- [x] 儲存 checkpoint
