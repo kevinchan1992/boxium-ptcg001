@@ -1612,6 +1612,9 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   alipayProofAiConfidence: mysqlEnum("alipayProofAiConfidence", ["high", "medium", "low"]),
   alipayProofAiSummary: text("alipayProofAiSummary"),
   alipayProofAiCheckedAt: timestamp("alipayProofAiCheckedAt"),
+  // Buyer shipping tracking
+  trackingNumber: varchar("trackingNumber", { length: 100 }), // SF Express tracking number submitted by buyer
+  trackingSubmittedAt: timestamp("trackingSubmittedAt"),
   // Tier upgrade fields (admin can upgrade tier after grading, user pays the diff)
   upgradeCheckoutSessionId: varchar("upgradeCheckoutSessionId", { length: 128 }),
   upgradeDiffFeeHkd: decimal("upgradeDiffFeeHkd", { precision: 10, scale: 2 }),

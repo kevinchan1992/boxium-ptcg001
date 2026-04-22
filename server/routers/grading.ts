@@ -1973,4 +1973,102 @@ export const gradingRouter = router({
     const val = await getSystemSetting("seller_center_maintenance_mode");
     return { enabled: val?.settingValue === "true" };
   }),
+
+  // ─── Protected: Submit SF Express tracking number ───────────────────────────────
+  submitTrackingNumber: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        trackingNumber: z.string().min(1).max(100),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if (submission.status !== "pending_shipment") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有待寄件狀態的申請可以提交追蹤號碼" });
+      }
+      await db
+        .update(gradingSubmissions)
+        .set({
+          trackingNumber: input.trackingNumber.trim(),
+          trackingSubmittedAt: new Date(),
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+      // Notify admin
+      await createNotification({
+        userId: ctx.user.id,
+        type: "system",
+        title: "鑑定申請已寄出",
+        body: `申請單 ${submission.orderNo} 已提交順豐追蹤號碼：${input.trackingNumber.trim()}，請確認收件。`,
+        linkUrl: `/admin`,
+      }).catch(() => {});
+      return { success: true };
+    }),
+
+  // ─── Protected: Resubmit Alipay HK proof after rejection ─────────────────────
+  resubmitGradingAlipayProof: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        proofImageBase64: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(
+          and(
+            eq(gradingSubmissions.id, input.submissionId),
+            eq(gradingSubmissions.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if ((submission as any).alipayProofStatus !== "rejected") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "只有被拒絕的截圖可以重新提交" });
+      }
+      const { storagePut } = await import("../storage");
+      const buffer = Buffer.from(input.proofImageBase64, "base64");
+      const ext = input.mimeType.split("/")[1] || "jpg";
+      const fileKey = `grading-alipay-proof/${submission.orderNo}-resubmit-${Date.now()}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+      await db
+        .update(gradingSubmissions)
+        .set({
+          alipayProofImageUrl: url,
+          alipayProofSubmittedAt: new Date(),
+          alipayProofStatus: "pending_review",
+          alipayProofRejectionReason: null,
+          alipayProofAiResult: null,
+          alipayProofAiConfidence: null,
+          alipayProofAiSummary: null,
+          alipayProofAiCheckedAt: null,
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+      // Notify admin
+      await createNotification({
+        userId: ctx.user.id,
+        type: "system",
+        title: "鑑定付款截圖重新提交",
+        body: `申請單 ${submission.orderNo} 已重新提交支付寳 HK 付款截圖，請前往 Admin 確認收款。`,
+        linkUrl: `/admin`,
+      }).catch(() => {});
+      return { success: true, proofUrl: url };
+    }),
 });

@@ -348,6 +348,81 @@ export default function GradingOrderDetail() {
     reader.readAsDataURL(alipayProofFile);
   };
 
+  // ── Resubmit Alipay proof after rejection ──────────────────────────────────
+  const [resubmitProofFile, setResubmitProofFile] = useState<File | null>(null);
+  const [resubmitProofPreview, setResubmitProofPreview] = useState<string | null>(null);
+  const [uploadingResubmit, setUploadingResubmit] = useState(false);
+  const [resubmitAiVerifying, setResubmitAiVerifying] = useState(false);
+  const [resubmitAiResult, setResubmitAiResult] = useState<{ result: string; confidence: string; summary: string } | null>(null);
+
+  const resubmitAlipayProofMutation = trpc.grading.resubmitGradingAlipayProof.useMutation({
+    onSuccess: () => {
+      setUploadingResubmit(false);
+      toast.success("截圖已重新提交，等待管理員再次確認");
+      utils.grading.getSubmissionDetail.invalidate({ id: submissionId });
+      setResubmitProofFile(null);
+      setResubmitProofPreview(null);
+      setResubmitAiResult(null);
+    },
+    onError: (err: any) => {
+      setUploadingResubmit(false);
+      toast.error(`重新提交失敗：${err.message}`);
+    },
+  });
+
+  const handleResubmitProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResubmitProofFile(file);
+    setResubmitAiResult(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setResubmitProofPreview(ev.target?.result as string);
+      const base64 = (ev.target?.result as string).split(",")[1];
+      setResubmitAiVerifying(true);
+      verifyAlipayProofMutation.mutate(
+        { submissionId, proofImageBase64: base64, mimeType: file.type },
+        {
+          onSuccess: (r: any) => { setResubmitAiVerifying(false); setResubmitAiResult(r); },
+          onError: () => { setResubmitAiVerifying(false); },
+        }
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResubmitAlipayProof = async () => {
+    if (!resubmitProofFile) return;
+    setUploadingResubmit(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = (ev.target?.result as string).split(",")[1];
+      resubmitAlipayProofMutation.mutate({
+        submissionId,
+        proofImageBase64: base64,
+        mimeType: resubmitProofFile.type,
+      });
+    };
+    reader.readAsDataURL(resubmitProofFile);
+  };
+
+  // ── Submit SF Express tracking number ─────────────────────────────────────
+  const [trackingInput, setTrackingInput] = useState("");
+  const [trackingSubmitting, setTrackingSubmitting] = useState(false);
+
+  const submitTrackingMutation = trpc.grading.submitTrackingNumber.useMutation({
+    onSuccess: () => {
+      setTrackingSubmitting(false);
+      toast.success("追蹤號碼已提交，管理員將確認收件");
+      utils.grading.getSubmissionDetail.invalidate({ id: submissionId });
+      setTrackingInput("");
+    },
+    onError: (err: any) => {
+      setTrackingSubmitting(false);
+      toast.error(`提交失敗：${err.message}`);
+    },
+  });
+
   const createPaymentMutation = trpc.grading.createPaymentIntent.useMutation({
     onSuccess: (data: any) => {
       setPayingLoading(false);
@@ -532,8 +607,10 @@ export default function GradingOrderDetail() {
   const isAwaitingPayment = submission.status === "awaiting_payment";
   // pending_shipment 且 AlipayHK 截圖待審核（管理員尚未確認）
   const isAlipayPendingReview = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "pending_review";
+  // pending_shipment 且 AlipayHK 截圖被拒絕（需重新上傳）
+  const isAlipayRejected = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "rejected";
   // 付款已確認（Stripe 付款成功 或 AlipayHK 截圖已批准）
-  const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayPendingReview;
+  const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayPendingReview && !isAlipayRejected;
   const isGraded = submission.status === "graded" || submission.status === "payment_pending";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 
@@ -669,9 +746,9 @@ export default function GradingOrderDetail() {
                 </p>
               </div>
               <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                isCancelled ? "bg-red-500 text-white" : isCompleted ? "bg-green-500 text-white" : isAwaitingPayment ? "bg-yellow-300 text-gray-900" : isAlipayPendingReview ? "bg-blue-500 text-white" : "bg-yellow-400 text-[#06038d]"
+                isCancelled ? "bg-red-500 text-white" : isCompleted ? "bg-green-500 text-white" : isAwaitingPayment ? "bg-yellow-300 text-gray-900" : isAlipayRejected ? "bg-red-500 text-white" : isAlipayPendingReview ? "bg-blue-500 text-white" : "bg-yellow-400 text-[#06038d]"
               }`}>
-                {isAlipayPendingReview ? "截圖待審核" : (STATUS_LABEL[submission.status] ?? submission.status)}
+                {isAlipayRejected ? "截圖被拒絕" : isAlipayPendingReview ? "截圖待審核" : (STATUS_LABEL[submission.status] ?? submission.status)}
               </span>
             </div>
           </div>
@@ -843,8 +920,105 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
+          {/* Alipay proof rejected - resubmit UI */}
+          {isAlipayRejected && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <XCircle className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-red-800">截圖已被拒絕，請重新上傳</p>
+                  <p className="text-xs text-red-600">管理員尚未確認此截圖為有效付款証明</p>
+                </div>
+              </div>
+              {/* Rejection reason */}
+              {(submission as any).alipayProofRejectionReason && (
+                <div className="bg-red-100 border border-red-300 rounded-lg p-3 mb-4">
+                  <p className="text-xs font-semibold text-red-800 mb-1">拒絕原因：</p>
+                  <p className="text-sm text-red-700">{(submission as any).alipayProofRejectionReason}</p>
+                </div>
+              )}
+              {/* Previous rejected proof */}
+              {(submission as any).alipayProofImageUrl && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-red-800 mb-2">被拒絕的截圖：</p>
+                  <img
+                    src={(submission as any).alipayProofImageUrl}
+                    alt="被拒絕的截圖"
+                    className="max-h-40 rounded-lg border-2 border-red-300 mx-auto block object-contain opacity-60"
+                  />
+                </div>
+              )}
+              {/* Resubmit section */}
+              <div className="border-t border-red-200 pt-4">
+                <p className="text-sm font-bold text-red-800 mb-3">重新上傳付款截圖</p>
+                <label className="block w-full border-2 border-dashed border-red-300 rounded-lg p-4 text-center cursor-pointer hover:border-red-400 hover:bg-red-50 transition-all mb-3">
+                  <input type="file" accept="image/*" className="sr-only" onChange={handleResubmitProofChange} />
+                  {resubmitProofPreview ? (
+                    <img src={resubmitProofPreview} alt="新截圖" className="max-h-40 mx-auto rounded-lg object-contain" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <Printer className="h-5 w-5 text-red-500" />
+                      </div>
+                      <p className="text-sm font-semibold text-red-700">點擊選擇新截圖</p>
+                      <p className="text-xs text-red-500">支持 JPG、PNG 格式</p>
+                    </div>
+                  )}
+                </label>
+                {/* AI verification result for resubmit */}
+                {resubmitProofFile && (
+                  <div className="mb-3">
+                    {resubmitAiVerifying ? (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>AI 核對中，請稍候…</span>
+                      </div>
+                    ) : resubmitAiResult ? (
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        resubmitAiResult.result === 'pass' ? 'bg-green-100 text-green-800' :
+                        resubmitAiResult.result === 'warning' ? 'bg-amber-100 text-amber-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <span>{resubmitAiResult.result === 'pass' ? '✅' : resubmitAiResult.result === 'warning' ? '⚠️' : '❌'}</span>
+                        <span>{resubmitAiResult.result === 'pass' ? 'AI 核對通過' : resubmitAiResult.result === 'warning' ? 'AI 核對有警告' : 'AI 核對未通過'}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                <Button
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  disabled={!resubmitProofFile || uploadingResubmit || resubmitAiVerifying}
+                  onClick={handleResubmitAlipayProof}
+                >
+                  {uploadingResubmit ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />提交中…</>
+                  ) : (
+                    <>重新提交截圖</>
+                  )}
+                </Button>
+              </div>
+              {/* Cancel button */}
+              <div className="mt-4 pt-3 border-t border-red-200">
+                {!cancelConfirm ? (
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs" onClick={() => setCancelConfirm(true)}>
+                    <XCircle className="h-3 w-3 mr-1.5" />取消申請
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-700 font-semibold">確定要取消此申請？</span>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
+                      {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {/* Progress stepper */}
-          {!isCancelled && !isAwaitingPayment && !isAlipayPendingReview && (
+          {!isCancelled && !isAwaitingPayment && !isAlipayPendingReview && !isAlipayRejected && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
               <h3 className="font-bold text-gray-900 mb-4 text-sm">申請進度</h3>
               <div className="flex items-start">
@@ -883,7 +1057,7 @@ export default function GradingOrderDetail() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="font-bold text-amber-800 mb-1">請將卡牌寄至以下地址</p>
                   <p className="text-sm text-amber-700 font-semibold">📦 順豐站 852Z351</p>
                   <p className="text-sm text-amber-700">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
@@ -899,6 +1073,41 @@ export default function GradingOrderDetail() {
                     <Printer className="h-3 w-3 mr-1.5" />
                     打印申請單
                   </Button>
+                  {/* Tracking number section */}
+                  <div className="mt-4 pt-3 border-t border-amber-200">
+                    <p className="text-xs font-bold text-amber-800 mb-2">📦 寄出後，請提交順豐追蹤號碼</p>
+                    {(submission as any).trackingNumber ? (
+                      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-green-700">已提交追蹤號碼</p>
+                          <p className="text-sm font-bold text-green-800 font-mono">{(submission as any).trackingNumber}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={trackingInput}
+                          onChange={(e) => setTrackingInput(e.target.value)}
+                          placeholder="輸入順豐追蹤號碼（如：SF1234567890HK）"
+                          className="flex-1 text-sm border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                          disabled={trackingSubmitting}
+                        />
+                        <Button
+                          size="sm"
+                          className="bg-amber-500 hover:bg-amber-600 text-white px-4 h-10"
+                          disabled={!trackingInput.trim() || trackingSubmitting}
+                          onClick={() => {
+                            setTrackingSubmitting(true);
+                            submitTrackingMutation.mutate({ submissionId, trackingNumber: trackingInput });
+                          }}
+                        >
+                          {trackingSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "提交"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

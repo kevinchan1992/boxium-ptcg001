@@ -8549,3 +8549,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] awaiting_payment 狀態下「請將卡牌寄至以下地址」卡片仍顯示（已修復：isPaymentConfirmed 條件）
 - [x] AlipayHK 截圖提交後 AI 核對功能消失（已修復：新增 isAlipayPendingReview 截圖待審核區塊）
 - [ ] 儲存 checkpoint
+---
+## 新功能：AlipayHK 截圖拒絕重新上傳 + 寄件追蹤號碼
+- [x] Schema：gradingSubmissions 新增 trackingNumber 欄位
+- [x] 後端：resubmitGradingAlipayProof procedure 新增（rejected 狀態重新提交）
+- [x] 後端：新增 submitTrackingNumber procedure
+- [x] 前端：isAlipayRejected 狀態 - 顯示拒絕原因 + 重新上傳截圖 UI（含 AI 核對）
+- [x] 前端：isPaymentConfirmed 狀態 - 顯示追蹤號碼輸入框（已提交則顯示號碼）
+- [ ] 儲存 checkpoint
