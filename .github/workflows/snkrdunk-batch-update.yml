@@ -1,0 +1,47 @@
+name: SNKRDUNK Batch Price Update
+on:
+  schedule:
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_hours:
+        description: 'Skip cards updated within N hours (default: 12)'
+        required: false
+        default: '12'
+      parallel:
+        description: 'Number of parallel workers (default: 8)'
+        required: false
+        default: '8'
+permissions:
+  contents: read
+jobs:
+  batch-update:
+    name: Update SNKRDUNK Price History
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install script dependencies
+        run: npm install mysql2 axios
+      - name: Run SNKRDUNK batch update
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PARALLEL: ${{ github.event.inputs.parallel || '8' }}
+          SKIP_HOURS: ${{ github.event.inputs.skip_hours || '12' }}
+          REQUEST_TIMEOUT_MS: '15000'
+          MAX_CONSECUTIVE_ERR: '50'
+          NODE_ENV: 'production'
+        run: |
+          node scripts/githubActionsBatchUpdate.mjs
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch-update-failure-${{ github.run_id }}
+          path: '*.log'
+          retention-days: 7
