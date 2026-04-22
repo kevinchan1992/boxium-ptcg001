@@ -2179,4 +2179,81 @@ export const gradingRouter = router({
       }
       return { success: true };
     }),
+
+  // ─── Admin: Approve Alipay HK proof (pending_review → approved + pending_shipment) ──
+  adminApproveGradingAlipayProof: adminProcedure
+    .input(z.object({ submissionId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.submissionId))
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+      if ((submission as any).alipayProofStatus !== "pending_review") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "截圖狀態不允許批准" });
+      }
+      await db
+        .update(gradingSubmissions)
+        .set({ alipayProofStatus: "approved", status: "pending_shipment" } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+
+      // In-app notification
+      await createNotification({
+        userId: submission.userId,
+        type: "system",
+        title: "付款截圖已通過審核 ✅",
+        body: `申請單 ${submission.orderNo} 的支付寶 HK 付款截圖已通過審核，付款已確認！請準備寄件，將卡牌寄往 BOXIUM。`,
+        linkUrl: `/grading/orders/${submission.id}`,
+      }).catch(() => {});
+
+      // Email notification
+      try {
+        const [user] = await db
+          .select({ email: users.email, name: users.name })
+          .from(users)
+          .where(eq(users.id, submission.userId))
+          .limit(1);
+        if (user?.email) {
+          const baseUrl = "https://boxium.asia";
+          const orderUrl = `${baseUrl}/grading/orders/${submission.id}`;
+          const extraHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:2px solid #86efac;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#16a34a;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">✅ 付款截圖審核通過</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;color:#333;">付款方式：支付寶 HK</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#333;">確認時間：${new Date().toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })}</p>
+    <p style="margin:8px 0 0;font-size:13px;color:#555;">請盡快將您的卡牌寄往 BOXIUM，我們將為您代辦 PSA 申報及包裝。</p>
+  </td></tr>
+</table>
+<div style="text-align:center;margin:16px 0;">
+  <a href="${orderUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">查看申請詳情</a>
+</div>`;
+          const { buildGradingEmail } = await import("../_core/gradingEmail");
+          const html = buildGradingEmail({
+            userName: user.name || user.email,
+            title: "付款截圖已通過審核，請準備寄件 ✅",
+            body: `您的申請單 ${submission.orderNo} 的支付寶 HK 付款截圖已通過審核，付款已確認！請準備將您的卡牌寄往 BOXIUM。`,
+            orderNo: submission.orderNo,
+            linkUrl: orderUrl,
+            ctaText: "查看寄件指引",
+            extraHtml,
+          });
+          await sendEmail({
+            to: user.email,
+            subject: `【BOXIUM PSA 鑑定】付款截圖已通過審核，請準備寄件 ✅ — ${submission.orderNo}`,
+            html,
+            emailType: "grading",
+            toUserId: submission.userId,
+          });
+        }
+      } catch (e) {
+        console.error("[Grading] Failed to send approval email:", e);
+      }
+      return { success: true };
+    }),
 });

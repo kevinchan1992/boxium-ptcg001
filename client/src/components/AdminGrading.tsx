@@ -410,6 +410,16 @@ function SubmissionDetailDialog({
   });
   const [showRejectInput, setShowRejectInput] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState("");
+  const approveAlipayMutation = trpc.grading.adminApproveGradingAlipayProof.useMutation({
+    onSuccess: () => {
+      toast.success("截圖已批准，已通知用戶準備寄件");
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+      utils.grading.admin.getSubmissionDetail.invalidate({ id: submissionId! });
+      onUpdated();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
   const rejectAlipayMutation = trpc.grading.adminRejectGradingAlipayProof.useMutation({
     onSuccess: () => {
       toast.success("截圖已拒絕，已通知用戶重新上傳");
@@ -541,6 +551,14 @@ function SubmissionDetailDialog({
                   disabled={confirmAlipayMutation.isPending}
                 >
                   {confirmAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認收款完成，訂單標記完成</>}
+                </Button>
+                {/* Approve button */}
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => approveAlipayMutation.mutate({ submissionId: detail.id })}
+                  disabled={approveAlipayMutation.isPending}
+                >
+                  {approveAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />批准截圖，通知用戶準備寄件</>}
                 </Button>
                 {/* Reject button */}
                 {!showRejectInput ? (
@@ -1278,6 +1296,7 @@ function SubmissionManagement() {
     alipayProofPending: alipayPendingFilter || undefined,
   });
   const submissions: any[] = Array.isArray(submissionsData) ? submissionsData : (submissionsData as any)?.submissions ?? [];
+  const totalFee = submissions.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
 
   const { data: batchesData } = trpc.grading.admin.getAllBatches.useQuery();
   const batches: any[] = Array.isArray(batchesData) ? batchesData : [];
@@ -1365,7 +1384,7 @@ function SubmissionManagement() {
           <span>📸</span>
           待審核截圖
         </button>
-        <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆</span>
+        <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆{submissions.length > 0 && <span className="ml-2 font-semibold text-[#06038d]">HK${totalFee.toLocaleString('zh-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>}</span>
         {/* Bulk delete awaiting_payment button */}
         <button
           onClick={() => setShowBulkDeleteDialog(true)}
