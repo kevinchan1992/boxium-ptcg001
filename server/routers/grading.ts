@@ -550,7 +550,7 @@ export const gradingRouter = router({
           and(
             eq(gradingSubmissions.id, input.submissionId),
             eq(gradingSubmissions.userId, ctx.user.id),
-            inArray(gradingSubmissions.status, ["pending_shipment", "graded", "payment_pending", "payment_overdue"])
+            inArray(gradingSubmissions.status, ["awaiting_payment", "pending_shipment", "graded", "payment_pending", "payment_overdue"])
           )
         )
         .limit(1);
