@@ -8557,3 +8557,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端：isAlipayRejected 狀態 - 顯示拒絕原因 + 重新上傳截圖 UI（含 AI 核對）
 - [x] 前端：isPaymentConfirmed 狀態 - 顯示追蹤號碼輸入框（已提交則顯示號碼）
 - [ ] 儲存 checkpoint
+---
+## 管理員端三個新功能（2026-04-22）
+
+- [ ] 管理員鑑定頁面新增「待審核截圖」快速篩選列表（alipayProofStatus === "pending_review"）
+- [ ] 截圖被拒絕後自動發送通知給用戶（站內通知 + 電郵）
+- [ ] 管理員確認收件（received → submitted_to_psa）後自動通知用戶
+- [ ] 儲存 checkpoint

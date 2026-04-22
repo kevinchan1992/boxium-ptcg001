@@ -407,6 +407,20 @@ function SubmissionDetailDialog({
     },
     onError: (err: any) => toast.error(err.message),
   });
+  const [showRejectInput, setShowRejectInput] = React.useState(false);
+  const [rejectionReason, setRejectionReason] = React.useState("");
+  const rejectAlipayMutation = trpc.grading.adminRejectGradingAlipayProof.useMutation({
+    onSuccess: () => {
+      toast.success("截圖已拒絕，已通知用戶重新上傳");
+      setShowRejectInput(false);
+      setRejectionReason("");
+      utils.grading.admin.listSubmissions.invalidate();
+      utils.grading.admin.listBatchesWithStats.invalidate();
+      utils.grading.admin.getSubmissionDetail.invalidate({ id: submissionId! });
+      onUpdated();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -521,12 +535,53 @@ function SubmissionDetailDialog({
                   </div>
                 )}
                 <Button
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white mb-2"
                   onClick={() => confirmAlipayMutation.mutate({ submissionId: detail.id })}
                   disabled={confirmAlipayMutation.isPending}
                 >
                   {confirmAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認收款完成，訂單標記完成</>}
                 </Button>
+                {/* Reject button */}
+                {!showRejectInput ? (
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                    onClick={() => setShowRejectInput(true)}
+                  >
+                    <X className="h-4 w-4 mr-2" />拒絕截圖，通知用戶重新上傳
+                  </Button>
+                ) : (
+                  <div className="mt-2 space-y-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                    <Label className="text-xs font-semibold text-red-700">拒絕原因 *</Label>
+                    <Textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="請說明拒絕原因，如：截圖不清晰、金額不符、不是支付寶 HK 付款截圖等"
+                      className="resize-none h-16 bg-white border-red-200 text-gray-900 text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => { setShowRejectInput(false); setRejectionReason(""); }}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => {
+                          if (!rejectionReason.trim()) { toast.error("請填寫拒絕原因"); return; }
+                          rejectAlipayMutation.mutate({ submissionId: detail.id, rejectionReason: rejectionReason.trim() });
+                        }}
+                        disabled={rejectAlipayMutation.isPending}
+                      >
+                        {rejectAlipayMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認拒絕"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1209,16 +1264,17 @@ function BatchOverview() {
 // ─── Submission Management (all submissions, filterable) ──────────────────────
 function SubmissionManagement() {
   const utils = trpc.useUtils();
-  const [statusFilter, setStatusFilter] = useState("all");
+   const [statusFilter, setStatusFilter] = useState("all");
   const [pendingUpgradeFilter, setPendingUpgradeFilter] = useState(false);
+  const [alipayPendingFilter, setAlipayPendingFilter] = useState(false);
   const [batchFilter, setBatchFilter] = useState("all");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
     batchId: batchFilter === "all" ? undefined : parseInt(batchFilter),
     pendingUpgrade: pendingUpgradeFilter || undefined,
+    alipayProofPending: alipayPendingFilter || undefined,
   });
   const submissions: any[] = Array.isArray(submissionsData) ? submissionsData : (submissionsData as any)?.submissions ?? [];
 
@@ -1285,6 +1341,18 @@ function SubmissionManagement() {
         >
           <span>⇑</span>
           待補付
+        </button>
+        {/* Alipay proof pending review quick filter */}
+        <button
+          onClick={() => setAlipayPendingFilter(v => !v)}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+            alipayPendingFilter
+              ? 'bg-amber-500 text-white border-amber-500'
+              : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
+          }`}
+        >
+          <span>📸</span>
+          待審核截圖
         </button>
         <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆</span>
       </div>

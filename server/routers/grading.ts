@@ -2064,4 +2064,88 @@ export const gradingRouter = router({
       }).catch(() => {});
       return { success: true, proofUrl: url };
     }),
+
+  // ─── Admin: Reject Alipay HK proof ─────────────────────────────────────────
+  adminRejectGradingAlipayProof: adminProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        rejectionReason: z.string().min(1, "請填寫拒絕原因"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [submission] = await db
+        .select()
+        .from(gradingSubmissions)
+        .where(eq(gradingSubmissions.id, input.submissionId))
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+      if (submission.alipayProofStatus !== "pending_review") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "截圖狀態不允許拒絕" });
+      }
+      // Update proof status to rejected and revert submission status to awaiting_payment
+      await db
+        .update(gradingSubmissions)
+        .set({
+          alipayProofStatus: "rejected",
+          alipayProofRejectionReason: input.rejectionReason,
+          status: "awaiting_payment",
+        } as any)
+        .where(eq(gradingSubmissions.id, submission.id));
+      // Notify user via in-app notification
+      await createNotification({
+        userId: submission.userId,
+        type: "system",
+        title: "支付寶 HK 截圖未通過審核 ❌",
+        body: `申請單 ${submission.orderNo} 的支付寶 HK 付款截圖未通過審核，原因：${input.rejectionReason}。請重新上傳正確的付款截圖。`,
+        linkUrl: `/grading/orders/${submission.id}`,
+      }).catch(() => {});
+      // Send email notification to user
+      try {
+        const [user] = await db
+          .select({ email: users.email, name: users.name })
+          .from(users)
+          .where(eq(users.id, submission.userId))
+          .limit(1);
+        if (user?.email) {
+          const baseUrl = "https://boxium.asia";
+          const orderUrl = `${baseUrl}/grading/orders/${submission.id}`;
+          const extraHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border:2px solid #fca5a5;border-radius:10px;margin:16px 0;overflow:hidden;">
+  <tr><td style="background:#dc2626;padding:10px 16px;">
+    <p style="margin:0;font-size:13px;font-weight:bold;color:#ffffff;">❌ 截圖審核未通過</p>
+  </td></tr>
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0;font-size:13px;color:#333;">拒絕原因：<strong style="color:#dc2626;">${input.rejectionReason}</strong></p>
+    <p style="margin:8px 0 0;font-size:13px;color:#555;">請重新上傳正確的支付寶 HK 付款截圖（須顯示付款成功、金額及收款方資訊）。</p>
+  </td></tr>
+</table>
+<p style="color:#555;font-size:14px;margin:12px 0;">如有任何疑問，請聯絡 BOXIUM 客服。</p>
+<div style="text-align:center;margin:16px 0;">
+  <a href="${orderUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">重新上傳截圖</a>
+</div>`;
+          const html = buildGradingEmail({
+            userName: user.name || user.email,
+            title: "支付寶 HK 截圖審核未通過 ❌",
+            body: `您的申請單 ${submission.orderNo} 的支付寶 HK 付款截圖未通過審核，請重新上傳正確的付款截圖。`,
+            orderNo: submission.orderNo,
+            linkUrl: orderUrl,
+            ctaText: "重新上傳截圖",
+            extraHtml,
+          });
+          await sendEmail({
+            to: user.email,
+            subject: `【BOXIUM PSA 鑑定】付款截圖審核未通過 ❌ — ${submission.orderNo}`,
+            html,
+            emailType: "grading",
+            toUserId: submission.userId,
+          });
+        }
+      } catch (e) {
+        console.error("[Grading] Failed to send rejection email:", e);
+      }
+      return { success: true };
+    }),
 });
