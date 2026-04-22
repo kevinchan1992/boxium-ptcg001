@@ -549,6 +549,7 @@ export default function GradingOrderDetail() {
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm">返回我的申請</span>
             </button>
+{submission.status !== "awaiting_payment" && (
             <Button
               variant="outline"
               size="sm"
@@ -558,6 +559,7 @@ export default function GradingOrderDetail() {
               <Printer className="h-4 w-4 mr-2" />
               打印申請單
             </Button>
+            )}
           </div>
 
           {/* ── Upgrade Payment Success Banner ── */}
@@ -740,7 +742,7 @@ export default function GradingOrderDetail() {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setShowAlipayQR(false)} className="flex-1 text-black">返回</Button>
-                    <Button onClick={handleAlipayProofUpload} disabled={!alipayProofFile || uploadingProof} className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white">
+                    <Button onClick={handleSubmitAlipayProof} disabled={!alipayProofFile || uploadingProof} className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white">
                       {uploadingProof ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />上傳中...</> : "提交截圖"}
                     </Button>
                   </div>
@@ -808,7 +810,7 @@ export default function GradingOrderDetail() {
           )}
 
           {/* Shipping notice (before received) */}
-          {(submission.status === "pending_shipment" || submission.status === "pending_payment" || submission.status === "paid") && (
+          {(submission.status === "pending_shipment" || submission.status === "paid") && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />

@@ -8537,3 +8537,9 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 標記 server/persistentSnkrdunkBatchUpdate.ts 為 @DEPRECATED
 - [x] 標記 server/batchUpdateScheduler.ts 為 @DEPRECATED
 - [x] 儲存 checkpoint
+---
+## GradingOrderDetail 三項 Bug 修復
+- [x] 修復 AlipayHK 截圖提交按鈕調用不存在的函數（handleAlipayProofUpload → handleSubmitAlipayProof）
+- [x] 頂部「打印申請單」按鈕只在付款完成後顯示（awaiting_payment 狀態時隱藏）
+- [x] 寄件提示區塊移除 pending_payment 條件（只在 pending_shipment 或 paid 狀態顯示）
+- [ ] 儲存 checkpoint
