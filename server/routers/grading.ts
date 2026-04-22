@@ -632,7 +632,7 @@ export const gradingRouter = router({
         .limit(1);
 
       if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
-      if (!["pending_shipment", "graded", "payment_pending", "payment_overdue"].includes(submission.status)) {
+      if (!["awaiting_payment", "pending_shipment", "graded", "payment_pending", "payment_overdue"].includes(submission.status)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "申請狀態不允許提交付款截圖" });
       }
 
@@ -649,6 +649,8 @@ export const gradingRouter = router({
           alipayProofSubmittedAt: new Date(),
           alipayProofStatus: "pending_review",
           paymentMethod: "alipay_hk",
+          // 若狀態為 awaiting_payment，提交截圖後自動轉為 pending_shipment
+          ...(submission.status === "awaiting_payment" ? { status: "pending_shipment" } : {}),
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
 
