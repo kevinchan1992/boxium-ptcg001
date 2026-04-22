@@ -528,7 +528,12 @@ export default function GradingOrderDetail() {
 
   const currentStepIdx = getStepIndex(submission.status);
   const isCancelled = submission.status === "cancelled";
-  const isAwaitingPayment = submission.status === "awaiting_payment" || submission.status === "pending_shipment";
+  // awaiting_payment: 申請已建立，等待付款（Stripe 或 AlipayHK 截圖尚未提交）
+  const isAwaitingPayment = submission.status === "awaiting_payment";
+  // pending_shipment 且 AlipayHK 截圖待審核（管理員尚未確認）
+  const isAlipayPendingReview = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "pending_review";
+  // 付款已確認（Stripe 付款成功 或 AlipayHK 截圖已批准）
+  const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayPendingReview;
   const isGraded = submission.status === "graded" || submission.status === "payment_pending";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 
@@ -549,7 +554,7 @@ export default function GradingOrderDetail() {
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm">返回我的申請</span>
             </button>
-{submission.status !== "awaiting_payment" && (
+{(isPaymentConfirmed || isGraded || isCompleted || submission.status === "received" || submission.status === "submitted_to_psa" || submission.status === "grading" || submission.status === "graded") && (
             <Button
               variant="outline"
               size="sm"
@@ -664,9 +669,9 @@ export default function GradingOrderDetail() {
                 </p>
               </div>
               <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                isCancelled ? "bg-red-500" : isCompleted ? "bg-green-500" : isAwaitingPayment ? "bg-yellow-300 text-gray-900" : "bg-yellow-400 text-[#06038d]"
+                isCancelled ? "bg-red-500 text-white" : isCompleted ? "bg-green-500 text-white" : isAwaitingPayment ? "bg-yellow-300 text-gray-900" : isAlipayPendingReview ? "bg-blue-500 text-white" : "bg-yellow-400 text-[#06038d]"
               }`}>
-                {STATUS_LABEL[submission.status] ?? submission.status}
+                {isAlipayPendingReview ? "截圖待審核" : (STATUS_LABEL[submission.status] ?? submission.status)}
               </span>
             </div>
           </div>
@@ -774,8 +779,72 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
+          {/* AlipayHK proof pending review - payment submitted but not yet confirmed */}
+          {isAlipayPendingReview && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <p className="font-bold text-blue-800">支付寳 HK 截圖已提交，等待管理員確認</p>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">管理員將於 24 小時內確認收款，確認後申請將自動進入處理。</p>
+              {/* Show proof image if available */}
+              {(submission as any)?.alipayProofImageUrl && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-blue-800 mb-2">已提交截圖：</p>
+                  <img
+                    src={(submission as any).alipayProofImageUrl}
+                    alt="付款截圖"
+                    className="max-h-48 rounded-lg border border-blue-200 mx-auto block object-contain"
+                  />
+                </div>
+              )}
+              {/* AI verification result */}
+              <div className="mt-2">
+                {(submission as any)?.alipayProofAiResult ? (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    (submission as any).alipayProofAiResult === 'pass'
+                      ? 'bg-green-100 text-green-800'
+                      : (submission as any).alipayProofAiResult === 'warning'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    <span>{(submission as any).alipayProofAiResult === 'pass' ? '✅' : (submission as any).alipayProofAiResult === 'warning' ? '⚠️' : '❌'}</span>
+                    <span>
+                      {(submission as any).alipayProofAiResult === 'pass'
+                        ? 'AI 核對通過，等待管理員確認'
+                        : (submission as any).alipayProofAiResult === 'warning'
+                        ? 'AI 核對有警告，管理員將人工審核'
+                        : 'AI 核對未通過，請確認截圖是否正確'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>AI 核對中，請稍候…</span>
+                  </div>
+                )}
+              </div>
+              {/* Cancel button */}
+              <div className="mt-4 pt-3 border-t border-blue-200">
+                {!cancelConfirm ? (
+                  <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs" onClick={() => setCancelConfirm(true)}>
+                    <XCircle className="h-3 w-3 mr-1.5" />取消申請
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-700 font-semibold">確定要取消此申請？</span>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
+                      {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Progress stepper */}
-          {!isCancelled && !isAwaitingPayment && (
+          {!isCancelled && !isAwaitingPayment && !isAlipayPendingReview && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
               <h3 className="font-bold text-gray-900 mb-4 text-sm">申請進度</h3>
               <div className="flex items-start">
@@ -809,8 +878,8 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
-          {/* Shipping notice (before received) */}
-          {(submission.status === "pending_shipment" || submission.status === "paid") && (
+          {/* Shipping notice (before received) - only show when payment is confirmed */}
+          {isPaymentConfirmed && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />

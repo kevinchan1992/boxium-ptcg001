@@ -8542,4 +8542,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 修復 AlipayHK 截圖提交按鈕調用不存在的函數（handleAlipayProofUpload → handleSubmitAlipayProof）
 - [x] 頂部「打印申請單」按鈕只在付款完成後顯示（awaiting_payment 狀態時隱藏）
 - [x] 寄件提示區塊移除 pending_payment 條件（只在 pending_shipment 或 paid 狀態顯示）
+- [x] 儲存 checkpoint (7e95050b)
+---
+## GradingOrderDetail 進一步修復
+- [x] awaiting_payment 狀態下頂部打印按鈕仍顯示（已修復：isPaymentConfirmed 條件）
+- [x] awaiting_payment 狀態下「請將卡牌寄至以下地址」卡片仍顯示（已修復：isPaymentConfirmed 條件）
+- [x] AlipayHK 截圖提交後 AI 核對功能消失（已修復：新增 isAlipayPendingReview 截圖待審核區塊）
 - [ ] 儲存 checkpoint
