@@ -197,7 +197,7 @@ export const gradingRouter = router({
       const [submissionResult] = await db.insert(gradingSubmissions).values({
         orderNo,
         userId: ctx.user.id,
-        status: "pending_shipment",
+        status: "awaiting_payment",
         totalFeeHkd: totalFeeHkd.toFixed(2),
         batchId: nextBatch?.id || null,
         shippingDeadline: nextBatch?.cutoffDate || null,
@@ -236,30 +236,20 @@ export const gradingRouter = router({
         userName: user.name || user.email,
         type: "grading_submitted",
         title: "PSA 鑑定申請已提交",
-        body: `您的 PSA 鑑定申請 ${orderNo} 已成功提交，請盡快將卡牌寄至 BOXIUM 指定地址。`,
+        body: `您的 PSA 鑑定申請 ${orderNo} 已成功提交，請前往申請詳情頁面完成付款。`,
         linkUrl,
-        subject: `【BOXIUM PSA 鑑定】申請已提交 - ${orderNo}`,
+        subject: `》BOXIUM PSA 鑑定「申請已提交 - ${orderNo}`,
         html: buildGradingEmail({
           userName: user.name || user.email,
           title: "PSA 鑑定申請已提交",
-          body: `您的 PSA 鑑定申請已成功提交，請打印申請單並連同卡牌一起寄至以下地址。`,
+          body: `您的 PSA 鑑定申請已成功提交，請點擊下方按鈕前往申請詳情頁面完成付款。付款確認後，請打印申請單並連同卡牌一起寄至 BOXIUM 指定地址。`,
           orderNo,
           linkUrl: `${baseUrl}${linkUrl}`,
-          ctaText: "查看申請詳情",
+          ctaText: "前往完成付款",
           extraHtml: `
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6ff;border:2px solid #dde0f5;border-radius:10px;margin:16px 0;overflow:hidden;">
-  <tr><td style="background:#06038d;padding:10px 16px;">
-    <p style="margin:0;font-size:13px;font-weight:bold;color:#FFD700;">📦 送件地址</p>
-  </td></tr>
-  <tr><td style="padding:12px 16px;">
-    <p style="margin:0;font-size:13px;font-weight:bold;color:#06038d;">順豐站 852Z351</p>
-    <p style="margin:4px 0 0;font-size:13px;color:#333;">香港新界離島區東淌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
-    ${nextBatch ? `<p style="margin:8px 0 0;font-size:13px;font-weight:bold;color:#dc3545;">⏰ 寄件截止日期：${new Date(nextBatch.cutoffDate).toLocaleDateString("zh-HK")}</p>` : ""}
-  </td></tr>
-</table>
-<p style="color:#dc3545;font-size:14px;margin:12px 0;">⚠️ 請務必打印申請單連同卡牌一起寄出，否則無法處理您的申請。</p>
-<div style="text-align:center;margin:16px 0;">
-  <a href="${baseUrl}${printUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">🖨️ 打印申請單</a>
+<div style="background:#fff8e1;border:2px solid #ffd600;border-radius:10px;padding:14px 16px;margin:16px 0;">
+  <p style="margin:0;font-size:14px;font-weight:bold;color:#e65100;">⚠️ 請先完成付款，申請才會進入處理流程</p>
+  <p style="margin:6px 0 0;font-size:13px;color:#555;">付款確認後，系統將發送寄件地址及打印申請單的詳細資訊。</p>
 </div>`,
         }),
       });
@@ -2004,6 +1994,7 @@ export const gradingRouter = router({
         .set({
           trackingNumber: input.trackingNumber.trim(),
           trackingSubmittedAt: new Date(),
+          status: "received",  // 自動更新為「待 BOXIUM 收件」狀態
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
       // Notify admin

@@ -1113,6 +1113,22 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
+          {/* Tracking number display when status is received */}
+          {submission.status === "received" && (submission as any).trackingNumber && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <div className="flex gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-blue-800 mb-1">已提交順豐追蹤號碼，BOXIUM 正在等待收件</p>
+                  <p className="text-sm text-blue-700 mb-2">收件後將自動更新狀態為「已收件」。</p>
+                  <div className="bg-white border border-blue-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-blue-600">順豐追蹤號碼</p>
+                    <p className="text-base font-bold text-blue-900 font-mono">{(submission as any).trackingNumber}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Batch info */}
           {submission.batch && (
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">

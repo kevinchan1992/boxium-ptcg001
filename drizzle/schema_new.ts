@@ -1590,7 +1590,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
     "returned",
     "completed",
     "cancelled"
-  ]).default("pending_shipment").notNull(),
+  ]).default("awaiting_payment").notNull(),
   totalFeeHkd: decimal("totalFeeHkd", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: mysqlEnum("paymentMethod", ["stripe", "alipay_hk"]),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 128 }),
