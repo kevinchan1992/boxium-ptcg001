@@ -48,6 +48,7 @@ import {
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
+  { value: "awaiting_payment", label: "未付款" },
   { value: "pending_shipment", label: "待寄件" },
   { value: "received", label: "BOXIUM已收件" },
   { value: "submitted_to_psa", label: "已出團" },
