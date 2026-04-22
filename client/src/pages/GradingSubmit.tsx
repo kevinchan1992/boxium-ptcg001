@@ -283,13 +283,13 @@ function ItemCard({
               />
               <button
                 type="button"
-                onClick={() => onUpdate(item.id, { quantity: Math.min(1000, (item.quantity ?? 1) + 1) })}
+                onClick={() => onUpdate(item.id, { quantity: Math.min(999, (item.quantity ?? 1) + 1) })}
                 className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors font-bold text-lg select-none"
-                disabled={(item.quantity ?? 1) >= 1000}
+                disabled={(item.quantity ?? 1) >= 999}
               >
                 +
               </button>
-              <span className="text-xs text-gray-400 ml-1">張（1–1000）</span>
+              <span className="text-xs text-gray-400 ml-1">張（1-999）</span>
             </div>
           </div>
         </div>
@@ -300,13 +300,16 @@ function ItemCard({
 
 // ─── Terms content ────────────────────────────────────────────────────────────
 const TERMS = [
-  "本人確認所提交的卡牌為本人合法擁有，並非贓物或侵權物品。",
-  "本人明白 PSA 鑑定結果為最終結果，BOXIUM 無法干預評分，亦不保證任何特定評分。",
+  "本人確認所提交的卡牌為本人合法擁有，並非贓物或侵權物品。如日後發現卡牌來源有問題，本人須承擔一切法律責任。",
+  "本人明白 PSA 鑑定結果為最終結果，BOXIUM 無法干預評分，亦不保證任何特定評分。對評分結果有任何異議，須直接向 PSA 提出，BOXIUM 不負責跟進。",
   "本人明白卡片一經提交 PSA 後，申請不可取消，費用亦不予退還。如需在 BOXIUM 收件後取消，須於 48 小時內書面通知並支付 HK$50 行政費。",
-  "本人明白客人自費寄件至 BOXIUM 的過程由客人自行承擔風險，BOXIUM 不負責寄件途中的遺失或損壞。",
+  "本人明白客人自費寄件至 BOXIUM 的過程由客人自行承擔風險，BOXIUM 不負責寄件途中的遺失或損壞。強烈建議客人購買運輸保險。",
   "本人明白鑑定完成後須於 30 天內完成付款。逾期未付款，BOXIUM 保留對相關卡片自行處理之權利，包括但不限於出售、捐贈或銷毀，客人將不獲任何賠償。",
   "本人明白 BOXIUM 對 PSA 之任何服務中斷、政策變更、價格調整或其他不可抗力因素概不負責。",
   "本人明白價格或會因應官方調整而更改，恕不另行通知。鑑定期以工作天計算，實際時間會根據官方實際情況而定，不包括運輸時間。",
+  "本人明白 BOXIUM 只作代理服務，卡牌鑑定期間由 PSA 負責保管，BOXIUM 不對 PSA 保管期間的任何損失負責。",
+  "本人明白提交申請即代表同意 BOXIUM 收集及使用本人的個人資料（包括姓名、聯絡方式及卡牌資料）用於處理本次申請。",
+  "本人確認所填寫的資料屬實，如有虛假陳述，BOXIUM 保留拒絕服務及追究責任的權利。",
 ];
 
 // ─── Draft helpers ───────────────────────────────────────────────────────────
@@ -909,7 +912,7 @@ export default function GradingSubmit() {
                       ? 'border-[#06038d] bg-white'
                       : 'border-gray-400 bg-white'
                   }`}
-                  style={{ minWidth: '16px', minHeight: '16px' }}
+                  style={{ minWidth: '16px', minHeight: '16px', transform: 'none', WebkitTransform: 'none' }}
                 >
                   {agreedTerms && (
                     <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
