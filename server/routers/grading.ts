@@ -1134,7 +1134,13 @@ export const gradingRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
         const conditions = [];
-        if (input.status) conditions.push(eq(gradingSubmissions.status, input.status as any));
+        if (input.status) {
+          // If a specific status is requested, use it directly
+          conditions.push(eq(gradingSubmissions.status, input.status as any));
+        } else {
+          // Default: exclude awaiting_payment (unpaid) and cancelled submissions
+          conditions.push(notInArray(gradingSubmissions.status, ["awaiting_payment", "cancelled"]));
+        }
         if (input.batchId) conditions.push(eq(gradingSubmissions.batchId, input.batchId));
         if (input.alipayProofPending) conditions.push(eq(gradingSubmissions.alipayProofStatus, "pending_review"));
         if (input.pendingUpgrade) {
