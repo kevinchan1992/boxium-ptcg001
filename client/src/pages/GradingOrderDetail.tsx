@@ -994,44 +994,43 @@ export default function GradingOrderDetail() {
                       </div>
                     )}
 
-                    <div className="flex gap-2 mt-3">
+                    <div className="grid grid-cols-3 gap-2 mt-3 w-full">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => { setShowAlipayQR(false); setAlipayProofFile(null); setAlipayProofPreview(null); setAiVerifyResult(null); }}
-                        className="flex-1 border-gray-300 text-black"
+                        className="w-full border-gray-300 text-black text-xs h-9"
                       >
                         返回
                       </Button>
-                      {alipayProofFile && !aiVerifying && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (!alipayProofFile || !submission?.id) return;
-                            setAiVerifyResult(null);
-                            setAiVerifying(true);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              const base64 = (e.target?.result as string).split(',')[1];
-                              verifyAlipayProofMutation.mutate({
-                                submissionId: submission.id,
-                                proofImageBase64: base64,
-                                mimeType: alipayProofFile.type || 'image/jpeg',
-                              });
-                            };
-                            reader.readAsDataURL(alipayProofFile);
-                          }}
-                          className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                        >
-                          重新核對
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!alipayProofFile || !submission?.id) return;
+                          setAiVerifyResult(null);
+                          setAiVerifying(true);
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            const base64 = (e.target?.result as string).split(',')[1];
+                            verifyAlipayProofMutation.mutate({
+                              submissionId: submission.id,
+                              proofImageBase64: base64,
+                              mimeType: alipayProofFile.type || 'image/jpeg',
+                            });
+                          };
+                          reader.readAsDataURL(alipayProofFile);
+                        }}
+                        disabled={!alipayProofFile || aiVerifying}
+                        className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-xs h-9"
+                      >
+                        重新核對
+                      </Button>
                       <Button
                         size="sm"
                         onClick={handleSubmitAlipayProof}
                         disabled={!alipayProofFile || uploadingProof || aiVerifying}
-                        className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                        className="w-full bg-[#06038d] hover:bg-[#06038d]/90 text-white text-xs h-9"
                       >
                         {uploadingProof ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />上傳中...</> : "提交截圖"}
                       </Button>
@@ -1778,44 +1777,43 @@ export default function GradingOrderDetail() {
                       </div>
                     )}
 
-                    <div className="flex gap-2 mt-3">
+                    <div className="grid grid-cols-3 gap-2 mt-3 w-full">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => { setShowAlipayQR(false); setAlipayProofFile(null); setAlipayProofPreview(null); setAiVerifyResult(null); }}
-                        className="flex-1 border-gray-300 text-black"
+                        className="w-full border-gray-300 text-black text-xs h-9"
                       >
                         返回
                       </Button>
-                      {alipayProofFile && !aiVerifying && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (!alipayProofFile || !submission?.id) return;
-                            setAiVerifyResult(null);
-                            setAiVerifying(true);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              const base64 = (e.target?.result as string).split(',')[1];
-                              verifyAlipayProofMutation.mutate({
-                                submissionId: submission.id,
-                                proofImageBase64: base64,
-                                mimeType: alipayProofFile.type || 'image/jpeg',
-                              });
-                            };
-                            reader.readAsDataURL(alipayProofFile);
-                          }}
-                          className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                        >
-                          重新核對
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!alipayProofFile || !submission?.id) return;
+                          setAiVerifyResult(null);
+                          setAiVerifying(true);
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            const base64 = (e.target?.result as string).split(',')[1];
+                            verifyAlipayProofMutation.mutate({
+                              submissionId: submission.id,
+                              proofImageBase64: base64,
+                              mimeType: alipayProofFile.type || 'image/jpeg',
+                            });
+                          };
+                          reader.readAsDataURL(alipayProofFile);
+                        }}
+                        disabled={!alipayProofFile || aiVerifying}
+                        className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-xs h-9"
+                      >
+                        重新核對
+                      </Button>
                       <Button
                         size="sm"
                         onClick={handleSubmitAlipayProof}
                         disabled={!alipayProofFile || uploadingProof || aiVerifying}
-                        className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                        className="w-full bg-[#06038d] hover:bg-[#06038d]/90 text-white text-xs h-9"
                       >
                         {uploadingProof ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />上傳中...</> : "提交截圖"}
                       </Button>
