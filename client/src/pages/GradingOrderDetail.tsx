@@ -273,6 +273,26 @@ export default function GradingOrderDetail() {
     return () => { clearInterval(timer); clearTimeout(timeout); };
   }, [upgradeProofSubmitted, aiPollingActive, (submission as any)?.alipayProofAiResult, refetchSubmission]);
 
+  // Poll for AI verification result after initial alipay proof is submitted
+  const [alipayAiPollingActive, setAlipayAiPollingActive] = useState(false);
+  useEffect(() => {
+    if (!alipayAiPollingActive) return;
+    // Already have result, stop polling
+    if ((submission as any)?.alipayProofAiResult) {
+      setAlipayAiPollingActive(false);
+      return;
+    }
+    const timer = setInterval(() => {
+      refetchSubmission();
+    }, 3000);
+    // Stop polling after 90s
+    const timeout = setTimeout(() => {
+      clearInterval(timer);
+      setAlipayAiPollingActive(false);
+    }, 90000);
+    return () => { clearInterval(timer); clearTimeout(timeout); };
+  }, [alipayAiPollingActive, (submission as any)?.alipayProofAiResult, refetchSubmission]);
+
   const { data: qrData } = trpc.grading.getSubmissionQrCode.useQuery(
     { submissionId },
     { enabled: submissionId > 0 }
@@ -283,6 +303,9 @@ export default function GradingOrderDetail() {
       setUploadingProof(false);
       setProofSubmitted(true);
       toast.success("截圖已提交，等待管理員確認收款");
+      // Refetch to update status to pending_shipment, then start AI polling
+      refetchSubmission();
+      setAlipayAiPollingActive(true);
     },
     onError: (err: any) => {
       setUploadingProof(false);

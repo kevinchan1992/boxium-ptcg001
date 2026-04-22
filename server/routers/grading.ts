@@ -719,9 +719,9 @@ export const gradingRouter = router({
           const orderNo = submission.orderNo;
           const imageDataUrl = `data:${input.mimeType};base64,${input.proofImageBase64}`;
 
-          const systemPrompt = `你是一個專業的支付寶 HK 付款截圖核對助手。你的任務是分析用戶上傳的截圖，判斷是否為有效的支付寶 HK 付款成功記錄。\n\n請以 JSON 格式回覆，不要加入任何其他文字：\n{\n  "isValid": true/false,\n  "confidence": "high"/"medium"/"low",\n  "detectedAmount": "偵測到的金額（如 1680）或 null",\n  "detectedOrderNo": "偵測到的備注單號或 null",\n  "amountMatch": true/false/null,\n  "orderNoMatch": true/false/null,\n  "issues": ["問題列表，如果沒有則為空陣列"],\n  "summary": "簡短的中文核對結果說明"\n}`;
+          const systemPrompt = `你是一個專業的支付寶 HK（AlipayHK）付款截圖核對助手。你的任務是分析用戶上傳的截圖，判斷是否為有效的支付寶 HK 付款成功記錄。\n\n【重要判斷標準】\n支付寶 HK 付款成功截圖的特徵：\n- 顯示「付款成功」、「Payment Successful」、「轉賬成功」等字樣\n- 有支付寶 HK 的 logo 或介面元素（藍色/白色介面，AlipayHK 字樣）\n- 顯示付款金額（HKD 金額）\n- 可能顯示收款方名稱（如「零度有限公司」或「Boxium」）\n- 可能顯示交易單號或備注\n\n【不符合的情況】\n- 截圖是其他網站或應用程式的頁面（如購物網站、訂單確認頁面、電郵等）\n- 截圖顯示付款失敗、處理中、或等待中的狀態\n- 截圖模糊不清或無法辨認\n\n請以 JSON 格式回覆，不要加入任何其他文字：\n{\n  "isValid": true/false,\n  "confidence": "high"/"medium"/"low",\n  "detectedAmount": "偵測到的金額（如 1680）或 null",\n  "detectedOrderNo": "偵測到的備注單號或 null",\n  "amountMatch": true/false/null,\n  "orderNoMatch": true/false/null,\n  "issues": ["問題列表，如果沒有則為空陣列"],\n  "summary": "簡短的中文核對結果說明（如截圖不是支付寶 HK 付款截圖，請說明截圖實際顯示的是什麼內容，例如：截圖顯示的是購物網站的訂單確認頁面）"\n}`;
 
-          const userPrompt = `請核對這張支付寶 HK ${isUpgradePayment ? '升級差價補付' : '付款'}截圖：\n\n預期付款金額：HK$${expectedFee.toLocaleString()}\n預期備注單號：${orderNo}\n\n請判斷：\n1. 是否為支付寶 HK 付款成功截圖（顯示「付款成功」或「Payment Successful」等字樣）\n2. 付款金額是否符合預期金額 HK$${expectedFee.toLocaleString()}\n3. 備注是否包含單號 ${orderNo}`;
+          const userPrompt = `請核對這張支付寶 HK ${isUpgradePayment ? '升級差價補付' : '付款'}截圖：\n\n預期付款金額：HK$${expectedFee.toLocaleString()}\n預期備注單號：${orderNo}\n\n請判斷：\n1. 截圖是否為支付寶 HK（AlipayHK）的付款成功頁面？（注意：不是其他網站的頁面，如購物網站、訂單確認頁、電郵等）\n2. 如果是支付寶 HK 付款截圖，付款金額是否符合預期金額 HK$${expectedFee.toLocaleString()}？\n3. 備注是否包含單號 ${orderNo}？\n\n如果截圖不是支付寶 HK 的付款成功頁面，請在 summary 中說明截圖實際顯示的是什麼（例如：「截圖顯示的是購物網站的訂單確認頁面，並非支付寶 HK 付款截圖」），不要描述為「提交失敗頁面」。`;
 
           const response = await invokeLLM({
             messages: [
