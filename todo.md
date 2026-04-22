@@ -8564,3 +8564,11 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [ ] 截圖被拒絕後自動發送通知給用戶（站內通知 + 電郵）
 - [ ] 管理員確認收件（received → submitted_to_psa）後自動通知用戶
 - [ ] 儲存 checkpoint
+---
+## AlipayHK 付款流程重新設計（2026-04-22）
+- [x] 刪除 isAwaitingPayment 舊版 AlipayHK UI（無 AI 核對步驟）
+- [x] 統一使用新版 UI：上傳截圖 → AI 核對 → 用戶確認 → 提交給管理員
+- [x] 截圖上傳後只做前端 AI 核對（verifyAlipayProofMutation），不改變後端狀態
+- [x] 顯示 AI 核對結果（通過/警告/未通過），允許用戶重新核對或重新上傳
+- [x] 用戶點擊「提交截圖」後才真正提交給管理員（handleSubmitAlipayProof）
+- [ ] 儲存 checkpoint
