@@ -1,7 +1,11 @@
 name: SNKRDUNK Batch Price Update
+
+# ─── Schedule ────────────────────────────────────────────────────────────────
+# Runs daily at 01:00 HKT (17:00 UTC previous day)
+# Can also be triggered manually from GitHub Actions UI
 on:
   schedule:
-    - cron: '0 17 * * *'
+    - cron: '0 17 * * *'   # 01:00 HKT = 17:00 UTC
   workflow_dispatch:
     inputs:
       skip_hours:
@@ -12,22 +16,34 @@ on:
         description: 'Number of parallel workers (default: 8)'
         required: false
         default: '8'
+
+# ─── Permissions ─────────────────────────────────────────────────────────────
 permissions:
   contents: read
+
 jobs:
   batch-update:
     name: Update SNKRDUNK Price History
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 180   # 3-hour safety cap (55k cards @ 8/s ≈ 115 min)
+
     steps:
+      # ── 1. Checkout repository ──────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ── 2. Set up Node.js ───────────────────────────────────────────────────
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      # ── 3. Install dependencies ─────────────────────────────────────────────
+      # Only install the packages needed by the batch script
       - name: Install script dependencies
         run: npm install mysql2 axios
+
+      # ── 4. Run batch update ─────────────────────────────────────────────────
       - name: Run SNKRDUNK batch update
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -40,6 +56,8 @@ jobs:
           echo "Starting SNKRDUNK batch update..."
           echo "PARALLEL=$PARALLEL, SKIP_HOURS=$SKIP_HOURS"
           node scripts/githubActionsBatchUpdate.mjs
+
+      # ── 5. Upload logs on failure ───────────────────────────────────────────
       - name: Upload failure logs
         if: failure()
         uses: actions/upload-artifact@v4
