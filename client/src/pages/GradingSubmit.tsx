@@ -254,7 +254,7 @@ function ItemCard({
               <input
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]*"
+                 max={999}
                 value={item.quantityInput !== undefined ? item.quantityInput : String(item.quantity ?? 1)}
                 onChange={(e) => {
                   const raw = e.target.value.replace(/[^0-9]/g, '');
@@ -265,14 +265,19 @@ function ItemCard({
                   }
                   const v = parseInt(raw, 10);
                   if (!isNaN(v)) {
-                    onUpdate(item.id, { quantityInput: raw, quantity: Math.min(1000, Math.max(1, v)) });
+                    onUpdate(item.id, { quantityInput: raw, quantity: Math.min(999, Math.max(1, v)) });
                   }
                 }}
                 onBlur={(e) => {
                   // On blur: if empty or 0, reset to 1
                   const v = parseInt(e.target.value, 10);
-                  const final = isNaN(v) || v < 1 ? 1 : Math.min(1000, v);
+                  const final = isNaN(v) || v < 1 ? 1 : Math.min(999, v);
                   onUpdate(item.id, { quantityInput: undefined, quantity: final });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  }
                 }}
                 className="w-16 h-8 text-center border border-gray-300 rounded-lg text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 focus:border-[#06038d]"
               />
