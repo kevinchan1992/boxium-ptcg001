@@ -7938,9 +7938,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'listings', label: '商品管理', icon: Package },
   { key: 'auctions', label: '拍賣管理', icon: Package, badgeKey: 'pendingAuctionReview' },
   { key: 'grading', label: 'PSA 代客鑑定', icon: Award },
-  { key: 'auction_orders', label: '拍賣訂單', icon: ShoppingBag },
   { key: 'auction_violations', label: '拍賣違規', icon: Shield },
-  { key: 'orders', label: '訂單管理', icon: ShoppingBag },
   { key: 'alipay', label: '支付寶核對', icon: DollarSign, badgeKey: 'pendingAlipayConfirmation' },
   { key: 'sellers', label: '賣家管理', icon: Users },
   { key: 'disputes', label: '爭議處理', icon: Flag, badgeKey: 'unresolvedDisputeCount' },
@@ -7976,20 +7974,81 @@ export default function AdminMarketplace() {
   }
 
   const [ordersListingFilter, setOrdersListingFilter] = useState<number | null>(null);
+  const [listingsActiveTab, setListingsActiveTab] = useState<'listings' | 'orders'>('listings');
+  const [auctionsActiveTab, setAuctionsActiveTab] = useState<'auctions' | 'auction_orders'>('auctions');
 
   const handleViewOrders = (listingId: number) => {
     setOrdersListingFilter(listingId);
-    setActiveSection('orders');
+    setActiveSection('listings');
+    setListingsActiveTab('orders');
   };
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'listings': return <ListingsTab onViewOrders={handleViewOrders} />;
-      case 'auctions': return <AuctionsAdminTab />;
+      case 'listings': return (
+        <div className="space-y-0">
+          {/* Tab header */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setListingsActiveTab('listings')}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                listingsActiveTab === 'listings'
+                  ? 'border-[#06038d] text-[#06038d]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              商品管理
+            </button>
+            <button
+              onClick={() => setListingsActiveTab('orders')}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                listingsActiveTab === 'orders'
+                  ? 'border-[#06038d] text-[#06038d]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              訂單管理
+            </button>
+          </div>
+          {listingsActiveTab === 'listings'
+            ? <ListingsTab onViewOrders={handleViewOrders} />
+            : <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => { setOrdersListingFilter(null); }} onViewOrders={handleViewOrders} />}
+        </div>
+      );
+      case 'auctions': return (
+        <div className="space-y-0">
+          {/* Tab header */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setAuctionsActiveTab('auctions')}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                auctionsActiveTab === 'auctions'
+                  ? 'border-[#06038d] text-[#06038d]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              拍賣管理
+            </button>
+            <button
+              onClick={() => setAuctionsActiveTab('auction_orders')}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                auctionsActiveTab === 'auction_orders'
+                  ? 'border-[#06038d] text-[#06038d]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              拍賣訂單
+            </button>
+          </div>
+          {auctionsActiveTab === 'auctions' ? <AuctionsAdminTab /> : <AuctionOrdersAdminTab />}
+        </div>
+      );
       case 'grading': return <AdminGrading />;
-      case 'auction_orders': return <AuctionOrdersAdminTab />;
       case 'auction_violations': return <AuctionViolationsAdminTab />;
-      case 'orders': return <OrdersTab listingFilter={ordersListingFilter} onClearListingFilter={() => setOrdersListingFilter(null)} onViewOrders={handleViewOrders} />;
       case 'alipay': return <AlipayPendingTab />;
       case 'sellers': return <SellersTab />;
       case 'disputes': return <DisputesTab />;
