@@ -291,7 +291,7 @@ function SubmissionDetailDialog({
   const utils = trpc.useUtils();
   const { data: detail, isLoading } = trpc.grading.admin.getSubmissionDetail.useQuery(
     { id: submissionId! },
-    { enabled: !!submissionId && open }
+    { enabled: !!submissionId && open, refetchOnMount: 'always', staleTime: 0 }
   );
 
   const [newStatus, setNewStatus] = useState("");
@@ -362,6 +362,7 @@ function SubmissionDetailDialog({
       toast.success("狀態已更新");
       utils.grading.admin.listSubmissions.invalidate();
       utils.grading.admin.listBatchesWithStats.invalidate();
+      if (submissionId) utils.grading.admin.getSubmissionDetail.invalidate({ id: submissionId });
       onUpdated();
       onClose();
     },
@@ -373,6 +374,7 @@ function SubmissionDetailDialog({
       toast.success("鑑定結果已儲存並通知客人");
       utils.grading.admin.listSubmissions.invalidate();
       utils.grading.admin.listBatchesWithStats.invalidate();
+      if (submissionId) utils.grading.admin.getSubmissionDetail.invalidate({ id: submissionId });
       onUpdated();
       onClose();
     },
