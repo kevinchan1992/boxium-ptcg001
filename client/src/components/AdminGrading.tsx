@@ -302,10 +302,11 @@ function SubmissionDetailDialog({
   // Tier upgrade flow state
   // gradingStep: 'ask_upgrade' | 'select_tier' | 'fill_result'
   const [gradingStep, setGradingStep] = useState<'ask_upgrade' | 'select_tier' | 'fill_result'>('ask_upgrade');
-  const [selectedUpgradeTierId, setSelectedUpgradeTierId] = useState<number | null>(null);
   const [upgradeResult, setUpgradeResult] = useState<{ checkoutUrl: string | null; diffFeeHkd: string; newTierName: string } | null>(null);
   // Per-card upgrade selection: set of item IDs selected for upgrade
   const [selectedItemIdsForUpgrade, setSelectedItemIdsForUpgrade] = useState<Set<number>>(new Set());
+  // Per-card tier selection: itemId -> newTierId
+  const [itemTierMap, setItemTierMap] = useState<Map<number, number>>(new Map());
 
   // Fetch all active tiers for upgrade selection
   const { data: allTiers } = trpc.grading.getServiceTiers.useQuery(undefined, { enabled: open && gradingStep === 'select_tier' });
@@ -347,13 +348,12 @@ function SubmissionDetailDialog({
         setGradingStep('ask_upgrade');
         setUpgradeResult(null);
       }
-      setSelectedUpgradeTierId(null);
     } else if (!open) {
       // Reset when dialog closes
       setGradingStep('ask_upgrade');
-      setSelectedUpgradeTierId(null);
       setUpgradeResult(null);
       setSelectedItemIdsForUpgrade(new Set());
+      setItemTierMap(new Map());
     }
   }, [open, submissionId, detail]);
 
@@ -769,72 +769,103 @@ function SubmissionDetailDialog({
               {gradingStep === 'select_tier' && (
                 <div className="space-y-3">
                   <div className="bg-white rounded-lg p-4 border border-blue-100">
-                    {/* Step A: Select which cards need upgrade */}
+                    {/* Per-card upgrade: each card has its own tier selector */}
                     <p className="text-sm font-semibold text-gray-900 mb-1">選擇需要升級的卡牌</p>
-                    <p className="text-xs text-gray-500 mb-3">勾選需要升級服務層級的卡牌（可只選部分），再選擇新層級，系統將按選中張數計算差價。</p>
-                    <div className="space-y-1.5 mb-4 max-h-40 overflow-y-auto">
+                    <p className="text-xs text-gray-500 mb-3">勾選需要升級的卡牌，並為每張卡牌各自選擇升級後的層級，差價將按每張卡牌分別計算後加總。</p>
+                    <div className="space-y-2 mb-4 max-h-72 overflow-y-auto">
                       {(detail.items ?? []).map((item: any) => {
                         const checked = selectedItemIdsForUpgrade.has(item.id);
+                        const selectedTierId = itemTierMap.get(item.id) ?? null;
+                        const currentFee = parseFloat(item.feeHkd ?? 0);
+                        const selectedTier = (allTiers ?? []).find((t: any) => t.id === selectedTierId);
+                        const diff = selectedTier ? parseFloat(selectedTier.feeHkd) - currentFee : 0;
                         return (
-                          <label key={item.id} className={`flex items-center gap-2 rounded-lg p-2 border cursor-pointer transition-all ${checked ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => {
-                                const next = new Set(selectedItemIdsForUpgrade);
-                                if (checked) next.delete(item.id); else next.add(item.id);
-                                setSelectedItemIdsForUpgrade(next);
-                              }}
-                              className="accent-blue-600"
-                            />
-                            <span className="text-xs text-gray-800 flex-1 truncate">{item.cardName}</span>
-                            <span className="text-xs text-gray-400 shrink-0">HK${parseFloat(item.feeHkd ?? 0).toLocaleString()} / 張</span>
-                          </label>
+                          <div key={item.id} className={`rounded-lg border transition-all ${checked ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white'}`}>
+                            <label className="flex items-center gap-2 p-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  const next = new Set(selectedItemIdsForUpgrade);
+                                  if (checked) {
+                                    next.delete(item.id);
+                                    const nextMap = new Map(itemTierMap);
+                                    nextMap.delete(item.id);
+                                    setItemTierMap(nextMap);
+                                  } else {
+                                    next.add(item.id);
+                                  }
+                                  setSelectedItemIdsForUpgrade(next);
+                                }}
+                                className="accent-blue-600 shrink-0"
+                              />
+                              <span className="text-xs text-gray-800 flex-1 truncate">{item.cardName}</span>
+                              <span className="text-xs text-gray-400 shrink-0">原：HK${currentFee.toLocaleString()}</span>
+                            </label>
+                            {checked && (
+                              <div className="px-3 pb-2">
+                                <p className="text-xs text-gray-500 mb-1">選擇升級層級：</p>
+                                <div className="grid grid-cols-2 gap-1">
+                                  {(allTiers ?? []).map((tier: any) => {
+                                    const tierFee = parseFloat(tier.feeHkd);
+                                    const tierDiff = tierFee - currentFee;
+                                    const isTooLow = tierDiff <= 0;
+                                    const isSel = selectedTierId === tier.id;
+                                    return (
+                                      <button
+                                        key={tier.id}
+                                        disabled={isTooLow}
+                                        onClick={() => {
+                                          if (isTooLow) return;
+                                          const nextMap = new Map(itemTierMap);
+                                          nextMap.set(item.id, tier.id);
+                                          setItemTierMap(nextMap);
+                                        }}
+                                        className={`text-left rounded p-2 border text-xs transition-all ${
+                                          isTooLow
+                                            ? 'border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed'
+                                            : isSel
+                                            ? 'border-blue-500 bg-blue-100 font-semibold'
+                                            : 'border-gray-200 bg-white hover:border-blue-300'
+                                        }`}
+                                      >
+                                        <p className="font-medium text-gray-900">{tier.name}</p>
+                                        <p className="text-gray-500">HK${tierFee.toLocaleString()}</p>
+                                        {!isTooLow && <p className="text-red-500 font-bold">+HK${tierDiff.toLocaleString()}</p>}
+                                        {isTooLow && <p className="text-gray-400">層級過低</p>}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {selectedTier && diff > 0 && (
+                                  <p className="text-xs text-blue-700 mt-1">此卡差價：<strong>+HK${diff.toLocaleString()}</strong></p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-500 mb-2">已選 <strong>{selectedItemIdsForUpgrade.size}</strong> 張。選擇升級後的層級：</p>
-                    <div className="space-y-2 mb-3">
-                      {(allTiers ?? []).map((tier: any) => {
-                        const selectedCount = selectedItemIdsForUpgrade.size;
-                        // Calculate diff: selected cards upgrade to new tier, unselected stay at original per-card fee
-                        const selectedItems = (detail.items ?? []).filter((it: any) => selectedItemIdsForUpgrade.has(it.id));
-                        const currentSelectedFee = selectedItems.reduce((sum: number, it: any) => sum + parseFloat(it.feeHkd ?? 0), 0);
-                        const newSelectedFee = selectedCount * parseFloat(tier.feeHkd);
-                        const diff = newSelectedFee - currentSelectedFee;
-                        const isSelected = selectedUpgradeTierId === tier.id;
-                        const isCurrentOrLower = diff <= 0 || selectedCount === 0;
-                        return (
-                          <button
-                            key={tier.id}
-                            onClick={() => !isCurrentOrLower && setSelectedUpgradeTierId(tier.id)}
-                            disabled={isCurrentOrLower}
-                            className={`w-full text-left rounded-lg p-3 border-2 transition-all ${
-                              isCurrentOrLower
-                                ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
-                                : isSelected
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 bg-white hover:border-blue-300'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{tier.name}</p>
-                                <p className="text-xs text-gray-500">HK${parseFloat(tier.feeHkd).toLocaleString()} / 張</p>
-                              </div>
-                              <div className="text-right">
-                                {selectedCount > 0 && !isCurrentOrLower && (
-                                  <p className="text-xs font-bold text-red-600">差價 +HK${diff.toLocaleString()}</p>
-                                )}
-                                {isCurrentOrLower && (
-                                  <p className="text-xs text-gray-400">{selectedCount === 0 ? '請先選卡牌' : '目前層級或更低'}</p>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Total diff summary */}
+                    {selectedItemIdsForUpgrade.size > 0 && (() => {
+                      const totalDiff = Array.from(selectedItemIdsForUpgrade).reduce((sum, itemId) => {
+                        const item = (detail.items ?? []).find((it: any) => it.id === itemId);
+                        const tierId = itemTierMap.get(itemId);
+                        const tier = (allTiers ?? []).find((t: any) => t.id === tierId);
+                        if (!item || !tier) return sum;
+                        return sum + (parseFloat(tier.feeHkd) - parseFloat(item.feeHkd ?? 0));
+                      }, 0);
+                      const allSelected = Array.from(selectedItemIdsForUpgrade).every((id) => itemTierMap.has(id));
+                      return (
+                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mb-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-blue-700">已選 <strong>{selectedItemIdsForUpgrade.size}</strong> 張，合計差價：</p>
+                            <p className="text-sm font-bold text-red-600">+HK${totalDiff.toLocaleString()}</p>
+                          </div>
+                          {!allSelected && <p className="text-xs text-orange-600 mt-1">⚠️ 部分卡牌尚未選擇升級層級</p>}
+                        </div>
+                      );
+                    })()}
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -845,13 +876,15 @@ function SubmissionDetailDialog({
                       </Button>
                       <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                        disabled={!selectedUpgradeTierId || selectedItemIdsForUpgrade.size === 0 || upgradeTierMutation.isPending}
+                        disabled={selectedItemIdsForUpgrade.size === 0 || !Array.from(selectedItemIdsForUpgrade).every((id) => itemTierMap.has(id)) || upgradeTierMutation.isPending}
                         onClick={() => {
-                          if (!selectedUpgradeTierId || selectedItemIdsForUpgrade.size === 0) return;
+                          const items = Array.from(selectedItemIdsForUpgrade).map((itemId) => ({
+                            itemId,
+                            newTierId: itemTierMap.get(itemId)!,
+                          }));
                           upgradeTierMutation.mutate({
                             submissionId: detail.id,
-                            newTierId: selectedUpgradeTierId,
-                            itemIds: Array.from(selectedItemIdsForUpgrade),
+                            items,
                             origin: window.location.origin,
                           });
                         }}

@@ -1608,9 +1608,11 @@ export const gradingRouter = router({
       .input(
         z.object({
           submissionId: z.number().int().positive(),
-          newTierId: z.number().int().positive(),
-          // itemIds: specific card item IDs to upgrade (per-card upgrade)
-          itemIds: z.array(z.number().int().positive()).min(1),
+          // Per-card upgrade: each item can have a different newTierId
+          items: z.array(z.object({
+            itemId: z.number().int().positive(),
+            newTierId: z.number().int().positive(),
+          })).min(1),
           origin: z.string().default("https://boxium.asia"),
         })
       )
@@ -1626,14 +1628,6 @@ export const gradingRouter = router({
           .limit(1);
         if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
 
-        // Get new tier
-        const [newTier] = await db
-          .select()
-          .from(gradingServiceTiers)
-          .where(and(eq(gradingServiceTiers.id, input.newTierId), eq(gradingServiceTiers.isActive, true)))
-          .limit(1);
-        if (!newTier) throw new TRPCError({ code: "NOT_FOUND", message: "服務層級不存在或已停用" });
-
         // Get all items for this submission
         const allItems = await db
           .select()
@@ -1641,31 +1635,58 @@ export const gradingRouter = router({
           .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
         if (allItems.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "申請沒有卡牌" });
 
-        // Filter to only selected items
-        const selectedItems = allItems.filter((item: typeof allItems[0]) => input.itemIds.includes(item.id));
-        if (selectedItems.length === 0) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "選中的卡牌不存在" });
+        // Collect all unique tier IDs needed
+        const uniqueTierIds = Array.from(new Set(input.items.map((i) => i.newTierId)));
+        const allTiersForUpgrade = await db
+          .select()
+          .from(gradingServiceTiers)
+          .where(and(inArray(gradingServiceTiers.id, uniqueTierIds), eq(gradingServiceTiers.isActive, true)));
+        type TierRow = typeof allTiersForUpgrade[0];
+        const tierMap = new Map<number, TierRow>(allTiersForUpgrade.map((t: TierRow) => [t.id, t]));
+
+        // Validate all requested tiers exist
+        for (const { newTierId } of input.items) {
+          if (!tierMap.has(newTierId)) {
+            throw new TRPCError({ code: "NOT_FOUND", message: `服務層級 ID ${newTierId} 不存在或已停用` });
+          }
         }
 
-        // Calculate diff based on selected items only
-        const currentSelectedFee = selectedItems.reduce((sum: number, item: typeof allItems[0]) => sum + parseFloat(item.feeHkd), 0);
-        const newSelectedFee = selectedItems.length * parseFloat(newTier.feeHkd);
-        const diffFee = newSelectedFee - currentSelectedFee;
+        // Build per-item upgrade map: itemId -> { newTierId, newTier, currentItem }
+        type ItemRow = typeof allItems[0];
+        const itemMap = new Map<number, ItemRow>(allItems.map((it: ItemRow) => [it.id, it]));
+        type UpgradeEntry = { itemId: number; newTierId: number; newTier: TierRow; currentItem: ItemRow; diffFee: number };
+        const upgradeEntries: UpgradeEntry[] = [];
 
-        if (diffFee <= 0) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `選中 ${selectedItems.length} 張卡牌的新層級費用 HK$${newSelectedFee.toFixed(2)} 不高於原費用 HK$${currentSelectedFee.toFixed(2)}，無需補付差價` });
+        for (const { itemId, newTierId } of input.items) {
+          const currentItem = itemMap.get(itemId);
+          if (!currentItem) throw new TRPCError({ code: "BAD_REQUEST", message: `卡牌 ID ${itemId} 不存在` });
+          const newTier = tierMap.get(newTierId)!;
+          const currentFee = parseFloat(currentItem.feeHkd as string);
+          const newFee = parseFloat(newTier.feeHkd as string);
+          const diff = newFee - currentFee;
+          if (diff <= 0) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: `卡牌 #${itemId} 的新層級 ${newTier.name}（HK$${newFee}）不高於原費用（HK$${currentFee}），無需補付差價` });
+          }
+          upgradeEntries.push({ itemId, newTierId, newTier, currentItem, diffFee: diff });
         }
 
+        // Total diff fee = sum of per-item diffs
+        const totalDiffFee = upgradeEntries.reduce((sum, e) => sum + e.diffFee, 0);
         const currentTotal = parseFloat(submission.totalFeeHkd);
-        const newTotal = currentTotal + diffFee;
+        const newTotal = currentTotal + totalDiffFee;
 
         // Get user
         const [user] = await db.select().from(users).where(eq(users.id, submission.userId)).limit(1);
         if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "用戶不存在" });
 
-        // Create Stripe checkout for the diff amount
+        // Build upgrade summary for description
+        const tierSummary = upgradeEntries.map((e) => `${e.newTier.name} x1`).join(", ");
+        // Store per-item upgrade info in metadata as JSON
+        const upgradeItemsJson = JSON.stringify(upgradeEntries.map((e) => ({ itemId: e.itemId, newTierId: e.newTierId, diffFee: e.diffFee.toFixed(2) })));
+
+        // Create Stripe checkout for the total diff amount
         const stripe = getStripe();
-        const amountCents = Math.round(diffFee * 100);
+        const amountCents = Math.round(totalDiffFee * 100);
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ["card"],
           line_items: [
@@ -1674,7 +1695,7 @@ export const gradingRouter = router({
                 currency: "hkd",
                 product_data: {
                   name: `PSA 鑑定服務升級差價 - ${submission.orderNo}`,
-                  description: `升級至 ${newTier.name}，共 ${selectedItems.length} 張卡牌升級，差價補付`,
+                  description: `升級 ${upgradeEntries.length} 張卡牌（${tierSummary}），差價補付`,
                 },
                 unit_amount: amountCents,
               },
@@ -1690,54 +1711,57 @@ export const gradingRouter = router({
             submission_id: input.submissionId.toString(),
             order_no: submission.orderNo,
             user_id: user.id.toString(),
-            new_tier_id: input.newTierId.toString(),
-            diff_fee_hkd: diffFee.toFixed(2),
-            // Store selected item IDs (comma-separated) for webhook processing
-            upgrade_item_ids: input.itemIds.join(","),
+            diff_fee_hkd: totalDiffFee.toFixed(2),
+            // Per-item upgrade details as JSON (itemId, newTierId, diffFee)
+            upgrade_items: upgradeItemsJson,
           },
           success_url: `${input.origin}/grading/orders/${input.submissionId}?upgrade_payment=success`,
           cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
         });
 
         // Save upgrade info to submission AND immediately update totalFeeHkd
+        // upgradeNewTierId: use the most expensive new tier as representative
+        const maxTier = upgradeEntries.reduce((best, e) => parseFloat(e.newTier.feeHkd) > parseFloat(best.newTier.feeHkd) ? e : best, upgradeEntries[0]);
         await db
           .update(gradingSubmissions)
           .set({
             upgradeCheckoutSessionId: session.id,
-            upgradeDiffFeeHkd: sql`${diffFee.toFixed(2)}`,
-            upgradeNewTierId: input.newTierId,
+            upgradeDiffFeeHkd: sql`${totalDiffFee.toFixed(2)}`,
+            upgradeNewTierId: maxTier.newTierId,
             upgradeCheckoutAt: new Date(),
-            totalFeeHkd: sql`${newTotal.toFixed(2)}`, // Update total fee immediately
+            upgradeItemIds: upgradeEntries.map((e) => e.itemId).join(","),
+            totalFeeHkd: sql`${newTotal.toFixed(2)}`,
           })
           .where(eq(gradingSubmissions.id, input.submissionId));
 
-        // Update ONLY selected items to new tier and new fee
-        await db
-          .update(gradingSubmissionItems)
-          .set({ tierId: input.newTierId, feeHkd: sql`${parseFloat(newTier.feeHkd).toFixed(2)}` })
-          .where(
-            and(
-              eq(gradingSubmissionItems.submissionId, input.submissionId),
-              inArray(gradingSubmissionItems.id, input.itemIds)
-            )
-          );
+        // Update each item to its new tier and fee
+        await Promise.all(
+          upgradeEntries.map((e) =>
+            db
+              .update(gradingSubmissionItems)
+              .set({ tierId: e.newTierId, feeHkd: sql`${parseFloat(e.newTier.feeHkd).toFixed(2)}` })
+              .where(eq(gradingSubmissionItems.id, e.itemId))
+          )
+        );
 
         // Notify user
         const linkUrl = `/grading/orders/${submission.id}`;
         const baseUrl = "https://boxium.asia";
+        // Build upgrade detail rows for email
+        const upgradeRows = upgradeEntries.map((e) => `<tr><td style="padding:4px 0;font-size:13px;color:#555;">${e.currentItem.cardName ?? `卡牌 #${e.itemId}`}</td><td style="padding:4px 0;font-size:13px;font-weight:bold;color:#0369a1;">${e.newTier.name}</td><td style="padding:4px 0;font-size:13px;color:#dc2626;">+HK$${e.diffFee.toFixed(2)}</td></tr>`).join("");
         await sendGradingNotification({
           userId: user.id,
           userEmail: user.email,
           userName: user.name || user.email,
           type: "grading_tier_upgrade",
           title: "PSA 鑑定服務層級升級通知",
-          body: `您的申請 ${submission.orderNo} 中 ${selectedItems.length} 張卡牌服務層級已升級至 ${newTier.name}，需補付差價 HK$${diffFee.toFixed(2)}，請點擊連結完成付款。`,
+          body: `您的申請 ${submission.orderNo} 中 ${upgradeEntries.length} 張卡牌服務層級已升級，需補付差價 HK$${totalDiffFee.toFixed(2)}，請點擊連結完成付款。`,
           linkUrl,
           subject: `【BOXIUM PSA 鑑定】服務層級升級，請補付差價 - ${submission.orderNo}`,
           html: buildGradingEmail({
             userName: user.name || user.email,
             title: "PSA 鑑定服務層級升級通知 🔼",
-            body: `您的申請 <strong>${selectedItems.length} 張卡牌</strong>服務層級已由管理員升級至 <strong>${newTier.name}</strong>，需補付差價 <strong>HK$${diffFee.toFixed(2)}</strong>，請點擊下方按鈕完成付款。`,
+            body: `您的申請共 <strong>${upgradeEntries.length} 張卡牌</strong>服務層級已由管理員升級，需補付差價 <strong>HK$${totalDiffFee.toFixed(2)}</strong>，請點擊下方按鈕完成付款。`,
             orderNo: submission.orderNo,
             linkUrl: `${baseUrl}${linkUrl}`,
             ctaText: "立即補付差價",
@@ -1748,18 +1772,16 @@ export const gradingRouter = router({
   </td></tr>
   <tr><td style="padding:12px 16px;">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;width:40%;">升級張數</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${selectedItems.length} 張</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新服務層級</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${newTier.name}</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">原訂單費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${currentTotal.toFixed(2)}</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新訂單費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${newTotal.toFixed(2)}</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">需補付差價</td><td style="padding:4px 0;font-size:18px;font-weight:bold;color:#dc2626;">HK$${diffFee.toFixed(2)}</td></tr>
+      <tr style="border-bottom:1px solid #e0f2fe;"><th style="text-align:left;padding:4px 0;font-size:12px;color:#0369a1;">卡牌</th><th style="text-align:left;padding:4px 0;font-size:12px;color:#0369a1;">新層級</th><th style="text-align:left;padding:4px 0;font-size:12px;color:#0369a1;">差價</th></tr>
+      ${upgradeRows}
+      <tr style="border-top:1px solid #e0f2fe;"><td colspan="2" style="padding:6px 0;font-size:14px;color:#555;font-weight:bold;">合計補付</td><td style="padding:6px 0;font-size:16px;font-weight:bold;color:#dc2626;">HK$${totalDiffFee.toFixed(2)}</td></tr>
     </table>
   </td></tr>
 </table>`,
           }),
         });
 
-        return { success: true, checkoutUrl: session.url, diffFeeHkd: diffFee.toFixed(2), newTierName: newTier.name };
+        return { success: true, checkoutUrl: session.url, diffFeeHkd: totalDiffFee.toFixed(2), newTierName: maxTier.newTier.name };
       }),
 
     // ─── Admin: Get upgrade checkout status ──────────────────────────────────

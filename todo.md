@@ -8572,3 +8572,16 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 顯示 AI 核對結果（通過/警告/未通過），允許用戶重新核對或重新上傳
 - [x] 用戶點擊「提交截圖」後才真正提交給管理員（handleSubmitAlipayProof）
 - [ ] 儲存 checkpoint
+---
+## 每張卡牌可升級至不同層級（2026-04-23）
+
+- [x] 前端：重新設計 select_tier 步驟 UI（每張勾選的卡牌各自有層級選擇格，差價按各卡牌分別計算後加總）
+- [x] 前端：新增 `itemTierMap` state（Map<itemId, newTierId>），追蹤每張卡牌的目標層級
+- [x] 前端：移除已廢棄的 `selectedUpgradeTierId` state
+- [x] 前端：重置 Dialog 時同時清除 `itemTierMap`
+- [x] 後端：`upgradeTier` procedure 已改為接受 `items: [{itemId, newTierId}][]`（每張卡牌各自升級到不同層級）
+- [x] 後端：差價計算改為逐張卡牌計算後加總（sum of newFee - currentFee per item）
+- [x] 後端：Stripe metadata 存入 `upgrade_items` JSON（含 itemId、newTierId、diffFee）
+- [x] 後端：Stripe webhook 解析 `upgrade_items` JSON，逐張卡牌更新至各自的新層級
+- [x] 後端：修復 TypeScript 錯誤（Set 迭代、tierMap 類型推斷）
+- [x] 儲存 checkpoint
