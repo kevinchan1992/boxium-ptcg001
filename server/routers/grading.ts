@@ -2201,9 +2201,7 @@ export const gradingRouter = router({
         .where(eq(gradingSubmissions.id, input.submissionId))
         .limit(1);
       if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
-      if ((submission as any).alipayProofStatus !== "pending_review") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "截圖狀態不允許批准" });
-      }
+      // Admin can force-approve regardless of current alipayProofStatus
       await db
         .update(gradingSubmissions)
         .set({ alipayProofStatus: "approved", status: "pending_shipment" } as any)
