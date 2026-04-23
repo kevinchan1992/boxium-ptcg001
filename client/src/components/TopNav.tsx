@@ -277,7 +277,7 @@ export function TopNav() {
             </motion.button>
 
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
-            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
+            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
               {[
                 { href: "/research", label: "卡牌搜尋" },
                 { href: "/pricing", label: "市場格價" },
@@ -287,7 +287,7 @@ export function TopNav() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative px-4 py-1.5 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap ${
+                  className={`relative px-6 py-1.5 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap ${
                     isActive(item.href)
                       ? "text-[#FEDD00]"
                       : "text-white/75 hover:text-white"
