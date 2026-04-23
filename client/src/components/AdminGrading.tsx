@@ -883,11 +883,31 @@ function SubmissionDetailDialog({
                   <div className="space-y-2">
                     {itemResults.map((ir: any, idx: number) => {
                       const item = (detail.items ?? [])[idx];
+                      // Determine final tier: if item was upgraded, use the upgraded tier name from upgradeNewTierName;
+                      // otherwise use item's own tier name
+                      const upgradeItemIdList: number[] = (detail as any).upgradeItemIds
+                        ? String((detail as any).upgradeItemIds).split(',').map(Number).filter(Boolean)
+                        : [];
+                      const isUpgradedItem = item?.id != null && upgradeItemIdList.includes(item.id);
+                      const finalTierName = isUpgradedItem
+                        ? ((detail as any).upgradeNewTierName ?? item?.tier?.name)
+                        : item?.tier?.name;
                       return (
                         <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-100">
-                          <p className="text-xs font-semibold text-gray-800 mb-2">
-                            #{idx + 1} {item?.cardName}
-                          </p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-gray-800">
+                              #{idx + 1} {item?.cardName}
+                            </p>
+                            {finalTierName && (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${
+                                isUpgradedItem
+                                  ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                  : 'bg-blue-50 text-blue-700 border-blue-100'
+                              }`}>
+                                {isUpgradedItem && <span className="mr-0.5">↑</span>}{finalTierName}
+                              </span>
+                            )}
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label className="text-xs text-gray-600">PSA 評分</Label>
@@ -960,6 +980,27 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
   const [expanded, setExpanded] = useState(true);
   const submissions = batch.submissions ?? [];
   const utils = trpc.useUtils();
+  const [batchSyncTarget, setBatchSyncTarget] = useState<{ status: 'received' | 'submitted_to_psa' | 'grading'; label: string } | null>(null);
+
+  const batchUpdateStatusMutation = trpc.grading.admin.batchUpdateStatus.useMutation({
+    onSuccess: (data) => {
+      if (data.updated === 0) {
+        toast.info('所有申請單狀態已符合或更高，無需更新');
+      } else {
+        toast.success(`已成功同步 ${data.updated} 筆申請單`);
+      }
+      setBatchSyncTarget(null);
+      utils.grading.admin.listBatchesWithStats.invalidate();
+      utils.grading.admin.listSubmissions.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const SYNC_OPTIONS = [
+    { status: 'received' as const, label: 'BOXIUM已收件', color: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' },
+    { status: 'submitted_to_psa' as const, label: '已出團', color: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
+    { status: 'grading' as const, label: '鑑定中', color: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100' },
+  ];
 
   const quickUpdateMutation = trpc.grading.admin.updateStatus.useMutation({
     onSuccess: () => {
@@ -1038,6 +1079,33 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
         </div>
 
         <div className="flex items-center gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+          {/* Batch sync status button */}
+          <div className="relative group">
+            <button
+              className="p-1.5 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+              title="批量同步狀態"
+              onClick={(e) => { e.stopPropagation(); }}
+            >
+              <List className="h-4 w-4" />
+            </button>
+            {/* Dropdown menu */}
+            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden hidden group-hover:block">
+              <div className="px-3 py-2 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-700">批量同步狀態</p>
+                <p className="text-xs text-gray-500 mt-0.5">只更新較低狀態</p>
+              </div>
+              {SYNC_OPTIONS.map((opt) => (
+                <button
+                  key={opt.status}
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 transition-colors text-gray-700 flex items-center gap-2"
+                  onClick={(e) => { e.stopPropagation(); setBatchSyncTarget({ status: opt.status, label: opt.label }); }}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full ${opt.status === 'received' ? 'bg-indigo-500' : opt.status === 'submitted_to_psa' ? 'bg-purple-500' : 'bg-violet-500'}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="刪除批次"
@@ -1143,11 +1211,48 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
           )}
         </div>
       )}
+
+      {/* Batch sync confirm dialog */}
+      <Dialog open={!!batchSyncTarget} onOpenChange={(v) => { if (!v) setBatchSyncTarget(null); }}>
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 flex items-center gap-2">
+              <List className="h-5 w-5 text-blue-600" />
+              批量同步狀態
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              確定將批次「{batch.batchName}」內所有狀態較低的申請單更新為：
+            </p>
+            {batchSyncTarget && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-center">
+                <span className="text-base font-bold text-blue-700">{batchSyncTarget.label}</span>
+              </div>
+            )}
+            <p className="text-xs text-gray-500">已處於相同或更高狀態的申請單不會被變更。</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBatchSyncTarget(null)} className="text-gray-700">取消</Button>
+            <Button
+              className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+              disabled={batchUpdateStatusMutation.isPending}
+              onClick={() => {
+                if (batchSyncTarget) {
+                  batchUpdateStatusMutation.mutate({ batchId: batch.id, status: batchSyncTarget.status });
+                }
+              }}
+            >
+              {batchUpdateStatusMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : '確定同步'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// ─── Batch Overview (new main view) ──────────────────────────────────────────
+// ─── Batch Overview (new main view) ────────────────────────────────────────────
 function BatchOverview() {
   const utils = trpc.useUtils();
   const { data: batchStats, isLoading, refetch } = trpc.grading.admin.listBatchesWithStats.useQuery();

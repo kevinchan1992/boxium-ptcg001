@@ -1479,6 +1479,66 @@ export const gradingRouter = router({
         return { success: true, paymentDeadline };
       }),
 
+    // ─── Admin: Batch update all submissions in a batch to a specific status ─────
+    batchUpdateStatus: adminProcedure
+      .input(
+        z.object({
+          batchId: z.number().int().positive(),
+          status: z.enum(["received", "submitted_to_psa", "grading"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Only update submissions that are in a "lower" status (avoid downgrading)
+        // Status order: pending_shipment < received < submitted_to_psa < grading < graded
+        const statusOrder: Record<string, number> = {
+          awaiting_payment: 0,
+          pending_review: 1,
+          pending_shipment: 2,
+          received: 3,
+          submitted_to_psa: 4,
+          grading: 5,
+          graded: 6,
+          payment_overdue: 7,
+          paid: 8,
+          returned: 9,
+          completed: 10,
+          cancelled: 11,
+        };
+        const targetOrder = statusOrder[input.status];
+
+        // Get all submissions in this batch
+        const submissions = await db
+          .select()
+          .from(gradingSubmissions)
+          .where(eq(gradingSubmissions.batchId, input.batchId));
+
+        // Filter: only update those with a lower status order (don't downgrade)
+        const toUpdate = submissions.filter(
+          (s: GradingSubmission) => (statusOrder[s.status] ?? 0) < targetOrder
+        );
+
+        if (toUpdate.length === 0) return { updated: 0 };
+
+        // Bulk update
+        await db
+          .update(gradingSubmissions)
+          .set({ status: input.status })
+          .where(
+            and(
+              eq(gradingSubmissions.batchId, input.batchId),
+              inArray(
+                gradingSubmissions.id,
+                toUpdate.map((s: GradingSubmission) => s.id)
+              )
+            )
+          );
+
+        return { updated: toUpdate.length };
+      }),
+
     // Overdue submissions
     listOverdueSubmissions: adminProcedure.query(async () => {
       const db = await getDb();
@@ -1753,16 +1813,19 @@ export const gradingRouter = router({
         cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
       });
 
-      // Update checkout session ID
+      // Update checkout session ID only
       await db
         .update(gradingSubmissions)
-        .set({ upgradeCheckoutSessionId: session.id, upgradeCheckoutAt: new Date() })
+        .set({
+          upgradeCheckoutSessionId: session.id,
+          upgradeCheckoutAt: new Date(),
+        })
         .where(eq(gradingSubmissions.id, input.submissionId));
 
       return { checkoutUrl: session.url };
     }),
 
-  // ─── Protected: Get QR Code for submission ───────────────────────────────
+  // 250025002500 Protected: Get QR Code for submission 25002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
   getSubmissionQrCode: protectedProcedure
     .input(z.object({ submissionId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
@@ -2260,7 +2323,6 @@ export const gradingRouter = router({
 <div style="text-align:center;margin:16px 0;">
   <a href="${orderUrl}" style="display:inline-block;background:#06038d;color:#FFD700;padding:12px 28px;border-radius:50px;text-decoration:none;font-size:14px;font-weight:bold;">查看申請詳情</a>
 </div>`;
-          const { buildGradingEmail } = await import("../_core/gradingEmail");
           const html = buildGradingEmail({
             userName: user.name || user.email,
             title: "付款截圖已通過審核，請準備寄件 ✅",

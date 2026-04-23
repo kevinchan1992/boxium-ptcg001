@@ -1620,6 +1620,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   upgradeCheckoutSessionId: varchar("upgradeCheckoutSessionId", { length: 128 }),
   upgradeDiffFeeHkd: decimal("upgradeDiffFeeHkd", { precision: 10, scale: 2 }),
   upgradeNewTierId: int("upgradeNewTierId"),
+  upgradeItemIds: varchar("upgradeItemIds", { length: 512 }), // Comma-separated item IDs that were upgraded
   upgradeCheckoutAt: timestamp("upgradeCheckoutAt"), // When the upgrade checkout was created
   upgradePaidAt: timestamp("upgradePaidAt"),
   upgradeReminderSentAt: timestamp("upgradeReminderSentAt"), // Last time overdue reminder was sent (for dedup)
