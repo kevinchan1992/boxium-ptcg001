@@ -1707,12 +1707,17 @@ function GradingOrdersTab() {
   }, []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Revenue stats
+  // "Confirmed received" = alipayProofStatus approved (admin confirmed payment) OR paid/completed status
+  const isConfirmedPaid = (s: any) =>
+    s.alipayProofStatus === "approved" ||
+    s.status === "paid" ||
+    s.status === "completed";
   const totalRevenue = allPaidSubmissions.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
   const confirmedRevenue = allPaidSubmissions
-    .filter((s: any) => s.status === "paid" || s.status === "completed")
+    .filter(isConfirmedPaid)
     .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
   const pendingRevenue = allPaidSubmissions
-    .filter((s: any) => s.status === "pending_shipment" || s.status === "received" || s.status === "graded" || s.status === "payment_overdue")
+    .filter((s: any) => !isConfirmedPaid(s))
     .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
 
   // Filter by status
@@ -1750,12 +1755,12 @@ function GradingOrdersTab() {
         <div className="bg-[#06038d] text-white rounded-xl p-4">
           <p className="text-xs text-white/70">總收益（已收款）</p>
           <p className="text-2xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
-          <p className="text-xs text-white/60 mt-0.5">{allPaidSubmissions.filter((s: any) => s.status === "paid" || s.status === "completed").length} 筆已確認</p>
+          <p className="text-xs text-white/60 mt-0.5">{allPaidSubmissions.filter(isConfirmedPaid).length} 筆已確認</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-200">
           <p className="text-xs text-gray-700">待確認收益</p>
           <p className="text-2xl font-bold text-orange-600">HK${pendingRevenue.toLocaleString()}</p>
-          <p className="text-xs text-gray-700 mt-0.5">{allPaidSubmissions.filter((s: any) => ["pending_shipment","received","graded","payment_overdue"].includes(s.status)).length} 筆進行中</p>
+          <p className="text-xs text-gray-700 mt-0.5">{allPaidSubmissions.filter((s: any) => !isConfirmedPaid(s)).length} 筆待確認</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-200">
           <p className="text-xs text-gray-700">總訂單金額</p>
