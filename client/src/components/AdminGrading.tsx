@@ -545,13 +545,6 @@ function SubmissionDetailDialog({
                     )}
                   </div>
                 )}
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700 text-white mb-2"
-                  onClick={() => confirmAlipayMutation.mutate({ submissionId: detail.id })}
-                  disabled={confirmAlipayMutation.isPending}
-                >
-                  {confirmAlipayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認收款完成，訂單標記完成</>}
-                </Button>
                 {/* Approve button */}
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
