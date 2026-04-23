@@ -6,6 +6,8 @@ import { Loader2, Package, ChevronRight, Plus, AlertCircle } from "lucide-react"
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   // 資料庫實際 enum 對應
+  awaiting_payment: { label: "待付款", color: "bg-orange-100 text-orange-800 border-orange-200" },
+  pending_review: { label: "審核中", color: "bg-gray-100 text-gray-700 border-gray-200" },
   pending_shipment: { label: "待寄件", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   received: { label: "BOXIUM 已收件", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
   submitted_to_psa: { label: "已出團", color: "bg-purple-100 text-purple-800 border-purple-200" },

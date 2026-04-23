@@ -435,6 +435,13 @@
       "when": 1776750000000,
       "tag": "0062_add_awaiting_payment_status",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "5",
+      "when": 1776932000000,
+      "tag": "0064_add_upgrade_item_ids",
+      "breakpoints": true
     }
   ]
 }
