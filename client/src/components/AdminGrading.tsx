@@ -1289,14 +1289,23 @@ function SubmissionManagement() {
   const [batchFilter, setBatchFilter] = useState("all");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
   const { data: submissionsData, isLoading, refetch } = trpc.grading.admin.listSubmissions.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
     batchId: batchFilter === "all" ? undefined : parseInt(batchFilter),
     pendingUpgrade: pendingUpgradeFilter || undefined,
     alipayProofPending: alipayPendingFilter || undefined,
+    page: currentPage,
+    pageSize: PAGE_SIZE,
   });
-  const submissions: any[] = Array.isArray(submissionsData) ? submissionsData : (submissionsData as any)?.submissions ?? [];
+  const submissions: any[] = (submissionsData as any)?.submissions ?? [];
+  const totalCount: number = (submissionsData as any)?.total ?? 0;
+  const totalPages: number = (submissionsData as any)?.totalPages ?? 1;
   const totalFee = submissions.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => { setCurrentPage(1); }, [statusFilter, batchFilter, pendingUpgradeFilter, alipayPendingFilter]);
 
   const { data: batchesData } = trpc.grading.admin.getAllBatches.useQuery();
   const batches: any[] = Array.isArray(batchesData) ? batchesData : [];
@@ -1384,7 +1393,7 @@ function SubmissionManagement() {
           <span>📸</span>
           待審核截圖
         </button>
-        <span className="text-xs text-gray-700 ml-auto">共 {submissions.length} 筆{submissions.length > 0 && <span className="ml-2 font-semibold text-[#06038d]">HK${totalFee.toLocaleString('zh-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>}</span>
+        <span className="text-xs text-gray-700 ml-auto">共 {totalCount} 筆{totalCount > 0 && <span className="ml-2 font-semibold text-[#06038d]">HK${totalFee.toLocaleString('zh-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>}</span>
         {/* Bulk delete awaiting_payment button */}
         <button
           onClick={() => setShowBulkDeleteDialog(true)}
@@ -1504,6 +1513,69 @@ function SubmissionManagement() {
         </div>
       )}
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage <= 1 || isLoading}
+            className="h-8 px-3 text-xs text-gray-700 border-gray-300"
+          >
+            上一頁
+          </Button>
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            {(() => {
+              const pages: (number | string)[] = [];
+              if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else if (currentPage <= 4) {
+                for (let i = 1; i <= 5; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+              } else if (currentPage >= totalPages - 3) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+              } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+              }
+              return pages.map((p, i) =>
+                typeof p === 'string' ? (
+                  <span key={`e${i}`} className="text-gray-400 text-xs px-1">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p as number)}
+                    disabled={isLoading}
+                    className={`h-8 w-8 rounded text-xs font-medium transition-colors ${
+                      currentPage === p ? 'bg-[#06038d] text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              );
+            })()}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage >= totalPages || isLoading}
+            className="h-8 px-3 text-xs text-gray-700 border-gray-300"
+          >
+            下一頁
+          </Button>
+          <span className="text-xs text-gray-500">{currentPage} / {totalPages} 頁</span>
+        </div>
+      )}
+
       {/* Submission detail dialog */}
       <SubmissionDetailDialog
         submissionId={selectedSubmissionId}
@@ -1591,22 +1663,22 @@ function GradingOrdersTab() {
   // Fetch graded (awaiting payment)
   const { data: gradedData, isLoading: loadingGraded } = trpc.grading.admin.listSubmissions.useQuery({
     status: "graded",
-    limit: 200,
-    offset: 0,
+    page: 1,
+    pageSize: 200,
   }, { refetchInterval: 30000 });
 
   // Fetch payment_overdue
   const { data: overdueData, isLoading: loadingOverdue } = trpc.grading.admin.listSubmissions.useQuery({
     status: "payment_overdue",
-    limit: 200,
-    offset: 0,
+    page: 1,
+    pageSize: 200,
   }, { refetchInterval: 30000 });
 
   // Fetch alipay proof pending review (any status with pending screenshot)
   const { data: alipayPendingData, isLoading: loadingAlipayPending } = trpc.grading.admin.listSubmissions.useQuery({
     alipayProofPending: true,
-    limit: 200,
-    offset: 0,
+    page: 1,
+    pageSize: 200,
   }, { refetchInterval: 30000 });
 
   const isLoading = loadingGraded || loadingOverdue || loadingAlipayPending;

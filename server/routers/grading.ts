@@ -1123,10 +1123,10 @@ export const gradingRouter = router({
         z.object({
           status: z.string().optional(),
           batchId: z.number().int().optional(),
-          alipayProofPending: z.boolean().optional(), // filter by alipayProofStatus = 'pending_review'
-          pendingUpgrade: z.boolean().optional(), // filter by upgradeCheckoutSessionId IS NOT NULL AND upgradePaidAt IS NULL
-          limit: z.number().int().default(50),
-          offset: z.number().int().default(0),
+          alipayProofPending: z.boolean().optional(),
+          pendingUpgrade: z.boolean().optional(),
+          page: z.number().int().min(1).default(1),
+          pageSize: z.number().int().min(1).max(100).default(20),
         })
       )
       .query(async ({ input }) => {
@@ -1135,10 +1135,8 @@ export const gradingRouter = router({
 
         const conditions = [];
         if (input.status) {
-          // If a specific status is requested, use it directly
           conditions.push(eq(gradingSubmissions.status, input.status as any));
         } else {
-          // Default: exclude awaiting_payment (unpaid) and cancelled submissions
           conditions.push(notInArray(gradingSubmissions.status, ["awaiting_payment", "cancelled"]));
         }
         if (input.batchId) conditions.push(eq(gradingSubmissions.batchId, input.batchId));
@@ -1148,6 +1146,15 @@ export const gradingRouter = router({
           conditions.push(isNull(gradingSubmissions.upgradePaidAt));
         }
 
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+        // Get total count for pagination
+        const [{ totalCount }] = await db
+          .select({ totalCount: count(gradingSubmissions.id) })
+          .from(gradingSubmissions)
+          .where(whereClause);
+
+        const offset = (input.page - 1) * input.pageSize;
         const submissions = await db
           .select({
             submission: gradingSubmissions,
@@ -1155,14 +1162,13 @@ export const gradingRouter = router({
           })
           .from(gradingSubmissions)
           .leftJoin(users, eq(gradingSubmissions.userId, users.id))
-          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .where(whereClause)
           .orderBy(desc(gradingSubmissions.createdAt))
-          .limit(input.limit)
-          .offset(input.offset);
+          .limit(input.pageSize)
+          .offset(offset);
 
-        // Get item counts
         const submissionIds = submissions.map((s: { submission: GradingSubmission; user: any }) => s.submission.id);
-        if (submissionIds.length === 0) return { submissions: [], total: 0 };
+        if (submissionIds.length === 0) return { submissions: [], total: totalCount, page: input.page, pageSize: input.pageSize, totalPages: Math.ceil(totalCount / input.pageSize) };
 
         const items = await db
           .select()
@@ -1180,7 +1186,10 @@ export const gradingRouter = router({
             user: s.user,
             itemCount: itemCountMap.get(s.submission.id) || 0,
           })),
-          total: submissions.length,
+          total: totalCount,
+          page: input.page,
+          pageSize: input.pageSize,
+          totalPages: Math.ceil(totalCount / input.pageSize),
         };
       }),
 
