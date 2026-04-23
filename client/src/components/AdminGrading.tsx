@@ -1878,11 +1878,11 @@ function GradingOrdersTab() {
   }, []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Revenue stats
-  // "Confirmed received" = alipayProofStatus approved (admin confirmed payment) OR paid/completed status
-  const isConfirmedPaid = (s: any) =>
-    s.alipayProofStatus === "approved" ||
-    s.status === "paid" ||
-    s.status === "completed";
+  // "Confirmed received" = any status AFTER payment confirmation
+  // awaiting_payment = not paid yet; pending_review = screenshot submitted, pending admin approval
+  // All other statuses (pending_shipment and beyond) = payment confirmed
+  const UNPAID_STATUSES = ["awaiting_payment", "pending_review", "cancelled"];
+  const isConfirmedPaid = (s: any) => !UNPAID_STATUSES.includes(s.status);
   const totalRevenue = allPaidSubmissions.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
   const confirmedRevenue = allPaidSubmissions
     .filter(isConfirmedPaid)
@@ -2008,7 +2008,9 @@ function GradingOrdersTab() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {pagedSubmissions.map((sub: any) => {
-                  const isPaid = sub.status === "paid" || sub.status === "completed";
+                  // Payment confirmed = any status after pending_review (pending_shipment and beyond)
+                  const UNPAID = ["awaiting_payment", "pending_review", "cancelled"];
+                  const isPaid = !UNPAID.includes(sub.status);
                   const isGraded = sub.status === "graded";
                   const isOverdue = sub.status === "payment_overdue";
                   const hasAlipayPending = sub.alipayProofStatus === "pending_review";
@@ -2040,17 +2042,18 @@ function GradingOrdersTab() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {isPaid ? (
+                        {/* Priority: overdue > graded (upgrade pending) > paid > alipay pending > default */}
+                        {isOverdue ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                            <AlertCircle className="h-3 w-3" />差價逾期
+                          </span>
+                        ) : isGraded && sub.upgradeCheckoutSessionId && !sub.upgradePaidAt ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
+                            <Clock className="h-3 w-3" />已付款（差價待付）
+                          </span>
+                        ) : isPaid ? (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900">
                             <CheckCheck className="h-3 w-3" />已付款
-                          </span>
-                        ) : isGraded ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
-                            <Clock className="h-3 w-3" />待付款
-                          </span>
-                        ) : isOverdue ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
-                            <AlertCircle className="h-3 w-3" />付款逾期
                           </span>
                         ) : hasAlipayPending ? (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-gray-900">
@@ -2141,8 +2144,9 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
   const completed = completedData?.submissions ?? [];
 
   const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...paid, ...completed];
+  const UNPAID_STATUSES_DASH = ["awaiting_payment", "pending_review", "cancelled"];
   const confirmedRevenue = allActive
-    .filter((s: any) => s.alipayProofStatus === "approved" || s.status === "paid" || s.status === "completed")
+    .filter((s: any) => !UNPAID_STATUSES_DASH.includes(s.status))
     .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
   const totalRevenue = allActive.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
 
@@ -2192,12 +2196,12 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
         <div className="bg-[#06038d] text-white rounded-xl p-5">
           <p className="text-xs text-white/70 mb-1">已確認收款</p>
           <p className="text-3xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
-          <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => s.alipayProofStatus === "approved" || s.status === "paid" || s.status === "completed").length} 筆已確認</p>
+          <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => !UNPAID_STATUSES_DASH.includes(s.status)).length} 筆已確認</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-xs text-gray-500 mb-1">待確認收益</p>
           <p className="text-3xl font-bold text-orange-500">HK${(totalRevenue - confirmedRevenue).toLocaleString()}</p>
-          <p className="text-xs text-gray-400 mt-1">{allActive.filter((s: any) => s.alipayProofStatus !== "approved" && s.status !== "paid" && s.status !== "completed").length} 筆進行中</p>
+          <p className="text-xs text-gray-400 mt-1">{allActive.filter((s: any) => UNPAID_STATUSES_DASH.includes(s.status)).length} 筆進行中</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-xs text-gray-500 mb-1">逾期未付款</p>

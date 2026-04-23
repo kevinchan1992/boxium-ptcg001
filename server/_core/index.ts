@@ -407,15 +407,36 @@ async function startServer() {
                 const [sub2] = await _gdb2.select().from(_gSubs2).where(_geq2(_gSubs2.id, parseInt(submissionId))).limit(1);
                 const [tier2] = await _gdb2.select().from(_gTiers2).where(_geq2(_gTiers2.id, parseInt(newTierId))).limit(1);
                 if (sub2 && tier2) {
-                  // Update all items to new tier and fee
-                  const items2 = await _gdb2.select().from(_gItems2).where(_geq2(_gItems2.submissionId, parseInt(submissionId)));
-                  if (items2.length > 0) {
-                    const itemIds = items2.map((i: any) => i.id);
-                    // Use sql template for decimal fields to ensure correct DB write
-                    await _gdb2.update(_gItems2).set({ tierId: parseInt(newTierId), feeHkd: _sql2`${parseFloat(tier2.feeHkd).toFixed(2)}` }).where(_inArray2(_gItems2.id, itemIds));
+                  // Get upgrade_item_ids from metadata (comma-separated item IDs that were selected for upgrade)
+                  const upgradeItemIdsStr = session.metadata?.upgrade_item_ids ?? "";
+                  const upgradeItemIds = upgradeItemIdsStr
+                    ? upgradeItemIdsStr.split(",").map((s: string) => parseInt(s.trim())).filter((n: number) => !isNaN(n))
+                    : [];
+
+                  // Get all items for this submission
+                  const allItems2 = await _gdb2.select().from(_gItems2).where(_geq2(_gItems2.submissionId, parseInt(submissionId)));
+
+                  if (upgradeItemIds.length > 0) {
+                    // Only update the selected items to new tier and fee
+                    await _gdb2.update(_gItems2)
+                      .set({ tierId: parseInt(newTierId), feeHkd: _sql2`${parseFloat(tier2.feeHkd).toFixed(2)}` })
+                      .where(_inArray2(_gItems2.id, upgradeItemIds));
+                    console.log(`[Webhook] Upgraded ${upgradeItemIds.length} items to tier ${tier2.name} for submission #${submissionId}`);
+                  } else if (allItems2.length > 0) {
+                    // Fallback: upgrade all items if no specific IDs provided (legacy behaviour)
+                    const allItemIds = allItems2.map((i: any) => i.id);
+                    await _gdb2.update(_gItems2)
+                      .set({ tierId: parseInt(newTierId), feeHkd: _sql2`${parseFloat(tier2.feeHkd).toFixed(2)}` })
+                      .where(_inArray2(_gItems2.id, allItemIds));
+                    console.log(`[Webhook] Upgraded all ${allItems2.length} items (fallback) to tier ${tier2.name} for submission #${submissionId}`);
                   }
-                  // Update submission total fee and mark upgrade as paid
-                  const newTotal = items2.length * parseFloat(tier2.feeHkd);
+
+                  // Recalculate total: sum all items' feeHkd after update
+                  // Use diffFeeHkd from metadata as the authoritative amount paid (already validated at checkout creation)
+                  const diffPaid = parseFloat(diffFeeHkd ?? "0");
+                  const currentTotal = parseFloat(sub2.totalFeeHkd ?? "0");
+                  const newTotal = currentTotal + diffPaid;
+
                   await _gdb2.update(_gSubs2)
                     .set({
                       totalFeeHkd: _sql2`${newTotal.toFixed(2)}`,
@@ -423,7 +444,7 @@ async function startServer() {
                       upgradeCheckoutSessionId: null,
                     } as any)
                     .where(_geq2(_gSubs2.id, parseInt(submissionId)));
-                  console.log(`[Webhook] Grading submission #${submissionId} tier upgraded to ${tier2.name}, new total HK$${newTotal.toFixed(2)}`);
+                  console.log(`[Webhook] Grading submission #${submissionId} tier upgraded to ${tier2.name}, diff HK$${diffPaid.toFixed(2)}, new total HK$${newTotal.toFixed(2)}`);
                   // Notify user
                   const userId = parseInt(session.metadata?.user_id ?? "0");
                   if (userId) {
@@ -431,7 +452,7 @@ async function startServer() {
                       userId,
                       type: "system",
                       title: "PSA 鑑定服務層級升級差價已收到 ✅",
-                      body: `申請單 ${gradingOrderNo} 的升級差價已收到，服務層級已更新至 ${tier2.name}。`,
+                      body: `申請單 ${gradingOrderNo} 的升級差價 HK$${diffPaid.toFixed(2)} 已收到，已升級 ${upgradeItemIds.length || allItems2.length} 張卡牌至 ${tier2.name}。`,
                       linkUrl: `/grading/orders/${submissionId}`,
                     }).catch(() => {});
                   }
