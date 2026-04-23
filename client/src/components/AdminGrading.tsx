@@ -1645,71 +1645,129 @@ function GradingOrdersTab() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const PAGE_SIZE = 20;
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const utils = trpc.useUtils();
 
-  // Only fetch submissions that need payment action:
-  // graded (awaiting payment), payment_overdue, or alipay proof pending review
+  // Fetch ALL paid submissions (pending_shipment and beyond, excluding awaiting_payment/cancelled)
+  const paidStatuses = ["pending_shipment", "received", "graded", "payment_overdue", "paid", "completed", "returned"];
 
-  // Fetch graded (awaiting payment)
+  const { data: pendingShipmentData, isLoading: loadingPendingShipment } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "pending_shipment",
+    page: 1,
+    pageSize: 500,
+  }, { refetchInterval: 30000 });
+  const { data: receivedData, isLoading: loadingReceived } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "received",
+    page: 1,
+    pageSize: 500,
+  }, { refetchInterval: 30000 });
   const { data: gradedData, isLoading: loadingGraded } = trpc.grading.admin.listSubmissions.useQuery({
     status: "graded",
     page: 1,
-    pageSize: 200,
+    pageSize: 500,
   }, { refetchInterval: 30000 });
-
-  // Fetch payment_overdue
   const { data: overdueData, isLoading: loadingOverdue } = trpc.grading.admin.listSubmissions.useQuery({
     status: "payment_overdue",
     page: 1,
-    pageSize: 200,
+    pageSize: 500,
   }, { refetchInterval: 30000 });
-
-  // Fetch alipay proof pending review (any status with pending screenshot)
-  const { data: alipayPendingData, isLoading: loadingAlipayPending } = trpc.grading.admin.listSubmissions.useQuery({
-    alipayProofPending: true,
+  const { data: paidData, isLoading: loadingPaid } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "paid",
     page: 1,
-    pageSize: 200,
+    pageSize: 500,
+  }, { refetchInterval: 30000 });
+  const { data: completedData, isLoading: loadingCompleted } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "completed",
+    page: 1,
+    pageSize: 500,
+  }, { refetchInterval: 30000 });
+  const { data: returnedData, isLoading: loadingReturned } = trpc.grading.admin.listSubmissions.useQuery({
+    status: "returned",
+    page: 1,
+    pageSize: 500,
   }, { refetchInterval: 30000 });
 
-  const isLoading = loadingGraded || loadingOverdue || loadingAlipayPending;
+  const isLoading = loadingPendingShipment || loadingReceived || loadingGraded || loadingOverdue || loadingPaid || loadingCompleted || loadingReturned;
 
-  // Merge all three sets, deduplicate by id, sort by createdAt desc
-  const allPaymentPending = [
+  // Merge all sets, deduplicate by id, sort by createdAt desc
+  const allPaidSubmissions = [
+    ...(pendingShipmentData?.submissions ?? []),
+    ...(receivedData?.submissions ?? []),
     ...(gradedData?.submissions ?? []),
     ...(overdueData?.submissions ?? []),
-    ...(alipayPendingData?.submissions ?? []),
+    ...(paidData?.submissions ?? []),
+    ...(completedData?.submissions ?? []),
+    ...(returnedData?.submissions ?? []),
   ].reduce((acc: any[], sub: any) => {
     if (!acc.find((s: any) => s.id === sub.id)) acc.push(sub);
     return acc;
   }, []).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const submissions = allPaymentPending;
-  const total = submissions.length;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const pagedSubmissions = submissions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Revenue stats
+  const totalRevenue = allPaidSubmissions.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+  const confirmedRevenue = allPaidSubmissions
+    .filter((s: any) => s.status === "paid" || s.status === "completed")
+    .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+  const pendingRevenue = allPaidSubmissions
+    .filter((s: any) => s.status === "pending_shipment" || s.status === "received" || s.status === "graded" || s.status === "payment_overdue")
+    .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+
+  // Filter by status
+  const filteredByStatus = statusFilter === "all"
+    ? allPaidSubmissions
+    : allPaidSubmissions.filter((s: any) => s.status === statusFilter);
 
   const filteredBySearch = search
-    ? pagedSubmissions.filter((s: any) =>
+    ? filteredByStatus.filter((s: any) =>
         s.orderNo?.toLowerCase().includes(search.toLowerCase()) ||
         s.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
         s.user?.email?.toLowerCase().includes(search.toLowerCase())
       )
-    : pagedSubmissions;
+    : filteredByStatus;
+
+  const total = filteredBySearch.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pagedSubmissions = filteredBySearch.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const statusFilterOptions = [
+    { value: "all", label: "全部狀態" },
+    { value: "pending_shipment", label: "待客件" },
+    { value: "received", label: "已收件" },
+    { value: "graded", label: "鑑定完成（待付款）" },
+    { value: "payment_overdue", label: "付款逾期" },
+    { value: "paid", label: "已付款" },
+    { value: "completed", label: "已完成" },
+    { value: "returned", label: "已退回" },
+  ];
 
   return (
     <div className="space-y-4">
+      {/* Revenue summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-[#06038d] text-white rounded-xl p-4">
+          <p className="text-xs text-white/70">總收益（已收款）</p>
+          <p className="text-2xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
+          <p className="text-xs text-white/60 mt-0.5">{allPaidSubmissions.filter((s: any) => s.status === "paid" || s.status === "completed").length} 筆已確認</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-700">待確認收益</p>
+          <p className="text-2xl font-bold text-orange-600">HK${pendingRevenue.toLocaleString()}</p>
+          <p className="text-xs text-gray-700 mt-0.5">{allPaidSubmissions.filter((s: any) => ["pending_shipment","received","graded","payment_overdue"].includes(s.status)).length} 筆進行中</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-700">總訂單金額</p>
+          <p className="text-2xl font-bold text-gray-900">HK${totalRevenue.toLocaleString()}</p>
+          <p className="text-xs text-gray-700 mt-0.5">{allPaidSubmissions.length} 筆訂單</p>
+        </div>
+      </div>
+
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
-          <p className="text-sm text-gray-700 mt-0.5">顯示鑑定完成待付款、付款逾期及支付寶截圖待審的訂單，方便追蹤收款狀態</p>
-          <div className="flex gap-2 mt-2">
-            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800">鑑定完成（待付款）</span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">付款逾期</span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">支付宝HK截圖待審</span>
-          </div>
+          <p className="text-sm text-gray-700 mt-0.5">顯示所有已收款申請，方便追蹤進度及計算收益</p>
         </div>
         <div className="flex gap-2">
           <input
@@ -1730,6 +1788,21 @@ function GradingOrdersTab() {
             >清除</button>
           )}
         </div>
+      </div>
+
+      {/* Status filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {statusFilterOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => { setStatusFilter(opt.value); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+              statusFilter === opt.value
+                ? "bg-[#06038d] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >{opt.label}</button>
+        ))}
       </div>
 
       <div className="text-sm text-gray-700">共 {total} 筆鑑定訂單</div>
@@ -1758,7 +1831,7 @@ function GradingOrdersTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredBySearch.map((sub: any) => {
+                {pagedSubmissions.map((sub: any) => {
                   const isPaid = sub.status === "paid" || sub.status === "completed";
                   const isGraded = sub.status === "graded";
                   const isOverdue = sub.status === "payment_overdue";
