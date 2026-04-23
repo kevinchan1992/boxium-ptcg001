@@ -258,13 +258,13 @@ export function TopNav() {
         }`}
       >
         <div className="px-4">
-          {/* Single row: hamburger on left, icons on right */}
-          <div className="flex items-center h-14 gap-1">
+          {/* Single row: hamburger on left, center nav, icons on right */}
+          <div className="flex items-center h-14 gap-1 relative">
 
             {/* Hamburger — leftmost */}
             <motion.button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white p-2"
+              className="text-white p-2 flex-shrink-0"
               whileTap={{ scale: 0.9 }}
             >
               <motion.div
@@ -276,10 +276,34 @@ export function TopNav() {
               </motion.div>
             </motion.button>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+            {/* Center nav — desktop/tablet only (md+), absolutely centered */}
+            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
+              {[
+                { href: "/research", label: "卡牌搜尋" },
+                { href: "/pricing", label: "市場格價" },
+                { href: "/grading", label: "PSA 鑑定" },
+                { href: "/marketplace", label: "市集" },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`relative px-4 py-1.5 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap ${
+                    isActive(item.href)
+                      ? "text-[#FEDD00]"
+                      : "text-white/75 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                  {/* Active underline indicator */}
+                  {isActive(item.href) && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] rounded-full bg-[#FEDD00]" />
+                  )}
+                </Link>
+              ))}
+            </div>
 
-            {/* 出售商品 button */}
+            {/* Spacer */}
+            <div className="flex-1" />           {/* 出售商品 button */}
             {showSellButton && (
               <motion.button
                 onClick={handleSellClick}
