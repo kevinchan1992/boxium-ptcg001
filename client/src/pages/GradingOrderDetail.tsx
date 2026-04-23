@@ -39,6 +39,7 @@ const STATUS_ORDER = [
 function getStepIndex(status: string) {
   const map: Record<string, number> = {
     awaiting_payment: 0,
+    pending_review: 0,
     pending_shipment: 0,
     pending_payment: 0,
     paid: 0,
@@ -54,6 +55,7 @@ function getStepIndex(status: string) {
 
 const STATUS_LABEL: Record<string, string> = {
   awaiting_payment: "待付款確認",
+  pending_review: "截圖待審核",
   pending_shipment: "待寄件",
   pending_payment: "待收件",
   paid: "待收件",
@@ -626,12 +628,12 @@ export default function GradingOrderDetail() {
   const isCancelled = submission.status === "cancelled";
   // awaiting_payment: 申請已建立，等待付款（Stripe 或 AlipayHK 截圖尚未提交）
   const isAwaitingPayment = submission.status === "awaiting_payment";
-  // pending_shipment 且 AlipayHK 截圖待審核（管理員尚未確認）
-  const isAlipayPendingReview = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "pending_review";
-  // pending_shipment 且 AlipayHK 截圖被拒絕（需重新上傳）
-  const isAlipayRejected = submission.status === "pending_shipment" && (submission as any).alipayProofStatus === "rejected";
-  // 付款已確認（Stripe 付款成功 或 AlipayHK 截圖已批准）
-  const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayPendingReview && !isAlipayRejected;
+  // pending_review: AlipayHK 截圖已提交，等待管理員審核（新主狀態）
+  const isAlipayPendingReview = submission.status === "pending_review";
+  // awaiting_payment 且 AlipayHK 截圖被拒絕（需重新上傳）
+  const isAlipayRejected = submission.status === "awaiting_payment" && (submission as any).alipayProofStatus === "rejected";
+  // 付款已確認（Stripe 付款成功 或 AlipayHK 截圖已批准 → pending_shipment）
+  const isPaymentConfirmed = submission.status === "pending_shipment" && !isAlipayRejected;
   const isGraded = submission.status === "graded";
   const isCompleted = submission.status === "completed" || submission.status === "returned";
 

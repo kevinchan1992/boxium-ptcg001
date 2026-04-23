@@ -49,6 +49,7 @@ import {
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
   { value: "awaiting_payment", label: "未付款" },
+  { value: "pending_review", label: "截圖待審核" },
   { value: "pending_shipment", label: "待寄件" },
   { value: "received", label: "BOXIUM已收件" },
   { value: "submitted_to_psa", label: "已出團" },
@@ -62,6 +63,7 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
+  pending_review: "bg-amber-100 text-amber-800",
   pending_shipment: "bg-yellow-100 text-yellow-800",
   received: "bg-indigo-100 text-indigo-800",
   submitted_to_psa: "bg-purple-100 text-purple-800",
@@ -476,6 +478,21 @@ function SubmissionDetailDialog({
                     {STATUS_OPTIONS.find((s) => s.value === detail.status)?.label ?? detail.status}
                   </span>
                 </div>
+                <div>
+                  <span className="text-gray-700 text-xs">付款方式</span>
+                  <p className="font-semibold text-gray-900">
+                    {(detail as any).paymentMethod === 'stripe' ? '💳 Stripe 信用卡' : (detail as any).paymentMethod === 'alipay_hk' ? '📱 支付寳 HK' : (detail as any).paymentMethod ?? '—'}
+                  </p>
+                </div>
+                {(detail as any).trackingNumber && (
+                  <div className="col-span-2">
+                    <span className="text-gray-700 text-xs">📦 客人寄件追蹤號</span>
+                    <p className="font-mono font-bold text-[#06038d]">{(detail as any).trackingNumber}</p>
+                    {(detail as any).trackingSubmittedAt && (
+                      <p className="text-xs text-gray-400">提交時間：{new Date((detail as any).trackingSubmittedAt).toLocaleString('zh-HK')}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1951,14 +1968,297 @@ function GradingOrdersTab() {
   );
 }
 
+// ─── Dashboard 儀表板 ─────────────────────────────────────────────────────────
+function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const { data: pendingReviewData } = trpc.grading.admin.listSubmissions.useQuery({ status: "pending_review", page: 1, pageSize: 500 });
+  const { data: pendingShipmentData } = trpc.grading.admin.listSubmissions.useQuery({ status: "pending_shipment", page: 1, pageSize: 500 });
+  const { data: receivedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "received", page: 1, pageSize: 500 });
+  const { data: gradedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "graded", page: 1, pageSize: 500 });
+  const { data: overdueData } = trpc.grading.admin.listSubmissions.useQuery({ status: "payment_overdue", page: 1, pageSize: 500 });
+  const { data: paidData } = trpc.grading.admin.listSubmissions.useQuery({ status: "paid", page: 1, pageSize: 500 });
+  const { data: completedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "completed", page: 1, pageSize: 500 });
+
+  const pendingReview = pendingReviewData?.submissions ?? [];
+  const pendingShipment = pendingShipmentData?.submissions ?? [];
+  const received = receivedData?.submissions ?? [];
+  const graded = gradedData?.submissions ?? [];
+  const overdue = overdueData?.submissions ?? [];
+  const paid = paidData?.submissions ?? [];
+  const completed = completedData?.submissions ?? [];
+
+  const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...paid, ...completed];
+  const confirmedRevenue = allActive
+    .filter((s: any) => s.alipayProofStatus === "approved" || s.status === "paid" || s.status === "completed")
+    .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+  const totalRevenue = allActive.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+
+  const taskCards = [
+    {
+      title: "待付款審核",
+      desc: "截圖已提交，等待人工核對",
+      count: pendingReview.length,
+      color: "bg-amber-50 border-amber-200",
+      badge: "bg-amber-500",
+      icon: <AlertCircle className="h-5 w-5 text-amber-600" />,
+      section: "tasks",
+    },
+    {
+      title: "待收件",
+      desc: "付款已確認，等待用戶寄件",
+      count: pendingShipment.length,
+      color: "bg-yellow-50 border-yellow-200",
+      badge: "bg-yellow-500",
+      icon: <Package className="h-5 w-5 text-yellow-600" />,
+      section: "tasks",
+    },
+    {
+      title: "待送 PSA",
+      desc: "已收件，等待出團送 PSA",
+      count: received.length,
+      color: "bg-indigo-50 border-indigo-200",
+      badge: "bg-indigo-500",
+      icon: <Send className="h-5 w-5 text-indigo-600" />,
+      section: "tasks",
+    },
+    {
+      title: "待填結果",
+      desc: "PSA 已鑑定完成，等待回填分數",
+      count: graded.length,
+      color: "bg-green-50 border-green-200",
+      badge: "bg-green-500",
+      icon: <CheckCheck className="h-5 w-5 text-green-600" />,
+      section: "tasks",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Revenue summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-[#06038d] text-white rounded-xl p-5">
+          <p className="text-xs text-white/70 mb-1">已確認收款</p>
+          <p className="text-3xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
+          <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => s.alipayProofStatus === "approved" || s.status === "paid" || s.status === "completed").length} 筆已確認</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <p className="text-xs text-gray-500 mb-1">待確認收益</p>
+          <p className="text-3xl font-bold text-orange-500">HK${(totalRevenue - confirmedRevenue).toLocaleString()}</p>
+          <p className="text-xs text-gray-400 mt-1">{allActive.filter((s: any) => s.alipayProofStatus !== "approved" && s.status !== "paid" && s.status !== "completed").length} 筆進行中</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <p className="text-xs text-gray-500 mb-1">逾期未付款</p>
+          <p className="text-3xl font-bold text-red-500">{overdue.length}</p>
+          <p className="text-xs text-gray-400 mt-1">需要跟進</p>
+        </div>
+      </div>
+
+      {/* Task cards */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">待處理任務</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {taskCards.map((card) => (
+            <button
+              key={card.title}
+              onClick={() => onNavigate(card.section)}
+              className={`${card.color} border rounded-xl p-4 text-left hover:shadow-md transition-all group`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                {card.icon}
+                <span className={`${card.badge} text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center`}>
+                  {card.count}
+                </span>
+              </div>
+              <p className="font-semibold text-gray-900 text-sm">{card.title}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{card.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Status overview */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">全部訂單狀態概覽</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            { label: "截圖待審核", count: pendingReview.length, color: "text-amber-700 bg-amber-50" },
+            { label: "待寄件", count: pendingShipment.length, color: "text-yellow-700 bg-yellow-50" },
+            { label: "已收件", count: received.length, color: "text-indigo-700 bg-indigo-50" },
+            { label: "鑑定完成", count: graded.length, color: "text-green-700 bg-green-50" },
+            { label: "付款逾期", count: overdue.length, color: "text-red-700 bg-red-50" },
+            { label: "已付款", count: paid.length, color: "text-emerald-700 bg-emerald-50" },
+            { label: "已完成", count: completed.length, color: "text-gray-700 bg-gray-50" },
+          ].map((item) => (
+            <div key={item.label} className={`${item.color} rounded-lg p-3 flex items-center justify-between`}>
+              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-lg font-bold">{item.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── 任務中心 ─────────────────────────────────────────────────────────────────
+function TaskCenterTab() {
+  const utils = trpc.useUtils();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [activeTask, setActiveTask] = useState<"pending_review" | "pending_shipment" | "received" | "graded">("pending_review");
+
+  const { data: pendingReviewData, isLoading: loadingReview } = trpc.grading.admin.listSubmissions.useQuery(
+    { status: "pending_review", page: 1, pageSize: 200 },
+    { refetchInterval: 15000 }
+  );
+  const { data: pendingShipmentData, isLoading: loadingShipment } = trpc.grading.admin.listSubmissions.useQuery(
+    { status: "pending_shipment", page: 1, pageSize: 200 },
+    { refetchInterval: 30000 }
+  );
+  const { data: receivedData, isLoading: loadingReceived } = trpc.grading.admin.listSubmissions.useQuery(
+    { status: "received", page: 1, pageSize: 200 },
+    { refetchInterval: 30000 }
+  );
+  const { data: gradedData, isLoading: loadingGraded } = trpc.grading.admin.listSubmissions.useQuery(
+    { status: "graded", page: 1, pageSize: 200 },
+    { refetchInterval: 30000 }
+  );
+
+  const pendingReview = pendingReviewData?.submissions ?? [];
+  const pendingShipment = pendingShipmentData?.submissions ?? [];
+  const received = receivedData?.submissions ?? [];
+  const graded = gradedData?.submissions ?? [];
+
+  const taskTabs = [
+    { id: "pending_review" as const, label: "待付款審核", count: pendingReview.length, color: "bg-amber-500", desc: "截圖已提交，等待人工核對確認收款" },
+    { id: "pending_shipment" as const, label: "待收件", count: pendingShipment.length, color: "bg-yellow-500", desc: "付款已確認，等待用戶寄件到 BOXIUM" },
+    { id: "received" as const, label: "待送 PSA", count: received.length, color: "bg-indigo-500", desc: "已收件，等待出團送 PSA 鑑定" },
+    { id: "graded" as const, label: "待填結果", count: graded.length, color: "bg-green-500", desc: "PSA 已鑑定完成，等待回填分數" },
+  ];
+
+  const currentList = activeTask === "pending_review" ? pendingReview
+    : activeTask === "pending_shipment" ? pendingShipment
+    : activeTask === "received" ? received
+    : graded;
+
+  const isLoading = activeTask === "pending_review" ? loadingReview
+    : activeTask === "pending_shipment" ? loadingShipment
+    : activeTask === "received" ? loadingReceived
+    : loadingGraded;
+
+  return (
+    <div className="space-y-4">
+      {/* Task type tabs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {taskTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTask(tab.id)}
+            className={`rounded-xl p-4 text-left border-2 transition-all ${
+              activeTask === tab.id
+                ? "border-[#06038d] bg-[#06038d]/5"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-700">{tab.label}</span>
+              <span className={`${tab.color} text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center`}>
+                {tab.count}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 leading-snug">{tab.desc}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Current task list */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <p className="text-sm font-semibold text-gray-800">
+            {taskTabs.find(t => t.id === activeTask)?.label} — {currentList.length} 筆
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">{taskTabs.find(t => t.id === activeTask)?.desc}</p>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
+        ) : currentList.length === 0 ? (
+          <div className="flex flex-col items-center py-10 text-gray-400">
+            <CheckCircle2 className="h-10 w-10 mb-2 text-green-400" />
+            <p className="text-sm font-medium">目前沒有待處理任務</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">申請單號</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">申請人</th>
+                <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-600">卡牌</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-600">費用</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">批次</th>
+                <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-600">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {currentList.map((sub: any) => (
+                <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-4 py-3">
+                    <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
+                    <p className="text-xs text-gray-400 mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900 text-sm">{sub.user?.name ?? "—"}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-[120px]">{sub.user?.email ?? ""}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-50 text-gray-900 font-bold text-sm">{sub.itemCount ?? 0}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd || "0").toLocaleString()}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">{sub.batch?.batchName ?? <span className="text-gray-300">未分配</span>}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button
+                      size="sm"
+                      onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
+                      className="bg-[#06038d] hover:bg-[#06038d]/90 text-white h-7 px-3 text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      處理
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Detail dialog */}
+      {showDetail && selectedId && (
+        <SubmissionDetailDialog
+          submissionId={selectedId}
+          open={showDetail}
+          onClose={() => { setShowDetail(false); setSelectedId(null); }}
+          onUpdated={() => {
+            utils.grading.admin.listSubmissions.invalidate();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function AdminGrading() {
-  const [activeSection, setActiveSection] = useState<"batches" | "submissions" | "orders" | "tiers">("batches");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "tasks" | "batches" | "submissions" | "orders" | "tiers">("dashboard");
 
   const sections = [
-    { id: "batches" as const, label: "出團批次管理", icon: <BarChart3 className="h-4 w-4" /> },
-    { id: "submissions" as const, label: "申請管理", icon: <Package className="h-4 w-4" /> },
-    { id: "orders" as const, label: "鑑定訂單管理", icon: <CreditCard className="h-4 w-4" /> },
+    { id: "dashboard" as const, label: "儀表板", icon: <BarChart3 className="h-4 w-4" /> },
+    { id: "tasks" as const, label: "任務中心", icon: <CheckCheck className="h-4 w-4" /> },
+    { id: "batches" as const, label: "批次管理", icon: <Calendar className="h-4 w-4" /> },
+    { id: "submissions" as const, label: "訂單管理", icon: <List className="h-4 w-4" /> },
+    { id: "orders" as const, label: "收益統計", icon: <TrendingUp className="h-4 w-4" /> },
     { id: "tiers" as const, label: "服務層級", icon: <Award className="h-4 w-4" /> },
   ];
 
@@ -1987,6 +2287,8 @@ export default function AdminGrading() {
         ))}
       </div>
 
+      {activeSection === "dashboard" && <DashboardTab onNavigate={(s) => setActiveSection(s as any)} />}
+      {activeSection === "tasks" && <TaskCenterTab />}
       {activeSection === "batches" && <BatchOverview />}
       {activeSection === "submissions" && <SubmissionManagement />}
       {activeSection === "orders" && <GradingOrdersTab />}

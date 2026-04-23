@@ -1580,6 +1580,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   userId: int("userId").notNull(),
   status: mysqlEnum("status", [
     "awaiting_payment",
+    "pending_review",
     "pending_shipment",
     "received",
     "submitted_to_psa",
