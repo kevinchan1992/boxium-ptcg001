@@ -1485,6 +1485,7 @@ export const gradingRouter = router({
         z.object({
           batchId: z.number().int().positive(),
           status: z.enum(["received", "submitted_to_psa", "grading"]),
+          notifyUsers: z.boolean().optional().default(false),
         })
       )
       .mutation(async ({ input }) => {
@@ -1507,20 +1508,30 @@ export const gradingRouter = router({
           completed: 10,
           cancelled: 11,
         };
+        const statusLabels: Record<string, string> = {
+          received: "BOXIUM 已收件",
+          submitted_to_psa: "已出團送鑑",
+          grading: "鑑定中",
+        };
         const targetOrder = statusOrder[input.status];
 
-        // Get all submissions in this batch
-        const submissions = await db
-          .select()
+        // Get all submissions in this batch with user info
+        const submissionsWithUsers = await db
+          .select({
+            submission: gradingSubmissions,
+            user: { id: users.id, name: users.name, email: users.email },
+          })
           .from(gradingSubmissions)
+          .leftJoin(users, eq(gradingSubmissions.userId, users.id))
           .where(eq(gradingSubmissions.batchId, input.batchId));
 
+        type SubmissionWithUser = typeof submissionsWithUsers[0];
         // Filter: only update those with a lower status order (don't downgrade)
-        const toUpdate = submissions.filter(
-          (s: GradingSubmission) => (statusOrder[s.status] ?? 0) < targetOrder
+        const toUpdate = submissionsWithUsers.filter(
+          (row: SubmissionWithUser) => (statusOrder[row.submission.status] ?? 0) < targetOrder
         );
 
-        if (toUpdate.length === 0) return { updated: 0 };
+        if (toUpdate.length === 0) return { updated: 0, notified: 0 };
 
         // Bulk update
         await db
@@ -1531,12 +1542,45 @@ export const gradingRouter = router({
               eq(gradingSubmissions.batchId, input.batchId),
               inArray(
                 gradingSubmissions.id,
-                toUpdate.map((s: GradingSubmission) => s.id)
+                toUpdate.map((row: SubmissionWithUser) => row.submission.id)
               )
             )
           );
 
-        return { updated: toUpdate.length };
+        // Send notifications if requested
+        let notified = 0;
+        if (input.notifyUsers) {
+          const statusLabel = statusLabels[input.status] ?? input.status;
+          const notifyPromises = toUpdate.map(async (row: SubmissionWithUser) => {
+            if (!row.user?.email) return;
+            try {
+              await sendGradingNotification({
+                userId: row.submission.userId,
+                userEmail: row.user.email,
+                userName: row.user.name ?? row.user.email,
+                type: "status_update",
+                title: `鑑定進度更新：${statusLabel}`,
+                body: `您的申請單 ${row.submission.orderNo} 狀態已更新為「${statusLabel}」。`,
+                linkUrl: `/grading/orders/${row.submission.id}`,
+                subject: `[BOXIUM] 鑑定進度更新 — ${row.submission.orderNo}`,
+                html: buildGradingEmail({
+                  userName: row.user.name ?? row.user.email,
+                  orderNo: row.submission.orderNo,
+                  title: `鑑定進度更新：${statusLabel}`,
+                  body: `您的 PSA 代客鑑定申請狀態已更新為「${statusLabel}」，請登入 BOXIUM 查看最新進度。`,
+                  linkUrl: `/grading/orders/${row.submission.id}`,
+                  ctaText: "查看申請進度",
+                }),
+              });
+              notified++;
+            } catch (e) {
+              console.error(`[batchUpdateStatus] Failed to notify user ${row.user.email}:`, e);
+            }
+          });
+          await Promise.allSettled(notifyPromises);
+        }
+
+        return { updated: toUpdate.length, notified };
       }),
 
     // Overdue submissions

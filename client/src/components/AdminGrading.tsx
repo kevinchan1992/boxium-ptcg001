@@ -981,15 +981,18 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
   const submissions = batch.submissions ?? [];
   const utils = trpc.useUtils();
   const [batchSyncTarget, setBatchSyncTarget] = useState<{ status: 'received' | 'submitted_to_psa' | 'grading'; label: string } | null>(null);
+  const [syncNotifyUsers, setSyncNotifyUsers] = useState(false);
 
   const batchUpdateStatusMutation = trpc.grading.admin.batchUpdateStatus.useMutation({
     onSuccess: (data) => {
       if (data.updated === 0) {
         toast.info('所有申請單狀態已符合或更高，無需更新');
       } else {
-        toast.success(`已成功同步 ${data.updated} 筆申請單`);
+        const notifiedMsg = data.notified > 0 ? `，已通知 ${data.notified} 位客人` : '';
+        toast.success(`已成功同步 ${data.updated} 筆申請單${notifiedMsg}`);
       }
       setBatchSyncTarget(null);
+      setSyncNotifyUsers(false);
       utils.grading.admin.listBatchesWithStats.invalidate();
       utils.grading.admin.listSubmissions.invalidate();
     },
@@ -1231,6 +1234,19 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
               </div>
             )}
             <p className="text-xs text-gray-500">已處於相同或更高狀態的申請單不會被變更。</p>
+            {/* Notify users option */}
+            <label className="flex items-center gap-2 cursor-pointer select-none p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={syncNotifyUsers}
+                onChange={(e) => setSyncNotifyUsers(e.target.checked)}
+                className="w-4 h-4 accent-[#06038d] cursor-pointer"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-800">同時發送通知給客人</span>
+                <p className="text-xs text-gray-500 mt-0.5">系統將以 Email 及站內通知告知受影響的客人進度更新</p>
+              </div>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBatchSyncTarget(null)} className="text-gray-700">取消</Button>
@@ -1239,7 +1255,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
               disabled={batchUpdateStatusMutation.isPending}
               onClick={() => {
                 if (batchSyncTarget) {
-                  batchUpdateStatusMutation.mutate({ batchId: batch.id, status: batchSyncTarget.status });
+                  batchUpdateStatusMutation.mutate({ batchId: batch.id, status: batchSyncTarget.status, notifyUsers: syncNotifyUsers });
                 }
               }}
             >

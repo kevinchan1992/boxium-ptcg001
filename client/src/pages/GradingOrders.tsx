@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, ChevronRight, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Package, ChevronRight, Plus, AlertCircle, CreditCard } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   // 資料庫實際 enum 對應
@@ -19,6 +19,8 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   completed: { label: "已完成", color: "bg-gray-100 text-gray-700 border-gray-200" },
   cancelled: { label: "已取消", color: "bg-red-100 text-red-700 border-red-200" },
 };
+
+const PAYMENT_PENDING_STATUSES = new Set(["awaiting_payment", "payment_overdue"]);
 
 export default function GradingOrders() {
   const [, navigate] = useLocation();
@@ -82,10 +84,15 @@ export default function GradingOrders() {
           <div className="space-y-3">
             {submissions.map((sub: any) => {
               const statusInfo = STATUS_MAP[sub.status] ?? { label: sub.status, color: "bg-gray-100 text-gray-700 border-gray-200" };
+              const needsPayment = PAYMENT_PENDING_STATUSES.has(sub.status);
               return (
                 <div
                   key={sub.id}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 cursor-pointer hover:border-[#06038d] hover:shadow-md transition-all"
+                  className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer transition-all ${
+                    needsPayment
+                      ? "border-orange-300 hover:border-orange-500 hover:shadow-md"
+                      : "border-gray-200 hover:border-[#06038d] hover:shadow-md"
+                  }`}
                   onClick={() => navigate(`/grading/orders/${sub.id}`)}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -118,6 +125,24 @@ export default function GradingOrders() {
                   {sub.status === "graded" && sub.paymentDeadline && (
                     <div className="mt-2 bg-orange-50 rounded-lg px-3 py-2 text-xs text-orange-700 font-semibold">
                       ⚠️ 請於 {new Date(sub.paymentDeadline).toLocaleDateString("zh-HK")} 前完成付款
+                    </div>
+                  )}
+                  {/* Payment CTA for awaiting_payment / payment_overdue */}
+                  {needsPayment && (
+                    <div
+                      className="mt-3 pt-3 border-t border-orange-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/grading/orders/${sub.id}`);
+                      }}
+                    >
+                      <Button
+                        size="sm"
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        {sub.status === "payment_overdue" ? "⚠️ 立即付款（已逾期）" : "前往付款"}
+                      </Button>
                     </div>
                   )}
                 </div>
