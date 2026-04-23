@@ -916,15 +916,14 @@ function SubmissionDetailDialog({
                   <div className="space-y-2">
                     {itemResults.map((ir: any, idx: number) => {
                       const item = (detail.items ?? [])[idx];
-                      // Determine final tier: if item was upgraded, use the upgraded tier name from upgradeNewTierName;
-                      // otherwise use item's own tier name
+                      // Each item's tier is already updated by upgradeTier (immediately on confirm).
+                      // Use item.tier.name directly for accurate per-card tier display.
                       const upgradeItemIdList: number[] = (detail as any).upgradeItemIds
                         ? String((detail as any).upgradeItemIds).split(',').map(Number).filter(Boolean)
                         : [];
                       const isUpgradedItem = item?.id != null && upgradeItemIdList.includes(item.id);
-                      const finalTierName = isUpgradedItem
-                        ? ((detail as any).upgradeNewTierName ?? item?.tier?.name)
-                        : item?.tier?.name;
+                      // Always use the item's own current tier name (already updated per-card)
+                      const finalTierName = item?.tier?.name ?? null;
                       return (
                         <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-100">
                           <div className="flex items-center justify-between mb-2">
