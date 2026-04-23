@@ -1505,6 +1505,8 @@ export const gradingRouter = router({
         z.object({
           submissionId: z.number().int().positive(),
           newTierId: z.number().int().positive(),
+          // itemIds: specific card item IDs to upgrade (per-card upgrade)
+          itemIds: z.array(z.number().int().positive()).min(1),
           origin: z.string().default("https://boxium.asia"),
         })
       )
@@ -1528,20 +1530,30 @@ export const gradingRouter = router({
           .limit(1);
         if (!newTier) throw new TRPCError({ code: "NOT_FOUND", message: "服務層級不存在或已停用" });
 
-        // Get all items to calculate current total and new total
-        const items = await db
+        // Get all items for this submission
+        const allItems = await db
           .select()
           .from(gradingSubmissionItems)
           .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
-        if (items.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "申請沒有卡牌" });
+        if (allItems.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "申請沒有卡牌" });
 
-        const currentTotal = parseFloat(submission.totalFeeHkd);
-        const newTotal = items.length * parseFloat(newTier.feeHkd);
-        const diffFee = newTotal - currentTotal;
+        // Filter to only selected items
+        const selectedItems = allItems.filter((item: typeof allItems[0]) => input.itemIds.includes(item.id));
+        if (selectedItems.length === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "選中的卡牌不存在" });
+        }
+
+        // Calculate diff based on selected items only
+        const currentSelectedFee = selectedItems.reduce((sum: number, item: typeof allItems[0]) => sum + parseFloat(item.feeHkd), 0);
+        const newSelectedFee = selectedItems.length * parseFloat(newTier.feeHkd);
+        const diffFee = newSelectedFee - currentSelectedFee;
 
         if (diffFee <= 0) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `新層級費用 HK$${newTotal.toFixed(2)} 不高於原費用 HK$${currentTotal.toFixed(2)}，無需補付差價` });
+          throw new TRPCError({ code: "BAD_REQUEST", message: `選中 ${selectedItems.length} 張卡牌的新層級費用 HK$${newSelectedFee.toFixed(2)} 不高於原費用 HK$${currentSelectedFee.toFixed(2)}，無需補付差價` });
         }
+
+        const currentTotal = parseFloat(submission.totalFeeHkd);
+        const newTotal = currentTotal + diffFee;
 
         // Get user
         const [user] = await db.select().from(users).where(eq(users.id, submission.userId)).limit(1);
@@ -1558,7 +1570,7 @@ export const gradingRouter = router({
                 currency: "hkd",
                 product_data: {
                   name: `PSA 鑑定服務升級差價 - ${submission.orderNo}`,
-                  description: `升級至 ${newTier.name}，共 ${items.length} 張卡牌，差價補付`,
+                  description: `升級至 ${newTier.name}，共 ${selectedItems.length} 張卡牌升級，差價補付`,
                 },
                 unit_amount: amountCents,
               },
@@ -1576,29 +1588,35 @@ export const gradingRouter = router({
             user_id: user.id.toString(),
             new_tier_id: input.newTierId.toString(),
             diff_fee_hkd: diffFee.toFixed(2),
+            // Store selected item IDs (comma-separated) for webhook processing
+            upgrade_item_ids: input.itemIds.join(","),
           },
           success_url: `${input.origin}/grading/orders/${input.submissionId}?upgrade_payment=success`,
           cancel_url: `${input.origin}/grading/orders/${input.submissionId}`,
         });
 
         // Save upgrade info to submission AND immediately update totalFeeHkd
-        // Use sql template to ensure decimal fields are written correctly
         await db
           .update(gradingSubmissions)
           .set({
             upgradeCheckoutSessionId: session.id,
             upgradeDiffFeeHkd: sql`${diffFee.toFixed(2)}`,
             upgradeNewTierId: input.newTierId,
-            upgradeCheckoutAt: new Date(), // Record when upgrade checkout was created
+            upgradeCheckoutAt: new Date(),
             totalFeeHkd: sql`${newTotal.toFixed(2)}`, // Update total fee immediately
           })
           .where(eq(gradingSubmissions.id, input.submissionId));
 
-        // Update all items to new tier and new fee
+        // Update ONLY selected items to new tier and new fee
         await db
           .update(gradingSubmissionItems)
           .set({ tierId: input.newTierId, feeHkd: sql`${parseFloat(newTier.feeHkd).toFixed(2)}` })
-          .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
+          .where(
+            and(
+              eq(gradingSubmissionItems.submissionId, input.submissionId),
+              inArray(gradingSubmissionItems.id, input.itemIds)
+            )
+          );
 
         // Notify user
         const linkUrl = `/grading/orders/${submission.id}`;
@@ -1609,13 +1627,13 @@ export const gradingRouter = router({
           userName: user.name || user.email,
           type: "grading_tier_upgrade",
           title: "PSA 鑑定服務層級升級通知",
-          body: `您的申請 ${submission.orderNo} 服務層級已升級至 ${newTier.name}，需補付差價 HK$${diffFee.toFixed(2)}，請點擊連結完成付款。`,
+          body: `您的申請 ${submission.orderNo} 中 ${selectedItems.length} 張卡牌服務層級已升級至 ${newTier.name}，需補付差價 HK$${diffFee.toFixed(2)}，請點擊連結完成付款。`,
           linkUrl,
           subject: `【BOXIUM PSA 鑑定】服務層級升級，請補付差價 - ${submission.orderNo}`,
           html: buildGradingEmail({
             userName: user.name || user.email,
             title: "PSA 鑑定服務層級升級通知 🔼",
-            body: `您的申請服務層級已由管理員升級至 <strong>${newTier.name}</strong>，需補付差價 <strong>HK$${diffFee.toFixed(2)}</strong>（原費用 HK$${currentTotal.toFixed(2)} → 新費用 HK$${newTotal.toFixed(2)}），請點擊下方按鈕完成付款。`,
+            body: `您的申請 <strong>${selectedItems.length} 張卡牌</strong>服務層級已由管理員升級至 <strong>${newTier.name}</strong>，需補付差價 <strong>HK$${diffFee.toFixed(2)}</strong>，請點擊下方按鈕完成付款。`,
             orderNo: submission.orderNo,
             linkUrl: `${baseUrl}${linkUrl}`,
             ctaText: "立即補付差價",
@@ -1626,9 +1644,10 @@ export const gradingRouter = router({
   </td></tr>
   <tr><td style="padding:12px 16px;">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;width:40%;">新服務層級</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${newTier.name}</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">原費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${currentTotal.toFixed(2)}</td></tr>
-      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${newTotal.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;width:40%;">升級張數</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${selectedItems.length} 張</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新服務層級</td><td style="padding:4px 0;font-size:14px;font-weight:bold;color:#0369a1;">${newTier.name}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">原訂單費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${currentTotal.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 0;font-size:14px;color:#555;">新訂單費用</td><td style="padding:4px 0;font-size:14px;color:#555;">HK$${newTotal.toFixed(2)}</td></tr>
       <tr><td style="padding:4px 0;font-size:14px;color:#555;">需補付差價</td><td style="padding:4px 0;font-size:18px;font-weight:bold;color:#dc2626;">HK$${diffFee.toFixed(2)}</td></tr>
     </table>
   </td></tr>

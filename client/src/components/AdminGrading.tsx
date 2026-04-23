@@ -304,6 +304,8 @@ function SubmissionDetailDialog({
   const [gradingStep, setGradingStep] = useState<'ask_upgrade' | 'select_tier' | 'fill_result'>('ask_upgrade');
   const [selectedUpgradeTierId, setSelectedUpgradeTierId] = useState<number | null>(null);
   const [upgradeResult, setUpgradeResult] = useState<{ checkoutUrl: string | null; diffFeeHkd: string; newTierName: string } | null>(null);
+  // Per-card upgrade selection: set of item IDs selected for upgrade
+  const [selectedItemIdsForUpgrade, setSelectedItemIdsForUpgrade] = useState<Set<number>>(new Set());
 
   // Fetch all active tiers for upgrade selection
   const { data: allTiers } = trpc.grading.getServiceTiers.useQuery(undefined, { enabled: open && gradingStep === 'select_tier' });
@@ -351,6 +353,7 @@ function SubmissionDetailDialog({
       setGradingStep('ask_upgrade');
       setSelectedUpgradeTierId(null);
       setUpgradeResult(null);
+      setSelectedItemIdsForUpgrade(new Set());
     }
   }, [open, submissionId, detail]);
 
@@ -719,7 +722,8 @@ function SubmissionDetailDialog({
               </Button>
             </div>
 
-            {/* Grading results - 3-step flow */}
+            {/* Grading results - 3-step flow: only show when status is 'graded' */}
+            {detail.status === 'graded' && (
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
               <div className="flex items-center gap-2 mb-3">
                 <Award className="h-4 w-4 text-gray-900" />
@@ -763,14 +767,41 @@ function SubmissionDetailDialog({
               {gradingStep === 'select_tier' && (
                 <div className="space-y-3">
                   <div className="bg-white rounded-lg p-4 border border-blue-100">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">選擇新服務層級</p>
-                    <p className="text-xs text-gray-500 mb-3">目前費用：<strong>HK${parseFloat(detail.totalFeeHkd).toLocaleString()}</strong>（{detail.items?.length ?? 0} 張卡牌）。選擇升級後的層級，系統將計算差價並發送付款連結給客人。</p>
+                    {/* Step A: Select which cards need upgrade */}
+                    <p className="text-sm font-semibold text-gray-900 mb-1">選擇需要升級的卡牌</p>
+                    <p className="text-xs text-gray-500 mb-3">勾選需要升級服務層級的卡牌（可只選部分），再選擇新層級，系統將按選中張數計算差價。</p>
+                    <div className="space-y-1.5 mb-4 max-h-40 overflow-y-auto">
+                      {(detail.items ?? []).map((item: any) => {
+                        const checked = selectedItemIdsForUpgrade.has(item.id);
+                        return (
+                          <label key={item.id} className={`flex items-center gap-2 rounded-lg p-2 border cursor-pointer transition-all ${checked ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-200'}`}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                const next = new Set(selectedItemIdsForUpgrade);
+                                if (checked) next.delete(item.id); else next.add(item.id);
+                                setSelectedItemIdsForUpgrade(next);
+                              }}
+                              className="accent-blue-600"
+                            />
+                            <span className="text-xs text-gray-800 flex-1 truncate">{item.cardName}</span>
+                            <span className="text-xs text-gray-400 shrink-0">HK${parseFloat(item.feeHkd ?? 0).toLocaleString()} / 張</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">已選 <strong>{selectedItemIdsForUpgrade.size}</strong> 張。選擇升級後的層級：</p>
                     <div className="space-y-2 mb-3">
                       {(allTiers ?? []).map((tier: any) => {
-                        const newTotal = (detail.items?.length ?? 0) * parseFloat(tier.feeHkd);
-                        const diff = newTotal - parseFloat(detail.totalFeeHkd);
+                        const selectedCount = selectedItemIdsForUpgrade.size;
+                        // Calculate diff: selected cards upgrade to new tier, unselected stay at original per-card fee
+                        const selectedItems = (detail.items ?? []).filter((it: any) => selectedItemIdsForUpgrade.has(it.id));
+                        const currentSelectedFee = selectedItems.reduce((sum: number, it: any) => sum + parseFloat(it.feeHkd ?? 0), 0);
+                        const newSelectedFee = selectedCount * parseFloat(tier.feeHkd);
+                        const diff = newSelectedFee - currentSelectedFee;
                         const isSelected = selectedUpgradeTierId === tier.id;
-                        const isCurrentOrLower = diff <= 0;
+                        const isCurrentOrLower = diff <= 0 || selectedCount === 0;
                         return (
                           <button
                             key={tier.id}
@@ -790,13 +821,11 @@ function SubmissionDetailDialog({
                                 <p className="text-xs text-gray-500">HK${parseFloat(tier.feeHkd).toLocaleString()} / 張</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-xs text-gray-500">新總費用</p>
-                                <p className="text-sm font-bold text-gray-900">HK${newTotal.toLocaleString()}</p>
-                                {!isCurrentOrLower && (
+                                {selectedCount > 0 && !isCurrentOrLower && (
                                   <p className="text-xs font-bold text-red-600">差價 +HK${diff.toLocaleString()}</p>
                                 )}
                                 {isCurrentOrLower && (
-                                  <p className="text-xs text-gray-400">目前層級或更低</p>
+                                  <p className="text-xs text-gray-400">{selectedCount === 0 ? '請先選卡牌' : '目前層級或更低'}</p>
                                 )}
                               </div>
                             </div>
@@ -814,17 +843,18 @@ function SubmissionDetailDialog({
                       </Button>
                       <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                        disabled={!selectedUpgradeTierId || upgradeTierMutation.isPending}
+                        disabled={!selectedUpgradeTierId || selectedItemIdsForUpgrade.size === 0 || upgradeTierMutation.isPending}
                         onClick={() => {
-                          if (!selectedUpgradeTierId) return;
+                          if (!selectedUpgradeTierId || selectedItemIdsForUpgrade.size === 0) return;
                           upgradeTierMutation.mutate({
                             submissionId: detail.id,
                             newTierId: selectedUpgradeTierId,
+                            itemIds: Array.from(selectedItemIdsForUpgrade),
                             origin: window.location.origin,
                           });
                         }}
                       >
-                        {upgradeTierMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>確認升級並發送差價連結</>}
+                        {upgradeTierMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>確認升級並發送差價連結（{selectedItemIdsForUpgrade.size} 張）</>}
                       </Button>
                     </div>
                   </div>
@@ -915,6 +945,7 @@ function SubmissionDetailDialog({
                 </div>
               )}
             </div>
+            )}
           </div>
         ) : null}
       </DialogContent>
