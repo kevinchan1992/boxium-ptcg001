@@ -2911,8 +2911,8 @@ function AlipayPendingTab() {
   // Grading alipay pending
   const { data: gradingAlipayData, isLoading: loadingGradingAlipay, refetch: refetchGrading } = trpc.grading.admin.listSubmissions.useQuery({
     alipayProofPending: true,
-    limit: 100,
-    offset: 0,
+    page: 1,
+    pageSize: 100,
   });
   const gradingAlipaySubmissions = gradingAlipayData?.submissions ?? [];
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
