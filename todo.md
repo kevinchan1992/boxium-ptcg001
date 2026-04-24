@@ -8640,3 +8640,19 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後台批次管理加入「一鍵確認收件」和「一鍵確認出團」快速操作列
 - [x] 管理員備註歷史化：schema 加入 adminNotesHistory 欄位（JSON 陣列），後端每次更新備注時 append 記錄，前端顯示時間軸
 - [x] 修復 grading.ts originalTierIds 型別錯誤（as number[]）
+
+---
+## B 層剩餘 + C 層優化（2026-04-24）
+- [ ] GradingSubmit step 1 加入服務層級對比表（費用、申報上限、時效）
+- [ ] GradingOrders 加入搜尋框和前端分頁（每頁 10 筆）
+- [ ] 客戶評價系統：gradingReviews schema + 後端 procedure + 前端（申請完成後評價入口）
+- [ ] 評價顯示在 PSA 鑑定服務介紹頁
+
+---
+## B 層剩餘 + C 層優化完成記錄（2026-04-24）
+- [x] GradingSubmit.tsx：服務層級對比表（可摺疊，顯示費用/時效/適用場景）
+- [x] GradingOrders.tsx：搜尋框 + 前端分頁（每頁 10 筆）
+- [x] gradingReviews 表：schema + db:push 遷移完成
+- [x] grading.ts：submitReview / getPublicReviews / getMyReview / adminGetReviews procedures
+- [x] GradingOrderDetail.tsx：completed 狀態顯示 ReviewSection 評價表單
+- [x] Grading.tsx：FAQ 前加入 PublicReviewsSection 展示公開評價

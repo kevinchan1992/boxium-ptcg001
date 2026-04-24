@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Truck,
+  Star,
 } from "lucide-react";
 
 // Countdown timer component
@@ -164,6 +165,56 @@ const FAQS = [
     a: "如尚未付款（awaiting_payment 狀態），可在申請詳情頁面自行取消。一旦付款完成後，卡片一經提交 PSA 就不可取消。若在 BOXIUM 收件後 48 小時內以書面通知取消，需支付 HK$50 行政費。",
   },
 ];
+
+// ─── Public Reviews Section ──────────────────────────────────────────────────
+function PublicReviewsSection() {
+  const { data, isLoading } = trpc.grading.getPublicReviews.useQuery({ limit: 6 });
+
+  if (isLoading || !data || data.length === 0) return null;
+
+  const avgRating = data.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / data.length;
+
+  return (
+    <section className="py-16 px-4 bg-white">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">用戶評價</h2>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map((s) => (
+                <Star key={s} className={`h-5 w-5 ${s <= Math.round(avgRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+              ))}
+            </div>
+            <span className="text-lg font-bold text-gray-800">{avgRating.toFixed(1)}</span>
+            <span className="text-sm text-gray-500">({data.length} 則評價)</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((review: { id: number; rating: number; comment: string | null; createdAt: Date; userName: string | null }) => (
+            <div key={review.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <div className="flex items-center gap-1 mb-2">
+                {[1,2,3,4,5].map((s) => (
+                  <Star key={s} className={`h-4 w-4 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                ))}
+              </div>
+              {review.comment && (
+                <p className="text-sm text-gray-700 italic mb-3">"{review.comment}"</p>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-600">
+                  {review.userName ? review.userName.charAt(0) + "***" : "匿名用戶"}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(review.createdAt).toLocaleDateString("zh-HK")}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Grading() {
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
@@ -448,6 +499,8 @@ export default function Grading() {
         </div>
       </section>
 
+      {/* ── User Reviews ── */}
+      <PublicReviewsSection />
       {/* ── FAQ ── */}
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-2xl mx-auto">

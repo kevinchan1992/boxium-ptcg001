@@ -11,6 +11,7 @@ import {
   gradingBatches,
   gradingSubmissions,
   gradingSubmissionItems,
+  gradingReviews,
   users,
   type GradingServiceTier,
   type GradingBatch,
@@ -1292,6 +1293,18 @@ export const gradingRouter = router({
         if (input.adminNotes !== undefined) updateData.adminNotes = input.adminNotes;
         if (input.returnTrackingNo !== undefined) updateData.returnTrackingNo = input.returnTrackingNo;
         if (input.batchId !== undefined) updateData.batchId = input.batchId;
+        // Append note to adminNotesHistory if a note is provided
+        if (input.adminNotes) {
+          const existingHistory = (submission as any).adminNotesHistory
+            ? JSON.parse((submission as any).adminNotesHistory as string)
+            : [];
+          const newEntry = {
+            timestamp: new Date().toISOString(),
+            note: input.adminNotes,
+            statusAtTime: input.status,
+          };
+          updateData.adminNotesHistory = JSON.stringify([...existingHistory, newEntry]);
+        }
 
         // Append note to adminNotesHistory if a note is provided
         if (input.adminNotes) {
@@ -2440,5 +2453,102 @@ export const gradingRouter = router({
         console.error("[Grading] Failed to send approval email:", e);
       }
       return { success: true };
+    }),
+
+  // ─── Reviews ─────────────────────────────────────────────────────────────────
+
+  /** Submit a review for a completed grading submission */
+  submitReview: protectedProcedure
+    .input(z.object({
+      submissionId: z.number().int().positive(),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().max(500).optional(),
+      isPublic: z.boolean().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      // Verify the submission belongs to the user and is completed
+      const [submission] = await db
+        .select({ id: gradingSubmissions.id, status: gradingSubmissions.status, userId: gradingSubmissions.userId })
+        .from(gradingSubmissions)
+        .where(and(eq(gradingSubmissions.id, input.submissionId), eq(gradingSubmissions.userId, ctx.user.id)))
+        .limit(1);
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "申請不存在" });
+      if (submission.status !== "completed") throw new TRPCError({ code: "BAD_REQUEST", message: "只有已完成的申請才能評價" });
+      // Check if already reviewed
+      const [existing] = await db
+        .select({ id: gradingReviews.id })
+        .from(gradingReviews)
+        .where(eq(gradingReviews.submissionId, input.submissionId))
+        .limit(1);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "您已評價過此申請" });
+      // Insert review
+      await db.insert(gradingReviews).values({
+        submissionId: input.submissionId,
+        userId: ctx.user.id,
+        rating: input.rating,
+        comment: input.comment || null,
+        isPublic: input.isPublic,
+      });
+      return { success: true };
+    }),
+
+  /** Get public reviews for the grading service (for landing page) */
+  getPublicReviews: publicProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(50).default(10) }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      const limit = input?.limit ?? 10;
+      const rows = await db
+        .select({
+          id: gradingReviews.id,
+          rating: gradingReviews.rating,
+          comment: gradingReviews.comment,
+          createdAt: gradingReviews.createdAt,
+          userName: users.name,
+        })
+        .from(gradingReviews)
+        .innerJoin(users, eq(gradingReviews.userId, users.id))
+        .where(eq(gradingReviews.isPublic, true))
+        .orderBy(desc(gradingReviews.createdAt))
+        .limit(limit);
+      return rows;
+    }),
+
+  /** Get the review for a specific submission (by the current user) */
+  getMyReview: protectedProcedure
+    .input(z.object({ submissionId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      const [review] = await db
+        .select()
+        .from(gradingReviews)
+        .where(and(eq(gradingReviews.submissionId, input.submissionId), eq(gradingReviews.userId, ctx.user.id)))
+        .limit(1);
+      return review ?? null;
+    }),
+
+  /** Admin: get all reviews with stats */
+  adminGetReviews: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      const rows = await db
+        .select({
+          id: gradingReviews.id,
+          submissionId: gradingReviews.submissionId,
+          rating: gradingReviews.rating,
+          comment: gradingReviews.comment,
+          isPublic: gradingReviews.isPublic,
+          createdAt: gradingReviews.createdAt,
+          userName: users.name,
+          userEmail: users.email,
+        })
+        .from(gradingReviews)
+        .innerJoin(users, eq(gradingReviews.userId, users.id))
+        .orderBy(desc(gradingReviews.createdAt));
+      const avgRating = rows.length > 0
+        ? rows.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / rows.length
+        : 0;
+      return { reviews: rows, avgRating: Math.round(avgRating * 10) / 10, total: rows.length };
     }),
 });

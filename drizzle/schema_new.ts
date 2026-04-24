@@ -1668,3 +1668,22 @@ export const gradingSubmissionItems = mysqlTable("gradingSubmissionItems", {
 }));
 export type GradingSubmissionItem = typeof gradingSubmissionItems.$inferSelect;
 export type InsertGradingSubmissionItem = typeof gradingSubmissionItems.$inferInsert;
+
+/**
+ * PSA Grading Reviews - User reviews for completed grading submissions
+ */
+export const gradingReviews = mysqlTable("gradingReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  submissionId: int("submissionId").notNull().unique(),
+  userId: int("userId").notNull(),
+  rating: int("rating").notNull(), // 1-5
+  comment: text("comment"),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  submissionIdIdx: index("gr_submissionId_idx").on(table.submissionId),
+  userIdIdx: index("gr_userId_idx").on(table.userId),
+}));
+export type GradingReview = typeof gradingReviews.$inferSelect;
+export type InsertGradingReview = typeof gradingReviews.$inferInsert;

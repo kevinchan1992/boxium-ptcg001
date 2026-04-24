@@ -367,6 +367,63 @@ function clearDraft(userId?: number | string) {
   } catch {}
 }
 
+// ─── Tier Comparison Table ────────────────────────────────────────────────────
+function TierComparisonTable({ tiers }: { tiers: any[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!tiers || tiers.length === 0) return null;
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-base">📊</span>
+          <span className="font-semibold text-gray-900 text-sm">各層級服務對比</span>
+          <span className="text-xs text-gray-400">（點擊展開）</span>
+        </div>
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+      {expanded && (
+        <div className="border-t border-gray-100 overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">層級</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">費用 / 張</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">最高申報</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">預計時效</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiers.map((tier: any, idx: number) => (
+                <tr key={tier.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <td className="p-3 font-semibold text-gray-900 whitespace-nowrap">{tier.name}</td>
+                  <td className="p-3 text-right font-bold text-[#06038d] whitespace-nowrap">
+                    HK${parseFloat(tier.feeHkd).toLocaleString()}
+                  </td>
+                  <td className="p-3 text-right text-gray-600 whitespace-nowrap">
+                    USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()}
+                  </td>
+                  <td className="p-3 text-right text-gray-600 whitespace-nowrap">
+                    {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 工作天
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 bg-blue-50 border-t border-blue-100">
+            <p className="text-xs text-blue-700">
+              <strong>選層級建議：</strong>選擇「最高申報」<strong>高於卡牌實際市值</strong>的層級，避免鑑定後需補付差價。
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function GradingSubmit() {
   const [, navigate] = useLocation();
@@ -694,16 +751,10 @@ export default function GradingSubmit() {
               );
             })()}
 
-            {/* How to choose tier tip */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <span className="text-amber-500 text-lg flex-shrink-0 mt-0.5">💡</span>
-              <div>
-                <p className="text-sm font-semibold text-amber-800 mb-1">如何選擇正確層級，避免補付差價？</p>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  請選擇「最高申報價值」<strong>高於您卡牌實際市值</strong>的層級。例如卡牌市值約 USD $200，建議選擇最高申報 USD $500 或以上的層級。如鑑定後市值超出申報上限，管理員才會通知補付差價。
-                </p>
-              </div>
-            </div>
+            {/* Tier Comparison Table */}
+            {tiers && tiers.length > 0 && (
+              <TierComparisonTable tiers={tiers} />
+            )}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-bold text-gray-900 mb-1">選擇服務層級</h2>
               <p className="text-xs text-gray-500 mb-4">此次申請的所有卡牌將使用相同服務層級</p>

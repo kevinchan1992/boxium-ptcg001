@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   ShieldQuestion,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -210,6 +211,95 @@ function PrintableSlip({ submission }: { submission: any }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Review Section ──────────────────────────────────────────────────────────
+function ReviewSection({ submissionId }: { submissionId: number }) {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const utils = trpc.useUtils();
+
+  const { data: existingReview, isLoading } = trpc.grading.getMyReview.useQuery({ submissionId });
+  const submitReview = trpc.grading.submitReview.useMutation({
+    onSuccess: () => {
+      toast.success("感謝您的評價！");
+      utils.grading.getMyReview.invalidate({ submissionId });
+    },
+    onError: (err) => toast.error(err.message || "提交評價失敗"),
+  });
+
+  if (isLoading) return null;
+
+  if (existingReview) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+        <p className="font-bold text-green-800 text-sm mb-2">✅ 您已提交評價</p>
+        <div className="flex items-center gap-1 mb-2">
+          {[1,2,3,4,5].map((s) => (
+            <Star key={s} className={`h-5 w-5 ${s <= existingReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+          ))}
+          <span className="text-sm text-gray-600 ml-1">{existingReview.rating}/5</span>
+        </div>
+        {existingReview.comment && (
+          <p className="text-sm text-gray-700 italic">"{existingReview.comment}"</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+      <p className="font-bold text-yellow-800 text-sm mb-3">⭐ 為本次鑑定服務評分</p>
+      {/* Star rating */}
+      <div className="flex items-center gap-1 mb-3">
+        {[1,2,3,4,5].map((s) => (
+          <button
+            key={s}
+            type="button"
+            onMouseEnter={() => setHoverRating(s)}
+            onMouseLeave={() => setHoverRating(0)}
+            onClick={() => setRating(s)}
+            className="focus:outline-none"
+          >
+            <Star className={`h-7 w-7 transition-colors ${s <= (hoverRating || rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+          </button>
+        ))}
+        {rating > 0 && (
+          <span className="text-sm text-gray-600 ml-2">{["", "很差", "差", "普通", "好", "非常好"][rating]}</span>
+        )}
+      </div>
+      {/* Comment */}
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="分享您的鑑定體驗（選填）"
+        maxLength={500}
+        rows={3}
+        className="w-full text-sm border border-yellow-200 rounded-lg p-2 bg-white resize-none focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-2"
+      />
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="rounded"
+          />
+          公開顯示此評價
+        </label>
+        <button
+          type="button"
+          disabled={rating === 0 || submitReview.isPending}
+          onClick={() => submitReview.mutate({ submissionId, rating, comment: comment.trim() || undefined, isPublic })}
+          className="bg-[#06038d] text-white text-sm font-semibold px-4 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#06038d]/90 transition-colors"
+        >
+          {submitReview.isPending ? "提交中..." : "提交評價"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function GradingOrderDetail() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -1888,6 +1978,10 @@ export default function GradingOrderDetail() {
             </div>
           </div>
 
+          {/* Review section for completed submissions */}
+          {(submission.status === "completed" || submission.status === "returned") && (
+            <ReviewSection submissionId={submission.id} />
+          )}
           {/* Admin notes */}
           {submission.adminNotes && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
