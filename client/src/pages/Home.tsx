@@ -445,10 +445,10 @@ function HeroQuickAccess() {
   }, []);
 
   const items = [
-    { num: "01", href: "/research",    Icon: ScanSearch,  label: "卡牌搜尋",  desc: "55,000+ 張卡牌資料庫" },
-    { num: "02", href: "/pricing",     Icon: LineChart,   label: "市場格價",  desc: "121萬+ 全球成交記錄" },
-    { num: "03", href: "/grading",    Icon: Award,       label: "PSA 鑑定", desc: "專業代客鑑定服務" },
-    { num: "04", href: "/marketplace",Icon: Store,       label: "市集",     desc: "安全交易平台" },
+    { tag: "SEARCH",  href: "/research",    label: "卡牌搜尋", desc: "55,000+ 張卡牌資料庫" },
+    { tag: "PRICING", href: "/pricing",     label: "市場格價", desc: "121萬+ 全球成交記錄" },
+    { tag: "GRADING", href: "/grading",     label: "PSA 鑑定", desc: "專業代客鑑定服務" },
+    { tag: "MARKET",  href: "/marketplace", label: "市集",    desc: "安全交易平台" },
   ];
 
   return (
@@ -462,51 +462,49 @@ function HeroQuickAccess() {
       }}
     >
       {/* Top rule */}
-      <div style={{ height: "1px", background: "rgba(255,255,255,0.18)" }} />
-      <div className="flex w-full">
+      <div style={{ height: "1px", background: "rgba(255,255,255,0.15)" }} />
+      <div className="flex w-full" style={{ background: "rgba(0,0,0,0.2)" }}>
         {items.map((item, i) => {
-          const { Icon } = item;
           const isLast = i === items.length - 1;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="group relative flex-1 flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 md:py-5 cursor-pointer select-none overflow-hidden transition-colors duration-200"
+              className="group relative flex-1 flex flex-col justify-center px-5 md:px-7 py-4 md:py-5 cursor-pointer select-none transition-colors duration-200"
               style={{
-                borderRight: !isLast ? "1px solid rgba(255,255,255,0.12)" : undefined,
+                borderRight: !isLast ? "none" : undefined,
               }}
             >
               {/* Hover fill */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250" style={{ background: "rgba(255,255,255,0.05)" }} />
-              {/* Left yellow accent bar */}
-              <div className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300" style={{ background: "#FEDD00" }} />
-              {/* Number */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(255,255,255,0.04)" }} />
+              {/* Slash divider (after each item except last) */}
+              {!isLast && (
+                <span
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-white/20 font-light select-none pointer-events-none z-10"
+                  style={{ fontSize: "22px", lineHeight: 1 }}
+                >/</span>
+              )}
+              {/* EN tag */}
               <span
-                className="relative z-10 font-black text-lg md:text-xl leading-none tabular-nums shrink-0 transition-colors duration-200 group-hover:text-[#FEDD00]"
-                style={{ color: "rgba(255,255,255,0.18)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}
-              >{item.num}</span>
-              {/* Icon */}
-              <div
-                className="relative z-10 w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 group-hover:scale-105"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}
-              >
-                <Icon className="w-4 h-4 md:w-4.5 md:h-4.5 transition-colors duration-200 group-hover:text-[#FEDD00]" style={{ color: "rgba(255,255,255,0.7)" }} strokeWidth={1.6} />
-              </div>
-              {/* Text */}
-              <div className="relative z-10 flex flex-col gap-0.5 min-w-0">
-                <span className="text-white font-bold text-xs md:text-sm leading-tight tracking-wide group-hover:text-[#FEDD00] transition-colors duration-200 truncate">{item.label}</span>
-                <span className="text-white/40 text-[10px] md:text-xs leading-tight truncate hidden sm:block">{item.desc}</span>
-              </div>
-              {/* Arrow */}
-              <ArrowRight
-                className="relative z-10 ml-auto w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200 text-[#FEDD00]"
-              />
+                className="relative z-10 text-[9px] md:text-[10px] font-bold tracking-[0.14em] uppercase mb-1 transition-colors duration-200"
+                style={{ color: "rgba(255,255,255,0.32)" }}
+              >{item.tag}</span>
+              {/* Main label */}
+              <span
+                className="relative z-10 font-extrabold leading-tight transition-all duration-200 group-hover:text-[#FEDD00] group-hover:tracking-[0.01em]"
+                style={{ fontSize: "clamp(14px, 2vw, 20px)", color: "white", letterSpacing: "-0.01em" }}
+              >{item.label}</span>
+              {/* Desc */}
+              <span
+                className="relative z-10 mt-1 hidden sm:block transition-colors duration-200"
+                style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)" }}
+              >{item.desc}</span>
             </Link>
           );
         })}
       </div>
       {/* Bottom rule */}
-      <div style={{ height: "1px", background: "rgba(255,255,255,0.18)" }} />
+      <div style={{ height: "1px", background: "rgba(255,255,255,0.15)" }} />
     </div>
   );
 }
