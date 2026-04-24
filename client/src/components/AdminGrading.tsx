@@ -54,6 +54,9 @@ import {
   Truck,
   BarChart3,
   X,
+  Star,
+  EyeOff,
+  MessageSquare,
 } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -2619,8 +2622,143 @@ function TaskCenterTab() {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
+
+// ─── Reviews Management Tab ───────────────────────────────────────────────────
+function ReviewsManagementTab() {
+  const { data, isLoading, refetch } = trpc.grading.adminGetReviews.useQuery();
+  const { data: monthlyStats } = trpc.grading.adminGetReviewMonthlyStats.useQuery();
+  const toggleMutation = trpc.grading.toggleReviewVisibility.useMutation({
+    onSuccess: () => { refetch(); toast.success("已更新評價狀態"); },
+    onError: () => toast.error("更新失敗"),
+  });
+
+  const renderStars = (rating: number) => (
+    <span className="flex gap-0.5">
+      {[1,2,3,4,5].map(i => (
+        <Star key={i} className={`h-4 w-4 ${i <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+      ))}
+    </span>
+  );
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#06038d]" /></div>;
+
+  const reviews = data?.reviews ?? [];
+  const avgRating = data?.avgRating ?? 0;
+  const total = data?.total ?? 0;
+
+  const dist = [5,4,3,2,1].map(r => ({
+    rating: r,
+    count: reviews.filter((rv: any) => rv.rating === r).length,
+  }));
+
+  return (
+    <div className="space-y-6">
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
+          <p className="text-xs text-gray-500">平均評分</p>
+          <div className="flex items-center gap-2">
+            <span className="text-3xl font-bold text-[#06038d]">{avgRating.toFixed(1)}</span>
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(i => (
+                <Star key={i} className={`h-5 w-5 ${i <= Math.round(avgRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
+          <p className="text-xs text-gray-500">評價總數</p>
+          <p className="text-3xl font-bold text-[#06038d]">{total}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
+          <p className="text-xs text-gray-500">公開評價</p>
+          <p className="text-3xl font-bold text-green-600">{reviews.filter((r: any) => r.isPublic).length}</p>
+        </div>
+      </div>
+
+      {/* Rating distribution */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">評分分佈</h3>
+        <div className="space-y-2">
+          {dist.map(({ rating, count }) => (
+            <div key={rating} className="flex items-center gap-3">
+              <div className="flex gap-0.5 w-24 shrink-0">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className={`h-3.5 w-3.5 ${i <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                ))}
+              </div>
+              <div className="flex-1 bg-gray-100 rounded-full h-2">
+                <div
+                  className="bg-yellow-400 h-2 rounded-full transition-all"
+                  style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%" }}
+                />
+              </div>
+              <span className="text-xs text-gray-500 w-6 text-right">{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Monthly trend chart */}
+      {monthlyStats && monthlyStats.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">月度評分趨勢</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={monthlyStats} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v: any) => [v, "平均評分"]} />
+              <Area type="monotone" dataKey="avgRating" stroke="#f59e0b" fill="#fef3c7" strokeWidth={2} name="平均評分" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Reviews list */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-[#06038d]" />
+          <h3 className="text-sm font-semibold text-gray-700">所有評價</h3>
+          <span className="ml-auto text-xs text-gray-400">{total} 則</span>
+        </div>
+        {reviews.length === 0 ? (
+          <div className="py-12 text-center text-gray-400 text-sm">暫無評價</div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {reviews.map((review: any) => (
+              <div key={review.id} className="px-4 py-3 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {renderStars(review.rating)}
+                    <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("zh-HK")}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${review.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                      {review.isPublic ? "公開" : "隱藏"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-800 mb-1">{review.comment || <span className="text-gray-400 italic">無評語</span>}</p>
+                  <p className="text-xs text-gray-400">{review.userName} · 申請 #{review.submissionId}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 text-xs"
+                  onClick={() => toggleMutation.mutate({ id: review.id, isPublic: !review.isPublic })}
+                  disabled={toggleMutation.isPending}
+                >
+                  {review.isPublic ? <><EyeOff className="h-3 w-3 mr-1" />隱藏</> : <><Eye className="h-3 w-3 mr-1" />公開</>}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminGrading() {
-  const [activeSection, setActiveSection] = useState<"dashboard" | "tasks" | "batches" | "submissions" | "orders" | "tiers">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "tasks" | "batches" | "submissions" | "orders" | "tiers" | "reviews">("dashboard");
 
   const sections = [
     { id: "dashboard" as const, label: "儀表板", icon: <BarChart3 className="h-4 w-4" /> },
@@ -2629,6 +2767,7 @@ export default function AdminGrading() {
     { id: "submissions" as const, label: "訂單管理", icon: <List className="h-4 w-4" /> },
     { id: "orders" as const, label: "收益統計", icon: <TrendingUp className="h-4 w-4" /> },
     { id: "tiers" as const, label: "服務層級", icon: <Award className="h-4 w-4" /> },
+    { id: "reviews" as const, label: "客戶評價", icon: <Star className="h-4 w-4" /> },
   ];
 
   return (
@@ -2662,6 +2801,7 @@ export default function AdminGrading() {
       {activeSection === "submissions" && <SubmissionManagement />}
       {activeSection === "orders" && <GradingOrdersTab />}
       {activeSection === "tiers" && <ServiceTierManagement />}
+      {activeSection === "reviews" && <ReviewsManagementTab />}
     </div>
   );
 }

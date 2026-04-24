@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -23,15 +23,13 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 const PAYMENT_PENDING_STATUSES = new Set(["awaiting_payment", "payment_overdue"]);
 
 type FilterTab = "all" | "action" | "in_progress" | "done";
-const FILTER_TABS: { key: FilterTab; label: string }[] = [
+
+const FILTER_TABS: { key: FilterTab; label: string; statuses?: string[] }[] = [
   { key: "all", label: "全部" },
-  { key: "action", label: "需行動" },
-  { key: "in_progress", label: "進行中" },
-  { key: "done", label: "已完成" },
+  { key: "action", label: "需行動", statuses: ["awaiting_payment", "payment_overdue", "pending_shipment", "graded"] },
+  { key: "in_progress", label: "進行中", statuses: ["pending_review", "received", "submitted_to_psa", "grading", "paid"] },
+  { key: "done", label: "已完成", statuses: ["completed", "returned", "cancelled"] },
 ];
-const ACTION_STATUSES = new Set(["awaiting_payment", "payment_overdue", "pending_shipment", "graded"]);
-const IN_PROGRESS_STATUSES = new Set(["pending_review", "received", "submitted_to_psa", "grading", "paid"]);
-const DONE_STATUSES = new Set(["completed", "returned", "cancelled"]);
 
 const PAGE_SIZE = 10;
 
@@ -39,56 +37,74 @@ export default function GradingOrders() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: me } = trpc.auth.me.useQuery();
-  const { data: submissions, isLoading } = trpc.grading.getMySubmissions.useQuery(undefined, {
-    enabled: !!me,
-  });
 
-  const handleTabChange = (tab: FilterTab) => {
+  // Determine status filter based on active tab
+  const statusFilter = useMemo(() => {
+    const tab = FILTER_TABS.find((t) => t.key === activeTab);
+    return tab?.statuses;
+  }, [activeTab]);
+
+  // Use backend pagination with search and status filter
+  // For "action", "in_progress", "done" tabs, we pass a comma-separated status string
+  // Backend supports single status; for multi-status tabs we fetch all and filter client-side
+  const isMultiStatusTab = activeTab !== "all" && statusFilter && statusFilter.length > 1;
+
+  const { data: serverData, isLoading } = trpc.grading.getMySubmissions.useQuery(
+    isMultiStatusTab
+      ? { page: 1, pageSize: 200, search: debouncedSearch } // fetch more for multi-status tabs
+      : {
+          page: currentPage,
+          pageSize: PAGE_SIZE,
+          search: debouncedSearch || undefined,
+          status: activeTab === "all" ? undefined : statusFilter?.[0],
+        },
+    { enabled: !!me }
+  );
+
+  // For multi-status tabs, filter client-side
+  const filteredSubmissions = useMemo(() => {
+    if (!serverData) return [];
+    if (isMultiStatusTab && statusFilter) {
+      const statusSet = new Set(statusFilter);
+      return serverData.submissions.filter((s: any) => statusSet.has(s.status));
+    }
+    return serverData.submissions;
+  }, [serverData, isMultiStatusTab, statusFilter]);
+
+  // Pagination for multi-status tabs (client-side)
+  const totalPages = isMultiStatusTab
+    ? Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE))
+    : (serverData?.totalPages ?? 1);
+
+  const paginated = useMemo(() => {
+    if (isMultiStatusTab) {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      return filteredSubmissions.slice(start, start + PAGE_SIZE);
+    }
+    return filteredSubmissions;
+  }, [filteredSubmissions, isMultiStatusTab, currentPage]);
+
+  const totalCount = isMultiStatusTab
+    ? filteredSubmissions.length
+    : (serverData?.total ?? 0);
+
+  const handleTabChange = useCallback((tab: FilterTab) => {
     setActiveTab(tab);
     setCurrentPage(1);
-  };
-  const handleSearch = (q: string) => {
+  }, []);
+
+  const handleSearch = useCallback((q: string) => {
     setSearchQuery(q);
     setCurrentPage(1);
-  };
-
-  const filtered = useMemo(() => {
-    if (!submissions) return [];
-    let list = submissions as any[];
-    if (activeTab === "action") list = list.filter((s) => ACTION_STATUSES.has(s.status));
-    else if (activeTab === "in_progress") list = list.filter((s) => IN_PROGRESS_STATUSES.has(s.status));
-    else if (activeTab === "done") list = list.filter((s) => DONE_STATUSES.has(s.status));
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter((s) => {
-        const idStr = String(s.id).toLowerCase();
-        const orderNo = (s.orderNo || "").toLowerCase();
-        const tierName = (s.tierName || "").toLowerCase();
-        return idStr.includes(q) || orderNo.includes(q) || tierName.includes(q);
-      });
-    }
-    return list;
-  }, [submissions, activeTab, searchQuery]);
-
-  const counts = useMemo(() => {
-    if (!submissions) return { all: 0, action: 0, in_progress: 0, done: 0 };
-    const list = submissions as any[];
-    return {
-      all: list.length,
-      action: list.filter((s) => ACTION_STATUSES.has(s.status)).length,
-      in_progress: list.filter((s) => IN_PROGRESS_STATUSES.has(s.status)).length,
-      done: list.filter((s) => DONE_STATUSES.has(s.status)).length,
-    };
-  }, [submissions]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, currentPage]);
+    if (searchTimer) clearTimeout(searchTimer);
+    const timer = setTimeout(() => setDebouncedSearch(q), 400);
+    setSearchTimer(timer);
+  }, [searchTimer]);
 
   if (!me) {
     return (
@@ -98,9 +114,7 @@ export default function GradingOrders() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">請先登入</h2>
           <p className="text-gray-500 mb-6">查看鑑定訂單需要登入帳號</p>
           <a href="/login">
-            <Button className="bg-[#06038d] hover:bg-[#06038d]/90 text-white w-full">
-              登入 / 註冊
-            </Button>
+            <Button className="bg-[#06038d] hover:bg-[#06038d]/90 text-white">前往登入</Button>
           </a>
         </div>
       </div>
@@ -108,108 +122,74 @@ export default function GradingOrders() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">我的鑑定申請</h1>
-            <p className="text-gray-500 text-sm mt-1">追蹤您的 PSA 代客鑑定進度</p>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-lg font-bold text-gray-900">我的鑑定申請</h1>
           <Button
+            size="sm"
+            className="bg-[#06038d] hover:bg-[#06038d]/90 text-white gap-1"
             onClick={() => navigate("/grading/submit")}
-            className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             新申請
           </Button>
         </div>
+      </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-1 mb-4 bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
-          {FILTER_TABS.map((tab) => {
-            const count = counts[tab.key];
-            const isActive = activeTab === tab.key;
-            const hasUrgent = tab.key === "action" && count > 0;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-[#06038d] text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                <span>{tab.label}</span>
-                {count > 0 && (
-                  <span
-                    className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : hasUrgent
-                        ? "bg-orange-100 text-orange-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
+            className="pl-9 bg-white border-gray-200"
+            placeholder="搜尋訂單號..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="搜尋申請編號、訂單號..."
-            className="pl-9 bg-white border-gray-200 text-sm"
           />
         </div>
 
+        {/* Filter tabs */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all ${
+                activeTab === tab.key
+                  ? "bg-white text-[#06038d] shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-[#06038d]" />
           </div>
-        ) : !submissions || (submissions as any[]).length === 0 ? (
+        ) : paginated.length === 0 ? (
           <div className="text-center py-16">
-            <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">尚無鑑定申請</h3>
-            <p className="text-gray-400 text-sm mb-6">立即提交您的第一張卡牌進行 PSA 鑑定</p>
-            <Button
-              onClick={() => navigate("/grading/submit")}
-              className="bg-[#06038d] hover:bg-[#06038d]/90 text-white"
-            >
-              立即申請
-            </Button>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
             <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">
-              {searchQuery ? `找不到符合「${searchQuery}」的申請` : "此分類暫無申請"}
+            <p className="text-gray-500 font-medium">
+              {debouncedSearch ? "找不到符合的申請" : "暫無鑑定申請"}
             </p>
-            {searchQuery && (
-              <button
-                onClick={() => handleSearch("")}
-                className="mt-2 text-xs text-[#06038d] underline"
+            {!debouncedSearch && (
+              <Button
+                className="mt-4 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
+                onClick={() => navigate("/grading/submit")}
               >
-                清除搜尋
-              </button>
+                立即申請
+              </Button>
             )}
           </div>
         ) : (
           <>
-            {/* Results count */}
-            <p className="text-xs text-gray-400 mb-3">
-              共 {filtered.length} 筆
-              {totalPages > 1 && `，第 ${currentPage} / ${totalPages} 頁`}
-            </p>
-
+            <p className="text-xs text-gray-400 text-right">共 {totalCount} 筆申請</p>
             <div className="space-y-3">
               {paginated.map((sub: any) => {
                 const statusInfo = STATUS_MAP[sub.status] ?? { label: sub.status, color: "bg-gray-100 text-gray-700 border-gray-200" };
@@ -217,11 +197,7 @@ export default function GradingOrders() {
                 return (
                   <div
                     key={sub.id}
-                    className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer transition-all ${
-                      needsPayment
-                        ? "border-orange-300 hover:border-orange-500 hover:shadow-md"
-                        : "border-gray-200 hover:border-[#06038d] hover:shadow-md"
-                    }`}
+                    className="bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer hover:border-[#06038d]/30 hover:shadow-sm transition-all"
                     onClick={() => navigate(`/grading/orders/${sub.id}`)}
                   >
                     <div className="flex items-start justify-between gap-3">

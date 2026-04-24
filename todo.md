@@ -8656,3 +8656,20 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] grading.ts：submitReview / getPublicReviews / getMyReview / adminGetReviews procedures
 - [x] GradingOrderDetail.tsx：completed 狀態顯示 ReviewSection 評價表單
 - [x] Grading.tsx：FAQ 前加入 PublicReviewsSection 展示公開評價
+
+---
+## 三項功能優化（2026-04-24）
+- [ ] 後端：toggleReviewVisibility procedure
+- [ ] 後端：completed 狀態時發送評價邀請電郵
+- [ ] 後端：getMySubmissions 加入 page + search 後端分頁
+- [ ] 前端：AdminGrading.tsx 加入評價管理 Tab（列表 + 切換 + 平均分趨勢圖）
+- [ ] 前端：GradingOrders.tsx 改為後端分頁查詢
+
+---
+## 三項功能優化完成記錄（2026-04-24）
+- [x] 後端：toggleReviewVisibility procedure 加入
+- [x] 後端：adminGetReviewMonthlyStats procedure 加入
+- [x] 後端：申請完成後自動發送評價邀請電郵
+- [x] 後端：getMySubmissions 改為後端分頁（page + search + status 參數）
+- [x] 前端：AdminGrading 加入「客戶評價」管理 Tab（評分摘要、分佈圖、月度趨勢、列表、公開/隱藏切換）
+- [x] 前端：GradingOrders 改為後端分頁查詢（400ms debounce 搜尋）

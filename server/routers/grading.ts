@@ -18,7 +18,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, isNull, lt, sql, like } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -401,30 +401,65 @@ export const gradingRouter = router({
     }),
 
   // ─── Protected: Get my submissions ───────────────────────────────────────
-  getMySubmissions: protectedProcedure.query(async ({ ctx }) => {
+  getMySubmissions: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(50).default(10),
+        search: z.string().optional(),
+        status: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const page = input?.page ?? 1;
+    const pageSize = input?.pageSize ?? 10;
+    const search = input?.search?.trim() ?? "";
+    const statusFilter = input?.status ?? "";
+    const offset = (page - 1) * pageSize;
+    // Build conditions
+    const conditions: any[] = [eq(gradingSubmissions.userId, ctx.user.id)];
+    if (statusFilter) {
+      conditions.push(eq(gradingSubmissions.status, statusFilter as any));
+    }
+    if (search) {
+      conditions.push(like(gradingSubmissions.orderNo, `%${search}%`));
+    }
+    const whereClause = and(...conditions);
+    // Get total count
+    const [{ total }] = await db
+      .select({ total: count(gradingSubmissions.id) })
+      .from(gradingSubmissions)
+      .where(whereClause);
+    // Get paginated submissions
     const submissions = await db
       .select()
       .from(gradingSubmissions)
-      .where(eq(gradingSubmissions.userId, ctx.user.id))
-      .orderBy(desc(gradingSubmissions.createdAt));
-
+      .where(whereClause)
+      .orderBy(desc(gradingSubmissions.createdAt))
+      .limit(pageSize)
+      .offset(offset);
     // Get item counts
     const submissionIds = submissions.map((s: GradingSubmission) => s.id);
-    if (submissionIds.length === 0) return [];
-
+    if (submissionIds.length === 0) {
+      return { submissions: [], total: Number(total), page, pageSize, totalPages: Math.ceil(Number(total) / pageSize) };
+    }
     const items = await db
       .select()
       .from(gradingSubmissionItems)
       .where(inArray(gradingSubmissionItems.submissionId, submissionIds));
-
     const itemCountMap = new Map<number, number>();
     for (const item of items as GradingSubmissionItem[]) {
       itemCountMap.set(item.submissionId, (itemCountMap.get(item.submissionId) || 0) + 1);
     }
-
-    return submissions.map((s: GradingSubmission) => ({ ...s, itemCount: itemCountMap.get(s.id) || 0 }));
+    return {
+      submissions: submissions.map((s: GradingSubmission) => ({ ...s, itemCount: itemCountMap.get(s.id) || 0 })),
+      total: Number(total),
+      page,
+      pageSize,
+      totalPages: Math.ceil(Number(total) / pageSize),
+    };
   }),
 
   // ─── Protected: Get submission detail ────────────────────────────────────
@@ -1380,6 +1415,29 @@ export const gradingRouter = router({
           });
         }
 
+        // Send review invitation email for completed status
+        if (input.status === "completed" && user) {
+          const reviewUrl = `${baseUrl}${linkUrl}`;
+          await sendGradingNotification({
+            userId: user.id,
+            userEmail: user.email,
+            userName: user.name || user.email,
+            type: "grading_review_invitation",
+            title: "邀請您為 BOXIUM PSA 鑑定服務評分",
+            body: `您的申請 ${submission.orderNo} 已完成，歡迎花 30 秒為我們的服務評分！`,
+            linkUrl,
+            subject: `【BOXIUM PSA 鑑定】感謝您的使用，邀請您留下評價 - ${submission.orderNo}`,
+            html: buildGradingEmail({
+              userName: user.name || user.email,
+              title: "感謝您使用 BOXIUM PSA 代客鑑定服務",
+              body: `您的申請 <strong>${submission.orderNo}</strong> 已全部完成！<br><br>歡迎花 30 秒為我們的服務評分，您的寶貴意見將幫助我們持續改善服務品質。`,
+              orderNo: submission.orderNo,
+              linkUrl: reviewUrl,
+              ctaText: "立即評價",
+              extraHtml: `<div style="background: #fff8e1; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px; margin: 12px 0;"><p style="margin: 0; color: #92400e; font-size: 14px;">⭐ 點擊上方按鈕進入申請詳情頁，即可為本次服務評分</p></div>`,
+            }),
+          });
+        }
         return { success: true };
       }),
 
@@ -2550,5 +2608,44 @@ export const gradingRouter = router({
         ? rows.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / rows.length
         : 0;
       return { reviews: rows, avgRating: Math.round(avgRating * 10) / 10, total: rows.length };
+    }),
+  /** Toggle review public/hidden visibility */
+  toggleReviewVisibility: adminProcedure
+    .input(z.object({ id: z.number().int().positive(), isPublic: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db
+        .update(gradingReviews)
+        .set({ isPublic: input.isPublic })
+        .where(eq(gradingReviews.id, input.id));
+      return { success: true };
+    }),
+  /** Get monthly review stats for admin trend chart */
+  adminGetReviewMonthlyStats: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db
+        .select({
+          id: gradingReviews.id,
+          rating: gradingReviews.rating,
+          createdAt: gradingReviews.createdAt,
+        })
+        .from(gradingReviews)
+        .orderBy(asc(gradingReviews.createdAt));
+      // Group by month
+      const monthMap = new Map<string, { total: number; count: number }>();
+      for (const row of rows) {
+        const d = new Date(row.createdAt);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const existing = monthMap.get(key) || { total: 0, count: 0 };
+        monthMap.set(key, { total: existing.total + row.rating, count: existing.count + 1 });
+      }
+      return Array.from(monthMap.entries()).map(([month, { total, count }]) => ({
+        month,
+        avgRating: Math.round((total / count) * 10) / 10,
+        count,
+      }));
     }),
 });
