@@ -430,105 +430,193 @@ function CtaSection() {
   );
 }
 
-// ─── HeroQuickAccess: 4 feature cards with staggered entrance animation ──────
+// ─── HeroQuickAccess: 4 diagonal panels matching CTA section style ────────
 function HeroQuickAccess() {
-  const [visible, setVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const refs = [useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null)];
+  const [vis, setVis] = useState([false, false, false, false]);
 
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.15 }
-    );
-    if (containerRef.current) obs.observe(containerRef.current);
-    return () => obs.disconnect();
+    const observers = refs.map((ref, i) => {
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { setTimeout(() => setVis(prev => { const n = [...prev]; n[i] = true; return n; }), i * 90); obs.disconnect(); } },
+        { threshold: 0.1 }
+      );
+      if (ref.current) obs.observe(ref.current);
+      return obs;
+    });
+    return () => observers.forEach(o => o.disconnect());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const items = [
+  // SVG card texture (same as CTA panels)
+  const CardTexture = ({ stroke }: { stroke: string }) => (
+    <svg className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect x="10" y="15" width="50" height="70" rx="4" fill="none" stroke={stroke} strokeWidth="2"/>
+      <rect x="140" y="-10" width="50" height="70" rx="4" fill="none" stroke={stroke} strokeWidth="2"/>
+      <rect x="60" y="110" width="50" height="70" rx="4" fill="none" stroke={stroke} strokeWidth="2"/>
+      <rect x="-10" y="90" width="30" height="42" rx="3" fill="none" stroke={stroke} strokeWidth="1.5"/>
+      <rect x="160" y="130" width="50" height="70" rx="4" fill="none" stroke={stroke} strokeWidth="2"/>
+    </svg>
+  );
+
+  const slideIn = (visible: boolean, delay: number): React.CSSProperties => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0)" : "translateY(32px)",
+    transition: `opacity 0.5s ease ${delay}ms, transform 0.5s ease ${delay}ms`,
+  });
+
+  // clip values: first panel (no left clip), middle panels (both sides), last panel (no right clip)
+  // cut = 18px diagonal
+  const CUT = 18;
+
+  const panels = [
     {
       href: "/research",
+      bg: "#06038d",
       Icon: ScanSearch,
-      label: "卡牌搜尋",
+      iconRingBg: "rgba(255,255,255,0.12)",
+      iconRingHover: "bg-[#FEDD00]",
+      iconColor: "#FEDD00",
+      iconHoverColor: "#06038d",
+      title: "卡牌搜尋",
       desc: "55,000+ 張卡牌資料",
-      accent: "#FEDD00",
-      iconBg: "rgba(254,221,0,0.15)",
+      cta: "立即搜尋",
+      ctaColor: "#FEDD00",
+      accentBar: "#FEDD00",
+      textColor: "white",
+      descColor: "rgba(255,255,255,0.6)",
+      texStroke: "white",
+      clip: `polygon(0 0, 100% 0, calc(100% - ${CUT}px) 100%, 0 100%)`,
+      ml: "0",
+      w: `calc(25% + ${CUT}px)`,
+      pl: "5%",
+      pr: `calc(5% + ${CUT + 4}px)`,
+      z: 4,
     },
     {
       href: "/pricing",
-      Icon: LineChart,
-      label: "市場格價",
+      bg: "#ffffff",
+      Icon: BarChart3,
+      iconRingBg: "rgba(6,3,141,0.08)",
+      iconRingHover: "group-hover:bg-[#06038d]",
+      iconColor: "#06038d",
+      iconHoverColor: "white",
+      title: "市場格價",
       desc: "121萬+ 成交記錄",
-      accent: "#60a5fa",
-      iconBg: "rgba(96,165,250,0.15)",
+      cta: "查看行情",
+      ctaColor: "#06038d",
+      accentBar: "#06038d",
+      textColor: "#06038d",
+      descColor: "rgba(6,3,141,0.55)",
+      texStroke: "#06038d",
+      clip: `polygon(${CUT}px 0, 100% 0, calc(100% - ${CUT}px) 100%, 0 100%)`,
+      ml: `-${CUT}px`,
+      w: `calc(25% + ${CUT * 2}px)`,
+      pl: `calc(5% + ${CUT + 4}px)`,
+      pr: `calc(5% + ${CUT + 4}px)`,
+      z: 3,
     },
     {
       href: "/grading",
+      bg: "#06038d",
       Icon: Award,
-      label: "PSA 鑑定",
+      iconRingBg: "rgba(255,255,255,0.12)",
+      iconRingHover: "group-hover:bg-[#FEDD00]",
+      iconColor: "#FEDD00",
+      iconHoverColor: "#06038d",
+      title: "PSA 鑑定",
       desc: "代客鑑定服務",
-      accent: "#34d399",
-      iconBg: "rgba(52,211,153,0.15)",
+      cta: "立即申請",
+      ctaColor: "#FEDD00",
+      accentBar: "#FEDD00",
+      textColor: "white",
+      descColor: "rgba(255,255,255,0.6)",
+      texStroke: "white",
+      clip: `polygon(${CUT}px 0, 100% 0, calc(100% - ${CUT}px) 100%, 0 100%)`,
+      ml: `-${CUT}px`,
+      w: `calc(25% + ${CUT * 2}px)`,
+      pl: `calc(5% + ${CUT + 4}px)`,
+      pr: `calc(5% + ${CUT + 4}px)`,
+      z: 2,
     },
     {
       href: "/marketplace",
-      Icon: Store,
-      label: "市集",
+      bg: "#FEDD00",
+      Icon: ShoppingBag,
+      iconRingBg: "rgba(6,3,141,0.12)",
+      iconRingHover: "group-hover:bg-[#06038d]",
+      iconColor: "#06038d",
+      iconHoverColor: "#FEDD00",
+      title: "市集",
       desc: "安全交易平台",
-      accent: "#f472b6",
-      iconBg: "rgba(244,114,182,0.15)",
+      cta: "立即瀏覽",
+      ctaColor: "#06038d",
+      accentBar: "#06038d",
+      textColor: "#06038d",
+      descColor: "rgba(6,3,141,0.6)",
+      texStroke: "#06038d",
+      clip: `polygon(${CUT}px 0, 100% 0, 100% 100%, 0 100%)`,
+      ml: `-${CUT}px`,
+      w: `calc(25% + ${CUT}px)`,
+      pl: `calc(5% + ${CUT + 4}px)`,
+      pr: "5%",
+      z: 1,
     },
   ];
 
   return (
-    <div ref={containerRef} className="w-full max-w-2xl pt-4 md:pt-6">
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
-        {items.map((item, i) => {
-          const { Icon } = item;
+    <div className="w-full pt-4 md:pt-6 overflow-hidden">
+      <div className="w-full" style={{ height: "3px", backgroundColor: "#06038d" }} />
+      <div className="relative flex flex-row w-full overflow-hidden" style={{ minHeight: "clamp(120px, 18vw, 180px)" }}>
+        {panels.map((p, i) => {
+          const { Icon } = p;
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              className="group relative flex flex-col items-center gap-2 sm:gap-3 py-4 sm:py-5 px-2 sm:px-3 rounded-xl sm:rounded-2xl cursor-pointer select-none overflow-hidden"
+              key={p.href}
+              ref={refs[i]}
+              href={p.href}
+              className="group relative flex flex-col justify-between cursor-pointer transition-all duration-200 active:brightness-90 select-none"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                backdropFilter: "blur(8px)",
-                opacity: visible ? 1 : 0,
-                transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(0.96)",
-                transition: `opacity 0.4s ease ${i * 70}ms, transform 0.4s ease ${i * 70}ms`,
+                backgroundColor: p.bg,
+                width: p.w,
+                clipPath: p.clip,
+                marginLeft: p.ml,
+                paddingLeft: p.pl,
+                paddingRight: p.pr,
+                paddingTop: "clamp(12px, 3vw, 28px)",
+                paddingBottom: "clamp(12px, 3vw, 28px)",
+                zIndex: p.z,
+                ...slideIn(vis[i], i * 90),
               }}
             >
-              {/* Glow on hover */}
+              <CardTexture stroke={p.texStroke} />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/[0.04] transition-all duration-200" />
+              <div className="absolute bottom-0 left-0 right-0 h-[3px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20" style={{ backgroundColor: p.accentBar }} />
+              {/* Icon */}
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl sm:rounded-2xl"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${item.accent}22 0%, transparent 70%)` }}
-              />
-              {/* Top accent border on hover */}
-              <div
-                className="absolute top-0 left-4 right-4 h-[1.5px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"
-                style={{ background: item.accent }}
-              />
-              {/* Icon circle */}
-              <div
-                className="relative z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
-                style={{ background: item.iconBg, border: `1px solid ${item.accent}33` }}
+                className={`relative z-10 w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center group-hover:scale-110 transition-all duration-200 ${p.iconRingHover}`}
+                style={{ backgroundColor: p.iconRingBg }}
               >
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: item.accent }} strokeWidth={1.8} />
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors duration-200" style={{ color: p.iconColor }} strokeWidth={1.8} />
               </div>
-              {/* Text */}
-              <div className="relative z-10 flex flex-col items-center gap-0.5 text-center">
-                <span className="text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight tracking-wide">{item.label}</span>
-                <span className="text-white/45 text-[9px] sm:text-[10px] leading-tight hidden sm:block">{item.desc}</span>
+              {/* Title */}
+              <div className="relative z-10 mt-1.5 sm:mt-2">
+                <h3 className="font-bold text-[11px] sm:text-xs md:text-sm leading-tight" style={{ color: p.textColor }}>{p.title}</h3>
               </div>
-              {/* Arrow */}
-              <ArrowRight
-                className="relative z-10 w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200"
-                style={{ color: item.accent }}
-              />
+              {/* Desc */}
+              <div className="relative z-10 mt-0.5 sm:mt-1 flex-1">
+                <p className="text-[9px] sm:text-[10px] md:text-xs leading-snug" style={{ color: p.descColor }}>{p.desc}</p>
+              </div>
+              {/* CTA */}
+              <div className="relative z-10 mt-2 sm:mt-3 flex items-center gap-0.5 text-[9px] sm:text-[10px] font-semibold" style={{ color: p.ctaColor }}>
+                <span>{p.cta}</span>
+                <ChevronRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              </div>
             </Link>
           );
         })}
       </div>
+      <div className="w-full h-1" style={{ backgroundColor: "#FEDD00" }} />
     </div>
   );
 }
