@@ -454,7 +454,7 @@ function HeroQuickAccess() {
   return (
     <div
       ref={containerRef}
-      className="w-full mt-6 md:mt-8"
+      className="w-full mt-0"
       style={{
         opacity: vis ? 1 : 0,
         transform: vis ? "translateY(0)" : "translateY(24px)",
@@ -549,8 +549,9 @@ export default function Home() {
       <StructuredData data={structuredData} />
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
         {/* Hero Section */}
-      <section className="pt-16 md:pt-20 pb-16 md:pb-24 px-4 sm:px-6" style={{ backgroundColor: "#06038d" }}>
-        <div className="max-w-6xl mx-auto">
+      <section className="pt-16 md:pt-20 pb-0 overflow-hidden" style={{ backgroundColor: "#06038d" }}>
+        {/* Main hero content — constrained width */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-8 md:pb-12">
           <div className="flex flex-col items-center text-center space-y-4 md:space-y-8">
             {/* LOGO - Responsive sizing */}
             <div className="w-full max-w-[280px] md:max-w-2xl">
@@ -588,13 +589,11 @@ export default function Home() {
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
               </div>
             </div>
-
-            {/* Hero Quick Access — 4 feature cards with staggered entrance animation */}
-            <HeroQuickAccess />
-
-
           </div>
         </div>
+
+        {/* Hero Quick Access — full-width, flush to bottom of hero */}
+        <HeroQuickAccess />
       </section>
 
 
