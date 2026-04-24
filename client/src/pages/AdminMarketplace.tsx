@@ -4943,6 +4943,7 @@ function SalesReportTab() {
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-[#06038d] inline-block rounded" />GMV</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" />平台直售</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-purple-500 inline-block rounded" />PSA 鑑定</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-emerald-500 inline-block rounded" />平台收入</span>
                 </div>
               </div>
@@ -4961,6 +4962,7 @@ function SalesReportTab() {
                     <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(v: any) => [`HKD ${Number(v).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`, undefined]} />
                     <Area type="monotone" dataKey="銷售總額" stroke="#06038d" strokeWidth={2} fill="url(#gradGMV)" dot={false} />
                     <Line type="monotone" dataKey="平台直售" stroke="#3b82f6" strokeWidth={1.5} dot={false} />
+                    <Line type="monotone" dataKey="PSA鑑定收入" stroke="#8b5cf6" strokeWidth={2} dot={false} />
                     <Line type="monotone" dataKey="平台收入" stroke="#10b981" strokeWidth={2} strokeDasharray="4 2" dot={false} />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -5264,9 +5266,18 @@ function SalesReportTab() {
                   </div>
                   <p className="text-sm font-semibold text-emerald-700">HKD {fmtHkd(overall?.stripeSellerFeesHkd ?? 0)}</p>
                 </div>
+                {((overall as any)?.stripeGradingRevenueHkd ?? 0) > 0 && (
+                  <div className="px-5 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">其中：PSA 鑑定服務</p>
+                      <p className="text-xs text-gray-400">Stripe 付款的 PSA 鑑定訂單（{(overall as any)?.stripeGradingCount ?? 0} 筆）</p>
+                    </div>
+                    <p className="text-sm font-semibold text-purple-700">HKD {fmtHkd((overall as any)?.stripeGradingRevenueHkd ?? 0)}</p>
+                  </div>
+                )}
                 <div className="px-5 py-3 bg-indigo-50/40 flex items-center justify-between">
                   <p className="text-sm font-bold text-indigo-800">Stripe 平台收入</p>
-                  <p className="text-base font-bold text-indigo-700">HKD {fmtHkd((overall?.stripePlatformSalesHkd ?? 0) + (overall?.stripeSellerFeesHkd ?? 0))}</p>
+                  <p className="text-base font-bold text-indigo-700">HKD {fmtHkd((overall?.stripePlatformSalesHkd ?? 0) + (overall?.stripeSellerFeesHkd ?? 0) + ((overall as any)?.stripeGradingRevenueHkd ?? 0))}</p>
                 </div>
               </div>
             </div>
@@ -5302,9 +5313,18 @@ function SalesReportTab() {
                   </div>
                   <p className="text-sm font-semibold text-emerald-700">HKD {fmtHkd(overall?.alipaySellerFeesHkd ?? 0)}</p>
                 </div>
+                {((overall as any)?.alipayGradingRevenueHkd ?? 0) > 0 && (
+                  <div className="px-5 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">其中：PSA 鑑定服務</p>
+                      <p className="text-xs text-gray-400">支付寶 HK 付款的 PSA 鑑定訂單（{(overall as any)?.alipayGradingCount ?? 0} 筆）</p>
+                    </div>
+                    <p className="text-sm font-semibold text-purple-700">HKD {fmtHkd((overall as any)?.alipayGradingRevenueHkd ?? 0)}</p>
+                  </div>
+                )}
                 <div className="px-5 py-3 bg-cyan-50/40 flex items-center justify-between">
                   <p className="text-sm font-bold text-cyan-800">支付寶 HK 平台收入</p>
-                  <p className="text-base font-bold text-cyan-700">HKD {fmtHkd((overall?.alipayPlatformSalesHkd ?? 0) + (overall?.alipaySellerFeesHkd ?? 0))}</p>
+                  <p className="text-base font-bold text-cyan-700">HKD {fmtHkd((overall?.alipayPlatformSalesHkd ?? 0) + (overall?.alipaySellerFeesHkd ?? 0) + ((overall as any)?.alipayGradingRevenueHkd ?? 0))}</p>
                 </div>
               </div>
             </div>

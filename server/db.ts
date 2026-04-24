@@ -4471,6 +4471,10 @@ export async function getSalesReport(months: number = 12) {
     totalGradingCount: sql<number>`count(*)`,
     totalUpgradeRevenue: sql<string>`COALESCE(SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN upgradeDiffFeeHkd ELSE 0 END), 0)`,
     totalUpgradeCount: sql<number>`SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN 1 ELSE 0 END)`,
+    stripeGradingRevenue: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'stripe' THEN totalFeeHkd ELSE 0 END), 0)`,
+    stripeGradingCount: sql<number>`SUM(CASE WHEN paymentMethod = 'stripe' THEN 1 ELSE 0 END)`,
+    alipayGradingRevenue: sql<string>`COALESCE(SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN totalFeeHkd ELSE 0 END), 0)`,
+    alipayGradingCount: sql<number>`SUM(CASE WHEN paymentMethod = 'alipay_hk' THEN 1 ELSE 0 END)`,
   })
     .from(gradingSubmissions)
     .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]));
@@ -4559,6 +4563,11 @@ export async function getSalesReport(months: number = 12) {
       // PSA Grading Revenue
       gradingRevenueHkd,
       gradingCount,
+      // PSA Grading Revenue by payment method
+      stripeGradingRevenueHkd: parseFloat(gradingOverall?.stripeGradingRevenue ?? '0'),
+      stripeGradingCount: Number(gradingOverall?.stripeGradingCount ?? 0),
+      alipayGradingRevenueHkd: parseFloat(gradingOverall?.alipayGradingRevenue ?? '0'),
+      alipayGradingCount: Number(gradingOverall?.alipayGradingCount ?? 0),
       // Tier Upgrade Revenue (subset of grading revenue)
       upgradeRevenueHkd,
       upgradeCount,

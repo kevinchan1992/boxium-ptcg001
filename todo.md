@@ -8596,3 +8596,10 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 前端 AdminGrading.tsx：收益統計 Tab 加入月度 PSA 鑑定收益趨勢面積圖（GradingMonthlyRevenueChart 組件）
 - [x] 測試：新增 grading-upgrade-revenue.test.ts（3 項測試全部通過）
 - [x] 儲存 checkpoint
+---
+## 財務報告 PSA 鑑定收入顯示修復（2026-04-24）
+- [x] 月度銷售趨勢圖：加入 PSA 鑑定收入折線（紫色）
+- [x] 付款方式 Tab：Stripe 和支付寶 HK 的「平台收入」加入 PSA 鑑定收入（按付款方式分組）
+- [x] 後端：getSalesReport 加入 stripeGradingRevenueHkd 和 alipayGradingRevenueHkd 欄位
+- [x] 月度明細表格：「平台收入」欄位確認已包含 PSA 鑑定收入（platformIncomeHkd = platSales + fees + grading）
+- [ ] 儲存 checkpoint

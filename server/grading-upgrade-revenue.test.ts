@@ -66,4 +66,30 @@ describe("Sales Report - PSA Grading Upgrade Revenue", () => {
     expect(overall.gradingRevenueHkd).toBeGreaterThanOrEqual(0);
     expect(overall.gradingCount).toBeGreaterThanOrEqual(0);
   });
+
+  it("getSalesReport overall should include stripeGradingRevenueHkd and alipayGradingRevenueHkd fields", async () => {
+    const { getSalesReport } = await import("./db");
+    const report = await getSalesReport(12);
+    const overall = report.overall as any;
+
+    // Verify payment-method breakdown fields exist
+    expect(overall).toHaveProperty("stripeGradingRevenueHkd");
+    expect(overall).toHaveProperty("stripeGradingCount");
+    expect(overall).toHaveProperty("alipayGradingRevenueHkd");
+    expect(overall).toHaveProperty("alipayGradingCount");
+
+    // Verify types
+    expect(typeof overall.stripeGradingRevenueHkd).toBe("number");
+    expect(typeof overall.stripeGradingCount).toBe("number");
+    expect(typeof overall.alipayGradingRevenueHkd).toBe("number");
+    expect(typeof overall.alipayGradingCount).toBe("number");
+
+    // Verify non-negative
+    expect(overall.stripeGradingRevenueHkd).toBeGreaterThanOrEqual(0);
+    expect(overall.alipayGradingRevenueHkd).toBeGreaterThanOrEqual(0);
+
+    // Stripe + Alipay grading should sum to total grading revenue
+    const sumByMethod = overall.stripeGradingRevenueHkd + overall.alipayGradingRevenueHkd;
+    expect(sumByMethod).toBeCloseTo(overall.gradingRevenueHkd, 1);
+  });
 });
