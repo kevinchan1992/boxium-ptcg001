@@ -4682,6 +4682,9 @@ function SalesReportTab() {
   // PSA Grading Revenue
   const gradingRevenue = (overall as any)?.gradingRevenueHkd ?? 0;
   const gradingOrderCount = (overall as any)?.gradingCount ?? 0;
+  // Tier Upgrade Diff Revenue (subset of grading revenue)
+  const upgradeRevenue = (overall as any)?.upgradeRevenueHkd ?? 0;
+  const upgradeCount = (overall as any)?.upgradeCount ?? 0;
 
   // Auction vs Direct breakdown
   const auctionSales = (overall as any)?.auctionSalesHkd ?? 0;
@@ -4712,6 +4715,8 @@ function SalesReportTab() {
     退款: parseFloat(((r as any).refundedAmountHkd ?? 0).toFixed(2)),
     拍賣銷售: parseFloat(((r as any).auctionSalesHkd ?? 0).toFixed(2)),
     直購銷售: parseFloat(((r as any).directSalesHkd ?? 0).toFixed(2)),
+    PSA鑑定收入: parseFloat(((r as any).gradingRevenueHkd ?? 0).toFixed(2)),
+    升級差價收入: parseFloat(((r as any).upgradeRevenueHkd ?? 0).toFixed(2)),
   }));
 
   // Payment method pie data
@@ -4805,6 +4810,9 @@ function SalesReportTab() {
               'C2C 销售 (HKD)': r.sellerSalesHkd.toFixed(2),
               '手續費收入 (HKD)': r.sellerFeesHkd.toFixed(2),
               'PSA 鑑定收入 (HKD)': ((r as any).gradingRevenueHkd ?? 0).toFixed(2),
+              'PSA 鑑定申請數': (r as any).gradingCount ?? 0,
+              '層級升級差價 (HKD)': ((r as any).upgradeRevenueHkd ?? 0).toFixed(2),
+              '層級升級申請數': (r as any).upgradeCount ?? 0,
               '平台收入合計 (HKD)': ((r as any).platformIncomeHkd ?? (r.platformSalesHkd + r.sellerFeesHkd)).toFixed(2),
               '訂單數': r.orderCount,
               'Stripe 訂單': r.stripeCount,
@@ -5128,6 +5136,15 @@ function SalesReportTab() {
                     </div>
                     <p className="text-sm font-semibold text-gray-900">HKD {fmtHkd(gradingRevenue)}</p>
                   </div>
+                  {upgradeRevenue > 0 && (
+                    <div className="flex items-center justify-between pl-4 border-l-2 border-purple-200">
+                      <div>
+                        <p className="text-sm text-gray-600">↳ 層級升級差價收入</p>
+                        <p className="text-xs text-gray-400">包含於鑑定收入中（{upgradeCount} 筆升級）</p>
+                      </div>
+                      <p className="text-sm font-medium text-purple-700">HKD {fmtHkd(upgradeRevenue)}</p>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between pt-2 border-t border-emerald-200">
                     <p className="text-sm font-bold text-emerald-800">平台收入合計</p>
                     <p className="text-base font-bold text-emerald-700">HKD {fmtHkd(platformIncome)}</p>

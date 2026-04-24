@@ -1,4 +1,14 @@
 import React, { useState } from "react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1843,6 +1853,104 @@ function SubmissionManagement() {
   );
 }
 
+// ─── Monthly Revenue Trend Chart ─────────────────────────────────────────────
+function GradingMonthlyRevenueChart() {
+  const [months, setMonths] = useState(12);
+  const { data, isLoading } = trpc.marketplace.adminGetSalesReport.useQuery({ months });
+
+  const chartData = data?.monthly
+    ? [...data.monthly].reverse().map((r: any) => {
+        const ym = r.yearMonth as string;
+        const label = ym.length === 7 ? ym.slice(0, 4) + '/' + ym.slice(5, 7) : ym;
+        return {
+          month: label,
+          PSA鑑定收入: parseFloat((r.gradingRevenueHkd ?? 0).toFixed(2)),
+          升級差價收入: parseFloat((r.upgradeRevenueHkd ?? 0).toFixed(2)),
+        };
+      })
+    : [];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-base font-bold text-gray-900">月度 PSA 鑑定收益趨勢</h3>
+          <p className="text-xs text-gray-500 mt-0.5">每月鑑定服務費及升級差價收入（HKD）</p>
+        </div>
+        <div className="flex gap-1">
+          {[6, 12, 24].map((m) => (
+            <button
+              key={m}
+              onClick={() => setMonths(m)}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
+                months === m
+                  ? 'bg-[#06038d] text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {m}個月
+            </button>
+          ))}
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#06038d]" />
+        </div>
+      ) : chartData.length === 0 ? (
+        <div className="flex items-center justify-center h-48 text-gray-400 text-sm">暫無數據</div>
+      ) : (
+        <ResponsiveContainer width="100%" height={280}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+            <defs>
+              <linearGradient id="gradingGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
+              </linearGradient>
+              <linearGradient id="upgradeGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6b7280' }} />
+            <YAxis
+              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)}
+            />
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                `HKD ${value.toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`,
+                name,
+              ]}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+            />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Area
+              type="monotone"
+              dataKey="PSA鑑定收入"
+              stroke="#8b5cf6"
+              strokeWidth={2}
+              fill="url(#gradingGrad)"
+              dot={{ r: 3, fill: '#8b5cf6' }}
+              activeDot={{ r: 5 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="升級差價收入"
+              stroke="#f59e0b"
+              strokeWidth={2}
+              fill="url(#upgradeGrad)"
+              dot={{ r: 3, fill: '#f59e0b' }}
+              activeDot={{ r: 5 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
 // // ─── Grading Orders Tab ────────────────────────────────────────────────────────
 function GradingOrdersTab() {
   const [searchInput, setSearchInput] = useState("");
@@ -1971,6 +2079,9 @@ function GradingOrdersTab() {
           <p className="text-xs text-gray-700 mt-0.5">{allPaidSubmissions.length} 筆訂單</p>
         </div>
       </div>
+
+      {/* Monthly Revenue Trend Chart */}
+      <GradingMonthlyRevenueChart />
 
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>

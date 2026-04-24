@@ -8585,3 +8585,14 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：Stripe webhook 解析 `upgrade_items` JSON，逐張卡牌更新至各自的新層級
 - [x] 後端：修復 TypeScript 錯誤（Set 迭代、tierMap 類型推斷）
 - [x] 儲存 checkpoint
+---
+## 財務報告三項優化（2026-04-24）
+- [x] 後端：getSalesReport 月度資料加入 upgradeRevenueHkd、upgradeCount 欄位
+- [x] 後端：getSalesReport 整體資料加入 upgradeRevenueHkd、upgradeCount 欄位
+- [x] 後端：gradingPaidStatuses 擴展為包含所有付款後狀態（pending_shipment 至 completed）
+- [x] 前端 AdminMarketplace.tsx：P&L 損益表 PSA 鑑定收入下加入「層級升級差價收入」子項（縮排顯示，紫色文字）
+- [x] 前端 AdminMarketplace.tsx：月度圖表 chartData 加入 PSA鑑定收入、升級差價收入 系列
+- [x] 前端 AdminMarketplace.tsx：CSV 匯出加入 PSA鑑定申請數、層級升級差價(HKD)、層級升級申請數 欄位
+- [x] 前端 AdminGrading.tsx：收益統計 Tab 加入月度 PSA 鑑定收益趨勢面積圖（GradingMonthlyRevenueChart 組件）
+- [x] 測試：新增 grading-upgrade-revenue.test.ts（3 項測試全部通過）
+- [x] 儲存 checkpoint

@@ -4444,6 +4444,8 @@ export async function getSalesReport(months: number = 12) {
     yearMonth: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
     gradingRevenue: sql<string>`COALESCE(SUM(totalFeeHkd), 0)`,
     gradingCount: sql<number>`count(*)`,
+    upgradeRevenue: sql<string>`COALESCE(SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN upgradeDiffFeeHkd ELSE 0 END), 0)`,
+    upgradeCount: sql<number>`SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN 1 ELSE 0 END)`,
   })
     .from(gradingSubmissions)
     .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]))
@@ -4451,12 +4453,14 @@ export async function getSalesReport(months: number = 12) {
     .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m') DESC`);
 
   // Build grading revenue map keyed by yearMonth
-  const gradingMonthlyMap = new Map<string, { gradingRevenue: number; gradingCount: number }>();
+  const gradingMonthlyMap = new Map<string, { gradingRevenue: number; gradingCount: number; upgradeRevenue: number; upgradeCount: number }>();
   for (const r of gradingMonthlyRows) {
     if (r.yearMonth) {
       gradingMonthlyMap.set(r.yearMonth, {
         gradingRevenue: parseFloat(r.gradingRevenue ?? '0'),
         gradingCount: Number(r.gradingCount ?? 0),
+        upgradeRevenue: parseFloat(r.upgradeRevenue ?? '0'),
+        upgradeCount: Number(r.upgradeCount ?? 0),
       });
     }
   }
@@ -4465,6 +4469,8 @@ export async function getSalesReport(months: number = 12) {
   const [gradingOverall] = await db.select({
     totalGradingRevenue: sql<string>`COALESCE(SUM(totalFeeHkd), 0)`,
     totalGradingCount: sql<number>`count(*)`,
+    totalUpgradeRevenue: sql<string>`COALESCE(SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN upgradeDiffFeeHkd ELSE 0 END), 0)`,
+    totalUpgradeCount: sql<number>`SUM(CASE WHEN upgradePaidAt IS NOT NULL THEN 1 ELSE 0 END)`,
   })
     .from(gradingSubmissions)
     .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]));
@@ -4483,7 +4489,9 @@ export async function getSalesReport(months: number = 12) {
   const platformSalesHkd = parseFloat(overall?.platformSales ?? '0');
   const gradingRevenueHkd = parseFloat(gradingOverall?.totalGradingRevenue ?? '0');
   const gradingCount = Number(gradingOverall?.totalGradingCount ?? 0);
-  // Platform income = platform direct sales + C2C fees + PSA grading revenue
+  const upgradeRevenueHkd = parseFloat(gradingOverall?.totalUpgradeRevenue ?? '0');
+  const upgradeCount = Number(gradingOverall?.totalUpgradeCount ?? 0);
+  // Platform income = platform direct sales + C2C fees + PSA grading revenue (upgrade diff already included in totalFeeHkd via grading)
   const platformIncomeHkd = platformSalesHkd + totalFeesHkd + gradingRevenueHkd;
   // Platform payout (outcome) = seller receivable paid out + refunds
   const paidOutHkd = parseFloat(payoutStats?.paidOutAmount ?? '0');
@@ -4492,7 +4500,7 @@ export async function getSalesReport(months: number = 12) {
   return {
     monthly: monthlyRows.map(r => {
       const refund = refundMap.get(r.yearMonth) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
-      const grading = gradingMonthlyMap.get(r.yearMonth) ?? { gradingRevenue: 0, gradingCount: 0 };
+      const grading = gradingMonthlyMap.get(r.yearMonth) ?? { gradingRevenue: 0, gradingCount: 0, upgradeRevenue: 0, upgradeCount: 0 };
       const salesHkd = parseFloat(r.totalSales ?? '0');
       const feesHkd = parseFloat(r.sellerFees ?? '0');
       const platSalesHkd = parseFloat(r.platformSales ?? '0');
@@ -4508,6 +4516,8 @@ export async function getSalesReport(months: number = 12) {
         platformIncomeHkd: platSalesHkd + feesHkd + grading.gradingRevenue,
         gradingRevenueHkd: grading.gradingRevenue,
         gradingCount: grading.gradingCount,
+        upgradeRevenueHkd: grading.upgradeRevenue,
+        upgradeCount: grading.upgradeCount,
         refundedCount: refund.refundedCount,
         cancelledCount: refund.cancelledCount,
         refundedAmountHkd: refund.refundedAmountHkd,
@@ -4549,6 +4559,9 @@ export async function getSalesReport(months: number = 12) {
       // PSA Grading Revenue
       gradingRevenueHkd,
       gradingCount,
+      // Tier Upgrade Revenue (subset of grading revenue)
+      upgradeRevenueHkd,
+      upgradeCount,
       // Net platform profit = income - refunds
       platformNetProfitHkd: platformIncomeHkd - totalRefundedHkd,
       // Auction vs Direct breakdown
