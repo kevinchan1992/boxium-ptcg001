@@ -509,23 +509,74 @@ export default function Home() {
               </div>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-row flex-wrap justify-center gap-3">
-              <Link href="/research">
-                <Button
-                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105"
-                  style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
-                >
-                  {t("home.startExploring")}
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button
-                  className="px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold rounded-lg transition-all hover:scale-105 border-2 border-[#FEDD00] bg-transparent text-[#FEDD00] hover:bg-[#FEDD00]/10"
-                >
-                  {t("home.goToMarketplace")}
-                </Button>
-              </Link>
+            {/* Hero Quick Access — 4 feature cards */}
+            <div className="w-full max-w-3xl pt-2 md:pt-4">
+              <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
+                {[
+                  {
+                    href: "/research",
+                    emoji: "🔍",
+                    label: "卡牌搜尋",
+                    desc: "55,000+ 張卡牌",
+                    bg: "rgba(255,255,255,0.08)",
+                    hoverBg: "rgba(254,221,0,0.15)",
+                    accent: "#FEDD00",
+                  },
+                  {
+                    href: "/pricing",
+                    emoji: "📈",
+                    label: "市場格價",
+                    desc: "121萬+ 記錄",
+                    bg: "rgba(255,255,255,0.05)",
+                    hoverBg: "rgba(254,221,0,0.12)",
+                    accent: "#FEDD00",
+                  },
+                  {
+                    href: "/grading",
+                    emoji: "🏅",
+                    label: "PSA 鑑定",
+                    desc: "代客鑑定服務",
+                    bg: "rgba(255,255,255,0.08)",
+                    hoverBg: "rgba(254,221,0,0.15)",
+                    accent: "#FEDD00",
+                  },
+                  {
+                    href: "/marketplace",
+                    emoji: "🛒",
+                    label: "市集",
+                    desc: "安全交易",
+                    bg: "rgba(254,221,0,0.12)",
+                    hoverBg: "rgba(254,221,0,0.25)",
+                    accent: "#FEDD00",
+                  },
+                ].map((item, i) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group relative flex flex-col items-center justify-center gap-1 md:gap-2 py-4 md:py-5 px-1 md:px-3 cursor-pointer transition-all duration-200 select-none"
+                    style={{
+                      background: item.bg,
+                      borderRight: i < 3 ? "1px solid rgba(255,255,255,0.12)" : undefined,
+                    }}
+                  >
+                    {/* Hover overlay */}
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      style={{ background: item.hoverBg }}
+                    />
+                    {/* Bottom accent line */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" style={{ background: item.accent }} />
+                    {/* Emoji icon */}
+                    <span className="relative z-10 text-xl md:text-2xl leading-none group-hover:scale-110 transition-transform duration-200">{item.emoji}</span>
+                    {/* Label */}
+                    <span className="relative z-10 text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight text-center">{item.label}</span>
+                    {/* Sub-desc */}
+                    <span className="relative z-10 text-white/50 text-[9px] sm:text-[10px] md:text-xs leading-tight text-center group-hover:text-[#FEDD00]/80 transition-colors duration-200">{item.desc}</span>
+                    {/* Arrow */}
+                    <ChevronRight className="relative z-10 w-3 h-3 text-white/30 group-hover:text-[#FEDD00] group-hover:translate-x-0.5 transition-all duration-200" />
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>

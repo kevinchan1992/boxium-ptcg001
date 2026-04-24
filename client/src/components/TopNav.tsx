@@ -276,30 +276,57 @@ export function TopNav() {
               </motion.div>
             </motion.button>
 
+            {/* BOXIUM Logo — appears when scrolled, desktop only */}
+            <AnimatePresence>
+              {isScrolled && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="hidden md:flex items-center flex-shrink-0"
+                >
+                  <Link href="/">
+                    <img
+                      src="/boxium-logo.png"
+                      alt="BOXIUM"
+                      className="h-7 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                    />
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
             <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
               {[
-                { href: "/research", label: "卡牌搜尋", emoji: "🔍" },
-                { href: "/pricing", label: "市場格價", emoji: "📈" },
-                { href: "/grading", label: "PSA 鑑定", emoji: "🏅" },
-                { href: "/marketplace", label: "市集", emoji: "🛒" },
+                { href: "/research", label: "卡牌搜尋", emoji: "🔍", tip: "搜尋 55,000+ 張卡牌的市場行情" },
+                { href: "/pricing", label: "市場格價", emoji: "📈", tip: "比較各平台即時卡牌成交價格" },
+                { href: "/grading", label: "PSA 鑑定", emoji: "🏅", tip: "PSA 代客鑑定，專業團隊負責寄送" },
+                { href: "/marketplace", label: "市集", emoji: "🛒", tip: "安全買賣 TCG 卡牌，支援拍賣" },
               ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center gap-1.5 px-6 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap ${
-                    isActive(item.href)
-                      ? "text-[#FEDD00] bg-white/10"
-                      : "text-white/75 hover:text-white hover:bg-white/8"
-                  }`}
-                >
-                  <span className="text-base leading-none">{item.emoji}</span>
-                  {item.label}
-                  {/* Active underline indicator */}
-                  {isActive(item.href) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] rounded-full bg-[#FEDD00]" />
-                  )}
-                </Link>
+                <div key={item.href} className="relative group/nav">
+                  <Link
+                    href={item.href}
+                    className={`relative flex items-center gap-1.5 px-6 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap ${
+                      isActive(item.href)
+                        ? "text-[#FEDD00] bg-white/10"
+                        : "text-white/75 hover:text-white hover:bg-white/8"
+                    }`}
+                  >
+                    <span className="text-base leading-none">{item.emoji}</span>
+                    {item.label}
+                    {/* Active underline indicator */}
+                    {isActive(item.href) && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] rounded-full bg-[#FEDD00]" />
+                    )}
+                  </Link>
+                  {/* Tooltip */}
+                  <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-black/90 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-150 z-50 border border-white/10 shadow-xl">
+                    {item.tip}
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 border-l border-t border-white/10 rotate-45" />
+                  </div>
+                </div>
               ))}
             </div>
 
