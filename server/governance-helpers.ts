@@ -113,7 +113,7 @@ export async function getListingModerationLogs(options: {
   const { page = 1, pageSize = 50, listingId, adminId, action, listingMode } = options;
   const offset = (page - 1) * pageSize;
   
-  const conditions = [];
+  const conditions: import("drizzle-orm").SQL[] = [];
   if (listingId) conditions.push(eq(listingModerationLogs.listingId, listingId));
   if (adminId) conditions.push(eq(listingModerationLogs.adminId, adminId));
   if (action) conditions.push(eq(listingModerationLogs.action, action as any));

@@ -5158,8 +5158,8 @@ IMPORTANT:
       // Enrich with sender info
       const db = await getDb();
       if (!db) return messages;
-      const senderIds = Array.from(new Set(messages.map(m => m.senderId)));
-      const senderInfos = senderIds.length > 0
+      const senderIds: number[] = Array.from(new Set(messages.map(m => m.senderId)));
+      const senderInfos: Array<{ id: number; name: string | null }> = senderIds.length > 0
         ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, senderIds))
         : [];
       const senderMap = new Map(senderInfos.map(s => [s.id, s]));

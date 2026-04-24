@@ -414,7 +414,7 @@ async function startServer() {
                     type UpgradeItemMeta = { itemId: number; newTierId: number; diffFee: string };
                     const upgradeItems: UpgradeItemMeta[] = JSON.parse(upgradeItemsJson);
                     // Collect unique tier IDs
-                    const uniqueTierIds2 = [...new Set(upgradeItems.map((i) => i.newTierId))];
+                    const uniqueTierIds2 = Array.from(new Set(upgradeItems.map((i) => i.newTierId)));
                     const tiers2 = await _gdb2.select().from(_gTiers2).where(_inArray2(_gTiers2.id, uniqueTierIds2));
                     const tierMap2 = new Map(tiers2.map((t: any) => [t.id, t]));
                     // Update each item to its specific new tier

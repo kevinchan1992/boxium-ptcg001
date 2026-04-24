@@ -1,6 +1,6 @@
 import { getDb } from "./db";
 import { posts, categories, tags, postTags, postVersions, type InsertPost, type InsertCategory, type InsertTag } from "../drizzle/schema_new";
-import { eq, like, or, desc, and, inArray, sql, asc } from "drizzle-orm";
+import { eq, like, or, desc, and, inArray, sql, asc, type SQL } from "drizzle-orm";
 
 /**
  * Get all posts with optional filters, including tags and translation status
@@ -19,7 +19,7 @@ export async function getPosts(filters?: {
   }
 
   // Build conditions
-  const conditions = [];
+  const conditions: SQL[] = [];
   if (filters?.categoryId) {
     conditions.push(eq(posts.categoryId, filters.categoryId));
   }
@@ -27,12 +27,11 @@ export async function getPosts(filters?: {
     conditions.push(eq(posts.status, filters.status));
   }
   if (filters?.search) {
-    conditions.push(
-      or(
-        like(posts.title, `%${filters.search}%`),
-        like(posts.excerpt, `%${filters.search}%`)
-      )
+    const searchCond = or(
+      like(posts.title, `%${filters.search}%`),
+      like(posts.excerpt, `%${filters.search}%`)
     );
+    if (searchCond) conditions.push(searchCond);
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

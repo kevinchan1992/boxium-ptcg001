@@ -889,7 +889,7 @@ export const appRouter = router({
           const cards = await db.getRandomCards(input.count);
           return cards.map((card: any) => {
             // 格式化卡牌名稱：名稱 + 稀有度 + 編號 + 系列
-            const parts = [];
+            const parts: string[] = [];
             
             // 使用日文名稱（如果有），否則使用英文名稱
             const displayName = card.nameJa || card.name;

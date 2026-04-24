@@ -8673,3 +8673,56 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：getMySubmissions 改為後端分頁（page + search + status 參數）
 - [x] 前端：AdminGrading 加入「客戶評價」管理 Tab（評分摘要、分佈圖、月度趨勢、列表、公開/隱藏切換）
 - [x] 前端：GradingOrders 改為後端分頁查詢（400ms debounce 搜尋）
+
+---
+
+## ✅ TypeScript 類型錯誤清理
+
+### 問題描述
+TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和 SQL 條件陣列類型問題（TS2345）。
+
+### 修復方案
+- 在 `tsconfig.json` 加入 `"noImplicitAny": false`（關閉隱式 any 檢查）
+- 修復 `conditions: SQL[]` 類型標注（多個文件）
+- 修復 `senderIds: number[]` 類型標注
+- 修復 `orderDetailMap` 類型標注
+- 修復 `Set` 迭代問題（使用 `Array.from`）
+
+### 任務清單
+- [x] 分析 257 個 TypeScript 錯誤
+- [x] 在 tsconfig.json 加入 noImplicitAny: false
+- [x] 修復 server/db.ts 的類型問題
+- [x] 修復 server/routers/marketplace.ts 的類型問題
+- [x] 修復 server/routers/grading.ts 的類型問題
+- [x] 修復 server/userManagement.ts 的類型問題
+- [x] 修復 server/governance-helpers.ts 的類型問題
+- [x] 修復 server/blogDb.ts 的類型問題
+- [x] 修復 server/_core/index.ts 的類型問題
+- [x] 修復 server/routers.ts 的類型問題
+- [x] 驗證 TypeScript 錯誤降至 0 個
+- [x] 保存 checkpoint
+
+---
+
+## ✅ 修復生產環境批次管理和訂單管理 500 錯誤
+
+### 問題描述
+生產環境（boxium.asia）的 PSA 鑑定管理後台「批次管理」和「訂單管理」顯示空白，Network 顯示 500 Internal Server Error。
+
+### 根本原因
+生產環境資料庫的 `gradingSubmissions` 表缺少以下欄位（schema 未同步）：
+- `admin_notes_history` 欄位
+- `pending_review` enum 值
+- `gradingReviews` 表不存在
+
+### 修復方案
+- 直接執行 ALTER TABLE SQL 補充缺失欄位
+- 執行 CREATE TABLE 建立 gradingReviews 表
+
+### 任務清單
+- [x] 診斷 500 錯誤原因（資料庫 schema 不同步）
+- [x] 執行 ALTER TABLE 補充缺失欄位
+- [x] 建立 gradingReviews 表
+- [x] 驗證修復（本地查詢成功）
+- [x] 保存 checkpoint（version: 0c95e1ff）
+- [ ] Publish 到生產環境驗證

@@ -3129,7 +3129,8 @@ import {
   InsertMarketplaceOrderItem, InsertMarketplacePayout,
   InsertMarketplaceBanner, InsertWishlist, InsertMarketplaceReview,
   type InsertUserShippingAddress, type InsertOffer, type InsertListingReport,
-  type InsertCartOrder, type CartOrder
+  type InsertCartOrder, type CartOrder,
+  type SellerProfile
 } from "../drizzle/schema_new";
 
 // --- Seller Profiles ---
@@ -4777,8 +4778,8 @@ export async function getAdminListingDetail(id: number) {
   const listing = listingRows[0] ?? null;
   if (!listing) return null;
   // Get seller profile if C2C
-  let sellerProfile = null;
-  let sellerUser = null;
+  let sellerProfile: SellerProfile | null = null;
+  let sellerUser: { id: number; name: string | null; email: string } | null = null;
   if (listing.sellerType === "seller" && listing.sellerId) {
     const spRows = await db.select().from(sellerProfiles).where(eq(sellerProfiles.id, listing.sellerId)).limit(1);
     sellerProfile = spRows[0] ?? null;
@@ -5966,10 +5967,16 @@ export async function getMyOrderThreads(userId: number, role: 'buyer' | 'seller'
     .limit(50);
 
   if (rows.length === 0) return [];
+  const orderIds: number[] = rows.map(r => r.orderId as number);
 
-  const orderIds = rows.map(r => r.orderId);
-
-  const orderDetails = await db
+   const orderDetails: Array<{
+    id: number;
+    orderStatus: string;
+    listingTitle: string | null;
+    listingImages: string | null;
+    buyerId: number | null;
+    sellerId: number | null;
+  }> = await db
     .select({
       id: marketplaceOrders.id,
       orderStatus: marketplaceOrders.orderStatus,
@@ -5981,7 +5988,6 @@ export async function getMyOrderThreads(userId: number, role: 'buyer' | 'seller'
     .from(marketplaceOrders)
     .leftJoin(marketplaceListings, eq(marketplaceOrders.listingId, marketplaceListings.id))
     .where(inArray(marketplaceOrders.id, orderIds));
-
   const orderDetailMap = new Map(orderDetails.map(o => [o.id, o]));
 
   const counterpartyIds = orderDetails

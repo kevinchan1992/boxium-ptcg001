@@ -18,7 +18,7 @@ import {
   type GradingSubmission,
   type GradingSubmissionItem,
 } from "../../drizzle/schema_new";
-import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, isNull, lt, sql, like } from "drizzle-orm";
+import { eq, and, desc, asc, or, inArray, notInArray, count, isNotNull, isNull, lt, sql, like, type SQL } from "drizzle-orm";
 import Stripe from "stripe";
 import QRCode from "qrcode";
 import { createNotification } from "../db/notifications";
@@ -1169,7 +1169,7 @@ export const gradingRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const conditions = [];
+        const conditions: SQL[] = [];
         if (input.status) {
           conditions.push(eq(gradingSubmissions.status, input.status as any));
         } else {

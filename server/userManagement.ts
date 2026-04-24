@@ -1,4 +1,4 @@
-import { eq, like, or, sql, desc, and, gte } from "drizzle-orm";
+import { eq, like, or, sql, desc, and, gte, type SQL } from "drizzle-orm";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema_new";
 import type { User } from "../drizzle/schema_new";
@@ -23,15 +23,14 @@ export async function getUserList(params: {
   const offset = (page - 1) * pageSize;
 
   // Build where conditions
-  const conditions = [];
+  const conditions: SQL[] = [];
   
   if (params.search) {
-    conditions.push(
-      or(
-        like(users.email, `%${params.search}%`),
-        like(users.name, `%${params.search}%`)
-      )
+    const searchCond = or(
+      like(users.email, `%${params.search}%`),
+      like(users.name, `%${params.search}%`)
     );
+    if (searchCond) conditions.push(searchCond);
   }
   
   if (params.role) {
