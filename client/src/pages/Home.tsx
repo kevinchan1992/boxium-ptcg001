@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag, ScanSearch, LineChart, Award, Store, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -432,65 +432,102 @@ function CtaSection() {
 
 // ─── HeroQuickAccess: 4 feature cards with staggered entrance animation ──────
 function HeroQuickAccess() {
-  const cardRefs = [useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null)];
-  const [visible, setVisible] = useState([false, false, false, false]);
+  const [visible, setVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observers = cardRefs.map((ref, i) => {
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => setVisible((prev) => { const next = [...prev]; next[i] = true; return next; }), i * 80);
-            obs.disconnect();
-          }
-        },
-        { threshold: 0.1 }
-      );
-      if (ref.current) obs.observe(ref.current);
-      return obs;
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
   }, []);
 
   const items = [
-    { href: "/research", emoji: "🔍", label: "卡牌搜尋", desc: "55,000+ 張卡牌", bg: "rgba(255,255,255,0.08)", hoverBg: "rgba(254,221,0,0.15)" },
-    { href: "/pricing", emoji: "📈", label: "市場格價", desc: "121萬+ 記錄", bg: "rgba(255,255,255,0.05)", hoverBg: "rgba(254,221,0,0.12)" },
-    { href: "/grading", emoji: "🏅", label: "PSA 鑑定", desc: "代客鑑定服務", bg: "rgba(255,255,255,0.08)", hoverBg: "rgba(254,221,0,0.15)" },
-    { href: "/marketplace", emoji: "🛒", label: "市集", desc: "安全交易", bg: "rgba(254,221,0,0.12)", hoverBg: "rgba(254,221,0,0.25)" },
+    {
+      href: "/research",
+      Icon: ScanSearch,
+      label: "卡牌搜尋",
+      desc: "55,000+ 張卡牌資料",
+      accent: "#FEDD00",
+      iconBg: "rgba(254,221,0,0.15)",
+    },
+    {
+      href: "/pricing",
+      Icon: LineChart,
+      label: "市場格價",
+      desc: "121萬+ 成交記錄",
+      accent: "#60a5fa",
+      iconBg: "rgba(96,165,250,0.15)",
+    },
+    {
+      href: "/grading",
+      Icon: Award,
+      label: "PSA 鑑定",
+      desc: "代客鑑定服務",
+      accent: "#34d399",
+      iconBg: "rgba(52,211,153,0.15)",
+    },
+    {
+      href: "/marketplace",
+      Icon: Store,
+      label: "市集",
+      desc: "安全交易平台",
+      accent: "#f472b6",
+      iconBg: "rgba(244,114,182,0.15)",
+    },
   ];
 
   return (
-    <div className="w-full max-w-3xl pt-2 md:pt-4">
-      <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
-        {items.map((item, i) => (
-          <Link
-            key={item.href}
-            ref={cardRefs[i]}
-            href={item.href}
-            className="group relative flex flex-col items-center justify-center gap-1 md:gap-2 py-4 md:py-5 px-1 md:px-3 cursor-pointer select-none"
-            style={{
-              background: item.bg,
-              borderRight: i < 3 ? "1px solid rgba(255,255,255,0.12)" : undefined,
-              opacity: visible[i] ? 1 : 0,
-              transform: visible[i] ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity 0.45s ease, transform 0.45s ease",
-            }}
-          >
-            {/* Hover overlay */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: item.hoverBg }} />
-            {/* Bottom accent line */}
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" style={{ background: "#FEDD00" }} />
-            {/* Emoji icon */}
-            <span className="relative z-10 text-xl md:text-2xl leading-none group-hover:scale-110 transition-transform duration-200">{item.emoji}</span>
-            {/* Label */}
-            <span className="relative z-10 text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight text-center">{item.label}</span>
-            {/* Sub-desc */}
-            <span className="relative z-10 text-white/50 text-[9px] sm:text-[10px] md:text-xs leading-tight text-center group-hover:text-[#FEDD00]/80 transition-colors duration-200">{item.desc}</span>
-            {/* Arrow */}
-            <ChevronRight className="relative z-10 w-3 h-3 text-white/30 group-hover:text-[#FEDD00] group-hover:translate-x-0.5 transition-all duration-200" />
-          </Link>
-        ))}
+    <div ref={containerRef} className="w-full max-w-2xl pt-4 md:pt-6">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        {items.map((item, i) => {
+          const { Icon } = item;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group relative flex flex-col items-center gap-2 sm:gap-3 py-4 sm:py-5 px-2 sm:px-3 rounded-xl sm:rounded-2xl cursor-pointer select-none overflow-hidden"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                backdropFilter: "blur(8px)",
+                opacity: visible ? 1 : 0,
+                transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(0.96)",
+                transition: `opacity 0.4s ease ${i * 70}ms, transform 0.4s ease ${i * 70}ms`,
+              }}
+            >
+              {/* Glow on hover */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl sm:rounded-2xl"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${item.accent}22 0%, transparent 70%)` }}
+              />
+              {/* Top accent border on hover */}
+              <div
+                className="absolute top-0 left-4 right-4 h-[1.5px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"
+                style={{ background: item.accent }}
+              />
+              {/* Icon circle */}
+              <div
+                className="relative z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                style={{ background: item.iconBg, border: `1px solid ${item.accent}33` }}
+              >
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: item.accent }} strokeWidth={1.8} />
+              </div>
+              {/* Text */}
+              <div className="relative z-10 flex flex-col items-center gap-0.5 text-center">
+                <span className="text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight tracking-wide">{item.label}</span>
+                <span className="text-white/45 text-[9px] sm:text-[10px] leading-tight hidden sm:block">{item.desc}</span>
+              </div>
+              {/* Arrow */}
+              <ArrowRight
+                className="relative z-10 w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200"
+                style={{ color: item.accent }}
+              />
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
