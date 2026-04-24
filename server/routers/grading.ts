@@ -405,9 +405,10 @@ export const gradingRouter = router({
     .input(
       z.object({
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(50).default(10),
+        pageSize: z.number().int().min(1).max(200).default(10),
         search: z.string().optional(),
         status: z.string().optional(),
+        statuses: z.array(z.string()).optional(), // multi-status filter
       }).optional()
     )
     .query(async ({ ctx, input }) => {
@@ -417,10 +418,14 @@ export const gradingRouter = router({
     const pageSize = input?.pageSize ?? 10;
     const search = input?.search?.trim() ?? "";
     const statusFilter = input?.status ?? "";
+    const statusesFilter = input?.statuses ?? [];
     const offset = (page - 1) * pageSize;
     // Build conditions
     const conditions: any[] = [eq(gradingSubmissions.userId, ctx.user.id)];
-    if (statusFilter) {
+    if (statusesFilter.length > 0) {
+      // Multi-status filter (for tabs like 'action', 'in_progress', 'done')
+      conditions.push(inArray(gradingSubmissions.status, statusesFilter as any[]));
+    } else if (statusFilter) {
       conditions.push(eq(gradingSubmissions.status, statusFilter as any));
     }
     if (search) {
@@ -1328,19 +1333,6 @@ export const gradingRouter = router({
         if (input.adminNotes !== undefined) updateData.adminNotes = input.adminNotes;
         if (input.returnTrackingNo !== undefined) updateData.returnTrackingNo = input.returnTrackingNo;
         if (input.batchId !== undefined) updateData.batchId = input.batchId;
-        // Append note to adminNotesHistory if a note is provided
-        if (input.adminNotes) {
-          const existingHistory = (submission as any).adminNotesHistory
-            ? JSON.parse((submission as any).adminNotesHistory as string)
-            : [];
-          const newEntry = {
-            timestamp: new Date().toISOString(),
-            note: input.adminNotes,
-            statusAtTime: input.status,
-          };
-          updateData.adminNotesHistory = JSON.stringify([...existingHistory, newEntry]);
-        }
-
         // Append note to adminNotesHistory if a note is provided
         if (input.adminNotes) {
           const existingHistory: Array<{timestamp: string; note: string; statusAtTime: string}> = submission.adminNotesHistory

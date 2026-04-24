@@ -44,54 +44,30 @@ export default function GradingOrders() {
   const { data: me } = trpc.auth.me.useQuery();
 
   // Determine status filter based on active tab
-  const statusFilter = useMemo(() => {
+  const tabStatuses = useMemo(() => {
     const tab = FILTER_TABS.find((t) => t.key === activeTab);
     return tab?.statuses;
   }, [activeTab]);
 
-  // Use backend pagination with search and status filter
-  // For "action", "in_progress", "done" tabs, we pass a comma-separated status string
-  // Backend supports single status; for multi-status tabs we fetch all and filter client-side
-  const isMultiStatusTab = activeTab !== "all" && statusFilter && statusFilter.length > 1;
+  // Build query input — always use backend filtering (single or multi-status)
+  const queryInput = useMemo(() => {
+    const base = {
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+      search: debouncedSearch || undefined,
+    };
+    if (!tabStatuses) return base; // "all" tab
+    if (tabStatuses.length === 1) return { ...base, status: tabStatuses[0] };
+    return { ...base, statuses: tabStatuses }; // multi-status → backend inArray filter
+  }, [currentPage, debouncedSearch, tabStatuses]);
 
-  const { data: serverData, isLoading } = trpc.grading.getMySubmissions.useQuery(
-    isMultiStatusTab
-      ? { page: 1, pageSize: 200, search: debouncedSearch } // fetch more for multi-status tabs
-      : {
-          page: currentPage,
-          pageSize: PAGE_SIZE,
-          search: debouncedSearch || undefined,
-          status: activeTab === "all" ? undefined : statusFilter?.[0],
-        },
-    { enabled: !!me }
-  );
+  const { data: serverData, isLoading } = trpc.grading.getMySubmissions.useQuery(queryInput, {
+    enabled: !!me,
+  });
 
-  // For multi-status tabs, filter client-side
-  const filteredSubmissions = useMemo(() => {
-    if (!serverData) return [];
-    if (isMultiStatusTab && statusFilter) {
-      const statusSet = new Set(statusFilter);
-      return serverData.submissions.filter((s: any) => statusSet.has(s.status));
-    }
-    return serverData.submissions;
-  }, [serverData, isMultiStatusTab, statusFilter]);
-
-  // Pagination for multi-status tabs (client-side)
-  const totalPages = isMultiStatusTab
-    ? Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE))
-    : (serverData?.totalPages ?? 1);
-
-  const paginated = useMemo(() => {
-    if (isMultiStatusTab) {
-      const start = (currentPage - 1) * PAGE_SIZE;
-      return filteredSubmissions.slice(start, start + PAGE_SIZE);
-    }
-    return filteredSubmissions;
-  }, [filteredSubmissions, isMultiStatusTab, currentPage]);
-
-  const totalCount = isMultiStatusTab
-    ? filteredSubmissions.length
-    : (serverData?.total ?? 0);
+  const submissions = serverData?.submissions ?? [];
+  const totalPages = serverData?.totalPages ?? 1;
+  const totalCount = serverData?.total ?? 0;
 
   const handleTabChange = useCallback((tab: FilterTab) => {
     setActiveTab(tab);
@@ -172,7 +148,7 @@ export default function GradingOrders() {
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-[#06038d]" />
           </div>
-        ) : paginated.length === 0 ? (
+        ) : submissions.length === 0 ? (
           <div className="text-center py-16">
             <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">
@@ -191,7 +167,7 @@ export default function GradingOrders() {
           <>
             <p className="text-xs text-gray-400 text-right">共 {totalCount} 筆申請</p>
             <div className="space-y-3">
-              {paginated.map((sub: any) => {
+              {submissions.map((sub: any) => {
                 const statusInfo = STATUS_MAP[sub.status] ?? { label: sub.status, color: "bg-gray-100 text-gray-700 border-gray-200" };
                 const needsPayment = PAYMENT_PENDING_STATUSES.has(sub.status);
                 return (

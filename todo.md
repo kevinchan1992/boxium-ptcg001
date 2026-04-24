@@ -8726,3 +8726,33 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 驗證修復（本地查詢成功）
 - [x] 保存 checkpoint（version: 0c95e1ff）
 - [ ] Publish 到生產環境驗證
+
+---
+
+## ✅ 2026-04-24 代碼優化（Code Quality Improvements）
+
+### 優化內容
+
+- [x] **修復 grading.ts `updateStatus` 中重複的 `adminNotesHistory` 邏輯**
+  - 原本有兩個完全相同的 `if (input.adminNotes)` 區塊（第一個使用 `as any` 強制轉型，第二個有正確型別）
+  - 移除舊版 `as any` 區塊，保留有正確 TypeScript 型別的版本
+  - 效果：每次更新狀態時只追加一條歷史記錄，而非兩條
+
+- [x] **優化 `getMySubmissions` 後端支援多狀態篩選**
+  - 新增 `statuses: z.array(z.string()).optional()` 參數，使用 Drizzle `inArray()` 在資料庫層過濾
+  - `pageSize` 上限從 50 提升至 200（保持彈性）
+  - 效果：多狀態 tab（需行動、進行中、已完成）不再需要 workaround
+
+- [x] **重構 `GradingOrders.tsx` 查詢邏輯**
+  - 移除 `isMultiStatusTab` 判斷 + `pageSize: 200` workaround + 客戶端 `filter()` 邏輯
+  - 改用統一的 `buildQueryInput()` 函數，直接傳 `statuses` 陣列給後端
+  - 移除不必要的 `filteredSubmissions`、`paginated` 中間狀態
+  - 效果：代碼行數減少 ~30 行，邏輯更清晰，分頁完全由後端控制
+
+- [x] **撰寫 14 項 vitest 單元測試（grading-optimizations.test.ts）**
+  - `adminNotesHistory` 追加邏輯（4 項）
+  - `GradingOrders` 查詢輸入建構器（8 項，包含驗證不再使用 pageSize=200）
+  - `STATUS_MAP` 完整性（2 項）
+  - 全部 14 項測試通過 ✅
+
+- [x] 保存 checkpoint
