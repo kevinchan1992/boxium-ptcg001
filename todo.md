@@ -8625,3 +8625,18 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 付款後 Confirmation page：提交成功後顯示 step 4 確認頁，包含明顯 CTA 和下一步指引
 - [x] 修復 AdminMarketplace.tsx 中 CheckCheck 未 import 的 TypeScript 錯誤
 - [x] 所有 vitest 測試通過（4/4）
+
+---
+## B 層應做優化（2026-04-24）
+- [ ] GradingOrders 頁面加入狀態篩選 Tab（全部、需行動、進行中、已完成）
+- [ ] 後台批次管理加入批次一鍵確認出團功能
+- [ ] 管理員備註歷史化（adminNotes 改為 JSON 時間軸陣列）
+- [ ] 撰寫 vitest 測試
+- [ ] 儲存 checkpoint
+
+---
+## B 層應做優化完成記錄（2026-04-24）
+- [x] GradingOrders 頁面加入狀態篩選 Tab（全部、需行動、進行中、已完成）
+- [x] 後台批次管理加入「一鍵確認收件」和「一鍵確認出團」快速操作列
+- [x] 管理員備註歷史化：schema 加入 adminNotesHistory 欄位（JSON 陣列），後端每次更新備注時 append 記錄，前端顯示時間軸
+- [x] 修復 grading.ts originalTierIds 型別錯誤（as number[]）

@@ -1293,6 +1293,18 @@ export const gradingRouter = router({
         if (input.returnTrackingNo !== undefined) updateData.returnTrackingNo = input.returnTrackingNo;
         if (input.batchId !== undefined) updateData.batchId = input.batchId;
 
+        // Append note to adminNotesHistory if a note is provided
+        if (input.adminNotes) {
+          const existingHistory: Array<{timestamp: string; note: string; statusAtTime: string}> = submission.adminNotesHistory
+            ? JSON.parse(submission.adminNotesHistory)
+            : [];
+          const newEntry = {
+            timestamp: new Date().toISOString(),
+            note: input.adminNotes,
+            statusAtTime: input.status,
+          };
+          updateData.adminNotesHistory = JSON.stringify([...existingHistory, newEntry]);
+        }
         await db.update(gradingSubmissions).set(updateData).where(eq(gradingSubmissions.id, input.id));
 
         // Get user for notification
@@ -1637,7 +1649,7 @@ export const gradingRouter = router({
 
         // Collect all unique tier IDs needed (new tiers + original tiers for display)
         const uniqueTierIds = Array.from(new Set(input.items.map((i) => i.newTierId)));
-        const originalTierIds = Array.from(new Set(allItems.map((it: any) => it.tierId).filter(Boolean)));
+        const originalTierIds = Array.from(new Set(allItems.map((it: any) => it.tierId).filter(Boolean))) as number[];
         const allOriginalTiers = originalTierIds.length > 0 ? await db
           .select()
           .from(gradingServiceTiers)

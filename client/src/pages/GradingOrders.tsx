@@ -1,7 +1,7 @@
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, ChevronRight, Plus, AlertCircle, CreditCard } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -22,12 +22,44 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
 const PAYMENT_PENDING_STATUSES = new Set(["awaiting_payment", "payment_overdue"]);
 
+// Filter tab definitions
+type FilterTab = "all" | "action" | "in_progress" | "done";
+const FILTER_TABS: { key: FilterTab; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "action", label: "需行動" },
+  { key: "in_progress", label: "進行中" },
+  { key: "done", label: "已完成" },
+];
+const ACTION_STATUSES = new Set(["awaiting_payment", "payment_overdue", "pending_shipment", "graded"]);
+const IN_PROGRESS_STATUSES = new Set(["pending_review", "received", "submitted_to_psa", "grading", "paid"]);
+const DONE_STATUSES = new Set(["completed", "returned", "cancelled"]);
+
 export default function GradingOrders() {
   const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const { data: me } = trpc.auth.me.useQuery();
   const { data: submissions, isLoading } = trpc.grading.getMySubmissions.useQuery(undefined, {
     enabled: !!me,
   });
+
+  const filtered = useMemo(() => {
+    if (!submissions) return [];
+    if (activeTab === "all") return submissions;
+    if (activeTab === "action") return submissions.filter((s: any) => ACTION_STATUSES.has(s.status));
+    if (activeTab === "in_progress") return submissions.filter((s: any) => IN_PROGRESS_STATUSES.has(s.status));
+    if (activeTab === "done") return submissions.filter((s: any) => DONE_STATUSES.has(s.status));
+    return submissions;
+  }, [submissions, activeTab]);
+
+  const counts = useMemo(() => {
+    if (!submissions) return { all: 0, action: 0, in_progress: 0, done: 0 };
+    return {
+      all: submissions.length,
+      action: submissions.filter((s: any) => ACTION_STATUSES.has(s.status)).length,
+      in_progress: submissions.filter((s: any) => IN_PROGRESS_STATUSES.has(s.status)).length,
+      done: submissions.filter((s: any) => DONE_STATUSES.has(s.status)).length,
+    };
+  }, [submissions]);
 
   if (!me) {
     return (
@@ -50,7 +82,7 @@ export default function GradingOrders() {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">我的鑑定申請</h1>
             <p className="text-gray-500 text-sm mt-1">追蹤您的 PSA 代客鑑定進度</p>
@@ -62,6 +94,41 @@ export default function GradingOrders() {
             <Plus className="h-4 w-4 mr-2" />
             新申請
           </Button>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-1 mb-5 bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+          {FILTER_TABS.map((tab) => {
+            const count = counts[tab.key];
+            const isActive = activeTab === tab.key;
+            const hasUrgent = tab.key === "action" && count > 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-[#06038d] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <span>{tab.label}</span>
+                {count > 0 && (
+                  <span
+                    className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : hasUrgent
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {isLoading ? (
@@ -80,9 +147,14 @@ export default function GradingOrders() {
               立即申請
             </Button>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">此分類暫無申請</p>
+          </div>
         ) : (
           <div className="space-y-3">
-            {submissions.map((sub: any) => {
+            {filtered.map((sub: any) => {
               const statusInfo = STATUS_MAP[sub.status] ?? { label: sub.status, color: "bg-gray-100 text-gray-700 border-gray-200" };
               const needsPayment = PAYMENT_PENDING_STATUSES.has(sub.status);
               return (

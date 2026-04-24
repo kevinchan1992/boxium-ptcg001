@@ -1600,6 +1600,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   paymentDeadline: timestamp("paymentDeadline"),
   gradedAt: timestamp("gradedAt"),
   adminNotes: text("adminNotes"),
+  adminNotesHistory: text("adminNotesHistory"), // JSON array of {timestamp, note, adminName, statusAtTime}
   returnTrackingNo: varchar("returnTrackingNo", { length: 128 }),
   paymentDueAt: timestamp("paymentDueAt"),
   day15ReminderSentAt: timestamp("day15ReminderSentAt"),

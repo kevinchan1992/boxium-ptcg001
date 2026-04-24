@@ -734,6 +734,39 @@ function SubmissionDetailDialog({
               </Button>
             </div>
 
+            {/* Admin Notes History Timeline */}
+            {detail.adminNotesHistory && (() => {
+              try {
+                const history: Array<{timestamp: string; note: string; statusAtTime: string}> = JSON.parse(detail.adminNotesHistory);
+                if (history.length === 0) return null;
+                return (
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-bold text-gray-900">備注歷史</span>
+                      <span className="ml-auto text-xs text-gray-400">{history.length} 條記錄</span>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {[...history].reverse().map((entry, idx) => (
+                        <div key={idx} className="flex gap-3 text-xs">
+                          <div className="flex flex-col items-center">
+                            <div className="w-2 h-2 rounded-full bg-[#06038d] mt-0.5 shrink-0" />
+                            {idx < history.length - 1 && <div className="w-px flex-1 bg-gray-200 mt-1" />}
+                          </div>
+                          <div className="flex-1 pb-2">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-gray-400">{new Date(entry.timestamp).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                              <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">{entry.statusAtTime}</span>
+                            </div>
+                            <p className="text-gray-700 leading-relaxed">{entry.note}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
             {/* Grading results - 3-step flow: only show when status is 'graded' */}
             {detail.status === 'graded' && (
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
@@ -1182,6 +1215,26 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
           {submissions.length === 0 ? (
             <div className="py-8 text-center text-gray-700 text-sm">此批次尚無申請</div>
           ) : (
+            <div>
+              {/* Quick action bar */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 border-b border-purple-100">
+                <Truck className="h-4 w-4 text-purple-600 shrink-0" />
+                <span className="text-xs font-semibold text-purple-800 flex-1">批次快速操作</span>
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setBatchSyncTarget({ status: 'received', label: 'BOXIUM已收件' }); }}
+                >
+                  <Package className="h-3.5 w-3.5" />
+                  一鍵確認收件
+                </button>
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setBatchSyncTarget({ status: 'submitted_to_psa', label: '已出團' }); }}
+                >
+                  <Truck className="h-3.5 w-3.5" />
+                  一鍵確認出團
+                </button>
+              </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -1266,6 +1319,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>
