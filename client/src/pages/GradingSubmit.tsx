@@ -49,6 +49,7 @@ function newItem(): GradingItem {
 
 // ─── Step Indicator ─────────────────────────────────────────────────────────────────────────────
 function StepIndicator({ step }: { step: number }) {
+  if (step === 4) return null; // Hide step indicator on confirmation page
   const steps = ["選擇服務層級", "填寫卡牌資料", "確認提交"];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
@@ -386,6 +387,10 @@ export default function GradingSubmit() {
 
   // Always start at step 1 so user can choose to resume or start fresh
   const [step, setStep] = useState(1);
+  // Submitted order data (used in step 4 confirmation page)
+  const [submittedData, setSubmittedData] = useState<{ submissionId: number; orderNo: string; totalFee: number; cardCount: number } | null>(null);
+  // Ref to store fee/count at submit time (avoids stale closure in onSuccess)
+  const pendingSubmitRef = useRef<{ totalFee: number; cardCount: number } | null>(null);
   // Order-level tier selection
   const [selectedTierId, setSelectedTierId] = useState<number | null>(existingDraft && hasDraftWithCards ? existingDraft.selectedTierId : null);
   const initialItems = existingDraft && hasDraftWithCards ? existingDraft.items : [newItem()];
@@ -447,8 +452,14 @@ export default function GradingSubmit() {
   const checkoutMutation = trpc.grading.submitApplication.useMutation({
     onSuccess: (data: any) => {
       clearDraft(userId);
-      toast.success("申請已提交！請前往申請詳情頁完成付款。");
-      navigate(`/grading/orders/${data.submissionId}`);
+      setSubmittedData({
+        submissionId: data.submissionId,
+        orderNo: data.orderNo,
+        totalFee: pendingSubmitRef.current?.totalFee ?? 0,
+        cardCount: pendingSubmitRef.current?.cardCount ?? 0,
+      });
+      pendingSubmitRef.current = null;
+      setStep(4);
     },
     onError: (err: any) => {
       toast.error(`提交失敗：${err.message}`);
@@ -531,6 +542,13 @@ export default function GradingSubmit() {
         notes: "",
       }));
     });
+    // Store fee/count before mutation (for step 4 confirmation page)
+    const qty = items.reduce((sum, i) => sum + ((i as any).quantity ?? 1), 0);
+    const tier = tiers?.find((t: any) => t.id === selectedTierId);
+    pendingSubmitRef.current = {
+      totalFee: tier ? parseFloat(tier.feeHkd) * qty : 0,
+      cardCount: qty,
+    };
     checkoutMutation.mutate({
       items: expandedItems,
       agreedToTerms: true,
@@ -948,6 +966,66 @@ export default function GradingSubmit() {
                   </>
                 )}
               </Button>
+            </div>
+          </div>
+        )}
+        {/* ── Step 4: Submission Confirmed ── */}
+        {step === 4 && submittedData && (
+          <div className="space-y-5">
+            {/* Success header */}
+            <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+              <div className="flex justify-center mb-3">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+              <h2 className="text-xl font-bold text-green-800 mb-1">申請已成功提交！</h2>
+              <p className="text-sm text-green-700 font-mono font-semibold">{submittedData.orderNo}</p>
+            </div>
+            {/* Payment CTA — high priority */}
+            <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-5">
+              <div className="flex items-start gap-3 mb-4">
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-amber-800 text-sm">請立即完成付款，否則申請將無法進入處理流程</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    共 {submittedData.cardCount} 張卡牌 · 費用合計 <span className="font-bold text-[#06038d]">HK${submittedData.totalFee.toLocaleString()}</span>
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate(`/grading/orders/${submittedData.submissionId}`)}
+                className="w-full bg-[#06038d] hover:bg-[#06038d]/90 text-white font-bold text-base py-3 h-auto"
+              >
+                <DollarSign className="mr-2 h-5 w-5" />
+                前往申請詳情頁完成付款
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+            {/* Next steps */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+              <p className="font-semibold text-gray-800 text-sm">付款後的下一步</p>
+              {[
+                { icon: Package, text: "付款確認後，系統將自動發送確認通知（站內訊息 + Email），包含 BOXIUM 送件地址" },
+                { icon: FileText, text: "請打印申請單，連同卡牌自費寄至 BOXIUM 指定地址（順豐站 852Z351）" },
+                { icon: CheckCircle2, text: "BOXIUM 確認收件後，代辦 PSA 申報及專業包裝，每月 2 次出團直送美國 PSA" },
+              ].map(({ icon: Icon, text }, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-[#06038d]/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="h-3.5 w-3.5 text-[#06038d]" />
+                  </div>
+                  <p className="text-xs text-gray-600">{text}</p>
+                </div>
+              ))}
+            </div>
+            {/* View orders link */}
+            <div className="text-center">
+              <button
+                onClick={() => navigate("/grading/orders")}
+                className="text-sm text-[#06038d] underline underline-offset-2"
+              >
+                查看所有申請記錄
+              </button>
             </div>
           </div>
         )}

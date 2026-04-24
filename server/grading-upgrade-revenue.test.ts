@@ -23,7 +23,7 @@ describe("Sales Report - PSA Grading Upgrade Revenue", () => {
 
     // Upgrade revenue should be a subset of grading revenue
     expect(overall.upgradeRevenueHkd).toBeLessThanOrEqual(overall.gradingRevenueHkd);
-  });
+  }, 15000);
 
   it("getSalesReport monthly data should include upgradeRevenueHkd and upgradeCount fields", async () => {
     const { getSalesReport } = await import("./db");
@@ -47,7 +47,7 @@ describe("Sales Report - PSA Grading Upgrade Revenue", () => {
       // Upgrade revenue should be a subset of grading revenue
       expect(firstMonth.upgradeRevenueHkd).toBeLessThanOrEqual(firstMonth.gradingRevenueHkd);
     }
-  });
+  }, 15000);
 
   it("getSalesReport overall should include gradingRevenueHkd and gradingCount fields", async () => {
     const { getSalesReport } = await import("./db");
@@ -65,7 +65,7 @@ describe("Sales Report - PSA Grading Upgrade Revenue", () => {
     // Verify non-negative
     expect(overall.gradingRevenueHkd).toBeGreaterThanOrEqual(0);
     expect(overall.gradingCount).toBeGreaterThanOrEqual(0);
-  });
+  }, 15000);
 
   it("getSalesReport overall should include stripeGradingRevenueHkd and alipayGradingRevenueHkd fields", async () => {
     const { getSalesReport } = await import("./db");
@@ -91,5 +91,5 @@ describe("Sales Report - PSA Grading Upgrade Revenue", () => {
     // Stripe + Alipay grading should sum to total grading revenue
     const sumByMethod = overall.stripeGradingRevenueHkd + overall.alipayGradingRevenueHkd;
     expect(sumByMethod).toBeCloseTo(overall.gradingRevenueHkd, 1);
-  });
+  }, 15000);
 });

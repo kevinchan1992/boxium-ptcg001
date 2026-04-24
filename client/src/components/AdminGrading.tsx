@@ -312,7 +312,7 @@ function SubmissionDetailDialog({
   // Tier upgrade flow state
   // gradingStep: 'ask_upgrade' | 'select_tier' | 'fill_result'
   const [gradingStep, setGradingStep] = useState<'ask_upgrade' | 'select_tier' | 'fill_result'>('ask_upgrade');
-  const [upgradeResult, setUpgradeResult] = useState<{ checkoutUrl: string | null; diffFeeHkd: string; newTierName: string } | null>(null);
+  const [upgradeResult, setUpgradeResult] = useState<{ checkoutUrl: string | null; diffFeeHkd: string; newTierName: string; upgradeItems?: Array<{ cardName: string; oldTierName: string; newTierName: string; diffFeeHkd: string }> } | null>(null);
   // Per-card upgrade selection: set of item IDs selected for upgrade
   const [selectedItemIdsForUpgrade, setSelectedItemIdsForUpgrade] = useState<Set<number>>(new Set());
   // Per-card tier selection: itemId -> newTierId
@@ -909,11 +909,25 @@ function SubmissionDetailDialog({
               {/* Upgrade success banner (shown in step 3 if upgrade was done) */}
               {gradingStep === 'fill_result' && upgradeResult && (
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mb-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-blue-800">升級差價連結已發送</p>
-                      <p className="text-xs text-blue-600">已升級至 {upgradeResult.newTierName}，客人需補付 HK${upgradeResult.diffFeeHkd}</p>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-blue-800 mb-1">
+                        升級差價連結已發送 — 共 {upgradeResult.upgradeItems?.length ?? 1} 張卡牌，合計補付 HK${upgradeResult.diffFeeHkd}
+                      </p>
+                      {upgradeResult.upgradeItems && upgradeResult.upgradeItems.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {upgradeResult.upgradeItems.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-1 text-xs text-blue-700">
+                              <span className="truncate max-w-[120px] font-medium">{item.cardName}</span>
+                              <span className="text-blue-400 shrink-0">{item.oldTierName} → <span className="font-semibold text-orange-600">{item.newTierName}</span></span>
+                              <span className="ml-auto shrink-0 text-red-600 font-semibold">+HK${item.diffFeeHkd}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-blue-600">已升級至 {upgradeResult.newTierName}</p>
+                      )}
                     </div>
                   </div>
                 </div>

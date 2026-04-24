@@ -1635,8 +1635,15 @@ export const gradingRouter = router({
           .where(eq(gradingSubmissionItems.submissionId, input.submissionId));
         if (allItems.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "申請沒有卡牌" });
 
-        // Collect all unique tier IDs needed
+        // Collect all unique tier IDs needed (new tiers + original tiers for display)
         const uniqueTierIds = Array.from(new Set(input.items.map((i) => i.newTierId)));
+        const originalTierIds = Array.from(new Set(allItems.map((it: any) => it.tierId).filter(Boolean)));
+        const allOriginalTiers = originalTierIds.length > 0 ? await db
+          .select()
+          .from(gradingServiceTiers)
+          .where(inArray(gradingServiceTiers.id, originalTierIds)) : [];
+        type OrigTierRow = typeof allOriginalTiers[0];
+        const originalTierMap = new Map<number, OrigTierRow>(allOriginalTiers.map((t: OrigTierRow) => [t.id, t]));
         const allTiersForUpgrade = await db
           .select()
           .from(gradingServiceTiers)
@@ -1781,7 +1788,18 @@ export const gradingRouter = router({
           }),
         });
 
-        return { success: true, checkoutUrl: session.url, diffFeeHkd: totalDiffFee.toFixed(2), newTierName: maxTier.newTier.name };
+        return {
+          success: true,
+          checkoutUrl: session.url,
+          diffFeeHkd: totalDiffFee.toFixed(2),
+          newTierName: maxTier.newTier.name,
+          upgradeItems: upgradeEntries.map((e) => ({
+            cardName: e.currentItem.cardName ?? `卡牌 #${e.itemId}`,
+            oldTierName: originalTierMap.get(e.currentItem.tierId)?.name ?? '原層級',
+            newTierName: e.newTier.name,
+            diffFeeHkd: e.diffFee.toFixed(2),
+          })),
+        };
       }),
 
     // ─── Admin: Get upgrade checkout status ──────────────────────────────────

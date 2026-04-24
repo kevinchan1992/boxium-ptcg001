@@ -8603,3 +8603,25 @@ Admin 可以開啟/關閉市集維護模式，並管理白名單用戶。
 - [x] 後端：getSalesReport 加入 stripeGradingRevenueHkd 和 alipayGradingRevenueHkd 欄位
 - [x] 月度明細表格：「平台收入」欄位確認已包含 PSA 鑑定收入（platformIncomeHkd = platSales + fees + grading）
 - [ ] 儲存 checkpoint
+---
+## A 層必做優化（2026-04-24，來自全面審查報告）
+- [ ] 修復倒計時器 Bug（Grading.tsx CountdownTimer 改用 useEffect + setInterval，每秒更新並顯示秒數）
+- [ ] 補全通知：截圖被拒絕 → 站內通知 + Email（附拒絕原因）
+- [ ] 補全通知：管理員確認收件（received）→ 站內通知「BOXIUM 已收到您的卡牌」
+- [ ] 補全通知：批次出團（submitted_to_psa）→ 站內通知「您的卡牌已出團」
+- [ ] 補全通知：付款逾期提醒（payment_overdue）→ 站內通知 + Email（附補付連結）
+- [ ] 後台 AdminGrading 加入「截圖待審核」Tab（alipayProofStatus = pending_review，顯示待處理數量）
+- [ ] 後台 AdminGrading 加入「升級待補付」Tab（upgradeCheckoutSessionId IS NOT NULL AND upgradePaidAt IS NULL）
+- [ ] 升級成功 Banner 改為多卡摘要（「X 張卡牌已升級，詳見下方卡牌列表」）
+- [ ] 付款後下一步指引：提交成功後顯示 Confirmation 頁面，包含明顯「立即付款」CTA 和「未完成付款將無法進入下一步」提醒
+- [ ] 訂單列表新增「升級待補付」視覺強調（橙色 ⚠ 標籤，點擊跳轉補付頁面）
+
+---
+## A 層必做優化完成記錄（2026-04-24）
+- [x] 修復倒計時器：CountdownTimer 改用 useEffect + setInterval，新增秒數格
+- [x] 通知系統確認：截圖拒絕、已收件、已出團、逾期提醒均已完整實作，無需補全
+- [x] Alipay 審核可見性確認：TaskCenterTab 已有完整截圖待審核工作隊列
+- [x] 升級 Banner 改為多卡摘要：顯示每張卡牌的舊層級→新層級和差價，合計補付金額
+- [x] 付款後 Confirmation page：提交成功後顯示 step 4 確認頁，包含明顯 CTA 和下一步指引
+- [x] 修復 AdminMarketplace.tsx 中 CheckCheck 未 import 的 TypeScript 錯誤
+- [x] 所有 vitest 測試通過（4/4）

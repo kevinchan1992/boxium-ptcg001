@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,18 @@ import {
 
 // Countdown timer component
 function CountdownTimer({ deadline }: { deadline: Date }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const diff = deadline.getTime() - now.getTime();
   const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
   const hours = Math.max(0, Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
   const minutes = Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)));
-
-  // Update every minute
-  useState(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(timer);
-  });
+  const seconds = Math.max(0, Math.floor((diff % (1000 * 60)) / 1000));
 
   if (diff <= 0) return <span className="text-red-500 font-bold">已截止</span>;
 
@@ -45,6 +46,7 @@ function CountdownTimer({ deadline }: { deadline: Date }) {
         { value: days, label: "天" },
         { value: hours, label: "時" },
         { value: minutes, label: "分" },
+        { value: seconds, label: "秒" },
       ].map(({ value, label }) => (
         <div key={label} className="flex flex-col items-center">
           <div className="bg-[#06038d] text-white text-2xl font-bold w-14 h-14 flex items-center justify-center rounded-lg">
