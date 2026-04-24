@@ -279,20 +279,21 @@ export function TopNav() {
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
             <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
               {[
-                { href: "/research", label: "卡牌搜尋" },
-                { href: "/pricing", label: "市場格價" },
-                { href: "/grading", label: "PSA 鑑定" },
-                { href: "/marketplace", label: "市集" },
+                { href: "/research", label: "卡牌搜尋", emoji: "🔍" },
+                { href: "/pricing", label: "市場格價", emoji: "📈" },
+                { href: "/grading", label: "PSA 鑑定", emoji: "🏅" },
+                { href: "/marketplace", label: "市集", emoji: "🛒" },
               ].map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative px-6 py-1.5 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 px-6 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap ${
                     isActive(item.href)
-                      ? "text-[#FEDD00]"
-                      : "text-white/75 hover:text-white"
+                      ? "text-[#FEDD00] bg-white/10"
+                      : "text-white/75 hover:text-white hover:bg-white/8"
                   }`}
                 >
+                  <span className="text-base leading-none">{item.emoji}</span>
                   {item.label}
                   {/* Active underline indicator */}
                   {isActive(item.href) && (
@@ -303,7 +304,7 @@ export function TopNav() {
             </div>
 
             {/* Spacer */}
-            <div className="flex-1" />           {/* 出售商品 button */}
+            <div className="flex-1" />            {/* 出售商品 button — full text on lg+, icon-only on md~lg */}
             {showSellButton && (
               <motion.button
                 onClick={handleSellClick}
@@ -311,10 +312,10 @@ export function TopNav() {
                 className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
               >
                 <Tag className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{t("topnav.sellItem")}</span>
+                {/* Hide label on md~lg to avoid crowding center nav */}
+                <span className="hidden lg:inline">{t("topnav.sellItem")}</span>
               </motion.button>
             )}
-
             {/* Shopping Cart — logged-in only */}
             {user && (
               <Link href="/cart">
