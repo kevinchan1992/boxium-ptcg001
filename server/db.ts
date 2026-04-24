@@ -4353,7 +4353,8 @@ export async function getSalesReport(months: number = 12) {
 
   // Import gradingSubmissions for PSA grading revenue
   const { gradingSubmissions } = await import("../drizzle/schema_new");
-  const gradingPaidStatuses = ['paid', 'returned', 'completed'];
+  // Include all statuses where payment has been confirmed (after pending_review/awaiting_payment)
+  const gradingPaidStatuses = ['pending_shipment', 'received', 'submitted_to_psa', 'grading', 'graded', 'paid', 'returned', 'completed'];
 
   // Monthly breakdown: group by year-month (paid orders)
   const monthlyRows = await db.select({
