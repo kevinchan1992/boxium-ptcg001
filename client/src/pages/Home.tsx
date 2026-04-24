@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag, Clock, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -430,6 +430,176 @@ function CtaSection() {
   );
 }
 
+// ─── HeroQuickAccess: 4 feature cards with staggered entrance animation ──────
+function HeroQuickAccess() {
+  const cardRefs = [useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null), useRef<HTMLAnchorElement>(null)];
+  const [visible, setVisible] = useState([false, false, false, false]);
+
+  useEffect(() => {
+    const observers = cardRefs.map((ref, i) => {
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => setVisible((prev) => { const next = [...prev]; next[i] = true; return next; }), i * 80);
+            obs.disconnect();
+          }
+        },
+        { threshold: 0.1 }
+      );
+      if (ref.current) obs.observe(ref.current);
+      return obs;
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const items = [
+    { href: "/research", emoji: "🔍", label: "卡牌搜尋", desc: "55,000+ 張卡牌", bg: "rgba(255,255,255,0.08)", hoverBg: "rgba(254,221,0,0.15)" },
+    { href: "/pricing", emoji: "📈", label: "市場格價", desc: "121萬+ 記錄", bg: "rgba(255,255,255,0.05)", hoverBg: "rgba(254,221,0,0.12)" },
+    { href: "/grading", emoji: "🏅", label: "PSA 鑑定", desc: "代客鑑定服務", bg: "rgba(255,255,255,0.08)", hoverBg: "rgba(254,221,0,0.15)" },
+    { href: "/marketplace", emoji: "🛒", label: "市集", desc: "安全交易", bg: "rgba(254,221,0,0.12)", hoverBg: "rgba(254,221,0,0.25)" },
+  ];
+
+  return (
+    <div className="w-full max-w-3xl pt-2 md:pt-4">
+      <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
+        {items.map((item, i) => (
+          <Link
+            key={item.href}
+            ref={cardRefs[i]}
+            href={item.href}
+            className="group relative flex flex-col items-center justify-center gap-1 md:gap-2 py-4 md:py-5 px-1 md:px-3 cursor-pointer select-none"
+            style={{
+              background: item.bg,
+              borderRight: i < 3 ? "1px solid rgba(255,255,255,0.12)" : undefined,
+              opacity: visible[i] ? 1 : 0,
+              transform: visible[i] ? "translateY(0)" : "translateY(20px)",
+              transition: "opacity 0.45s ease, transform 0.45s ease",
+            }}
+          >
+            {/* Hover overlay */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: item.hoverBg }} />
+            {/* Bottom accent line */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" style={{ background: "#FEDD00" }} />
+            {/* Emoji icon */}
+            <span className="relative z-10 text-xl md:text-2xl leading-none group-hover:scale-110 transition-transform duration-200">{item.emoji}</span>
+            {/* Label */}
+            <span className="relative z-10 text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight text-center">{item.label}</span>
+            {/* Sub-desc */}
+            <span className="relative z-10 text-white/50 text-[9px] sm:text-[10px] md:text-xs leading-tight text-center group-hover:text-[#FEDD00]/80 transition-colors duration-200">{item.desc}</span>
+            {/* Arrow */}
+            <ChevronRight className="relative z-10 w-3 h-3 text-white/30 group-hover:text-[#FEDD00] group-hover:translate-x-0.5 transition-all duration-200" />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── BatchCountdown: PSA grading batch deadline banner ──────────────────────
+function BatchCountdownBanner() {
+  const { data: nextBatch } = trpc.grading.getNextBatch.useQuery();
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
+
+  useEffect(() => {
+    if (!nextBatch?.cutoffDate) return;
+    const deadline = new Date(nextBatch.cutoffDate).getTime();
+    const tick = () => {
+      const now = Date.now();
+      const diff = deadline - now;
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft({ days, hours, minutes, seconds, expired: false });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [nextBatch?.cutoffDate]);
+
+  if (!nextBatch || timeLeft.expired) return null;
+
+  const isUrgent = timeLeft.days < 3;
+
+  return (
+    <Link href="/grading">
+      <div
+        className="w-full max-w-3xl mx-auto mt-3 md:mt-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl cursor-pointer group transition-all duration-200 hover:brightness-110 select-none"
+        style={{
+          background: isUrgent
+            ? "linear-gradient(135deg, rgba(239,68,68,0.25) 0%, rgba(220,38,38,0.15) 100%)"
+            : "linear-gradient(135deg, rgba(254,221,0,0.18) 0%, rgba(254,221,0,0.08) 100%)",
+          border: isUrgent ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(254,221,0,0.3)",
+        }}
+      >
+        {/* Left: icon + label */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: isUrgent ? "rgba(239,68,68,0.3)" : "rgba(254,221,0,0.2)" }}
+          >
+            {isUrgent ? (
+              <Clock className="w-3.5 h-3.5" style={{ color: isUrgent ? "#fca5a5" : "#FEDD00" }} />
+            ) : (
+              <Award className="w-3.5 h-3.5" style={{ color: "#FEDD00" }} />
+            )}
+          </div>
+          <div>
+            <div className="text-white font-bold text-[11px] sm:text-xs leading-tight">
+              {nextBatch.name} 截止報名
+            </div>
+            <div className="text-white/55 text-[9px] sm:text-[10px] leading-tight">
+              PSA 代客鑑定 · 立即申請
+            </div>
+          </div>
+        </div>
+
+        {/* Center: countdown */}
+        <div className="flex items-center gap-1.5 flex-1 justify-center">
+          {[
+            { val: timeLeft.days, unit: "天" },
+            { val: timeLeft.hours, unit: "時" },
+            { val: timeLeft.minutes, unit: "分" },
+            { val: timeLeft.seconds, unit: "秒" },
+          ].map(({ val, unit }, i) => (
+            <div key={unit} className="flex items-center gap-1">
+              {i > 0 && <span className="text-white/30 text-xs font-bold">:</span>}
+              <div className="flex flex-col items-center">
+                <span
+                  className="font-black text-sm sm:text-base md:text-lg tabular-nums leading-none"
+                  style={{ color: isUrgent ? "#fca5a5" : "#FEDD00" }}
+                >
+                  {String(val).padStart(2, "0")}
+                </span>
+                <span className="text-white/40 text-[8px] sm:text-[9px] leading-tight">{unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right: CTA arrow */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span
+            className="text-[10px] sm:text-xs font-semibold hidden sm:inline"
+            style={{ color: isUrgent ? "#fca5a5" : "#FEDD00" }}
+          >
+            立即申請
+          </span>
+          <ChevronRight
+            className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200"
+            style={{ color: isUrgent ? "#fca5a5" : "#FEDD00" }}
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function Home() {
   const { t } = useTranslation();
   
@@ -509,75 +679,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hero Quick Access — 4 feature cards */}
-            <div className="w-full max-w-3xl pt-2 md:pt-4">
-              <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden border border-white/20 shadow-2xl">
-                {[
-                  {
-                    href: "/research",
-                    emoji: "🔍",
-                    label: "卡牌搜尋",
-                    desc: "55,000+ 張卡牌",
-                    bg: "rgba(255,255,255,0.08)",
-                    hoverBg: "rgba(254,221,0,0.15)",
-                    accent: "#FEDD00",
-                  },
-                  {
-                    href: "/pricing",
-                    emoji: "📈",
-                    label: "市場格價",
-                    desc: "121萬+ 記錄",
-                    bg: "rgba(255,255,255,0.05)",
-                    hoverBg: "rgba(254,221,0,0.12)",
-                    accent: "#FEDD00",
-                  },
-                  {
-                    href: "/grading",
-                    emoji: "🏅",
-                    label: "PSA 鑑定",
-                    desc: "代客鑑定服務",
-                    bg: "rgba(255,255,255,0.08)",
-                    hoverBg: "rgba(254,221,0,0.15)",
-                    accent: "#FEDD00",
-                  },
-                  {
-                    href: "/marketplace",
-                    emoji: "🛒",
-                    label: "市集",
-                    desc: "安全交易",
-                    bg: "rgba(254,221,0,0.12)",
-                    hoverBg: "rgba(254,221,0,0.25)",
-                    accent: "#FEDD00",
-                  },
-                ].map((item, i) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="group relative flex flex-col items-center justify-center gap-1 md:gap-2 py-4 md:py-5 px-1 md:px-3 cursor-pointer transition-all duration-200 select-none"
-                    style={{
-                      background: item.bg,
-                      borderRight: i < 3 ? "1px solid rgba(255,255,255,0.12)" : undefined,
-                    }}
-                  >
-                    {/* Hover overlay */}
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      style={{ background: item.hoverBg }}
-                    />
-                    {/* Bottom accent line */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" style={{ background: item.accent }} />
-                    {/* Emoji icon */}
-                    <span className="relative z-10 text-xl md:text-2xl leading-none group-hover:scale-110 transition-transform duration-200">{item.emoji}</span>
-                    {/* Label */}
-                    <span className="relative z-10 text-white font-bold text-[11px] sm:text-xs md:text-sm leading-tight text-center">{item.label}</span>
-                    {/* Sub-desc */}
-                    <span className="relative z-10 text-white/50 text-[9px] sm:text-[10px] md:text-xs leading-tight text-center group-hover:text-[#FEDD00]/80 transition-colors duration-200">{item.desc}</span>
-                    {/* Arrow */}
-                    <ChevronRight className="relative z-10 w-3 h-3 text-white/30 group-hover:text-[#FEDD00] group-hover:translate-x-0.5 transition-all duration-200" />
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {/* Hero Quick Access — 4 feature cards with staggered entrance animation */}
+            <HeroQuickAccess />
+
+            {/* PSA Grading Batch Countdown Banner */}
+            <BatchCountdownBanner />
           </div>
         </div>
       </section>
