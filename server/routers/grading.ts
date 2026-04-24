@@ -429,7 +429,34 @@ export const gradingRouter = router({
       conditions.push(eq(gradingSubmissions.status, statusFilter as any));
     }
     if (search) {
-      conditions.push(like(gradingSubmissions.orderNo, `%${search}%`));
+      // Search by orderNo OR by cardName in any of the submission's items
+      const matchingSubmissionIds = await db
+        .selectDistinct({ id: gradingSubmissionItems.submissionId })
+        .from(gradingSubmissionItems)
+        .where(
+          and(
+            like(gradingSubmissionItems.cardName, `%${search}%`),
+            // Only look at items belonging to this user's submissions (performance guard)
+            inArray(
+              gradingSubmissionItems.submissionId,
+              db
+                .select({ id: gradingSubmissions.id })
+                .from(gradingSubmissions)
+                .where(eq(gradingSubmissions.userId, ctx.user.id))
+            )
+          )
+        );
+      const cardNameMatchIds = matchingSubmissionIds.map((r) => r.id);
+      if (cardNameMatchIds.length > 0) {
+        conditions.push(
+          or(
+            like(gradingSubmissions.orderNo, `%${search}%`),
+            inArray(gradingSubmissions.id, cardNameMatchIds)
+          ) as any
+        );
+      } else {
+        conditions.push(like(gradingSubmissions.orderNo, `%${search}%`));
+      }
     }
     const whereClause = and(...conditions);
     // Get total count
@@ -1608,7 +1635,7 @@ export const gradingRouter = router({
 
         if (toUpdate.length === 0) return { updated: 0, notified: 0 };
 
-        // Bulk update
+        // Bulk update status
         await db
           .update(gradingSubmissions)
           .set({ status: input.status })
@@ -1621,6 +1648,26 @@ export const gradingRouter = router({
               )
             )
           );
+
+        // Append system note to adminNotesHistory for each updated submission
+        const batchNoteTimestamp = new Date().toISOString();
+        const statusLabel = statusLabels[input.status] ?? input.status;
+        await Promise.all(
+          toUpdate.map(async (row: SubmissionWithUser) => {
+            const existingHistory: Array<{ timestamp: string; note: string; statusAtTime: string }> =
+              row.submission.adminNotesHistory ? JSON.parse(row.submission.adminNotesHistory) : [];
+            const newEntry = {
+              timestamp: batchNoteTimestamp,
+              note: `[系統] 批量更新至「${statusLabel}」`,
+              statusAtTime: input.status,
+            };
+            const updatedHistory = JSON.stringify([...existingHistory, newEntry]);
+            await db
+              .update(gradingSubmissions)
+              .set({ adminNotesHistory: updatedHistory })
+              .where(eq(gradingSubmissions.id, row.submission.id));
+          })
+        );
 
         // Send notifications if requested
         let notified = 0;

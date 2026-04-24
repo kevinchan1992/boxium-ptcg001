@@ -8756,3 +8756,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
   - 全部 14 項測試通過 ✅
 
 - [x] 保存 checkpoint
+
+---
+
+## 🔧 2026-04-24 功能改進（第二批）
+
+- [x] batchUpdateStatus 加入 adminNotesHistory 追加（系統備注「批量更新至 X 狀態」）
+- [x] getMySubmissions 搜尋範圍擴展至卡牌名稱（cardName）
+- [x] 撰寫對應 vitest 測試（grading-batch-search.test.ts，17 項全通過）
+- [x] 保存 checkpoint
