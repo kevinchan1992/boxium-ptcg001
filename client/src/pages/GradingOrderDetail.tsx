@@ -1508,6 +1508,16 @@ export default function GradingOrderDetail() {
             <div className="bg-orange-50 border-2 border-orange-400 rounded-xl p-4 mb-4">
               {!showUpgradeAlipayQR && !upgradeProofSubmitted && (
                 <>
+                  {/* Show rejection reason if upgrade proof was rejected */}
+                  {(submission as any).alipayProofStatus === "rejected" && (submission as any).alipayProofRejectionReason && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 flex items-start gap-2">
+                      <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-red-700">截圖審核未通過，請重新上傳</p>
+                        <p className="text-xs text-red-600 mt-0.5">拒絕原因：{(submission as any).alipayProofRejectionReason}</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-bold text-sm">⇑</span>

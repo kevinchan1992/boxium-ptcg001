@@ -1826,9 +1826,15 @@ function SubmissionManagement() {
                       </span>
                     )}
                     {sub.upgradeCheckoutSessionId && !sub.upgradePaidAt && (
-                      <span className="mt-1 flex items-center justify-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                        ⇑ 待補付
-                      </span>
+                      (sub as any).alipayProofStatus === 'pending_review' ? (
+                        <span className="mt-1 flex items-center justify-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-500 text-white">
+                          ⇑ 差價待審核
+                        </span>
+                      ) : (
+                        <span className="mt-1 flex items-center justify-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                          ⇑ 待補付
+                        </span>
+                      )
                     )}
                   </td>
                   <td className="px-4 py-3">

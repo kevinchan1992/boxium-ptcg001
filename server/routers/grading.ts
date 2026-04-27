@@ -2453,14 +2453,20 @@ export const gradingRouter = router({
       if (submission.alipayProofStatus !== "pending_review") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "截圖狀態不允許拒絕" });
       }
-      // Update proof status to rejected and revert submission status to awaiting_payment
+      // Update proof status to rejected
+      // If this is an upgrade diff payment rejection, preserve the current status (e.g. graded)
+      // Only revert to awaiting_payment for initial payment rejections
+      const isUpgradeRejection = !!(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt;
+      const updateFields: Record<string, unknown> = {
+        alipayProofStatus: "rejected",
+        alipayProofRejectionReason: input.rejectionReason,
+      };
+      if (!isUpgradeRejection) {
+        updateFields.status = "awaiting_payment";
+      }
       await db
         .update(gradingSubmissions)
-        .set({
-          alipayProofStatus: "rejected",
-          alipayProofRejectionReason: input.rejectionReason,
-          status: "awaiting_payment",
-        } as any)
+        .set(updateFields as any)
         .where(eq(gradingSubmissions.id, submission.id));
       // Notify user via in-app notification
       await createNotification({

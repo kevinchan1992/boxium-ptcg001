@@ -469,6 +469,8 @@ async function startServer() {
                       totalFeeHkd: _sql2`${newTotal.toFixed(2)}`,
                       upgradePaidAt: new Date(),
                       upgradeCheckoutSessionId: null,
+                      // Clear alipayProofStatus so Admin proof review card is hidden after Stripe upgrade payment
+                      alipayProofStatus: "approved",
                       // After upgrade payment, status stays 'graded' — Admin will update to 'returned' when shipped back
                       // No status change needed here
                     } as any)
