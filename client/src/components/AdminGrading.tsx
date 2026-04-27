@@ -559,6 +559,25 @@ function SubmissionDetailDialog({
                 <p className="text-xs text-amber-800">客戶尚未填寫收貨地址，請聯絡客戶補填。</p>
               </div>
             )}
+            {/* Return tracking number display (admin view) */}
+            {(detail as any).returnTrackingNo && (
+              <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-green-800">🚚 BOXIUM 寄出追蹤號碼</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-gray-800 text-sm tracking-wider flex-1">{(detail as any).returnTrackingNo}</span>
+                  <a
+                    href={`https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/${(detail as any).returnTrackingNo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-[#e2231a] rounded-md hover:bg-[#c01d15] transition-colors whitespace-nowrap"
+                  >
+                    開啟順豐查詢
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Card list */}
             {(detail.items ?? []).length > 0 && (
@@ -809,12 +828,24 @@ function SubmissionDetailDialog({
               {newStatus === "returned" && (
                 <div className="mt-2">
                   <Label className="text-xs font-semibold text-gray-700 mb-1 block">追蹤號碼</Label>
-                  <Input
-                    value={trackingNo}
-                    onChange={(e) => setTrackingNo(e.target.value)}
-                    placeholder="寄回追蹤號碼"
-                    className="bg-white border-gray-200 text-gray-900"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={trackingNo}
+                      onChange={(e) => setTrackingNo(e.target.value)}
+                      placeholder="寄回追蹤號碼"
+                      className="bg-white border-gray-200 text-gray-900 flex-1"
+                    />
+                    {trackingNo && (
+                      <a
+                        href={`https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/${trackingNo}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-3 py-2 text-xs font-semibold text-white bg-[#e2231a] rounded-md hover:bg-[#c01d15] transition-colors whitespace-nowrap"
+                      >
+                        開啟順豐
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
               <Button
@@ -2457,6 +2488,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
   const { data: gradedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "graded", page: 1, pageSize: 500 });
   const { data: overdueData } = trpc.grading.admin.listSubmissions.useQuery({ status: "payment_overdue", page: 1, pageSize: 500 });
   const { data: completedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "completed", page: 1, pageSize: 500 });
+  const { data: returnedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "returned", page: 1, pageSize: 500 });
 
   const pendingReview = pendingReviewData?.submissions ?? [];
   const pendingShipment = pendingShipmentData?.submissions ?? [];
@@ -2464,11 +2496,17 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
   const graded = gradedData?.submissions ?? [];
   const overdue = overdueData?.submissions ?? [];
   const completed = completedData?.submissions ?? [];
+  const returned = returnedData?.submissions ?? [];
 
-  const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...completed];
+  const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...completed, ...returned];
   const UNPAID_STATUSES_DASH = ["awaiting_payment", "pending_review", "cancelled"];
+  // confirmedRevenue: paid statuses only; for 'graded' (post-payment), only count if paidAt is set
   const confirmedRevenue = allActive
-    .filter((s: any) => !UNPAID_STATUSES_DASH.includes(s.status))
+    .filter((s: any) => {
+      if (UNPAID_STATUSES_DASH.includes(s.status)) return false;
+      if (s.status === 'graded' && !(s as any).paidAt) return false; // post-grading payment not yet received
+      return true;
+    })
     .reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
   const totalRevenue = allActive.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
 
@@ -2518,7 +2556,11 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
         <div className="bg-[#06038d] text-white rounded-xl p-5">
           <p className="text-xs text-white/70 mb-1">已確認收款</p>
           <p className="text-3xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
-          <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => !UNPAID_STATUSES_DASH.includes(s.status)).length} 筆已確認</p>
+          <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => {
+            if (UNPAID_STATUSES_DASH.includes(s.status)) return false;
+            if (s.status === 'graded' && !(s as any).paidAt) return false;
+            return true;
+          }).length} 筆已確認</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-xs text-gray-500 mb-1">待確認收益</p>

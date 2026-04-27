@@ -8860,3 +8860,15 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ## 🔧 Admin 寄回追蹤號碼顯示修復（2026-04-27）
 - [x] GradingOrderDetail.tsx：在 returned/completed 狀態下顯示 returnTrackingNo 追蹤號碼卡片
 - [x] 追蹤號碼卡片應在「差價已確認，等待 BOXIUM 寄回」卡片之後顯示
+
+---
+
+## ✅ 修復 PSA 鑑定收益統計 + 順豐追蹤連結
+
+- [x] 月度趨勢圖修復：getSalesReport 改為合併 marketplace + grading 月份（grading-only 月份現在也會顯示在圖表中）
+- [x] 儀表板修復：DashboardTab 加入 returned 狀態查詢，confirmedRevenue 正確計算（含 returned 訂單，排除 graded 未付款）
+- [x] Admin 端：追蹤號碼輸入欄位旁加入「開啟順豐」按鈕（輸入號碼後顯示）
+- [x] Admin 端：訂單詳情中加入「BOXIUM 寄出追蹤號碼」顯示卡片（含「開啟順豐查詢」按鈕）
+- [x] 用戶端：GradingOrderDetail.tsx 追蹤號碼卡片加入「順豐查詢」紅色按鈕（一鍵跳轉順豐官網）
+- [x] TypeScript 0 errors 確認
+- [x] 保存 checkpoint

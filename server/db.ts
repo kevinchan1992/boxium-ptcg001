@@ -4502,21 +4502,33 @@ export async function getSalesReport(months: number = 12) {
   const paidOutHkd = parseFloat(payoutStats?.paidOutAmount ?? '0');
   const pendingPayoutHkd = parseFloat(payoutStats?.pendingPayoutAmount ?? '0');
 
+  // Build a unified monthly set: union of marketplace months + grading months
+  // This ensures grading-only months (no marketplace orders) still appear in the chart
+  const allMonthKeys = new Set<string>();
+  for (const r of monthlyRows) { if (r.yearMonth) allMonthKeys.add(r.yearMonth); }
+  for (const k of Array.from(gradingMonthlyMap.keys())) { allMonthKeys.add(k); }
+  // Build a map from marketplace rows for quick lookup
+  const marketplaceMonthlyMap = new Map<string, typeof monthlyRows[0]>();
+  for (const r of monthlyRows) { if (r.yearMonth) marketplaceMonthlyMap.set(r.yearMonth, r); }
+  // Sort all months descending, limit to requested months
+  const sortedMonthKeys = Array.from(allMonthKeys).sort((a, b) => b.localeCompare(a)).slice(0, months);
+
   return {
-    monthly: monthlyRows.map(r => {
-      const refund = refundMap.get(r.yearMonth) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
-      const grading = gradingMonthlyMap.get(r.yearMonth) ?? { gradingRevenue: 0, gradingCount: 0, upgradeRevenue: 0, upgradeCount: 0 };
-      const salesHkd = parseFloat(r.totalSales ?? '0');
-      const feesHkd = parseFloat(r.sellerFees ?? '0');
-      const platSalesHkd = parseFloat(r.platformSales ?? '0');
+    monthly: sortedMonthKeys.map(ym => {
+      const r = marketplaceMonthlyMap.get(ym);
+      const refund = refundMap.get(ym) ?? { refundedCount: 0, cancelledCount: 0, refundedAmountHkd: 0 };
+      const grading = gradingMonthlyMap.get(ym) ?? { gradingRevenue: 0, gradingCount: 0, upgradeRevenue: 0, upgradeCount: 0 };
+      const salesHkd = parseFloat(r?.totalSales ?? '0');
+      const feesHkd = parseFloat(r?.sellerFees ?? '0');
+      const platSalesHkd = parseFloat(r?.platformSales ?? '0');
       return {
-        yearMonth: r.yearMonth,
+        yearMonth: ym,
         totalSalesHkd: salesHkd,
-        orderCount: Number(r.orderCount ?? 0),
-        stripeCount: Number(r.stripeCount ?? 0),
-        alipayCount: Number(r.alipayCount ?? 0),
+        orderCount: Number(r?.orderCount ?? 0),
+        stripeCount: Number(r?.stripeCount ?? 0),
+        alipayCount: Number(r?.alipayCount ?? 0),
         platformSalesHkd: platSalesHkd,
-        sellerSalesHkd: parseFloat(r.sellerSales ?? '0'),
+        sellerSalesHkd: parseFloat(r?.sellerSales ?? '0'),
         sellerFeesHkd: feesHkd,
         platformIncomeHkd: platSalesHkd + feesHkd + grading.gradingRevenue,
         gradingRevenueHkd: grading.gradingRevenue,
@@ -4528,12 +4540,12 @@ export async function getSalesReport(months: number = 12) {
         refundedAmountHkd: refund.refundedAmountHkd,
         netRevenueHkd: salesHkd - refund.refundedAmountHkd,
         // Auction vs Direct breakdown
-        auctionSalesHkd: parseFloat(r.auctionSales ?? '0'),
-        auctionCount: Number(r.auctionCount ?? 0),
-        auctionPlatformSalesHkd: parseFloat(r.auctionPlatformSales ?? '0'),
-        auctionSellerFeesHkd: parseFloat(r.auctionSellerFees ?? '0'),
-        directSalesHkd: parseFloat(r.directSales ?? '0'),
-        directCount: Number(r.directCount ?? 0),
+        auctionSalesHkd: parseFloat(r?.auctionSales ?? '0'),
+        auctionCount: Number(r?.auctionCount ?? 0),
+        auctionPlatformSalesHkd: parseFloat(r?.auctionPlatformSales ?? '0'),
+        auctionSellerFeesHkd: parseFloat(r?.auctionSellerFees ?? '0'),
+        directSalesHkd: parseFloat(r?.directSales ?? '0'),
+        directCount: Number(r?.directCount ?? 0),
       };
     }),
     overall: {

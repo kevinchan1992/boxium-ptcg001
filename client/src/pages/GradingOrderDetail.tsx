@@ -2015,15 +2015,25 @@ export default function GradingOrderDetail() {
               </p>
               <div className="bg-white border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
                 <span className="font-mono font-bold text-gray-800 text-base tracking-wider">{(submission as any).returnTrackingNo}</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText((submission as any).returnTrackingNo);
-                    toast.success("追蹤號碼已複製");
-                  }}
-                  className="text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-100 transition-colors whitespace-nowrap"
-                >
-                  複製
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText((submission as any).returnTrackingNo);
+                      toast.success("追蹤號碼已複製");
+                    }}
+                    className="text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-100 transition-colors whitespace-nowrap"
+                  >
+                    複製
+                  </button>
+                  <a
+                    href={`https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/${(submission as any).returnTrackingNo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-white bg-[#e2231a] rounded px-2 py-1 hover:bg-[#c01d15] transition-colors whitespace-nowrap"
+                  >
+                    順豐查詢
+                  </a>
+                </div>
               </div>
               <p className="text-xs text-green-600 mt-2">⚡ 順豐速遞到付，請準備好運費收取包裹。</p>
             </div>
