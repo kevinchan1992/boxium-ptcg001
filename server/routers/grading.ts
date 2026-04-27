@@ -2360,7 +2360,7 @@ export const gradingRouter = router({
         .set({
           trackingNumber: input.trackingNumber.trim(),
           trackingSubmittedAt: new Date(),
-          status: "received",  // 自動更新為「待 BOXIUM 收件」狀態
+          // Status remains "pending_shipment" — Admin must confirm receipt to move to "received"
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
       // Notify admin
