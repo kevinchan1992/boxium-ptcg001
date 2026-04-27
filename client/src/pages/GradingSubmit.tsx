@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { toast } from "sonner";
+import { SF_STATIONS } from "@/lib/sfStations";
+import { SF_LOCKERS } from "@/lib/sfLockers";
 import {
   Plus,
   Trash2,
@@ -25,6 +27,9 @@ import {
   MapPin,
   Home,
   PlusCircle,
+  Truck,
+  Save,
+  ExternalLink,
 } from "lucide-react";
 // ─── Types ─────────────────────────────────────────────────────────────────────────────
 interface GradingItem {
@@ -470,6 +475,11 @@ export default function GradingSubmit() {
     district: '',
     region: '香港',
   });
+  // SF station mode for manual input
+  const [manualInputType, setManualInputType] = useState<'normal' | 'sf_station'>('normal');
+  const [sfStationSearch, setSfStationSearch] = useState('');
+  const [selectedSfStation, setSelectedSfStation] = useState<{ code: string; name: string; district: string; address: string; region: string } | null>(null);
+  const [saveToProfile, setSaveToProfile] = useState(false);
 
   // Auto-select first saved address when loaded
   useEffect(() => {
@@ -548,7 +558,15 @@ export default function GradingSubmit() {
     },
   });
 
-  const submitMutation = checkoutMutation;
+   const submitMutation = checkoutMutation;
+
+  // ── Save address to profile ──
+  const addShippingAddressMutation = trpc.marketplace.addShippingAddress.useMutation({
+    onSuccess: () => {
+      toast.success("地址已儲存到個人中心");
+    },
+    onError: () => { /* silent fail */ },
+  });
 
   // ── Item management ──
   const addItem = () => {
@@ -629,17 +647,61 @@ export default function GradingSubmit() {
         } as any;
       }
     } else if (returnAddressMode === 'manual') {
-      if (!manualReturnAddress.recipientName.trim() || !manualReturnAddress.phone.trim() || !manualReturnAddress.address.trim()) {
-        toast.error("請完整填寫收貨地址資料（姓名、電話、地址）");
+      if (!manualReturnAddress.recipientName.trim() || !manualReturnAddress.phone.trim()) {
+        toast.error("請填寫收件人姓名和電話");
         return;
       }
-      returnAddress = {
-        recipientName: manualReturnAddress.recipientName.trim(),
-        phone: manualReturnAddress.phone.trim(),
-        address: manualReturnAddress.address.trim(),
-        district: manualReturnAddress.district.trim() || undefined,
-        region: manualReturnAddress.region || '香港',
-      };
+      if (manualInputType === 'sf_station') {
+        if (!selectedSfStation) {
+          toast.error("請選擇順豐自提站");
+          return;
+        }
+        returnAddress = {
+          recipientName: manualReturnAddress.recipientName.trim(),
+          phone: manualReturnAddress.phone.trim(),
+          address: selectedSfStation.address,
+          district: selectedSfStation.district,
+          region: selectedSfStation.region,
+          sfStationCode: selectedSfStation.code,
+          sfStationName: selectedSfStation.name,
+        } as any;
+        // Save to profile if requested
+        if (saveToProfile) {
+          addShippingAddressMutation.mutate({
+            addressType: 'sf_station',
+            recipientName: manualReturnAddress.recipientName.trim(),
+            phone: manualReturnAddress.phone.trim(),
+            address: selectedSfStation.address,
+            district: selectedSfStation.district,
+            region: selectedSfStation.region,
+            sfStationCode: selectedSfStation.code,
+            sfStationName: selectedSfStation.name,
+          });
+        }
+      } else {
+        if (!manualReturnAddress.address.trim()) {
+          toast.error("請填寫詳細地址");
+          return;
+        }
+        returnAddress = {
+          recipientName: manualReturnAddress.recipientName.trim(),
+          phone: manualReturnAddress.phone.trim(),
+          address: manualReturnAddress.address.trim(),
+          district: manualReturnAddress.district.trim() || undefined,
+          region: manualReturnAddress.region || '香港',
+        };
+        // Save to profile if requested
+        if (saveToProfile) {
+          addShippingAddressMutation.mutate({
+            addressType: 'normal',
+            recipientName: manualReturnAddress.recipientName.trim(),
+            phone: manualReturnAddress.phone.trim(),
+            address: manualReturnAddress.address.trim(),
+            district: manualReturnAddress.district.trim() || undefined,
+            region: manualReturnAddress.region || '香港',
+          });
+        }
+      }
     }
     // Expand items by quantity: each item with qty=3 becomes 3 separate submission items
     const expandedItems = items.flatMap((item: GradingItem) => {
@@ -1005,10 +1067,36 @@ export default function GradingSubmit() {
               <div className="bg-[#06038d] text-white px-5 py-3 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 <span className="font-bold">客戶收貨地址</span>
-                <span className="text-blue-200 text-xs ml-1">（鑑定完成後，BOXIUM 將把卡牌寄回此地址）</span>
+                <span className="text-blue-200 text-xs ml-1 hidden sm:inline">（鑑定完成後回寄）</span>
+                <span className="ml-auto flex items-center gap-1 text-xs bg-orange-400 text-white font-bold px-2 py-0.5 rounded-full">
+                  <Truck className="h-3 w-3" />順豐到付
+                </span>
               </div>
+
+              {/* SF Express freight-collect notice */}
+              <div className="bg-orange-50 border-b border-orange-100 px-4 py-2.5 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-orange-700">
+                  <span className="font-bold">順豐到付：</span>所有回寄貨物均以順豐到付方式寄出，達付時預計進行收貨。如選擇順豐自提站，請確保站點已開放接件。
+                </p>
+              </div>
+
               <div className="p-4">
-                {/* Mode toggle */}
+                {/* No saved address — prominent prompt */}
+                {savedAddresses && savedAddresses.length === 0 && (
+                  <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-amber-800">
+                      <p className="font-bold mb-0.5">您尚未儲存任何收貨地址</p>
+                      <p>請在下方填寫收貨地址，或先前往
+                        <a href="/profile" target="_blank" className="underline font-semibold mx-1 inline-flex items-center gap-0.5">個人中心<ExternalLink className="h-3 w-3" /></a>
+                        儲存常用地址。
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mode toggle — only show if have saved addresses */}
                 {savedAddresses && savedAddresses.length > 0 && (
                   <div className="flex gap-2 mb-4">
                     <button
@@ -1021,7 +1109,7 @@ export default function GradingSubmit() {
                       }`}
                     >
                       <Home className="h-4 w-4" />
-                      使用已儲存地址
+                      已儲存地址
                     </button>
                     <button
                       type="button"
@@ -1033,7 +1121,7 @@ export default function GradingSubmit() {
                       }`}
                     >
                       <PlusCircle className="h-4 w-4" />
-                      手動輸入新地址
+                      輸入新地址
                     </button>
                   </div>
                 )}
@@ -1083,7 +1171,7 @@ export default function GradingSubmit() {
                       onClick={() => setReturnAddressMode('manual')}
                       className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-[#06038d] hover:underline"
                     >
-                      <PlusCircle className="h-4 w-4" />
+                      <PlusCircle className="h-3.5 w-3.5" />
                       使用其他地址
                     </button>
                   </div>
@@ -1092,9 +1180,7 @@ export default function GradingSubmit() {
                 {/* Manual input */}
                 {(returnAddressMode === 'manual' || !savedAddresses || savedAddresses.length === 0) && (
                   <div className="space-y-3">
-                    {savedAddresses && savedAddresses.length === 0 && (
-                      <p className="text-xs text-gray-500 mb-2">您尚未儲存任何地址，請填寫收貨地址。您可在個人中心儲存常用地址。</p>
-                    )}
+                    {/* Recipient name + phone */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">收件人姓名 <span className="text-red-500">*</span></label>
@@ -1115,35 +1201,142 @@ export default function GradingSubmit() {
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">詳細地址 <span className="text-red-500">*</span></label>
-                      <Input
-                        value={manualReturnAddress.address}
-                        onChange={(e) => setManualReturnAddress(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="例：九龍旺角彌敦道 123 號 XX 大廈 5 樓 A 室"
-                        className="text-sm"
+
+                    {/* Address type toggle */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setManualInputType('normal'); setSelectedSfStation(null); }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all ${
+                          manualInputType === 'normal'
+                            ? 'border-[#06038d] bg-[#06038d]/5 text-[#06038d]'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        <MapPin className="h-3.5 w-3.5" />一般地址
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setManualInputType('sf_station')}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all ${
+                          manualInputType === 'sf_station'
+                            ? 'border-orange-400 bg-orange-50 text-orange-700'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        <Truck className="h-3.5 w-3.5" />順豐自提站
+                      </button>
+                    </div>
+
+                    {/* Normal address fields */}
+                    {manualInputType === 'normal' && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">詳細地址 <span className="text-red-500">*</span></label>
+                          <Input
+                            value={manualReturnAddress.address}
+                            onChange={(e) => setManualReturnAddress(prev => ({ ...prev, address: e.target.value }))}
+                            placeholder="例：九龍旺角彌敦道 123 號 XX 大廈 5 樓 A 室"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">地區</label>
+                            <Input
+                              value={manualReturnAddress.district}
+                              onChange={(e) => setManualReturnAddress(prev => ({ ...prev, district: e.target.value }))}
+                              placeholder="例：旺角"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">城市</label>
+                            <Input
+                              value={manualReturnAddress.region}
+                              onChange={(e) => setManualReturnAddress(prev => ({ ...prev, region: e.target.value }))}
+                              placeholder="香港"
+                              className="text-sm"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* SF Station picker */}
+                    {manualInputType === 'sf_station' && (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-gray-700">搜尋順豐自提站 <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            value={sfStationSearch}
+                            onChange={(e) => { setSfStationSearch(e.target.value); setSelectedSfStation(null); }}
+                            placeholder="輸入站點名稱或地區，如：旺角、屬山、852FTL"
+                            className="pl-9 text-sm"
+                          />
+                        </div>
+                        {selectedSfStation ? (
+                          <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <Truck className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900">{selectedSfStation.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{selectedSfStation.address}</p>
+                              <p className="text-xs text-orange-600 font-mono">{selectedSfStation.code}</p>
+                            </div>
+                            <button type="button" onClick={() => { setSelectedSfStation(null); setSfStationSearch(''); }} className="text-gray-400 hover:text-gray-600">
+                              <span className="text-lg leading-none">×</span>
+                            </button>
+                          </div>
+                        ) : sfStationSearch.length >= 1 ? (
+                          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                            {(() => {
+                              const q = sfStationSearch.toLowerCase();
+                              const allStations = [...SF_STATIONS, ...SF_LOCKERS];
+                              const filtered = allStations.filter(s =>
+                                s.name.toLowerCase().includes(q) ||
+                                s.district.toLowerCase().includes(q) ||
+                                s.code.toLowerCase().includes(q) ||
+                                s.address.toLowerCase().includes(q)
+                              ).slice(0, 20);
+                              if (filtered.length === 0) return (
+                                <p className="text-xs text-gray-500 text-center py-4">找不到符合的站點</p>
+                              );
+                              return filtered.map(s => (
+                                <button
+                                  key={s.code}
+                                  type="button"
+                                  onClick={() => { setSelectedSfStation(s); setSfStationSearch(s.name); }}
+                                  className="w-full flex items-start gap-2 px-3 py-2.5 hover:bg-orange-50 text-left border-b border-gray-100 last:border-0"
+                                >
+                                  <Truck className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                                    <p className="text-xs text-gray-500 truncate">{s.address}</p>
+                                    <span className="text-xs text-orange-600 font-mono">{s.code}</span>
+                                  </div>
+                                </button>
+                              ));
+                            })()}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {/* Save to profile checkbox */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none mt-1">
+                      <input
+                        type="checkbox"
+                        checked={saveToProfile}
+                        onChange={(e) => setSaveToProfile(e.target.checked)}
+                        className="accent-[#06038d] w-4 h-4"
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">地區</label>
-                        <Input
-                          value={manualReturnAddress.district}
-                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, district: e.target.value }))}
-                          placeholder="例：旺角"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">城市</label>
-                        <Input
-                          value={manualReturnAddress.region}
-                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, region: e.target.value }))}
-                          placeholder="香港"
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
+                      <span className="text-xs text-gray-600 flex items-center gap-1">
+                        <Save className="h-3.5 w-3.5" />
+                        儲存此地址到個人中心，方便下次使用
+                      </span>
+                    </label>
+
                     {savedAddresses && savedAddresses.length > 0 && (
                       <button
                         type="button"

@@ -8802,3 +8802,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 修復鑑定結果摘要區域的 psaCertNo → psaCertNumber
 - [x] TypeScript 0 errors 確認
 - [x] 儲存 checkpoint
+
+---
+
+## ✅ 收貨地址功能擴充（完成）
+
+- [x] Admin 後台申請詳情頁加入客戶收貨地址卡片（含順豐到付提示）
+- [x] STEP 3 加入無地址提示及儲存到個人中心功能
+- [x] STEP 3 手動輸入支援順豐自提站選擇
+- [x] 所有收貨地址相關 UI 加入「順豐到付」提示
+- [x] GradingOrderDetail 申請詳情頁加入順豐到付提示

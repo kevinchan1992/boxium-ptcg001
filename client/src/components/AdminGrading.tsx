@@ -57,6 +57,7 @@ import {
   Star,
   EyeOff,
   MessageSquare,
+  MapPin,
 } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -513,6 +514,51 @@ function SubmissionDetailDialog({
                 )}
               </div>
             </div>
+
+            {/* Customer Return Address */}
+            {(detail as any).returnAddress && (
+              <div className="rounded-xl border border-green-200 overflow-hidden">
+                <div className="bg-green-700 px-4 py-2.5 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-white" />
+                  <span className="text-xs font-bold text-white">客戶收貨地址（鑑定完成後回寄）</span>
+                  <span className="ml-auto text-xs bg-orange-400 text-white font-bold px-2 py-0.5 rounded-full">順豐到付</span>
+                </div>
+                <div className="bg-white p-4">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500 text-xs">收件人</span>
+                      <p className="font-semibold text-gray-900">{(detail as any).returnAddress.recipientName}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">聯絡電話</span>
+                      <p className="font-semibold text-gray-900">{(detail as any).returnAddress.phone}</p>
+                    </div>
+                    {(detail as any).returnAddress.sfStationName ? (
+                      <div className="col-span-2">
+                        <span className="text-gray-500 text-xs">順豐自提站</span>
+                        <p className="font-semibold text-gray-900">
+                          <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded mr-1">順豐站</span>
+                          {(detail as any).returnAddress.sfStationCode} · {(detail as any).returnAddress.sfStationName}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="col-span-2">
+                        <span className="text-gray-500 text-xs">地址</span>
+                        <p className="font-semibold text-gray-900">
+                          {[(detail as any).returnAddress.district, (detail as any).returnAddress.region, (detail as any).returnAddress.address].filter(Boolean).join(' ')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {!(detail as any).returnAddress && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                <p className="text-xs text-amber-800">客戶尚未填寫收貨地址，請聯絡客戶補填。</p>
+              </div>
+            )}
 
             {/* Card list */}
             {(detail.items ?? []).length > 0 && (
