@@ -739,6 +739,9 @@ export const gradingRouter = router({
       const fileKey = `grading-alipay-proof/${submission.orderNo}-${Date.now()}.${ext}`;
       const { url } = await storagePut(fileKey, buffer, input.mimeType);
 
+      // Determine if this is an upgrade diff payment or initial payment
+      const isUpgradeDiffPayment = !!(submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt;
+
       await db
         .update(gradingSubmissions)
         .set({
@@ -746,8 +749,9 @@ export const gradingRouter = router({
           alipayProofSubmittedAt: new Date(),
           alipayProofStatus: "pending_review",
           paymentMethod: "alipay_hk",
-          // 提交截圖後主狀態改為 pending_review（等待管理員審核）
-          status: "pending_review",
+          // 升級差價截圖：保留原狀態（graded 等），不改為 pending_review
+          // 初始付款截圖：才改為 pending_review
+          ...(isUpgradeDiffPayment ? {} : { status: "pending_review" }),
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
 

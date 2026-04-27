@@ -8847,3 +8847,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ## 🔧 費用摘要分拆計算說明（2026-04-27）
 - [x] 卡版清單底部費用摘要：有升級差價時，顯示「初始代送費用 + 升級差價 = 費用合計」分拆說明
 - [x] 有 paidAt（已付款）時，在費用旁顯示「✓ 已付」綠色標記
+---
+## 🔧 升級差價支付寶 HK 截圖提交流程修復（2026-04-27）
+- [x] submitAlipayProof：升級差價截圖提交時，status 不改為 pending_review，保留原狀態（只更新 alipayProofStatus）
+- [x] 前端截圖待審核卡片：升級差價截圖提交後，status 不再是 pending_review，不會觸發 isAlipayPendingReview 卡片
+- [x] upgradeProofSubmitted 條件保留正確：upgradeCheckoutSessionId + !upgradePaidAt + alipayProofStatus=pending_review
