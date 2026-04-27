@@ -149,7 +149,8 @@ export const gradingRouter = router({
         returnAddress: z.object({
           recipientName: z.string().min(1),
           phone: z.string().min(1),
-          address: z.string().min(1),
+          // address can be empty when sfStationCode is provided (SF station pickup mode)
+          address: z.string().default(""),
           district: z.string().optional(),
           region: z.string().default("香港"),
           sfStationCode: z.string().optional(),
@@ -290,7 +291,8 @@ export const gradingRouter = router({
         returnAddress: z.object({
           recipientName: z.string().min(1),
           phone: z.string().min(1),
-          address: z.string().min(1),
+          // address can be empty when sfStationCode is provided (SF station pickup mode)
+          address: z.string().default(""),
           district: z.string().optional(),
           region: z.string().default("香港"),
           sfStationCode: z.string().optional(),
