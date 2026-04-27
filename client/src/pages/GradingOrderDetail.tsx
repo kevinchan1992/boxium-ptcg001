@@ -1391,7 +1391,7 @@ export default function GradingOrderDetail() {
                           value={trackingInput}
                           onChange={(e) => setTrackingInput(e.target.value)}
                           placeholder="輸入順豐追蹤號碼（如：SF1234567890HK）"
-                          className="flex-1 text-sm border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                          className="flex-1 text-sm border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white text-black"
                           disabled={trackingSubmitting}
                         />
                         <Button
