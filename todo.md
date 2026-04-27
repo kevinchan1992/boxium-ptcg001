@@ -8856,3 +8856,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ## 🔧 Admin 升級差價按鈕顯示條件修復（2026-04-27）
 - [x] AdminGrading.tsx：「確認升級差價已收到」和「拒絕截圖」按鈕只在 alipayProofStatus === "pending_review" 時顯示
 - [x] 未上傳截圖時，顯示「等待客人提交支付寶 HK 補付截圖或選擇 Stripe 付款…」提示文字
+---
+## 🔧 Admin 寄回追蹤號碼顯示修復（2026-04-27）
+- [x] GradingOrderDetail.tsx：在 returned/completed 狀態下顯示 returnTrackingNo 追蹤號碼卡片
+- [x] 追蹤號碼卡片應在「差價已確認，等待 BOXIUM 寄回」卡片之後顯示

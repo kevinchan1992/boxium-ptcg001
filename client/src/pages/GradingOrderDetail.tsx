@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   ShieldQuestion,
   Star,
+  Truck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -2002,6 +2003,31 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
+          {/* Return tracking number card */}
+          {(submission as any).returnTrackingNo && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Truck className="h-5 w-5 text-green-600" />
+                <p className="font-bold text-green-800">BOXIUM 已寄出，追蹤號碼</p>
+              </div>
+              <p className="text-sm text-green-700 mb-3">
+                您的卡牌已由 BOXIUM 寄出，請使用以下追蹤號碼查詢包裹狀態。
+              </p>
+              <div className="bg-white border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+                <span className="font-mono font-bold text-gray-800 text-base tracking-wider">{(submission as any).returnTrackingNo}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText((submission as any).returnTrackingNo);
+                    toast.success("追蹤號碼已複製");
+                  }}
+                  className="text-xs text-green-700 border border-green-300 rounded px-2 py-1 hover:bg-green-100 transition-colors whitespace-nowrap"
+                >
+                  複製
+                </button>
+              </div>
+              <p className="text-xs text-green-600 mt-2">⚡ 順豐速遞到付，請準備好運費收取包裹。</p>
+            </div>
+          )}
           {/* Return Address display card */}
           {(submission as any).returnAddress && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
