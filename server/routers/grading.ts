@@ -2536,9 +2536,17 @@ export const gradingRouter = router({
         .limit(1);
       if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
       // Admin can force-approve regardless of current alipayProofStatus
+      // If the submission is in 'graded' status, this is a post-grading payment (pay-after-grading flow)
+      // In that case, approve -> completed; otherwise (awaiting_payment), approve -> pending_shipment
+      const newStatus = submission.status === "graded" ? "completed" : "pending_shipment";
+      const extraFields: Record<string, any> = { alipayProofStatus: "approved", status: newStatus };
+      if (submission.status === "graded") {
+        extraFields.paidAt = new Date();
+        extraFields.paymentMethod = "alipay";
+      }
       await db
         .update(gradingSubmissions)
-        .set({ alipayProofStatus: "approved", status: "pending_shipment" } as any)
+        .set(extraFields as any)
         .where(eq(gradingSubmissions.id, submission.id));
 
       // In-app notification

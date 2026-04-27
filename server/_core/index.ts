@@ -496,6 +496,49 @@ async function startServer() {
           }
           return res.json({ received: true });
         }
+        // Handle grading post-payment (pay-after-grading flow)
+        if (gradingMetaType === "grading_payment") {
+          const submissionId = session.metadata?.submission_id;
+          const gradingOrderNo = session.metadata?.order_no;
+          console.log(`[Webhook] grading_payment: submissionId=${submissionId}, orderNo=${gradingOrderNo}`);
+          if (submissionId) {
+            try {
+              const { getDb: _gDb3 } = await import("../db");
+              const { gradingSubmissions: _gSubs3 } = await import("../../drizzle/schema_new");
+              const { eq: _geq3 } = await import("drizzle-orm");
+              const _gdb3 = await _gDb3();
+              if (_gdb3) {
+                const [sub3] = await _gdb3.select().from(_gSubs3).where(_geq3(_gSubs3.id, parseInt(submissionId))).limit(1);
+                if (sub3 && (sub3.status === "graded" || sub3.status === "payment_overdue")) {
+                  await _gdb3.update(_gSubs3)
+                    .set({
+                      status: "completed",
+                      paymentMethod: "stripe",
+                      stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : session.id,
+                      paidAt: new Date(),
+                    } as any)
+                    .where(_geq3(_gSubs3.id, parseInt(submissionId)));
+                  console.log(`[Webhook] Grading post-payment #${submissionId} (${gradingOrderNo}): graded -> completed`);
+                  const userId = parseInt(session.metadata?.user_id ?? "0");
+                  if (userId) {
+                    await createNotification({
+                      userId,
+                      type: "system",
+                      title: "PSA 鑑定費用已收到 ✅",
+                      body: `申請單 ${gradingOrderNo} 的費用已收到，BOXIUM 將安排寄回您的卡牌。`,
+                      linkUrl: `/grading/orders/${submissionId}`,
+                    }).catch(() => {});
+                  }
+                } else {
+                  console.log(`[Webhook] Grading post-payment #${submissionId} status=${sub3?.status}, skipping`);
+                }
+              }
+            } catch (gradingPostPayErr: any) {
+              console.error(`[Webhook] Grading post-payment processing error:`, gradingPostPayErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
 
         let order: any = null;
         if (orderId) {

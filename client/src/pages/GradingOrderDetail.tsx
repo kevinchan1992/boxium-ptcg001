@@ -1678,7 +1678,7 @@ export default function GradingOrderDetail() {
           )}
 
           {/* Grading results + payment - only show if upgrade diff is NOT yet paid */}
-          {isGraded && !((submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt) && !(submission as any).upgradePaidAt && (
+          {isGraded && !((submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt) && !(submission as any).upgradePaidAt && !(submission as any).paidAt && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />

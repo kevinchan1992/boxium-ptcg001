@@ -8822,3 +8822,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 新增「差價已確認，等待 BOXIUM 寄回」區塊（isGraded && upgradePaidAt）
 - [x] TypeScript 0 errors 確認
 - [x] 儲存 checkpoint
+---
+## ✅ 後付款流程修復（2026-04-27）
+- [x] Stripe webhook 加入 `grading_payment` 後付款處理邏輯（`graded`/`payment_overdue` → `completed`，設置 `paidAt`）
+- [x] 前端 GradingOrderDetail.tsx 付款卡片條件加入 `!(submission as any).paidAt` 檢查，避免已付款後仍顯示「鑑定完成！請完成付款」卡片
+- [x] 後端 `adminApproveGradingAlipayProof`：當申請狀態為 `graded` 時（後付款流程），確認截圖後更新狀態為 `completed`（並設置 `paidAt` 和 `paymentMethod`），而非 `pending_shipment`
+- [x] TypeScript 0 errors 確認
+- [x] 儲存 checkpoint
