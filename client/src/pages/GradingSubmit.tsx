@@ -541,9 +541,12 @@ export default function GradingSubmit() {
     setStep(2);
   };
 
+  const utils = trpc.useUtils();
   const checkoutMutation = trpc.grading.submitApplication.useMutation({
     onSuccess: (data: any) => {
       clearDraft(userId);
+      // Invalidate grading list so GradingOrders page shows the new submission immediately
+      utils.grading.getMySubmissions.invalidate();
       setSubmittedData({
         submissionId: data.submissionId,
         orderNo: data.orderNo,

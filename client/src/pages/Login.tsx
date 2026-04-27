@@ -15,6 +15,19 @@ const IS_DEV = import.meta.env.DEV;
 export default function Login() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  // ── Redirect already-logged-in users away from /login ──
+  const { data: currentUser, isLoading: authLoading } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    staleTime: 0, // always check fresh auth state on login page
+  });
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      // User is already logged in, redirect to home or returnTo param
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo") || "/";
+      setLocation(returnTo);
+    }
+  }, [currentUser, authLoading, setLocation]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

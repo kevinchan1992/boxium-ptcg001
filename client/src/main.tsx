@@ -53,10 +53,11 @@ if (sentryDsn) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache auth.me and other queries for 5 minutes to avoid rate limiting
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      // Disable refetch on window focus to reduce unnecessary requests
-      refetchOnWindowFocus: false,
+      // Short stale time so data refreshes quickly after mutations or navigation.
+      // Individual queries can override this with their own staleTime if needed.
+      staleTime: 30 * 1000, // 30 seconds
+      // Refetch when user returns to the tab so stale data is updated automatically
+      refetchOnWindowFocus: true,
       // Retry failed requests only once
       retry: 1,
     },
