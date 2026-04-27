@@ -875,9 +875,9 @@ async function startServer() {
     res.json({ received: true });
   });
 
-  // Configure body parser — 2MB for JSON (upload routes use multipart, not JSON)
-  app.use(express.json({ limit: "2mb" }));
-  app.use(express.urlencoded({ limit: "2mb", extended: true }));
+  // Configure body parser — 10MB for JSON (base64 image uploads for Alipay proof)
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ limit: "10mb", extended: true }));
   // Manus OAuth removed
   
   // Google OAuth routes — apply auth rate limiter

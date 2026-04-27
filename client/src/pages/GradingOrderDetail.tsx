@@ -24,6 +24,28 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+// Compress image to reduce payload size before uploading as base64
+const compressImageToBase64 = (file: File, maxWidthPx = 1600, quality = 0.82): Promise<{ base64: string; mimeType: string }> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxWidthPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+
 const STATUS_STEPS = [
   { key: "pending_payment", label: "申請提交" },
   { key: "received", label: "BOXIUM 收件" },
@@ -451,34 +473,32 @@ export default function GradingOrderDetail() {
     if (!file) return;
     setAlipayProofFile(file);
     setAiVerifyResult(null); // Reset AI result when new file selected
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setAlipayProofPreview(ev.target?.result as string);
-      // Auto-trigger AI verification after file is loaded
-      const base64 = (ev.target?.result as string).split(",")[1];
-      setAiVerifying(true);
-      verifyAlipayProofMutation.mutate({
-        submissionId,
-        proofImageBase64: base64,
-        mimeType: file.type,
-      });
-    };
-    reader.readAsDataURL(file);
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => URL.revokeObjectURL(previewUrl);
+    setAlipayProofPreview(previewUrl);
+    // Auto-trigger AI verification with compressed image
+    setAiVerifying(true);
+    compressImageToBase64(file).then(({ base64, mimeType }) => {
+      verifyAlipayProofMutation.mutate({ submissionId, proofImageBase64: base64, mimeType });
+    }).catch(() => setAiVerifying(false));
   };
 
   const handleSubmitAlipayProof = async () => {
     if (!alipayProofFile) return;
     setUploadingProof(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = (ev.target?.result as string).split(",")[1];
+    try {
+      const { base64, mimeType } = await compressImageToBase64(alipayProofFile);
       submitAlipayProofMutation.mutate({
         submissionId,
         proofImageBase64: base64,
-        mimeType: alipayProofFile.type,
+        mimeType,
       });
-    };
-    reader.readAsDataURL(alipayProofFile);
+    } catch {
+      setUploadingProof(false);
+      toast.error("圖片壓縮失敗，請重試");
+    }
   };
 
   // ── Resubmit Alipay proof after rejection ──────────────────────────────────
@@ -508,35 +528,33 @@ export default function GradingOrderDetail() {
     if (!file) return;
     setResubmitProofFile(file);
     setResubmitAiResult(null);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setResubmitProofPreview(ev.target?.result as string);
-      const base64 = (ev.target?.result as string).split(",")[1];
-      setResubmitAiVerifying(true);
+    setResubmitProofPreview(URL.createObjectURL(file));
+    setResubmitAiVerifying(true);
+    compressImageToBase64(file).then(({ base64, mimeType }) => {
       verifyAlipayProofMutation.mutate(
-        { submissionId, proofImageBase64: base64, mimeType: file.type },
+        { submissionId, proofImageBase64: base64, mimeType },
         {
           onSuccess: (r: any) => { setResubmitAiVerifying(false); setResubmitAiResult(r); },
           onError: () => { setResubmitAiVerifying(false); },
         }
       );
-    };
-    reader.readAsDataURL(file);
+    }).catch(() => setResubmitAiVerifying(false));
   };
 
   const handleResubmitAlipayProof = async () => {
     if (!resubmitProofFile) return;
     setUploadingResubmit(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = (ev.target?.result as string).split(",")[1];
+    try {
+      const { base64, mimeType } = await compressImageToBase64(resubmitProofFile);
       resubmitAlipayProofMutation.mutate({
         submissionId,
         proofImageBase64: base64,
-        mimeType: resubmitProofFile.type,
+        mimeType,
       });
-    };
-    reader.readAsDataURL(resubmitProofFile);
+    } catch {
+      setUploadingResubmit(false);
+      toast.error("圖片壓縮失敗，請重試");
+    }
   };
 
   // ── Submit SF Express tracking number ─────────────────────────────────────
@@ -1131,20 +1149,20 @@ export default function GradingOrderDetail() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!alipayProofFile || !submission?.id) return;
                           setAiVerifyResult(null);
                           setAiVerifying(true);
-                          const reader = new FileReader();
-                          reader.onload = (e) => {
-                            const base64 = (e.target?.result as string).split(',')[1];
+                          try {
+                            const { base64, mimeType } = await compressImageToBase64(alipayProofFile);
                             verifyAlipayProofMutation.mutate({
                               submissionId: submission.id,
                               proofImageBase64: base64,
-                              mimeType: alipayProofFile.type || 'image/jpeg',
+                              mimeType,
                             });
-                          };
-                          reader.readAsDataURL(alipayProofFile);
+                          } catch {
+                            setAiVerifying(false);
+                          }
                         }}
                         disabled={!alipayProofFile || aiVerifying}
                         className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-xs h-9"
@@ -1573,9 +1591,7 @@ export default function GradingOrderDetail() {
                       const f = e.target.files?.[0];
                       if (f) {
                         setUpgradeAlipayProofFile(f);
-                        const r = new FileReader();
-                        r.onload = (ev) => setUpgradeAlipayProofPreview(ev.target?.result as string);
-                        r.readAsDataURL(f);
+                        setUpgradeAlipayProofPreview(URL.createObjectURL(f));
                       }
                     }} className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#06038d] file:text-white hover:file:bg-[#06038d]/90" />
                     {upgradeAlipayProofPreview && <img src={upgradeAlipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />}
@@ -1586,24 +1602,20 @@ export default function GradingOrderDetail() {
                       onClick={async () => {
                         if (!upgradeAlipayProofFile) return;
                         setUploadingUpgradeProof(true);
-                        const reader = new FileReader();
-                        reader.onload = async (ev) => {
-                          const base64 = (ev.target?.result as string).split(',')[1];
-                          try {
-                            await submitAlipayProofMutation.mutateAsync({
-                              submissionId,
-                              proofImageBase64: base64,
-                              mimeType: upgradeAlipayProofFile.type,
-                            });
-                            setUpgradeProofSubmitted(true);
-                            setAiPollingActive(true);
-                          } catch (e: any) {
-                            toast.error(e.message || '提交失敗');
-                          } finally {
-                            setUploadingUpgradeProof(false);
-                          }
-                        };
-                        reader.readAsDataURL(upgradeAlipayProofFile);
+                        try {
+                          const { base64, mimeType } = await compressImageToBase64(upgradeAlipayProofFile);
+                          await submitAlipayProofMutation.mutateAsync({
+                            submissionId,
+                            proofImageBase64: base64,
+                            mimeType,
+                          });
+                          setUpgradeProofSubmitted(true);
+                          setAiPollingActive(true);
+                        } catch (e: any) {
+                          toast.error(e.message || '提交失敗');
+                        } finally {
+                          setUploadingUpgradeProof(false);
+                        }
                       }}
                       disabled={!upgradeAlipayProofFile || uploadingUpgradeProof}
                       className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
@@ -1914,20 +1926,20 @@ export default function GradingOrderDetail() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!alipayProofFile || !submission?.id) return;
                           setAiVerifyResult(null);
                           setAiVerifying(true);
-                          const reader = new FileReader();
-                          reader.onload = (e) => {
-                            const base64 = (e.target?.result as string).split(',')[1];
+                          try {
+                            const { base64, mimeType } = await compressImageToBase64(alipayProofFile);
                             verifyAlipayProofMutation.mutate({
                               submissionId: submission.id,
                               proofImageBase64: base64,
-                              mimeType: alipayProofFile.type || 'image/jpeg',
+                              mimeType,
                             });
-                          };
-                          reader.readAsDataURL(alipayProofFile);
+                          } catch {
+                            setAiVerifying(false);
+                          }
                         }}
                         disabled={!alipayProofFile || aiVerifying}
                         className="w-full border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-xs h-9"
