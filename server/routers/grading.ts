@@ -1174,6 +1174,10 @@ export const gradingRouter = router({
           (s.status === "graded" && !s.paidAt) // graded + no paidAt = post-grading payment pending
         ).length;
         const pendingCount = subs.filter((s: { status: string }) => !["paid", "completed", "graded", "payment_overdue", "cancelled"].includes(s.status)).length;
+        // Calculate total revenue for this batch (all submissions regardless of status)
+        const totalRevenueHkd = subs.reduce((sum: number, s: any) => sum + parseFloat(s.totalFeeHkd || "0"), 0);
+        const batchCost = parseFloat((batch as any).batchCostHkd || "0");
+        const netProfitHkd = totalRevenueHkd - batchCost;
         return {
           ...batch,
           submissions: subs,
@@ -1182,6 +1186,8 @@ export const gradingRouter = router({
           paidCount,
           unpaidCount,
           pendingCount,
+          totalRevenueHkd,
+          netProfitHkd,
         };
       });
     }),
@@ -1221,6 +1227,20 @@ export const gradingRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await db.delete(gradingBatches).where(eq(gradingBatches.id, input.id));
+        return { success: true };
+      }),
+
+    updateBatchCost: adminProcedure
+      .input(z.object({
+        id: z.number().int().positive(),
+        batchCostHkd: z.number().min(0),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.update(gradingBatches)
+          .set({ batchCostHkd: input.batchCostHkd.toFixed(2) })
+          .where(eq(gradingBatches.id, input.id));
         return { success: true };
       }),
 

@@ -58,6 +58,8 @@ import {
   EyeOff,
   MessageSquare,
   MapPin,
+  DollarSign,
+  Check,
 } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -1201,6 +1203,23 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
   const utils = trpc.useUtils();
   const [batchSyncTarget, setBatchSyncTarget] = useState<{ status: 'received' | 'submitted_to_psa' | 'grading'; label: string } | null>(null);
   const [syncNotifyUsers, setSyncNotifyUsers] = useState(false);
+  const [costInput, setCostInput] = useState(parseFloat(batch.batchCostHkd || "0").toString());
+  const [costEditing, setCostEditing] = useState(false);
+
+  const updateBatchCostMutation = trpc.grading.admin.updateBatchCost.useMutation({
+    onSuccess: () => {
+      toast.success("出團成本已儲存");
+      setCostEditing(false);
+      utils.grading.admin.listBatchesWithStats.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const handleSaveCost = () => {
+    const val = parseFloat(costInput);
+    if (isNaN(val) || val < 0) { toast.error("請輸入有效金額"); return; }
+    updateBatchCostMutation.mutate({ id: batch.id, batchCostHkd: val });
+  };
 
   const batchUpdateStatusMutation = trpc.grading.admin.batchUpdateStatus.useMutation({
     onSuccess: (data) => {
@@ -1286,7 +1305,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
         </div>
 
         {/* Stats pills */}
-        <div className="flex items-center gap-2 mr-3">
+        <div className="flex items-center gap-2 mr-3 flex-wrap">
           <div className="text-center px-3 py-1.5 rounded-lg bg-[#06038d]/5 border border-[#06038d]/10">
             <p className="text-xs text-gray-700">申請</p>
             <p className="text-lg font-bold text-[#06038d]">{batch.totalSubmissions}</p>
@@ -1305,6 +1324,23 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
             <div className="text-center px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100">
               <p className="text-xs text-gray-700">待付</p>
               <p className="text-lg font-bold text-gray-900">{batch.unpaidCount}</p>
+            </div>
+          )}
+          {/* Financial summary pills */}
+          <div className="text-center px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
+            <p className="text-xs text-gray-700">總收費</p>
+            <p className="text-sm font-bold text-blue-700">HK${(batch.totalRevenueHkd ?? 0).toLocaleString()}</p>
+          </div>
+          {parseFloat(batch.batchCostHkd || "0") > 0 && (
+            <div className="text-center px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
+              <p className="text-xs text-gray-700">出團成本</p>
+              <p className="text-sm font-bold text-red-600">HK${parseFloat(batch.batchCostHkd || "0").toLocaleString()}</p>
+            </div>
+          )}
+          {parseFloat(batch.batchCostHkd || "0") > 0 && (
+            <div className={`text-center px-3 py-1.5 rounded-lg border ${(batch.netProfitHkd ?? 0) >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+              <p className="text-xs text-gray-700">純利</p>
+              <p className={`text-sm font-bold ${(batch.netProfitHkd ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>HK${(batch.netProfitHkd ?? 0).toLocaleString()}</p>
             </div>
           )}
         </div>
@@ -1373,6 +1409,37 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                   <Truck className="h-3.5 w-3.5" />
                   一鍵確認出團
                 </button>
+              </div>
+              {/* Batch cost input row */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border-b border-amber-100" onClick={(e) => e.stopPropagation()}>
+                <DollarSign className="h-4 w-4 text-amber-600 shrink-0" />
+                <span className="text-xs font-semibold text-amber-800">出團成本（PSA 鑑定費用）</span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-xs text-amber-700">HK$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={costInput}
+                    onChange={(e) => { setCostInput(e.target.value); setCostEditing(true); }}
+                    onFocus={() => setCostEditing(true)}
+                    placeholder="0"
+                    className="w-28 text-sm font-mono border border-amber-300 rounded-lg px-2 py-1 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                  {costEditing && (
+                    <button
+                      onClick={handleSaveCost}
+                      disabled={updateBatchCostMutation.isPending}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                    >
+                      {updateBatchCostMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      儲存
+                    </button>
+                  )}
+                  {!costEditing && parseFloat(batch.batchCostHkd || "0") > 0 && (
+                    <span className="text-xs text-amber-600">純利：<span className={`font-bold ${(batch.netProfitHkd ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>HK${(batch.netProfitHkd ?? 0).toLocaleString()}</span></span>
+                  )}
+                </div>
               </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

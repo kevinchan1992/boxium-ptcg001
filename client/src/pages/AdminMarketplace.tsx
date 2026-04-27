@@ -4685,6 +4685,9 @@ function SalesReportTab() {
   // Tier Upgrade Diff Revenue (subset of grading revenue)
   const upgradeRevenue = (overall as any)?.upgradeRevenueHkd ?? 0;
   const upgradeCount = (overall as any)?.upgradeCount ?? 0;
+  // PSA Batch Cost & Net Profit
+  const totalBatchCostHkd = (overall as any)?.totalBatchCostHkd ?? 0;
+  const gradingNetProfitHkd = (overall as any)?.gradingNetProfitHkd ?? 0;
 
   // Auction vs Direct breakdown
   const auctionSales = (overall as any)?.auctionSalesHkd ?? 0;
@@ -5145,6 +5148,24 @@ function SalesReportTab() {
                         <p className="text-xs text-gray-400">包含於鑑定收入中（{upgradeCount} 筆升級）</p>
                       </div>
                       <p className="text-sm font-medium text-purple-700">HKD {fmtHkd(upgradeRevenue)}</p>
+                    </div>
+                  )}
+                  {totalBatchCostHkd > 0 && (
+                    <div className="flex items-center justify-between pl-4 border-l-2 border-amber-200">
+                      <div>
+                        <p className="text-sm text-gray-600">↳ 出團成本（PSA 鑑定費用）</p>
+                        <p className="text-xs text-gray-400">各批次出團成本合計</p>
+                      </div>
+                      <p className="text-sm font-medium text-amber-700">-HKD {fmtHkd(totalBatchCostHkd)}</p>
+                    </div>
+                  )}
+                  {totalBatchCostHkd > 0 && (
+                    <div className="flex items-center justify-between pl-4 border-l-2 border-emerald-300">
+                      <div>
+                        <p className="text-sm text-gray-600">↳ 鑑定業務純利</p>
+                        <p className="text-xs text-gray-400">鑑定收入 - 出團成本</p>
+                      </div>
+                      <p className={`text-sm font-bold ${gradingNetProfitHkd >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{gradingNetProfitHkd >= 0 ? '' : '-'}HKD {fmtHkd(Math.abs(gradingNetProfitHkd))}</p>
                     </div>
                   )}
                   <div className="flex items-center justify-between pt-2 border-t border-emerald-200">

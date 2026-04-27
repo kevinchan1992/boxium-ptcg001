@@ -1562,6 +1562,7 @@ export const gradingBatches = mysqlTable("gradingBatches", {
   shippedDate: timestamp("shippedDate"),
   expectedReturnDate: timestamp("expectedReturnDate"),
   status: mysqlEnum("status", ["open", "closed", "shipped", "returned"]).default("open").notNull(),
+  batchCostHkd: decimal("batchCostHkd", { precision: 10, scale: 2 }).default("0.00"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

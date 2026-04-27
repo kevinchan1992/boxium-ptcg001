@@ -8872,3 +8872,17 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 用戶端：GradingOrderDetail.tsx 追蹤號碼卡片加入「順豐查詢」紅色按鈕（一鍵跳轉順豐官網）
 - [x] TypeScript 0 errors 確認
 - [x] 保存 checkpoint
+
+---
+
+## ✅ 出團批次成本管理功能
+
+- [x] schema：gradingBatches 表加入 batchCostHkd 欄位（出團成本）
+- [x] db:push 更新資料庫
+- [x] 後端 listBatchesWithStats：計算 totalRevenueHkd 和 netProfitHkd
+- [x] 後端 router：新增 updateBatchCost mutation（更新出團成本）
+- [x] 後端 getSalesReport：加入 totalBatchCostHkd 和 gradingNetProfitHkd
+- [x] 前端 AdminGrading.tsx：批次卡片顯示「總收費」、「出團成本」、「純利」 pills
+- [x] 前端：批次展開區加入出團成本輸入欄（amber 色調，儲存按鈕）
+- [x] 財務報告：在 PSA 鑑定收入下方加入出團成本和鑑定業務純利顯示
+- [x] TypeScript 0 errors 確認 + 儲存 checkpoint

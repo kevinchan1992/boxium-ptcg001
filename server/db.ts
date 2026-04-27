@@ -4480,6 +4480,13 @@ export async function getSalesReport(months: number = 12) {
     .from(gradingSubmissions)
     .where(inArray(gradingSubmissions.status, gradingPaidStatuses as any[]));
 
+  // PSA Batch Costs: sum of all batchCostHkd from gradingBatches
+  const { gradingBatches: gradingBatchesTable } = await import("../drizzle/schema_new");
+  const [batchCostStats] = await db.select({
+    totalBatchCost: sql<string>`COALESCE(SUM(batchCostHkd), 0)`,
+    batchCount: sql<number>`count(*)`,
+  }).from(gradingBatchesTable);
+
   // Payout totals: how much has been paid out to sellers, how much is pending
   const [payoutStats] = await db.select({
     paidOutAmount: sql<string>`COALESCE(SUM(CASE WHEN payoutStatus = 'paid' THEN sellerReceivableHkd ELSE 0 END), 0)`,
@@ -4496,6 +4503,8 @@ export async function getSalesReport(months: number = 12) {
   const gradingCount = Number(gradingOverall?.totalGradingCount ?? 0);
   const upgradeRevenueHkd = parseFloat(gradingOverall?.totalUpgradeRevenue ?? '0');
   const upgradeCount = Number(gradingOverall?.totalUpgradeCount ?? 0);
+  const totalBatchCostHkd = parseFloat(batchCostStats?.totalBatchCost ?? '0');
+  const gradingNetProfitHkd = gradingRevenueHkd - totalBatchCostHkd;
   // Platform income = platform direct sales + C2C fees + PSA grading revenue (upgrade diff already included in totalFeeHkd via grading)
   const platformIncomeHkd = platformSalesHkd + totalFeesHkd + gradingRevenueHkd;
   // Platform payout (outcome) = seller receivable paid out + refunds
@@ -4584,6 +4593,9 @@ export async function getSalesReport(months: number = 12) {
       // Tier Upgrade Revenue (subset of grading revenue)
       upgradeRevenueHkd,
       upgradeCount,
+      // PSA Batch Cost & Net Profit
+      totalBatchCostHkd,
+      gradingNetProfitHkd,
       // Net platform profit = income - refunds
       platformNetProfitHkd: platformIncomeHkd - totalRefundedHkd,
       // Auction vs Direct breakdown
