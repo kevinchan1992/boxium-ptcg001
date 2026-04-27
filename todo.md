@@ -8829,3 +8829,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 後端 `adminApproveGradingAlipayProof`：當申請狀態為 `graded` 時（後付款流程），確認截圖後更新狀態為 `completed`（並設置 `paidAt` 和 `paymentMethod`），而非 `pending_shipment`
 - [x] TypeScript 0 errors 確認
 - [x] 儲存 checkpoint
+---
+## 🔧 修復 graded 狀態付款卡片問題（2026-04-27）
+- [x] gradingSubmissions 表加入 paidAt 欄位（timestamp，nullable）
+- [x] 執行 SQL ALTER TABLE 推送 schema 變更（db:push 互動式問題，改用直接 SQL）
+- [x] Stripe webhook grading_submission_payment 付款時已設定 paidAt（已有）
+- [x] 支付寶 HK adminApproveGradingAlipayProof（awaiting_payment 流程）設定 paidAt（修復）
+- [x] 補填現有 2 筆已付款訂單的 paidAt 欄位
+- [x] 前端 GradingOrderDetail.tsx 付款卡片條件確認 paidAt 正確隱藏

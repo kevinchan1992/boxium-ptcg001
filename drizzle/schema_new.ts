@@ -1617,6 +1617,8 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   // Buyer shipping tracking
   trackingNumber: varchar("trackingNumber", { length: 100 }), // SF Express tracking number submitted by buyer
   trackingSubmittedAt: timestamp("trackingSubmittedAt"),
+  // Initial grading fee payment
+  paidAt: timestamp("paidAt"), // When the initial grading fee was confirmed (pay-first flow: pending_shipment; post-grading flow: completed)
   // Tier upgrade fields (admin can upgrade tier after grading, user pays the diff)
   upgradeCheckoutSessionId: varchar("upgradeCheckoutSessionId", { length: 128 }),
   upgradeDiffFeeHkd: decimal("upgradeDiffFeeHkd", { precision: 10, scale: 2 }),
