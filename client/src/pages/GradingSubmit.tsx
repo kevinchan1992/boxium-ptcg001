@@ -1276,7 +1276,7 @@ export default function GradingSubmit() {
                             value={sfStationSearch}
                             onChange={(e) => { setSfStationSearch(e.target.value); setSelectedSfStation(null); }}
                             placeholder="輸入站點名稱或地區，如：旺角、屬山、852FTL"
-                            className="pl-9 text-sm"
+                            className="pl-9 text-sm text-black"
                           />
                         </div>
                         {selectedSfStation ? (
