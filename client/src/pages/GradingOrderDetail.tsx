@@ -2092,12 +2092,66 @@ export default function GradingOrderDetail() {
                 </div>
               ))}
             </div>
-            <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-              <span className="text-sm text-gray-600 font-semibold">代送 PSA 費用合計</span>
-              <span className="font-bold text-[#06038d] text-lg">
-                HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
-              </span>
-            </div>
+            {/* Fee summary - show breakdown if upgrade diff exists */}
+            {(submission as any).upgradeDiffFeeHkd && parseFloat((submission as any).upgradeDiffFeeHkd) > 0 ? (
+              <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 space-y-1.5">
+                {/* Initial fee row */}
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    初始代送費用
+                    {(submission as any).paidAt && (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                        ✓ 已付
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-sm text-gray-700 font-medium">
+                    HK${(parseFloat(submission.totalFeeHkd) - parseFloat((submission as any).upgradeDiffFeeHkd)).toLocaleString()}
+                  </span>
+                </div>
+                {/* Upgrade diff fee row */}
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-orange-600">
+                    升級差價
+                    {(submission as any).upgradePaidAt ? (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                        ✓ 已付
+                      </span>
+                    ) : (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs font-semibold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                        待補付
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-sm text-orange-600 font-semibold">
+                    + HK${parseFloat((submission as any).upgradeDiffFeeHkd).toLocaleString()}
+                  </span>
+                </div>
+                {/* Divider + total */}
+                <div className="flex justify-between items-center pt-1.5 border-t border-gray-200">
+                  <span className="text-sm text-gray-700 font-semibold">代送 PSA 費用合計</span>
+                  <span className="font-bold text-[#06038d] text-lg">
+                    HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="px-5 py-3 bg-gray-50 border-t border-gray-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 font-semibold">
+                    代送 PSA 費用合計
+                    {(submission as any).paidAt && (
+                      <span className="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                        ✓ 已付
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-bold text-[#06038d] text-lg">
+                    HK${parseFloat(submission.totalFeeHkd).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Review section for completed submissions */}

@@ -8843,3 +8843,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 非批次列表（AllSubmissionsView）的狀態欄加入「後付款待收款」標記
 - [x] getPaymentStatusBadge 函數更新：graded + paidAt 有値 → 顯示「費用已收」綠色標記
 - [x] 修復 unpaidCount 計算：graded + paidAt IS NULL 才算待收款
+---
+## 🔧 費用摘要分拆計算說明（2026-04-27）
+- [x] 卡版清單底部費用摘要：有升級差價時，顯示「初始代送費用 + 升級差價 = 費用合計」分拆說明
+- [x] 有 paidAt（已付款）時，在費用旁顯示「✓ 已付」綠色標記
