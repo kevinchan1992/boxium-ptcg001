@@ -1280,72 +1280,32 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
     <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
       {/* Batch header */}
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-gray-900 text-base">{batch.batchName}</span>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${batchCfg.color}`}>{batchCfg.label}</span>
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-            {batch.cutoffDate && (
-              <span className="text-xs text-gray-700 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                截止：{new Date(batch.cutoffDate).toLocaleDateString("zh-HK")}
-              </span>
-            )}
-            {batch.shippedDate && (
-              <span className="text-xs text-gray-700 flex items-center gap-1">
-                <Truck className="h-3 w-3" />
-                出團：{new Date(batch.shippedDate).toLocaleDateString("zh-HK")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Stats pills */}
-        <div className="flex items-center gap-2 mr-3 flex-wrap">
-          <div className="text-center px-3 py-1.5 rounded-lg bg-[#06038d]/5 border border-[#06038d]/10">
-            <p className="text-xs text-gray-700">申請</p>
-            <p className="text-lg font-bold text-[#06038d]">{batch.totalSubmissions}</p>
-          </div>
-          <div className="text-center px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-100">
-            <p className="text-xs text-gray-700">卡牌</p>
-            <p className="text-lg font-bold text-gray-900">{batch.totalCards}</p>
-          </div>
-          {batch.paidCount > 0 && (
-            <div className="text-center px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
-              <p className="text-xs text-gray-700">已付</p>
-              <p className="text-lg font-bold text-gray-900">{batch.paidCount}</p>
+        {/* Top row: name + status badge + action buttons */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-gray-900 text-base">{batch.batchName}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${batchCfg.color}`}>{batchCfg.label}</span>
             </div>
-          )}
-          {batch.unpaidCount > 0 && (
-            <div className="text-center px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100">
-              <p className="text-xs text-gray-700">待付</p>
-              <p className="text-lg font-bold text-gray-900">{batch.unpaidCount}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">
+              {batch.cutoffDate && (
+                <span className="text-xs text-gray-700 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  截止：{new Date(batch.cutoffDate).toLocaleDateString("zh-HK")}
+                </span>
+              )}
+              {batch.shippedDate && (
+                <span className="text-xs text-gray-700 flex items-center gap-1">
+                  <Truck className="h-3 w-3" />
+                  出團：{new Date(batch.shippedDate).toLocaleDateString("zh-HK")}
+                </span>
+              )}
             </div>
-          )}
-          {/* Financial summary pills */}
-          <div className="text-center px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
-            <p className="text-xs text-gray-700">總收費</p>
-            <p className="text-sm font-bold text-blue-700">HK${(batch.totalRevenueHkd ?? 0).toLocaleString()}</p>
           </div>
-          {parseFloat(batch.batchCostHkd || "0") > 0 && (
-            <div className="text-center px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
-              <p className="text-xs text-gray-700">出團成本</p>
-              <p className="text-sm font-bold text-red-600">HK${parseFloat(batch.batchCostHkd || "0").toLocaleString()}</p>
-            </div>
-          )}
-          {parseFloat(batch.batchCostHkd || "0") > 0 && (
-            <div className={`text-center px-3 py-1.5 rounded-lg border ${(batch.netProfitHkd ?? 0) >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-              <p className="text-xs text-gray-700">純利</p>
-              <p className={`text-sm font-bold ${(batch.netProfitHkd ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>HK${(batch.netProfitHkd ?? 0).toLocaleString()}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
           {/* Batch sync status button */}
           <div className="relative group">
             <button
@@ -1381,8 +1341,49 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
             <Trash2 className="h-4 w-4" />
           </button>
           {expanded ? <ChevronUp className="h-5 w-5 text-gray-700 shrink-0" /> : <ChevronDown className="h-5 w-5 text-gray-700 shrink-0" />}
-        </div>
-      </div>
+          </div>{/* end action buttons */}
+        </div>{/* end top row */}
+
+        {/* Stats pills row - below title on all screens */}
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <div className="text-center px-3 py-1.5 rounded-lg bg-[#06038d]/5 border border-[#06038d]/10">
+            <p className="text-xs text-gray-700">申請</p>
+            <p className="text-lg font-bold text-[#06038d]">{batch.totalSubmissions}</p>
+          </div>
+          <div className="text-center px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-100">
+            <p className="text-xs text-gray-700">卡牌</p>
+            <p className="text-lg font-bold text-gray-900">{batch.totalCards}</p>
+          </div>
+          {batch.paidCount > 0 && (
+            <div className="text-center px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
+              <p className="text-xs text-gray-700">已付</p>
+              <p className="text-lg font-bold text-gray-900">{batch.paidCount}</p>
+            </div>
+          )}
+          {batch.unpaidCount > 0 && (
+            <div className="text-center px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100">
+              <p className="text-xs text-gray-700">待付</p>
+              <p className="text-lg font-bold text-gray-900">{batch.unpaidCount}</p>
+            </div>
+          )}
+          <div className="text-center px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
+            <p className="text-xs text-gray-700">總收費</p>
+            <p className="text-sm font-bold text-blue-700">HK${(batch.totalRevenueHkd ?? 0).toLocaleString()}</p>
+          </div>
+          {parseFloat(batch.batchCostHkd || "0") > 0 && (
+            <div className="text-center px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
+              <p className="text-xs text-gray-700">出團成本</p>
+              <p className="text-sm font-bold text-red-600">HK${parseFloat(batch.batchCostHkd || "0").toLocaleString()}</p>
+            </div>
+          )}
+          {parseFloat(batch.batchCostHkd || "0") > 0 && (
+            <div className={`text-center px-3 py-1.5 rounded-lg border ${(batch.netProfitHkd ?? 0) >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+              <p className="text-xs text-gray-700">純利</p>
+              <p className={`text-sm font-bold ${(batch.netProfitHkd ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>HK${(batch.netProfitHkd ?? 0).toLocaleString()}</p>
+            </div>
+          )}
+        </div>{/* end pills row */}
+      </div>{/* end batch header */}
 
       {/* Submissions table */}
       {expanded && (
@@ -2994,21 +2995,24 @@ export default function AdminGrading() {
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setActiveSection(s.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeSection === s.id
-                ? "border-[#06038d] text-[#06038d]"
-                : "border-transparent text-gray-700 hover:text-[#06038d]"
-            }`}
-          >
-            {s.icon}
-            {s.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto mb-6 border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="flex gap-0.5 min-w-max sm:min-w-0">
+          {sections.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setActiveSection(s.id)}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                activeSection === s.id
+                  ? "border-[#06038d] text-[#06038d]"
+                  : "border-transparent text-gray-700 hover:text-[#06038d]"
+              }`}
+            >
+              {s.icon}
+              <span className="hidden sm:inline">{s.label}</span>
+              <span className="sm:hidden">{s.label.length > 3 ? s.label.slice(0, 3) : s.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeSection === "dashboard" && <DashboardTab onNavigate={(s) => setActiveSection(s as any)} />}
