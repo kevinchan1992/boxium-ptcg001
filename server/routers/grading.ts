@@ -974,12 +974,15 @@ export const gradingRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "此申請沒有待確認的升級差價" });
       }
 
-      // Mark upgrade as paid and clear checkout session
+      // Mark upgrade as paid, clear checkout session, and mark alipayProofStatus as approved
+      // This prevents the initial payment proof review card from reappearing after
+      // upgradeCheckoutSessionId is cleared (since the condition checks both fields)
       await db
         .update(gradingSubmissions)
         .set({
           upgradePaidAt: new Date(),
           upgradeCheckoutSessionId: null,
+          alipayProofStatus: "approved",
         } as any)
         .where(eq(gradingSubmissions.id, submission.id));
 
