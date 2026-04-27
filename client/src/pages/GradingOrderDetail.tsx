@@ -375,14 +375,19 @@ export default function GradingOrderDetail() {
   const [upgradeAlipayProofFile, setUpgradeAlipayProofFile] = useState<File | null>(null);
   const [upgradeAlipayProofPreview, setUpgradeAlipayProofPreview] = useState<string | null>(null);
   const [uploadingUpgradeProof, setUploadingUpgradeProof] = useState(false);
-  const [upgradeProofSubmitted, setUpgradeProofSubmitted] = useState(false);
-
+   const [upgradeProofSubmittedLocal, setUpgradeProofSubmittedLocal] = useState(false);
   const submissionId = parseInt(params.id ?? "0", 10);
   const utils = trpc.useUtils();
-
   const { data: submission, isLoading, refetch: refetchSubmission } = trpc.grading.getSubmissionDetail.useQuery(
     { id: submissionId },
     { enabled: submissionId > 0 }
+  );
+  // Derive from backend: if upgrade is pending AND alipayProofStatus is pending_review, proof was already submitted
+  // This persists across page refreshes unlike the local state alone
+  const upgradeProofSubmitted = upgradeProofSubmittedLocal || (
+    !!(submission as any)?.upgradeCheckoutSessionId &&
+    !(submission as any)?.upgradePaidAt &&
+    (submission as any)?.alipayProofStatus === "pending_review"
   );
 
   // Poll for AI verification result after upgrade proof is submitted
@@ -1609,7 +1614,7 @@ export default function GradingOrderDetail() {
                             proofImageBase64: base64,
                             mimeType,
                           });
-                          setUpgradeProofSubmitted(true);
+                          setUpgradeProofSubmittedLocal(true);
                           setAiPollingActive(true);
                         } catch (e: any) {
                           toast.error(e.message || '提交失敗');
