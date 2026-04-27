@@ -8837,3 +8837,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 支付寶 HK adminApproveGradingAlipayProof（awaiting_payment 流程）設定 paidAt（修復）
 - [x] 補填現有 2 筆已付款訂單的 paidAt 欄位
 - [x] 前端 GradingOrderDetail.tsx 付款卡片條件確認 paidAt 正確隱藏
+---
+## 🔧 Admin 鑑定列表「後付款待收款」橙色標記（2026-04-27）
+- [x] 批次列表（BatchDetailView）的付款欄加入「後付款待收款」標記（graded + paidAt IS NULL）
+- [x] 非批次列表（AllSubmissionsView）的狀態欄加入「後付款待收款」標記
+- [x] getPaymentStatusBadge 函數更新：graded + paidAt 有値 → 顯示「費用已收」綠色標記
+- [x] 修復 unpaidCount 計算：graded + paidAt IS NULL 才算待收款

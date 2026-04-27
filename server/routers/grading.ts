@@ -1165,7 +1165,10 @@ export const gradingRouter = router({
         const subs = submissionsByBatch.get(batch.id) ?? [];
         const totalCards = subs.reduce((sum: number, s: { itemCount: number }) => sum + s.itemCount, 0);
         const paidCount = subs.filter((s: { status: string }) => s.status === "paid" || s.status === "completed").length;
-        const unpaidCount = subs.filter((s: { status: string }) => s.status === "graded" || s.status === "payment_overdue").length;
+        const unpaidCount = subs.filter((s: { status: string; paidAt?: Date | null }) => 
+          s.status === "payment_overdue" || 
+          (s.status === "graded" && !s.paidAt) // graded + no paidAt = post-grading payment pending
+        ).length;
         const pendingCount = subs.filter((s: { status: string }) => !["paid", "completed", "graded", "payment_overdue", "cancelled"].includes(s.status)).length;
         return {
           ...batch,

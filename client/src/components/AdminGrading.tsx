@@ -1200,7 +1200,16 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
       return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900"><CheckCheck className="h-3 w-3" />已付款</span>;
     }
     if (sub.status === "graded") {
-      return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800"><Clock className="h-3 w-3" />待付款</span>;
+      // graded + paidAt = pre-paid (pay-first flow), no payment needed
+      if ((sub as any).paidAt) {
+        return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800"><CheckCheck className="h-3 w-3" />費用已收</span>;
+      }
+      // graded + no paidAt = post-grading payment pending
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-500 text-white">
+          <Clock className="h-3 w-3" />後付款待收
+        </span>
+      );
     }
     if (sub.status === "payment_overdue") {
       return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800"><AlertCircle className="h-3 w-3" />付款逾期</span>;
@@ -1823,6 +1832,11 @@ function SubmissionManagement() {
                         'bg-red-100 text-red-800'
                       }`}>
                         {(sub as any).alipayProofAiResult === 'pass' ? '✅ AI通過' : (sub as any).alipayProofAiResult === 'warning' ? '⚠️ AI警告' : '❌ AI未通過'}
+                      </span>
+                    )}
+                    {sub.status === 'graded' && !(sub as any).paidAt && (
+                      <span className="mt-1 flex items-center justify-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-500 text-white">
+                        <Clock className="h-2.5 w-2.5" />後付款待收
                       </span>
                     )}
                     {sub.upgradeCheckoutSessionId && !sub.upgradePaidAt && (
