@@ -1672,14 +1672,14 @@ export default function GradingOrderDetail() {
                           PSA {item.psaGrade}
                         </span>
                       )}
-                      {item.psaCertNo && (
+                      {item.psaCertNumber && (
                         <a
-                          href={`https://www.psacard.com/cert/${item.psaCertNo}`}
+                          href={`https://www.psacard.com/cert/${item.psaCertNumber}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-[#06038d] hover:underline flex items-center gap-0.5"
                         >
-                          #{item.psaCertNo}
+                          #{item.psaCertNumber}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
@@ -2032,14 +2032,14 @@ export default function GradingOrderDetail() {
                         <span className="bg-[#06038d] text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           PSA {item.psaGrade}
                         </span>
-                        {item.psaCertNo && (
+                        {item.psaCertNumber && (
                           <a
-                            href={`https://www.psacard.com/cert/${item.psaCertNo}`}
+                            href={`https://www.psacard.com/cert/${item.psaCertNumber}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-[#06038d] hover:underline flex items-center gap-0.5 font-medium"
                           >
-                            #{item.psaCertNo}
+                            #{item.psaCertNumber}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         )}

@@ -8792,3 +8792,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Admin getSubmissionDetail 同步解析 returnAddress
 - [x] 撰寫並通過 8 項 vitest 測試（grading.returnAddress.test.ts）
 - [x] 儲存 checkpoint
+
+---
+
+## ✅ 修復 PSA 認證號碼不顯示問題
+
+- [x] 問題根源：GradingOrderDetail.tsx 使用 `item.psaCertNo`，但後端返回欄位名為 `item.psaCertNumber`
+- [x] 修復卡牌清單中的 psaCertNo → psaCertNumber（兩處）
+- [x] 修復鑑定結果摘要區域的 psaCertNo → psaCertNumber
+- [x] TypeScript 0 errors 確認
+- [x] 儲存 checkpoint
