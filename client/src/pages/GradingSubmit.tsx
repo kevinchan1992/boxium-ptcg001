@@ -1191,7 +1191,7 @@ export default function GradingSubmit() {
                           value={manualReturnAddress.recipientName}
                           onChange={(e) => setManualReturnAddress(prev => ({ ...prev, recipientName: e.target.value }))}
                           placeholder="例：陳大文"
-                          className="text-sm"
+                          className="text-sm text-black"
                         />
                       </div>
                       <div>
@@ -1200,7 +1200,7 @@ export default function GradingSubmit() {
                           value={manualReturnAddress.phone}
                           onChange={(e) => setManualReturnAddress(prev => ({ ...prev, phone: e.target.value }))}
                           placeholder="例：9123 4567"
-                          className="text-sm"
+                          className="text-sm text-black"
                         />
                       </div>
                     </div>
@@ -1240,7 +1240,7 @@ export default function GradingSubmit() {
                             value={manualReturnAddress.address}
                             onChange={(e) => setManualReturnAddress(prev => ({ ...prev, address: e.target.value }))}
                             placeholder="例：九龍旺角彌敦道 123 號 XX 大廈 5 樓 A 室"
-                            className="text-sm"
+                            className="text-sm text-black"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -1250,7 +1250,7 @@ export default function GradingSubmit() {
                               value={manualReturnAddress.district}
                               onChange={(e) => setManualReturnAddress(prev => ({ ...prev, district: e.target.value }))}
                               placeholder="例：旺角"
-                              className="text-sm"
+                              className="text-sm text-black"
                             />
                           </div>
                           <div>
@@ -1259,7 +1259,7 @@ export default function GradingSubmit() {
                               value={manualReturnAddress.region}
                               onChange={(e) => setManualReturnAddress(prev => ({ ...prev, region: e.target.value }))}
                               placeholder="香港"
-                              className="text-sm"
+                              className="text-sm text-black"
                             />
                           </div>
                         </div>
