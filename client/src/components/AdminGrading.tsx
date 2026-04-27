@@ -429,6 +429,8 @@ function SubmissionDetailDialog({
   });
   const [showRejectInput, setShowRejectInput] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState("");
+  const [showUpgradeRejectInput, setShowUpgradeRejectInput] = React.useState(false);
+  const [upgradeRejectionReason, setUpgradeRejectionReason] = React.useState("");
   const approveAlipayMutation = trpc.grading.adminApproveGradingAlipayProof.useMutation({
     onSuccess: () => {
       toast.success("截圖已批准，已通知用戶準備寄件");
@@ -586,8 +588,8 @@ function SubmissionDetailDialog({
               </div>
             )}
 
-            {/* Alipay proof review */}
-            {detail.alipayProofImageUrl && detail.alipayProofStatus === "pending_review" && (
+            {/* Alipay proof review — only for initial payment, not upgrade diff payment */}
+            {detail.alipayProofImageUrl && detail.alipayProofStatus === "pending_review" && !((detail as any).upgradeCheckoutSessionId && !(detail as any).upgradePaidAt) && (
               <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -723,12 +725,55 @@ function SubmissionDetailDialog({
                 )}
                 <p className="text-xs text-gray-700 mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>
                 <Button
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white mb-2"
                   onClick={() => confirmAlipayUpgradeMutation.mutate({ submissionId: detail.id })}
                   disabled={confirmAlipayUpgradeMutation.isPending}
                 >
                   {confirmAlipayUpgradeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCheck className="h-4 w-4 mr-2" />確認升級差價已收到</>}
                 </Button>
+                {/* Reject upgrade proof button */}
+                {!showUpgradeRejectInput ? (
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                    onClick={() => setShowUpgradeRejectInput(true)}
+                  >
+                    <X className="h-4 w-4 mr-2" />拒絕截圖，通知用戶重新上傳
+                  </Button>
+                ) : (
+                  <div className="mt-2 space-y-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                    <Label className="text-xs font-semibold text-red-700">拒絕原因 *</Label>
+                    <Textarea
+                      value={upgradeRejectionReason}
+                      onChange={(e) => setUpgradeRejectionReason(e.target.value)}
+                      placeholder="請說明拒絕原因，如：截圖不清晰、金額不符、不是支付寶 HK 付款截圖等"
+                      className="resize-none h-16 bg-white border-red-200 text-gray-900 text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => { setShowUpgradeRejectInput(false); setUpgradeRejectionReason(""); }}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => {
+                          if (!upgradeRejectionReason.trim()) { toast.error("請填寫拒絕原因"); return; }
+                          rejectAlipayMutation.mutate({ submissionId: detail.id, rejectionReason: upgradeRejectionReason.trim() });
+                          setShowUpgradeRejectInput(false);
+                          setUpgradeRejectionReason("");
+                        }}
+                        disabled={rejectAlipayMutation.isPending}
+                      >
+                        {rejectAlipayMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認拒絕"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

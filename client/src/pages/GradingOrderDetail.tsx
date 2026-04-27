@@ -1983,34 +1983,7 @@ export default function GradingOrderDetail() {
               <div className="bg-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800">
                 <span className="font-semibold">⚡ 順豐到付</span>：貨品將以順豐速遞到付方式寄回，請準備好運費。
               </div>
-              {/* PSA results summary */}
-              {submission.items.filter((i: any) => i.psaGrade).length > 0 && (
-                <div className="space-y-2 mt-3">
-                  {submission.items.filter((i: any) => i.psaGrade).map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-blue-200">
-                      <span className="text-sm font-semibold text-gray-800">{item.cardName}</span>
-                      <div className="flex items-center gap-2">
-                        {item.psaGrade && (
-                          <span className="bg-[#06038d] text-white text-xs font-bold px-2 py-0.5 rounded">
-                            PSA {item.psaGrade}
-                          </span>
-                        )}
-                        {item.psaCertNumber && (
-                          <a
-                            href={`https://www.psacard.com/cert/${item.psaCertNumber}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-[#06038d] hover:underline flex items-center gap-0.5"
-                          >
-                            #{item.psaCertNumber}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+
             </div>
           )}
 
