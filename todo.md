@@ -8765,3 +8765,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] getMySubmissions 搜尋範圍擴展至卡牌名稱（cardName）
 - [x] 撰寫對應 vitest 測試（grading-batch-search.test.ts，17 項全通過）
 - [x] 保存 checkpoint
+
+---
+
+## 🔧 2026-04-27 GradingOrderDetail 修復
+
+- [x] 差價補付時（有 upgradePayment 卡片），隱藏下方「鑑定完成！請完成付款」卡片，避免兩個付款卡片同時顯示
+- [x] 卡牌清單加入 PSA 認證號碼（certNumber）顯示，在 PSA 等級旁顯示 Admin 輸入的認證號碼（可點擊連結至 PSA 官網查驗）

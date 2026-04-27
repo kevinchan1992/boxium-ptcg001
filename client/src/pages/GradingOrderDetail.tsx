@@ -1616,7 +1616,7 @@ export default function GradingOrderDetail() {
           )}
 
           {/* Grading results + payment */}
-          {isGraded && (
+          {isGraded && !((submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt) && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -1954,12 +1954,20 @@ export default function GradingOrderDetail() {
                       <Badge variant="outline" className="text-xs text-black border-gray-400">{item.tier?.name ?? "—"}</Badge>
                     </div>
                     {item.psaGrade && (
-                      <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className="bg-[#06038d] text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           PSA {item.psaGrade}
                         </span>
                         {item.psaCertNo && (
-                          <span className="text-xs text-gray-500">#{item.psaCertNo}</span>
+                          <a
+                            href={`https://www.psacard.com/cert/${item.psaCertNo}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#06038d] hover:underline flex items-center gap-0.5 font-medium"
+                          >
+                            #{item.psaCertNo}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
                         )}
                       </div>
                     )}
