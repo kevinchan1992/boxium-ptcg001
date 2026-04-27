@@ -14,7 +14,6 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   grading: { label: "鑑定中", color: "bg-violet-100 text-violet-800 border-violet-200" },
   graded: { label: "鑑定完成", color: "bg-green-100 text-green-800 border-green-200" },
   payment_overdue: { label: "付款逾期", color: "bg-red-100 text-red-800 border-red-200" },
-  paid: { label: "已付款", color: "bg-blue-100 text-blue-800 border-blue-200" },
   returned: { label: "已寄回", color: "bg-teal-100 text-teal-800 border-teal-200" },
   completed: { label: "已完成", color: "bg-gray-100 text-gray-700 border-gray-200" },
   cancelled: { label: "已取消", color: "bg-red-100 text-red-700 border-red-200" },
@@ -27,7 +26,7 @@ type FilterTab = "all" | "action" | "in_progress" | "done";
 const FILTER_TABS: { key: FilterTab; label: string; statuses?: string[] }[] = [
   { key: "all", label: "全部" },
   { key: "action", label: "需行動", statuses: ["awaiting_payment", "payment_overdue", "pending_shipment", "graded"] },
-  { key: "in_progress", label: "進行中", statuses: ["pending_review", "received", "submitted_to_psa", "grading", "paid"] },
+  { key: "in_progress", label: "進行中", statuses: ["pending_review", "received", "submitted_to_psa", "grading"] },
   { key: "done", label: "已完成", statuses: ["completed", "returned", "cancelled"] },
 ];
 

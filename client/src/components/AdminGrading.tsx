@@ -70,7 +70,6 @@ const STATUS_OPTIONS = [
   { value: "grading", label: "鑑定中" },
   { value: "graded", label: "鑑定完成" },
   { value: "payment_overdue", label: "付款逾期" },
-  { value: "paid", label: "已付款" },
   { value: "returned", label: "已寄回" },
   { value: "completed", label: "已完成" },
   { value: "cancelled", label: "已取消" },
@@ -84,7 +83,6 @@ const STATUS_COLOR: Record<string, string> = {
   grading: "bg-violet-100 text-violet-800",
   graded: "bg-green-100 text-green-800",
   payment_overdue: "bg-red-100 text-red-800",
-  paid: "bg-emerald-100 text-gray-900",
   returned: "bg-teal-100 text-teal-800",
   completed: "bg-gray-100 text-gray-700",
   cancelled: "bg-red-50 text-red-400",
@@ -1153,7 +1151,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
   });
 
   const getPaymentStatusBadge = (sub: any) => {
-    if (sub.status === "paid" || sub.status === "completed") {
+    if (sub.status === "completed") {
       return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900"><CheckCheck className="h-3 w-3" />已付款</span>;
     }
     if (sub.status === "graded") {
@@ -2080,7 +2078,7 @@ function GradingOrdersTab() {
   const utils = trpc.useUtils();
 
   // Fetch ALL paid submissions (pending_shipment and beyond, excluding awaiting_payment/cancelled)
-  const paidStatuses = ["pending_shipment", "received", "graded", "payment_overdue", "paid", "completed", "returned"];
+  const paidStatuses = ["pending_shipment", "received", "graded", "payment_overdue", "completed", "returned"];
 
   const { data: pendingShipmentData, isLoading: loadingPendingShipment } = trpc.grading.admin.listSubmissions.useQuery({
     status: "pending_shipment",
@@ -2102,11 +2100,7 @@ function GradingOrdersTab() {
     page: 1,
     pageSize: 500,
   }, { refetchInterval: 30000 });
-  const { data: paidData, isLoading: loadingPaid } = trpc.grading.admin.listSubmissions.useQuery({
-    status: "paid",
-    page: 1,
-    pageSize: 500,
-  }, { refetchInterval: 30000 });
+
   const { data: completedData, isLoading: loadingCompleted } = trpc.grading.admin.listSubmissions.useQuery({
     status: "completed",
     page: 1,
@@ -2118,7 +2112,7 @@ function GradingOrdersTab() {
     pageSize: 500,
   }, { refetchInterval: 30000 });
 
-  const isLoading = loadingPendingShipment || loadingReceived || loadingGraded || loadingOverdue || loadingPaid || loadingCompleted || loadingReturned;
+  const isLoading = loadingPendingShipment || loadingReceived || loadingGraded || loadingOverdue || loadingCompleted || loadingReturned;
 
   // Merge all sets, deduplicate by id, sort by createdAt desc
   const allPaidSubmissions = [
@@ -2126,7 +2120,6 @@ function GradingOrdersTab() {
     ...(receivedData?.submissions ?? []),
     ...(gradedData?.submissions ?? []),
     ...(overdueData?.submissions ?? []),
-    ...(paidData?.submissions ?? []),
     ...(completedData?.submissions ?? []),
     ...(returnedData?.submissions ?? []),
   ].reduce((acc: any[], sub: any) => {
@@ -2171,7 +2164,6 @@ function GradingOrdersTab() {
     { value: "received", label: "已收件" },
     { value: "graded", label: "鑑定完成（待付款）" },
     { value: "payment_overdue", label: "付款逾期" },
-    { value: "paid", label: "已付款" },
     { value: "completed", label: "已完成" },
     { value: "returned", label: "已退回" },
   ];
@@ -2392,7 +2384,6 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
   const { data: receivedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "received", page: 1, pageSize: 500 });
   const { data: gradedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "graded", page: 1, pageSize: 500 });
   const { data: overdueData } = trpc.grading.admin.listSubmissions.useQuery({ status: "payment_overdue", page: 1, pageSize: 500 });
-  const { data: paidData } = trpc.grading.admin.listSubmissions.useQuery({ status: "paid", page: 1, pageSize: 500 });
   const { data: completedData } = trpc.grading.admin.listSubmissions.useQuery({ status: "completed", page: 1, pageSize: 500 });
 
   const pendingReview = pendingReviewData?.submissions ?? [];
@@ -2400,10 +2391,9 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
   const received = receivedData?.submissions ?? [];
   const graded = gradedData?.submissions ?? [];
   const overdue = overdueData?.submissions ?? [];
-  const paid = paidData?.submissions ?? [];
   const completed = completedData?.submissions ?? [];
 
-  const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...paid, ...completed];
+  const allActive = [...pendingReview, ...pendingShipment, ...received, ...graded, ...overdue, ...completed];
   const UNPAID_STATUSES_DASH = ["awaiting_payment", "pending_review", "cancelled"];
   const confirmedRevenue = allActive
     .filter((s: any) => !UNPAID_STATUSES_DASH.includes(s.status))
@@ -2503,7 +2493,6 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
             { label: "已收件", count: received.length, color: "text-indigo-700 bg-indigo-50" },
             { label: "鑑定完成", count: graded.length, color: "text-green-700 bg-green-50" },
             { label: "付款逾期", count: overdue.length, color: "text-red-700 bg-red-50" },
-            { label: "已付款", count: paid.length, color: "text-emerald-700 bg-emerald-50" },
             { label: "已完成", count: completed.length, color: "text-gray-700 bg-gray-50" },
           ].map((item) => (
             <div key={item.label} className={`${item.color} rounded-lg p-3 flex items-center justify-between`}>

@@ -469,6 +469,8 @@ async function startServer() {
                       totalFeeHkd: _sql2`${newTotal.toFixed(2)}`,
                       upgradePaidAt: new Date(),
                       upgradeCheckoutSessionId: null,
+                      // After upgrade payment, status stays 'graded' — Admin will update to 'returned' when shipped back
+                      // No status change needed here
                     } as any)
                     .where(_geq2(_gSubs2.id, parseInt(submissionId)));
                   console.log(`[Webhook] Grading submission #${submissionId} upgrade complete, diff HK$${diffPaid.toFixed(2)}, new total HK$${newTotal.toFixed(2)}`);

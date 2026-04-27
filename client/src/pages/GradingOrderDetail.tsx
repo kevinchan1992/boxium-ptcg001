@@ -34,16 +34,14 @@ const STATUS_STEPS = [
 ];
 
 const STATUS_ORDER = [
-  "pending_payment", "paid", "received", "submitted_to_psa", "grading", "graded", "returned", "completed"
+   "pending_payment", "received", "submitted_to_psa", "grading", "graded", "returned", "completed"
 ];
-
 function getStepIndex(status: string) {
   const map: Record<string, number> = {
     awaiting_payment: 0,
     pending_review: 0,
     pending_shipment: 0,
     pending_payment: 0,
-    paid: 0,
     received: 1,
     submitted_to_psa: 2,
     grading: 3,
@@ -53,13 +51,11 @@ function getStepIndex(status: string) {
   };
   return map[status] ?? 0;
 }
-
 const STATUS_LABEL: Record<string, string> = {
   awaiting_payment: "待付款確認",
   pending_review: "截圖待審核",
   pending_shipment: "待寄件",
   pending_payment: "待收件",
-  paid: "待收件",
   received: "已收件",
   submitted_to_psa: "已出團",
   grading: "鑑定中",
@@ -1654,8 +1650,8 @@ export default function GradingOrderDetail() {
             </div>
           )}
 
-          {/* Grading results + payment */}
-          {isGraded && !((submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt) && (
+          {/* Grading results + payment - only show if upgrade diff is NOT yet paid */}
+          {isGraded && !((submission as any).upgradeCheckoutSessionId && !(submission as any).upgradePaidAt) && !(submission as any).upgradePaidAt && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -1957,6 +1953,50 @@ export default function GradingOrderDetail() {
                   <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto mb-2" />
                   <p className="font-bold text-green-800 mb-1">截圖已提交！</p>
                   <p className="text-sm text-green-700">管理員確認收款後，訂單將自動完成。如有查詢請聯絡 BOXIUM。</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grading complete + upgrade paid - waiting for return shipment */}
+          {isGraded && (submission as any).upgradePaidAt && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                <p className="font-bold text-blue-800">差價已確認，等待 BOXIUM 寄回</p>
+              </div>
+              <p className="text-sm text-blue-700 mb-3">
+                您的升級差價已確認收款，BOXIUM 正在安排將卡牌寄回至您的收貨地址。
+              </p>
+              <div className="bg-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800">
+                <span className="font-semibold">⚡ 順豐到付</span>：貨品將以順豐速遞到付方式寄回，請準備好運費。
+              </div>
+              {/* PSA results summary */}
+              {submission.items.filter((i: any) => i.psaGrade).length > 0 && (
+                <div className="space-y-2 mt-3">
+                  {submission.items.filter((i: any) => i.psaGrade).map((item: any) => (
+                    <div key={item.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-blue-200">
+                      <span className="text-sm font-semibold text-gray-800">{item.cardName}</span>
+                      <div className="flex items-center gap-2">
+                        {item.psaGrade && (
+                          <span className="bg-[#06038d] text-white text-xs font-bold px-2 py-0.5 rounded">
+                            PSA {item.psaGrade}
+                          </span>
+                        )}
+                        {item.psaCertNumber && (
+                          <a
+                            href={`https://www.psacard.com/cert/${item.psaCertNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#06038d] hover:underline flex items-center gap-0.5"
+                          >
+                            #{item.psaCertNumber}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

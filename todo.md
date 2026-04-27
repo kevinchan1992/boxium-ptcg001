@@ -8812,3 +8812,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] STEP 3 手動輸入支援順豐自提站選擇
 - [x] 所有收貨地址相關 UI 加入「順豐到付」提示
 - [x] GradingOrderDetail 申請詳情頁加入順豐到付提示
+
+---
+## ✅ 鑑定狀態流程修復（完成）
+- [x] 移除冗餘 `paid` 狀態：GradingOrders.tsx STATUS_MAP 和 FILTER_TABS
+- [x] 移除冗餘 `paid` 狀態：AdminGrading.tsx STATUS_OPTIONS、STATUS_COLOR、paidData 查詢、statusFilterOptions
+- [x] 確認升級費用顯示正確：升級差額區塊顯示 upgradeDiffFeeHkd，初始付款區塊顯示 totalFeeHkd
+- [x] 確認 isGraded 區塊條件正確：無升級時顯示初始付款；有升級未付時顯示差額付款；已付差額時顯示等待寄回
+- [x] 新增「差價已確認，等待 BOXIUM 寄回」區塊（isGraded && upgradePaidAt）
+- [x] TypeScript 0 errors 確認
+- [x] 儲存 checkpoint
