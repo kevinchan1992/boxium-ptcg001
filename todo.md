@@ -8852,3 +8852,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] submitAlipayProof：升級差價截圖提交時，status 不改為 pending_review，保留原狀態（只更新 alipayProofStatus）
 - [x] 前端截圖待審核卡片：升級差價截圖提交後，status 不再是 pending_review，不會觸發 isAlipayPendingReview 卡片
 - [x] upgradeProofSubmitted 條件保留正確：upgradeCheckoutSessionId + !upgradePaidAt + alipayProofStatus=pending_review
+---
+## 🔧 Admin 升級差價按鈕顯示條件修復（2026-04-27）
+- [x] AdminGrading.tsx：「確認升級差價已收到」和「拒絕截圖」按鈕只在 alipayProofStatus === "pending_review" 時顯示
+- [x] 未上傳截圖時，顯示「等待客人提交支付寶 HK 補付截圖或選擇 Stripe 付款…」提示文字
