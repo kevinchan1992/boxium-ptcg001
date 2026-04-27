@@ -126,22 +126,46 @@ function PrintableSlip({ submission }: { submission: any }) {
           </div>
         </div>
 
-        {/* Shipping Address */}
-        <div style={{ border: '1.5px solid #06038d', borderRadius: '8px', padding: '14px 16px', marginBottom: '16px', background: '#f0f2ff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <div style={{ width: '20px', height: '20px', background: '#06038d', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: 'white', fontSize: '11px' }}>📦</span>
+        {/* Two-column: Shipping Address (to BOXIUM) + Return Address (to customer) */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          {/* Send-to BOXIUM address */}
+          <div style={{ flex: 1, border: '1.5px solid #06038d', borderRadius: '8px', padding: '12px 14px', background: '#f0f2ff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <div style={{ width: '18px', height: '18px', background: '#06038d', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: 'white', fontSize: '10px' }}>📦</span>
+              </div>
+              <span style={{ fontWeight: '700', fontSize: '12px', color: '#06038d' }}>送件地址（寄給 BOXIUM）</span>
             </div>
-            <span style={{ fontWeight: '700', fontSize: '13px', color: '#06038d' }}>送件地址</span>
+            <div style={{ fontSize: '11px', lineHeight: '1.7' }}>
+              <div><span style={{ color: '#6b7280' }}>收件人：</span><span style={{ fontWeight: '600' }}>BOXIUM</span></div>
+              <div><span style={{ color: '#6b7280' }}>電話：</span><span style={{ fontWeight: '600' }}>55090102</span></div>
+              <div><span style={{ color: '#6b7280' }}>方式：</span><span style={{ fontWeight: '600' }}>順豐站 852Z351</span></div>
+              <div><span style={{ color: '#6b7280' }}>地址：</span><span style={{ fontWeight: '600' }}>東涌逸東邨逸東商場 2 樓 201 號舖</span></div>
+            </div>
+            <div style={{ marginTop: '8px', padding: '5px 8px', background: '#fff3cd', borderRadius: '4px', fontSize: '10px', fontWeight: '600', color: '#92400e' }}>
+              ⚠️ 請連同申請單一起寄出
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: '12px' }}>
-            <div><span style={{ color: '#6b7280' }}>收件人：</span><span style={{ fontWeight: '600' }}>BOXIUM</span></div>
-            <div><span style={{ color: '#6b7280' }}>聯絡電話：</span><span style={{ fontWeight: '600' }}>55090102</span></div>
-            <div><span style={{ color: '#6b7280' }}>寄件方式：</span><span style={{ fontWeight: '600' }}>順豐站 852Z351</span></div>
-            <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#6b7280' }}>地址：</span><span style={{ fontWeight: '600' }}>香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</span></div>
-          </div>
-          <div style={{ marginTop: '10px', padding: '6px 10px', background: '#fff3cd', borderRadius: '4px', fontSize: '11px', fontWeight: '600', color: '#92400e' }}>
-            ⚠️ 請確保此申請單與卡牌一同寄出，否則無法處理您的申請
+          {/* Return address (customer's delivery address) */}
+          <div style={{ flex: 1, border: '1.5px solid #16a34a', borderRadius: '8px', padding: '12px 14px', background: '#f0fdf4' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <div style={{ width: '18px', height: '18px', background: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: 'white', fontSize: '10px' }}>🏠</span>
+              </div>
+              <span style={{ fontWeight: '700', fontSize: '12px', color: '#16a34a' }}>客戶收貨地址（鑑定後回寄）</span>
+            </div>
+            {submission.returnAddress ? (
+              <div style={{ fontSize: '11px', lineHeight: '1.7' }}>
+                <div><span style={{ color: '#6b7280' }}>收件人：</span><span style={{ fontWeight: '600' }}>{submission.returnAddress.recipientName}</span></div>
+                <div><span style={{ color: '#6b7280' }}>電話：</span><span style={{ fontWeight: '600' }}>{submission.returnAddress.phone}</span></div>
+                {submission.returnAddress.sfStationName && (
+                  <div><span style={{ color: '#6b7280' }}>順豐站：</span><span style={{ fontWeight: '600' }}>{submission.returnAddress.sfStationName} ({submission.returnAddress.sfStationCode})</span></div>
+                )}
+                <div><span style={{ color: '#6b7280' }}>地址：</span><span style={{ fontWeight: '600' }}>{[submission.returnAddress.district, submission.returnAddress.region, submission.returnAddress.address].filter(Boolean).join(' ')}</span></div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '11px', color: '#9ca3af', fontStyle: 'italic' }}>未填寫收貨地址</div>
+            )}
           </div>
         </div>
 
@@ -589,6 +613,15 @@ export default function GradingOrderDetail() {
         <td style="padding:10px 12px;text-align:right;font-weight:600;color:#111827">HK$${item.tier ? parseFloat(item.tier.feeHkd).toLocaleString() : '—'}</td>
       </tr>
     `).join('');
+    const returnAddr = (submission as any).returnAddress;
+    const returnAddrHtml = returnAddr
+      ? `<div style="font-size:11px;line-height:1.7">
+          <div><span style="color:#6b7280">收件人：</span><span style="font-weight:600">${returnAddr.recipientName || ''}</span></div>
+          <div><span style="color:#6b7280">電話：</span><span style="font-weight:600">${returnAddr.phone || ''}</span></div>
+          ${returnAddr.sfStationName ? `<div><span style="color:#6b7280">順豐站：</span><span style="font-weight:600">${returnAddr.sfStationName} (${returnAddr.sfStationCode})</span></div>` : ''}
+          <div><span style="color:#6b7280">地址：</span><span style="font-weight:600">${[returnAddr.district, returnAddr.region, returnAddr.address].filter(Boolean).join(' ')}</span></div>
+        </div>`
+      : '<div style="font-size:11px;color:#9ca3af;font-style:italic">未填寫收貨地址</div>';
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>申請單 ${submission.orderNo}</title>
     <style>body{margin:0;padding:0;font-family:Arial,sans-serif;color:#111;background:#fff}@page{margin:10mm;size:A4}*{box-sizing:border-box}</style>
     </head><body>
@@ -626,15 +659,21 @@ export default function GradingOrderDetail() {
           <div style="font-size:12px;color:#6b7280;margin-top:2px">共 ${(submission as any).items.length} 張卡牌</div>
         </div>
       </div>
-      <div style="border:1.5px solid #06038d;border-radius:8px;padding:14px 16px;margin-bottom:16px;background:#f0f2ff">
-        <div style="font-weight:700;font-size:13px;color:#06038d;margin-bottom:8px">📦 送件地址</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px">
-          <div><span style="color:#6b7280">收件人：</span><span style="font-weight:600">BOXIUM</span></div>
-          <div><span style="color:#6b7280">聯絡電話：</span><span style="font-weight:600">55090102</span></div>
-          <div><span style="color:#6b7280">寄件方式：</span><span style="font-weight:600">順豐站 852Z351</span></div>
-          <div style="grid-column:1/-1"><span style="color:#6b7280">地址：</span><span style="font-weight:600">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</span></div>
+      <div style="display:flex;gap:12px;margin-bottom:16px">
+        <div style="flex:1;border:1.5px solid #06038d;border-radius:8px;padding:12px 14px;background:#f0f2ff">
+          <div style="font-weight:700;font-size:12px;color:#06038d;margin-bottom:8px">📦 送件地址（寄給 BOXIUM）</div>
+          <div style="font-size:11px;line-height:1.7">
+            <div><span style="color:#6b7280">收件人：</span><span style="font-weight:600">BOXIUM</span></div>
+            <div><span style="color:#6b7280">電話：</span><span style="font-weight:600">55090102</span></div>
+            <div><span style="color:#6b7280">方式：</span><span style="font-weight:600">順豐站 852Z351</span></div>
+            <div><span style="color:#6b7280">地址：</span><span style="font-weight:600">東涌逸東邨逸東商場 2 樓 201 號舖</span></div>
+          </div>
+          <div style="margin-top:8px;padding:5px 8px;background:#fff3cd;border-radius:4px;font-size:10px;font-weight:600;color:#92400e">⚠️ 請連同申請單一起寄出</div>
         </div>
-        <div style="margin-top:10px;padding:6px 10px;background:#fff3cd;border-radius:4px;font-size:11px;font-weight:600;color:#92400e">⚠️ 請確保此申請單與卡牌一同寄出，否則無法處理您的申請</div>
+        <div style="flex:1;border:1.5px solid #16a34a;border-radius:8px;padding:12px 14px;background:#f0fdf4">
+          <div style="font-weight:700;font-size:12px;color:#16a34a;margin-bottom:8px">🏠 客戶收貨地址（鑑定後回寄）</div>
+          ${returnAddrHtml}
+        </div>
       </div>
       <div style="border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:16px">
         <div style="background:#06038d;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
@@ -1920,6 +1959,41 @@ export default function GradingOrderDetail() {
                   <p className="text-sm text-green-700">管理員確認收款後，訂單將自動完成。如有查詢請聯絡 BOXIUM。</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Return Address display card */}
+          {(submission as any).returnAddress && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+              <div className="bg-green-700 text-white px-5 py-3 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span className="font-bold text-sm">客戶收貨地址</span>
+                <span className="text-green-200 text-xs ml-1">（鑑定完成後，BOXIUM 將把卡牌寄回此地址）</span>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                  <div>
+                    <span className="text-gray-500 text-xs">收件人</span>
+                    <p className="font-semibold text-gray-900">{(submission as any).returnAddress.recipientName}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs">聯絡電話</span>
+                    <p className="font-semibold text-gray-900">{(submission as any).returnAddress.phone}</p>
+                  </div>
+                  {(submission as any).returnAddress.sfStationName && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500 text-xs">順豐站</span>
+                      <p className="font-semibold text-gray-900">{(submission as any).returnAddress.sfStationName} ({(submission as any).returnAddress.sfStationCode})</p>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <span className="text-gray-500 text-xs">地址</span>
+                    <p className="font-semibold text-gray-900">
+                      {[(submission as any).returnAddress.district, (submission as any).returnAddress.region, (submission as any).returnAddress.address].filter(Boolean).join(' ')}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

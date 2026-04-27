@@ -8772,3 +8772,23 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 
 - [x] 差價補付時（有 upgradePayment 卡片），隱藏下方「鑑定完成！請完成付款」卡片，避免兩個付款卡片同時顯示
 - [x] 卡牌清單加入 PSA 認證號碼（certNumber）顯示，在 PSA 等級旁顯示 Admin 輸入的認證號碼（可點擊連結至 PSA 官網查驗）
+
+---
+
+## ✅ STEP 3 客戶收貨地址功能
+
+- [x] 資料庫 gradingSubmissions 表新增 returnAddress 欄位（JSON text）
+- [x] 後端 grading router 新增 getMyShippingAddresses procedure（讀取用戶個人中心已儲存地址）
+- [x] 後端 submitApplication 和 createSubmissionCheckout 接受 returnAddress 參數並儲存為 JSON
+- [x] 後端 getSubmissionDetail（用戶版 + Admin 版）解析 returnAddress JSON 並返回
+- [x] 前端 GradingSubmit.tsx STEP 3：將「送件地址」卡片改為「客戶收貨地址」輸入區
+- [x] 支援選擇個人中心已儲存地址（含順豐站地址類型顯示）
+- [x] 支援手動輸入新地址（姓名、電話、詳細地址、地區、城市）
+- [x] 無已儲存地址時自動切換到手動輸入模式
+- [x] 提交前驗證必填欄位（姓名、電話、地址）
+- [x] 前端 GradingOrderDetail.tsx 申請詳情頁加入客戶收貨地址顯示卡片
+- [x] PrintableSlip 申請單改為兩欄佈局（送件地址 + 客戶收貨地址並排）
+- [x] handlePrint HTML 申請單同步更新（加入客戶收貨地址）
+- [x] Admin getSubmissionDetail 同步解析 returnAddress
+- [x] 撰寫並通過 8 項 vitest 測試（grading.returnAddress.test.ts）
+- [x] 儲存 checkpoint

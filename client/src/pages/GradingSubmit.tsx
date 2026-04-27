@@ -22,6 +22,9 @@ import {
   Package,
   DollarSign,
   Loader2,
+  MapPin,
+  Home,
+  PlusCircle,
 } from "lucide-react";
 // ─── Types ─────────────────────────────────────────────────────────────────────────────
 interface GradingItem {
@@ -456,6 +459,28 @@ export default function GradingSubmit() {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const { data: tiers, isLoading: tiersLoading } = trpc.grading.getServiceTiers.useQuery();
 
+  // ── Return address (customer's delivery address) ──
+  const { data: savedAddresses } = trpc.grading.getMyShippingAddresses.useQuery();
+  const [returnAddressMode, setReturnAddressMode] = useState<'saved' | 'manual'>('saved');
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<number | null>(null);
+  const [manualReturnAddress, setManualReturnAddress] = useState({
+    recipientName: '',
+    phone: '',
+    address: '',
+    district: '',
+    region: '香港',
+  });
+
+  // Auto-select first saved address when loaded
+  useEffect(() => {
+    if (savedAddresses && savedAddresses.length > 0 && selectedSavedAddressId === null) {
+      setSelectedSavedAddressId(savedAddresses[0].id);
+    }
+    if (savedAddresses && savedAddresses.length === 0) {
+      setReturnAddressMode('manual');
+    }
+  }, [savedAddresses]);
+
   // Once userId is available, re-check draft with user-specific key
   useEffect(() => {
     if (!userId || draftInitialized.current) return;
@@ -586,6 +611,36 @@ export default function GradingSubmit() {
       toast.error("請先閱讀並同意服務條款");
       return;
     }
+    // Build returnAddress
+    let returnAddress: { recipientName: string; phone: string; address: string; district?: string; region: string } | undefined;
+    if (returnAddressMode === 'saved' && selectedSavedAddressId && savedAddresses) {
+      const saved = savedAddresses.find((a: any) => a.id === selectedSavedAddressId);
+      if (saved) {
+        returnAddress = {
+          recipientName: saved.recipientName || '',
+          phone: saved.phone || '',
+          address: saved.address || '',
+          district: saved.district || '',
+          region: saved.region || '香港',
+          ...(saved.addressType === 'sf_station' && saved.sfStationCode ? {
+            sfStationCode: saved.sfStationCode,
+            sfStationName: saved.sfStationName || '',
+          } : {}),
+        } as any;
+      }
+    } else if (returnAddressMode === 'manual') {
+      if (!manualReturnAddress.recipientName.trim() || !manualReturnAddress.phone.trim() || !manualReturnAddress.address.trim()) {
+        toast.error("請完整填寫收貨地址資料（姓名、電話、地址）");
+        return;
+      }
+      returnAddress = {
+        recipientName: manualReturnAddress.recipientName.trim(),
+        phone: manualReturnAddress.phone.trim(),
+        address: manualReturnAddress.address.trim(),
+        district: manualReturnAddress.district.trim() || undefined,
+        region: manualReturnAddress.region || '香港',
+      };
+    }
     // Expand items by quantity: each item with qty=3 becomes 3 separate submission items
     const expandedItems = items.flatMap((item: GradingItem) => {
       const qty = item.quantity ?? 1;
@@ -609,6 +664,7 @@ export default function GradingSubmit() {
     checkoutMutation.mutate({
       items: expandedItems,
       agreedToTerms: true,
+      returnAddress,
     });
   };
 
@@ -944,18 +1000,161 @@ export default function GradingSubmit() {
               </div>
             </div>
 
-            {/* Shipping notice */}
-            <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
-              <div className="flex gap-3">
-                <Package className="h-5 w-5 text-[#06038d] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-[#06038d] mb-1">送件地址</p>
-                  <p className="text-sm text-gray-700">📦 順豐站 852Z351</p>
-                  <p className="text-sm text-gray-700">香港新界離島區東涌逸東街 8 號逸東邨逸東商場 2 樓 201 號舖</p>
-                  <p className="text-xs text-amber-600 mt-2 font-semibold">
-                    ⚠️ 請打印申請單連同卡牌一起寄出，否則無法處理您的申請
-                  </p>
-                </div>
+            {/* Return Address (customer's delivery address) */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-[#06038d] text-white px-5 py-3 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span className="font-bold">客戶收貨地址</span>
+                <span className="text-blue-200 text-xs ml-1">（鑑定完成後，BOXIUM 將把卡牌寄回此地址）</span>
+              </div>
+              <div className="p-4">
+                {/* Mode toggle */}
+                {savedAddresses && savedAddresses.length > 0 && (
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setReturnAddressMode('saved')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-sm font-semibold transition-all ${
+                        returnAddressMode === 'saved'
+                          ? 'border-[#06038d] bg-[#06038d]/5 text-[#06038d]'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <Home className="h-4 w-4" />
+                      使用已儲存地址
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReturnAddressMode('manual')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-sm font-semibold transition-all ${
+                        returnAddressMode === 'manual'
+                          ? 'border-[#06038d] bg-[#06038d]/5 text-[#06038d]'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      手動輸入新地址
+                    </button>
+                  </div>
+                )}
+
+                {/* Saved addresses list */}
+                {returnAddressMode === 'saved' && savedAddresses && savedAddresses.length > 0 && (
+                  <div className="space-y-2">
+                    {savedAddresses.map((addr: any) => (
+                      <label
+                        key={addr.id}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                          selectedSavedAddressId === addr.id
+                            ? 'border-[#06038d] bg-[#06038d]/5'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="savedAddress"
+                          checked={selectedSavedAddressId === addr.id}
+                          onChange={() => setSelectedSavedAddressId(addr.id)}
+                          className="mt-1 accent-[#06038d]"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-gray-900">{addr.recipientName}</span>
+                            <span className="text-sm text-gray-500">{addr.phone}</span>
+                            {addr.isDefault && (
+                              <span className="text-xs bg-[#06038d] text-white px-1.5 py-0.5 rounded">預設</span>
+                            )}
+                            {addr.addressType === 'sf_station' && (
+                              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">順豐站</span>
+                            )}
+                          </div>
+                          {addr.addressType === 'sf_station' && addr.sfStationName ? (
+                            <p className="text-xs text-gray-600 mt-0.5 truncate">順豐站 {addr.sfStationCode} · {addr.sfStationName}</p>
+                          ) : (
+                            <p className="text-xs text-gray-600 mt-0.5 truncate">
+                              {[addr.district, addr.region, addr.address].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setReturnAddressMode('manual')}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-[#06038d] hover:underline"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      使用其他地址
+                    </button>
+                  </div>
+                )}
+
+                {/* Manual input */}
+                {(returnAddressMode === 'manual' || !savedAddresses || savedAddresses.length === 0) && (
+                  <div className="space-y-3">
+                    {savedAddresses && savedAddresses.length === 0 && (
+                      <p className="text-xs text-gray-500 mb-2">您尚未儲存任何地址，請填寫收貨地址。您可在個人中心儲存常用地址。</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">收件人姓名 <span className="text-red-500">*</span></label>
+                        <Input
+                          value={manualReturnAddress.recipientName}
+                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, recipientName: e.target.value }))}
+                          placeholder="例：陳大文"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">聯絡電話 <span className="text-red-500">*</span></label>
+                        <Input
+                          value={manualReturnAddress.phone}
+                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, phone: e.target.value }))}
+                          placeholder="例：9123 4567"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">詳細地址 <span className="text-red-500">*</span></label>
+                      <Input
+                        value={manualReturnAddress.address}
+                        onChange={(e) => setManualReturnAddress(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="例：九龍旺角彌敦道 123 號 XX 大廈 5 樓 A 室"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">地區</label>
+                        <Input
+                          value={manualReturnAddress.district}
+                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, district: e.target.value }))}
+                          placeholder="例：旺角"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">城市</label>
+                        <Input
+                          value={manualReturnAddress.region}
+                          onChange={(e) => setManualReturnAddress(prev => ({ ...prev, region: e.target.value }))}
+                          placeholder="香港"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    {savedAddresses && savedAddresses.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setReturnAddressMode('saved')}
+                        className="text-xs text-[#06038d] hover:underline"
+                      >
+                        ← 返回選擇已儲存地址
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

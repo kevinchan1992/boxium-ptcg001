@@ -1625,6 +1625,7 @@ export const gradingSubmissions = mysqlTable("gradingSubmissions", {
   upgradeCheckoutAt: timestamp("upgradeCheckoutAt"), // When the upgrade checkout was created
   upgradePaidAt: timestamp("upgradePaidAt"),
   upgradeReminderSentAt: timestamp("upgradeReminderSentAt"), // Last time overdue reminder was sent (for dedup)
+  returnAddress: text("returnAddress"), // JSON: { recipientName, phone, address, district, region, sfStationCode?, sfStationName? }
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

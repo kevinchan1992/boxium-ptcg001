@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
-import { getDb, getSystemSetting, setSystemSetting, isGradingMaintenanceMode, isGradingWhitelisted, createAuditLog } from "../db";
+import { getDb, getSystemSetting, setSystemSetting, isGradingMaintenanceMode, isGradingWhitelisted, createAuditLog, getUserShippingAddresses } from "../db";
 import {
   gradingServiceTiers,
   gradingBatches,
@@ -146,6 +146,15 @@ export const gradingRouter = router({
           })
         ).min(1),
         agreedToTerms: z.boolean().refine((v) => v === true, { message: "必須同意服務條款" }),
+        returnAddress: z.object({
+          recipientName: z.string().min(1),
+          phone: z.string().min(1),
+          address: z.string().min(1),
+          district: z.string().optional(),
+          region: z.string().default("香港"),
+          sfStationCode: z.string().optional(),
+          sfStationName: z.string().optional(),
+        }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -202,6 +211,7 @@ export const gradingRouter = router({
         totalFeeHkd: totalFeeHkd.toFixed(2),
         batchId: nextBatch?.id || null,
         shippingDeadline: nextBatch?.cutoffDate || null,
+        returnAddress: input.returnAddress ? JSON.stringify(input.returnAddress) : null,
       }).$returningId();
 
       const submissionId = submissionResult.id;
@@ -277,6 +287,15 @@ export const gradingRouter = router({
         paymentMethod: z.enum(["stripe", "alipay_hk"]),
         agreedToTerms: z.boolean().refine((v) => v === true, { message: "必須同意服務條款" }),
         origin: z.string(),
+        returnAddress: z.object({
+          recipientName: z.string().min(1),
+          phone: z.string().min(1),
+          address: z.string().min(1),
+          district: z.string().optional(),
+          region: z.string().default("香港"),
+          sfStationCode: z.string().optional(),
+          sfStationName: z.string().optional(),
+        }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -334,6 +353,7 @@ export const gradingRouter = router({
         batchId: nextBatch?.id || null,
         shippingDeadline: nextBatch?.cutoffDate || null,
         paymentMethod: input.paymentMethod,
+        returnAddress: input.returnAddress ? JSON.stringify(input.returnAddress) : null,
       }).$returningId();
 
       const submissionId = submissionResult.id;
@@ -558,12 +578,19 @@ export const gradingRouter = router({
         upgradeNewTierName = upgradeTier?.name ?? null;
       }
 
+      // Parse returnAddress JSON
+      let parsedReturnAddress: Record<string, string> | null = null;
+      if (submission.returnAddress) {
+        try { parsedReturnAddress = JSON.parse(submission.returnAddress as string); } catch {}
+      }
+
       return {
         ...submission,
         user: userInfo || null,
         items: (items as GradingSubmissionItem[]).map((item) => ({ ...item, tier: tierMap.get(item.tierId) || null })),
         batch,
         upgradeNewTierName,
+        returnAddress: parsedReturnAddress,
       };
     }),
 
@@ -1314,12 +1341,19 @@ export const gradingRouter = router({
           upgradeNewTierName = upgradeTier?.name ?? null;
         }
 
+        // Parse returnAddress JSON
+        let parsedAdminReturnAddress: Record<string, string> | null = null;
+        if (row.submission.returnAddress) {
+          try { parsedAdminReturnAddress = JSON.parse(row.submission.returnAddress as string); } catch {}
+        }
+
         return {
           ...row.submission,
           user: row.user,
           items: (items as GradingSubmissionItem[]).map((item: GradingSubmissionItem) => ({ ...item, tier: tierMap.get(item.tierId) || null })),
           batch,
           upgradeNewTierName,
+          returnAddress: parsedAdminReturnAddress,
         };
       }),
 
@@ -2686,5 +2720,11 @@ export const gradingRouter = router({
         avgRating: Math.round((total / count) * 10) / 10,
         count,
       }));
+    }),
+
+  /** Get current user's saved shipping addresses (for grading return address selection) */
+  getMyShippingAddresses: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getUserShippingAddresses(ctx.user.id);
     }),
 });
