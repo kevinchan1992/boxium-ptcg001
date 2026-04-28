@@ -1536,6 +1536,30 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: Trending Cards Daily Recalculation ─────────────
+  // Called by external Manus scheduled task daily at 06:00 HKT
+  // Auth: accepts app_session_id cookie (user role) from scheduled task platform
+  app.post("/api/scheduled/trending-cards", async (req, res) => {
+    try {
+      const { createContext } = await import("./context");
+      const ctx = await createContext({ req, res } as any);
+      // Allow user role (scheduled task platform injects user-level cookie)
+      if (!ctx.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      console.log(`[ScheduledTask] trending-cards triggered by user: ${ctx.user.email}`);
+      const { calculateAndCacheTrendingCards } = await import("../db");
+      const startTime = Date.now();
+      await calculateAndCacheTrendingCards();
+      const durationMs = Date.now() - startTime;
+      console.log(`[ScheduledTask] trending-cards completed in ${durationMs}ms`);
+      return res.json({ success: true, durationMs, calculatedAt: new Date().toISOString() });
+    } catch (err: any) {
+      console.error('[ScheduledTask] trending-cards failed:', err?.message);
+      return res.status(500).json({ error: 'Calculation failed', detail: err?.message });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   app.use(
