@@ -2995,24 +2995,28 @@ export default function AdminGrading() {
       </div>
 
       {/* Section tabs */}
-      <div className="overflow-x-auto mb-6 border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
-        <div className="flex gap-0.5 min-w-max sm:min-w-0">
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setActiveSection(s.id)}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                activeSection === s.id
-                  ? "border-[#06038d] text-[#06038d]"
-                  : "border-transparent text-gray-700 hover:text-[#06038d]"
-              }`}
-            >
-              {s.icon}
-              <span className="hidden sm:inline">{s.label}</span>
-              <span className="sm:hidden">{s.label.length > 3 ? s.label.slice(0, 3) : s.label}</span>
-            </button>
-          ))}
+      <div className="relative mb-6">
+        <div className="overflow-x-auto border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="flex gap-0.5 min-w-max sm:min-w-0">
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  activeSection === s.id
+                    ? "border-[#06038d] text-[#06038d]"
+                    : "border-transparent text-gray-700 hover:text-[#06038d]"
+                }`}
+              >
+                {s.icon}
+                <span className="hidden sm:inline">{s.label}</span>
+                <span className="sm:hidden">{s.label.length > 3 ? s.label.slice(0, 3) : s.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
+        {/* Fade-out gradient hint for mobile scroll */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent sm:hidden" />
       </div>
 
       {activeSection === "dashboard" && <DashboardTab onNavigate={(s) => setActiveSection(s as any)} />}
