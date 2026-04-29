@@ -261,11 +261,13 @@ function InlineCardSearch({
   value,
   onChange,
   onSelect,
+  onAfterSelect,
   placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSelect: (card: CardSearchResult) => void;
+  onAfterSelect?: () => void;
   placeholder?: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -297,6 +299,8 @@ function InlineCardSearch({
           onSelect(card);
           onChange(card.name);
           setModalOpen(false);
+          // After modal closes, focus next field
+          if (onAfterSelect) setTimeout(onAfterSelect, 80);
         }}
         title="搜尋卡牌"
       />
@@ -550,6 +554,7 @@ function BatchSellDialog({
                         type="number" step="0.01" placeholder="0"
                         value={row.sellPriceOriginal}
                         onChange={(e) => updateSellRow(row.id, { sellPriceOriginal: e.target.value })}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } }}
                         className="h-8 text-xs min-w-0"
                       />
                     </div>
@@ -679,6 +684,12 @@ function BatchBuyDialog({
   // Rows
   const [rows, setRows] = useState<BatchRow[]>([makeBatchRow()]);
   const rowsContainerRef = useRef<HTMLDivElement>(null);
+  // Refs for Tab-key navigation: rowFieldRefs[rowId] = { set, num, amount }
+  const rowFieldRefs = useRef<Record<string, { set: HTMLInputElement | null; num: HTMLInputElement | null; amount: HTMLInputElement | null }>>({});
+  const getRowRefs = (rowId: string) => {
+    if (!rowFieldRefs.current[rowId]) rowFieldRefs.current[rowId] = { set: null, num: null, amount: null };
+    return rowFieldRefs.current[rowId];
+  };
   const batchCreateMutation = trpc.cardInventory.batchCreate.useMutation({
     onSuccess: (data) => {
       toast.success(`已批量新增 ${data.count} 筆買取記錄`);
@@ -860,6 +871,7 @@ function BatchBuyDialog({
                       });
                     }}
                     placeholder="卡牌名稱..."
+                    onAfterSelect={() => getRowRefs(row.id).set?.focus()}
                   />
                 </div>
                 {/* Duplicate */}
@@ -884,15 +896,19 @@ function BatchBuyDialog({
               <div className="pl-9 grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
                 {/* Set */}
                 <Input
+                  ref={(el) => { getRowRefs(row.id).set = el; }}
                   value={row.cardSet}
                   onChange={(e) => updateRow(row.id, { cardSet: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); getRowRefs(row.id).num?.focus(); } }}
                   placeholder="系列"
                   className="h-9 text-sm"
                 />
                 {/* Card number */}
                 <Input
+                  ref={(el) => { getRowRefs(row.id).num = el; }}
                   value={row.cardNumber}
                   onChange={(e) => updateRow(row.id, { cardNumber: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); getRowRefs(row.id).amount?.focus(); } }}
                   placeholder="卡號"
                   className="h-9 text-sm"
                 />
@@ -907,12 +923,24 @@ function BatchBuyDialog({
                     </SelectContent>
                   </Select>
                   <Input
+                    ref={(el) => { getRowRefs(row.id).amount = el; }}
                     type="number"
                     step="0.01"
                     placeholder="0"
                     value={row.buyPriceOriginal}
                     onChange={(e) => updateRow(row.id, { buyPriceOriginal: e.target.value })}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); handleSubmit(); }
+                      if (e.key === "Tab" && !e.shiftKey) {
+                        // Jump to next row's set field, or add a new row
+                        const nextIdx = rows.findIndex(r => r.id === row.id) + 1;
+                        if (nextIdx < rows.length) {
+                          e.preventDefault();
+                          getRowRefs(rows[nextIdx].id).set?.focus();
+                        }
+                        // else: let default Tab behavior proceed
+                      }
+                    }}
                     className="h-9 text-sm w-[90px]"
                   />
                 </div>
