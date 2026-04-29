@@ -149,7 +149,7 @@ function InlineCardSearch({
       {open && value.length >= 2 && (
         <div
           ref={dropdownRef}
-          className="absolute z-[60] top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-[340px] overflow-y-auto"
+          className="absolute z-[60] top-full mt-1 left-0 bg-background border rounded-lg shadow-xl max-h-[340px] overflow-y-auto w-[min(340px,calc(100vw-2rem))]"
         >
           {isFetching && <div className="p-2.5 text-xs text-muted-foreground text-center">搜尋中...</div>}
           {!isFetching && results.length === 0 && <div className="p-2.5 text-xs text-muted-foreground text-center">找不到卡牌，請手動輸入</div>}
@@ -697,8 +697,9 @@ function BatchBuyDialog({
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {rows.map((row, idx) => (
             <div key={row.id} className="space-y-1">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
-              {/* Card search */}
+            {/* Row: two-line layout */}
+            <div className="space-y-1.5">
+              {/* Line 1: index + card search + action buttons */}
               <div className="flex items-center gap-1.5">
                 {row.imageUrl ? (
                   <img src={row.imageUrl} alt={row.cardName} className="w-7 h-10 object-cover rounded flex-shrink-0" />
@@ -707,69 +708,74 @@ function BatchBuyDialog({
                     <span className="text-xs text-muted-foreground font-bold">{idx + 1}</span>
                   </div>
                 )}
-                <InlineCardSearch
-                  value={row.cardName}
-                  onChange={(v) => updateRow(row.id, { cardName: v, imageUrl: v ? row.imageUrl : "", linkedCardId: v ? row.linkedCardId : null })}
-                  onSelect={(card) => updateRow(row.id, {
-                    cardName: card.name,
-                    cardSet: card.setName ?? "",
-                    cardNumber: card.cardNumber ?? "",
-                    imageUrl: card.imageUrl ?? "",
-                    linkedCardId: card.id,
-                  })}
-                  placeholder="卡牌名稱..."
-                />
+                <div className="flex-1 min-w-0">
+                  <InlineCardSearch
+                    value={row.cardName}
+                    onChange={(v) => updateRow(row.id, { cardName: v, imageUrl: v ? row.imageUrl : "", linkedCardId: v ? row.linkedCardId : null })}
+                    onSelect={(card) => updateRow(row.id, {
+                      cardName: card.name,
+                      cardSet: card.setName ?? "",
+                      cardNumber: card.cardNumber ?? "",
+                      imageUrl: card.imageUrl ?? "",
+                      linkedCardId: card.id,
+                    })}
+                    placeholder="卡牌名稱..."
+                  />
+                </div>
+                {/* Duplicate */}
+                <button
+                  className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  title="複製此行"
+                  onClick={() => duplicateRow(row.id)}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+                {/* Remove */}
+                <button
+                  className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30"
+                  title="刪除此行"
+                  onClick={() => removeRow(row.id)}
+                  disabled={rows.length === 1}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              {/* Set */}
-              <Input
-                value={row.cardSet}
-                onChange={(e) => updateRow(row.id, { cardSet: e.target.value })}
-                placeholder="系列"
-                className="h-8 text-xs"
-              />
-              {/* Card number */}
-              <Input
-                value={row.cardNumber}
-                onChange={(e) => updateRow(row.id, { cardNumber: e.target.value })}
-                placeholder="卡號"
-                className="h-8 text-xs"
-              />
-              {/* Price */}
-              <div className="flex gap-0.5">
-                <Select value={row.buyPriceCurrency} onValueChange={(v) => updateRow(row.id, { buyPriceCurrency: v as "HKD" | "JPY" | "USD" })}>
-                  <SelectTrigger className="w-14 h-8 text-xs px-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="HKD">HKD</SelectItem>
-                    <SelectItem value="JPY">JPY</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Line 2: set + card number + currency + amount */}
+              <div className="pl-9 grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
+                {/* Set */}
                 <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0"
-                  value={row.buyPriceOriginal}
-                  onChange={(e) => updateRow(row.id, { buyPriceOriginal: e.target.value })}
-                  className="h-8 text-xs min-w-0"
+                  value={row.cardSet}
+                  onChange={(e) => updateRow(row.id, { cardSet: e.target.value })}
+                  placeholder="系列"
+                  className="h-9 text-sm"
                 />
+                {/* Card number */}
+                <Input
+                  value={row.cardNumber}
+                  onChange={(e) => updateRow(row.id, { cardNumber: e.target.value })}
+                  placeholder="卡號"
+                  className="h-9 text-sm"
+                />
+                {/* Currency + Amount */}
+                <div className="flex gap-1 items-center">
+                  <Select value={row.buyPriceCurrency} onValueChange={(v) => updateRow(row.id, { buyPriceCurrency: v as "HKD" | "JPY" | "USD" })}>
+                    <SelectTrigger className="w-[72px] h-9 text-sm px-2"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HKD">HKD</SelectItem>
+                      <SelectItem value="JPY">JPY</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    value={row.buyPriceOriginal}
+                    onChange={(e) => updateRow(row.id, { buyPriceOriginal: e.target.value })}
+                    className="h-9 text-sm w-[90px]"
+                  />
+                </div>
               </div>
-              {/* Duplicate */}
-              <button
-                className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                title="複製此行"
-                onClick={() => duplicateRow(row.id)}
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-              {/* Remove */}
-              <button
-                className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30"
-                title="刪除此行"
-                onClick={() => removeRow(row.id)}
-                disabled={rows.length === 1}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
             {/* Notes toggle for batch buy row */}
             <div className="pl-9">
