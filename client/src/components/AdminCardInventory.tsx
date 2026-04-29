@@ -93,6 +93,130 @@ function formatDate(d: Date | null | undefined): string {
   return new Date(d).toLocaleDateString("zh-HK", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
+/* ─── Card Search Modal (full-screen, like 選擇卡牌 dialog) ─────────── */
+function CardSearchModal({
+  open,
+  onClose,
+  onSelect,
+  title = "搜尋卡牌",
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (card: CardSearchResult) => void;
+  title?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { data, isFetching } = trpc.cards.search.useQuery(
+    { query, limit: 20 },
+    { enabled: query.length >= 2 }
+  );
+  const results: CardSearchResult[] = (data?.cards ?? []) as CardSearchResult[];
+
+  // Auto-focus input when modal opens
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent
+        className="flex flex-col p-0 gap-0 overflow-hidden"
+        style={{ maxWidth: "min(680px, 95vw)", height: "min(85vh, 700px)" }}
+      >
+        {/* Blue header with search box */}
+        <div className="bg-[#06038D] px-5 pt-5 pb-4 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-white text-xl font-bold">{title}</h2>
+              <p className="text-blue-200 text-xs mt-0.5">搜索並選擇對應的卡牌，系統將自動關聯市場數據</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-white transition-colors p-1 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-blue-300 pointer-events-none" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="輸入卡牌名稱、日文名或卡號..."
+              className="w-full h-11 pl-10 pr-10 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-white/40"
+            />
+            {query && (
+              <button
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-white"
+                onClick={() => setQuery("")}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Results list */}
+        <div className="flex-1 overflow-y-auto bg-white">
+          {query.length < 2 && (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 py-16">
+              <Search className="w-10 h-10 opacity-30" />
+              <p className="text-sm">輸入至少 2 個字元開始搜尋</p>
+            </div>
+          )}
+          {query.length >= 2 && isFetching && (
+            <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">搜尋中...</div>
+          )}
+          {query.length >= 2 && !isFetching && results.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-1">
+              <p className="text-sm">找不到符合的卡牌</p>
+              <p className="text-xs">請嘗試其他關鍵字，或關閉後手動輸入</p>
+            </div>
+          )}
+          {results.map((card, idx) => (
+            <button
+              key={card.id}
+              className="w-full flex items-center gap-4 px-5 py-4 hover:bg-blue-50 text-left transition-colors border-b last:border-b-0"
+              onClick={() => { onSelect(card); onClose(); }}
+            >
+              <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 shadow">
+                {card.imageUrl
+                  ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-gray-400" /></div>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-[#06038D] text-base leading-snug line-clamp-2">{card.name}</div>
+                {card.nameJa && <div className="text-xs text-gray-500 truncate mt-0.5">{card.nameJa}</div>}
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {card.cardNumber && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600 font-mono">
+                      {card.cardNumber}
+                    </span>
+                  )}
+                </div>
+                {card.latestPrice && (
+                  <div className="text-xs font-semibold text-[#06038D] mt-1">PSA 10 市場均價 HKD {card.latestPrice.toLocaleString()}</div>
+                )}
+              </div>
+            </button>
+          ))}
+          {query.length >= 2 && !isFetching && results.length > 0 && (
+            <div className="px-5 py-3 text-xs text-gray-400 text-center border-t">
+              顯示 {results.length} 個結果
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Inline Card Search (for batch rows) ───────────────────────────── */
 function InlineCardSearch({
   value,
@@ -105,77 +229,39 @@ function InlineCardSearch({
   onSelect: (card: CardSearchResult) => void;
   placeholder?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const { data, isFetching } = trpc.cards.search.useQuery(
-    { query: value, limit: 6 },
-    { enabled: value.length >= 2 }
-  );
-  const results: CardSearchResult[] = (data?.cards ?? []) as CardSearchResult[];
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current && !inputRef.current.contains(e.target as Node)
-      ) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  const [modalOpen, setModalOpen] = useState(false);
   return (
-    <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-      <Input
-        ref={inputRef}
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => value.length >= 2 && setOpen(true)}
-        placeholder={placeholder ?? "搜尋卡牌..."}
-        className="pl-8 h-8 text-sm"
+    <>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          readOnly
+          value={value}
+          onClick={() => setModalOpen(true)}
+          placeholder={placeholder ?? "點擊搜尋卡牌..."}
+          className="pl-8 h-8 text-sm cursor-pointer"
+        />
+        {value && (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={(e) => { e.stopPropagation(); onChange(""); }}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      <CardSearchModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSelect={(card) => {
+          onSelect(card);
+          onChange(card.name);
+          setModalOpen(false);
+        }}
+        title="搜尋卡牌"
       />
-      {value && (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => { onChange(""); setOpen(false); }}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-      )}
-      {open && value.length >= 2 && (
-        <div
-          ref={dropdownRef}
-          className="absolute z-[60] top-full mt-1 left-0 bg-background border rounded-lg shadow-xl max-h-[340px] overflow-y-auto w-[min(340px,calc(100vw-2rem))]"
-        >
-          {isFetching && <div className="p-2.5 text-xs text-muted-foreground text-center">搜尋中...</div>}
-          {!isFetching && results.length === 0 && <div className="p-2.5 text-xs text-muted-foreground text-center">找不到卡牌，請手動輸入</div>}
-          {results.map((card) => (
-            <button
-              key={card.id}
-              className="w-full flex items-center gap-3 p-3 hover:bg-muted/60 text-left transition-colors border-b last:border-b-0"
-              onClick={() => { onSelect(card); setOpen(false); }}
-            >
-              <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted shadow-sm">
-                {card.imageUrl
-                  ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-5 h-5 text-muted-foreground" /></div>
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm leading-snug line-clamp-2">{card.name}</div>
-                {card.nameJa && <div className="text-xs text-muted-foreground truncate mt-0.5">{card.nameJa}</div>}
-                <div className="text-xs text-muted-foreground mt-1">{[card.setName, card.cardNumber].filter(Boolean).join(" · ")}</div>
-                {card.latestPrice && <div className="text-xs font-medium text-blue-600 mt-0.5">PSA10 參考: HK${card.latestPrice.toLocaleString()}</div>}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -864,97 +950,28 @@ function CardSearchPicker({
   onSelect: (card: CardSearchResult) => void;
   onManualMode: () => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const { data, isFetching } = trpc.cards.search.useQuery(
-    { query, limit: 8 },
-    { enabled: query.length >= 2 }
-  );
-
-  const results: CardSearchResult[] = (data?.cards ?? []) as CardSearchResult[];
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current && !inputRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium block">搜尋平台卡牌</label>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          ref={inputRef}
-          placeholder="輸入卡牌名稱、日文名或卡號..."
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => query.length >= 2 && setOpen(true)}
-          className="pl-9 pr-8"
-        />
-        {query && (
-          <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            onClick={() => { setQuery(""); setOpen(false); }}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-        {open && query.length >= 2 && (
-          <div
-            ref={dropdownRef}
-            className="absolute z-50 top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-[360px] overflow-y-auto"
-          >
-            {isFetching && (
-              <div className="p-3 text-sm text-muted-foreground text-center">搜尋中...</div>
-            )}
-            {!isFetching && results.length === 0 && (
-              <div className="p-3 text-sm text-muted-foreground text-center">找不到卡牌</div>
-            )}
-            {results.map((card) => (
-              <button
-                key={card.id}
-                className="w-full flex items-center gap-3 p-3 hover:bg-muted/60 text-left transition-colors border-b last:border-b-0"
-                onClick={() => {
-                  onSelect(card);
-                  setQuery("");
-                  setOpen(false);
-                }}
-              >
-                <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted shadow-sm">
-                  {card.imageUrl ? (
-                    <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageOff className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm leading-snug line-clamp-2">{card.name}</div>
-                  {card.nameJa && <div className="text-xs text-muted-foreground truncate mt-0.5">{card.nameJa}</div>}
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {[card.setName, card.cardNumber].filter(Boolean).join(" · ")}
-                  </div>
-                  {card.latestPrice && (
-                    <div className="text-xs font-medium text-blue-600 mt-0.5">PSA10 參考: {formatHkd(card.latestPrice)}</div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-[#06038D]/50 hover:bg-blue-50/30 transition-colors text-left"
+      >
+        <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm text-muted-foreground">點擊搜尋並關聯卡牌...</span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+      </button>
+      <CardSearchModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSelect={(card) => {
+          onSelect(card);
+          setModalOpen(false);
+        }}
+        title="選擇卡牌"
+      />
       <button
         type="button"
         className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
