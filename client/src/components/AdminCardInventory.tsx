@@ -156,18 +156,20 @@ function InlineCardSearch({
           {results.map((card) => (
             <button
               key={card.id}
-              className="w-full flex items-center gap-2 p-2 hover:bg-muted/60 text-left transition-colors"
+              className="w-full flex items-center gap-3 p-3 hover:bg-muted/60 text-left transition-colors border-b last:border-b-0"
               onClick={() => { onSelect(card); setOpen(false); }}
             >
-              <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-muted">
+              <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted shadow-sm">
                 {card.imageUrl
                   ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
+                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-5 h-5 text-muted-foreground" /></div>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-xs truncate">{card.name}</div>
-                <div className="text-xs text-muted-foreground truncate">{[card.setName, card.cardNumber].filter(Boolean).join(" · ")}</div>
+                <div className="font-semibold text-sm leading-snug line-clamp-2">{card.name}</div>
+                {card.nameJa && <div className="text-xs text-muted-foreground truncate mt-0.5">{card.nameJa}</div>}
+                <div className="text-xs text-muted-foreground mt-1">{[card.setName, card.cardNumber].filter(Boolean).join(" · ")}</div>
+                {card.latestPrice && <div className="text-xs font-medium text-blue-600 mt-0.5">PSA10 參考: HK${card.latestPrice.toLocaleString()}</div>}
               </div>
             </button>
           ))}
@@ -551,7 +553,7 @@ function BatchBuyDialog({
 
   // Rows
   const [rows, setRows] = useState<BatchRow[]>([makeBatchRow()]);
-
+  const rowsContainerRef = useRef<HTMLDivElement>(null);
   const batchCreateMutation = trpc.cardInventory.batchCreate.useMutation({
     onSuccess: (data) => {
       toast.success(`已批量新增 ${data.count} 筆買取記錄`);
@@ -569,6 +571,12 @@ function BatchBuyDialog({
   const addRow = () => {
     const last = rows[rows.length - 1];
     setRows(rs => [...rs, makeBatchRow({ cardSet: last?.cardSet, buyPriceCurrency: last?.buyPriceCurrency })]);
+    // Auto-scroll to bottom after new row is added
+    setTimeout(() => {
+      if (rowsContainerRef.current) {
+        rowsContainerRef.current.scrollTop = rowsContainerRef.current.scrollHeight;
+      }
+    }, 50);
   };
 
   const removeRow = (id: string) => {
@@ -694,7 +702,7 @@ function BatchBuyDialog({
         </div>
 
         {/* Rows */}
-        <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+        <div ref={rowsContainerRef} className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {rows.map((row, idx) => (
             <div key={row.id} className="space-y-1">
             {/* Row: two-line layout */}
@@ -712,13 +720,20 @@ function BatchBuyDialog({
                   <InlineCardSearch
                     value={row.cardName}
                     onChange={(v) => updateRow(row.id, { cardName: v, imageUrl: v ? row.imageUrl : "", linkedCardId: v ? row.linkedCardId : null })}
-                    onSelect={(card) => updateRow(row.id, {
-                      cardName: card.name,
-                      cardSet: card.setName ?? "",
-                      cardNumber: card.cardNumber ?? "",
-                      imageUrl: card.imageUrl ?? "",
-                      linkedCardId: card.id,
-                    })}
+                    onSelect={(card) => {
+                      // Extract set code from cardNumber (e.g. "SM7 068/096" → setCode="SM7", num="068/096")
+                      const rawNum = card.cardNumber ?? "";
+                      const spaceIdx = rawNum.indexOf(" ");
+                      const setCode = spaceIdx > 0 ? rawNum.slice(0, spaceIdx) : "";
+                      const pureNum = spaceIdx > 0 ? rawNum.slice(spaceIdx + 1) : rawNum;
+                      updateRow(row.id, {
+                        cardName: card.name,
+                        cardSet: setCode || card.setName || "",
+                        cardNumber: pureNum,
+                        imageUrl: card.imageUrl ?? "",
+                        linkedCardId: card.id,
+                      });
+                    }}
                     placeholder="卡牌名稱..."
                   />
                 </div>
