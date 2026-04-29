@@ -256,8 +256,8 @@ function BatchBuyDialog({
     });
   };
 
-  const effectiveGrade = sharedGrade === "其他" ? sharedGradeCustom : sharedGrade;
-  const effectiveSource = sharedSource === "其他" ? sharedSourceCustom : sharedSource;
+  const effectiveGrade = sharedGrade === "其他" ? sharedGradeCustom : (sharedGrade === "__none__" ? "" : sharedGrade);
+  const effectiveSource = sharedSource === "其他" ? sharedSourceCustom : (sharedSource === "__none__" ? "" : sharedSource);
 
   const totalHkd = useMemo(() => {
     return rows.reduce((sum, r) => {
@@ -325,7 +325,7 @@ function BatchBuyDialog({
               <Select value={sharedGrade} onValueChange={setSharedGrade}>
                 <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇評級" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">未選擇</SelectItem>
+                  <SelectItem value="__none__">未選擇</SelectItem>
                   {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -338,7 +338,7 @@ function BatchBuyDialog({
               <Select value={sharedSource} onValueChange={setSharedSource}>
                 <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇來源" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">未選擇</SelectItem>
+                  <SelectItem value="__none__">未選擇</SelectItem>
                   {BUY_SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -609,12 +609,12 @@ function BuyFormDialog({
     cardName: editItem?.cardName ?? "",
     cardSet: editItem?.cardSet ?? "",
     cardNumber: editItem?.cardNumber ?? "",
-    grade: editItem?.grade ?? "",
+    grade: editItem?.grade ?? "__none__",
     gradeCustom: "",
     buyPriceCurrency: editItem?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: editItem?.buyPriceOriginal ?? "",
     buyDate: editItem?.buyDate ? new Date(editItem.buyDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    buySource: editItem?.buySource ?? "",
+    buySource: editItem?.buySource ?? "__none__",
     buySourceCustom: "",
     notes: editItem?.notes ?? "",
     imageUrl: editItem?.imageUrl ?? "",
@@ -661,8 +661,8 @@ function BuyFormDialog({
     return amt * rate;
   }, [form.buyPriceOriginal, form.buyPriceCurrency, rates]);
 
-  const effectiveGrade = form.grade === "其他" ? form.gradeCustom : form.grade;
-  const effectiveBuySource = form.buySource === "其他" ? form.buySourceCustom : form.buySource;
+  const effectiveGrade = form.grade === "其他" ? form.gradeCustom : (form.grade === "__none__" ? "" : form.grade);
+  const effectiveBuySource = form.buySource === "其他" ? form.buySourceCustom : (form.buySource === "__none__" ? "" : form.buySource);
 
   const handleSubmit = () => {
     if (!form.cardName.trim()) return toast.error("請輸入卡牌/商品名稱");
@@ -792,7 +792,7 @@ function BuyFormDialog({
                   <Select value={form.grade} onValueChange={(v) => setForm(f => ({ ...f, grade: v }))}>
                     <SelectTrigger><SelectValue placeholder="選擇評級" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">未選擇</SelectItem>
+                      <SelectItem value="__none__">未選擇</SelectItem>
                       {GRADE_OPTIONS.map(g => (
                         <SelectItem key={g} value={g}>{g}</SelectItem>
                       ))}
@@ -812,7 +812,7 @@ function BuyFormDialog({
                   <Select value={form.buySource} onValueChange={(v) => setForm(f => ({ ...f, buySource: v }))}>
                     <SelectTrigger><SelectValue placeholder="選擇來源" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">未選擇</SelectItem>
+                      <SelectItem value="__none__">未選擇</SelectItem>
                       {BUY_SOURCE_OPTIONS.map(s => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
@@ -905,7 +905,7 @@ function SellDialog({
     sellPriceCurrency: "HKD" as "HKD" | "JPY" | "USD",
     sellPriceOriginal: "",
     sellDate: new Date().toISOString().slice(0, 10),
-    sellChannel: "",
+    sellChannel: "__none__",
     sellChannelCustom: "",
   });
 
@@ -926,7 +926,7 @@ function SellDialog({
     return amt * rate;
   }, [form.sellPriceOriginal, form.sellPriceCurrency, rates]);
 
-  const effectiveSellChannel = form.sellChannel === "其他" ? form.sellChannelCustom : form.sellChannel;
+  const effectiveSellChannel = form.sellChannel === "其他" ? form.sellChannelCustom : (form.sellChannel === "__none__" ? "" : form.sellChannel);
 
   const handleSubmit = () => {
     const amt = parseFloat(form.sellPriceOriginal);
@@ -1003,7 +1003,7 @@ function SellDialog({
             <Select value={form.sellChannel} onValueChange={(v) => setForm(f => ({ ...f, sellChannel: v }))}>
               <SelectTrigger><SelectValue placeholder="選擇渠道" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">未選擇</SelectItem>
+                <SelectItem value="__none__">未選擇</SelectItem>
                 {SELL_CHANNEL_OPTIONS.map(s => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
