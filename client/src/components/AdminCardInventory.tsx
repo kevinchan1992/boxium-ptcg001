@@ -106,7 +106,9 @@ function CardSearchModal({
   title?: string;
 }) {
   const [query, setQuery] = useState("");
+  const [highlightIdx, setHighlightIdx] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const { data, isFetching } = trpc.cards.search.useQuery(
     { query, limit: 20 },
     { enabled: query.length >= 2 }
@@ -117,9 +119,41 @@ function CardSearchModal({
   useEffect(() => {
     if (open) {
       setQuery("");
+      setHighlightIdx(-1);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
+
+  // Reset highlight when results change
+  useEffect(() => { setHighlightIdx(-1); }, [results.length]);
+
+  // Keyboard navigation handler
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIdx((i) => {
+        const next = Math.min(i + 1, results.length - 1);
+        const el = listRef.current?.querySelector(`[data-idx="${next}"]`) as HTMLElement | null;
+        el?.scrollIntoView({ block: "nearest" });
+        return next;
+      });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIdx((i) => {
+        const prev = Math.max(i - 1, 0);
+        const el = listRef.current?.querySelector(`[data-idx="${prev}"]`) as HTMLElement | null;
+        el?.scrollIntoView({ block: "nearest" });
+        return prev;
+      });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const idx = highlightIdx >= 0 ? highlightIdx : 0;
+      if (results[idx]) { onSelect(results[idx]); onClose(); }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -149,6 +183,7 @@ function CardSearchModal({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="輸入卡牌名稱、日文名或卡號..."
               className="w-full h-11 pl-10 pr-10 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-white/40"
+              onKeyDown={handleKeyDown}
             />
             {query && (
               <button
@@ -162,7 +197,7 @@ function CardSearchModal({
         </div>
 
         {/* Results list */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div ref={listRef} className="flex-1 overflow-y-auto bg-white">
           {query.length < 2 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 py-16">
               <Search className="w-10 h-10 opacity-30" />
@@ -181,7 +216,11 @@ function CardSearchModal({
           {results.map((card, idx) => (
             <button
               key={card.id}
-              className="w-full flex items-center gap-4 px-5 py-4 hover:bg-blue-50 text-left transition-colors border-b last:border-b-0"
+              data-idx={idx}
+              className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors border-b last:border-b-0 ${
+                highlightIdx === idx ? "bg-blue-100" : "hover:bg-blue-50"
+              }`}
+              onMouseEnter={() => setHighlightIdx(idx)}
               onClick={() => { onSelect(card); onClose(); }}
             >
               <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 shadow">
@@ -873,6 +912,7 @@ function BatchBuyDialog({
                     placeholder="0"
                     value={row.buyPriceOriginal}
                     onChange={(e) => updateRow(row.id, { buyPriceOriginal: e.target.value })}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } }}
                     className="h-9 text-sm w-[90px]"
                   />
                 </div>
