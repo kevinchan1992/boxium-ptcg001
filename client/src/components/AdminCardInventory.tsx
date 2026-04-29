@@ -149,7 +149,7 @@ function InlineCardSearch({
       {open && value.length >= 2 && (
         <div
           ref={dropdownRef}
-          className="absolute z-[60] top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-60 overflow-y-auto"
+          className="absolute z-[60] top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-[340px] overflow-y-auto"
         >
           {isFetching && <div className="p-2.5 text-xs text-muted-foreground text-center">搜尋中...</div>}
           {!isFetching && results.length === 0 && <div className="p-2.5 text-xs text-muted-foreground text-center">找不到卡牌，請手動輸入</div>}
@@ -159,7 +159,7 @@ function InlineCardSearch({
               className="w-full flex items-center gap-2 p-2 hover:bg-muted/60 text-left transition-colors"
               onClick={() => { onSelect(card); setOpen(false); }}
             >
-              <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
+              <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-muted">
                 {card.imageUrl
                   ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
@@ -305,7 +305,7 @@ function BatchSellDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-3xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-green-600" />
@@ -623,7 +623,7 @@ function BatchBuyDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-3xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-[#06038D]" />
@@ -678,8 +678,8 @@ function BatchBuyDialog({
           </div>
         </div>
 
-        {/* Row Header */}
-        <div className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 px-1 text-xs font-medium text-muted-foreground">
+        {/* Row Header - hidden on mobile */}
+        <div className="hidden sm:grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 px-1 text-xs font-medium text-muted-foreground">
           <span>卡牌名稱 / 搜尋</span>
           <span>系列</span>
           <span>卡號</span>
@@ -692,7 +692,7 @@ function BatchBuyDialog({
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {rows.map((row, idx) => (
             <div key={row.id} className="space-y-1">
-            <div className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
               {/* Card search */}
               <div className="flex items-center gap-1.5">
                 {row.imageUrl ? (
@@ -1046,7 +1046,7 @@ function BuyFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "編輯買取記錄" : "新增買取記錄"}</DialogTitle>
         </DialogHeader>
@@ -1615,7 +1615,72 @@ export default function AdminCardInventory() {
               <p className="text-xs mt-1">點擊「新增買取記錄」開始記錄</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
+            <>
+            {/* Mobile card list - visible only on small screens */}
+            <div className="sm:hidden space-y-3">
+              {items.map((item) => {
+                const buyHkd = Number(item.buyPriceHkd);
+                const sellHkd = item.sellPriceHkd ? Number(item.sellPriceHkd) : null;
+                const profit = sellHkd !== null ? sellHkd - buyHkd : null;
+                return (
+                  <div key={item.id} className="border rounded-xl p-3 space-y-2.5 bg-card shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.cardName} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-4 h-4 text-muted-foreground/50" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          <Badge variant="outline" className="text-xs">{item.itemType === "card" ? "單卡" : "封裝"}</Badge>
+                          <Badge className={item.status === "holding" ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 text-xs" : "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 text-xs"}>
+                            {item.status === "holding" ? "持有中" : "已賣出"}
+                          </Badge>
+                        </div>
+                        <div className="font-semibold text-sm leading-tight">{item.cardName}</div>
+                        {(item.cardSet || item.cardNumber || item.grade) && (
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">{[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}</div>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-0.5">{formatDate(item.buyDate)}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/30 rounded-lg py-2">
+                      <div>
+                        <div className="text-muted-foreground mb-0.5">買取成本</div>
+                        <div className="font-semibold text-[#06038D] text-sm">{formatHkd(item.buyPriceHkd)}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground mb-0.5">賣出金額</div>
+                        <div className="font-semibold text-green-600 text-sm">{sellHkd !== null ? formatHkd(sellHkd) : "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground mb-0.5">毛利</div>
+                        <div className={`font-semibold text-sm ${profit === null ? "text-muted-foreground" : profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {profit === null ? "—" : (profit >= 0 ? "+" : "") + formatHkd(profit)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-0.5">
+                      {item.status === "holding" && (
+                        <Button variant="ghost" size="sm" onClick={() => setSellItem(item as CardInventoryItem)} className="h-8 px-3 text-xs text-green-600 hover:text-green-700 hover:bg-green-50 font-medium">
+                          記錄賣出
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={() => { setEditItem(item as CardInventoryItem); setShowBuyForm(true); }} className="h-8 w-8">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(item.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Desktop table - hidden on mobile */}
+            <div className="hidden sm:block overflow-x-auto rounded-lg border">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -1723,6 +1788,7 @@ export default function AdminCardInventory() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           {totalPages > 1 && (
