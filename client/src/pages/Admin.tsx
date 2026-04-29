@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
   Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2
+  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2, BookOpen
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -21,6 +21,7 @@ import AdminMessages from "@/components/AdminMessages";
 import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import AdminQuickPublish from "@/components/AdminQuickPublish";
+import AdminCardInventory from "@/components/AdminCardInventory";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const VALID_TABS = [
   "dashboard", "users", "datasources", "trending", "blog", "quick-publish", "content-workflow",
   "cache", "schedule", "performance", "taskhistory", "security",
   "sfstations", "emaillogs", "emailtest", "platformsettings", "messages",
+  "card-inventory",
 ] as const;
 
 type TabId = typeof VALID_TABS[number];
@@ -85,6 +87,7 @@ function useNavItems(): NavItem[] {
     { id: "emaillogs", label: "電郵日誌", icon: <Mail className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "emailtest", label: "電郵測試", icon: <FlaskConical className="w-[18px] h-[18px]" />, group: "communication" },
     { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-[18px] h-[18px]" />, group: "communication" },
+    { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-[18px] h-[18px]" />, group: "other" },
     { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-[18px] h-[18px]" />, group: "other" },
     { id: "platformsettings", label: "平台設定", icon: <Settings className="w-[18px] h-[18px]" />, group: "other" },
   ];
@@ -110,6 +113,7 @@ function AdminContent({ activeTab }: { activeTab: string }) {
     case "platformsettings": return <AdminPlatformSettings />;
     case "messages": return <AdminMessages />;
     case "security": return <AdminSecurityMonitor />;
+    case "card-inventory": return <AdminCardInventory />;
     default: return <AdminDashboard />;
   }
 }

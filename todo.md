@@ -8886,3 +8886,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 前端：批次展開區加入出團成本輸入欄（amber 色調，儲存按鈕）
 - [x] 財務報告：在 PSA 鑑定收入下方加入出團成本和鑑定業務純利顯示
 - [x] TypeScript 0 errors 確認 + 儲存 checkpoint
+
+---
+
+## 🆕 卡牌買取及賣出記錄功能（報稅用）
+
+- [ ] Schema：新增 cardInventory 表（id, itemType, cardName, cardSet, grade, currency, buyPriceOriginal, buyPriceHkd, buyDate, status, sellPriceOriginal, sellPriceHkd, sellDate, notes, createdAt）
+- [ ] db:push 更新資料庫
+- [ ] 後端 router：cardInventory CRUD（新增/編輯/刪除/列表）
+- [ ] 後端：月度統計 API（每月買取總額、賣出總額、毛利）
+- [ ] 後端：匯率轉換（JPY/USD → HKD）
+- [ ] 前端：AdminCardInventory 頁面（買取記錄列表、新增買取、標記賣出、持有中篩選）
+- [ ] 前端：月度總表 tab（每月買取/賣出/毛利匯總）
+- [ ] 前端：卡牌名稱搜尋（連結現有卡牌資料庫 + 支援手動輸入）
+- [ ] PDF 匯出（含藍黃 Logo、月度報表格式）
+- [ ] Excel 匯出（含 Logo、月度總表）
+- [ ] Admin 側邊欄加入「買取賣出記錄」連結
+- [ ] TypeScript 0 errors 確認 + checkpoint

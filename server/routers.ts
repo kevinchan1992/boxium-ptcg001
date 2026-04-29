@@ -25,6 +25,7 @@ import { diagnosticsRouter } from "./routers/diagnostics";
 import { emailRouter } from "./routers/email";
 import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
+import { cardInventoryRouter } from "./routers/cardInventory";
 
 export const appRouter = router({
   system: systemRouter,
@@ -4441,6 +4442,7 @@ UNBREAKABLE RULES:
   notifications: notificationsRouter,
   auction: auctionRouter,
   grading: gradingRouter,
+  cardInventory: cardInventoryRouter,
 });
 
 export type AppRouter = typeof appRouter;

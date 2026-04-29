@@ -1691,3 +1691,46 @@ export const gradingReviews = mysqlTable("gradingReviews", {
 }));
 export type GradingReview = typeof gradingReviews.$inferSelect;
 export type InsertGradingReview = typeof gradingReviews.$inferInsert;
+
+
+/**
+ * Card Inventory - Buy/Sell records for company tax reporting
+ * Tracks card purchases (buy-in) and sales (sell-out) with multi-currency support
+ */
+export const cardInventory = mysqlTable("cardInventory", {
+  id: int("id").autoincrement().primaryKey(),
+  // Item type: single card or sealed product (booster box, etc.)
+  itemType: mysqlEnum("itemType", ["card", "sealed"]).default("card").notNull(),
+  // Card/product identification
+  cardName: varchar("cardName", { length: 512 }).notNull(),
+  cardSet: varchar("cardSet", { length: 256 }),
+  cardNumber: varchar("cardNumber", { length: 64 }),
+  grade: varchar("grade", { length: 32 }), // e.g. PSA10, RAW, etc.
+  // Buy-in details
+  buyPriceCurrency: mysqlEnum("buyPriceCurrency", ["HKD", "JPY", "USD"]).default("HKD").notNull(),
+  buyPriceOriginal: decimal("buyPriceOriginal", { precision: 12, scale: 2 }).notNull(),
+  buyPriceHkd: decimal("buyPriceHkd", { precision: 12, scale: 2 }).notNull(), // converted to HKD
+  buyExchangeRate: decimal("buyExchangeRate", { precision: 10, scale: 4 }).default("1.0000"), // rate used for conversion
+  buyDate: timestamp("buyDate").notNull(),
+  buySource: varchar("buySource", { length: 256 }), // e.g. 客戶回收, 拍賣, 市場購入
+  // Status: holding (持有中) or sold (已賣出)
+  status: mysqlEnum("status", ["holding", "sold"]).default("holding").notNull(),
+  // Sell-out details (nullable until sold)
+  sellPriceCurrency: mysqlEnum("sellPriceCurrency", ["HKD", "JPY", "USD"]).default("HKD"),
+  sellPriceOriginal: decimal("sellPriceOriginal", { precision: 12, scale: 2 }),
+  sellPriceHkd: decimal("sellPriceHkd", { precision: 12, scale: 2 }), // converted to HKD
+  sellExchangeRate: decimal("sellExchangeRate", { precision: 10, scale: 4 }),
+  sellDate: timestamp("sellDate"),
+  sellChannel: varchar("sellChannel", { length: 256 }), // e.g. 平台自售, 拍賣, 直接賣出
+  // Notes
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  statusIdx: index("ci_status_idx").on(table.status),
+  buyDateIdx: index("ci_buyDate_idx").on(table.buyDate),
+  itemTypeIdx: index("ci_itemType_idx").on(table.itemType),
+}));
+
+export type CardInventory = typeof cardInventory.$inferSelect;
+export type InsertCardInventory = typeof cardInventory.$inferInsert;

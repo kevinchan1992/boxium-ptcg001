@@ -1536,6 +1536,47 @@ async function startServer() {
     }
   });
 
+  // ─── Card Inventory Export: PDF ────────────────────────────────────────────────
+  app.get("/api/card-inventory/export/pdf", async (req, res) => {
+    try {
+      const { createContext } = await import("./context");
+      const ctx = await createContext({ req, res } as any);
+      if (!ctx.user || ctx.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+      const year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
+      const month = parseInt((req.query.month as string) || '0', 10);
+      const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
+      const pdfBuffer = await generateCardInventoryPdf(year, month);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const label = month > 0 ? `${year}_${String(month).padStart(2,'0')}` : `${year}`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_CardInventory_${label}.pdf"; filename*=UTF-8''${encodeURIComponent(`BOXIUM_卡牌買賣記錄_${label}.pdf`)}`);
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error('[CardInventory PDF] Error:', err?.message);
+      res.status(500).json({ error: 'Failed to generate PDF', detail: err?.message });
+    }
+  });
+
+  // ─── Card Inventory Export: Excel ────────────────────────────────────────────
+  app.get("/api/card-inventory/export/excel", async (req, res) => {
+    try {
+      const { createContext } = await import("./context");
+      const ctx = await createContext({ req, res } as any);
+      if (!ctx.user || ctx.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+      const year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
+      const month = parseInt((req.query.month as string) || '0', 10);
+      const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
+      const excelBuffer = await generateCardInventoryExcel(year, month);
+      const label = month > 0 ? `${year}_${String(month).padStart(2,'0')}` : `${year}`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_CardInventory_${label}.xlsx"; filename*=UTF-8''${encodeURIComponent(`BOXIUM_卡牌買賣記錄_${label}.xlsx`)}`);
+      res.send(excelBuffer);
+    } catch (err: any) {
+      console.error('[CardInventory Excel] Error:', err?.message);
+      res.status(500).json({ error: 'Failed to generate Excel', detail: err?.message });
+    }
+  });
+
   // ─── Scheduled Task Endpoint: Trending Cards Daily Recalculation ─────────────
   // Called by external Manus scheduled task daily at 06:00 HKT
   // Auth: Bearer token via Authorization header (CRON_SECRET)
