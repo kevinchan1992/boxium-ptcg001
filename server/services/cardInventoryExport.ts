@@ -5,6 +5,7 @@
  */
 
 import PDFDocument from "pdfkit";
+import { execSync } from "child_process";
 import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
@@ -25,6 +26,11 @@ const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
 
 // ─── Image Cache ──────────────────────────────────────────────────────────────
+function getImageExtension(url: string): "png" | "jpeg" {
+  const lower = (url || "").toLowerCase().split("?")[0];
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "jpeg";
+  return "png";
+}
 const imageCache = new Map<string, Buffer>();
 
 async function fetchImageBuffer(url: string): Promise<Buffer | null> {
@@ -262,8 +268,14 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
         const colDef = cols[ci + 1]; // +1 to skip image col
         const textColor = ci === 7 ? (row.status === "holding" ? "#d97706" : "#16a34a") : "#111827";
         const textY = rowY + (ROW_H - 14) / 2; // vertically center
-        doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
-          .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });
+        const isNotesCol = ci === cells.length - 1;
+        if (isNotesCol) {
+          doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7)
+            .text(cell, dcx + 3, rowY + 4, { width: colDef.width - 6, lineBreak: true });
+        } else {
+          doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
+            .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });
+        }
         dcx += colDef.width;
       });
 
@@ -458,7 +470,8 @@ export async function generateCardInventoryExcel(year: number, month: number): P
     const imgBuf = imageBuffers[idx];
     if (imgBuf) {
       try {
-        const imgId = workbook.addImage({ base64: imgBuf.toString("base64"), extension: "png" });
+        const imgExt = getImageExtension(row.imageUrl || "");
+        const imgId = workbook.addImage({ base64: imgBuf.toString("base64"), extension: imgExt });
         const colLetter = "A";
         const imgRange = `${colLetter}${excelRowNum}:${colLetter}${excelRowNum}`;
         sheet.addImage(imgId, imgRange);
@@ -537,6 +550,29 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   const grandProfit = grandSell - grandBuy;
   const grandHolding = grandCount - grandSoldCount;
   const totalRow = summarySheet.addRow(["合計", grandCount, grandBuy, grandSoldCount, grandSell, grandProfit, grandHolding]);
+
+  // ── Insert line chart below summary table ──
+  try {
+    const sortedEntries = Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b));
+    const chartData = {
+      labels: sortedEntries.map(([k]) => k),
+      buy: sortedEntries.map(([, m]) => Math.round(m.buy * 100) / 100),
+      sell: sortedEntries.map(([, m]) => Math.round(m.sell * 100) / 100),
+    };
+    const chartScriptPath = path.join(process.cwd(), "server/scripts/generate_chart.py");
+    const chartPngBuf = execSync(
+      `python3 "${chartScriptPath}"`,
+      { input: JSON.stringify(chartData), maxBuffer: 4 * 1024 * 1024, timeout: 15000 }
+    );
+    const chartImgId = workbook.addImage({ base64: Buffer.from(chartPngBuf).toString("base64"), extension: "png" as const });
+    const chartStartRow = summarySheet.rowCount + 3;
+    summarySheet.addImage(chartImgId, {
+      tl: { col: 0, row: chartStartRow - 1 },
+      br: { col: 7, row: chartStartRow + 17 },
+    } as Parameters<typeof summarySheet.addImage>[1]);
+  } catch (e) {
+    console.warn("[Export] Chart generation failed:", e);
+  }
   totalRow.eachCell((cell, ci) => {
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
     cell.font = { name: "Arial", bold: true, size: 11, color: { argb: "FF" + BRAND_BLUE.slice(1) } };

@@ -58,6 +58,8 @@
     "@types/sharp": "^0.32.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "chart.js": "^4.5.1",
+    "chartjs-node-canvas": "^5.0.0",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
