@@ -191,29 +191,32 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
 
     // ── Table ──
     // Image column (40px) + text columns
-    const IMG_COL_W = 42;
+    // Total col widths = 762 = A4 landscape (841.89) - margin*2 (80)
+    const IMG_COL_W = 40;
     const cols = [
-      { label: "圖片", width: IMG_COL_W },
-      { label: "日期", width: 66 },
-      { label: "類型", width: 38 },
-      { label: "卡牌/商品名稱", width: 160 },
-      { label: "系列", width: 80 },
-      { label: "等級", width: 42 },
-      { label: "買取金額", width: 78 },
-      { label: "買取來源", width: 72 },
-      { label: "狀態", width: 46 },
-      { label: "賣出金額", width: 72 },
-      { label: "賣出渠道", width: 66 },
-      { label: "備注", width: 80 },
+      { label: "圖片", width: IMG_COL_W },  // 40
+      { label: "日期", width: 60 },          // 60
+      { label: "類型", width: 34 },          // 34
+      { label: "卡牌/商品名稱", width: 148 }, // 148
+      { label: "系列", width: 72 },          // 72
+      { label: "等級", width: 50 },          // 50
+      { label: "買取金額", width: 72 },      // 72
+      { label: "買取來源", width: 68 },      // 68
+      { label: "狀態", width: 42 },          // 42
+      { label: "賣出金額", width: 66 },      // 66
+      { label: "賣出渠道", width: 60 },      // 60
+      { label: "備注", width: 50 },          // 50  ← total = 762
     ];
 
     const tableTop = sy + 60;
     // Dynamic row height based on notes length
     const getRowH = (notes: string | null) => {
+      // Notes col is 50px wide (~8 chars/line at 7.5pt)
       const len = (notes || "").length;
-      if (len <= 20) return 44;
-      if (len <= 40) return 56;
-      if (len <= 80) return 68;
+      if (len === 0) return 44;
+      if (len <= 8) return 44;
+      if (len <= 16) return 56;
+      if (len <= 24) return 68;
       return 80;
     };
 
