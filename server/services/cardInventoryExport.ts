@@ -189,8 +189,9 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
       { label: "買取金額", width: 78 },
       { label: "買取來源", width: 72 },
       { label: "狀態", width: 46 },
-      { label: "賣出金額", width: 78 },
-      { label: "賣出渠道", width: 72 },
+      { label: "賣出金額", width: 72 },
+      { label: "賣出渠道", width: 66 },
+      { label: "備注", width: 80 },
     ];
 
     const tableTop = sy + 60;
@@ -253,6 +254,7 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
         row.status === "holding" ? "持有中" : "已賣出",
         row.sellPriceHkd ? fmtHkd(row.sellPriceHkd) : "—",
         row.sellChannel || "—",
+        row.notes || "—",
       ];
 
       let dcx = margin + IMG_COL_W; // skip image col
@@ -374,7 +376,7 @@ export async function generateCardInventoryExcel(year: number, month: number): P
 
   // Header row 6 (with image column)
   const headers = [
-    { key: "image", header: "圖片", width: 10 },
+    { key: "image", header: "圖片", width: 14 },
     { key: "buyDate", header: "買取日期", width: 14 },
     { key: "itemType", header: "類型", width: 8 },
     { key: "cardName", header: "卡牌/商品名稱", width: 36 },
