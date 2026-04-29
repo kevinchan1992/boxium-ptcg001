@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  LayoutDashboard, Users, Database, TrendingUp, FileText, HardDrive,
-  Clock, Activity, History, MapPin, Mail, FlaskConical, Settings,
-  ShoppingCart, PanelLeftClose, PanelLeft, Menu, X, MessageSquare, Sparkles, Shield, Wand2, BookOpen
+  LayoutDashboard, Users, Database, TrendingUp, FileText,
+  HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical,
+  Settings, ShoppingCart, PanelLeftClose, PanelLeft, Menu, X,
+  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -27,24 +28,107 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
+const STORAGE_KEY_SECTION = "boxium_admin_active_section";
 const STORAGE_KEY_TAB = "boxium_admin_active_tab";
 const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 
-const VALID_TABS = [
-  "dashboard", "users", "datasources", "trending", "blog", "quick-publish", "content-workflow",
-  "cache", "schedule", "performance", "taskhistory", "security",
-  "sfstations", "emaillogs", "emailtest", "platformsettings", "messages",
-  "card-inventory",
-] as const;
+/* ─── Section & Tab Definitions ─────────────────────────────────────── */
 
-type TabId = typeof VALID_TABS[number];
+// Each "section" is a sidebar item; each section has one or more "tabs"
+interface TabDef {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
 
-function getStoredTab(): TabId {
+interface SectionDef {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  tabs: TabDef[];
+}
+
+const SECTIONS: SectionDef[] = [
+  {
+    id: "overview",
+    label: "統計總覽",
+    icon: <LayoutDashboard className="w-[18px] h-[18px]" />,
+    tabs: [
+      { id: "dashboard", label: "統計資訊", icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: "users", label: "帳號管理", icon: <Users className="w-4 h-4" /> },
+    ],
+  },
+  {
+    id: "content",
+    label: "內容管理",
+    icon: <FileText className="w-[18px] h-[18px]" />,
+    tabs: [
+      { id: "datasources", label: "數據源管理", icon: <Database className="w-4 h-4" /> },
+      { id: "trending", label: "熱門卡牌", icon: <TrendingUp className="w-4 h-4" /> },
+      { id: "blog", label: "博客管理", icon: <FileText className="w-4 h-4" /> },
+      { id: "quick-publish", label: "AI 出文章", icon: <Wand2 className="w-4 h-4" /> },
+      { id: "content-workflow", label: "AI 工作流", icon: <Sparkles className="w-4 h-4" /> },
+    ],
+  },
+  {
+    id: "system",
+    label: "系統運維",
+    icon: <Wrench className="w-[18px] h-[18px]" />,
+    tabs: [
+      { id: "cache", label: "緩存管理", icon: <HardDrive className="w-4 h-4" /> },
+      { id: "schedule", label: "排程管理", icon: <Clock className="w-4 h-4" /> },
+      { id: "performance", label: "性能監控", icon: <Activity className="w-4 h-4" /> },
+      { id: "taskhistory", label: "任務歷史", icon: <History className="w-4 h-4" /> },
+      { id: "security", label: "安全監控", icon: <Shield className="w-4 h-4" /> },
+      { id: "emaillogs", label: "電郵日誌", icon: <Mail className="w-4 h-4" /> },
+      { id: "emailtest", label: "電郵測試", icon: <FlaskConical className="w-4 h-4" /> },
+      { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-4 h-4" /> },
+    ],
+  },
+  {
+    id: "finance",
+    label: "財務記錄",
+    icon: <BookOpen className="w-[18px] h-[18px]" />,
+    tabs: [
+      { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
+    ],
+  },
+  {
+    id: "settings",
+    label: "設定",
+    icon: <Settings className="w-[18px] h-[18px]" />,
+    tabs: [
+      { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-4 h-4" /> },
+      { id: "platformsettings", label: "平台設定", icon: <Settings className="w-4 h-4" /> },
+    ],
+  },
+];
+
+// Build a flat map: tabId → sectionId
+const TAB_TO_SECTION: Record<string, string> = {};
+SECTIONS.forEach(s => s.tabs.forEach(t => { TAB_TO_SECTION[t.id] = s.id; }));
+
+// Default tab for each section
+const SECTION_DEFAULT_TAB: Record<string, string> = {};
+SECTIONS.forEach(s => { SECTION_DEFAULT_TAB[s.id] = s.tabs[0].id; });
+
+type SectionId = typeof SECTIONS[number]["id"];
+
+function getStoredSection(): SectionId {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY_TAB);
-    if (stored && VALID_TABS.includes(stored as TabId)) return stored as TabId;
+    const stored = localStorage.getItem(STORAGE_KEY_SECTION);
+    if (stored && SECTIONS.find(s => s.id === stored)) return stored as SectionId;
   } catch { /* ignore */ }
-  return "dashboard";
+  return "overview";
+}
+
+function getStoredTab(sectionId: SectionId): string {
+  try {
+    const stored = localStorage.getItem(`${STORAGE_KEY_TAB}_${sectionId}`);
+    const section = SECTIONS.find(s => s.id === sectionId);
+    if (stored && section?.tabs.find(t => t.id === stored)) return stored;
+  } catch { /* ignore */ }
+  return SECTION_DEFAULT_TAB[sectionId];
 }
 
 function getStoredCollapsed(): boolean {
@@ -53,49 +137,9 @@ function getStoredCollapsed(): boolean {
   } catch { return false; }
 }
 
-/* ─── Navigation Groups ─────────────────────────────────────────────── */
-interface NavItem {
-  id: TabId;
-  label: string;
-  icon: React.ReactNode;
-  group: string;
-}
-
-const NAV_GROUPS = [
-  { id: "overview", label: "總覽" },
-  { id: "content", label: "內容管理" },
-  { id: "system", label: "系統運維" },
-  { id: "communication", label: "通訊" },
-  { id: "other", label: "其他" },
-];
-
-function useNavItems(): NavItem[] {
-  const { t } = useTranslation();
-  return [
-    { id: "dashboard", label: t("admin.statistics"), icon: <LayoutDashboard className="w-[18px] h-[18px]" />, group: "overview" },
-    { id: "users", label: "帳號管理", icon: <Users className="w-[18px] h-[18px]" />, group: "overview" },
-    { id: "datasources", label: t("admin.dataSources"), icon: <Database className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "trending", label: "熱門卡牌", icon: <TrendingUp className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "blog", label: "博客管理", icon: <FileText className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "quick-publish", label: "AI 出文章", icon: <Wand2 className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "content-workflow", label: "AI 工作流（進階）", icon: <Sparkles className="w-[18px] h-[18px]" />, group: "content" },
-    { id: "cache", label: "緩存管理", icon: <HardDrive className="w-[18px] h-[18px]" />, group: "system" },
-    { id: "schedule", label: "排程管理", icon: <Clock className="w-[18px] h-[18px]" />, group: "system" },
-    { id: "performance", label: "性能監控", icon: <Activity className="w-[18px] h-[18px]" />, group: "system" },
-    { id: "taskhistory", label: "任務歷史", icon: <History className="w-[18px] h-[18px]" />, group: "system" },
-    { id: "security", label: "安全監控", icon: <Shield className="w-[18px] h-[18px]" />, group: "system" },
-    { id: "emaillogs", label: "電郵日誌", icon: <Mail className="w-[18px] h-[18px]" />, group: "communication" },
-    { id: "emailtest", label: "電郵測試", icon: <FlaskConical className="w-[18px] h-[18px]" />, group: "communication" },
-    { id: "messages", label: "訊息管理", icon: <MessageSquare className="w-[18px] h-[18px]" />, group: "communication" },
-    { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-[18px] h-[18px]" />, group: "other" },
-    { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-[18px] h-[18px]" />, group: "other" },
-    { id: "platformsettings", label: "平台設定", icon: <Settings className="w-[18px] h-[18px]" />, group: "other" },
-  ];
-}
-
-/* ─── Content Renderer ───────────────────────────────────────────────── */
-function AdminContent({ activeTab }: { activeTab: string }) {
-  switch (activeTab) {
+/* ─── Tab Content Renderer ───────────────────────────────────────────── */
+function TabContent({ tabId }: { tabId: string }) {
+  switch (tabId) {
     case "dashboard": return <AdminDashboard />;
     case "users": return <AdminUserManagement />;
     case "datasources": return <AdminDataSources />;
@@ -118,25 +162,85 @@ function AdminContent({ activeTab }: { activeTab: string }) {
   }
 }
 
-/* ─── Sidebar Navigation (shared between desktop & mobile) ───────── */
-function SidebarNav({
-  navItems,
+/* ─── In-page Tab Bar ────────────────────────────────────────────────── */
+function SectionTabBar({
+  section,
   activeTab,
+  onSelect,
+}: {
+  section: SectionDef;
+  activeTab: string;
+  onSelect: (tabId: string) => void;
+}) {
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(false);
+
+  useEffect(() => {
+    const el = tabBarRef.current;
+    if (!el) return;
+    const check = () => setShowFade(el.scrollWidth > el.clientWidth + 4);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    el.addEventListener("scroll", check);
+    return () => { ro.disconnect(); el.removeEventListener("scroll", check); };
+  }, [section.tabs]);
+
+  // Only render the tab bar if there are multiple tabs
+  if (section.tabs.length <= 1) return null;
+
+  return (
+    <div className="relative border-b border-white/[0.06] bg-[#0a0a1e]/60 shrink-0">
+      <div
+        ref={tabBarRef}
+        className="flex overflow-x-auto scrollbar-none px-4 md:px-6 gap-1"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {section.tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onSelect(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 transition-all duration-150 shrink-0",
+                isActive
+                  ? "border-[#FEDD00] text-white"
+                  : "border-transparent text-gray-500 hover:text-gray-300 hover:border-white/20"
+              )}
+            >
+              <span className={cn("shrink-0", isActive ? "text-[#FEDD00]" : "text-gray-500")}>
+                {tab.icon}
+              </span>
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Right fade hint for mobile */}
+      {showFade && (
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-[#0a0a1e] to-transparent sm:hidden" />
+      )}
+    </div>
+  );
+}
+
+/* ─── Sidebar Navigation ─────────────────────────────────────────────── */
+function SidebarNav({
+  activeSection,
   onSelect,
   collapsed,
   onToggleCollapse,
   onMarketplace,
   isMobile,
 }: {
-  navItems: NavItem[];
-  activeTab: string;
-  onSelect: (id: TabId) => void;
+  activeSection: SectionId;
+  onSelect: (id: SectionId) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
   onMarketplace: () => void;
   isMobile: boolean;
 }) {
-  const { t } = useTranslation();
   const showLabels = isMobile || !collapsed;
 
   return (
@@ -150,11 +254,10 @@ function SidebarNav({
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-1.5 h-7 rounded-full bg-[#FEDD00] shrink-0" />
             <h1 className="text-[15px] font-semibold text-white truncate tracking-tight">
-              {t("admin.title")}
+              管理後台
             </h1>
           </div>
         )}
-        {/* Desktop: collapse toggle; Mobile: hidden (close handled by overlay) */}
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
@@ -167,53 +270,45 @@ function SidebarNav({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-1 scrollbar-thin">
-        {NAV_GROUPS.map((group) => {
-          const groupItems = navItems.filter(item => item.group === group.id);
-          if (groupItems.length === 0) return null;
+      <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5 scrollbar-thin">
+        {SECTIONS.map((section) => {
+          const isActive = activeSection === section.id;
           return (
-            <div key={group.id} className="mb-1">
+            <button
+              key={section.id}
+              onClick={() => onSelect(section.id)}
+              title={!showLabels ? section.label : undefined}
+              className={cn(
+                "w-full flex items-center gap-2.5 rounded-lg transition-all duration-150 group relative",
+                !showLabels ? "justify-center px-0 py-2.5 mx-auto" : "px-2.5 py-2.5",
+                isActive
+                  ? "bg-[#06038d] text-white shadow-[0_1px_3px_rgba(6,3,141,0.4)]"
+                  : "text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]"
+              )}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#FEDD00]" />
+              )}
+              <span className={cn(
+                "shrink-0 transition-colors",
+                isActive ? "text-[#FEDD00]" : "text-gray-500 group-hover:text-gray-300"
+              )}>
+                {section.icon}
+              </span>
               {showLabels && (
-                <div className="px-2.5 pt-3 pb-1.5 first:pt-0">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500/80">
-                    {group.label}
-                  </span>
-                </div>
-              )}
-              {!showLabels && group.id !== "overview" && (
-                <div className="mx-2.5 my-2 border-t border-white/[0.06]" />
-              )}
-              {groupItems.map((item) => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onSelect(item.id)}
-                    title={!showLabels ? item.label : undefined}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 rounded-lg transition-all duration-150 group relative",
-                      !showLabels ? "justify-center px-0 py-2.5 mx-auto" : "px-2.5 py-2",
-                      isActive
-                        ? "bg-[#06038d] text-white shadow-[0_1px_3px_rgba(6,3,141,0.4)]"
-                        : "text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]"
-                    )}
-                  >
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#FEDD00]" />
-                    )}
+                <>
+                  <span className="text-[13px] font-medium truncate flex-1 text-left">{section.label}</span>
+                  {section.tabs.length > 1 && (
                     <span className={cn(
-                      "shrink-0 transition-colors",
-                      isActive ? "text-[#FEDD00]" : "text-gray-500 group-hover:text-gray-300"
+                      "text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                      isActive ? "bg-white/20 text-white" : "bg-white/[0.06] text-gray-500"
                     )}>
-                      {item.icon}
+                      {section.tabs.length}
                     </span>
-                    {showLabels && (
-                      <span className="text-[13px] font-medium truncate">{item.label}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                  )}
+                </>
+              )}
+            </button>
           );
         })}
       </nav>
@@ -241,19 +336,32 @@ function SidebarNav({
 
 /* ─── Main Admin Page ────────────────────────────────────────────────── */
 export default function Admin() {
-  const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const navItems = useNavItems();
 
-  // Restore from localStorage
-  const [activeTab, setActiveTab] = useState<TabId>(getStoredTab);
+  // Active section (sidebar item)
+  const [activeSection, setActiveSection] = useState<SectionId>(getStoredSection);
+
+  // Active tab per section (stored separately)
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>(() => {
+    const result: Record<string, string> = {};
+    SECTIONS.forEach(s => { result[s.id] = getStoredTab(s.id); });
+    return result;
+  });
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getStoredCollapsed);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Persist active tab
+  // Persist active section
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY_TAB, activeTab); } catch { /* ignore */ }
-  }, [activeTab]);
+    try { localStorage.setItem(STORAGE_KEY_SECTION, activeSection); } catch { /* ignore */ }
+  }, [activeSection]);
+
+  // Persist active tab per section
+  useEffect(() => {
+    SECTIONS.forEach(s => {
+      try { localStorage.setItem(`${STORAGE_KEY_TAB}_${s.id}`, activeTabs[s.id] ?? SECTION_DEFAULT_TAB[s.id]); } catch { /* ignore */ }
+    });
+  }, [activeTabs]);
 
   // Persist sidebar collapsed state
   useEffect(() => {
@@ -270,37 +378,39 @@ export default function Admin() {
     return () => mql.removeEventListener("change", handler);
   }, []);
 
-  // Listen for cross-component navigation events from ContentWorkflowCenter
+  // Listen for cross-component navigation events
   useEffect(() => {
     const handleNavigateToBlog = () => {
-      setActiveTab('blog');
+      setActiveSection("content");
+      setActiveTabs(prev => ({ ...prev, content: "blog" }));
       setMobileMenuOpen(false);
     };
     const handleNavigateToQuickPublish = () => {
-      setActiveTab('quick-publish');
+      setActiveSection("content");
+      setActiveTabs(prev => ({ ...prev, content: "quick-publish" }));
       setMobileMenuOpen(false);
     };
-    window.addEventListener('navigate-to-blog', handleNavigateToBlog);
-    window.addEventListener('navigate-to-quick-publish', handleNavigateToQuickPublish);
+    window.addEventListener("navigate-to-blog", handleNavigateToBlog);
+    window.addEventListener("navigate-to-quick-publish", handleNavigateToQuickPublish);
     return () => {
-      window.removeEventListener('navigate-to-blog', handleNavigateToBlog);
-      window.removeEventListener('navigate-to-quick-publish', handleNavigateToQuickPublish);
+      window.removeEventListener("navigate-to-blog", handleNavigateToBlog);
+      window.removeEventListener("navigate-to-quick-publish", handleNavigateToQuickPublish);
     };
   }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileMenuOpen]);
 
-  const handleSelectTab = useCallback((id: TabId) => {
-    setActiveTab(id);
+  const handleSelectSection = useCallback((id: SectionId) => {
+    setActiveSection(id);
     setMobileMenuOpen(false);
+  }, []);
+
+  const handleSelectTab = useCallback((sectionId: string, tabId: string) => {
+    setActiveTabs(prev => ({ ...prev, [sectionId]: tabId }));
   }, []);
 
   const handleToggleCollapse = useCallback(() => {
@@ -312,21 +422,21 @@ export default function Admin() {
     setMobileMenuOpen(false);
   }, [navigate]);
 
-  const activeItem = navItems.find(item => item.id === activeTab);
+  const currentSection = SECTIONS.find(s => s.id === activeSection) ?? SECTIONS[0];
+  const currentTabId = activeTabs[activeSection] ?? SECTION_DEFAULT_TAB[activeSection];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#060618]">
-      {/* ─── Desktop Sidebar (hidden on mobile) ──────────────────── */}
+      {/* ─── Desktop Sidebar ─────────────────────────────────────── */}
       <aside
         className={cn(
           "hidden md:flex flex-col border-r border-white/[0.06] bg-[#0a0a1e] transition-all duration-300 ease-in-out shrink-0",
-          sidebarCollapsed ? "w-[68px]" : "w-[240px]"
+          sidebarCollapsed ? "w-[68px]" : "w-[220px]"
         )}
       >
         <SidebarNav
-          navItems={navItems}
-          activeTab={activeTab}
-          onSelect={handleSelectTab}
+          activeSection={activeSection}
+          onSelect={handleSelectSection}
           collapsed={sidebarCollapsed}
           onToggleCollapse={handleToggleCollapse}
           onMarketplace={handleMarketplace}
@@ -343,11 +453,10 @@ export default function Admin() {
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[260px] bg-[#0a0a1e] border-r border-white/[0.06] transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[240px] bg-[#0a0a1e] border-r border-white/[0.06] transition-transform duration-300 ease-in-out md:hidden",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Mobile close button */}
         <button
           onClick={() => setMobileMenuOpen(false)}
           className="absolute top-3 right-3 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors z-10"
@@ -355,9 +464,8 @@ export default function Admin() {
           <X className="w-5 h-5" />
         </button>
         <SidebarNav
-          navItems={navItems}
-          activeTab={activeTab}
-          onSelect={handleSelectTab}
+          activeSection={activeSection}
+          onSelect={handleSelectSection}
           collapsed={false}
           onToggleCollapse={handleToggleCollapse}
           onMarketplace={handleMarketplace}
@@ -376,20 +484,32 @@ export default function Admin() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-3 min-w-0">
-            {activeItem && (
-              <span className="text-gray-500 shrink-0">{activeItem.icon}</span>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 min-w-0 text-[14px]">
+            <span className="text-gray-500 shrink-0">{currentSection.icon}</span>
+            <span className="text-gray-400 font-medium shrink-0">{currentSection.label}</span>
+            {currentSection.tabs.length > 1 && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+                <span className="text-white font-semibold truncate">
+                  {currentSection.tabs.find(t => t.id === currentTabId)?.label ?? ""}
+                </span>
+              </>
             )}
-            <h2 className="text-[15px] font-semibold text-white truncate">
-              {activeItem?.label ?? t("admin.statistics")}
-            </h2>
           </div>
         </header>
+
+        {/* In-page Tab Bar */}
+        <SectionTabBar
+          section={currentSection}
+          activeTab={currentTabId}
+          onSelect={(tabId) => handleSelectTab(activeSection, tabId)}
+        />
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-3 sm:p-4 md:p-6 lg:p-8">
-            <AdminContent activeTab={activeTab} />
+            <TabContent tabId={currentTabId} />
           </div>
         </div>
       </main>
