@@ -8,6 +8,7 @@ import PDFDocument from "pdfkit";
 import { execSync } from "child_process";
 import ExcelJS from "exceljs";
 import fs from "fs";
+import sharp from "sharp";
 import path from "path";
 import https from "https";
 import http from "http";
@@ -26,9 +27,8 @@ const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
 
 // ─── Image Cache ──────────────────────────────────────────────────────────────
-function getImageExtension(url: string): "png" | "jpeg" {
-  const lower = (url || "").toLowerCase().split("?")[0];
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "jpeg";
+function getImageExtension(_url: string): "png" {
+  // Always PNG since fetchImageBuffer converts all formats via sharp
   return "png";
 }
 const imageCache = new Map<string, Buffer>();
@@ -36,22 +36,29 @@ const imageCache = new Map<string, Buffer>();
 async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   if (!url || !url.startsWith("http")) return null;
   if (imageCache.has(url)) return imageCache.get(url)!;
-  return new Promise((resolve) => {
+  const rawBuf = await new Promise<Buffer | null>((resolve) => {
     const client = url.startsWith("https") ? https : http;
-    const req = client.get(url, { timeout: 5000 }, (res) => {
+    const req = client.get(url, { timeout: 8000 }, (res) => {
       if (res.statusCode !== 200) { resolve(null); return; }
       const chunks: Buffer[] = [];
       res.on("data", (c: Buffer) => chunks.push(c));
-      res.on("end", () => {
-        const buf = Buffer.concat(chunks);
-        imageCache.set(url, buf);
-        resolve(buf);
-      });
+      res.on("end", () => resolve(Buffer.concat(chunks)));
       res.on("error", () => resolve(null));
     });
     req.on("error", () => resolve(null));
     req.on("timeout", () => { req.destroy(); resolve(null); });
   });
+  if (!rawBuf) return null;
+  // Convert WebP (and any other format) to PNG for PDF/Excel compatibility
+  try {
+    const pngBuf = await sharp(rawBuf).png().toBuffer();
+    imageCache.set(url, pngBuf);
+    return pngBuf;
+  } catch {
+    // Fallback: return raw buffer if sharp fails
+    imageCache.set(url, rawBuf);
+    return rawBuf;
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
