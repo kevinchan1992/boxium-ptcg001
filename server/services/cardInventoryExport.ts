@@ -201,7 +201,14 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
     ];
 
     const tableTop = sy + 60;
-    const ROW_H = 44; // taller rows to fit card images
+    // Dynamic row height based on notes length
+    const getRowH = (notes: string | null) => {
+      const len = (notes || "").length;
+      if (len <= 20) return 44;
+      if (len <= 40) return 56;
+      if (len <= 80) return 68;
+      return 80;
+    };
 
     const drawTableHeader = (y: number) => {
       doc.rect(margin, y, contentW, 22).fill(BRAND_BLUE);
@@ -217,6 +224,7 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
 
     let rowY = tableTop + 22;
     rows.forEach((row, idx) => {
+      const ROW_H = getRowH(row.notes);
       if (rowY + ROW_H > pageH - margin) {
         doc.addPage({ size: "A4", layout: "landscape" });
         rowY = margin;
@@ -558,6 +566,8 @@ export async function generateCardInventoryExcel(year: number, month: number): P
       labels: sortedEntries.map(([k]) => k),
       buy: sortedEntries.map(([, m]) => Math.round(m.buy * 100) / 100),
       sell: sortedEntries.map(([, m]) => Math.round(m.sell * 100) / 100),
+      year,
+      month,
     };
     const chartScriptPath = path.join(process.cwd(), "server/scripts/generate_chart.py");
     const chartPngBuf = execSync(

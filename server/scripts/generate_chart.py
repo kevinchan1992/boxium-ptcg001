@@ -17,6 +17,14 @@ labels = data.get("labels", [])
 buy_vals = data.get("buy", [])
 sell_vals = data.get("sell", [])
 profit_vals = [s - b for s, b in zip(sell_vals, buy_vals)]
+year = data.get("year", "")
+month = data.get("month", 0)
+if month and month > 0:
+    chart_title = f"{year} 年 {month} 月買賣趨勢"
+elif year:
+    chart_title = f"{year} 年度月度買賣趨勢"
+else:
+    chart_title = "月度買賣趨勢"
 
 fig, ax = plt.subplots(figsize=(9, 3.5), dpi=120)
 fig.patch.set_facecolor("white")
@@ -26,7 +34,7 @@ ax.plot(labels, buy_vals, marker="o", linewidth=2, color="#06038D", label="買�
 ax.plot(labels, sell_vals, marker="s", linewidth=2, color="#16a34a", label="賣出金額 (HKD)")
 ax.plot(labels, profit_vals, marker="^", linewidth=1.5, linestyle="--", color="#d97706", label="毛利 (HKD)")
 
-ax.set_title("月度買賣趨勢", fontsize=13, fontweight="bold", color="#06038D", pad=10)
+ax.set_title(chart_title, fontsize=13, fontweight="bold", color="#06038D", pad=10)
 ax.set_xlabel("月份", fontsize=9, color="#374151")
 ax.set_ylabel("金額 (HKD)", fontsize=9, color="#374151")
 ax.legend(fontsize=8, loc="upper left")
