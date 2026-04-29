@@ -228,11 +228,33 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
     };
 
     drawTableHeader(tableTop);
+    let currentPage = 1;
+    // Pre-calculate total pages
+    let simY = tableTop + 22;
+    let totalPages = 1;
+    rows.forEach((row) => {
+      const rh = getRowH(row.notes);
+      if (simY + rh > pageH - margin) { totalPages++; simY = margin + 22; }
+      simY += rh;
+    });
+    const drawFooter = (pageNum: number) => {
+      const footerY = pageH - 28;
+      doc.moveTo(margin, footerY - 5).lineTo(pageW - margin, footerY - 5).stroke("#e5e7eb");
+      doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
+        .text(
+          "BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用",
+          margin, footerY, { width: contentW - 90, align: "center" }
+        );
+      doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
+        .text(`第 ${pageNum} 頁 / 共 ${totalPages} 頁`, pageW - margin - 90, footerY, { width: 90, align: "right" });
+    };
 
     let rowY = tableTop + 22;
     rows.forEach((row, idx) => {
       const ROW_H = getRowH(row.notes);
       if (rowY + ROW_H > pageH - margin) {
+        drawFooter(currentPage);
+        currentPage++;
         doc.addPage({ size: "A4", layout: "landscape" });
         rowY = margin;
         drawTableHeader(rowY);
@@ -302,11 +324,8 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
         .text("此期間無記錄", margin, tableTop + 40, { width: contentW, align: "center" });
     }
 
-    // ── Footer ──
-    const footerY = pageH - 28;
-    doc.moveTo(margin, footerY - 5).lineTo(pageW - margin, footerY - 5).stroke("#e5e7eb");
-    doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
-      .text("BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用", margin, footerY, { width: contentW, align: "center" });
+    // ── Footer (last page) ──
+    drawFooter(currentPage);
 
     doc.end();
   });
