@@ -6,15 +6,47 @@
 
 import PDFDocument from "pdfkit";
 import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
+import https from "https";
+import http from "http";
 import { getDb } from "../db";
 import { cardInventory } from "../../drizzle/schema_new";
 import { and, gte, lt } from "drizzle-orm";
 
+// ─── Font Paths ────────────────────────────────────────────────────────────────
+const FONT_DIR = path.join(process.cwd(), "server/fonts");
+const FONT_REGULAR = path.join(FONT_DIR, "NotoSansTC-Regular.otf");
+const FONT_BOLD = path.join(FONT_DIR, "NotoSansTC-Bold.otf");
+const LOGO_PATH = path.join(FONT_DIR, "boxium-logo-pdf.png");
+
 // ─── Brand Colors ─────────────────────────────────────────────────────────────
 const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
-const BRAND_BLUE_RGB = { r: 6, g: 3, b: 141 };
-const BRAND_YELLOW_RGB = { r: 254, g: 221, b: 0 };
+
+// ─── Image Cache ──────────────────────────────────────────────────────────────
+const imageCache = new Map<string, Buffer>();
+
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  if (!url || !url.startsWith("http")) return null;
+  if (imageCache.has(url)) return imageCache.get(url)!;
+  return new Promise((resolve) => {
+    const client = url.startsWith("https") ? https : http;
+    const req = client.get(url, { timeout: 5000 }, (res) => {
+      if (res.statusCode !== 200) { resolve(null); return; }
+      const chunks: Buffer[] = [];
+      res.on("data", (c: Buffer) => chunks.push(c));
+      res.on("end", () => {
+        const buf = Buffer.concat(chunks);
+        imageCache.set(url, buf);
+        resolve(buf);
+      });
+      res.on("error", () => resolve(null));
+    });
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => { req.destroy(); resolve(null); });
+  });
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getDateRange(year: number, month: number): { from: Date; to: Date } {
@@ -62,6 +94,17 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
+  // Pre-fetch all card images in parallel
+  const imageBuffers = await Promise.all(
+    rows.map((r) => fetchImageBuffer(r.imageUrl || ""))
+  );
+
+  // Load logo
+  let logoData: Buffer | null = null;
+  try {
+    if (fs.existsSync(LOGO_PATH)) logoData = fs.readFileSync(LOGO_PATH);
+  } catch { /* skip */ }
+
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     const doc = new PDFDocument({ margin: 40, size: "A4", layout: "landscape" });
@@ -70,6 +113,10 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
+    // Register Chinese fonts
+    doc.registerFont("NotoTC-Regular", FONT_REGULAR);
+    doc.registerFont("NotoTC-Bold", FONT_BOLD);
+
     const pageW = doc.page.width;
     const pageH = doc.page.height;
     const margin = 40;
@@ -77,31 +124,34 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
 
     // ── Header ──
     // Yellow background bar
-    doc.rect(0, 0, pageW, 70).fill(BRAND_YELLOW);
+    doc.rect(0, 0, pageW, 72).fill(BRAND_YELLOW);
     // Blue logo box
-    doc.roundedRect(margin, 12, 110, 46, 6).fill(BRAND_BLUE);
-    doc
-      .fillColor(BRAND_YELLOW)
-      .font("Helvetica-Bold")
-      .fontSize(22)
-      .text("BOXIUM", margin + 8, 22);
-    doc
-      .fillColor(BRAND_BLUE)
-      .font("Helvetica-Bold")
-      .fontSize(12)
-      .text("PTCG", margin + 8, 44);
+    if (logoData) {
+      try {
+        doc.image(logoData, margin, 10, { height: 52, fit: [140, 52] });
+      } catch {
+        // Fallback: draw text logo
+        doc.roundedRect(margin, 12, 110, 46, 6).fill(BRAND_BLUE);
+        doc.fillColor(BRAND_YELLOW).font("NotoTC-Bold").fontSize(20).text("BOXIUM", margin + 8, 18);
+        doc.fillColor(BRAND_BLUE).font("NotoTC-Bold").fontSize(11).text("PTCG", margin + 8, 44);
+      }
+    } else {
+      doc.roundedRect(margin, 12, 110, 46, 6).fill(BRAND_BLUE);
+      doc.fillColor(BRAND_YELLOW).font("NotoTC-Bold").fontSize(20).text("BOXIUM", margin + 8, 18);
+      doc.fillColor(BRAND_BLUE).font("NotoTC-Bold").fontSize(11).text("PTCG", margin + 8, 44);
+    }
 
     // Title
     doc
       .fillColor(BRAND_BLUE)
-      .font("Helvetica-Bold")
+      .font("NotoTC-Bold")
       .fontSize(18)
-      .text(`卡牌買取及賣出記錄`, margin + 130, 16);
+      .text("卡牌買取及賣出記錄", margin + 155, 16);
     doc
       .fillColor(BRAND_BLUE)
-      .font("Helvetica")
+      .font("NotoTC-Regular")
       .fontSize(11)
-      .text(`報告期間：${label}　　列印日期：${new Date().toLocaleDateString("zh-HK")}　　共 ${rows.length} 筆記錄`, margin + 130, 40);
+      .text(`報告期間：${label}　　列印日期：${new Date().toLocaleDateString("zh-HK")}　　共 ${rows.length} 筆記錄`, margin + 155, 42);
 
     // ── Summary Stats ──
     const totalBuy = rows.reduce((s, r) => s + parseFloat(r.buyPriceHkd || "0"), 0);
@@ -110,7 +160,7 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
     const totalProfit = totalSell - totalBuy;
     const holdingRows = rows.filter((r) => r.status === "holding");
 
-    let sy = 82;
+    let sy = 84;
     const statBoxW = (contentW - 30) / 4;
     const stats = [
       { label: "總買取金額 (HKD)", value: fmtHkd(totalBuy.toFixed(2)), color: BRAND_BLUE },
@@ -122,55 +172,74 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
       const sx = margin + i * (statBoxW + 10);
       doc.roundedRect(sx, sy, statBoxW, 44, 6).fill("#f8f9fa");
       doc.roundedRect(sx, sy, statBoxW, 44, 6).stroke("#e5e7eb");
-      doc.fillColor("#6b7280").font("Helvetica").fontSize(9).text(stat.label, sx + 8, sy + 8, { width: statBoxW - 16 });
-      doc.fillColor(stat.color).font("Helvetica-Bold").fontSize(14).text(stat.value, sx + 8, sy + 22, { width: statBoxW - 16 });
+      doc.fillColor("#6b7280").font("NotoTC-Regular").fontSize(9).text(stat.label, sx + 8, sy + 8, { width: statBoxW - 16 });
+      doc.fillColor(stat.color).font("NotoTC-Bold").fontSize(14).text(stat.value, sx + 8, sy + 22, { width: statBoxW - 16 });
     });
 
     // ── Table ──
-    const tableTop = sy + 60;
+    // Image column (40px) + text columns
+    const IMG_COL_W = 42;
     const cols = [
-      { label: "日期", width: 70 },
-      { label: "類型", width: 45 },
-      { label: "卡牌/商品名稱", width: 180 },
-      { label: "卡牌系列", width: 90 },
-      { label: "等級", width: 45 },
-      { label: "買取金額", width: 80 },
-      { label: "買取來源", width: 80 },
-      { label: "狀態", width: 50 },
-      { label: "賣出金額", width: 80 },
-      { label: "賣出日期", width: 70 },
-      { label: "賣出渠道", width: 80 },
+      { label: "圖片", width: IMG_COL_W },
+      { label: "日期", width: 66 },
+      { label: "類型", width: 38 },
+      { label: "卡牌/商品名稱", width: 160 },
+      { label: "系列", width: 80 },
+      { label: "等級", width: 42 },
+      { label: "買取金額", width: 78 },
+      { label: "買取來源", width: 72 },
+      { label: "狀態", width: 46 },
+      { label: "賣出金額", width: 78 },
+      { label: "賣出渠道", width: 72 },
     ];
 
-    // Header row
-    doc.rect(margin, tableTop, contentW, 22).fill(BRAND_BLUE);
-    let cx = margin;
-    cols.forEach((col) => {
-      doc.fillColor("white").font("Helvetica-Bold").fontSize(8).text(col.label, cx + 4, tableTop + 7, { width: col.width - 8 });
-      cx += col.width;
-    });
+    const tableTop = sy + 60;
+    const ROW_H = 44; // taller rows to fit card images
 
-    // Data rows
+    const drawTableHeader = (y: number) => {
+      doc.rect(margin, y, contentW, 22).fill(BRAND_BLUE);
+      let cx = margin;
+      cols.forEach((col) => {
+        doc.fillColor("white").font("NotoTC-Bold").fontSize(8)
+          .text(col.label, cx + 4, y + 7, { width: col.width - 8, lineBreak: false });
+        cx += col.width;
+      });
+    };
+
+    drawTableHeader(tableTop);
+
     let rowY = tableTop + 22;
     rows.forEach((row, idx) => {
-      const rowH = 18;
-      if (rowY + rowH > pageH - margin) {
+      if (rowY + ROW_H > pageH - margin) {
         doc.addPage({ size: "A4", layout: "landscape" });
         rowY = margin;
-        // Re-draw header on new page
-        doc.rect(margin, rowY, contentW, 22).fill(BRAND_BLUE);
-        let hcx = margin;
-        cols.forEach((col) => {
-          doc.fillColor("white").font("Helvetica-Bold").fontSize(8).text(col.label, hcx + 4, rowY + 7, { width: col.width - 8 });
-          hcx += col.width;
-        });
+        drawTableHeader(rowY);
         rowY += 22;
       }
 
       const bgColor = idx % 2 === 0 ? "white" : "#f9fafb";
-      doc.rect(margin, rowY, contentW, rowH).fill(bgColor);
-      doc.rect(margin, rowY, contentW, rowH).stroke("#e5e7eb");
+      doc.rect(margin, rowY, contentW, ROW_H).fill(bgColor);
+      doc.rect(margin, rowY, contentW, ROW_H).stroke("#e5e7eb");
 
+      // Draw card image
+      const imgBuf = imageBuffers[idx];
+      const imgX = margin + 3;
+      const imgY = rowY + 2;
+      const imgH = ROW_H - 4;
+      const imgW = IMG_COL_W - 6;
+      if (imgBuf) {
+        try {
+          doc.image(imgBuf, imgX, imgY, { fit: [imgW, imgH], align: "center", valign: "center" });
+        } catch {
+          doc.rect(imgX, imgY, imgW, imgH).fill("#e5e7eb");
+        }
+      } else {
+        doc.roundedRect(imgX, imgY, imgW, imgH, 3).fill("#e5e7eb");
+        doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(6)
+          .text("無圖", imgX, imgY + imgH / 2 - 4, { width: imgW, align: "center" });
+      }
+
+      // Text cells (skip image col)
       const cells = [
         fmtDate(row.buyDate),
         row.itemType === "card" ? "單卡" : "封包",
@@ -178,33 +247,37 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
         row.cardSet || "—",
         row.grade || "—",
         row.buyPriceCurrency !== "HKD"
-          ? `${row.buyPriceCurrency} ${row.buyPriceOriginal} (${fmtHkd(row.buyPriceHkd)})`
+          ? `${row.buyPriceCurrency} ${row.buyPriceOriginal}\n(${fmtHkd(row.buyPriceHkd)})`
           : fmtHkd(row.buyPriceHkd),
         row.buySource || "—",
         row.status === "holding" ? "持有中" : "已賣出",
         row.sellPriceHkd ? fmtHkd(row.sellPriceHkd) : "—",
-        fmtDate(row.sellDate),
         row.sellChannel || "—",
       ];
 
-      let dcx = margin;
+      let dcx = margin + IMG_COL_W; // skip image col
       cells.forEach((cell, ci) => {
+        const colDef = cols[ci + 1]; // +1 to skip image col
         const textColor = ci === 7 ? (row.status === "holding" ? "#d97706" : "#16a34a") : "#111827";
-        doc.fillColor(textColor).font("Helvetica").fontSize(7.5).text(cell, dcx + 4, rowY + 5, { width: cols[ci].width - 8, ellipsis: true, lineBreak: false });
-        dcx += cols[ci].width;
+        const textY = rowY + (ROW_H - 14) / 2; // vertically center
+        doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
+          .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });
+        dcx += colDef.width;
       });
 
-      rowY += rowH;
+      rowY += ROW_H;
     });
 
     if (rows.length === 0) {
-      doc.fillColor("#6b7280").font("Helvetica").fontSize(12).text("此期間無記錄", margin, tableTop + 40, { width: contentW, align: "center" });
+      doc.fillColor("#6b7280").font("NotoTC-Regular").fontSize(12)
+        .text("此期間無記錄", margin, tableTop + 40, { width: contentW, align: "center" });
     }
 
     // ── Footer ──
-    const footerY = pageH - 30;
+    const footerY = pageH - 28;
     doc.moveTo(margin, footerY - 5).lineTo(pageW - margin, footerY - 5).stroke("#e5e7eb");
-    doc.fillColor("#9ca3af").font("Helvetica").fontSize(8).text(`BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用`, margin, footerY, { width: contentW, align: "center" });
+    doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
+      .text("BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用", margin, footerY, { width: contentW, align: "center" });
 
     doc.end();
   });
@@ -215,6 +288,11 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
+  // Pre-fetch all card images in parallel
+  const imageBuffers = await Promise.all(
+    rows.map((r) => fetchImageBuffer(r.imageUrl || ""))
+  );
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BOXIUM PTCG";
   workbook.created = new Date();
@@ -222,63 +300,81 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   // ── Sheet 1: Detail Records ──
   const sheet = workbook.addWorksheet("買賣記錄", { views: [{ state: "frozen", ySplit: 5 }] });
 
-  // Logo area (rows 1-2)
-  sheet.mergeCells("A1:C2");
+  // Logo image (rows 1-3)
+  let logoImageId: number | null = null;
+  try {
+    if (fs.existsSync(LOGO_PATH)) {
+      const logoBuf = fs.readFileSync(LOGO_PATH);
+      logoImageId = workbook.addImage({ base64: logoBuf.toString("base64"), extension: "png" });
+    }
+  } catch { /* skip */ }
+
+  // Logo area (rows 1-3, cols A-C)
+  sheet.mergeCells("A1:C3");
   const logoCell = sheet.getCell("A1");
-  logoCell.value = "BOXIUM PTCG";
-  logoCell.font = { name: "Arial", bold: true, size: 18, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
-  logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
-  logoCell.alignment = { vertical: "middle", horizontal: "center" };
+  if (logoImageId !== null) {
+    logoCell.value = "";
+    logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
+    sheet.addImage(logoImageId, "A1:C3");
+  } else {
+    logoCell.value = "BOXIUM PTCG";
+    logoCell.font = { name: "Arial", bold: true, size: 18, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
+    logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
+    logoCell.alignment = { vertical: "middle", horizontal: "center" };
+  }
 
   // Title (rows 1-2, cols D onwards)
-  sheet.mergeCells("D1:K1");
+  sheet.mergeCells("D1:L1");
   const titleCell = sheet.getCell("D1");
-  titleCell.value = `卡牌買取及賣出記錄`;
+  titleCell.value = "卡牌買取及賣出記錄";
   titleCell.font = { name: "Arial", bold: true, size: 16, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
   titleCell.alignment = { vertical: "middle", horizontal: "left" };
 
-  sheet.mergeCells("D2:K2");
+  sheet.mergeCells("D2:L2");
   const subtitleCell = sheet.getCell("D2");
   subtitleCell.value = `報告期間：${label}　　列印日期：${new Date().toLocaleDateString("zh-HK")}　　共 ${rows.length} 筆記錄`;
   subtitleCell.font = { name: "Arial", size: 10, color: { argb: "FF555555" } };
   subtitleCell.alignment = { vertical: "middle", horizontal: "left" };
 
-  // Summary row 3
+  sheet.mergeCells("D3:L3");
+
+  // Summary row 4
   const totalBuy = rows.reduce((s, r) => s + parseFloat(r.buyPriceHkd || "0"), 0);
   const soldRows = rows.filter((r) => r.status === "sold");
   const totalSell = soldRows.reduce((s, r) => s + parseFloat(r.sellPriceHkd || "0"), 0);
   const totalProfit = totalSell - totalBuy;
   const holdingRows = rows.filter((r) => r.status === "holding");
 
-  sheet.mergeCells("A3:B3");
-  const s1 = sheet.getCell("A3");
+  sheet.mergeCells("A4:C4");
+  const s1 = sheet.getCell("A4");
   s1.value = `總買取：HK$${totalBuy.toFixed(2)}`;
   s1.font = { bold: true, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
   s1.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8E8F5" } };
 
-  sheet.mergeCells("C3:D3");
-  const s2 = sheet.getCell("C3");
+  sheet.mergeCells("D4:F4");
+  const s2 = sheet.getCell("D4");
   s2.value = `總賣出：HK$${totalSell.toFixed(2)}`;
   s2.font = { bold: true, color: { argb: "FF16a34a" } };
   s2.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFdcfce7" } };
 
-  sheet.mergeCells("E3:F3");
-  const s3 = sheet.getCell("E3");
+  sheet.mergeCells("G4:I4");
+  const s3 = sheet.getCell("G4");
   s3.value = `毛利：HK$${totalProfit.toFixed(2)}`;
   s3.font = { bold: true, color: { argb: totalProfit >= 0 ? "FF16a34a" : "FFdc2626" } };
   s3.fill = { type: "pattern", pattern: "solid", fgColor: { argb: totalProfit >= 0 ? "FFdcfce7" : "FFfee2e2" } };
 
-  sheet.mergeCells("G3:H3");
-  const s4 = sheet.getCell("G3");
+  sheet.mergeCells("J4:L4");
+  const s4 = sheet.getCell("J4");
   s4.value = `持有中：${holdingRows.length} 件`;
   s4.font = { bold: true, color: { argb: "FFd97706" } };
   s4.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFfef3c7" } };
 
-  // Empty row 4
-  sheet.getRow(4).height = 8;
+  // Empty row 5
+  sheet.getRow(5).height = 6;
 
-  // Header row 5
+  // Header row 6 (with image column)
   const headers = [
+    { key: "image", header: "圖片", width: 10 },
     { key: "buyDate", header: "買取日期", width: 14 },
     { key: "itemType", header: "類型", width: 8 },
     { key: "cardName", header: "卡牌/商品名稱", width: 36 },
@@ -290,8 +386,6 @@ export async function generateCardInventoryExcel(year: number, month: number): P
     { key: "buySource", header: "買取來源", width: 16 },
     { key: "status", header: "狀態", width: 10 },
     { key: "sellDate", header: "賣出日期", width: 14 },
-    { key: "sellPriceOriginal", header: "賣出原始金額", width: 16 },
-    { key: "sellPriceCurrency", header: "賣出貨幣", width: 10 },
     { key: "sellPriceHkd", header: "賣出金額(HKD)", width: 16 },
     { key: "sellChannel", header: "賣出渠道", width: 16 },
     { key: "profit", header: "毛利(HKD)", width: 14 },
@@ -299,8 +393,7 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   ];
 
   sheet.columns = headers.map((h) => ({ key: h.key, width: h.width }));
-
-  const headerRow = sheet.getRow(5);
+  const headerRow = sheet.getRow(6);
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h.header;
@@ -316,31 +409,30 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   });
   headerRow.height = 24;
 
-  // Data rows
+  // Data rows (starting at row 7)
   rows.forEach((row, idx) => {
     const buyHkd = parseFloat(row.buyPriceHkd || "0");
     const sellHkd = row.sellPriceHkd ? parseFloat(row.sellPriceHkd) : null;
     const profit = sellHkd !== null ? sellHkd - buyHkd : null;
+    const excelRowNum = 7 + idx;
 
-    const dataRow = sheet.addRow({
-      buyDate: row.buyDate ? new Date(row.buyDate).toLocaleDateString("zh-HK") : "—",
-      itemType: row.itemType === "card" ? "單卡" : "封包",
-      cardName: row.cardName,
-      cardSet: row.cardSet || "",
-      grade: row.grade || "",
-      buyPriceOriginal: parseFloat(row.buyPriceOriginal || "0"),
-      buyPriceCurrency: row.buyPriceCurrency,
-      buyPriceHkd: buyHkd,
-      buySource: row.buySource || "",
-      status: row.status === "holding" ? "持有中" : "已賣出",
-      sellDate: row.sellDate ? new Date(row.sellDate).toLocaleDateString("zh-HK") : "",
-      sellPriceOriginal: row.sellPriceOriginal ? parseFloat(row.sellPriceOriginal) : "",
-      sellPriceCurrency: row.sellPriceCurrency || "",
-      sellPriceHkd: sellHkd ?? "",
-      sellChannel: row.sellChannel || "",
-      profit: profit ?? "",
-      notes: row.notes || "",
-    });
+    const dataRow = sheet.getRow(excelRowNum);
+    dataRow.getCell(1).value = ""; // image placeholder
+    dataRow.getCell(2).value = row.buyDate ? new Date(row.buyDate).toLocaleDateString("zh-HK") : "—";
+    dataRow.getCell(3).value = row.itemType === "card" ? "單卡" : "封包";
+    dataRow.getCell(4).value = row.cardName;
+    dataRow.getCell(5).value = row.cardSet || "";
+    dataRow.getCell(6).value = row.grade || "";
+    dataRow.getCell(7).value = parseFloat(row.buyPriceOriginal || "0");
+    dataRow.getCell(8).value = row.buyPriceCurrency;
+    dataRow.getCell(9).value = buyHkd;
+    dataRow.getCell(10).value = row.buySource || "";
+    dataRow.getCell(11).value = row.status === "holding" ? "持有中" : "已賣出";
+    dataRow.getCell(12).value = row.sellDate ? new Date(row.sellDate).toLocaleDateString("zh-HK") : "";
+    dataRow.getCell(13).value = sellHkd ?? "";
+    dataRow.getCell(14).value = row.sellChannel || "";
+    dataRow.getCell(15).value = profit ?? "";
+    dataRow.getCell(16).value = row.notes || "";
 
     const bgColor = idx % 2 === 0 ? "FFFFFFFF" : "FFF9FAFB";
     dataRow.eachCell((cell, colNum) => {
@@ -351,27 +443,34 @@ export async function generateCardInventoryExcel(year: number, month: number): P
       };
       cell.font = { name: "Arial", size: 9 };
       cell.alignment = { vertical: "middle" };
-
-      // Color status cell
-      if (colNum === 10) {
+      if (colNum === 11) {
         cell.font = { name: "Arial", size: 9, bold: true, color: { argb: row.status === "holding" ? "FFd97706" : "FF16a34a" } };
       }
-      // Color profit cell
-      if (colNum === 16 && profit !== null) {
+      if (colNum === 15 && profit !== null) {
         cell.font = { name: "Arial", size: 9, bold: true, color: { argb: profit >= 0 ? "FF16a34a" : "FFdc2626" } };
       }
-      // Number format for HKD amounts
-      if ([6, 8, 12, 14, 16].includes(colNum)) {
-        cell.numFmt = '#,##0.00';
-      }
+      if ([7, 9, 13, 15].includes(colNum)) cell.numFmt = '#,##0.00';
     });
-    dataRow.height = 18;
+
+    // Insert card image into col 1
+    const imgBuf = imageBuffers[idx];
+    if (imgBuf) {
+      try {
+        const imgId = workbook.addImage({ base64: imgBuf.toString("base64"), extension: "png" });
+        const colLetter = "A";
+        const imgRange = `${colLetter}${excelRowNum}:${colLetter}${excelRowNum}`;
+        sheet.addImage(imgId, imgRange);
+      } catch { /* skip if image format unsupported */ }
+    }
+
+    dataRow.height = 60; // tall enough for card image
   });
+
+  // Freeze header rows
+  sheet.views = [{ state: "frozen", ySplit: 6 }];
 
   // ── Sheet 2: Monthly Summary ──
   const summarySheet = workbook.addWorksheet("月度總表");
-
-  // Group by month
   const monthMap = new Map<string, { buy: number; sell: number; count: number; soldCount: number }>();
   rows.forEach((row) => {
     const d = new Date(row.buyDate);
@@ -386,7 +485,6 @@ export async function generateCardInventoryExcel(year: number, month: number): P
     }
   });
 
-  // Summary header
   summarySheet.mergeCells("A1:G1");
   const sumTitle = summarySheet.getCell("A1");
   sumTitle.value = `BOXIUM PTCG — 月度買賣總表 (${label})`;
@@ -434,7 +532,6 @@ export async function generateCardInventoryExcel(year: number, month: number): P
       rowIdx++;
     });
 
-  // Grand total row
   const grandProfit = grandSell - grandBuy;
   const grandHolding = grandCount - grandSoldCount;
   const totalRow = summarySheet.addRow(["合計", grandCount, grandBuy, grandSoldCount, grandSell, grandProfit, grandHolding]);

@@ -11,6 +11,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
@@ -1747,12 +1751,48 @@ export default function AdminCardInventory() {
               </Button>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleExportExcel(0)} className="gap-1.5">
-                <Download className="w-4 h-4" />Excel 年度報表
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExportPdf(0)} className="gap-1.5">
-                <Download className="w-4 h-4" />PDF 年度報表
-              </Button>
+              {/* Excel export dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Download className="w-4 h-4" />Excel 匯出
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel>選擇匯出範圍</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExportExcel(0)}>
+                    {selectedYear} 年度（全年）
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <DropdownMenuItem key={m} onClick={() => handleExportExcel(m)}>
+                      {selectedYear} 年 {m} 月
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/* PDF export dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Download className="w-4 h-4" />PDF 匯出
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel>選擇匯出範圍</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExportPdf(0)}>
+                    {selectedYear} 年度（全年）
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <DropdownMenuItem key={m} onClick={() => handleExportPdf(m)}>
+                      {selectedYear} 年 {m} 月
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <MonthlySummaryTab year={selectedYear} onExportMonth={handleExportExcel} />
