@@ -1538,16 +1538,17 @@ async function startServer() {
 
   // ─── Scheduled Task Endpoint: Trending Cards Daily Recalculation ─────────────
   // Called by external Manus scheduled task daily at 06:00 HKT
-  // Auth: accepts app_session_id cookie (user role) from scheduled task platform
+  // Auth: Bearer token via Authorization header (CRON_SECRET)
   app.post("/api/scheduled/trending-cards", async (req, res) => {
     try {
-      const { createContext } = await import("./context");
-      const ctx = await createContext({ req, res } as any);
-      // Allow user role (scheduled task platform injects user-level cookie)
-      if (!ctx.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        console.warn('[ScheduledTask] trending-cards: invalid or missing CRON_SECRET token');
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
       }
-      console.log(`[ScheduledTask] trending-cards triggered by user: ${ctx.user.email}`);
+      console.log('[ScheduledTask] trending-cards triggered via cron token');
       const { calculateAndCacheTrendingCards } = await import("../db");
       const startTime = Date.now();
       await calculateAndCacheTrendingCards();
