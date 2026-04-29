@@ -8904,3 +8904,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] Admin 側邊欄加入「買取賣出記錄」連結
 - [ ] TypeScript 0 errors 確認 + checkpoint
 - [x] Admin 後台功能分頁重組：側邊欄精簡為 5 個主入口（統計總覽/內容管理/系統運維/財務記錄/設定），每個入口頁面內用 Tab 分頁整理子功能（共 18 個功能全部保留）
+- [x] AdminCardInventory 升級：新增買取記錄 Dialog 加入平台卡牌搜尋（帶縮圖下拉）、評級/買取來源改為下拉清單選擇、記錄列表卡片左側顯示卡牌縮圖、DB 加入 imageUrl/linkedCardId 欄位

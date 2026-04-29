@@ -106,6 +106,8 @@ export const cardInventoryRouter = router({
       buyDate: z.string(), // ISO date string
       buySource: z.string().max(256).optional(),
       notes: z.string().optional(),
+      imageUrl: z.string().optional(),
+      linkedCardId: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -130,6 +132,8 @@ export const cardInventoryRouter = router({
         buySource: input.buySource ?? null,
         status: "holding",
         notes: input.notes ?? null,
+        imageUrl: input.imageUrl ?? null,
+        linkedCardId: input.linkedCardId ?? null,
       });
 
       return { success: true, id: result.insertId };
@@ -155,6 +159,8 @@ export const cardInventoryRouter = router({
       sellDate: z.string().optional(),
       sellChannel: z.string().max(256).optional().nullable(),
       notes: z.string().optional().nullable(),
+      imageUrl: z.string().optional().nullable(),
+      linkedCardId: z.number().optional().nullable(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -169,6 +175,8 @@ export const cardInventoryRouter = router({
       if (fields.buySource !== undefined) updateData.buySource = fields.buySource;
       if (fields.notes !== undefined) updateData.notes = fields.notes;
       if (fields.sellChannel !== undefined) updateData.sellChannel = fields.sellChannel;
+      if (fields.imageUrl !== undefined) updateData.imageUrl = fields.imageUrl;
+      if (fields.linkedCardId !== undefined) updateData.linkedCardId = fields.linkedCardId;
 
       // Recalculate buy price if currency or amount changed
       if (fields.buyPriceOriginal !== undefined || fields.buyPriceCurrency !== undefined) {

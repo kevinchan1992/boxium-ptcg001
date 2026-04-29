@@ -1722,6 +1722,9 @@ export const cardInventory = mysqlTable("cardInventory", {
   sellExchangeRate: decimal("sellExchangeRate", { precision: 10, scale: 4 }),
   sellDate: timestamp("sellDate"),
   sellChannel: varchar("sellChannel", { length: 256 }), // e.g. 平台自售, 拍賣, 直接賣出
+  // Card image (from platform card database)
+  imageUrl: text("imageUrl"), // image URL linked from platform cards table
+  linkedCardId: int("linkedCardId"), // optional reference to cards.id
   // Notes
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -14,9 +14,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
-  DollarSign, Package, RefreshCw, Download, ChevronLeft, ChevronRight,
+  Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
 } from "lucide-react";
 
+/* ─── Constants ────────────────────────────────────────────────────── */
+const GRADE_OPTIONS = [
+  "PSA 10", "PSA 9", "PSA 8", "PSA 7", "PSA 6", "PSA 5",
+  "BGS 10", "BGS 9.5", "BGS 9",
+  "CGC 10", "CGC 9.5",
+  "RAW（未評級）",
+  "其他",
+];
+
+const BUY_SOURCE_OPTIONS = [
+  "客戶回收",
+  "拍賣（雅虎）",
+  "拍賣（eBay）",
+  "門市收購",
+  "網上平台",
+  "批發商",
+  "個人交易",
+  "其他",
+];
+
+const MONTHS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+const CURRENT_YEAR = new Date().getFullYear();
+
+/* ─── Types ─────────────────────────────────────────────────────────── */
 type CardInventoryItem = {
   id: number;
   itemType: "card" | "sealed";
@@ -37,12 +61,22 @@ type CardInventoryItem = {
   sellDate: Date | null;
   sellChannel: string | null;
   notes: string | null;
+  imageUrl: string | null;
+  linkedCardId: number | null;
   createdAt: Date;
 };
 
-const MONTHS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-const CURRENT_YEAR = new Date().getFullYear();
+type CardSearchResult = {
+  id: number;
+  name: string;
+  nameJa: string | null;
+  imageUrl: string | null;
+  cardNumber: string | null;
+  setName: string | null;
+  latestPrice: number | null;
+};
 
+/* ─── Helpers ────────────────────────────────────────────────────────── */
 function formatHkd(val: string | number | null | undefined): string {
   if (val == null) return "—";
   const n = Number(val);
@@ -52,6 +86,118 @@ function formatHkd(val: string | number | null | undefined): string {
 function formatDate(d: Date | null | undefined): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("zh-HK", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+/* ─── Card Search Picker ─────────────────────────────────────────────── */
+function CardSearchPicker({
+  onSelect,
+  onManualMode,
+}: {
+  onSelect: (card: CardSearchResult) => void;
+  onManualMode: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data, isFetching } = trpc.cards.search.useQuery(
+    { query, limit: 8 },
+    { enabled: query.length >= 2 }
+  );
+
+  const results: CardSearchResult[] = (data?.cards ?? []) as CardSearchResult[];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        inputRef.current && !inputRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium block">搜尋平台卡牌</label>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          ref={inputRef}
+          placeholder="輸入卡牌名稱、日文名或卡號..."
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => query.length >= 2 && setOpen(true)}
+          className="pl-9 pr-8"
+        />
+        {query && (
+          <button
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={() => { setQuery(""); setOpen(false); }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        {open && query.length >= 2 && (
+          <div
+            ref={dropdownRef}
+            className="absolute z-50 top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-lg max-h-72 overflow-y-auto"
+          >
+            {isFetching && (
+              <div className="p-3 text-sm text-muted-foreground text-center">搜尋中...</div>
+            )}
+            {!isFetching && results.length === 0 && (
+              <div className="p-3 text-sm text-muted-foreground text-center">找不到卡牌</div>
+            )}
+            {results.map((card) => (
+              <button
+                key={card.id}
+                className="w-full flex items-center gap-3 p-2.5 hover:bg-muted/60 text-left transition-colors"
+                onClick={() => {
+                  onSelect(card);
+                  setQuery("");
+                  setOpen(false);
+                }}
+              >
+                <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-muted">
+                  {card.imageUrl ? (
+                    <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageOff className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{card.name}</div>
+                  {card.nameJa && <div className="text-xs text-muted-foreground truncate">{card.nameJa}</div>}
+                  <div className="text-xs text-muted-foreground">
+                    {[card.setName, card.cardNumber].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                {card.latestPrice && (
+                  <div className="text-xs text-[#06038D] font-medium flex-shrink-0">
+                    {formatHkd(card.latestPrice)}
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        onClick={onManualMode}
+      >
+        找不到？手動輸入資料
+      </button>
+    </div>
+  );
 }
 
 /* ─── Buy/Edit Form Dialog ─────────────────────────────────────────── */
@@ -65,6 +211,8 @@ function BuyFormDialog({
 }) {
   const utils = trpc.useUtils();
   const isEdit = !!editItem;
+  const [manualMode, setManualMode] = useState(isEdit);
+  const [selectedCard, setSelectedCard] = useState<CardSearchResult | null>(null);
 
   const [form, setForm] = useState({
     itemType: editItem?.itemType ?? "card",
@@ -72,11 +220,15 @@ function BuyFormDialog({
     cardSet: editItem?.cardSet ?? "",
     cardNumber: editItem?.cardNumber ?? "",
     grade: editItem?.grade ?? "",
+    gradeCustom: "",
     buyPriceCurrency: editItem?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: editItem?.buyPriceOriginal ?? "",
     buyDate: editItem?.buyDate ? new Date(editItem.buyDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
     buySource: editItem?.buySource ?? "",
+    buySourceCustom: "",
     notes: editItem?.notes ?? "",
+    imageUrl: editItem?.imageUrl ?? "",
+    linkedCardId: editItem?.linkedCardId ?? null as number | null,
   });
 
   const createMutation = trpc.cardInventory.create.useMutation({
@@ -99,12 +251,28 @@ function BuyFormDialog({
     onError: (e) => toast.error(e.message),
   });
 
+  const handleCardSelect = (card: CardSearchResult) => {
+    setSelectedCard(card);
+    setManualMode(true);
+    setForm(f => ({
+      ...f,
+      cardName: card.name,
+      cardSet: card.setName ?? "",
+      cardNumber: card.cardNumber ?? "",
+      imageUrl: card.imageUrl ?? "",
+      linkedCardId: card.id,
+    }));
+  };
+
   const estimatedHkd = useMemo(() => {
     const amt = parseFloat(form.buyPriceOriginal);
     if (!amt || isNaN(amt)) return null;
     const rate = rates[form.buyPriceCurrency as keyof typeof rates] ?? 1;
     return amt * rate;
   }, [form.buyPriceOriginal, form.buyPriceCurrency, rates]);
+
+  const effectiveGrade = form.grade === "其他" ? form.gradeCustom : form.grade;
+  const effectiveBuySource = form.buySource === "其他" ? form.buySourceCustom : form.buySource;
 
   const handleSubmit = () => {
     if (!form.cardName.trim()) return toast.error("請輸入卡牌/商品名稱");
@@ -116,12 +284,14 @@ function BuyFormDialog({
       cardName: form.cardName.trim(),
       cardSet: form.cardSet || undefined,
       cardNumber: form.cardNumber || undefined,
-      grade: form.grade || undefined,
+      grade: effectiveGrade || undefined,
       buyPriceCurrency: form.buyPriceCurrency as "HKD" | "JPY" | "USD",
       buyPriceOriginal: amt,
       buyDate: form.buyDate,
-      buySource: form.buySource || undefined,
+      buySource: effectiveBuySource || undefined,
       notes: form.notes || undefined,
+      imageUrl: form.imageUrl || undefined,
+      linkedCardId: form.linkedCardId ?? undefined,
     };
 
     if (isEdit && editItem) {
@@ -135,11 +305,12 @@ function BuyFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "編輯買取記錄" : "新增買取記錄"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
+          {/* Type + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium mb-1 block">類型</label>
@@ -157,94 +328,164 @@ function BuyFormDialog({
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">卡牌/商品名稱 *</label>
-            <Input
-              placeholder="例：Charizard VMAX / 閃焰王者 第一彈 卡盒"
-              value={form.cardName}
-              onChange={(e) => setForm(f => ({ ...f, cardName: e.target.value }))}
+          {/* Card Search (only for new records or when not in manual mode) */}
+          {!isEdit && !manualMode && (
+            <CardSearchPicker
+              onSelect={handleCardSelect}
+              onManualMode={() => setManualMode(true)}
             />
-          </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">系列/卡包</label>
-              <Input
-                placeholder="例：S7R / Shiny Treasure ex"
-                value={form.cardSet}
-                onChange={(e) => setForm(f => ({ ...f, cardSet: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">卡號</label>
-              <Input
-                placeholder="例：082/067"
-                value={form.cardNumber}
-                onChange={(e) => setForm(f => ({ ...f, cardNumber: e.target.value }))}
-              />
-            </div>
-          </div>
+          {/* Selected card preview */}
+          {(manualMode || isEdit) && (
+            <>
+              {/* Show selected card preview */}
+              {selectedCard && (
+                <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border">
+                  <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-muted">
+                    {selectedCard.imageUrl ? (
+                      <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageOff className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{selectedCard.name}</div>
+                    <div className="text-xs text-muted-foreground">{[selectedCard.setName, selectedCard.cardNumber].filter(Boolean).join(" · ")}</div>
+                    <div className="text-xs text-green-600 mt-0.5">已從平台資料庫選取</div>
+                  </div>
+                  <button
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => { setSelectedCard(null); setManualMode(false); setForm(f => ({ ...f, cardName: "", cardSet: "", cardNumber: "", imageUrl: "", linkedCardId: null })); }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">評級</label>
-              <Input
-                placeholder="例：PSA10 / RAW"
-                value={form.grade}
-                onChange={(e) => setForm(f => ({ ...f, grade: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">買取來源</label>
-              <Input
-                placeholder="例：客戶回收 / 拍賣"
-                value={form.buySource}
-                onChange={(e) => setForm(f => ({ ...f, buySource: e.target.value }))}
-              />
-            </div>
-          </div>
+              {/* Card Name */}
+              <div>
+                <label className="text-sm font-medium mb-1 block">卡牌/商品名稱 *</label>
+                <Input
+                  placeholder="例：Charizard VMAX / 閃焰王者 第一彈 卡盒"
+                  value={form.cardName}
+                  onChange={(e) => setForm(f => ({ ...f, cardName: e.target.value }))}
+                />
+              </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">買取金額 *</label>
-            <div className="flex gap-2">
-              <Select value={form.buyPriceCurrency} onValueChange={(v) => setForm(f => ({ ...f, buyPriceCurrency: v as "HKD" | "JPY" | "USD" }))}>
-                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HKD">HKD</SelectItem>
-                  <SelectItem value="JPY">JPY</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={form.buyPriceOriginal}
-                onChange={(e) => setForm(f => ({ ...f, buyPriceOriginal: e.target.value }))}
-                className="flex-1"
-              />
-            </div>
-            {estimatedHkd !== null && form.buyPriceCurrency !== "HKD" && (
-              <p className="text-xs text-muted-foreground mt-1">
-                ≈ {formatHkd(estimatedHkd)} HKD（匯率：{rates[form.buyPriceCurrency as keyof typeof rates]}）
-              </p>
-            )}
-          </div>
+              {/* Set + Card Number */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">系列/卡包</label>
+                  <Input
+                    placeholder="例：S7R / Shiny Treasure ex"
+                    value={form.cardSet}
+                    onChange={(e) => setForm(f => ({ ...f, cardSet: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">卡號</label>
+                  <Input
+                    placeholder="例：082/067"
+                    value={form.cardNumber}
+                    onChange={(e) => setForm(f => ({ ...f, cardNumber: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">備注</label>
-            <Input
-              placeholder="選填備注"
-              value={form.notes}
-              onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
-            />
-          </div>
+              {/* Grade + Buy Source */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">評級</label>
+                  <Select value={form.grade} onValueChange={(v) => setForm(f => ({ ...f, grade: v }))}>
+                    <SelectTrigger><SelectValue placeholder="選擇評級" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">未選擇</SelectItem>
+                      {GRADE_OPTIONS.map(g => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.grade === "其他" && (
+                    <Input
+                      className="mt-1.5"
+                      placeholder="請輸入評級..."
+                      value={form.gradeCustom}
+                      onChange={(e) => setForm(f => ({ ...f, gradeCustom: e.target.value }))}
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">買取來源</label>
+                  <Select value={form.buySource} onValueChange={(v) => setForm(f => ({ ...f, buySource: v }))}>
+                    <SelectTrigger><SelectValue placeholder="選擇來源" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">未選擇</SelectItem>
+                      {BUY_SOURCE_OPTIONS.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.buySource === "其他" && (
+                    <Input
+                      className="mt-1.5"
+                      placeholder="請輸入來源..."
+                      value={form.buySourceCustom}
+                      onChange={(e) => setForm(f => ({ ...f, buySourceCustom: e.target.value }))}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Buy Price */}
+              <div>
+                <label className="text-sm font-medium mb-1 block">買取金額 *</label>
+                <div className="flex gap-2">
+                  <Select value={form.buyPriceCurrency} onValueChange={(v) => setForm(f => ({ ...f, buyPriceCurrency: v as "HKD" | "JPY" | "USD" }))}>
+                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HKD">HKD</SelectItem>
+                      <SelectItem value="JPY">JPY</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={form.buyPriceOriginal}
+                    onChange={(e) => setForm(f => ({ ...f, buyPriceOriginal: e.target.value }))}
+                    className="flex-1"
+                  />
+                </div>
+                {estimatedHkd !== null && form.buyPriceCurrency !== "HKD" && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ≈ {formatHkd(estimatedHkd)} HKD（匯率：{rates[form.buyPriceCurrency as keyof typeof rates]}）
+                  </p>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-sm font-medium mb-1 block">備注</label>
+                <Input
+                  placeholder="選填備注"
+                  value={form.notes}
+                  onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
+                />
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>取消</Button>
-          <Button onClick={handleSubmit} disabled={isPending} className="bg-[#06038D] hover:bg-[#06038D]/90">
-            {isPending ? "儲存中..." : isEdit ? "更新" : "新增買取"}
-          </Button>
+          {(manualMode || isEdit) && (
+            <Button onClick={handleSubmit} disabled={isPending} className="bg-[#06038D] hover:bg-[#06038D]/90">
+              {isPending ? "儲存中..." : isEdit ? "更新" : "新增買取"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -252,6 +493,15 @@ function BuyFormDialog({
 }
 
 /* ─── Sell Dialog ──────────────────────────────────────────────────── */
+const SELL_CHANNEL_OPTIONS = [
+  "平台自售",
+  "拍賣（雅虎）",
+  "拍賣（eBay）",
+  "門市直接賣出",
+  "個人交易",
+  "其他",
+];
+
 function SellDialog({
   open, onClose, item, rates,
 }: {
@@ -266,6 +516,7 @@ function SellDialog({
     sellPriceOriginal: "",
     sellDate: new Date().toISOString().slice(0, 10),
     sellChannel: "",
+    sellChannelCustom: "",
   });
 
   const updateMutation = trpc.cardInventory.update.useMutation({
@@ -281,9 +532,11 @@ function SellDialog({
   const estimatedHkd = useMemo(() => {
     const amt = parseFloat(form.sellPriceOriginal);
     if (!amt || isNaN(amt)) return null;
-    const rate = rates[form.sellPriceCurrency] ?? 1;
+    const rate = rates[form.sellPriceCurrency as keyof typeof rates] ?? 1;
     return amt * rate;
   }, [form.sellPriceOriginal, form.sellPriceCurrency, rates]);
+
+  const effectiveSellChannel = form.sellChannel === "其他" ? form.sellChannelCustom : form.sellChannel;
 
   const handleSubmit = () => {
     const amt = parseFloat(form.sellPriceOriginal);
@@ -294,28 +547,33 @@ function SellDialog({
       sellPriceCurrency: form.sellPriceCurrency,
       sellPriceOriginal: amt,
       sellDate: form.sellDate,
-      sellChannel: form.sellChannel || undefined,
+      sellChannel: effectiveSellChannel || undefined,
     });
   };
-
-  const buyHkd = Number(item.buyPriceHkd);
-  const sellHkd = estimatedHkd ?? 0;
-  const profit = sellHkd - buyHkd;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>記錄賣出 — {item.cardName}</DialogTitle>
+          <DialogTitle>記錄賣出</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="bg-muted/50 rounded-lg p-3 text-sm">
-            <p className="text-muted-foreground">買取成本：<span className="font-semibold text-foreground">{formatHkd(item.buyPriceHkd)}</span></p>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1 block">賣出日期 *</label>
-            <Input type="date" value={form.sellDate} onChange={(e) => setForm(f => ({ ...f, sellDate: e.target.value }))} />
+          {/* Item preview */}
+          <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg">
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.cardName} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+            ) : (
+              <div className="w-10 h-14 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                <Package className="w-4 h-4 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">{item.cardName}</div>
+              <div className="text-xs text-muted-foreground">
+                {[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}
+              </div>
+              <div className="text-xs text-[#06038D] font-medium mt-0.5">買取成本：{formatHkd(item.buyPriceHkd)}</div>
+            </div>
           </div>
 
           <div>
@@ -339,29 +597,46 @@ function SellDialog({
               />
             </div>
             {estimatedHkd !== null && form.sellPriceCurrency !== "HKD" && (
-              <p className="text-xs text-muted-foreground mt-1">≈ {formatHkd(estimatedHkd)}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                ≈ {formatHkd(estimatedHkd)} HKD
+              </p>
             )}
           </div>
 
-          {estimatedHkd !== null && (
-            <div className={`rounded-lg p-3 text-sm font-semibold ${profit >= 0 ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"}`}>
-              預計毛利：{profit >= 0 ? "+" : ""}{formatHkd(profit)}
-            </div>
-          )}
+          <div>
+            <label className="text-sm font-medium mb-1 block">賣出日期</label>
+            <Input type="date" value={form.sellDate} onChange={(e) => setForm(f => ({ ...f, sellDate: e.target.value }))} />
+          </div>
 
           <div>
             <label className="text-sm font-medium mb-1 block">賣出渠道</label>
-            <Input
-              placeholder="例：平台自售 / 拍賣 / 直接賣出"
-              value={form.sellChannel}
-              onChange={(e) => setForm(f => ({ ...f, sellChannel: e.target.value }))}
-            />
+            <Select value={form.sellChannel} onValueChange={(v) => setForm(f => ({ ...f, sellChannel: v }))}>
+              <SelectTrigger><SelectValue placeholder="選擇渠道" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">未選擇</SelectItem>
+                {SELL_CHANNEL_OPTIONS.map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.sellChannel === "其他" && (
+              <Input
+                className="mt-1.5"
+                placeholder="請輸入渠道..."
+                value={form.sellChannelCustom}
+                onChange={(e) => setForm(f => ({ ...f, sellChannelCustom: e.target.value }))}
+              />
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>取消</Button>
-          <Button onClick={handleSubmit} disabled={updateMutation.isPending} className="bg-green-600 hover:bg-green-700 text-white">
-            {updateMutation.isPending ? "記錄中..." : "確認賣出"}
+          <Button
+            onClick={handleSubmit}
+            disabled={updateMutation.isPending}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {updateMutation.isPending ? "儲存中..." : "確認賣出"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -369,16 +644,15 @@ function SellDialog({
   );
 }
 
-/* ─── Monthly Summary Tab ──────────────────────────────────────────── */
+/* ─── Monthly Summary Tab ─────────────────────────────────────────── */
 function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMonth: (month: number) => void }) {
   const { data, isLoading } = trpc.cardInventory.monthlySummary.useQuery({ year });
 
-  if (isLoading) return <div className="text-center py-8 text-muted-foreground">載入中...</div>;
+  if (isLoading) return <div className="text-center py-12 text-muted-foreground">載入中...</div>;
   if (!data) return null;
 
   return (
     <div className="space-y-4">
-      {/* Year total */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="bg-[#06038D] text-white">
           <CardContent className="pt-4 pb-3">
@@ -410,7 +684,6 @@ function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMont
         </Card>
       </div>
 
-      {/* Monthly table */}
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
@@ -466,7 +739,6 @@ export default function AdminCardInventory() {
   const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "card" | "sealed">("all");
   const [page, setPage] = useState(1);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
-  const [exportMonth, setExportMonth] = useState<number | null>(null);
 
   const { data: rates = { HKD: 1, JPY: 0.053, USD: 7.78 } } = trpc.cardInventory.getExchangeRates.useQuery();
 
@@ -488,16 +760,7 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(e.message),
   });
 
-  // Export month records
-  const { data: exportData } = trpc.cardInventory.getMonthRecords.useQuery(
-    { year: selectedYear, month: exportMonth ?? 1 },
-    { enabled: exportMonth !== null }
-  );
-
   const handleExportExcel = (month: number) => {
-    setExportMonth(month);
-    toast.info("準備匯出 Excel...請稍候");
-    // Trigger download via API
     const url = `/api/card-inventory/export/excel?year=${selectedYear}&month=${month}`;
     window.open(url, "_blank");
   };
@@ -539,7 +802,6 @@ export default function AdminCardInventory() {
 
         {/* Records Tab */}
         <TabsContent value="records" className="space-y-4">
-          {/* Filters */}
           <div className="flex flex-wrap gap-2">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -571,12 +833,8 @@ export default function AdminCardInventory() {
             </Button>
           </div>
 
-          {/* Stats bar */}
-          <div className="text-sm text-muted-foreground">
-            共 {total} 筆記錄
-          </div>
+          <div className="text-sm text-muted-foreground">共 {total} 筆記錄</div>
 
-          {/* Table */}
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">載入中...</div>
           ) : items.length === 0 ? (
@@ -613,9 +871,28 @@ export default function AdminCardInventory() {
                           </Badge>
                         </td>
                         <td className="p-3">
-                          <div className="font-medium max-w-[200px] truncate">{item.cardName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}
+                          <div className="flex items-center gap-2.5">
+                            {/* Card image */}
+                            <div className="w-9 h-12 flex-shrink-0 rounded overflow-hidden bg-muted">
+                              {item.imageUrl ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.cardName}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <ImageOff className="w-3 h-3 text-muted-foreground/50" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium max-w-[180px] truncate">{item.cardName}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}
+                              </div>
+                            </div>
                           </div>
                         </td>
                         <td className="p-3 text-right font-medium text-[#06038D]">
@@ -677,7 +954,6 @@ export default function AdminCardInventory() {
             </div>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
