@@ -913,7 +913,7 @@ function CardSearchPicker({
         {open && query.length >= 2 && (
           <div
             ref={dropdownRef}
-            className="absolute z-50 top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-lg max-h-72 overflow-y-auto"
+            className="absolute z-50 top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-[360px] overflow-y-auto"
           >
             {isFetching && (
               <div className="p-3 text-sm text-muted-foreground text-center">搜尋中...</div>
@@ -924,34 +924,32 @@ function CardSearchPicker({
             {results.map((card) => (
               <button
                 key={card.id}
-                className="w-full flex items-center gap-3 p-2.5 hover:bg-muted/60 text-left transition-colors"
+                className="w-full flex items-center gap-3 p-3 hover:bg-muted/60 text-left transition-colors border-b last:border-b-0"
                 onClick={() => {
                   onSelect(card);
                   setQuery("");
                   setOpen(false);
                 }}
               >
-                <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-muted">
+                <div className="w-14 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted shadow-sm">
                   {card.imageUrl ? (
                     <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageOff className="w-4 h-4 text-muted-foreground" />
+                      <ImageOff className="w-5 h-5 text-muted-foreground" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{card.name}</div>
-                  {card.nameJa && <div className="text-xs text-muted-foreground truncate">{card.nameJa}</div>}
-                  <div className="text-xs text-muted-foreground">
+                  <div className="font-semibold text-sm leading-snug line-clamp-2">{card.name}</div>
+                  {card.nameJa && <div className="text-xs text-muted-foreground truncate mt-0.5">{card.nameJa}</div>}
+                  <div className="text-xs text-muted-foreground mt-1">
                     {[card.setName, card.cardNumber].filter(Boolean).join(" · ")}
                   </div>
+                  {card.latestPrice && (
+                    <div className="text-xs font-medium text-blue-600 mt-0.5">PSA10 參考: {formatHkd(card.latestPrice)}</div>
+                  )}
                 </div>
-                {card.latestPrice && (
-                  <div className="text-xs text-[#06038D] font-medium flex-shrink-0">
-                    {formatHkd(card.latestPrice)}
-                  </div>
-                )}
               </button>
             ))}
           </div>
