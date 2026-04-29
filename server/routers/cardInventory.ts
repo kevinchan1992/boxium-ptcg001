@@ -267,6 +267,42 @@ export const cardInventoryRouter = router({
       return { success: true };
     }),
 
+  // Batch sell records
+  batchSell: adminProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        id: z.number(),
+        sellPriceCurrency: z.enum(["HKD", "JPY", "USD"]).default("HKD"),
+        sellPriceOriginal: z.number().positive(),
+        notes: z.string().optional().nullable(),
+      })).min(1).max(50),
+      sellDate: z.string(),
+      sellChannel: z.string().max(256).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      const jpyRate = await getExchangeRate("JPY", "HKD");
+      const usdRate = await getExchangeRate("USD", "HKD");
+      const rateMap: Record<string, number> = { HKD: 1, JPY: jpyRate, USD: usdRate };
+
+      for (const item of input.items) {
+        const rate = rateMap[item.sellPriceCurrency] ?? 1;
+        const sellHkd = toHkd(item.sellPriceOriginal, item.sellPriceCurrency as "HKD" | "JPY" | "USD", rate);
+        const updateData: Record<string, unknown> = {
+          status: "sold",
+          sellPriceCurrency: item.sellPriceCurrency,
+          sellPriceOriginal: String(item.sellPriceOriginal),
+          sellPriceHkd: String(sellHkd),
+          sellExchangeRate: String(rate),
+          sellDate: new Date(input.sellDate),
+          sellChannel: input.sellChannel ?? null,
+        };
+        if (item.notes !== undefined) updateData.notes = item.notes;
+        await db.update(cardInventory).set(updateData as any).where(eq(cardInventory.id, item.id));
+      }
+      return { success: true, count: input.items.length };
+    }),
+
   // Delete a record
   delete: adminProcedure
     .input(z.object({ id: z.number() }))

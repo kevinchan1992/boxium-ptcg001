@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
-  Copy, Layers,
+  Copy, Layers, MessageSquare, TrendingDown, CalendarDays,
 } from "lucide-react";
 
 /* ─── Constants ────────────────────────────────────────────────────── */
@@ -134,12 +134,13 @@ function InlineCardSearch({
         className="pl-8 h-8 text-sm"
       />
       {value && (
-        <button
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          onClick={() => { onChange(""); setOpen(false); }}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => { onChange(""); setOpen(false); }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
       )}
       {open && value.length >= 2 && (
         <div
@@ -172,6 +173,328 @@ function InlineCardSearch({
   );
 }
 
+/* ─── Batch Sell Dialog ──────────────────────────────────────────────── */
+const SELL_CHANNEL_OPTIONS_CONST = [
+  "平台自售",
+  "拍賣（雅虎）",
+  "拍賣（eBay）",
+  "門市直接賣出",
+  "個人交易",
+  "其他",
+];
+
+type SellRow = {
+  id: string;
+  recordId: number;
+  cardName: string;
+  cardSet: string | null;
+  cardNumber: string | null;
+  grade: string | null;
+  imageUrl: string | null;
+  buyPriceHkd: string | null;
+  sellPriceCurrency: "HKD" | "JPY" | "USD";
+  sellPriceOriginal: string;
+  notes: string;
+  notesOpen: boolean;
+};
+
+function BatchSellDialog({
+  open, onClose, rates,
+}: {
+  open: boolean;
+  onClose: () => void;
+  rates: { HKD: number; JPY: number; USD: number };
+}) {
+  const utils = trpc.useUtils();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [sharedDate, setSharedDate] = useState(today);
+  const [sharedChannel, setSharedChannel] = useState("__none__");
+  const [sharedChannelCustom, setSharedChannelCustom] = useState("");
+  const [rows, setRows] = useState<SellRow[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Load holding items
+  const { data: holdingData, isLoading: holdingLoading } = trpc.cardInventory.list.useQuery({
+    status: "holding",
+    pageSize: 200,
+    page: 1,
+  });
+
+  const holdingItems = holdingData?.items ?? [];
+  const filteredHolding = holdingItems.filter(item =>
+    !rows.some(r => r.recordId === item.id) &&
+    (searchQuery === "" ||
+      item.cardName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.cardSet ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const batchSellMutation = trpc.cardInventory.batchSell.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已批量記錄 ${data.count} 筆賣出`);
+      utils.cardInventory.list.invalidate();
+      utils.cardInventory.monthlySummary.invalidate();
+      onClose();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const addToSell = (item: typeof holdingItems[0]) => {
+    setRows(rs => [...rs, {
+      id: Math.random().toString(36).slice(2),
+      recordId: item.id,
+      cardName: item.cardName,
+      cardSet: item.cardSet,
+      cardNumber: item.cardNumber,
+      grade: item.grade,
+      imageUrl: item.imageUrl,
+      buyPriceHkd: item.buyPriceHkd,
+      sellPriceCurrency: "HKD",
+      sellPriceOriginal: "",
+      notes: "",
+      notesOpen: false,
+    }]);
+    setSearchQuery("");
+  };
+
+  const updateSellRow = (id: string, patch: Partial<SellRow>) => {
+    setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
+  };
+
+  const removeSellRow = (id: string) => setRows(rs => rs.filter(r => r.id !== id));
+
+  const effectiveChannel = sharedChannel === "其他" ? sharedChannelCustom : (sharedChannel === "__none__" ? "" : sharedChannel);
+
+  const totalSellHkd = useMemo(() => {
+    return rows.reduce((sum, r) => {
+      const amt = parseFloat(r.sellPriceOriginal);
+      if (!amt || isNaN(amt)) return sum;
+      const rate = rates[r.sellPriceCurrency as keyof typeof rates] ?? 1;
+      return sum + amt * rate;
+    }, 0);
+  }, [rows, rates]);
+
+  const totalBuyHkd = useMemo(() => {
+    return rows.reduce((sum, r) => {
+      const v = parseFloat(r.buyPriceHkd ?? "0");
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+  }, [rows]);
+
+  const handleSubmit = () => {
+    const validRows = rows.filter(r => parseFloat(r.sellPriceOriginal) > 0);
+    if (validRows.length === 0) return toast.error("請至少填寫一筆賣出金額");
+    const missingPrice = rows.filter(r => !(parseFloat(r.sellPriceOriginal) > 0));
+    if (missingPrice.length > 0) return toast.error(`有 ${missingPrice.length} 筆記錄未填寫賣出金額`);
+
+    batchSellMutation.mutate({
+      items: validRows.map(r => ({
+        id: r.recordId,
+        sellPriceCurrency: r.sellPriceCurrency,
+        sellPriceOriginal: parseFloat(r.sellPriceOriginal),
+        notes: r.notes || undefined,
+      })),
+      sellDate: sharedDate,
+      sellChannel: effectiveChannel || undefined,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-green-600" />
+            批量賣出記錄
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Shared Settings */}
+        <div className="bg-muted/40 rounded-lg p-3 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">共用設定</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-medium mb-1 block">賣出日期 *</label>
+              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-8 text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">賣出渠道</label>
+              <Select value={sharedChannel} onValueChange={setSharedChannel}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇渠道" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">未選擇</SelectItem>
+                  {SELL_CHANNEL_OPTIONS_CONST.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {sharedChannel === "其他" && (
+                <Input className="mt-1 h-8 text-sm" placeholder="自定義渠道" value={sharedChannelCustom} onChange={(e) => setSharedChannelCustom(e.target.value)} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Search holding items */}
+        <div>
+          <label className="text-xs font-medium mb-1.5 block">搜尋持有中卡牌加入清單</label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="輸入卡牌名稱或系列..."
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
+          {(searchQuery || filteredHolding.length > 0) && (
+            <div className="mt-1.5 border rounded-lg max-h-40 overflow-y-auto">
+              {holdingLoading && <div className="p-2.5 text-xs text-muted-foreground text-center">載入中...</div>}
+              {!holdingLoading && filteredHolding.length === 0 && (
+                <div className="p-2.5 text-xs text-muted-foreground text-center">
+                  {searchQuery ? "找不到符合的持有中卡牌" : "所有持有中卡牌已全部加入"}
+                </div>
+              )}
+              {filteredHolding.slice(0, 20).map(item => (
+                <button
+                  key={item.id}
+                  className="w-full flex items-center gap-2 p-2 hover:bg-muted/60 text-left transition-colors border-b last:border-0"
+                  onClick={() => addToSell(item)}
+                >
+                  <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
+                    {item.imageUrl
+                      ? <img src={item.imageUrl} alt={item.cardName} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-xs truncate">{item.cardName}</div>
+                    <div className="text-xs text-muted-foreground">{[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <div className="text-xs text-[#06038D] font-medium flex-shrink-0">{formatHkd(item.buyPriceHkd)}</div>
+                  <Plus className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sell rows */}
+        {rows.length > 0 && (
+          <div className="space-y-2">
+            <div className="grid grid-cols-[1fr_120px_28px] gap-1.5 px-1 text-xs font-medium text-muted-foreground">
+              <span>卡牌</span>
+              <span>賣出金額 *</span>
+              <span></span>
+            </div>
+            <div className="space-y-1.5 max-h-[35vh] overflow-y-auto pr-1">
+              {rows.map((row) => (
+                <div key={row.id} className="space-y-1">
+                  <div className="grid grid-cols-[1fr_120px_28px] gap-1.5 items-center">
+                    {/* Card info */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
+                        {row.imageUrl
+                          ? <img src={row.imageUrl} alt={row.cardName} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
+                        }
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-xs truncate">{row.cardName}</div>
+                        <div className="text-xs text-muted-foreground truncate">{[row.cardSet, row.grade].filter(Boolean).join(" · ")}</div>
+                        <div className="text-xs text-[#06038D]">成本 {formatHkd(row.buyPriceHkd)}</div>
+                      </div>
+                    </div>
+                    {/* Sell price */}
+                    <div className="flex gap-0.5">
+                      <Select value={row.sellPriceCurrency} onValueChange={(v) => updateSellRow(row.id, { sellPriceCurrency: v as "HKD" | "JPY" | "USD" })}>
+                        <SelectTrigger className="w-14 h-8 text-xs px-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="HKD">HKD</SelectItem>
+                          <SelectItem value="JPY">JPY</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number" step="0.01" placeholder="0"
+                        value={row.sellPriceOriginal}
+                        onChange={(e) => updateSellRow(row.id, { sellPriceOriginal: e.target.value })}
+                        className="h-8 text-xs min-w-0"
+                      />
+                    </div>
+                    {/* Remove */}
+                    <button
+                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                      onClick={() => removeSellRow(row.id)}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {/* Notes toggle */}
+                  <div className="pl-9">
+                    {!row.notesOpen ? (
+                      <button
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                        onClick={() => updateSellRow(row.id, { notesOpen: true })}
+                      >
+                        <MessageSquare className="w-3 h-3" />加入備注
+                      </button>
+                    ) : (
+                      <Input
+                        placeholder="備注（選填）"
+                        value={row.notes}
+                        onChange={(e) => updateSellRow(row.id, { notes: e.target.value })}
+                        className="h-7 text-xs"
+                        autoFocus
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {rows.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+            從上方搜尋並選擇要賣出的卡牌
+          </div>
+        )}
+
+        {/* Summary */}
+        {rows.length > 0 && (
+          <div className="bg-muted/40 rounded-lg px-3 py-2 space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">買取成本合計</span>
+              <span className="font-medium text-[#06038D]">{formatHkd(totalBuyHkd)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">預計賣出合計</span>
+              <span className="font-semibold text-green-600">{formatHkd(totalSellHkd)}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t pt-1">
+              <span className="text-muted-foreground">預計毛利</span>
+              <span className={`font-bold ${totalSellHkd - totalBuyHkd >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                {totalSellHkd - totalBuyHkd >= 0 ? "+" : ""}{formatHkd(totalSellHkd - totalBuyHkd)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={batchSellMutation.isPending || rows.length === 0}
+            className="bg-green-600 hover:bg-green-700 text-white gap-2"
+          >
+            <TrendingDown className="w-4 h-4" />
+            {batchSellMutation.isPending ? "儲存中..." : `確認賣出 ${rows.length} 筆`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Batch Buy Dialog ───────────────────────────────────────────────── */
 type BatchRow = {
   id: string;
@@ -183,6 +506,7 @@ type BatchRow = {
   buyPriceCurrency: "HKD" | "JPY" | "USD";
   buyPriceOriginal: string;
   notes: string;
+  notesOpen: boolean;
 };
 
 function makeBatchRow(prev?: Partial<BatchRow>): BatchRow {
@@ -196,6 +520,7 @@ function makeBatchRow(prev?: Partial<BatchRow>): BatchRow {
     buyPriceCurrency: prev?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: "",
     notes: "",
+    notesOpen: false,
   };
 }
 
@@ -362,7 +687,8 @@ function BatchBuyDialog({
         {/* Rows */}
         <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {rows.map((row, idx) => (
-            <div key={row.id} className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
+            <div key={row.id} className="space-y-1">
+            <div className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
               {/* Card search */}
               <div className="flex items-center gap-1.5">
                 {row.imageUrl ? (
@@ -435,6 +761,27 @@ function BatchBuyDialog({
               >
                 <X className="w-3.5 h-3.5" />
               </button>
+            </div>
+            {/* Notes toggle for batch buy row */}
+            <div className="pl-9">
+              {!row.notesOpen ? (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  onClick={() => setRows(rs => rs.map(r => r.id === row.id ? { ...r, notesOpen: true } : r))}
+                >
+                  <MessageSquare className="w-3 h-3" />加入備注
+                </button>
+              ) : (
+                <Input
+                  placeholder="備注（選填）"
+                  value={row.notes}
+                  onChange={(e) => updateRow(row.id, { notes: e.target.value })}
+                  className="h-7 text-xs"
+                  autoFocus
+                />
+              )}
+            </div>
             </div>
           ))}
         </div>
@@ -1122,6 +1469,7 @@ export default function AdminCardInventory() {
   const [activeTab, setActiveTab] = useState("records");
   const [showBuyForm, setShowBuyForm] = useState(false);
   const [showBatchForm, setShowBatchForm] = useState(false);
+  const [showBatchSell, setShowBatchSell] = useState(false);
   const [editItem, setEditItem] = useState<CardInventoryItem | null>(null);
   const [sellItem, setSellItem] = useState<CardInventoryItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -1173,19 +1521,26 @@ export default function AdminCardInventory() {
           <h1 className="text-2xl font-bold text-[#06038D]">卡牌買取及賣出記錄</h1>
           <p className="text-sm text-muted-foreground mt-0.5">記錄公司買取及賣出卡牌，用於財務報告及報稅</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => setShowBatchForm(true)}
             className="gap-2 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5"
           >
-            <Layers className="w-4 h-4" />批量新增
+            <Layers className="w-4 h-4" />批量買取
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowBatchSell(true)}
+            className="gap-2 border-green-600 text-green-600 hover:bg-green-50"
+          >
+            <TrendingDown className="w-4 h-4" />批量賣出
           </Button>
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
             className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
           >
-            <Plus className="w-4 h-4" />新增買取記錄
+            <Plus className="w-4 h-4" />新增買取
           </Button>
         </div>
       </div>
@@ -1228,7 +1583,19 @@ export default function AdminCardInventory() {
                 <SelectItem value="sealed">封裝商品</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="icon" onClick={() => utils.cardInventory.list.invalidate()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9"
+              onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                setSearch(today);
+                setPage(1);
+              }}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />今日
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => { setSearch(""); setStatusFilter("all"); setItemTypeFilter("all"); setPage(1); utils.cardInventory.list.invalidate(); }}>
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
@@ -1392,6 +1759,14 @@ export default function AdminCardInventory() {
         </TabsContent>
       </Tabs>
 
+      {/* Batch Sell Dialog */}
+      {showBatchSell && (
+        <BatchSellDialog
+          open={showBatchSell}
+          onClose={() => setShowBatchSell(false)}
+          rates={rates}
+        />
+      )}
       {/* Batch Buy Dialog */}
       {showBatchForm && (
         <BatchBuyDialog
