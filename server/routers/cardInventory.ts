@@ -139,6 +139,57 @@ export const cardInventoryRouter = router({
       return { success: true, id: result.insertId };
     }),
 
+  // Batch create buy records
+  batchCreate: adminProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        itemType: z.enum(["card", "sealed"]).default("card"),
+        cardName: z.string().min(1).max(512),
+        cardSet: z.string().max(256).optional(),
+        cardNumber: z.string().max(64).optional(),
+        grade: z.string().max(32).optional(),
+        buyPriceCurrency: z.enum(["HKD", "JPY", "USD"]).default("HKD"),
+        buyPriceOriginal: z.number().positive(),
+        buyDate: z.string(),
+        buySource: z.string().max(256).optional(),
+        notes: z.string().optional(),
+        imageUrl: z.string().optional(),
+        linkedCardId: z.number().optional(),
+      })).min(1).max(50),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      // Fetch exchange rates once
+      const jpyRate = await getExchangeRate("JPY", "HKD");
+      const usdRate = await getExchangeRate("USD", "HKD");
+      const rateMap: Record<string, number> = { HKD: 1, JPY: jpyRate, USD: usdRate };
+
+      const values = input.items.map((item) => {
+        const rate = rateMap[item.buyPriceCurrency] ?? 1;
+        const buyPriceHkd = toHkd(item.buyPriceOriginal, item.buyPriceCurrency as "HKD" | "JPY" | "USD", rate);
+        return {
+          itemType: item.itemType,
+          cardName: item.cardName,
+          cardSet: item.cardSet ?? null,
+          cardNumber: item.cardNumber ?? null,
+          grade: item.grade ?? null,
+          buyPriceCurrency: item.buyPriceCurrency,
+          buyPriceOriginal: String(item.buyPriceOriginal),
+          buyPriceHkd: String(buyPriceHkd),
+          buyExchangeRate: String(rate),
+          buyDate: new Date(item.buyDate),
+          buySource: item.buySource ?? null,
+          status: "holding" as const,
+          notes: item.notes ?? null,
+          imageUrl: item.imageUrl ?? null,
+          linkedCardId: item.linkedCardId ?? null,
+        };
+      });
+
+      await db.insert(cardInventory).values(values);
+      return { success: true, count: values.length };
+    }),
+
   // Update a record (edit buy details or mark as sold)
   update: adminProcedure
     .input(z.object({

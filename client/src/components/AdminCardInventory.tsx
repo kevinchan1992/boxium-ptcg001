@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
+  Copy, Layers,
 } from "lucide-react";
 
 /* ─── Constants ────────────────────────────────────────────────────── */
@@ -86,6 +87,395 @@ function formatHkd(val: string | number | null | undefined): string {
 function formatDate(d: Date | null | undefined): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("zh-HK", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+/* ─── Inline Card Search (for batch rows) ───────────────────────────── */
+function InlineCardSearch({
+  value,
+  onChange,
+  onSelect,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (card: CardSearchResult) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data, isFetching } = trpc.cards.search.useQuery(
+    { query: value, limit: 6 },
+    { enabled: value.length >= 2 }
+  );
+  const results: CardSearchResult[] = (data?.cards ?? []) as CardSearchResult[];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        inputRef.current && !inputRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+      <Input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => value.length >= 2 && setOpen(true)}
+        placeholder={placeholder ?? "搜尋卡牌..."}
+        className="pl-8 h-8 text-sm"
+      />
+      {value && (
+        <button
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          onClick={() => { onChange(""); setOpen(false); }}
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+      {open && value.length >= 2 && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-[60] top-full mt-1 left-0 right-0 bg-background border rounded-lg shadow-xl max-h-60 overflow-y-auto"
+        >
+          {isFetching && <div className="p-2.5 text-xs text-muted-foreground text-center">搜尋中...</div>}
+          {!isFetching && results.length === 0 && <div className="p-2.5 text-xs text-muted-foreground text-center">找不到卡牌，請手動輸入</div>}
+          {results.map((card) => (
+            <button
+              key={card.id}
+              className="w-full flex items-center gap-2 p-2 hover:bg-muted/60 text-left transition-colors"
+              onClick={() => { onSelect(card); setOpen(false); }}
+            >
+              <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
+                {card.imageUrl
+                  ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-xs truncate">{card.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{[card.setName, card.cardNumber].filter(Boolean).join(" · ")}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Batch Buy Dialog ───────────────────────────────────────────────── */
+type BatchRow = {
+  id: string;
+  cardName: string;
+  cardSet: string;
+  cardNumber: string;
+  imageUrl: string;
+  linkedCardId: number | null;
+  buyPriceCurrency: "HKD" | "JPY" | "USD";
+  buyPriceOriginal: string;
+  notes: string;
+};
+
+function makeBatchRow(prev?: Partial<BatchRow>): BatchRow {
+  return {
+    id: Math.random().toString(36).slice(2),
+    cardName: "",
+    cardSet: prev?.cardSet ?? "",
+    cardNumber: "",
+    imageUrl: "",
+    linkedCardId: null,
+    buyPriceCurrency: prev?.buyPriceCurrency ?? "HKD",
+    buyPriceOriginal: "",
+    notes: "",
+  };
+}
+
+function BatchBuyDialog({
+  open, onClose, rates,
+}: {
+  open: boolean;
+  onClose: () => void;
+  rates: { HKD: number; JPY: number; USD: number };
+}) {
+  const utils = trpc.useUtils();
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Shared settings
+  const [sharedDate, setSharedDate] = useState(today);
+  const [sharedGrade, setSharedGrade] = useState("");
+  const [sharedGradeCustom, setSharedGradeCustom] = useState("");
+  const [sharedSource, setSharedSource] = useState("");
+  const [sharedSourceCustom, setSharedSourceCustom] = useState("");
+  const [sharedType, setSharedType] = useState<"card" | "sealed">("card");
+
+  // Rows
+  const [rows, setRows] = useState<BatchRow[]>([makeBatchRow()]);
+
+  const batchCreateMutation = trpc.cardInventory.batchCreate.useMutation({
+    onSuccess: (data) => {
+      toast.success(`已批量新增 ${data.count} 筆買取記錄`);
+      utils.cardInventory.list.invalidate();
+      utils.cardInventory.monthlySummary.invalidate();
+      onClose();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateRow = useCallback((id: string, patch: Partial<BatchRow>) => {
+    setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
+  }, []);
+
+  const addRow = () => {
+    const last = rows[rows.length - 1];
+    setRows(rs => [...rs, makeBatchRow({ cardSet: last?.cardSet, buyPriceCurrency: last?.buyPriceCurrency })]);
+  };
+
+  const removeRow = (id: string) => {
+    if (rows.length === 1) return;
+    setRows(rs => rs.filter(r => r.id !== id));
+  };
+
+  const duplicateRow = (id: string) => {
+    const src = rows.find(r => r.id === id);
+    if (!src) return;
+    const newRow: BatchRow = { ...src, id: Math.random().toString(36).slice(2), buyPriceOriginal: "" };
+    setRows(rs => {
+      const idx = rs.findIndex(r => r.id === id);
+      const next = [...rs];
+      next.splice(idx + 1, 0, newRow);
+      return next;
+    });
+  };
+
+  const effectiveGrade = sharedGrade === "其他" ? sharedGradeCustom : sharedGrade;
+  const effectiveSource = sharedSource === "其他" ? sharedSourceCustom : sharedSource;
+
+  const totalHkd = useMemo(() => {
+    return rows.reduce((sum, r) => {
+      const amt = parseFloat(r.buyPriceOriginal);
+      if (!amt || isNaN(amt)) return sum;
+      const rate = rates[r.buyPriceCurrency as keyof typeof rates] ?? 1;
+      return sum + amt * rate;
+    }, 0);
+  }, [rows, rates]);
+
+  const handleSubmit = () => {
+    const validRows = rows.filter(r => r.cardName.trim() && parseFloat(r.buyPriceOriginal) > 0);
+    if (validRows.length === 0) return toast.error("請至少填寫一筆有效記錄（卡牌名稱 + 金額）");
+    const invalidRows = rows.filter(r => r.cardName.trim() && !(parseFloat(r.buyPriceOriginal) > 0));
+    if (invalidRows.length > 0) return toast.error("部分記錄缺少買取金額，請補充後再提交");
+
+    batchCreateMutation.mutate({
+      items: validRows.map(r => ({
+        itemType: sharedType,
+        cardName: r.cardName.trim(),
+        cardSet: r.cardSet || undefined,
+        cardNumber: r.cardNumber || undefined,
+        grade: effectiveGrade || undefined,
+        buyPriceCurrency: r.buyPriceCurrency,
+        buyPriceOriginal: parseFloat(r.buyPriceOriginal),
+        buyDate: sharedDate,
+        buySource: effectiveSource || undefined,
+        notes: r.notes || undefined,
+        imageUrl: r.imageUrl || undefined,
+        linkedCardId: r.linkedCardId ?? undefined,
+      })),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Layers className="w-5 h-5 text-[#06038D]" />
+            批量買取記錄
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Shared Settings */}
+        <div className="bg-muted/40 rounded-lg p-3 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">共用設定（套用至所有記錄）</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div>
+              <label className="text-xs font-medium mb-1 block">買取日期 *</label>
+              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-8 text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">類型</label>
+              <Select value={sharedType} onValueChange={(v) => setSharedType(v as "card" | "sealed")}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="card">單卡</SelectItem>
+                  <SelectItem value="sealed">封裝商品</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">評級</label>
+              <Select value={sharedGrade} onValueChange={setSharedGrade}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇評級" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">未選擇</SelectItem>
+                  {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {sharedGrade === "其他" && (
+                <Input className="mt-1 h-8 text-sm" placeholder="自定義評級" value={sharedGradeCustom} onChange={(e) => setSharedGradeCustom(e.target.value)} />
+              )}
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">買取來源</label>
+              <Select value={sharedSource} onValueChange={setSharedSource}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇來源" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">未選擇</SelectItem>
+                  {BUY_SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {sharedSource === "其他" && (
+                <Input className="mt-1 h-8 text-sm" placeholder="自定義來源" value={sharedSourceCustom} onChange={(e) => setSharedSourceCustom(e.target.value)} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Row Header */}
+        <div className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 px-1 text-xs font-medium text-muted-foreground">
+          <span>卡牌名稱 / 搜尋</span>
+          <span>系列</span>
+          <span>卡號</span>
+          <span>金額 *</span>
+          <span></span>
+          <span></span>
+        </div>
+
+        {/* Rows */}
+        <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+          {rows.map((row, idx) => (
+            <div key={row.id} className="grid grid-cols-[1fr_80px_90px_80px_28px_28px] gap-1.5 items-center">
+              {/* Card search */}
+              <div className="flex items-center gap-1.5">
+                {row.imageUrl ? (
+                  <img src={row.imageUrl} alt={row.cardName} className="w-7 h-10 object-cover rounded flex-shrink-0" />
+                ) : (
+                  <div className="w-7 h-10 bg-muted rounded flex-shrink-0 flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground font-bold">{idx + 1}</span>
+                  </div>
+                )}
+                <InlineCardSearch
+                  value={row.cardName}
+                  onChange={(v) => updateRow(row.id, { cardName: v, imageUrl: v ? row.imageUrl : "", linkedCardId: v ? row.linkedCardId : null })}
+                  onSelect={(card) => updateRow(row.id, {
+                    cardName: card.name,
+                    cardSet: card.setName ?? "",
+                    cardNumber: card.cardNumber ?? "",
+                    imageUrl: card.imageUrl ?? "",
+                    linkedCardId: card.id,
+                  })}
+                  placeholder="卡牌名稱..."
+                />
+              </div>
+              {/* Set */}
+              <Input
+                value={row.cardSet}
+                onChange={(e) => updateRow(row.id, { cardSet: e.target.value })}
+                placeholder="系列"
+                className="h-8 text-xs"
+              />
+              {/* Card number */}
+              <Input
+                value={row.cardNumber}
+                onChange={(e) => updateRow(row.id, { cardNumber: e.target.value })}
+                placeholder="卡號"
+                className="h-8 text-xs"
+              />
+              {/* Price */}
+              <div className="flex gap-0.5">
+                <Select value={row.buyPriceCurrency} onValueChange={(v) => updateRow(row.id, { buyPriceCurrency: v as "HKD" | "JPY" | "USD" })}>
+                  <SelectTrigger className="w-14 h-8 text-xs px-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="HKD">HKD</SelectItem>
+                    <SelectItem value="JPY">JPY</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0"
+                  value={row.buyPriceOriginal}
+                  onChange={(e) => updateRow(row.id, { buyPriceOriginal: e.target.value })}
+                  className="h-8 text-xs min-w-0"
+                />
+              </div>
+              {/* Duplicate */}
+              <button
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                title="複製此行"
+                onClick={() => duplicateRow(row.id)}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+              {/* Remove */}
+              <button
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30"
+                title="刪除此行"
+                onClick={() => removeRow(row.id)}
+                disabled={rows.length === 1}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add row button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={addRow}
+          disabled={rows.length >= 50}
+          className="w-full gap-1.5 border-dashed"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          新增一行
+          {rows.length >= 50 && <span className="text-xs text-muted-foreground ml-1">（最多 50 筆）</span>}
+        </Button>
+
+        {/* Summary */}
+        <div className="flex items-center justify-between text-sm bg-muted/40 rounded-lg px-3 py-2">
+          <span className="text-muted-foreground">
+            共 <span className="font-semibold text-foreground">{rows.filter(r => r.cardName.trim()).length}</span> 筆有效記錄
+          </span>
+          <span className="font-semibold text-[#06038D]">
+            預計總買取：{formatHkd(totalHkd)}
+          </span>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={batchCreateMutation.isPending}
+            className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
+          >
+            <Layers className="w-4 h-4" />
+            {batchCreateMutation.isPending ? "儲存中..." : `批量新增 ${rows.filter(r => r.cardName.trim() && parseFloat(r.buyPriceOriginal) > 0).length} 筆`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /* ─── Card Search Picker ─────────────────────────────────────────────── */
@@ -731,6 +1121,7 @@ export default function AdminCardInventory() {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("records");
   const [showBuyForm, setShowBuyForm] = useState(false);
+  const [showBatchForm, setShowBatchForm] = useState(false);
   const [editItem, setEditItem] = useState<CardInventoryItem | null>(null);
   const [sellItem, setSellItem] = useState<CardInventoryItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -782,12 +1173,21 @@ export default function AdminCardInventory() {
           <h1 className="text-2xl font-bold text-[#06038D]">卡牌買取及賣出記錄</h1>
           <p className="text-sm text-muted-foreground mt-0.5">記錄公司買取及賣出卡牌，用於財務報告及報稅</p>
         </div>
-        <Button
-          onClick={() => { setEditItem(null); setShowBuyForm(true); }}
-          className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />新增買取記錄
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowBatchForm(true)}
+            className="gap-2 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5"
+          >
+            <Layers className="w-4 h-4" />批量新增
+          </Button>
+          <Button
+            onClick={() => { setEditItem(null); setShowBuyForm(true); }}
+            className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />新增買取記錄
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -991,6 +1391,15 @@ export default function AdminCardInventory() {
           <MonthlySummaryTab year={selectedYear} onExportMonth={handleExportExcel} />
         </TabsContent>
       </Tabs>
+
+      {/* Batch Buy Dialog */}
+      {showBatchForm && (
+        <BatchBuyDialog
+          open={showBatchForm}
+          onClose={() => setShowBatchForm(false)}
+          rates={rates}
+        />
+      )}
 
       {/* Buy Form Dialog */}
       {showBuyForm && (
