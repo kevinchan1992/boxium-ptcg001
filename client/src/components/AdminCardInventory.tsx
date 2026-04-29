@@ -305,33 +305,35 @@ function BatchSellDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-full max-w-3xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-green-600" />
+      <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
+        {/* Green header */}
+        <div className="bg-green-700 px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+            <TrendingDown className="w-5 h-5" />
             批量賣出記錄
           </DialogTitle>
-        </DialogHeader>
-
+        </div>
+        {/* Scrollable content */}
+        <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[calc(95dvh-130px)] sm:max-h-[calc(92vh-130px)]">
         {/* Shared Settings */}
-        <div className="bg-muted/40 rounded-lg p-3 space-y-3">
+        <div className="bg-muted/40 rounded-xl p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">共用設定</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1 block">賣出日期 *</label>
-              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-8 text-sm" />
+              <label className="text-xs font-medium mb-1.5 block">賣出日期 *</label>
+              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-10 text-sm" />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1 block">賣出渠道</label>
+              <label className="text-xs font-medium mb-1.5 block">賣出渠道</label>
               <Select value={sharedChannel} onValueChange={setSharedChannel}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇渠道" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="選擇渠道" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">未選擇</SelectItem>
                   {SELL_CHANNEL_OPTIONS_CONST.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
               {sharedChannel === "其他" && (
-                <Input className="mt-1 h-8 text-sm" placeholder="自定義渠道" value={sharedChannelCustom} onChange={(e) => setSharedChannelCustom(e.target.value)} />
+                <Input className="mt-1.5 h-10 text-sm" placeholder="自定義渠道" value={sharedChannelCustom} onChange={(e) => setSharedChannelCustom(e.target.value)} />
               )}
             </div>
           </div>
@@ -339,14 +341,14 @@ function BatchSellDialog({
 
         {/* Search holding items */}
         <div>
-          <label className="text-xs font-medium mb-1.5 block">搜尋持有中卡牌加入清單</label>
+          <label className="text-sm font-medium mb-1.5 block">搜尋持有中卡牌加入清單</label>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="輸入卡牌名稱或系列..."
-              className="pl-8 h-8 text-sm"
+              className="pl-10 h-11 text-sm"
             />
           </div>
           {(searchQuery || filteredHolding.length > 0) && (
@@ -482,18 +484,19 @@ function BatchSellDialog({
             </div>
           </div>
         )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+        </div>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t flex gap-3 flex-shrink-0">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11">取消</Button>
           <Button
             onClick={handleSubmit}
             disabled={batchSellMutation.isPending || rows.length === 0}
-            className="bg-green-600 hover:bg-green-700 text-white gap-2"
+            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white gap-2"
           >
             <TrendingDown className="w-4 h-4" />
             {batchSellMutation.isPending ? "儲存中..." : `確認賣出 ${rows.length} 筆`}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -623,26 +626,28 @@ function BatchBuyDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-full max-w-3xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-[#06038D]" />
+      <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
+        {/* Blue header */}
+        <div className="bg-[#06038D] px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+            <Layers className="w-5 h-5" />
             批量買取記錄
           </DialogTitle>
-        </DialogHeader>
-
+        </div>
+        {/* Scrollable content */}
+        <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[calc(95dvh-130px)] sm:max-h-[calc(92vh-130px)]">
         {/* Shared Settings */}
-        <div className="bg-muted/40 rounded-lg p-3 space-y-3">
+        <div className="bg-muted/40 rounded-xl p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">共用設定（套用至所有記錄）</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1 block">買取日期 *</label>
-              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-8 text-sm" />
+              <label className="text-xs font-medium mb-1.5 block">買取日期 *</label>
+              <Input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="h-10 text-sm" />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1 block">類型</label>
+              <label className="text-xs font-medium mb-1.5 block">類型</label>
               <Select value={sharedType} onValueChange={(v) => setSharedType(v as "card" | "sealed")}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="card">單卡</SelectItem>
                   <SelectItem value="sealed">封裝商品</SelectItem>
@@ -650,29 +655,29 @@ function BatchBuyDialog({
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium mb-1 block">評級</label>
+              <label className="text-xs font-medium mb-1.5 block">評級</label>
               <Select value={sharedGrade} onValueChange={setSharedGrade}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇評級" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="選擇評級" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">未選擇</SelectItem>
                   {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
               {sharedGrade === "其他" && (
-                <Input className="mt-1 h-8 text-sm" placeholder="自定義評級" value={sharedGradeCustom} onChange={(e) => setSharedGradeCustom(e.target.value)} />
+                <Input className="mt-1.5 h-10 text-sm" placeholder="自定義評級" value={sharedGradeCustom} onChange={(e) => setSharedGradeCustom(e.target.value)} />
               )}
             </div>
             <div>
-              <label className="text-xs font-medium mb-1 block">買取來源</label>
+              <label className="text-xs font-medium mb-1.5 block">買取來源</label>
               <Select value={sharedSource} onValueChange={setSharedSource}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="選擇來源" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="選擇來源" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">未選擇</SelectItem>
                   {BUY_SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
               {sharedSource === "其他" && (
-                <Input className="mt-1 h-8 text-sm" placeholder="自定義來源" value={sharedSourceCustom} onChange={(e) => setSharedSourceCustom(e.target.value)} />
+                <Input className="mt-1.5 h-10 text-sm" placeholder="自定義來源" value={sharedSourceCustom} onChange={(e) => setSharedSourceCustom(e.target.value)} />
               )}
             </div>
           </div>
@@ -804,7 +809,7 @@ function BatchBuyDialog({
         </Button>
 
         {/* Summary */}
-        <div className="flex items-center justify-between text-sm bg-muted/40 rounded-lg px-3 py-2">
+        <div className="flex items-center justify-between text-sm bg-muted/40 rounded-xl px-4 py-3">
           <span className="text-muted-foreground">
             共 <span className="font-semibold text-foreground">{rows.filter(r => r.cardName.trim()).length}</span> 筆有效記錄
           </span>
@@ -812,18 +817,19 @@ function BatchBuyDialog({
             預計總買取：{formatHkd(totalHkd)}
           </span>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+        </div>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t flex gap-3 flex-shrink-0">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11">取消</Button>
           <Button
             onClick={handleSubmit}
             disabled={batchCreateMutation.isPending}
-            className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
+            className="flex-1 h-11 bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
           >
             <Layers className="w-4 h-4" />
             {batchCreateMutation.isPending ? "儲存中..." : `批量新增 ${rows.filter(r => r.cardName.trim() && parseFloat(r.buyPriceOriginal) > 0).length} 筆`}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -1046,11 +1052,15 @@ function BuyFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-full max-w-lg max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "編輯買取記錄" : "新增買取記錄"}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
+      <DialogContent bottomSheet className="sm:max-w-lg overflow-hidden">
+        {/* Blue header */}
+        <div className="bg-[#06038D] px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+          <DialogTitle className="text-white text-lg font-semibold">
+            {isEdit ? "編輯買取記錄" : "新增買取記錄"}
+          </DialogTitle>
+        </div>
+        {/* Scrollable content */}
+        <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[calc(95dvh-130px)] sm:max-h-[calc(92vh-130px)]">
           {/* Type + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -1108,30 +1118,33 @@ function BuyFormDialog({
 
               {/* Card Name */}
               <div>
-                <label className="text-sm font-medium mb-1 block">卡牌/商品名稱 *</label>
+                <label className="text-sm font-medium mb-1.5 block text-foreground">卡牌/商品名稱 *</label>
                 <Input
                   placeholder="例：Charizard VMAX / 閃焰王者 第一彈 卡盒"
                   value={form.cardName}
                   onChange={(e) => setForm(f => ({ ...f, cardName: e.target.value }))}
+                  className="h-11"
                 />
               </div>
 
               {/* Set + Card Number */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">系列/卡包</label>
+                  <label className="text-sm font-medium mb-1.5 block text-foreground">系列/卡包</label>
                   <Input
                     placeholder="例：S7R / Shiny Treasure ex"
                     value={form.cardSet}
                     onChange={(e) => setForm(f => ({ ...f, cardSet: e.target.value }))}
+                    className="h-11"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">卡號</label>
+                  <label className="text-sm font-medium mb-1.5 block text-foreground">卡號</label>
                   <Input
                     placeholder="例：082/067"
                     value={form.cardNumber}
                     onChange={(e) => setForm(f => ({ ...f, cardNumber: e.target.value }))}
+                    className="h-11"
                   />
                 </div>
               </div>
@@ -1139,9 +1152,9 @@ function BuyFormDialog({
               {/* Grade + Buy Source */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">評級</label>
+                  <label className="text-sm font-medium mb-1.5 block text-foreground">評級</label>
                   <Select value={form.grade} onValueChange={(v) => setForm(f => ({ ...f, grade: v }))}>
-                    <SelectTrigger><SelectValue placeholder="選擇評級" /></SelectTrigger>
+                    <SelectTrigger className="h-11"><SelectValue placeholder="選擇評級" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">未選擇</SelectItem>
                       {GRADE_OPTIONS.map(g => (
@@ -1151,7 +1164,7 @@ function BuyFormDialog({
                   </Select>
                   {form.grade === "其他" && (
                     <Input
-                      className="mt-1.5"
+                      className="mt-1.5 h-11"
                       placeholder="請輸入評級..."
                       value={form.gradeCustom}
                       onChange={(e) => setForm(f => ({ ...f, gradeCustom: e.target.value }))}
@@ -1159,9 +1172,9 @@ function BuyFormDialog({
                   )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">買取來源</label>
+                  <label className="text-sm font-medium mb-1.5 block text-foreground">買取來源</label>
                   <Select value={form.buySource} onValueChange={(v) => setForm(f => ({ ...f, buySource: v }))}>
-                    <SelectTrigger><SelectValue placeholder="選擇來源" /></SelectTrigger>
+                    <SelectTrigger className="h-11"><SelectValue placeholder="選擇來源" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">未選擇</SelectItem>
                       {BUY_SOURCE_OPTIONS.map(s => (
@@ -1171,7 +1184,7 @@ function BuyFormDialog({
                   </Select>
                   {form.buySource === "其他" && (
                     <Input
-                      className="mt-1.5"
+                      className="mt-1.5 h-11"
                       placeholder="請輸入來源..."
                       value={form.buySourceCustom}
                       onChange={(e) => setForm(f => ({ ...f, buySourceCustom: e.target.value }))}
@@ -1182,10 +1195,10 @@ function BuyFormDialog({
 
               {/* Buy Price */}
               <div>
-                <label className="text-sm font-medium mb-1 block">買取金額 *</label>
+                <label className="text-sm font-medium mb-1.5 block text-foreground">買取金額 *</label>
                 <div className="flex gap-2">
                   <Select value={form.buyPriceCurrency} onValueChange={(v) => setForm(f => ({ ...f, buyPriceCurrency: v as "HKD" | "JPY" | "USD" }))}>
-                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-28 h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="HKD">HKD</SelectItem>
                       <SelectItem value="JPY">JPY</SelectItem>
@@ -1198,7 +1211,7 @@ function BuyFormDialog({
                     placeholder="0.00"
                     value={form.buyPriceOriginal}
                     onChange={(e) => setForm(f => ({ ...f, buyPriceOriginal: e.target.value }))}
-                    className="flex-1"
+                    className="flex-1 h-11"
                   />
                 </div>
                 {estimatedHkd !== null && form.buyPriceCurrency !== "HKD" && (
@@ -1210,24 +1223,26 @@ function BuyFormDialog({
 
               {/* Notes */}
               <div>
-                <label className="text-sm font-medium mb-1 block">備注</label>
+                <label className="text-sm font-medium mb-1.5 block text-foreground">備注</label>
                 <Input
                   placeholder="選填備注"
                   value={form.notes}
                   onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
+                  className="h-11"
                 />
               </div>
             </>
           )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t flex gap-3 flex-shrink-0">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11">取消</Button>
           {(manualMode || isEdit) && (
-            <Button onClick={handleSubmit} disabled={isPending} className="bg-[#06038D] hover:bg-[#06038D]/90">
-              {isPending ? "儲存中..." : isEdit ? "更新" : "新增買取"}
+            <Button onClick={handleSubmit} disabled={isPending} className="flex-1 h-11 bg-[#06038D] hover:bg-[#06038D]/90 text-white">
+              {isPending ? "儲存中..." : isEdit ? "更新記錄" : "新增買取"}
             </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -1294,13 +1309,18 @@ function SellDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>記錄賣出</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
+      <DialogContent bottomSheet className="sm:max-w-md overflow-hidden">
+        {/* Green header */}
+        <div className="bg-green-700 px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+            <TrendingDown className="w-5 h-5" />
+            記錄賣出
+          </DialogTitle>
+        </div>
+        {/* Scrollable content */}
+        <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[calc(95dvh-130px)] sm:max-h-[calc(92vh-130px)]">
           {/* Item preview */}
-          <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl">
             {item.imageUrl ? (
               <img src={item.imageUrl} alt={item.cardName} className="w-10 h-14 object-cover rounded flex-shrink-0" />
             ) : (
@@ -1370,22 +1390,23 @@ function SellDialog({
             )}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t flex gap-3 flex-shrink-0">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11">取消</Button>
           <Button
             onClick={handleSubmit}
             disabled={updateMutation.isPending}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white"
           >
             {updateMutation.isPending ? "儲存中..." : "確認賣出"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-/* ─── Monthly Summary Tab ─────────────────────────────────────────── */
+/* ─── Monthly Summary Tabab ─────────────────────────────────────────── */
 function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMonth: (month: number) => void }) {
   const { data, isLoading } = trpc.cardInventory.monthlySummary.useQuery({ year });
 
