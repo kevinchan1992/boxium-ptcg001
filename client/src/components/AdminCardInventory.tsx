@@ -1668,46 +1668,54 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(`補全失敗：${e.message}`),
   });
 
-  const exportExcelMutation = trpc.cardInventory.exportExcel.useMutation();
-  const exportPdfMutation = trpc.cardInventory.exportPdf.useMutation();
+  const startExportMutation = trpc.cardInventory.startExport.useMutation();
+  const [exportJobId, setExportJobId] = useState<string | null>(null);
+  const [exportLabel, setExportLabel] = useState("");
+  const [exportExt, setExportExt] = useState("");
 
-  const handleExportExcel = async (month: number) => {
-    try {
-      toast.info("正在準備 Excel 檔案，請稍候...");
-      const result = await exportExcelMutation.mutateAsync({ year: selectedYear, month });
-      const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
-      const byteChars = atob(result.base64);
-      const byteNums = new Uint8Array(byteChars.length);
-      for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
-      const blob = new Blob([byteNums], { type: result.mimeType });
+  // Poll export job status every 3 seconds
+  const { data: exportJob } = trpc.cardInventory.getExportJob.useQuery(
+    { jobId: exportJobId ?? "" },
+    { enabled: !!exportJobId, refetchInterval: exportJobId ? 3000 : false }
+  );
+
+  // Auto-download when job is done
+  useEffect(() => {
+    if (!exportJob || !exportJobId) return;
+    if (exportJob.status === "done" && exportJob.downloadUrl) {
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
+      a.href = exportJob.downloadUrl;
+      a.download = `BOXIUM_卡牌買賣記錄_${exportLabel}.${exportExt}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-      toast.success("Excel 檔案已下載");
+      toast.success(`${exportExt.toUpperCase()} 檔案已下載！`);
+      setExportJobId(null);
+    } else if (exportJob.status === "error") {
+      toast.error(`匯出失敗：${exportJob.errorMessage ?? "請重試"}`);
+      setExportJobId(null);
+    }
+  }, [exportJob?.status, exportJob?.downloadUrl]);
+
+  const handleExportExcel = async (month: number) => {
+    try {
+      const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
+      setExportLabel(label);
+      setExportExt("xlsx");
+      const { jobId } = await startExportMutation.mutateAsync({ type: "excel", year: selectedYear, month });
+      setExportJobId(jobId);
+      toast.info("正在背景生成 Excel，完成後自動下載...");
     } catch (e: any) { toast.error(`匯出失敗：${e?.message ?? "請重試"}`); }
   };
 
   const handleExportPdf = async (month: number) => {
     try {
-      toast.info("正在準備 PDF 檔案，請稍候...");
-      const result = await exportPdfMutation.mutateAsync({ year: selectedYear, month });
       const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
-      const byteChars = atob(result.base64);
-      const byteNums = new Uint8Array(byteChars.length);
-      for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
-      const blob = new Blob([byteNums], { type: result.mimeType });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-      toast.success("PDF 檔案已下載");
+      setExportLabel(label);
+      setExportExt("pdf");
+      const { jobId } = await startExportMutation.mutateAsync({ type: "pdf", year: selectedYear, month });
+      setExportJobId(jobId);
+      toast.info("正在背景生成 PDF，完成後自動下載...");
     } catch (e: any) { toast.error(`匯出失敗：${e?.message ?? "請重試"}`); }
   };
 

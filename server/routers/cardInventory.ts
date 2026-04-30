@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { cardInventory, cards } from "../../drizzle/schema_new";
 import { eq, desc, and, gte, lte, like, or, sql } from "drizzle-orm";
@@ -509,41 +510,59 @@ export const cardInventoryRouter = router({
       return { updated, total: missingRecords.length };
     }),
 
-  // Export Excel via tRPC (returns base64-encoded file)
-  exportExcel: adminProcedure
+   // Start background export job (avoids Cloud Run 60s timeout)
+  startExport: adminProcedure
     .input(z.object({
+      type: z.enum(["excel", "pdf"]),
       year: z.number(),
       month: z.number(), // 0 = full year, 1-12 = specific month
     }))
     .mutation(async ({ input }) => {
-      const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
-      // 50s timeout to stay within Cloud Run 60s request limit
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("匯出超時：記錄數量過多，請改為按月份匯出（而非全年）")), 50000)
-      );
-      const buffer = await Promise.race([generateCardInventoryExcel(input.year, input.month), timeoutPromise]);
-      return {
-        base64: buffer.toString("base64"),
-        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      };
+      const { exportJobs } = await import("../../drizzle/schema_new");
+      const db = await getDb();
+      const jobId = crypto.randomUUID();
+      // Create job record immediately (fast response to client)
+      await db.insert(exportJobs).values({
+        id: jobId,
+        type: input.type,
+        year: input.year,
+        month: input.month,
+        status: "pending",
+      });
+      // Start background processing (fire and forget - does NOT await)
+      (async () => {
+        try {
+          await db.update(exportJobs).set({ status: "processing" }).where(eq(exportJobs.id, jobId));
+          const { generateCardInventoryExcel, generateCardInventoryPdf } = await import("../services/cardInventoryExport");
+          const buffer = input.type === "excel"
+            ? await generateCardInventoryExcel(input.year, input.month)
+            : await generateCardInventoryPdf(input.year, input.month);
+          const ext = input.type === "excel" ? "xlsx" : "pdf";
+          const label = input.month > 0 ? `${input.year}_${String(input.month).padStart(2, "0")}` : `${input.year}`;
+          const s3Key = `exports/${jobId}/BOXIUM_卡牌買賣記錄_${label}.${ext}`;
+          const mimeType = input.type === "excel"
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/pdf";
+          const { url } = await storagePut(s3Key, buffer, mimeType);
+          await db.update(exportJobs).set({ status: "done", downloadUrl: url }).where(eq(exportJobs.id, jobId));
+        } catch (err: any) {
+          await db.update(exportJobs)
+            .set({ status: "error", errorMessage: err?.message ?? "Unknown error" })
+            .where(eq(exportJobs.id, jobId))
+            .catch(() => {});
+        }
+      })();
+      return { jobId };
     }),
 
-  // Export PDF via tRPC (returns base64-encoded file)
-  exportPdf: adminProcedure
-    .input(z.object({
-      year: z.number(),
-      month: z.number(), // 0 = full year, 1-12 = specific month
-    }))
-    .mutation(async ({ input }) => {
-      const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
-      // 50s timeout to stay within Cloud Run 60s request limit
-      const timeoutPromise2 = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("匯出超時：記錄數量過多，請改為按月份匯出（而非全年）")), 50000)
-      );
-      const buffer = await Promise.race([generateCardInventoryPdf(input.year, input.month), timeoutPromise2]);
-      return {
-        base64: buffer.toString("base64"),
-        mimeType: "application/pdf",
-      };
+  // Poll export job status
+  getExportJob: adminProcedure
+    .input(z.object({ jobId: z.string() }))
+    .query(async ({ input }) => {
+      const { exportJobs } = await import("../../drizzle/schema_new");
+      const db = await getDb();
+      const [job] = await db.select().from(exportJobs).where(eq(exportJobs.id, input.jobId)).limit(1);
+      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "匯出任務不存在" });
+      return job;
     }),
 });

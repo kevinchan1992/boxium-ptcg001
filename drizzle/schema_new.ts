@@ -1738,3 +1738,18 @@ export const cardInventory = mysqlTable("cardInventory", {
 
 export type CardInventory = typeof cardInventory.$inferSelect;
 export type InsertCardInventory = typeof cardInventory.$inferInsert;
+
+// ─── Export Jobs ─────────────────────────────────────────────────────────────
+// Background export tasks (Excel/PDF) - avoids Cloud Run 60s timeout
+export const exportJobs = mysqlTable("exportJobs", {
+  id: varchar("id", { length: 36 }).primaryKey(), // UUID
+  type: mysqlEnum("type", ["excel", "pdf"]).notNull(),
+  year: int("year").notNull(),
+  month: int("month").notNull(), // 0 = full year
+  status: mysqlEnum("status", ["pending", "processing", "done", "error"]).default("pending").notNull(),
+  downloadUrl: text("downloadUrl"), // S3 URL when done
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ExportJob = typeof exportJobs.$inferSelect;
