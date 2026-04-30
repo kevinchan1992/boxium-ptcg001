@@ -162,7 +162,7 @@ function CardSearchModal({
         style={{ maxWidth: "min(680px, 95vw)", height: "min(85vh, 700px)" }}
       >
         {/* Blue header with search box */}
-        <div className="bg-[#06038D] px-5 pt-5 pb-4 flex-shrink-0">
+        <div className="bg-primary px-5 pt-5 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-white text-xl font-bold">{title}</h2>
@@ -197,7 +197,7 @@ function CardSearchModal({
         </div>
 
         {/* Results list */}
-        <div ref={listRef} className="flex-1 overflow-y-auto bg-white">
+        <div ref={listRef} className="flex-1 overflow-y-auto bg-card">
           {query.length < 2 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 py-16">
               <Search className="w-10 h-10 opacity-30" />
@@ -218,29 +218,29 @@ function CardSearchModal({
               key={card.id}
               data-idx={idx}
               className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors border-b last:border-b-0 ${
-                highlightIdx === idx ? "bg-blue-100" : "hover:bg-blue-50"
+                highlightIdx === idx ? "bg-primary/10" : "hover:bg-primary/5"
               }`}
               onMouseEnter={() => setHighlightIdx(idx)}
               onClick={() => { onSelect(card); onClose(); }}
             >
-              <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 shadow">
+              <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-muted shadow">
                 {card.imageUrl
                   ? <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-gray-400" /></div>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[#06038D] text-base leading-snug line-clamp-2">{card.name}</div>
+                <div className="font-semibold text-primary text-base leading-snug line-clamp-2">{card.name}</div>
                 {card.nameJa && <div className="text-xs text-gray-500 truncate mt-0.5">{card.nameJa}</div>}
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {card.cardNumber && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600 font-mono">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground font-mono">
                       {card.cardNumber}
                     </span>
                   )}
                 </div>
                 {card.latestPrice && (
-                  <div className="text-xs font-semibold text-[#06038D] mt-1">PSA 10 市場均價 HKD {card.latestPrice.toLocaleString()}</div>
+                  <div className="text-xs font-semibold text-primary mt-1">PSA 10 市場均價 HKD {card.latestPrice.toLocaleString()}</div>
                 )}
               </div>
             </button>
@@ -506,7 +506,7 @@ function BatchSellDialog({
                     <div className="font-medium text-xs truncate">{item.cardName}</div>
                     <div className="text-xs text-muted-foreground">{[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}</div>
                   </div>
-                  <div className="text-xs text-[#06038D] font-medium flex-shrink-0">{formatHkd(item.buyPriceHkd)}</div>
+                  <div className="text-xs text-primary font-medium flex-shrink-0">{formatHkd(item.buyPriceHkd)}</div>
                   <Plus className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
                 </button>
               ))}
@@ -537,7 +537,7 @@ function BatchSellDialog({
                       <div className="min-w-0">
                         <div className="font-medium text-xs truncate">{row.cardName}</div>
                         <div className="text-xs text-muted-foreground truncate">{[row.cardSet, row.grade].filter(Boolean).join(" · ")}</div>
-                        <div className="text-xs text-[#06038D]">成本 {formatHkd(row.buyPriceHkd)}</div>
+                        <div className="text-xs text-primary">成本 {formatHkd(row.buyPriceHkd)}</div>
                       </div>
                     </div>
                     {/* Sell price */}
@@ -602,7 +602,7 @@ function BatchSellDialog({
           <div className="bg-muted/40 rounded-lg px-3 py-2 space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">買取成本合計</span>
-              <span className="font-medium text-[#06038D]">{formatHkd(totalBuyHkd)}</span>
+              <span className="font-medium text-primary">{formatHkd(totalBuyHkd)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">預計賣出合計</span>
@@ -772,7 +772,7 @@ function BatchBuyDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
         {/* Blue header */}
-        <div className="bg-[#06038D] px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+        <div className="bg-primary px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
           <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
             <Layers className="w-5 h-5" />
             批量買取記錄
@@ -988,7 +988,7 @@ function BatchBuyDialog({
           <span className="text-muted-foreground">
             共 <span className="font-semibold text-foreground">{rows.filter(r => r.cardName.trim()).length}</span> 筆有效記錄
           </span>
-          <span className="font-semibold text-[#06038D]">
+          <span className="font-semibold text-primary">
             預計總買取：{formatHkd(totalHkd)}
           </span>
         </div>
@@ -999,7 +999,7 @@ function BatchBuyDialog({
           <Button
             onClick={handleSubmit}
             disabled={batchCreateMutation.isPending}
-            className="flex-1 h-11 bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
+            className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           >
             <Layers className="w-4 h-4" />
             {batchCreateMutation.isPending ? "儲存中..." : `批量新增 ${rows.filter(r => r.cardName.trim() && parseFloat(r.buyPriceOriginal) > 0).length} 筆`}
@@ -1025,7 +1025,7 @@ function CardSearchPicker({
       <button
         type="button"
         onClick={() => setModalOpen(true)}
-        className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-[#06038D]/50 hover:bg-blue-50/30 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
       >
         <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <span className="text-sm text-muted-foreground">點擊搜尋並關聯卡牌...</span>
@@ -1158,7 +1158,7 @@ function BuyFormDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent bottomSheet className="sm:max-w-lg overflow-hidden">
         {/* Blue header */}
-        <div className="bg-[#06038D] px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
+        <div className="bg-primary px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
           <DialogTitle className="text-white text-lg font-semibold">
             {isEdit ? "編輯買取記錄" : "新增買取記錄"}
           </DialogTitle>
@@ -1342,7 +1342,7 @@ function BuyFormDialog({
         <div className="px-5 py-4 border-t flex gap-3 flex-shrink-0">
           <Button variant="outline" onClick={onClose} className="flex-1 h-11">取消</Button>
           {(manualMode || isEdit) && (
-            <Button onClick={handleSubmit} disabled={isPending} className="flex-1 h-11 bg-[#06038D] hover:bg-[#06038D]/90 text-white">
+            <Button onClick={handleSubmit} disabled={isPending} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
               {isPending ? "儲存中..." : isEdit ? "更新記錄" : "新增買取"}
             </Button>
           )}
@@ -1437,7 +1437,7 @@ function SellDialog({
               <div className="text-xs text-muted-foreground">
                 {[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}
               </div>
-              <div className="text-xs text-[#06038D] font-medium mt-0.5">買取成本：{formatHkd(item.buyPriceHkd)}</div>
+              <div className="text-xs text-primary font-medium mt-0.5">買取成本：{formatHkd(item.buyPriceHkd)}</div>
             </div>
           </div>
 
@@ -1520,7 +1520,7 @@ function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMont
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-[#06038D] text-white">
+        <Card className="bg-primary text-white">
           <CardContent className="pt-4 pb-3">
             <p className="text-xs opacity-80">年度總買取</p>
             <p className="text-lg font-bold">{formatHkd(data.yearTotal.totalBuyHkd)}</p>
@@ -1567,8 +1567,8 @@ function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMont
             {data.months.map((m) => (
               <tr key={m.month} className="border-t hover:bg-muted/30">
                 <td className="p-3 font-medium">{year}年{MONTHS[m.month - 1]}</td>
-                <td className="p-3 text-right text-[#06038D] font-medium">{m.buyCount > 0 ? formatHkd(m.totalBuyHkd) : "—"}</td>
-                <td className="p-3 text-right text-green-600 font-medium">{m.soldCount > 0 ? formatHkd(m.totalSellHkd) : "—"}</td>
+                <td className="p-3 text-right text-primary font-medium">{m.buyCount > 0 ? formatHkd(m.totalBuyHkd) : "—"}</td>
+                <td className="p-3 text-right text-green-500 font-medium">{m.soldCount > 0 ? formatHkd(m.totalSellHkd) : "—"}</td>
                 <td className={`p-3 text-right font-semibold ${m.grossProfitHkd > 0 ? "text-emerald-600" : m.grossProfitHkd < 0 ? "text-red-600" : "text-muted-foreground"}`}>
                   {m.buyCount > 0 || m.soldCount > 0 ? `${m.grossProfitHkd >= 0 ? "+" : ""}${formatHkd(m.grossProfitHkd)}` : "—"}
                 </td>
@@ -1647,27 +1647,27 @@ export default function AdminCardInventory() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#06038D]">卡牌買取及賣出記錄</h1>
+          <h1 className="text-2xl font-bold text-foreground">卡牌買取及賣出記錄</h1>
           <p className="text-sm text-muted-foreground mt-0.5">記錄公司買取及賣出卡牌，用於財務報告及報稅</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => setShowBatchForm(true)}
-            className="gap-2 border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5"
+            className="gap-2 border-primary text-primary hover:bg-primary/10"
           >
             <Layers className="w-4 h-4" />批量買取
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowBatchSell(true)}
-            className="gap-2 border-green-600 text-green-600 hover:bg-green-50"
+            className="gap-2 border-green-500 text-green-500 hover:bg-green-500/10"
           >
             <TrendingDown className="w-4 h-4" />批量賣出
           </Button>
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
-            className="bg-[#06038D] hover:bg-[#06038D]/90 text-white gap-2"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           >
             <Plus className="w-4 h-4" />新增買取
           </Button>
@@ -1760,7 +1760,7 @@ export default function AdminCardInventory() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap mb-1">
                           <Badge variant="outline" className="text-xs">{item.itemType === "card" ? "單卡" : "封裝"}</Badge>
-                          <Badge className={item.status === "holding" ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 text-xs" : "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 text-xs"}>
+                          <Badge className={item.status === "holding" ? "bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/20 text-xs" : "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/20 text-xs"}>
                             {item.status === "holding" ? "持有中" : "已賣出"}
                           </Badge>
                         </div>
@@ -1774,11 +1774,11 @@ export default function AdminCardInventory() {
                     <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/30 rounded-lg py-2">
                       <div>
                         <div className="text-muted-foreground mb-0.5">買取成本</div>
-                        <div className="font-semibold text-[#06038D] text-sm">{formatHkd(item.buyPriceHkd)}</div>
+                        <div className="font-semibold text-primary text-sm">{formatHkd(item.buyPriceHkd)}</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground mb-0.5">賣出金額</div>
-                        <div className="font-semibold text-green-600 text-sm">{sellHkd !== null ? formatHkd(sellHkd) : "—"}</div>
+                        <div className="font-semibold text-green-500 text-sm">{sellHkd !== null ? formatHkd(sellHkd) : "—"}</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground mb-0.5">毛利</div>
@@ -1789,7 +1789,7 @@ export default function AdminCardInventory() {
                     </div>
                     <div className="flex items-center justify-end gap-1 pt-0.5">
                       {item.status === "holding" && (
-                        <Button variant="ghost" size="sm" onClick={() => setSellItem(item as CardInventoryItem)} className="h-8 px-3 text-xs text-green-600 hover:text-green-700 hover:bg-green-50 font-medium">
+                        <Button variant="ghost" size="sm" onClick={() => setSellItem(item as CardInventoryItem)} className="h-8 px-3 text-xs text-green-500 hover:text-green-400 hover:bg-green-500/10 font-medium">
                           記錄賣出
                         </Button>
                       )}
@@ -1856,13 +1856,13 @@ export default function AdminCardInventory() {
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-right font-medium text-[#06038D]">
+                        <td className="p-3 text-right font-medium text-primary">
                           {formatHkd(item.buyPriceHkd)}
                           {item.buyPriceCurrency !== "HKD" && (
                             <div className="text-xs text-muted-foreground">{item.buyPriceCurrency} {Number(item.buyPriceOriginal).toLocaleString()}</div>
                           )}
                         </td>
-                        <td className="p-3 text-right font-medium text-green-600">
+                        <td className="p-3 text-right font-medium text-green-500">
                           {sellHkd !== null ? formatHkd(sellHkd) : "—"}
                           {item.sellPriceCurrency && item.sellPriceCurrency !== "HKD" && item.sellPriceOriginal && (
                             <div className="text-xs text-muted-foreground">{item.sellPriceCurrency} {Number(item.sellPriceOriginal).toLocaleString()}</div>
@@ -1873,8 +1873,8 @@ export default function AdminCardInventory() {
                         </td>
                         <td className="p-3">
                           <Badge className={item.status === "holding"
-                            ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100"
-                            : "bg-green-100 text-green-700 border-green-200 hover:bg-green-100"
+                            ? "bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                            : "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/20"
                           }>
                             {item.status === "holding" ? "持有中" : "已賣出"}
                           </Badge>
@@ -1886,7 +1886,7 @@ export default function AdminCardInventory() {
                               <Button
                                 variant="ghost" size="sm"
                                 onClick={() => setSellItem(item as CardInventoryItem)}
-                                className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                className="h-7 px-2 text-xs text-green-500 hover:text-green-400 hover:bg-green-500/10"
                               >
                                 記錄賣出
                               </Button>

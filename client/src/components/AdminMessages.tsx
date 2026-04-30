@@ -21,9 +21,9 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
   buyer: "bg-blue-100 text-blue-700 border-blue-200",
-  seller: "bg-green-100 text-green-700 border-green-200",
+  seller: "bg-green-500/20 text-green-400 border-green-500/30",
   admin: "bg-purple-100 text-purple-700 border-purple-200",
-  system: "bg-gray-100 text-gray-600 border-gray-200",
+  system: "bg-muted text-muted-foreground border-border",
 };
 
 export default function AdminMessages() {
@@ -171,7 +171,7 @@ export default function AdminMessages() {
             >
               {unreadOnly ? "僅未讀" : "全部訊息"}
             </Button>
-            <Button type="submit" size="sm" className="bg-[#06038d] hover:bg-[#06038d]/90 text-white">
+            <Button type="submit" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               搜尋
             </Button>
             <Button
@@ -231,12 +231,12 @@ export default function AdminMessages() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link href={`/orders/${group.orderNo}`}>
-                            <span className="text-sm font-mono font-semibold text-[#06038d] hover:underline cursor-pointer">
+                            <span className="text-sm font-mono font-semibold text-primary hover:underline cursor-pointer">
                               #{group.orderNo}
                             </span>
                           </Link>
                           {isDisputed && (
-                            <Badge className="bg-red-100 text-red-600 border-red-200 text-[10px] px-1.5 py-0 h-4">
+                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] px-1.5 py-0 h-4">
                               爭議中
                             </Badge>
                           )}
@@ -322,7 +322,7 @@ export default function AdminMessages() {
                       <div className="px-4 pb-4 space-y-3">
                         <OrderChat orderNo={group.orderNo} defaultExpanded={true} />
                         {/* Dispute media — shown for all orders (read-only for admin) */}
-                        <div className="rounded-xl bg-white border border-orange-100 p-3">
+                        <div className="rounded-xl bg-card border border-orange-500/20 p-3">
                           <DisputeMediaUpload
                             orderId={group.orderId}
                             orderNo={group.orderNo}
@@ -371,7 +371,7 @@ export default function AdminMessages() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-sm text-gray-600">
-              訂單 <span className="font-mono font-semibold text-[#06038d]">#{disputeOrderNo}</span> 將被標記為爭議狀態，系統將自動發送 Email 通知買家和賣家。
+              訂單 <span className="font-mono font-semibold text-primary">#{disputeOrderNo}</span> 將被標記為爭議狀態，系統將自動發送 Email 通知買家和賣家。
             </p>
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">爭議原因（選填）</label>
@@ -412,7 +412,7 @@ export default function AdminMessages() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-gray-600">
-              訂單 <span className="font-mono font-semibold text-[#06038d]">#{resolveOrderNo}</span> 的爭議裁決。解決後將自動發送 Email 通知買家和賣家。
+              訂單 <span className="font-mono font-semibold text-primary">#{resolveOrderNo}</span> 的爭議裁決。解決後將自動發送 Email 通知買家和賣家。
             </p>
             {/* Favor selection */}
             <div>

@@ -282,7 +282,7 @@ function SidebarNav({
                 "w-full flex items-center gap-2.5 rounded-lg transition-all duration-150 group relative",
                 !showLabels ? "justify-center px-0 py-2.5 mx-auto" : "px-2.5 py-2.5",
                 isActive
-                  ? "bg-[#06038d] text-white shadow-[0_1px_3px_rgba(6,3,141,0.4)]"
+                  ? "bg-primary/80 text-white shadow-[0_1px_3px_rgba(6,3,141,0.4)]"
                   : "text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]"
               )}
             >

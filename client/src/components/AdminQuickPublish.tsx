@@ -140,7 +140,7 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
                 step > s.num
                   ? "bg-green-500 text-white"
                   : step === s.num
-                  ? "bg-[#06038d] text-white ring-2 ring-[#06038d]/30"
+                  ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
                   : "bg-zinc-700 text-zinc-400"
               }`}
             >
@@ -186,7 +186,7 @@ function TypeCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-white font-semibold text-sm">{type.title}</span>
-            {selected && <Badge className="bg-[#06038d] text-white text-[10px] px-1.5 py-0">已選</Badge>}
+            {selected && <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">已選</Badge>}
           </div>
           <p className={`text-xs font-medium mb-1 ${type.color}`}>{type.subtitle}</p>
           <p className="text-gray-400 text-xs leading-relaxed">{type.description}</p>
@@ -904,7 +904,7 @@ function CoverImageSection({
       {/* Extracted Cards Preview */}
       {isExtracting ? (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
-          <Loader2 className="w-4 h-4 animate-spin text-[#06038d]" />
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
           <span className="text-sm text-zinc-400">AI 正在從文章識別相關卡牌...</span>
         </div>
       ) : selectedCards.length > 0 ? (
@@ -961,8 +961,8 @@ function CoverImageSection({
 
       {/* Generating overlay indicator */}
       {isGenerating && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-[#06038d]/10 border border-[#06038d]/30">
-          <Loader2 className="w-4 h-4 animate-spin text-[#06038d]" />
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
           <span className="text-sm text-zinc-300">AI 正在生成「{activeStyleInfo?.label}」封面圖（約 20 秒）...</span>
         </div>
       )}
@@ -1036,7 +1036,7 @@ function ArticlePreview({
             size="sm"
             onClick={onPublish}
             disabled={isPublishing}
-            className="gap-1.5 bg-[#06038d] hover:bg-[#0804b0] text-white text-xs"
+            className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
           >
             {isPublishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             {isPublishing ? "發布中..." : "立即發布"}
@@ -1163,10 +1163,10 @@ function GeneratingView({ typeTitle }: { typeTitle: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 space-y-6">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full bg-[#06038d]/20 border-2 border-[#06038d]/40 flex items-center justify-center">
-          <Sparkles className="w-8 h-8 text-[#06038d] animate-pulse" />
+        <div className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center">
+          <Sparkles className="w-8 h-8 text-primary animate-pulse" />
         </div>
-        <div className="absolute inset-0 rounded-full border-2 border-[#06038d]/20 animate-ping" />
+        <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping" />
       </div>
       <div className="text-center space-y-2">
         <h3 className="text-white font-semibold text-lg">AI 正在生成「{typeTitle}」</h3>
@@ -1177,7 +1177,7 @@ function GeneratingView({ typeTitle }: { typeTitle: string }) {
           <div
             key={i}
             className={`w-2 h-2 rounded-full transition-all duration-500 ${
-              i === currentStep ? "bg-[#06038d] scale-125" : i < currentStep ? "bg-green-500" : "bg-zinc-600"
+              i === currentStep ? "bg-primary scale-125" : i < currentStep ? "bg-green-500" : "bg-zinc-600"
             }`}
           />
         ))}
@@ -1411,8 +1411,8 @@ export default function AdminQuickPublish() {
     <div className="p-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-9 h-9 rounded-lg bg-[#06038d]/20 border border-[#06038d]/30 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-[#06038d]" />
+        <div className="w-9 h-9 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-semibold text-white">AI 出文章</h1>
@@ -1528,7 +1528,7 @@ export default function AdminQuickPublish() {
               !selectedType ||
               (!!selectedTypeInfo?.requiresTopic && !topic.trim())
             }
-            className="w-full h-12 bg-[#06038d] hover:bg-[#0804b0] text-white font-semibold text-base gap-2 mt-2"
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base gap-2 mt-2"
           >
             <Sparkles className="w-5 h-5" />
             一鍵生成文章

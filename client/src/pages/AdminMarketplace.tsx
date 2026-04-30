@@ -38,9 +38,9 @@ const orderStatusColor: Record<string, string> = {
   processing: "bg-indigo-100 text-indigo-800",
   shipped: "bg-cyan-100 text-cyan-800",
   delivered: "bg-teal-100 text-teal-800",
-  completed: "bg-green-100 text-green-800",
-  cancelled: "bg-gray-100 text-gray-800",
-  disputed: "bg-red-100 text-red-800",
+  completed: "bg-green-500/20 text-green-400",
+  cancelled: "bg-muted text-muted-foreground",
+  disputed: "bg-red-500/20 text-red-400",
 };
 const orderStatusLabel: Record<string, string> = {
   pending_payment: "待付款", paid_held: "已付款，待出貨", payment_received: "已收款", processing: "處理中",
@@ -787,7 +787,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        <Badge className={listing.status === 'active' ? 'bg-green-100 text-green-800' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                        <Badge className={listing.status === 'active' ? 'bg-green-500/20 text-green-400' : listing.status === 'sold' ? 'bg-blue-100 text-blue-800' : 'bg-muted text-muted-foreground'}>
                           {listing.status === 'active' ? '上架中' : listing.status === 'draft' ? '草稿' : listing.status === 'sold' ? '已售出' : '已下架'}
                         </Badge>
                         {(listing as any).adminDelisted && (
@@ -2842,9 +2842,9 @@ function GradingAlipaySection({ submissions, isLoading, refetch }: { submissions
               <span className="text-xs text-gray-500">{new Date(sub.createdAt).toLocaleDateString('zh-HK')}</span>
               {sub.alipayProofAiResult && (
                 <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
-                  sub.alipayProofAiResult === 'pass' ? 'bg-green-100 text-green-800' :
+                  sub.alipayProofAiResult === 'pass' ? 'bg-green-500/20 text-green-400' :
                   sub.alipayProofAiResult === 'warning' ? 'bg-amber-100 text-amber-800' :
-                  'bg-red-100 text-red-800'
+                  'bg-red-500/20 text-red-400'
                 }`}>
                   {sub.alipayProofAiResult === 'pass' ? '✅ AI通過' : sub.alipayProofAiResult === 'warning' ? '⚠️ AI警告' : '❌ AI未通過'}
                 </span>
@@ -3184,7 +3184,7 @@ function AlipayPendingTab() {
                     const isOverdue = submittedMs !== null && (Date.now() - submittedMs) > 48 * 60 * 60 * 1000;
                     const isResubmitted = (order.alipayProofImageUrl ?? '').includes('resubmit-');
                     return isOverdue ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-200">
                         ⚠️ 超時未審核
                       </span>
                     ) : isResubmitted ? (
@@ -3198,12 +3198,12 @@ function AlipayPendingTab() {
                     );
                   })()}
                   {order.alipayProofStatus === "approved" && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-200">
                       ✅ 截圖已核准
                     </span>
                   )}
                   {order.alipayProofStatus === "rejected" && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-200">
                       ❌ 截圖已拒絕
                     </span>
                   )}
@@ -3226,7 +3226,7 @@ function AlipayPendingTab() {
                       const confidenceLabel = ai.confidence === 'high' ? '高可信度' : ai.confidence === 'medium' ? '中可信度' : ai.confidence === 'low' ? '低可信度' : '';
                       return (
                         <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-                          ai.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          ai.verified ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                         }`}>
                           {ai.verified ? '✅ AI 驗證通過' : '⚠️ AI 驗證失敗'}
                           {confidenceLabel && <span className="opacity-70">({confidenceLabel})</span>}
@@ -3620,7 +3620,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
   const user = data?.user;
 
   const loginMethodLabel: Record<string, string> = { password: "密碼登入", google: "Google OAuth" };
-  const stripeStatusColor: Record<string, string> = { active: "bg-green-100 text-green-800", pending: "bg-yellow-100 text-yellow-800", restricted: "bg-orange-100 text-orange-800", disabled: "bg-red-100 text-red-800" };
+  const stripeStatusColor: Record<string, string> = { active: "bg-green-500/20 text-green-400", pending: "bg-yellow-100 text-yellow-800", restricted: "bg-orange-100 text-orange-800", disabled: "bg-red-500/20 text-red-400" };
 
   return (
     <Dialog open={!!sellerId} onOpenChange={() => onClose()}>
@@ -3648,7 +3648,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
                 <h3 className="font-bold text-lg">{sp.displayName}</h3>
                 {sp.bio && <p className="text-sm text-muted-foreground">{sp.bio}</p>}
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <Badge className={sp.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                  <Badge className={sp.isActive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
                     {sp.isActive ? "已批准" : "已停用"}
                   </Badge>
                   <Badge className={stripeStatusColor[sp.stripeConnectStatus] ?? ""}>
@@ -3843,7 +3843,7 @@ function SellersTab() {
     onError: (e) => toast.error(parseApiError(e)),
   });
   const riskLevelLabel: Record<string, string> = { low: '低風險', medium: '中風險', high: '高風險', critical: '極高風險' };
-  const riskLevelColor: Record<string, string> = { low: 'bg-green-100 text-green-800', medium: 'bg-yellow-100 text-yellow-800', high: 'bg-orange-100 text-orange-800', critical: 'bg-red-100 text-red-800' };
+  const riskLevelColor: Record<string, string> = { low: 'bg-green-500/20 text-green-400', medium: 'bg-yellow-100 text-yellow-800', high: 'bg-orange-100 text-orange-800', critical: 'bg-red-500/20 text-red-400' };
 
   const handleExportSellersCSV = () => {
     const rows = sellers.map((s: any) => ({
@@ -5829,7 +5829,7 @@ function ReportsTab() {
   const [adminNote, setAdminNote] = useState("");
   const [pendingAction, setPendingAction] = useState<"reviewed" | "dismissed" | "actioned">("reviewed");
   const reasonLabel: Record<string, string> = { fake_item: "假貨", wrong_description: "描述不符", prohibited_item: "禁止商品", scam: "詐騙", other: "其他" };
-  const statusBadge: Record<string, string> = { pending: "bg-yellow-100 text-yellow-800", reviewed: "bg-blue-100 text-blue-800", dismissed: "bg-gray-100 text-gray-700", actioned: "bg-red-100 text-red-800" };
+  const statusBadge: Record<string, string> = { pending: "bg-yellow-100 text-yellow-800", reviewed: "bg-blue-100 text-blue-800", dismissed: "bg-gray-100 text-gray-700", actioned: "bg-red-500/20 text-red-400" };
   const statusLabel: Record<string, string> = { pending: "待處理", reviewed: "已審核", dismissed: "已忽略", actioned: "已處置", all: "全部" };
   return (
     <div className="space-y-4">
@@ -5949,8 +5949,8 @@ function OffersTab() {
   };
   const offerStatusColor: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800",
-    accepted: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
+    accepted: "bg-green-500/20 text-green-400",
+    rejected: "bg-red-500/20 text-red-400",
     expired: "bg-gray-100 text-gray-600",
     cancelled: "bg-gray-100 text-gray-500",
   };
@@ -6126,9 +6126,9 @@ function OrderStatusStepper({ orderStatus, payoutStatus, stripeTransferId }: { o
 const payoutStatusBadge: Record<string, { label: string; color: string }> = {
   pending: { label: "待放款", color: "bg-yellow-100 text-yellow-800" },
   processing: { label: "處理中", color: "bg-blue-100 text-blue-800" },
-  paid: { label: "已放款", color: "bg-green-100 text-green-800" },
-  completed: { label: "已放款", color: "bg-green-100 text-green-800" },
-  failed: { label: "放款失敗", color: "bg-red-100 text-red-800" },
+  paid: { label: "已放款", color: "bg-green-500/20 text-green-400" },
+  completed: { label: "已放款", color: "bg-green-500/20 text-green-400" },
+  failed: { label: "放款失敗", color: "bg-red-500/20 text-red-400" },
   not_applicable: { label: "不適用", color: "bg-gray-100 text-gray-500" },
 };
 
@@ -7001,14 +7001,14 @@ const actionLabels: Record<string, string> = {
   update_seller_risk: '更新賣家風控等級',
 };
 const actionColors: Record<string, string> = {
-  confirm_alipay: 'bg-green-100 text-green-800',
+  confirm_alipay: 'bg-green-500/20 text-green-400',
   update_order_status: 'bg-blue-100 text-blue-800',
   resolve_dispute: 'bg-purple-100 text-purple-800',
   suspend_seller: 'bg-orange-100 text-orange-800',
   unsuspend_seller: 'bg-cyan-100 text-cyan-800',
   ai_verify_alipay: 'bg-indigo-100 text-indigo-800',
-  delist_listing: 'bg-red-100 text-red-800',
-  restore_listing: 'bg-green-100 text-green-800',
+  delist_listing: 'bg-red-500/20 text-red-400',
+  restore_listing: 'bg-green-500/20 text-green-400',
   flag_risk: 'bg-amber-100 text-amber-800',
   update_seller_risk: 'bg-purple-100 text-purple-800',
 };
@@ -7126,7 +7126,7 @@ function AuditLogsTab() {
                       {new Date(log.createdAt).toLocaleString('zh-HK', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="py-2.5 pr-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${actionColors[log.action] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${actionColors[log.action] || 'bg-muted text-muted-foreground'}`}>
                         {actionLabels[log.action] || log.action}
                       </span>
                     </td>
@@ -7602,7 +7602,7 @@ function AuctionViolationsAdminTab() {
   };
   const penaltyColor: Record<string, string> = {
     warning: 'bg-yellow-100 text-yellow-800', ban_7d: 'bg-orange-100 text-orange-800',
-    ban_30d: 'bg-red-100 text-red-800', permanent: 'bg-red-200 text-red-900',
+    ban_30d: 'bg-red-500/20 text-red-400', permanent: 'bg-red-200 text-red-900',
   };
   const typeLabel: Record<string, string> = {
     no_payment: '未付款', fake_bid: '假出價', seller_cancel: '賣家取消',
@@ -7665,7 +7665,7 @@ function AuctionViolationsAdminTab() {
                     <Badge variant="outline">{typeLabel[v.type] ?? v.type}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${penaltyColor[v.penalty] ?? 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${penaltyColor[v.penalty] ?? 'bg-muted text-muted-foreground'}`}>
                       {penaltyLabel[v.penalty] ?? v.penalty}
                     </span>
                     {v.banExpiresAt && (
