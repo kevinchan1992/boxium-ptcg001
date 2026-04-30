@@ -40,7 +40,7 @@ const imageCache = new Map<string, Buffer>();
  */
 async function fetchImageBuffersBatched(
   urls: string[],
-  batchSize = 5,
+  batchSize = 10,
   onProgress?: (current: number, total: number) => void
 ): Promise<(Buffer | null)[]> {
   const results: (Buffer | null)[] = new Array(urls.length).fill(null);
@@ -73,9 +73,12 @@ async function fetchImageBuffer(url: string): Promise<Buffer | null> {
     req.on("timeout", () => { req.destroy(); resolve(null); });
   });
   if (!rawBuf) return null;
-  // Convert WebP (and any other format) to PNG for PDF/Excel compatibility
+  // Resize to thumbnail (100x140) for speed - reduces 750KB to ~15KB per image
   try {
-    const pngBuf = await sharp(rawBuf).png().toBuffer();
+    const pngBuf = await sharp(rawBuf)
+      .resize(100, 140, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .png({ compressionLevel: 6 })
+      .toBuffer();
     imageCache.set(url, pngBuf);
     return pngBuf;
   } catch {
