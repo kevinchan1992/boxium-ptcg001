@@ -125,7 +125,8 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
   const label = periodLabel(year, month);
 
   // Pre-fetch all card images in batches (5 at a time) to avoid Cloud Run 60s timeout
-  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.imageUrl || ""));
+  // Prefer s3ImageUrl (already cached in platform S3) over external imageUrl
+  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.s3ImageUrl || r.imageUrl || ""));
 
   // Load logo
   let logoData: Buffer | null = null;
@@ -355,7 +356,8 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   const label = periodLabel(year, month);
 
   // Pre-fetch all card images in batches (5 at a time) to avoid Cloud Run 60s timeout
-  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.imageUrl || ""));
+  // Prefer s3ImageUrl (already cached in platform S3) over external imageUrl
+  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.s3ImageUrl || r.imageUrl || ""));
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BOXIUM PTCG";

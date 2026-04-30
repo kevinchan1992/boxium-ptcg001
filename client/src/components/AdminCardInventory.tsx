@@ -1653,6 +1653,13 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(e.message),
   });
 
+  const cacheImagesToS3Mutation = trpc.cardInventory.cacheImagesToS3.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message ?? `圖片快取完成：${data.cached}/${data.total} 張`);
+      utils.cardInventory.list.invalidate();
+    },
+    onError: (e) => toast.error(`快取失敗：${e.message}`),
+  });
   const backfillImageUrlsMutation = trpc.cardInventory.backfillImageUrls.useMutation({
     onSuccess: (data) => {
       toast.success(`圖片補全完成：${data.updated}/${data.total} 筆記錄已更新`);
@@ -1739,6 +1746,16 @@ export default function AdminCardInventory() {
             title="對缺少圖片的記錄自動匹配卡牌圖片"
           >
             <ImageOff className="w-4 h-4" />{backfillImageUrlsMutation.isPending ? "補全中...": "補全圖片"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => cacheImagesToS3Mutation.mutate()}
+            disabled={cacheImagesToS3Mutation.isPending}
+            className="gap-2 border-blue-500 text-blue-500 hover:bg-blue-500/10"
+            title="將所有卡牌圖片上傳到平台雲端，加快往後匯出速度"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+            {cacheImagesToS3Mutation.isPending ? "上傳中..." : "快取圖片"}
           </Button>
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}

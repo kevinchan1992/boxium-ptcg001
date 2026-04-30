@@ -3,6 +3,10 @@ import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { cardInventory, cards } from "../../drizzle/schema_new";
 import { eq, desc, and, gte, lte, like, or, sql } from "drizzle-orm";
+import { storagePut } from "../storage";
+import https from "https";
+import http from "http";
+import sharp from "sharp";
 
 // Exchange rate fetcher (simple static fallback + optional live fetch)
 async function getExchangeRate(from: "JPY" | "USD", to: "HKD"): Promise<number> {
@@ -406,6 +410,57 @@ export const cardInventoryRouter = router({
     }),
 
   // Backfill imageUrl and linkedCardId for records that are missing them
+  // Upload all cardInventory images to S3 for fast export (no external download needed)
+  cacheImagesToS3: adminProcedure
+    .mutation(async () => {
+      const db = await getDb();
+      // Find records that have imageUrl but no s3ImageUrl yet
+      const records = await db.select({
+        id: cardInventory.id,
+        imageUrl: cardInventory.imageUrl,
+        s3ImageUrl: cardInventory.s3ImageUrl,
+      }).from(cardInventory)
+        .where(sql`${cardInventory.imageUrl} IS NOT NULL AND ${cardInventory.s3ImageUrl} IS NULL`);
+      
+      if (records.length === 0) return { cached: 0, total: 0, message: "所有圖片已快取" };
+      
+      let cached = 0;
+      let failed = 0;
+      
+      for (const record of records) {
+        if (!record.imageUrl) continue;
+        try {
+          // Download image from external URL
+          const rawBuf = await new Promise<Buffer | null>((resolve) => {
+            const client = record.imageUrl!.startsWith("https") ? https : http;
+            const req = client.get(record.imageUrl!, { timeout: 8000 }, (res) => {
+              if (res.statusCode !== 200) { resolve(null); return; }
+              const chunks: Buffer[] = [];
+              res.on("data", (c: Buffer) => chunks.push(c));
+              res.on("end", () => resolve(Buffer.concat(chunks)));
+              res.on("error", () => resolve(null));
+            });
+            req.on("error", () => resolve(null));
+            req.on("timeout", () => { req.destroy(); resolve(null); });
+          });
+          if (!rawBuf) { failed++; continue; }
+          // Convert to PNG for compatibility
+          const pngBuf = await sharp(rawBuf).png().toBuffer();
+          // Upload to S3
+          const s3Key = `card-inventory-images/${record.id}.png`;
+          const { url } = await storagePut(s3Key, pngBuf, "image/png");
+          // Save S3 URL to database
+          await db.update(cardInventory)
+            .set({ s3ImageUrl: url })
+            .where(eq(cardInventory.id, record.id));
+          cached++;
+        } catch {
+          failed++;
+        }
+      }
+      return { cached, failed, total: records.length, message: `已快取 ${cached}/${records.length} 張圖片` };
+    }),
+
   backfillImageUrls: adminProcedure
     .mutation(async () => {
       const db = await getDb();

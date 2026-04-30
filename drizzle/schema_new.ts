@@ -1724,6 +1724,7 @@ export const cardInventory = mysqlTable("cardInventory", {
   sellChannel: varchar("sellChannel", { length: 256 }), // e.g. 平台自售, 拍賣, 直接賣出
   // Card image (from platform card database)
   imageUrl: text("imageUrl"), // image URL linked from platform cards table
+  s3ImageUrl: text("s3ImageUrl"), // cached image URL in platform S3 (used for fast export)
   linkedCardId: int("linkedCardId"), // optional reference to cards.id
   // Notes
   notes: text("notes"),
