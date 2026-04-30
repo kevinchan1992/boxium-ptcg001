@@ -330,7 +330,7 @@ export async function getPriceHistoryByCardId(cardId: number) {
   return result;
 }
 
-export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50, days?: number) {
+export async function getPriceHistory(cardId: number, source?: string, grade?: string, limit: number = 50, days?: number, productType?: 'single_card' | 'sealed_product') {
   const db = await getDb();
   if (!db) return [];
 
@@ -357,7 +357,10 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
   }
 
   // 排除疑似批量成交的記錄（超過同評級中位數 4 倍）
-  conditions.push(eq(priceHistory.isSuspectedBulk, false));
+  // 注意：sealed_product 不應用此過濾，因為卡盒本來就是多盒一起賣的
+  if (productType !== 'sealed_product') {
+    conditions.push(eq(priceHistory.isSuspectedBulk, false));
+  }
 
   // Fetch more than needed so we can deduplicate in-memory
   const fetchLimit = limit * 3;

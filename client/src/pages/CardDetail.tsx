@@ -208,6 +208,21 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       : sorted[mid];
   };
 
+  // ── Helper: Parse quantity from string (e.g. "3個" → 3, "10個" → 10) ────────
+  const parseQuantity = (qty: any): number => {
+    if (!qty) return 1;
+    const n = parseInt(String(qty).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) || n <= 0 ? 1 : n;
+  };
+
+  // ── Helper: Get unit price for sealed product (total price ÷ quantity) ──────
+  const getSealedUnitPrice = (record: any): number | null => {
+    const price = parseFloat(record.price as any);
+    if (isNaN(price)) return null;
+    const qty = parseQuantity(record.quantity);
+    return price / qty;
+  };
+
   // ── Helper: Weighted average ─────────────────────────────────────────────
   const weightedAverage = (records: typeof activeRecentPrices, halfLifeDays: number): number | null => {
     if (records.length === 0) return null;
@@ -231,11 +246,28 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const calculateRecentMedian = (): { price: number | null; source: string; recordCount: number } => {
     if (activeRecentPrices.length === 0) return { price: null, source: "N/A", recordCount: 0 };
     if (isSealedProduct) {
-      const latest = activeRecentPrices[0];
-      if (!latest) return { price: null, source: "N/A", recordCount: 0 };
-      const price = parseFloat(latest.price as any);
-      const qty = latest.quantity ? parseInt(latest.quantity as any, 10) : 1;
-      return { price: isNaN(price) ? null : price / (qty || 1), source: "最新成交", recordCount: 1 };
+      // 卡盒：用最近 10 筆的時間加權平均單盒價格（越近的交易權重越高）
+      const records = activeRecentPrices.slice(0, 10);
+      if (records.length === 0) return { price: null, source: "N/A", recordCount: 0 };
+      const now = new Date();
+      let weightedSum = 0;
+      let totalWeight = 0;
+      let validCount = 0;
+      for (const r of records) {
+        const unitPrice = getSealedUnitPrice(r);
+        if (unitPrice === null) continue;
+        const daysAgo = r.soldAt
+          ? (now.getTime() - new Date(r.soldAt).getTime()) / (1000 * 60 * 60 * 24)
+          : 30;
+        const w = Math.pow(2, -daysAgo / 14); // 14-day half-life
+        weightedSum += unitPrice * w;
+        totalWeight += w;
+        validCount++;
+      }
+      if (validCount === 0) return { price: null, source: "N/A", recordCount: 0 };
+      const avgUnitPrice = totalWeight > 0 ? weightedSum / totalWeight : null;
+      const sourceLabel = validCount >= 10 ? "最近 10 筆" : validCount >= 5 ? `最近 ${validCount} 筆` : `${validCount} 筆`;
+      return { price: avgUnitPrice, source: sourceLabel, recordCount: validCount };
     }
 
     // Step 1: Try latest 5 records
@@ -293,7 +325,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   // ── Latest single trade ───────────────────────────────────────────────────
   const latestTrade = activeRecentPrices.length > 0 ? activeRecentPrices[0] : null;
-  const latestTradePrice = latestTrade ? parseFloat(latestTrade.price as any) : null;
+  // For sealed products: show unit price (total ÷ qty); for single cards: show raw price
+  const latestTradePrice = latestTrade
+    ? (isSealedProduct ? getSealedUnitPrice(latestTrade) : parseFloat(latestTrade.price as any))
+    : null;
 
   // ── 30-day P25 / P75 (Price Band) ────────────────────────────────────────
   const thirtyDayPrices = (() => {
@@ -312,8 +347,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     ? thirtyDayPrices[Math.floor(thirtyDayPrices.length * 0.75)]
     : null;
 
-  // Legacy min/max kept for sealed products
-  const psa10Prices = activeRecentPrices.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
+  // For sealed products: compute unit prices (total ÷ qty); for single cards: use raw prices
+  const psa10Prices = isSealedProduct
+    ? activeRecentPrices.map(p => getSealedUnitPrice(p)).filter((p): p is number => p !== null)
+    : activeRecentPrices.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
   const minPrice = psa10Prices.length > 0 ? Math.min(...psa10Prices) : null;
   const maxPrice = psa10Prices.length > 0 ? Math.max(...psa10Prices) : null;
 
@@ -479,8 +516,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       ) : (
                         <p className="text-xl sm:text-2xl font-bold text-[#FFD600]">N/A</p>
                       )}
-                      {!isSealedProduct && mainPriceRecordCount > 0 && (
-                        <p className="text-[9px] text-zinc-500 mt-0.5">基於 {mainPriceRecordCount} 筆成交記錄</p>
+                      {mainPriceRecordCount > 0 && (
+                        <p className="text-[9px] text-zinc-500 mt-0.5">
+                          {isSealedProduct
+                            ? `基於最近 ${mainPriceRecordCount} 筆成交加權平均（單盒價）`
+                            : `基於 ${mainPriceRecordCount} 筆成交記錄`
+                          }
+                        </p>
                       )}
                     </div>
                     {priceTrend && (
@@ -534,13 +576,25 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
                   {/* 小欄 2: 最近單筆成交 */}
                   <div className="px-3 py-3 text-center">
-                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">最近單筆</p>
-                    {latestTradePrice !== null && !isNaN(latestTradePrice) ? (
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
+                      {isSealedProduct ? '最近總金額' : '最近單筆'}
+                    </p>
+                    {latestTrade !== null ? (
                       <>
                         <p className="text-[9px] text-zinc-500">HKD</p>
                         <p className="text-xs sm:text-sm font-semibold text-white leading-tight">
-                          {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          {isSealedProduct
+                            ? parseFloat(latestTrade.price as any).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                            : (latestTradePrice !== null && !isNaN(latestTradePrice)
+                                ? latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                                : 'N/A')
+                          }
                         </p>
+                        {isSealedProduct && latestTrade.quantity && (
+                          <p className="text-[8px] text-zinc-600 mt-0.5">
+                            {latestTrade.quantity}個盒
+                          </p>
+                        )}
                         {latestTrade?.soldAt && (
                           <p className="text-[8px] text-zinc-600 mt-0.5">
                             {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
@@ -588,7 +642,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <div className="px-4 py-2 border-t border-[#1565C0]/30">
                   <p className="text-[10px] text-zinc-500">
                     {isSealedProduct
-                      ? t("cardDetail.basedOnLatestSealedRecords", { count: recordCount, months: 2 })
+                      ? `參考均價基於最近 ${mainPriceRecordCount} 筆 SNKRDUNK 成交計算單盒價（加権平均）`
                       : `中位數基於 ${mainPriceRecordCount} 筆 PSA 10 成交記錄（${mainPriceSource}）`
                     }
                     {priceTrend && <span className="ml-1">· {t("cardDetail.priceTrend")}</span>}
@@ -644,6 +698,11 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
                       {t("cardDetail.price")}
                     </th>
+                    {isSealedProduct && (
+                      <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide whitespace-nowrap">
+                        單盒價
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -669,6 +728,21 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                         <td className="py-2.5 px-4 text-right font-semibold text-[#FFD600] text-xs sm:text-sm">
                           {formatCurrency(item.price)}
                         </td>
+                        {isSealedProduct && (
+                          <td className="py-2.5 px-4 text-right text-xs sm:text-sm">
+                            {(() => {
+                              const unitPrice = getSealedUnitPrice(item);
+                              const qty = parseQuantity(item.quantity);
+                              return unitPrice !== null && qty > 1 ? (
+                                <span className="text-green-400 font-medium">
+                                  {formatCurrency(unitPrice)}
+                                </span>
+                              ) : (
+                                <span className="text-zinc-600">—</span>
+                              );
+                            })()}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

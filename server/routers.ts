@@ -119,7 +119,8 @@ export const appRouter = router({
           input.source,
           input.grade,
           input.limit,
-          input.days
+          input.days,
+          input.productType  // Pass productType so sealed_product skips isSuspectedBulk filter
         );
         // Filter by productType
         return history.filter(h => h.productType === input.productType);
