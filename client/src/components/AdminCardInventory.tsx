@@ -1628,14 +1628,42 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(e.message),
   });
 
-  const handleExportExcel = (month: number) => {
+  const handleExportExcel = async (month: number) => {
     const url = `/api/card-inventory/export/excel?year=${selectedYear}&month=${month}`;
-    window.open(url, "_blank");
+    try {
+      toast.info("正在準備 Excel 檔案...");
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) { toast.error(`匯出失敗 (${res.status})，請重試`); return; }
+      const blob = await res.blob();
+      const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast.success("Excel 檔案已下載");
+    } catch { toast.error("匯出失敗，請重試"); }
   };
 
-  const handleExportPdf = (month: number) => {
+  const handleExportPdf = async (month: number) => {
     const url = `/api/card-inventory/export/pdf?year=${selectedYear}&month=${month}`;
-    window.open(url, "_blank");
+    try {
+      toast.info("正在準備 PDF 檔案...");
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) { toast.error(`匯出失敗 (${res.status})，請重試`); return; }
+      const blob = await res.blob();
+      const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast.success("PDF 檔案已下載");
+    } catch { toast.error("匯出失敗，請重試"); }
   };
 
   const items = listData?.items ?? [];

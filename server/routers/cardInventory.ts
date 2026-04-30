@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { cardInventory } from "../../drizzle/schema_new";
+import { cardInventory, cards } from "../../drizzle/schema_new";
 import { eq, desc, and, gte, lte, like, or, sql } from "drizzle-orm";
 
 // Exchange rate fetcher (simple static fallback + optional live fetch)
@@ -76,7 +76,7 @@ export const cardInventoryRouter = router({
       const offset = (input.page - 1) * input.pageSize;
       const where = conditions.length > 0 ? and(...(conditions as [ReturnType<typeof eq>])) : undefined;
 
-      const [items, countResult] = await Promise.all([
+      const [rawItems, countResult] = await Promise.all([
         db.select().from(cardInventory)
           .where(where)
           .orderBy(desc(cardInventory.buyDate))
@@ -84,6 +84,23 @@ export const cardInventoryRouter = router({
           .offset(offset),
         db.select({ count: sql<number>`COUNT(*)` }).from(cardInventory).where(where),
       ]);
+
+      // Auto-fill imageUrl from linked cards table when missing
+      const linkedIds = rawItems
+        .filter(i => !i.imageUrl && i.linkedCardId)
+        .map(i => i.linkedCardId as number);
+      let cardImageMap: Record<number, string> = {};
+      if (linkedIds.length > 0) {
+        const cardImages = await db
+          .select({ id: cards.id, imageUrl: cards.imageUrl })
+          .from(cards)
+          .where(sql`${cards.id} IN (${sql.join(linkedIds.map(id => sql`${id}`), sql`, `)})`);
+        cardImageMap = Object.fromEntries(cardImages.map(c => [c.id, c.imageUrl ?? ""]));
+      }
+      const items = rawItems.map(item => ({
+        ...item,
+        imageUrl: item.imageUrl || (item.linkedCardId ? (cardImageMap[item.linkedCardId] ?? null) : null),
+      }));
 
       return {
         items,
