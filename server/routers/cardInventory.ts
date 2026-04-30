@@ -563,71 +563,28 @@ export const cardInventoryRouter = router({
       return { updated, total: missingRecords.length };
     }),
 
-   // Start background export job (avoids Cloud Run 60s timeout)
-  startExport: adminProcedure
+  // Generate a short-lived export token (valid 10 minutes)
+  // Frontend uses this token to call the REST download endpoint directly
+  getExportToken: adminProcedure
     .input(z.object({
       type: z.enum(["excel", "pdf"]),
       year: z.number(),
-      month: z.number(), // 0 = full year, 1-12 = specific month
+      month: z.number(),
     }))
     .mutation(async ({ input }) => {
       const { exportJobs } = await import("../../drizzle/schema_new");
       const db = await getDb();
-      const jobId = crypto.randomUUID();
-      // Create job record immediately (fast response to client)
+      const token = crypto.randomUUID();
+      // Store token with expiry (10 minutes)
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
       await db.insert(exportJobs).values({
-        id: jobId,
+        id: token,
         type: input.type,
         year: input.year,
         month: input.month,
         status: "pending",
+        expiresAt,
       });
-      // Start background processing (fire and forget - does NOT await)
-      (async () => {
-        try {
-          await db.update(exportJobs).set({ status: "processing", progress: 0 }).where(eq(exportJobs.id, jobId));
-          const { generateCardInventoryExcel, generateCardInventoryPdf } = await import("../services/cardInventoryExport");
-          // Progress callback: update DB every time a batch of images is processed
-          let lastProgressUpdate = 0;
-          const onProgress = async (current: number, total: number) => {
-            const pct = total > 0 ? Math.round((current / total) * 90) : 0; // max 90% during image download
-            if (pct !== lastProgressUpdate) {
-              lastProgressUpdate = pct;
-              await db.update(exportJobs)
-                .set({ progress: pct, currentItem: current, totalItems: total })
-                .where(eq(exportJobs.id, jobId))
-                .catch(() => {});
-            }
-          };
-          const buffer = input.type === "excel"
-            ? await generateCardInventoryExcel(input.year, input.month, onProgress)
-            : await generateCardInventoryPdf(input.year, input.month, onProgress);
-          const ext = input.type === "excel" ? "xlsx" : "pdf";
-          const label = input.month > 0 ? `${input.year}_${String(input.month).padStart(2, "0")}` : `${input.year}`;
-          const s3Key = `exports/${jobId}/BOXIUM_卡牌買賣記錄_${label}.${ext}`;
-          const mimeType = input.type === "excel"
-            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            : "application/pdf";
-          const { url } = await storagePut(s3Key, buffer, mimeType);
-          await db.update(exportJobs).set({ status: "done", downloadUrl: url }).where(eq(exportJobs.id, jobId));
-        } catch (err: any) {
-          await db.update(exportJobs)
-            .set({ status: "error", errorMessage: err?.message ?? "Unknown error" })
-            .where(eq(exportJobs.id, jobId))
-            .catch(() => {});
-        }
-      })();
-      return { jobId };
-    }),
-
-  // Poll export job status
-  getExportJob: adminProcedure
-    .input(z.object({ jobId: z.string() }))
-    .query(async ({ input }) => {
-      const { exportJobs } = await import("../../drizzle/schema_new");
-      const db = await getDb();
-      const [job] = await db.select().from(exportJobs).where(eq(exportJobs.id, input.jobId)).limit(1);
-      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "匯出任務不存在" });
-      return job;
+      return { token };
     }),
 });

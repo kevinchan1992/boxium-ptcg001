@@ -1752,6 +1752,7 @@ export const exportJobs = mysqlTable("exportJobs", {
   totalItems: int("totalItems").default(0), // total items to process
   downloadUrl: text("downloadUrl"), // S3 URL when done
   errorMessage: text("errorMessage"),
+  expiresAt: timestamp("expiresAt"), // Token expiry (for REST download auth)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

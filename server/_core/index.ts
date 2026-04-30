@@ -1539,14 +1539,31 @@ async function startServer() {
   // ─── Card Inventory Export: PDF ────────────────────────────────────────────────
   app.get("/api/card-inventory/export/pdf", async (req, res) => {
     try {
-      const { createContext } = await import("./context");
-      const ctx = await createContext({ req, res } as any);
-      if (!ctx.user || ctx.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-      const year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
-      const month = parseInt((req.query.month as string) || '0', 10);
+      // Support both cookie auth and token auth
+      const token = req.query.token as string | undefined;
+      let authorized = false;
+      let year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
+      let month = parseInt((req.query.month as string) || '0', 10);
+      if (token) {
+        const { getDb } = await import("../db");
+        const { exportJobs } = await import("../../drizzle/schema_new");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        const [job] = await db.select().from(exportJobs).where(eq(exportJobs.id, token)).limit(1);
+        if (job && job.type === 'pdf' && job.expiresAt && new Date(job.expiresAt) > new Date()) {
+          authorized = true;
+          year = job.year;
+          month = job.month;
+          await db.update(exportJobs).set({ status: 'processing' }).where(eq(exportJobs.id, token)).catch(() => {});
+        }
+      } else {
+        const { createContext } = await import("./context");
+        const ctx = await createContext({ req, res } as any);
+        if (ctx.user && ctx.user.role === 'admin') authorized = true;
+      }
+      if (!authorized) return res.status(403).json({ error: 'Forbidden' });
       const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
       const pdfBuffer = await generateCardInventoryPdf(year, month);
-      const dateStr = new Date().toISOString().split('T')[0];
       const label = month > 0 ? `${year}_${String(month).padStart(2,'0')}` : `${year}`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="BOXIUM_CardInventory_${label}.pdf"; filename*=UTF-8''${encodeURIComponent(`BOXIUM_卡牌買賣記錄_${label}.pdf`)}`);
@@ -1557,14 +1574,35 @@ async function startServer() {
     }
   });
 
-  // ─── Card Inventory Export: Excel ────────────────────────────────────────────
+  // ─── Card Inventory Export: Excel (token-based auth) ───────────────────────
   app.get("/api/card-inventory/export/excel", async (req, res) => {
     try {
-      const { createContext } = await import("./context");
-      const ctx = await createContext({ req, res } as any);
-      if (!ctx.user || ctx.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-      const year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
-      const month = parseInt((req.query.month as string) || '0', 10);
+      // Support both cookie auth and token auth
+      const token = req.query.token as string | undefined;
+      let authorized = false;
+      let year = parseInt((req.query.year as string) || String(new Date().getFullYear()), 10);
+      let month = parseInt((req.query.month as string) || '0', 10);
+      if (token) {
+        // Token-based auth: validate token from exportJobs table
+        const { getDb } = await import("../db");
+        const { exportJobs } = await import("../../drizzle/schema_new");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        const [job] = await db.select().from(exportJobs).where(eq(exportJobs.id, token)).limit(1);
+        if (job && job.type === 'excel' && job.expiresAt && new Date(job.expiresAt) > new Date()) {
+          authorized = true;
+          year = job.year;
+          month = job.month;
+          // Mark token as used
+          await db.update(exportJobs).set({ status: 'processing' }).where(eq(exportJobs.id, token)).catch(() => {});
+        }
+      } else {
+        // Cookie-based auth fallback
+        const { createContext } = await import("./context");
+        const ctx = await createContext({ req, res } as any);
+        if (ctx.user && ctx.user.role === 'admin') authorized = true;
+      }
+      if (!authorized) return res.status(403).json({ error: 'Forbidden' });
       const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
       const excelBuffer = await generateCardInventoryExcel(year, month);
       const label = month > 0 ? `${year}_${String(month).padStart(2,'0')}` : `${year}`;
