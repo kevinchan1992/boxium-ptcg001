@@ -404,4 +404,83 @@ export const cardInventoryRouter = router({
 
       return items;
     }),
+
+  // Backfill imageUrl and linkedCardId for records that are missing them
+  backfillImageUrls: adminProcedure
+    .mutation(async () => {
+      const db = await getDb();
+      // Find records with null imageUrl
+      const missingRecords = await db.select({
+        id: cardInventory.id,
+        cardName: cardInventory.cardName,
+        cardNumber: cardInventory.cardNumber,
+      }).from(cardInventory)
+        .where(sql`${cardInventory.imageUrl} IS NULL AND ${cardInventory.linkedCardId} IS NULL`);
+
+      if (missingRecords.length === 0) return { updated: 0, total: 0 };
+
+      let updated = 0;
+      for (const record of missingRecords) {
+        // Try to find matching card by name (fuzzy match)
+        const nameKeyword = record.cardName.split("[")[0].trim(); // strip set info
+        const matchingCards = await db.select({
+          id: cards.id,
+          imageUrl: cards.imageUrl,
+          name: cards.name,
+          cardNumber: cards.cardNumber,
+        }).from(cards)
+          .where(like(cards.name, `%${nameKeyword.slice(0, 20)}%`))
+          .limit(5);
+
+        if (matchingCards.length === 0) continue;
+
+        // If cardNumber is set, try to match by both name and number
+        let bestMatch = matchingCards[0];
+        if (record.cardNumber && matchingCards.length > 1) {
+          const numMatch = matchingCards.find(c =>
+            c.cardNumber && c.cardNumber.includes(record.cardNumber!.split("/")[0])
+          );
+          if (numMatch) bestMatch = numMatch;
+        }
+
+        if (bestMatch?.imageUrl) {
+          await db.update(cardInventory)
+            .set({ imageUrl: bestMatch.imageUrl, linkedCardId: bestMatch.id })
+            .where(eq(cardInventory.id, record.id));
+          updated++;
+        }
+      }
+
+      return { updated, total: missingRecords.length };
+    }),
+
+  // Export Excel via tRPC (returns base64-encoded file)
+  exportExcel: adminProcedure
+    .input(z.object({
+      year: z.number(),
+      month: z.number(), // 0 = full year, 1-12 = specific month
+    }))
+    .mutation(async ({ input }) => {
+      const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
+      const buffer = await generateCardInventoryExcel(input.year, input.month);
+      return {
+        base64: buffer.toString("base64"),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      };
+    }),
+
+  // Export PDF via tRPC (returns base64-encoded file)
+  exportPdf: adminProcedure
+    .input(z.object({
+      year: z.number(),
+      month: z.number(), // 0 = full year, 1-12 = specific month
+    }))
+    .mutation(async ({ input }) => {
+      const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
+      const buffer = await generateCardInventoryPdf(input.year, input.month);
+      return {
+        base64: buffer.toString("base64"),
+        mimeType: "application/pdf",
+      };
+    }),
 });

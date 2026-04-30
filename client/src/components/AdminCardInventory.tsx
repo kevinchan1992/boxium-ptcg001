@@ -1628,14 +1628,26 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(e.message),
   });
 
+  const backfillImageUrlsMutation = trpc.cardInventory.backfillImageUrls.useMutation({
+    onSuccess: (data) => {
+      toast.success(`圖片補全完成：${data.updated}/${data.total} 筆記錄已更新`);
+      utils.cardInventory.list.invalidate();
+    },
+    onError: (e) => toast.error(`補全失敗：${e.message}`),
+  });
+
+  const exportExcelMutation = trpc.cardInventory.exportExcel.useMutation();
+  const exportPdfMutation = trpc.cardInventory.exportPdf.useMutation();
+
   const handleExportExcel = async (month: number) => {
-    const url = `/api/card-inventory/export/excel?year=${selectedYear}&month=${month}`;
     try {
-      toast.info("正在準備 Excel 檔案...");
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) { toast.error(`匯出失敗 (${res.status})，請重試`); return; }
-      const blob = await res.blob();
+      toast.info("正在準備 Excel 檔案，請稍候...");
+      const result = await exportExcelMutation.mutateAsync({ year: selectedYear, month });
       const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
+      const byteChars = atob(result.base64);
+      const byteNums = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteNums], { type: result.mimeType });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
@@ -1644,17 +1656,18 @@ export default function AdminCardInventory() {
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
       toast.success("Excel 檔案已下載");
-    } catch { toast.error("匯出失敗，請重試"); }
+    } catch (e: any) { toast.error(`匯出失敗：${e?.message ?? "請重試"}`); }
   };
 
   const handleExportPdf = async (month: number) => {
-    const url = `/api/card-inventory/export/pdf?year=${selectedYear}&month=${month}`;
     try {
-      toast.info("正在準備 PDF 檔案...");
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) { toast.error(`匯出失敗 (${res.status})，請重試`); return; }
-      const blob = await res.blob();
+      toast.info("正在準備 PDF 檔案，請稍候...");
+      const result = await exportPdfMutation.mutateAsync({ year: selectedYear, month });
       const label = month > 0 ? `${selectedYear}_${String(month).padStart(2, "0")}` : `${selectedYear}`;
+      const byteChars = atob(result.base64);
+      const byteNums = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteNums], { type: result.mimeType });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
@@ -1663,7 +1676,7 @@ export default function AdminCardInventory() {
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
       toast.success("PDF 檔案已下載");
-    } catch { toast.error("匯出失敗，請重試"); }
+    } catch (e: any) { toast.error(`匯出失敗：${e?.message ?? "請重試"}`); }
   };
 
   const items = listData?.items ?? [];
@@ -1692,6 +1705,15 @@ export default function AdminCardInventory() {
             className="gap-2 border-green-500 text-green-500 hover:bg-green-500/10"
           >
             <TrendingDown className="w-4 h-4" />批量賣出
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => backfillImageUrlsMutation.mutate()}
+            disabled={backfillImageUrlsMutation.isPending}
+            className="gap-2 border-orange-500 text-orange-500 hover:bg-orange-500/10"
+            title="對缺少圖片的記錄自動匹配卡牌圖片"
+          >
+            <ImageOff className="w-4 h-4" />{backfillImageUrlsMutation.isPending ? "補全中...": "補全圖片"}
           </Button>
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
