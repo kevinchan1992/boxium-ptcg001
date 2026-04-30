@@ -1668,7 +1668,8 @@ export default function AdminCardInventory() {
     onError: (e) => toast.error(`補全失敗：${e.message}`),
   });
 
-  const getExportTokenMutation = trpc.cardInventory.getExportToken.useMutation();
+  const exportExcelMutation = trpc.cardInventory.exportExcel.useMutation();
+  const exportPdfMutation = trpc.cardInventory.exportPdf.useMutation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportCurrent, setExportCurrent] = useState(0);
@@ -1682,32 +1683,39 @@ export default function AdminCardInventory() {
       setExportLabel(label);
       setExportExt("xlsx");
       setIsExporting(true);
-      setExportProgress(5);
+      setExportProgress(10);
       setExportCurrent(0);
       setExportTotal(0);
-      toast.info("正在生成 Excel，請稍候...");
-      const { token } = await getExportTokenMutation.mutateAsync({ type: "excel", year: selectedYear, month });
-      setExportProgress(15);
-      // Open REST endpoint directly in browser - triggers file download
-      const url = `${window.location.origin}/api/card-inventory/export/excel?token=${token}`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Simulate progress while waiting
-      let pct = 15;
+      toast.info("正在生成 Excel，請稍候（約 30-60 秒）...");
+      // Simulate progress while waiting for server
+      let pct = 10;
       const timer = setInterval(() => {
-        pct = Math.min(pct + 5, 90);
+        pct = Math.min(pct + 3, 85);
         setExportProgress(pct);
       }, 2000);
-      setTimeout(() => {
+      try {
+        const result = await exportExcelMutation.mutateAsync({ year: selectedYear, month });
         clearInterval(timer);
+        setExportProgress(95);
+        // Decode base64 and trigger download
+        const byteChars = atob(result.base64);
+        const byteNums = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteNums], { type: result.mimeType });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
         setExportProgress(100);
         toast.success("Excel 檔案已下載！");
         setTimeout(() => setIsExporting(false), 1000);
-      }, 30000);
+      } catch (innerErr: any) {
+        clearInterval(timer);
+        throw innerErr;
+      }
     } catch (e: any) {
       setIsExporting(false);
       toast.error(`匯出失敗：${e?.message ?? "請重試"}`);
@@ -1720,30 +1728,39 @@ export default function AdminCardInventory() {
       setExportLabel(label);
       setExportExt("pdf");
       setIsExporting(true);
-      setExportProgress(5);
+      setExportProgress(10);
       setExportCurrent(0);
       setExportTotal(0);
-      toast.info("正在生成 PDF，請稍候...");
-      const { token } = await getExportTokenMutation.mutateAsync({ type: "pdf", year: selectedYear, month });
-      setExportProgress(15);
-      const url = `${window.location.origin}/api/card-inventory/export/pdf?token=${token}`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      let pct = 15;
+      toast.info("正在生成 PDF，請稍候（約 30-60 秒）...");
+      // Simulate progress while waiting for server
+      let pct = 10;
       const timer = setInterval(() => {
-        pct = Math.min(pct + 4, 90);
+        pct = Math.min(pct + 2, 85);
         setExportProgress(pct);
       }, 2000);
-      setTimeout(() => {
+      try {
+        const result = await exportPdfMutation.mutateAsync({ year: selectedYear, month });
         clearInterval(timer);
+        setExportProgress(95);
+        // Decode base64 and trigger download
+        const byteChars = atob(result.base64);
+        const byteNums = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteNums], { type: result.mimeType });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
         setExportProgress(100);
         toast.success("PDF 檔案已下載！");
         setTimeout(() => setIsExporting(false), 1000);
-      }, 40000);
+      } catch (innerErr: any) {
+        clearInterval(timer);
+        throw innerErr;
+      }
     } catch (e: any) {
       setIsExporting(false);
       toast.error(`匯出失敗：${e?.message ?? "請重試"}`);

@@ -563,28 +563,33 @@ export const cardInventoryRouter = router({
       return { updated, total: missingRecords.length };
     }),
 
-  // Generate a short-lived export token (valid 10 minutes)
-  // Frontend uses this token to call the REST download endpoint directly
-  getExportToken: adminProcedure
+  // Export Excel via tRPC (returns base64-encoded file)
+  exportExcel: adminProcedure
     .input(z.object({
-      type: z.enum(["excel", "pdf"]),
       year: z.number(),
-      month: z.number(),
+      month: z.number(), // 0 = full year, 1-12 = specific month
     }))
     .mutation(async ({ input }) => {
-      const { exportJobs } = await import("../../drizzle/schema_new");
-      const db = await getDb();
-      const token = crypto.randomUUID();
-      // Store token with expiry (10 minutes)
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      await db.insert(exportJobs).values({
-        id: token,
-        type: input.type,
-        year: input.year,
-        month: input.month,
-        status: "pending",
-        expiresAt,
-      });
-      return { token };
+      const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
+      const buffer = await generateCardInventoryExcel(input.year, input.month);
+      return {
+        base64: buffer.toString("base64"),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      };
+    }),
+
+  // Export PDF via tRPC (returns base64-encoded file)
+  exportPdf: adminProcedure
+    .input(z.object({
+      year: z.number(),
+      month: z.number(), // 0 = full year, 1-12 = specific month
+    }))
+    .mutation(async ({ input }) => {
+      const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
+      const buffer = await generateCardInventoryPdf(input.year, input.month);
+      return {
+        base64: buffer.toString("base64"),
+        mimeType: "application/pdf",
+      };
     }),
 });
