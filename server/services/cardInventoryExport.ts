@@ -244,14 +244,17 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
 
     const tableTop = sy + 60;
     // Dynamic row height based on notes length
+    // Notes col is 50px wide, ~6 Chinese chars per line at 7pt font
+    const NOTES_CHARS_PER_LINE = 6;
+    const NOTES_LINE_HEIGHT = 11;
+    const BASE_ROW_H = 44;
     const getRowH = (notes: string | null) => {
-      // Notes col is 50px wide (~8 chars/line at 7.5pt)
-      const len = (notes || "").length;
-      if (len === 0) return 44;
-      if (len <= 8) return 44;
-      if (len <= 16) return 56;
-      if (len <= 24) return 68;
-      return 80;
+      if (!notes) return BASE_ROW_H;
+      const lines = Math.ceil(notes.length / NOTES_CHARS_PER_LINE);
+      if (lines <= 1) return BASE_ROW_H;
+      // Extra height needed beyond 1 line
+      const extraH = (lines - 1) * NOTES_LINE_HEIGHT;
+      return Math.max(BASE_ROW_H, BASE_ROW_H + extraH);
     };
 
     const drawTableHeader = (y: number) => {
@@ -353,9 +356,14 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
         const textY = rowY + (ROW_H - 14) / 2; // vertically center
         const isNotesCol = ci === cells.length - 1;
         if (isNotesCol) {
-          // Notes col: vertically centered, same as other cols
+          // Notes col: top-aligned with line wrapping for long notes
+          const notesTextY = rowY + 6; // small top padding
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7)
-            .text(cell, dcx + 3, textY, { width: colDef.width - 6, lineBreak: false, ellipsis: true });
+            .text(cell === "—" ? cell : cell, dcx + 3, notesTextY, {
+              width: colDef.width - 6,
+              lineBreak: cell !== "—" && cell.length > NOTES_CHARS_PER_LINE,
+              ellipsis: false,
+            });
         } else {
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
             .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });

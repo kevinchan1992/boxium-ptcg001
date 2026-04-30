@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
@@ -1964,6 +1965,7 @@ export default function AdminCardInventory() {
                     <th className="text-right p-3 font-medium">毛利</th>
                     <th className="text-left p-3 font-medium">狀態</th>
                     <th className="text-left p-3 font-medium">買取日期</th>
+                    <th className="text-left p-3 font-medium max-w-[120px]">備注</th>
                     <th className="text-center p-3 font-medium">操作</th>
                   </tr>
                 </thead>
@@ -2028,6 +2030,22 @@ export default function AdminCardInventory() {
                           </Badge>
                         </td>
                         <td className="p-3 text-muted-foreground text-xs">{formatDate(item.buyDate)}</td>
+                        <td className="p-3 max-w-[120px]">
+                          {item.notes ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-xs text-muted-foreground truncate block max-w-[110px] cursor-default">
+                                  {item.notes}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[250px] whitespace-pre-wrap text-xs">
+                                {item.notes}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/40">—</span>
+                          )}
+                        </td>
                         <td className="p-3">
                           <div className="flex items-center justify-center gap-1">
                             {item.status === "holding" && (
