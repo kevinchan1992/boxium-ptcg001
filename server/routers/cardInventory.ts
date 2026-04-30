@@ -462,7 +462,11 @@ export const cardInventoryRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { generateCardInventoryExcel } = await import("../services/cardInventoryExport");
-      const buffer = await generateCardInventoryExcel(input.year, input.month);
+      // 50s timeout to stay within Cloud Run 60s request limit
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("匯出超時：記錄數量過多，請改為按月份匯出（而非全年）")), 50000)
+      );
+      const buffer = await Promise.race([generateCardInventoryExcel(input.year, input.month), timeoutPromise]);
       return {
         base64: buffer.toString("base64"),
         mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -477,7 +481,11 @@ export const cardInventoryRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { generateCardInventoryPdf } = await import("../services/cardInventoryExport");
-      const buffer = await generateCardInventoryPdf(input.year, input.month);
+      // 50s timeout to stay within Cloud Run 60s request limit
+      const timeoutPromise2 = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("匯出超時：記錄數量過多，請改為按月份匯出（而非全年）")), 50000)
+      );
+      const buffer = await Promise.race([generateCardInventoryPdf(input.year, input.month), timeoutPromise2]);
       return {
         base64: buffer.toString("base64"),
         mimeType: "application/pdf",

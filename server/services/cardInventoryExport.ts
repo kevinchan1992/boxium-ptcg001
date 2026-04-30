@@ -33,6 +33,23 @@ function getImageExtension(_url: string): "png" {
 }
 const imageCache = new Map<string, Buffer>();
 
+/**
+ * Fetch images in batches to avoid overwhelming the server and hitting Cloud Run 60s timeout.
+ * @param urls - Array of image URLs
+ * @param batchSize - Number of concurrent downloads per batch (default: 5)
+ */
+async function fetchImageBuffersBatched(urls: string[], batchSize = 5): Promise<(Buffer | null)[]> {
+  const results: (Buffer | null)[] = new Array(urls.length).fill(null);
+  for (let i = 0; i < urls.length; i += batchSize) {
+    const batch = urls.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map((url) => fetchImageBuffer(url)));
+    for (let j = 0; j < batchResults.length; j++) {
+      results[i + j] = batchResults[j];
+    }
+  }
+  return results;
+}
+
 async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   if (!url || !url.startsWith("http")) return null;
   if (imageCache.has(url)) return imageCache.get(url)!;
@@ -107,10 +124,8 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
-  // Pre-fetch all card images in parallel
-  const imageBuffers = await Promise.all(
-    rows.map((r) => fetchImageBuffer(r.imageUrl || ""))
-  );
+  // Pre-fetch all card images in batches (5 at a time) to avoid Cloud Run 60s timeout
+  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.imageUrl || ""));
 
   // Load logo
   let logoData: Buffer | null = null;
@@ -339,10 +354,8 @@ export async function generateCardInventoryExcel(year: number, month: number): P
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
-  // Pre-fetch all card images in parallel
-  const imageBuffers = await Promise.all(
-    rows.map((r) => fetchImageBuffer(r.imageUrl || ""))
-  );
+  // Pre-fetch all card images in batches (5 at a time) to avoid Cloud Run 60s timeout
+  const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.imageUrl || ""));
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "BOXIUM PTCG";

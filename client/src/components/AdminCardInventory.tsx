@@ -82,6 +82,36 @@ type CardSearchResult = {
 };
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
+/**
+ * Extract the set name from a card.
+ * Priority:
+ * 1. card.setName if not null/empty
+ * 2. The set name in parentheses from card.name, e.g. "(High Class Pack \"MEGA Dream ex\")" → "High Class Pack \"MEGA Dream ex\""
+ * 3. The set code prefix from card.cardNumber, e.g. "SM7 068/096" → "SM7"
+ */
+function extractCardSet(card: CardSearchResult): string {
+  if (card.setName) return card.setName;
+  // Try to extract from card name: last parenthesized group
+  if (card.name) {
+    const parenMatch = card.name.match(/\(([^)]+)\)\s*$/);
+    if (parenMatch) return parenMatch[1];
+  }
+  // Fall back to set code prefix from cardNumber
+  if (card.cardNumber) {
+    const spaceIdx = card.cardNumber.indexOf(" ");
+    if (spaceIdx > 0) return card.cardNumber.slice(0, spaceIdx);
+  }
+  return "";
+}
+/**
+ * Extract the pure card number (without set code prefix) from a CardSearchResult.
+ * e.g. "SM7 068/096" → "068/096", "M2a 063/193" → "063/193"
+ */
+function extractCardNumber(card: CardSearchResult): string {
+  if (!card.cardNumber) return "";
+  const spaceIdx = card.cardNumber.indexOf(" ");
+  return spaceIdx > 0 ? card.cardNumber.slice(spaceIdx + 1) : card.cardNumber;
+}
 function formatHkd(val: string | number | null | undefined): string {
   if (val == null) return "—";
   const n = Number(val);
@@ -857,15 +887,10 @@ function BatchBuyDialog({
                     value={row.cardName}
                     onChange={(v) => updateRow(row.id, { cardName: v, imageUrl: v ? row.imageUrl : "", linkedCardId: v ? row.linkedCardId : null })}
                     onSelect={(card) => {
-                      // Extract set code from cardNumber (e.g. "SM7 068/096" → setCode="SM7", num="068/096")
-                      const rawNum = card.cardNumber ?? "";
-                      const spaceIdx = rawNum.indexOf(" ");
-                      const setCode = spaceIdx > 0 ? rawNum.slice(0, spaceIdx) : "";
-                      const pureNum = spaceIdx > 0 ? rawNum.slice(spaceIdx + 1) : rawNum;
                       updateRow(row.id, {
                         cardName: card.name,
-                        cardSet: setCode || card.setName || "",
-                        cardNumber: pureNum,
+                        cardSet: extractCardSet(card),
+                        cardNumber: extractCardNumber(card),
                         imageUrl: card.imageUrl ?? "",
                         linkedCardId: card.id,
                       });
@@ -1108,8 +1133,8 @@ function BuyFormDialog({
     setForm(f => ({
       ...f,
       cardName: card.name,
-      cardSet: card.setName ?? "",
-      cardNumber: card.cardNumber ?? "",
+      cardSet: extractCardSet(card),
+      cardNumber: extractCardNumber(card),
       imageUrl: card.imageUrl ?? "",
       linkedCardId: card.id,
     }));
