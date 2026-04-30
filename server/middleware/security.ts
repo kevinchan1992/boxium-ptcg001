@@ -568,6 +568,9 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
  * Detection methods:
  *  1. x-internal-token header matches JWT_SECRET (server-to-server calls)
  *  2. Specific admin procedures known to be called by schedulers
+ *  3. /api/scheduled/* paths with valid CRON_SECRET Bearer token
+ *     (Manus scheduled tasks call these endpoints via curl without browser headers)
+ *  4. Stripe webhook path with stripe-signature header (safety net)
  */
 export function isInternalSystemRequest(req: Request): boolean {
   // Method 1: Internal token header (for server-to-server calls)
@@ -596,6 +599,27 @@ export function isInternalSystemRequest(req: Request): boolean {
     "admin.runScheduledPriceUpdate",
   ];
   if (INTERNAL_PROCEDURES.some((proc) => url.includes(proc))) {
+    return true;
+  }
+
+  // Method 3: /api/scheduled/* paths with valid CRON_SECRET Bearer token.
+  // Manus scheduled tasks call these endpoints via curl, which sends
+  // "curl/x.x.x" as User-Agent (blocked by BAD_BOT_PATTERNS) or no UA at all.
+  // Security is ensured by CRON_SECRET token validation, so bot detection bypass is safe.
+  const path = req.path ?? "";
+  if (path.startsWith("/api/scheduled/")) {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers["authorization"] ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (cronSecret && token === cronSecret) {
+      return true;
+    }
+  }
+
+  // Method 4: Stripe webhook — safety net in case Stripe changes its User-Agent.
+  // Stripe normally sends "Stripe/1.0 (+https://stripe.com/docs/webhooks)" which is fine,
+  // but the stripe-signature header is a reliable indicator of a legitimate Stripe request.
+  if (path === "/api/stripe/webhook" && req.headers["stripe-signature"]) {
     return true;
   }
 
