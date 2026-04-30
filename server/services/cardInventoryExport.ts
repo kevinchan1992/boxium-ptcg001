@@ -353,8 +353,9 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
         const textY = rowY + (ROW_H - 14) / 2; // vertically center
         const isNotesCol = ci === cells.length - 1;
         if (isNotesCol) {
+          // Notes col: vertically centered, same as other cols
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7)
-            .text(cell, dcx + 3, rowY + 4, { width: colDef.width - 6, lineBreak: true });
+            .text(cell, dcx + 3, textY, { width: colDef.width - 6, lineBreak: false, ellipsis: true });
         } else {
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
             .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });
