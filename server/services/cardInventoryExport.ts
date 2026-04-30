@@ -146,11 +146,13 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    const doc = new PDFDocument({ margin: 40, size: "A4", layout: "landscape" });
+    const doc = new PDFDocument({ margin: 0, size: "A4", layout: "landscape", bufferPages: true, autoFirstPage: false });
+    doc.addPage({ size: "A4", layout: "landscape", margin: 0 });
 
     doc.on("data", (chunk) => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
+
 
     // Register Chinese fonts
     doc.registerFont("NotoTC-Regular", FONT_REGULAR);
@@ -185,12 +187,14 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       .fillColor(BRAND_BLUE)
       .font("NotoTC-Bold")
       .fontSize(18)
-      .text("卡牌買取及賣出記錄", margin + 155, 16);
+      .text("卡牌買取及賣出記錄", margin + 155, 16, { lineBreak: false });
+    doc.y = 16; // Reset after title
     doc
       .fillColor(BRAND_BLUE)
       .font("NotoTC-Regular")
       .fontSize(11)
-      .text(`報告期間：${label}　　列印日期：${new Date().toLocaleDateString("zh-HK")}　　共 ${rows.length} 筆記錄`, margin + 155, 42);
+      .text(`報告期間：${label}　　列印日期：${new Date().toLocaleDateString("zh-HK")}　　共 ${rows.length} 筆記錄`, margin + 155, 42, { lineBreak: false });
+    doc.y = 42; // Reset after subtitle
 
     // ── Summary Stats ──
     const totalBuy = rows.reduce((s, r) => s + parseFloat(r.buyPriceHkd || "0"), 0);
@@ -211,9 +215,13 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       const sx = margin + i * (statBoxW + 10);
       doc.roundedRect(sx, sy, statBoxW, 44, 6).fill("#f8f9fa");
       doc.roundedRect(sx, sy, statBoxW, 44, 6).stroke("#e5e7eb");
-      doc.fillColor("#6b7280").font("NotoTC-Regular").fontSize(9).text(stat.label, sx + 8, sy + 8, { width: statBoxW - 16 });
-      doc.fillColor(stat.color).font("NotoTC-Bold").fontSize(14).text(stat.value, sx + 8, sy + 22, { width: statBoxW - 16 });
+      doc.fillColor("#6b7280").font("NotoTC-Regular").fontSize(9).text(stat.label, sx + 8, sy + 8, { width: statBoxW - 16, lineBreak: false });
+      doc.y = sy; // Reset after label
+      doc.fillColor(stat.color).font("NotoTC-Bold").fontSize(14).text(stat.value, sx + 8, sy + 22, { width: statBoxW - 16, lineBreak: false });
+      doc.y = sy; // Reset after value
     });
+    // Reset y after all stat boxes
+    doc.y = sy + 44;
 
     // ── Table ──
     // Image column (40px) + text columns
@@ -252,6 +260,8 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       cols.forEach((col) => {
         doc.fillColor("white").font("NotoTC-Bold").fontSize(8)
           .text(col.label, cx + 4, y + 7, { width: col.width - 8, lineBreak: false });
+        // CRITICAL: Reset y cursor after each header cell
+        doc.y = y;
         cx += col.width;
       });
     };
@@ -272,10 +282,12 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
         .text(
           "BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用",
-          margin, footerY, { width: contentW - 90, align: "center" }
+          margin, footerY, { width: contentW - 90, align: "center", lineBreak: false }
         );
+      doc.y = footerY; // Reset after footer text to prevent auto page-break
       doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
-        .text(`第 ${pageNum} 頁 / 共 ${totalPages} 頁`, pageW - margin - 90, footerY, { width: 90, align: "right" });
+        .text(`第 ${pageNum} 頁 / 共 ${totalPages} 頁`, pageW - margin - 90, footerY, { width: 90, align: "right", lineBreak: false });
+      doc.y = footerY; // Reset after page number text
     };
 
     let rowY = tableTop + 22;
@@ -284,7 +296,7 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       if (rowY + ROW_H > pageH - margin) {
         drawFooter(currentPage);
         currentPage++;
-        doc.addPage({ size: "A4", layout: "landscape" });
+        doc.addPage({ size: "A4", layout: "landscape", margin: 0 });
         rowY = margin;
         drawTableHeader(rowY);
         rowY += 22;
@@ -302,15 +314,20 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       const imgW = IMG_COL_W - 6;
       if (imgBuf) {
         try {
-          doc.image(imgBuf, imgX, imgY, { fit: [imgW, imgH], align: "center", valign: "center" });
+          // Use explicit width/height to prevent PDFKit from moving cursor after image
+          const savedY = doc.y;
+          doc.image(imgBuf, imgX, imgY, { width: imgW, height: imgH });
+          doc.y = savedY; // Restore y position immediately after image
         } catch {
           doc.rect(imgX, imgY, imgW, imgH).fill("#e5e7eb");
         }
       } else {
         doc.roundedRect(imgX, imgY, imgW, imgH, 3).fill("#e5e7eb");
         doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(6)
-          .text("無圖", imgX, imgY + imgH / 2 - 4, { width: imgW, align: "center" });
+          .text("無圖", imgX, imgY + imgH / 2 - 4, { width: imgW, align: "center", lineBreak: false });
       }
+      // CRITICAL: Reset y cursor after image/text to prevent PDFKit auto page-break
+      doc.y = rowY;
 
       // Text cells (skip image col)
       const cells = [
@@ -342,6 +359,8 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7.5)
             .text(cell, dcx + 3, textY, { width: colDef.width - 6, ellipsis: true, lineBreak: false });
         }
+        // CRITICAL: Reset y cursor after each cell to prevent PDFKit auto page-break
+        doc.y = rowY;
         dcx += colDef.width;
       });
 
