@@ -1747,6 +1747,9 @@ export const exportJobs = mysqlTable("exportJobs", {
   year: int("year").notNull(),
   month: int("month").notNull(), // 0 = full year
   status: mysqlEnum("status", ["pending", "processing", "done", "error"]).default("pending").notNull(),
+  progress: int("progress").default(0), // 0-100 percentage
+  currentItem: int("currentItem").default(0), // current item index being processed
+  totalItems: int("totalItems").default(0), // total items to process
   downloadUrl: text("downloadUrl"), // S3 URL when done
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

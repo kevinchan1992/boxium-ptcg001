@@ -9,6 +9,31 @@ import https from "https";
 import http from "http";
 import sharp from "sharp";
 
+// Upload a single image URL to S3 and return the S3 URL (fire-and-forget safe)
+async function uploadImageToS3(recordId: number, imageUrl: string): Promise<string | null> {
+  try {
+    const rawBuf = await new Promise<Buffer | null>((resolve) => {
+      const client = imageUrl.startsWith("https") ? https : http;
+      const req = client.get(imageUrl, { timeout: 8000 }, (res) => {
+        if (res.statusCode !== 200) { resolve(null); return; }
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () => resolve(Buffer.concat(chunks)));
+        res.on("error", () => resolve(null));
+      });
+      req.on("error", () => resolve(null));
+      req.on("timeout", () => { req.destroy(); resolve(null); });
+    });
+    if (!rawBuf) return null;
+    const pngBuf = await sharp(rawBuf).png().toBuffer();
+    const s3Key = `card-inventory-images/${recordId}.png`;
+    const { url } = await storagePut(s3Key, pngBuf, "image/png");
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 // Exchange rate fetcher (simple static fallback + optional live fetch)
 async function getExchangeRate(from: "JPY" | "USD", to: "HKD"): Promise<number> {
   // Static fallback rates (approximate)
@@ -158,7 +183,18 @@ export const cardInventoryRouter = router({
         linkedCardId: input.linkedCardId ?? null,
       });
 
-      return { success: true, id: result.insertId };
+      const newId = result.insertId;
+      // Auto-cache image to S3 in background (fire-and-forget)
+      if (input.imageUrl) {
+        (async () => {
+          const s3Url = await uploadImageToS3(newId, input.imageUrl!);
+          if (s3Url) {
+            const dbInner = await getDb();
+            await dbInner.update(cardInventory).set({ s3ImageUrl: s3Url }).where(eq(cardInventory.id, newId)).catch(() => {});
+          }
+        })();
+      }
+      return { success: true, id: newId };
     }),
 
   // Batch create buy records
@@ -208,7 +244,24 @@ export const cardInventoryRouter = router({
         };
       });
 
-      await db.insert(cardInventory).values(values);
+      const insertResult = await db.insert(cardInventory).values(values);
+      // Auto-cache images to S3 in background (fire-and-forget)
+      // We need to get the inserted IDs - fetch the most recently inserted records
+      const firstInsertId = insertResult[0]?.insertId;
+      if (firstInsertId) {
+        const itemsWithImages = input.items.map((item, i) => ({ id: firstInsertId + i, imageUrl: item.imageUrl })).filter(x => x.imageUrl);
+        if (itemsWithImages.length > 0) {
+          (async () => {
+            const dbInner = await getDb();
+            for (const item of itemsWithImages) {
+              const s3Url = await uploadImageToS3(item.id, item.imageUrl!);
+              if (s3Url) {
+                await dbInner.update(cardInventory).set({ s3ImageUrl: s3Url }).where(eq(cardInventory.id, item.id)).catch(() => {});
+              }
+            }
+          })();
+        }
+      }
       return { success: true, count: values.length };
     }),
 
@@ -532,11 +585,23 @@ export const cardInventoryRouter = router({
       // Start background processing (fire and forget - does NOT await)
       (async () => {
         try {
-          await db.update(exportJobs).set({ status: "processing" }).where(eq(exportJobs.id, jobId));
+          await db.update(exportJobs).set({ status: "processing", progress: 0 }).where(eq(exportJobs.id, jobId));
           const { generateCardInventoryExcel, generateCardInventoryPdf } = await import("../services/cardInventoryExport");
+          // Progress callback: update DB every time a batch of images is processed
+          let lastProgressUpdate = 0;
+          const onProgress = async (current: number, total: number) => {
+            const pct = total > 0 ? Math.round((current / total) * 90) : 0; // max 90% during image download
+            if (pct !== lastProgressUpdate) {
+              lastProgressUpdate = pct;
+              await db.update(exportJobs)
+                .set({ progress: pct, currentItem: current, totalItems: total })
+                .where(eq(exportJobs.id, jobId))
+                .catch(() => {});
+            }
+          };
           const buffer = input.type === "excel"
-            ? await generateCardInventoryExcel(input.year, input.month)
-            : await generateCardInventoryPdf(input.year, input.month);
+            ? await generateCardInventoryExcel(input.year, input.month, onProgress)
+            : await generateCardInventoryPdf(input.year, input.month, onProgress);
           const ext = input.type === "excel" ? "xlsx" : "pdf";
           const label = input.month > 0 ? `${input.year}_${String(input.month).padStart(2, "0")}` : `${input.year}`;
           const s3Key = `exports/${jobId}/BOXIUM_卡牌買賣記錄_${label}.${ext}`;

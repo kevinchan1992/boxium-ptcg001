@@ -1673,10 +1673,10 @@ export default function AdminCardInventory() {
   const [exportLabel, setExportLabel] = useState("");
   const [exportExt, setExportExt] = useState("");
 
-  // Poll export job status every 3 seconds
+  // Poll export job status every 2 seconds
   const { data: exportJob } = trpc.cardInventory.getExportJob.useQuery(
     { jobId: exportJobId ?? "" },
-    { enabled: !!exportJobId, refetchInterval: exportJobId ? 3000 : false }
+    { enabled: !!exportJobId, refetchInterval: exportJobId ? 2000 : false }
   );
 
   // Auto-download when job is done
@@ -1696,6 +1696,12 @@ export default function AdminCardInventory() {
       setExportJobId(null);
     }
   }, [exportJob?.status, exportJob?.downloadUrl]);
+
+  // Compute progress info
+  const exportProgress = exportJob?.progress ?? 0;
+  const exportCurrent = exportJob?.currentItem ?? 0;
+  const exportTotal = exportJob?.totalItems ?? 0;
+  const isExporting = !!exportJobId && exportJob?.status !== "done" && exportJob?.status !== "error";
 
   const handleExportExcel = async (month: number) => {
     try {
@@ -2041,7 +2047,34 @@ export default function AdminCardInventory() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col items-end gap-2">
+              {/* Export progress bar */}
+              {isExporting && (
+                <div className="w-full max-w-xs bg-muted rounded-lg px-3 py-2 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      正在生成 {exportExt.toUpperCase()}...
+                    </span>
+                    <span className="font-semibold text-foreground">{exportProgress}%</span>
+                  </div>
+                  <div className="w-full bg-background rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${exportProgress}%` }}
+                    />
+                  </div>
+                  {exportTotal > 0 && (
+                    <div className="text-xs text-muted-foreground text-right">
+                      已處理圖片 {exportCurrent} / {exportTotal} 張
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex gap-2">
               {/* Excel export dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -2084,7 +2117,8 @@ export default function AdminCardInventory() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+              </div>{/* end flex gap-2 */}
+            </div>{/* end flex flex-col */}
           </div>
           <MonthlySummaryTab year={selectedYear} onExportMonth={handleExportExcel} />
         </TabsContent>

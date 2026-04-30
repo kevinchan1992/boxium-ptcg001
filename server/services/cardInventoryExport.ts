@@ -38,14 +38,21 @@ const imageCache = new Map<string, Buffer>();
  * @param urls - Array of image URLs
  * @param batchSize - Number of concurrent downloads per batch (default: 5)
  */
-async function fetchImageBuffersBatched(urls: string[], batchSize = 5): Promise<(Buffer | null)[]> {
+async function fetchImageBuffersBatched(
+  urls: string[],
+  batchSize = 5,
+  onProgress?: (current: number, total: number) => void
+): Promise<(Buffer | null)[]> {
   const results: (Buffer | null)[] = new Array(urls.length).fill(null);
+  let processed = 0;
   for (let i = 0; i < urls.length; i += batchSize) {
     const batch = urls.slice(i, i + batchSize);
     const batchResults = await Promise.all(batch.map((url) => fetchImageBuffer(url)));
     for (let j = 0; j < batchResults.length; j++) {
       results[i + j] = batchResults[j];
     }
+    processed += batch.length;
+    if (onProgress) onProgress(processed, urls.length);
   }
   return results;
 }
@@ -120,7 +127,7 @@ function periodLabel(year: number, month: number): string {
 }
 
 // ─── PDF Export ───────────────────────────────────────────────────────────────
-export async function generateCardInventoryPdf(year: number, month: number): Promise<Buffer> {
+export async function generateCardInventoryPdf(year: number, month: number, onProgress?: (current: number, total: number) => void): Promise<Buffer> {
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
@@ -351,7 +358,7 @@ export async function generateCardInventoryPdf(year: number, month: number): Pro
 }
 
 // ─── Excel Export ─────────────────────────────────────────────────────────────
-export async function generateCardInventoryExcel(year: number, month: number): Promise<Buffer> {
+export async function generateCardInventoryExcel(year: number, month: number, onProgress?: (current: number, total: number) => void): Promise<Buffer> {
   const rows = await fetchRecords(year, month);
   const label = periodLabel(year, month);
 
