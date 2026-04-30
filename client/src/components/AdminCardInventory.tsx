@@ -1689,7 +1689,7 @@ export default function AdminCardInventory() {
       const { token } = await getExportTokenMutation.mutateAsync({ type: "excel", year: selectedYear, month });
       setExportProgress(15);
       // Open REST endpoint directly in browser - triggers file download
-      const url = `/api/card-inventory/export/excel?token=${token}`;
+      const url = `${window.location.origin}/api/card-inventory/export/excel?token=${token}`;
       const a = document.createElement("a");
       a.href = url;
       a.download = `BOXIUM_卡牌買賣記錄_${label}.xlsx`;
@@ -1726,7 +1726,7 @@ export default function AdminCardInventory() {
       toast.info("正在生成 PDF，請稍候...");
       const { token } = await getExportTokenMutation.mutateAsync({ type: "pdf", year: selectedYear, month });
       setExportProgress(15);
-      const url = `/api/card-inventory/export/pdf?token=${token}`;
+      const url = `${window.location.origin}/api/card-inventory/export/pdf?token=${token}`;
       const a = document.createElement("a");
       a.href = url;
       a.download = `BOXIUM_卡牌買賣記錄_${label}.pdf`;
