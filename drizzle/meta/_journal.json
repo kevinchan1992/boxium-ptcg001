@@ -449,6 +449,13 @@
       "when": 1777299800000,
       "tag": "0065_add_batch_cost_hkd",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1746151200000,
+      "tag": "0066_add_snkrdunk_update_mode",
+      "breakpoints": true
     }
   ]
 }

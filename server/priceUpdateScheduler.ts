@@ -113,7 +113,9 @@ export async function initPriceUpdateScheduler() {
     }
 
     // Start SNKRDUNK scheduler if enabled
-    if (config.snkrdunkEnabled) {
+    // When updateMode is 'github_actions', platform cron is disabled to avoid double-running
+    const updateMode = (config as any).snkrdunkUpdateMode ?? 'platform';
+    if (config.snkrdunkEnabled && updateMode !== 'github_actions') {
       startSnkrdunkScheduler(config.snkrdunkUpdateTime, 1);
       // Start second scheduler if configured
       if (config.snkrdunkUpdateTime2) {

@@ -1555,6 +1555,7 @@ export async function updatePriceUpdateSchedule(data: {
   snkrdunkEnabled?: boolean;
   snkrdunkUpdateTime?: string;
   snkrdunkUpdateTime2?: string | null;
+  snkrdunkUpdateMode?: string;
 }) {
   const db = await getDb();
   if (!db) {

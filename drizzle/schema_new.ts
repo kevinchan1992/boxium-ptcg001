@@ -579,6 +579,7 @@ export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
   snkrdunkUpdateTime2: varchar("snkrdunkUpdateTime2", { length: 8 }).default("13:00"), // Second daily update time (HH:mm format, null = disabled)
   snkrdunkLastExecutedAt: timestamp("snkrdunkLastExecutedAt"), // Last SNKRDUNK update execution time
   snkrdunkLastCatchupAt: timestamp("snkrdunkLastCatchupAt"), // Last catch-up execution time (used for cooldown — one catch-up per HKT day)
+  snkrdunkUpdateMode: varchar("snkrdunkUpdateMode", { length: 32 }).default("github_actions").notNull(), // 'platform' = use platform cron scheduler; 'github_actions' = GitHub Actions is primary (platform cron disabled)
   timezone: varchar("timezone", { length: 64 }).default("Asia/Hong_Kong").notNull(), // Timezone
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

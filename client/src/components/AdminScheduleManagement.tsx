@@ -367,6 +367,7 @@ export function AdminScheduleManagement() {
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(schedule?.snkrdunkEnabled ?? false);
   const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "01:00");
   const [snkrdunkTime2, setSnkrdunkTime2] = useState((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
+  const [snkrdunkUpdateMode, setSnkrdunkUpdateMode] = useState<'platform' | 'github_actions'>((schedule as any)?.snkrdunkUpdateMode ?? 'github_actions');
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   
   // 當 schedule 數據載入時同步更新本地狀態
@@ -375,6 +376,7 @@ export function AdminScheduleManagement() {
       setSnkrdunkEnabled(schedule.snkrdunkEnabled ?? false);
       setSnkrdunkTime(schedule.snkrdunkUpdateTime ?? "01:00");
       setSnkrdunkTime2((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
+      setSnkrdunkUpdateMode((schedule as any)?.snkrdunkUpdateMode ?? 'github_actions');
     }
   }, [schedule]);
   
@@ -398,6 +400,7 @@ export function AdminScheduleManagement() {
       snkrdunkEnabled,
       snkrdunkUpdateTime: snkrdunkTime,
       snkrdunkUpdateTime2: snkrdunkTime2 || null,
+      snkrdunkUpdateMode,
     } as any);
   };
   
@@ -486,6 +489,57 @@ export function AdminScheduleManagement() {
         <CardContent className="space-y-6">
           {/* SNKRDUNK 排程設定 */}
           <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
+            {/* 更新模式切換 */}
+            <div className="space-y-2">
+              <Label className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新模式</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSnkrdunkUpdateMode('github_actions')}
+                  className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
+                    snkrdunkUpdateMode === 'github_actions'
+                      ? 'bg-green-900/50 border-green-500 text-green-300'
+                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  <Github className="w-4 h-4" />
+                  <div className="text-left">
+                    <div>GitHub Actions （主要）</div>
+                    <div className="text-xs opacity-70">每日 01:00 HKT 自動執行</div>
+                  </div>
+                  {snkrdunkUpdateMode === 'github_actions' && <span className="ml-auto text-xs bg-green-700 text-green-200 px-1.5 py-0.5 rounded">啟用</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSnkrdunkUpdateMode('platform')}
+                  className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
+                    snkrdunkUpdateMode === 'platform'
+                      ? 'bg-blue-900/50 border-blue-500 text-blue-300'
+                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <div className="text-left">
+                    <div>平台內建排程</div>
+                    <div className="text-xs opacity-70">使用下方時間設定</div>
+                  </div>
+                  {snkrdunkUpdateMode === 'platform' && <span className="ml-auto text-xs bg-blue-700 text-blue-200 px-1.5 py-0.5 rounded">啟用</span>}
+                </button>
+              </div>
+              {snkrdunkUpdateMode === 'github_actions' && (
+                <div className="flex items-start gap-2 p-2 bg-green-900/20 border border-green-800 rounded text-xs text-green-300">
+                  <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                  <span>GitHub Actions 模式：平台內建排程已停用，全部更新由 GitHub Actions 執行。不會重複執行，節省伺服器資源。</span>
+                </div>
+              )}
+              {snkrdunkUpdateMode === 'platform' && (
+                <div className="flex items-start gap-2 p-2 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-300">
+                  <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                  <span>平台排程模式：由本平台伺服器執行排程。若 GitHub Actions 同時啟用，將會重複執行。</span>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新</Label>
