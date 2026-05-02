@@ -8937,3 +8937,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 修改 Cart.tsx：移除 Checkbox 的 green 覆蓋樣式，背景改為藍色 #06038D/5，CheckCircle 圖示改為藍色
 - [x] 在 index.css @layer base 加入全局 input[type="checkbox"] { accent-color: #06038D }，統一所有原生 checkbox 顯示藍色
 - [x] TypeScript 0 errors 確認 + checkpoint
+
+## ✅ BOXIUM 市場參考價 fallback 邏輯
+- [x] 無對應 grade 記錄時，顯示「暫無 X品 交易數據，以下為所有品相市場參考價」提示，並展示全部品相數據
+- [x] 底部說明文字 fallback 時顯示「所有品相（參考）」

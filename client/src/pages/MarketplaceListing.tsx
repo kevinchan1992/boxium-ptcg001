@@ -180,10 +180,16 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
 
   // Filter history by condition-matched grades (client-side)
   const matchedGrades = condition ? CONDITION_TO_GRADES[condition] : undefined;
-  const filteredHistory = useMemo(() => {
-    if (!history) return [];
-    if (!matchedGrades || matchedGrades.length === 0) return history;
-    return history.filter(h => h.grade && matchedGrades.includes(h.grade));
+  const conditionLabel = condition ? CONDITION_FULL[condition as ConditionValue] : undefined;
+
+  // filteredHistory: grade-matched records; fallbackHistory: all records when no grade match
+  const { filteredHistory, isGradeFallback } = useMemo(() => {
+    if (!history) return { filteredHistory: [], isGradeFallback: false };
+    if (!matchedGrades || matchedGrades.length === 0) return { filteredHistory: history, isGradeFallback: false };
+    const matched = history.filter(h => h.grade && matchedGrades.includes(h.grade));
+    if (matched.length > 0) return { filteredHistory: matched, isGradeFallback: false };
+    // No records for this grade → fall back to all grades
+    return { filteredHistory: history, isGradeFallback: true };
   }, [history, matchedGrades]);
 
   const chartData = useMemo(() => {
@@ -293,6 +299,15 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
         </a>
       </div>
       <div className="p-4 space-y-4">
+        {/* Fallback notice: no records for this grade, showing all grades */}
+        {isGradeFallback && conditionLabel && (
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              暫無 <span className="font-semibold">{conditionLabel}</span> 品相的交易數據，以下為所有品相的市場參考價
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center bg-[#06038D]/5 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">{t("marketplaceListing.30DayAverage")}</p>
@@ -358,7 +373,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：BOXIUM{condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
+        <p className="text-xs text-gray-400">數據來源：BOXIUM{isGradeFallback ? ' · 所有品相（參考）' : condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
       </div>
     </div>
   );
