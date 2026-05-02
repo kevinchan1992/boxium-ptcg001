@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
+import { MarketplaceMarquee } from "@/components/MarketplaceMarquee";
 import StructuredData from "@/components/StructuredData";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 
@@ -597,6 +598,9 @@ export default function Home() {
       </section>
 
 
+
+      {/* Marketplace Marquee Section */}
+      <MarketplaceMarquee />
 
       {/* Trending Cards Section */}
       <section className="py-6 md:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>
