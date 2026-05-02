@@ -179,7 +179,7 @@ function GradingBannerCarousel() {
     if (!images || images.length === 0) return;
     const track = trackRef.current;
     if (!track) return;
-    const speed = 0.7; // px per frame
+    const speed = 0.5; // px per frame
     const step = () => {
       if (!pausedRef.current) {
         posRef.current += speed;
@@ -217,13 +217,13 @@ function GradingBannerCarousel() {
           {doubled.map((img, idx) => (
             <div
               key={`${img.id}-${idx}`}
-              className="flex-shrink-0 rounded-2xl overflow-hidden shadow-lg"
-              style={{ width: '160px', height: '224px' }}
+              className="flex-shrink-0 rounded-xl overflow-hidden shadow-md bg-gray-100"
+              style={{ width: '100px', height: '140px' }}
             >
               <img
                 src={img.imageUrl}
                 alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 draggable={false}
               />
             </div>
