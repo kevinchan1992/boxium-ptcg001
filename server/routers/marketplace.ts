@@ -4670,6 +4670,45 @@ All three checks must pass for verified to be true. Respond with JSON only match
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      // ── Auto-cancel any pending_payment orders for this listing by this buyer ──
+      // When a buyer removes an item from cart, any associated pending_payment order
+      // should be automatically cancelled and the listing restored to active.
+      try {
+        const pendingOrders = await db
+          .select()
+          .from(marketplaceOrders)
+          .where(
+            and(
+              eq(marketplaceOrders.buyerId, ctx.user.id),
+              eq(marketplaceOrders.listingId, input.listingId),
+              eq(marketplaceOrders.orderStatus, 'pending_payment')
+            )
+          );
+        for (const pendingOrder of pendingOrders) {
+          await updateMarketplaceOrder(pendingOrder.id, {
+            orderStatus: 'cancelled',
+            paymentStatus: 'cancelled',
+            alipayProofImageUrl: null,
+            aiVerificationResult: null,
+          });
+          try {
+            await db.update(offers)
+              .set({ status: 'cancelled', respondedAt: new Date() })
+              .where(and(eq(offers.orderId, pendingOrder.id), eq(offers.status, 'accepted')));
+          } catch (offerErr: any) {
+            console.warn(`[RemoveFromCart] Failed to cancel offer for order ${pendingOrder.orderNo}:`, offerErr.message);
+          }
+          try {
+            await restoreListingStock(input.listingId, pendingOrder.quantity ?? 1);
+            console.log(`[RemoveFromCart] Auto-cancelled order ${pendingOrder.orderNo} and restored listing ${input.listingId}`);
+          } catch (stockErr: any) {
+            console.warn(`[RemoveFromCart] Failed to restore stock for listing ${input.listingId}:`, stockErr.message);
+          }
+        }
+      } catch (cancelErr: any) {
+        console.warn('[RemoveFromCart] Failed to auto-cancel pending orders:', cancelErr.message);
+      }
+      // Remove the cart item
       await db.delete(cartItems).where(and(eq(cartItems.userId, ctx.user.id), eq(cartItems.listingId, input.listingId)));
       return { success: true };
     }),

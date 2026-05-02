@@ -8941,3 +8941,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ## ✅ BOXIUM 市場參考價 fallback 邏輯
 - [x] 無對應 grade 記錄時，顯示「暫無 X品 交易數據，以下為所有品相市場參考價」提示，並展示全部品相數據
 - [x] 底部說明文字 fallback 時顯示「所有品相（參考）」
+
+## ✅ 購物車移除商品自動取消待付款訂單
+- [x] 修改 removeFromCart tRPC 程序：移除購物車時自動查找並取消對應的 pending_payment 訂單
+- [x] 取消訂單時同時取消關聯的 accepted offers
+- [x] 取消訂單後呼叫 restoreListingStock 重新上架商品
+- [x] 錯誤處理：取消失敗不阻擋購物車移除操作（non-fatal）
+- [x] TypeScript 0 errors，dev server HMR 正常
