@@ -88,13 +88,13 @@ const STATUS_COLOR: Record<string, string> = {
   graded: "bg-green-500/20 text-green-400 border border-green-500/30",
   payment_overdue: "bg-red-500/20 text-red-400 border border-red-500/30",
   returned: "bg-teal-500/20 text-teal-400 border border-teal-500/30",
-  completed: "bg-card/10 text-gray-300 border border-white/20",
+  completed: "bg-white/10 text-gray-300 border border-white/20",
   cancelled: "bg-red-500/10 text-red-400 border border-red-500/20",
 };
 
 const BATCH_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   open: { label: "開放收件", color: "bg-green-500 text-white" },
-  closed: { label: "已截止", color: "bg-card/10 text-gray-300 border border-white/20" },
+  closed: { label: "已截止", color: "bg-white/10 text-gray-300 border border-white/20" },
   shipped: { label: "已出團", color: "bg-purple-500/20 text-purple-400 border border-purple-500/30" },
   returned: { label: "已回件", color: "bg-teal-500/20 text-teal-400 border border-teal-500/30" },
 };
@@ -178,11 +178,11 @@ function ServiceTierManagement() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-foreground">服務層級管理</h3>
+        <h3 className="font-bold text-gray-900">服務層級管理</h3>
         <Button
           size="sm"
           onClick={() => { resetForm(); setEditTier(null); setShowForm(true); }}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground"
         >
           <Plus className="h-4 w-4 mr-1" />
           新增層級
@@ -190,17 +190,17 @@ function ServiceTierManagement() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
       ) : (
         <div className="space-y-2">
           {(tiers ?? []).map((tier: any) => (
-            <div key={tier.id} className={`flex items-center justify-between p-4 rounded-xl border ${tier.isActive ? "bg-card border-border" : "bg-muted/30 border-border opacity-60"}`}>
+            <div key={tier.id} className={`flex items-center justify-between p-4 rounded-xl border ${tier.isActive ? "bg-white border-gray-200" : "bg-gray-50 border-gray-200 opacity-60"}`}>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground">{tier.name}</span>
-                  {!tier.isActive && <Badge variant="outline" className="text-xs text-muted-foreground">已停用</Badge>}
+                  <span className="font-bold text-gray-900">{tier.name}</span>
+                  {!tier.isActive && <Badge variant="outline" className="text-xs text-gray-500">已停用</Badge>}
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-sm text-gray-500 mt-0.5">
                   HK${parseFloat(tier.feeHkd).toLocaleString()} / 張 ·
                   最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·
                   約 {tier.estimatedDaysMin} - {tier.estimatedDaysMax} 工作天
@@ -229,43 +229,43 @@ function ServiceTierManagement() {
       )}
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) { setEditTier(null); resetForm(); } }}>
-        <DialogContent className="max-w-md bg-card text-card-foreground border border-border">
+        <DialogContent className="max-w-md bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-foreground">{editTier ? "編輯服務層級" : "新增服務層級"}</DialogTitle>
+            <DialogTitle className="text-gray-900">{editTier ? "編輯服務層級" : "新增服務層級"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">層級名稱 *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="如 Value Bulk" className="bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">層級名稱 *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="如 Value Bulk" className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">代送費用（HKD）*</Label>
-                <Input value={form.feeHkd} onChange={(e) => setForm({ ...form, feeHkd: e.target.value })} placeholder="275" type="number" className="bg-card border-border text-card-foreground" />
+                <Label className="text-xs font-semibold text-gray-500">代送費用（HKD）*</Label>
+                <Input value={form.feeHkd} onChange={(e) => setForm({ ...form, feeHkd: e.target.value })} placeholder="275" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">最高申報價値（USD）*</Label>
-                <Input value={form.maxDeclaredValueUsd} onChange={(e) => setForm({ ...form, maxDeclaredValueUsd: e.target.value })} placeholder="499" type="number" className="bg-card border-border text-card-foreground" />
+                <Label className="text-xs font-semibold text-gray-500">最高申報價値（USD）*</Label>
+                <Input value={form.maxDeclaredValueUsd} onChange={(e) => setForm({ ...form, maxDeclaredValueUsd: e.target.value })} placeholder="499" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">預計最短時間（工作天）</Label>
-                <Input value={form.estimatedDaysMin} onChange={(e) => setForm({ ...form, estimatedDaysMin: e.target.value })} placeholder="4" type="number" className="bg-card border-border text-card-foreground" />
+                <Label className="text-xs font-semibold text-gray-500">預計最短時間（工作天）</Label>
+                <Input value={form.estimatedDaysMin} onChange={(e) => setForm({ ...form, estimatedDaysMin: e.target.value })} placeholder="4" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">預計最長時間（工作天）</Label>
-                <Input value={form.estimatedDaysMax} onChange={(e) => setForm({ ...form, estimatedDaysMax: e.target.value })} placeholder="5" type="number" className="bg-card border-border text-card-foreground" />
+                <Label className="text-xs font-semibold text-gray-500">預計最長時間（工作天）</Label>
+                <Input value={form.estimatedDaysMax} onChange={(e) => setForm({ ...form, estimatedDaysMax: e.target.value })} placeholder="5" type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
             </div>
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">說明（可選）</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="層級說明..." className="resize-none h-16 bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">說明（可選）</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="層級說明..." className="resize-none h-16 bg-white border-gray-200 text-gray-900" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-              <Label className="text-xs font-semibold text-muted-foreground">排序</Label>
-              <Input value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} type="number" className="bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">排序</Label>
+              <Input value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} type="number" className="bg-white border-gray-200 text-gray-900" />
               </div>
               <div className="flex items-end pb-1">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -275,14 +275,14 @@ function ServiceTierManagement() {
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                     className="accent-primary"
                   />
-                  <span className="text-sm text-muted-foreground">開放申請</span>
+                  <span className="text-sm text-gray-500">開放申請</span>
                 </label>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>取消</Button>
-            <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground">
               {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "儲存"}
             </Button>
           </DialogFooter>
@@ -460,57 +460,57 @@ function SubmissionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border w-[calc(100vw-2rem)] sm:w-full">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-white text-gray-900 border border-gray-200 w-[calc(100vw-2rem)] sm:w-full">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-foreground">
-            <Package className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-gray-900">
+            <Package className="h-5 w-5 text-[#06038d]" />
             管理申請 — {detail?.orderNo ?? "載入中..."}
           </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
         ) : detail ? (
           <div className="space-y-4">
             {/* Applicant info */}
-            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+            <div className="bg-[#06038d]/5 rounded-xl p-4 border border-[#06038d]/10">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground text-xs">申請人</span>
-                  <p className="font-semibold text-foreground">{detail.user?.name ?? "—"}</p>
+                  <span className="text-gray-500 text-xs">申請人</span>
+                  <p className="font-semibold text-gray-900">{detail.user?.name ?? "—"}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">Email</span>
-                  <p className="font-semibold text-foreground text-xs break-all">{detail.user?.email ?? "—"}</p>
+                  <span className="text-gray-500 text-xs">Email</span>
+                  <p className="font-semibold text-gray-900 text-xs break-all">{detail.user?.email ?? "—"}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">申請日期</span>
-                  <p className="font-semibold text-foreground">{new Date(detail.createdAt).toLocaleDateString("zh-HK")}</p>
+                  <span className="text-gray-500 text-xs">申請日期</span>
+                  <p className="font-semibold text-gray-900">{new Date(detail.createdAt).toLocaleDateString("zh-HK")}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">卡牌數量</span>
-                  <p className="font-semibold text-foreground">{detail.items?.length ?? 0} 張</p>
+                  <span className="text-gray-500 text-xs">卡牌數量</span>
+                  <p className="font-semibold text-gray-900">{detail.items?.length ?? 0} 張</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">應付金額</span>
-                  <p className="font-bold text-primary">HK${parseFloat(detail.totalFeeHkd).toLocaleString()}</p>
+                  <span className="text-gray-500 text-xs">應付金額</span>
+                  <p className="font-bold text-[#06038d]">HK${parseFloat(detail.totalFeeHkd).toLocaleString()}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">目前狀態</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[detail.status] ?? "bg-muted/50 text-muted-foreground"}`}>
+                  <span className="text-gray-500 text-xs">目前狀態</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[detail.status] ?? "bg-gray-100/50 text-gray-500"}`}>
                     {STATUS_OPTIONS.find((s) => s.value === detail.status)?.label ?? detail.status}
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">付款方式</span>
-                  <p className="font-semibold text-foreground">
+                  <span className="text-gray-500 text-xs">付款方式</span>
+                  <p className="font-semibold text-gray-900">
                     {(detail as any).paymentMethod === 'stripe' ? '💳 Stripe 信用卡' : (detail as any).paymentMethod === 'alipay_hk' ? '📱 支付寳 HK' : (detail as any).paymentMethod ?? '—'}
                   </p>
                 </div>
                 {(detail as any).trackingNumber && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground text-xs">📦 客人寄件追蹤號</span>
-                    <p className="font-mono font-bold text-primary">{(detail as any).trackingNumber}</p>
+                    <span className="text-gray-500 text-xs">📦 客人寄件追蹤號</span>
+                    <p className="font-mono font-bold text-[#06038d]">{(detail as any).trackingNumber}</p>
                     {(detail as any).trackingSubmittedAt && (
                       <p className="text-xs text-gray-400">提交時間：{new Date((detail as any).trackingSubmittedAt).toLocaleString('zh-HK')}</p>
                     )}
@@ -527,20 +527,20 @@ function SubmissionDetailDialog({
                   <span className="text-xs font-bold text-white">客戶收貨地址（鑑定完成後回寄）</span>
                   <span className="ml-auto text-xs bg-orange-400 text-white font-bold px-2 py-0.5 rounded-full">順豐到付</span>
                 </div>
-                <div className="bg-card p-4">
+                <div className="bg-white p-4">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div>
                       <span className="text-gray-500 text-xs">收件人</span>
-                      <p className="font-semibold text-foreground">{(detail as any).returnAddress.recipientName}</p>
+                      <p className="font-semibold text-gray-900">{(detail as any).returnAddress.recipientName}</p>
                     </div>
                     <div>
                       <span className="text-gray-500 text-xs">聯絡電話</span>
-                      <p className="font-semibold text-foreground">{(detail as any).returnAddress.phone}</p>
+                      <p className="font-semibold text-gray-900">{(detail as any).returnAddress.phone}</p>
                     </div>
                     {(detail as any).returnAddress.sfStationName ? (
                       <div className="col-span-2">
                         <span className="text-gray-500 text-xs">順豐自提站</span>
-                        <p className="font-semibold text-foreground">
+                        <p className="font-semibold text-gray-900">
                           <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded mr-1">順豐站</span>
                           {(detail as any).returnAddress.sfStationCode} · {(detail as any).returnAddress.sfStationName}
                         </p>
@@ -548,7 +548,7 @@ function SubmissionDetailDialog({
                     ) : (
                       <div className="col-span-2">
                         <span className="text-gray-500 text-xs">地址</span>
-                        <p className="font-semibold text-foreground">
+                        <p className="font-semibold text-gray-900">
                           {[(detail as any).returnAddress.district, (detail as any).returnAddress.region, (detail as any).returnAddress.address].filter(Boolean).join(' ')}
                         </p>
                       </div>
@@ -585,9 +585,9 @@ function SubmissionDetailDialog({
 
             {/* Card list */}
             {(detail.items ?? []).length > 0 && (
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="bg-muted/30 px-4 py-2 border-b border-border">
-                  <span className="text-xs font-bold text-muted-foreground">卡牌明細（{detail.items.length} 張）</span>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                  <span className="text-xs font-bold text-gray-500">卡牌明細（{detail.items.length} 張）</span>
                 </div>
                 <div className="divide-y divide-gray-100 max-h-48 overflow-y-auto">
                   {detail.items.map((item: any, idx: number) => (
@@ -595,15 +595,15 @@ function SubmissionDetailDialog({
                       {item.cardImageUrl ? (
                         <img src={item.cardImageUrl} alt={item.cardName} className="w-8 h-11 object-cover rounded shrink-0" />
                       ) : (
-                        <div className="w-8 h-11 bg-muted/50 rounded shrink-0 flex items-center justify-center text-gray-600 text-xs">無</div>
+                        <div className="w-8 h-11 bg-gray-100/50 rounded shrink-0 flex items-center justify-center text-gray-600 text-xs">無</div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{item.cardName}</p>
-                        <p className="text-xs text-muted-foreground">{[item.cardSet, item.cardNumber].filter(Boolean).join(" · ")}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate">{item.cardName}</p>
+                        <p className="text-xs text-gray-500">{[item.cardSet, item.cardNumber].filter(Boolean).join(" · ")}</p>
                       </div>
                       <div className="shrink-0 flex flex-wrap items-center gap-1 max-w-[110px] justify-end">
                         {item.tier?.name && <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-100 px-1.5 py-0.5 rounded">{item.tier.name}</span>}
-                        {item.psaGrade && <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded font-bold">PSA {item.psaGrade}</span>}
+                        {item.psaGrade && <span className="text-xs bg-[#06038d] text-white px-1.5 py-0.5 rounded font-bold">PSA {item.psaGrade}</span>}
                       </div>
                     </div>
                   ))}
@@ -616,16 +616,16 @@ function SubmissionDetailDialog({
               <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <Label className="text-sm font-bold text-foreground">支付寶 HK 截圖待審核</Label>
+                  <Label className="text-sm font-bold text-gray-900">支付寶 HK 截圖待審核</Label>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">客人已提交支付寶 HK 付款截圖，請確認收款後點擊「確認收款」。</p>
+                <p className="text-xs text-gray-500 mb-3">客人已提交支付寶 HK 付款截圖，請確認收款後點擊「確認收款」。</p>
                 <img
                   src={detail.alipayProofImageUrl}
                   alt="支付寶截圖"
                   className="w-full max-h-48 object-contain rounded-lg border border-amber-200 mb-3 cursor-pointer"
                   onClick={() => window.open(detail.alipayProofImageUrl, "_blank")}
                 />
-                <p className="text-xs text-muted-foreground mb-2">提交時間：{detail.alipayProofSubmittedAt ? new Date(detail.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
+                <p className="text-xs text-gray-500 mb-2">提交時間：{detail.alipayProofSubmittedAt ? new Date(detail.alipayProofSubmittedAt).toLocaleString("zh-HK") : "—"}</p>
                 {/* AI verification result badge */}
                 {(detail as any).alipayProofAiResult && (
                   <div className={`mb-3 flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
@@ -673,7 +673,7 @@ function SubmissionDetailDialog({
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       placeholder="請說明拒絕原因，如：截圖不清晰、金額不符、不是支付寶 HK 付款截圖等"
-                      className="resize-none h-16 bg-card border-red-500/30 text-foreground text-xs"
+                      className="resize-none h-16 bg-white border-red-500/30 text-gray-900 text-xs"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -706,14 +706,14 @@ function SubmissionDetailDialog({
               <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertCircle className="h-4 w-4 text-orange-600" />
-                  <Label className="text-sm font-bold text-foreground">升級差價待確認</Label>
+                  <Label className="text-sm font-bold text-gray-900">升級差價待確認</Label>
                 </div>
-                <p className="text-xs text-muted-foreground mb-1">層級升級差價：<span className="font-bold text-orange-700">HK${(detail as any).upgradeDiffFeeHkd ?? '—'}</span></p>
-                <p className="text-xs text-muted-foreground mb-1">升級至：<span className="font-bold text-orange-700">{(detail as any).upgradeNewTierName ?? '—'}</span></p>
+                <p className="text-xs text-gray-500 mb-1">層級升級差價：<span className="font-bold text-orange-700">HK${(detail as any).upgradeDiffFeeHkd ?? '—'}</span></p>
+                <p className="text-xs text-gray-500 mb-1">升級至：<span className="font-bold text-orange-700">{(detail as any).upgradeNewTierName ?? '—'}</span></p>
                 {/* Show Alipay proof screenshot if submitted for upgrade */}
                 {detail.alipayProofImageUrl && detail.alipayProofStatus === "pending_review" && (
                   <div className="mt-2 mb-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">支付寶補付截圖：</p>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">支付寶補付截圖：</p>
                     <img
                       src={detail.alipayProofImageUrl}
                       alt="補付截圖"
@@ -749,7 +749,7 @@ function SubmissionDetailDialog({
                 {/* Only show confirm/reject buttons when user has submitted a proof screenshot */}
                 {detail.alipayProofStatus === "pending_review" ? (
                   <>
-                    <p className="text-xs text-muted-foreground mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>
+                    <p className="text-xs text-gray-500 mb-3">如客人已通過支付寶 HK 補付差價，請確認收款後點擊「確認升級差價」。</p>
                     <Button
                       className="w-full bg-orange-600 hover:bg-orange-700 text-white mb-2"
                       onClick={() => confirmAlipayUpgradeMutation.mutate({ submissionId: detail.id })}
@@ -773,7 +773,7 @@ function SubmissionDetailDialog({
                           value={upgradeRejectionReason}
                           onChange={(e) => setUpgradeRejectionReason(e.target.value)}
                           placeholder="請說明拒絕原因，如：截圖不清晰、金額不符、不是支付寶 HK 付款截圖等"
-                          className="resize-none h-16 bg-card border-red-500/30 text-foreground text-xs"
+                          className="resize-none h-16 bg-white border-red-500/30 text-gray-900 text-xs"
                         />
                         <div className="flex gap-2">
                           <Button
@@ -809,35 +809,35 @@ function SubmissionDetailDialog({
 
             {/* Status update */}
             <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-100">
-              <Label className="text-xs font-semibold text-muted-foreground mb-2 block">更新狀態</Label>
+              <Label className="text-xs font-semibold text-gray-500 mb-2 block">更新狀態</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger className="bg-card border-border text-card-foreground">
+                <SelectTrigger className="bg-white border-gray-200 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border text-card-foreground">
+                <SelectContent className="bg-white border-gray-200 text-gray-900">
                   {STATUS_OPTIONS.map((s) => (
-                    <SelectItem className="text-foreground" key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem className="text-gray-900" key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="mt-2">
-                <Label className="text-xs font-semibold text-muted-foreground mb-1 block">通知備注（發送給客人）</Label>
+                <Label className="text-xs font-semibold text-gray-500 mb-1 block">通知備注（發送給客人）</Label>
                 <Textarea
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder="可選：附加說明文字..."
-                  className="resize-none h-16 text-sm bg-card border-border text-card-foreground placeholder:text-muted-foreground"
+                  className="resize-none h-16 text-sm bg-white border-gray-200 text-gray-900 placeholder:text-gray-500"
                 />
               </div>
               {newStatus === "returned" && (
                 <div className="mt-2">
-                  <Label className="text-xs font-semibold text-muted-foreground mb-1 block">追蹤號碼</Label>
+                  <Label className="text-xs font-semibold text-gray-500 mb-1 block">追蹤號碼</Label>
                   <div className="flex gap-2">
                     <Input
                       value={trackingNo}
                       onChange={(e) => setTrackingNo(e.target.value)}
                       placeholder="寄回追蹤號碼"
-                      className="bg-card border-border text-card-foreground flex-1"
+                      className="bg-white border-gray-200 text-gray-900 flex-1"
                     />
                     {trackingNo && (
                       <a
@@ -853,7 +853,7 @@ function SubmissionDetailDialog({
                 </div>
               )}
               <Button
-                className="mt-3 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="mt-3 w-full bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground"
                 onClick={() => updateStatusMutation.mutate({
                   id: detail.id,
                   status: newStatus as any,
@@ -874,17 +874,17 @@ function SubmissionDetailDialog({
                 const history: Array<{timestamp: string; note: string; statusAtTime: string}> = JSON.parse(detail.adminNotesHistory);
                 if (history.length === 0) return null;
                 return (
-                  <div className="bg-muted/30 rounded-xl p-4 border border-border">
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm font-bold text-foreground">備注歷史</span>
+                      <span className="text-sm font-bold text-gray-900">備注歷史</span>
                       <span className="ml-auto text-xs text-gray-400">{history.length} 條記錄</span>
                     </div>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {[...history].reverse().map((entry, idx) => (
                         <div key={idx} className="flex gap-3 text-xs">
                           <div className="flex flex-col items-center">
-                            <div className="w-2 h-2 rounded-full bg-primary mt-0.5 shrink-0" />
+                            <div className="w-2 h-2 rounded-full bg-[#06038d] mt-0.5 shrink-0" />
                             {idx < history.length - 1 && <div className="w-px flex-1 bg-gray-200 mt-1" />}
                           </div>
                           <div className="flex-1 pb-2">
@@ -892,7 +892,7 @@ function SubmissionDetailDialog({
                               <span className="text-gray-400">{new Date(entry.timestamp).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                               <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">{entry.statusAtTime}</span>
                             </div>
-                            <p className="text-muted-foreground leading-relaxed">{entry.note}</p>
+                            <p className="text-gray-500 leading-relaxed">{entry.note}</p>
                           </div>
                         </div>
                       ))}
@@ -905,28 +905,28 @@ function SubmissionDetailDialog({
             {detail.status === 'graded' && (
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
               <div className="flex items-center gap-2 mb-3">
-                <Award className="h-4 w-4 text-foreground" />
-                <Label className="text-sm font-bold text-foreground">填寫鑑定結果</Label>
+                <Award className="h-4 w-4 text-gray-900" />
+                <Label className="text-sm font-bold text-gray-900">填寫鑑定結果</Label>
                 {/* Step indicator */}
                 <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'ask_upgrade' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>1</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'ask_upgrade' ? 'bg-[#06038d] text-white' : 'bg-gray-100 text-gray-500'}`}>1</span>
                   <span className="text-gray-300">→</span>
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'select_tier' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>2</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'select_tier' ? 'bg-[#06038d] text-white' : 'bg-gray-100 text-gray-500'}`}>2</span>
                   <span className="text-gray-300">→</span>
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'fill_result' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>3</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${gradingStep === 'fill_result' ? 'bg-[#06038d] text-white' : 'bg-gray-100 text-gray-500'}`}>3</span>
                 </div>
               </div>
 
               {/* Step 1: Ask if tier upgrade needed */}
               {gradingStep === 'ask_upgrade' && (
                 <div className="space-y-3">
-                  <div className="bg-card rounded-lg p-4 border border-emerald-500/30">
-                    <p className="text-sm font-semibold text-foreground mb-1">是否需要更改服務層級？</p>
+                  <div className="bg-white rounded-lg p-4 border border-emerald-500/30">
+                    <p className="text-sm font-semibold text-gray-900 mb-1">是否需要更改服務層級？</p>
                     <p className="text-xs text-gray-500 mb-4">如果客人的卡牌鑑定結果需要升級服務（例如從 Value 升級至 Regular），選擇「需要升級」。系統將計算差價並發送付款連結至客人。</p>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
-                        className="border-border text-muted-foreground hover:bg-muted/30 bg-card"
+                        className="border-gray-200 text-gray-500 hover:bg-gray-50 bg-white"
                         onClick={() => setGradingStep('fill_result')}
                       >
                         不需要，直接填寫結果
@@ -945,9 +945,9 @@ function SubmissionDetailDialog({
               {/* Step 2: Select new tier and confirm diff */}
               {gradingStep === 'select_tier' && (
                 <div className="space-y-3">
-                  <div className="bg-card rounded-lg p-4 border border-blue-500/30">
+                  <div className="bg-white rounded-lg p-4 border border-blue-500/30">
                     {/* Per-card upgrade: each card has its own tier selector */}
-                    <p className="text-sm font-semibold text-foreground mb-1">選擇需要升級的卡牌</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-1">選擇需要升級的卡牌</p>
                     <p className="text-xs text-gray-500 mb-3">勾選需要升級的卡牌，並為每張卡牌各自選擇升級後的層級，差價將按每張卡牌分別計算後加總。</p>
                     <div className="space-y-2 mb-4 max-h-72 overflow-y-auto">
                       {(detail.items ?? []).map((item: any) => {
@@ -957,7 +957,7 @@ function SubmissionDetailDialog({
                         const selectedTier = (allTiers ?? []).find((t: any) => t.id === selectedTierId);
                         const diff = selectedTier ? parseFloat(selectedTier.feeHkd) - currentFee : 0;
                         return (
-                          <div key={item.id} className={`rounded-lg border transition-all ${checked ? 'border-blue-400 bg-blue-500/10' : 'border-border bg-card'}`}>
+                          <div key={item.id} className={`rounded-lg border transition-all ${checked ? 'border-blue-400 bg-blue-500/10' : 'border-gray-200 bg-white'}`}>
                             <label className="flex items-center gap-2 p-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -1000,13 +1000,13 @@ function SubmissionDetailDialog({
                                         }}
                                         className={`text-left rounded p-2 border text-xs transition-all ${
                                           isTooLow
-                                            ? 'border-gray-100 bg-muted/30 opacity-40 cursor-not-allowed'
+                                            ? 'border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed'
                                             : isSel
                                             ? 'border-blue-500 bg-blue-500/20 font-semibold'
-                                            : 'border-border bg-card hover:border-blue-300'
+                                            : 'border-gray-200 bg-white hover:border-blue-300'
                                         }`}
                                       >
-                                        <p className="font-medium text-foreground">{tier.name}</p>
+                                        <p className="font-medium text-gray-900">{tier.name}</p>
                                         <p className="text-gray-500">HK${tierFee.toLocaleString()}</p>
                                         {!isTooLow && <p className="text-red-500 font-bold">+HK${tierDiff.toLocaleString()}</p>}
                                         {isTooLow && <p className="text-gray-400">層級過低</p>}
@@ -1046,7 +1046,7 @@ function SubmissionDetailDialog({
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        className="flex-1 border-border text-muted-foreground bg-card"
+                        className="flex-1 border-gray-200 text-gray-500 bg-white"
                         onClick={() => setGradingStep('ask_upgrade')}
                       >
                         返回
@@ -1116,7 +1116,7 @@ function SubmissionDetailDialog({
                       // Always use the item's own current tier name (already updated per-card)
                       const finalTierName = item?.tier?.name ?? null;
                       return (
-                        <div key={ir.id} className="bg-card rounded-lg p-3 border border-emerald-500/30">
+                        <div key={ir.id} className="bg-white rounded-lg p-3 border border-emerald-500/30">
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-xs font-semibold text-gray-800">
                               #{idx + 1} {item?.cardName}
@@ -1142,13 +1142,13 @@ function SubmissionDetailDialog({
                                   setItemResults(updated);
                                 }}
                               >
-                                <SelectTrigger className="h-8 text-xs bg-card border-border text-card-foreground">
+                                <SelectTrigger className="h-8 text-xs bg-white border-gray-200 text-gray-900">
                                   <SelectValue placeholder="選擇評分" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border text-card-foreground">
-                                  <SelectItem className="text-foreground" value="none">—</SelectItem>
+                                <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                  <SelectItem className="text-gray-900" value="none">—</SelectItem>
                                   {["10", "9.5", "9", "8.5", "8", "7.5", "7", "6", "5", "4", "3", "2", "1", "A"].map((g) => (
-                                    <SelectItem className="text-foreground" key={g} value={g}>PSA {g}</SelectItem>
+                                    <SelectItem className="text-gray-900" key={g} value={g}>PSA {g}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1163,7 +1163,7 @@ function SubmissionDetailDialog({
                                   setItemResults(updated);
                                 }}
                                 placeholder="認證號碼"
-                                className="h-8 text-xs bg-card border-border text-card-foreground"
+                                className="h-8 text-xs bg-white border-gray-200 text-gray-900"
                               />
                             </div>
                           </div>
@@ -1256,7 +1256,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
 
   const getPaymentStatusBadge = (sub: any) => {
     if (sub.status === "completed") {
-      return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-foreground"><CheckCheck className="h-3 w-3" />已付款</span>;
+      return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900"><CheckCheck className="h-3 w-3" />已付款</span>;
     }
     if (sub.status === "graded") {
       // graded + paidAt = pre-paid (pay-first flow), no payment needed
@@ -1276,31 +1276,31 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
     return null;
   };
 
-  const batchCfg = BATCH_STATUS_CONFIG[batch.status] ?? { label: batch.status, color: "bg-muted/50 text-gray-600" };
+  const batchCfg = BATCH_STATUS_CONFIG[batch.status] ?? { label: batch.status, color: "bg-gray-100/50 text-gray-600" };
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
       {/* Batch header */}
       <div
-        className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Top row: name + status badge + action buttons */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-foreground text-base">{batch.batchName}</span>
+              <span className="font-bold text-gray-900 text-base">{batch.batchName}</span>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${batchCfg.color}`}>{batchCfg.label}</span>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">
               {batch.cutoffDate && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   截止：{new Date(batch.cutoffDate).toLocaleDateString("zh-HK")}
                 </span>
               )}
               {batch.shippedDate && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Truck className="h-3 w-3" />
                   出團：{new Date(batch.shippedDate).toLocaleDateString("zh-HK")}
                 </span>
@@ -1318,15 +1318,15 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
               <List className="h-4 w-4" />
             </button>
             {/* Dropdown menu */}
-            <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden hidden group-hover:block">
+            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden hidden group-hover:block">
               <div className="px-3 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-muted-foreground">批量同步狀態</p>
+                <p className="text-xs font-semibold text-gray-500">批量同步狀態</p>
                 <p className="text-xs text-gray-500 mt-0.5">只更新較低狀態</p>
               </div>
               {SYNC_OPTIONS.map((opt) => (
                 <button
                   key={opt.status}
-                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-muted/30 transition-colors text-muted-foreground flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 transition-colors text-gray-500 flex items-center gap-2"
                   onClick={(e) => { e.stopPropagation(); setBatchSyncTarget({ status: opt.status, label: opt.label }); }}
                 >
                   <span className={`inline-block w-2 h-2 rounded-full ${opt.status === 'received' ? 'bg-indigo-500' : opt.status === 'submitted_to_psa' ? 'bg-purple-500' : 'bg-violet-500'}`} />
@@ -1342,45 +1342,45 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
           >
             <Trash2 className="h-4 w-4" />
           </button>
-          {expanded ? <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" /> : <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />}
+          {expanded ? <ChevronUp className="h-5 w-5 text-gray-500 shrink-0" /> : <ChevronDown className="h-5 w-5 text-gray-500 shrink-0" />}
           </div>{/* end action buttons */}
         </div>{/* end top row */}
 
         {/* Stats pills row - below title on all screens */}
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          <div className="text-center px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-xs text-muted-foreground">申請</p>
-            <p className="text-lg font-bold text-primary">{batch.totalSubmissions}</p>
+          <div className="text-center px-3 py-1.5 rounded-lg bg-[#06038d]/5 border border-[#06038d]/10">
+            <p className="text-xs text-gray-500">申請</p>
+            <p className="text-lg font-bold text-[#06038d]">{batch.totalSubmissions}</p>
           </div>
           <div className="text-center px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-100">
-            <p className="text-xs text-muted-foreground">卡牌</p>
-            <p className="text-lg font-bold text-foreground">{batch.totalCards}</p>
+            <p className="text-xs text-gray-500">卡牌</p>
+            <p className="text-lg font-bold text-gray-900">{batch.totalCards}</p>
           </div>
           {batch.paidCount > 0 && (
             <div className="text-center px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
-              <p className="text-xs text-muted-foreground">已付</p>
-              <p className="text-lg font-bold text-foreground">{batch.paidCount}</p>
+              <p className="text-xs text-gray-500">已付</p>
+              <p className="text-lg font-bold text-gray-900">{batch.paidCount}</p>
             </div>
           )}
           {batch.unpaidCount > 0 && (
             <div className="text-center px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100">
-              <p className="text-xs text-muted-foreground">待付</p>
-              <p className="text-lg font-bold text-foreground">{batch.unpaidCount}</p>
+              <p className="text-xs text-gray-500">待付</p>
+              <p className="text-lg font-bold text-gray-900">{batch.unpaidCount}</p>
             </div>
           )}
           <div className="text-center px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-100">
-            <p className="text-xs text-muted-foreground">總收費</p>
+            <p className="text-xs text-gray-500">總收費</p>
             <p className="text-sm font-bold text-blue-400">HK${(batch.totalRevenueHkd ?? 0).toLocaleString()}</p>
           </div>
           {parseFloat(batch.batchCostHkd || "0") > 0 && (
             <div className="text-center px-3 py-1.5 rounded-lg bg-red-50 border border-red-100">
-              <p className="text-xs text-muted-foreground">出團成本</p>
+              <p className="text-xs text-gray-500">出團成本</p>
               <p className="text-sm font-bold text-red-600">HK${parseFloat(batch.batchCostHkd || "0").toLocaleString()}</p>
             </div>
           )}
           {parseFloat(batch.batchCostHkd || "0") > 0 && (
             <div className={`text-center px-3 py-1.5 rounded-lg border ${(batch.netProfitHkd ?? 0) >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-              <p className="text-xs text-muted-foreground">純利</p>
+              <p className="text-xs text-gray-500">純利</p>
               <p className={`text-sm font-bold ${(batch.netProfitHkd ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>HK${(batch.netProfitHkd ?? 0).toLocaleString()}</p>
             </div>
           )}
@@ -1391,7 +1391,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
       {expanded && (
         <div className="border-t border-gray-100">
           {submissions.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">此批次尚無申請</div>
+            <div className="py-8 text-center text-gray-500 text-sm">此批次尚無申請</div>
           ) : (
             <div>
               {/* Quick action bar */}
@@ -1427,7 +1427,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                     onChange={(e) => { setCostInput(e.target.value); setCostEditing(true); }}
                     onFocus={() => setCostEditing(true)}
                     placeholder="0"
-                    className="w-28 text-sm font-mono border border-amber-300 rounded-lg px-2 py-1 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-28 text-sm font-mono border border-amber-300 rounded-lg px-2 py-1 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
                   {costEditing && (
                     <button
@@ -1447,14 +1447,14 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/30 border-b border-gray-100">
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">申請單號</th>
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">申請人</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-muted-foreground">卡牌數</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-muted-foreground">費用</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-muted-foreground">進度</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-muted-foreground">付款</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-muted-foreground">操作</th>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">申請單號</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">申請人</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">卡牌數</th>
+                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">費用</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">進度</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">付款</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">操作</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -1465,30 +1465,30 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                       onClick={() => onManageSubmission(sub.id)}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold text-primary">{sub.orderNo}</span>
-                        <p className="text-xs text-muted-foreground mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
+                        <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
+                        <p className="text-xs text-gray-500 mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-foreground text-sm">{sub.userName}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[120px]">{sub.userEmail}</p>
+                        <p className="font-medium text-gray-900 text-sm">{sub.userName}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[120px]">{sub.userEmail}</p>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-foreground font-bold text-sm">{sub.itemCount}</span>
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-gray-900 font-bold text-sm">{sub.itemCount}</span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-foreground">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
+                        <span className="font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
                       </td>
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <Select
                           value={sub.status}
                           onValueChange={(v) => quickUpdateMutation.mutate({ id: sub.id, status: v as any })}
                         >
-                          <SelectTrigger className={`h-7 text-xs w-28 border-0 font-semibold ${STATUS_COLOR[sub.status] ?? "bg-muted/50 text-muted-foreground"}`}>
+                          <SelectTrigger className={`h-7 text-xs w-28 border-0 font-semibold ${STATUS_COLOR[sub.status] ?? "bg-gray-100/50 text-gray-500"}`}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-border text-card-foreground">
+                          <SelectContent className="bg-white border-gray-200 text-gray-900">
                             {STATUS_OPTIONS.map((s) => (
-                              <SelectItem className="text-foreground" key={s.value} value={s.value}>
+                              <SelectItem className="text-gray-900" key={s.value} value={s.value}>
                                 <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${STATUS_COLOR[s.value] ?? ""}`}>{s.label}</span>
                               </SelectItem>
                             ))}
@@ -1500,7 +1500,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                           <span className="text-xs text-gray-600">—</span>
                         )}
                         {sub.alipayProofStatus === "pending_review" && (
-                          <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-foreground">
+                          <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-gray-900">
                             <AlertCircle className="h-2.5 w-2.5" />截圖待審
                           </span>
                         )}
@@ -1518,7 +1518,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
                         <Button
                           size="sm"
                           onClick={() => onManageSubmission(sub.id)}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-3 text-xs"
+                          className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground h-7 px-3 text-xs"
                         >
                           <Eye className="h-3 w-3 mr-1" />
                           管理
@@ -1536,15 +1536,15 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
 
       {/* Batch sync confirm dialog */}
       <Dialog open={!!batchSyncTarget} onOpenChange={(v) => { if (!v) setBatchSyncTarget(null); }}>
-        <DialogContent className="max-w-sm bg-card text-card-foreground border border-border" onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle className="text-foreground flex items-center gap-2">
+            <DialogTitle className="text-gray-900 flex items-center gap-2">
               <List className="h-5 w-5 text-blue-600" />
               批量同步狀態
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               確定將批次「{batch.batchName}」內所有狀態較低的申請單更新為：
             </p>
             {batchSyncTarget && (
@@ -1554,7 +1554,7 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
             )}
             <p className="text-xs text-gray-500">已處於相同或更高狀態的申請單不會被變更。</p>
             {/* Notify users option */}
-            <label className="flex items-center gap-2 cursor-pointer select-none p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+            <label className="flex items-center gap-2 cursor-pointer select-none p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
               <input
                 type="checkbox"
                 checked={syncNotifyUsers}
@@ -1568,9 +1568,9 @@ function BatchDetailView({ batch, onManageSubmission, onDeleteBatch }: { batch: 
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBatchSyncTarget(null)} className="text-muted-foreground">取消</Button>
+            <Button variant="outline" onClick={() => setBatchSyncTarget(null)} className="text-gray-500">取消</Button>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground"
               disabled={batchUpdateStatusMutation.isPending}
               onClick={() => {
                 if (batchSyncTarget) {
@@ -1648,36 +1648,36 @@ function BatchOverview() {
     <div className="space-y-6">
       {/* Top summary bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-primary text-white rounded-xl p-4">
+        <div className="bg-[#06038d] text-white rounded-xl p-4">
           <p className="text-xs text-white/70">出團批次</p>
           <p className="text-2xl font-bold">{totalBatches}</p>
           <p className="text-xs text-white/60 mt-0.5">{openBatches} 個開放中</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <p className="text-xs text-muted-foreground">總申請數</p>
-          <p className="text-2xl font-bold text-foreground">{totalSubmissions}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">所有批次</p>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-500">總申請數</p>
+          <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
+          <p className="text-xs text-gray-500 mt-0.5">所有批次</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <p className="text-xs text-muted-foreground">總卡牌數</p>
-          <p className="text-2xl font-bold text-foreground">{totalCards}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">已分配批次</p>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-500">總卡牌數</p>
+          <p className="text-2xl font-bold text-gray-900">{totalCards}</p>
+          <p className="text-xs text-gray-500 mt-0.5">已分配批次</p>
         </div>
-        <div className={`rounded-xl p-4 border ${totalUnpaid > 0 ? "bg-orange-500/10 border-orange-500/30" : "bg-card border-border"}`}>
-          <p className="text-xs text-muted-foreground">待收款</p>
-          <p className={`text-2xl font-bold ${totalUnpaid > 0 ? "text-foreground" : "text-foreground"}`}>{totalUnpaid}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">鑑定完成未付款</p>
+        <div className={`rounded-xl p-4 border ${totalUnpaid > 0 ? "bg-orange-500/10 border-orange-500/30" : "bg-white border-gray-200"}`}>
+          <p className="text-xs text-gray-500">待收款</p>
+          <p className={`text-2xl font-bold ${totalUnpaid > 0 ? "text-gray-900" : "text-gray-900"}`}>{totalUnpaid}</p>
+          <p className="text-xs text-gray-500 mt-0.5">鑑定完成未付款</p>
         </div>
       </div>
 
       {/* Action bar */}
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-foreground text-base">出團批次列表</h3>
+        <h3 className="font-bold text-gray-900 text-base">出團批次列表</h3>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => refetch()} className="h-8 px-2">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button size="sm" onClick={() => setShowCreateBatch(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button size="sm" onClick={() => setShowCreateBatch(true)} className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground">
             <Plus className="h-4 w-4 mr-1" />
             新增批次
           </Button>
@@ -1686,9 +1686,9 @@ function BatchOverview() {
 
       {/* Batch list */}
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
       ) : (batchStats ?? []).length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
+        <div className="text-center py-16 text-gray-500">
           <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">尚無出團批次</p>
           <p className="text-xs mt-1">點擊「新增批次」建立第一個出團批次</p>
@@ -1708,27 +1708,27 @@ function BatchOverview() {
 
       {/* Create batch dialog */}
       <Dialog open={showCreateBatch} onOpenChange={setShowCreateBatch}>
-        <DialogContent className="max-w-sm bg-card text-card-foreground border border-border">
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-foreground">新增出團批次</DialogTitle>
+            <DialogTitle className="text-gray-900">新增出團批次</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">批次名稱 *</Label>
-              <Input value={batchForm.name} onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })} placeholder="如 2026年4月下半月團" className="bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">批次名稱 *</Label>
+              <Input value={batchForm.name} onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })} placeholder="如 2026年4月下半月團" className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">收件截止日期 *</Label>
-              <Input type="date" value={batchForm.deadline} onChange={(e) => setBatchForm({ ...batchForm, deadline: e.target.value })} className="bg-card border-border text-card-foreground" />
-              <p className="text-xs text-muted-foreground mt-1">截止日期前提交的申請將自動分配到此批次</p>
+              <Label className="text-xs font-semibold text-gray-500">收件截止日期 *</Label>
+              <Input type="date" value={batchForm.deadline} onChange={(e) => setBatchForm({ ...batchForm, deadline: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
+              <p className="text-xs text-gray-500 mt-1">截止日期前提交的申請將自動分配到此批次</p>
             </div>
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">預計出團日期</Label>
-              <Input type="date" value={batchForm.shippedAt} onChange={(e) => setBatchForm({ ...batchForm, shippedAt: e.target.value })} className="bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">預計出團日期</Label>
+              <Input type="date" value={batchForm.shippedAt} onChange={(e) => setBatchForm({ ...batchForm, shippedAt: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground">預計回件日期</Label>
-              <Input type="date" value={batchForm.expectedReturn} onChange={(e) => setBatchForm({ ...batchForm, expectedReturn: e.target.value })} className="bg-card border-border text-card-foreground" />
+              <Label className="text-xs font-semibold text-gray-500">預計回件日期</Label>
+              <Input type="date" value={batchForm.expectedReturn} onChange={(e) => setBatchForm({ ...batchForm, expectedReturn: e.target.value })} className="bg-white border-gray-200 text-gray-900" />
             </div>
           </div>
           <DialogFooter>
@@ -1742,7 +1742,7 @@ function BatchOverview() {
                 status: 'open' as const,
               })}
               disabled={!batchForm.name || !batchForm.deadline || createBatchMutation.isPending}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground"
             >
               {createBatchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "建立批次"}
             </Button>
@@ -1830,25 +1830,25 @@ function SubmissionManagement() {
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36 h-8 text-xs bg-card border-border text-card-foreground">
+          <SelectTrigger className="w-36 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border text-card-foreground">
-            <SelectItem className="text-foreground" value="all">全部狀態</SelectItem>
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
+            <SelectItem className="text-gray-900" value="all">全部狀態</SelectItem>
             {STATUS_OPTIONS.map((s) => (
-              <SelectItem className="text-foreground" key={s.value} value={s.value}>{s.label}</SelectItem>
+              <SelectItem className="text-gray-900" key={s.value} value={s.value}>{s.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={batchFilter} onValueChange={setBatchFilter}>
-          <SelectTrigger className="w-40 h-8 text-xs bg-card border-border text-card-foreground">
+          <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-200 text-gray-900">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border text-card-foreground">
-            <SelectItem className="text-foreground" value="all">全部批次</SelectItem>
-            <SelectItem className="text-foreground" value="0">未分配批次</SelectItem>
+          <SelectContent className="bg-white border-gray-200 text-gray-900">
+            <SelectItem className="text-gray-900" value="all">全部批次</SelectItem>
+            <SelectItem className="text-gray-900" value="0">未分配批次</SelectItem>
             {batches.map((b: any) => (
-              <SelectItem className="text-foreground" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
+              <SelectItem className="text-gray-900" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -1858,7 +1858,7 @@ function SubmissionManagement() {
           className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
             pendingUpgradeFilter
               ? 'bg-orange-500 text-white border-orange-500'
-              : 'bg-card text-orange-400 border-orange-500/30 hover:bg-orange-500/10'
+              : 'bg-white text-orange-400 border-orange-500/30 hover:bg-orange-500/10'
           }`}
         >
           <span>⇑</span>
@@ -1870,17 +1870,17 @@ function SubmissionManagement() {
           className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
             alipayPendingFilter
               ? 'bg-amber-500 text-white border-amber-500'
-              : 'bg-card text-amber-600 border-amber-300 hover:bg-amber-50'
+              : 'bg-white text-amber-600 border-amber-300 hover:bg-amber-50'
           }`}
         >
           <span>📸</span>
           待審核截圖
         </button>
-        <span className="text-xs text-muted-foreground ml-auto">共 {totalCount} 筆{totalCount > 0 && <span className="ml-2 font-semibold text-primary">HK${totalFee.toLocaleString('zh-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>}</span>
+        <span className="text-xs text-gray-500 ml-auto">共 {totalCount} 筆{totalCount > 0 && <span className="ml-2 font-semibold text-[#06038d]">HK${totalFee.toLocaleString('zh-HK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>}</span>
         {/* Bulk delete awaiting_payment button */}
         <button
           onClick={() => setShowBulkDeleteDialog(true)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all bg-card text-red-600 border-red-300 hover:bg-red-50"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all bg-white text-red-600 border-red-300 hover:bg-red-50"
           title="批量刪除所有未付款申請"
         >
           <Trash2 className="h-3 w-3" />
@@ -1890,46 +1890,46 @@ function SubmissionManagement() {
 
       {/* Submissions list */}
       {isLoading ? (
-        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
       ) : submissions.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8 text-sm">沒有符合條件的申請</p>
+        <p className="text-center text-gray-500 py-8 text-sm">沒有符合條件的申請</p>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/30 border-b border-border">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">申請單號</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">申請人</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">卡牌</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">費用</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">狀態</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">出團批次</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">操作</th>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">申請單號</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">申請人</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">卡牌</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">費用</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">狀態</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">出團批次</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {submissions.map((sub: any) => (
-                <tr key={sub.id} className="hover:bg-muted/30/50 transition-colors">
+                <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3">
-                    <span className="font-mono text-xs font-semibold text-primary">{sub.orderNo}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
+                    <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{sub.user?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[120px]">{sub.user?.email ?? ""}</p>
+                    <p className="font-medium text-gray-900">{sub.user?.name ?? "—"}</p>
+                    <p className="text-xs text-gray-500 truncate max-w-[120px]">{sub.user?.email ?? ""}</p>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-50 text-foreground font-bold text-sm">{sub.itemCount ?? 0}</span>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-50 text-gray-900 font-bold text-sm">{sub.itemCount ?? 0}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-bold text-foreground">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
+                    <span className="font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-muted/50 text-muted-foreground"}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-gray-100/50 text-gray-500"}`}>
                       {STATUS_OPTIONS.find((s) => s.value === sub.status)?.label ?? sub.status}
                     </span>
                     {sub.alipayProofStatus === "pending_review" && (
-                      <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-foreground">
+                      <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-gray-900">
                         <AlertCircle className="h-2.5 w-2.5" />截圖
                       </span>
                     )}
@@ -1968,13 +1968,13 @@ function SubmissionManagement() {
                         batchId: v === "none" ? undefined : parseInt(v),
                       })}
                     >
-                      <SelectTrigger className="h-7 text-xs w-36 bg-card border-border text-card-foreground">
+                      <SelectTrigger className="h-7 text-xs w-36 bg-white border-gray-200 text-gray-900">
                         <SelectValue placeholder="未分配" />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border text-card-foreground">
-                        <SelectItem className="text-foreground" value="none">未分配</SelectItem>
+                      <SelectContent className="bg-white border-gray-200 text-gray-900">
+                        <SelectItem className="text-gray-900" value="none">未分配</SelectItem>
                         {batches.map((b: any) => (
-                          <SelectItem className="text-foreground" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
+                          <SelectItem className="text-gray-900" key={b.id} value={String(b.id)}>{b.batchName}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1984,7 +1984,7 @@ function SubmissionManagement() {
                       <Button
                         size="sm"
                         onClick={() => { setSelectedSubmissionId(sub.id); setShowDetailDialog(true); }}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-3 text-xs"
+                        className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground h-7 px-3 text-xs"
                       >
                         <Eye className="h-3 w-3 mr-1" />
                         管理
@@ -2015,7 +2015,7 @@ function SubmissionManagement() {
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage <= 1 || isLoading}
-            className="h-8 px-3 text-xs text-muted-foreground border-border"
+            className="h-8 px-3 text-xs text-gray-500 border-gray-200"
           >
             上一頁
           </Button>
@@ -2048,7 +2048,7 @@ function SubmissionManagement() {
                     onClick={() => setCurrentPage(p as number)}
                     disabled={isLoading}
                     className={`h-8 w-8 rounded text-xs font-medium transition-colors ${
-                      currentPage === p ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:bg-muted/30'
+                      currentPage === p ? 'bg-[#06038d] text-white' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
                     }`}
                   >
                     {p}
@@ -2062,7 +2062,7 @@ function SubmissionManagement() {
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage >= totalPages || isLoading}
-            className="h-8 px-3 text-xs text-muted-foreground border-border"
+            className="h-8 px-3 text-xs text-gray-500 border-gray-200"
           >
             下一頁
           </Button>
@@ -2082,19 +2082,19 @@ function SubmissionManagement() {
       />
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
-        <DialogContent className="max-w-sm bg-card text-card-foreground border border-border">
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
               刪除申請單
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            確定要刪除申請單 <span className="font-mono font-bold text-foreground">{deleteTarget?.orderNo}</span> 嗎？
+          <p className="text-sm text-gray-500">
+            確定要刪除申請單 <span className="font-mono font-bold text-gray-900">{deleteTarget?.orderNo}</span> 嗎？
           </p>
           <p className="text-xs text-red-500">此操作無法復原，申請單及所有卡牌資料將被永久刪除。</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="text-muted-foreground">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="text-gray-500">
               取消
             </Button>
             <Button
@@ -2111,19 +2111,19 @@ function SubmissionManagement() {
 
       {/* Bulk delete awaiting_payment confirmation dialog */}
       <Dialog open={showBulkDeleteDialog} onOpenChange={(v) => { if (!v) setShowBulkDeleteDialog(false); }}>
-        <DialogContent className="max-w-sm bg-card text-card-foreground border border-border">
+        <DialogContent className="max-w-sm bg-white text-gray-900 border border-gray-200">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
               清除所有未付款申請
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             確定要刪除所有「未付款（awaiting_payment）」狀態的申請嗎？用戶頁面將同步移除這些申請。
           </p>
           <p className="text-xs text-red-500">此操作無法復原，所有未付款申請及其卡牌資料將被永久刪除。</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)} className="text-muted-foreground">
+            <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)} className="text-gray-500">
               取消
             </Button>
             <Button
@@ -2159,10 +2159,10 @@ function GradingMonthlyRevenueChart() {
     : [];
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-foreground">月度 PSA 鑑定收益趨勢</h3>
+          <h3 className="text-base font-bold text-gray-900">月度 PSA 鑑定收益趨勢</h3>
           <p className="text-xs text-gray-500 mt-0.5">每月鑑定服務費及升級差價收入（HKD）</p>
         </div>
         <div className="flex gap-1">
@@ -2172,8 +2172,8 @@ function GradingMonthlyRevenueChart() {
               onClick={() => setMonths(m)}
               className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
                 months === m
-                  ? 'bg-primary text-white'
-                  : 'bg-muted/50 text-muted-foreground hover:bg-gray-200'
+                  ? 'bg-[#06038d] text-white'
+                  : 'bg-gray-100/50 text-gray-500 hover:bg-gray-200'
               }`}
             >
               {m}個月
@@ -2183,7 +2183,7 @@ function GradingMonthlyRevenueChart() {
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#06038d]" />
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex items-center justify-center h-48 text-gray-400 text-sm">暫無數據</div>
@@ -2345,20 +2345,20 @@ function GradingOrdersTab() {
     <div className="space-y-4">
       {/* Revenue summary */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-primary text-white rounded-xl p-4">
+        <div className="bg-[#06038d] text-white rounded-xl p-4">
           <p className="text-xs text-white/70">總收益（已收款）</p>
           <p className="text-2xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
           <p className="text-xs text-white/60 mt-0.5">{allPaidSubmissions.filter(isConfirmedPaid).length} 筆已確認</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <p className="text-xs text-muted-foreground">待確認收益</p>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-500">待確認收益</p>
           <p className="text-2xl font-bold text-orange-600">HK${pendingRevenue.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{allPaidSubmissions.filter((s: any) => !isConfirmedPaid(s)).length} 筆待確認</p>
+          <p className="text-xs text-gray-500 mt-0.5">{allPaidSubmissions.filter((s: any) => !isConfirmedPaid(s)).length} 筆待確認</p>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <p className="text-xs text-muted-foreground">總訂單金額</p>
-          <p className="text-2xl font-bold text-foreground">HK${totalRevenue.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{allPaidSubmissions.length} 筆訂單</p>
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <p className="text-xs text-gray-500">總訂單金額</p>
+          <p className="text-2xl font-bold text-gray-900">HK${totalRevenue.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{allPaidSubmissions.length} 筆訂單</p>
         </div>
       </div>
 
@@ -2367,12 +2367,12 @@ function GradingOrdersTab() {
 
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h3 className="text-xl font-bold text-primary">PSA 鑑定訂單管理</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">顯示所有已收款申請，方便追蹤進度及計算收益</p>
+          <h3 className="text-xl font-bold text-[#06038d]">PSA 鑑定訂單管理</h3>
+          <p className="text-sm text-gray-500 mt-0.5">顯示所有已收款申請，方便追蹤進度及計算收益</p>
         </div>
         <div className="flex gap-2">
           <input
-            className="border border-border rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-primary text-foreground bg-card"
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:border-[#06038d] text-gray-900 bg-white"
             placeholder="搜尋訂單號/申請人..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -2380,12 +2380,12 @@ function GradingOrdersTab() {
           />
           <button
             onClick={() => { setSearch(searchInput); setPage(1); }}
-            className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/90"
+            className="px-3 py-1.5 bg-[#06038d] text-white rounded-lg text-xs font-semibold hover:bg-[#06038d]/90"
           >搜尋</button>
           {search && (
             <button
               onClick={() => { setSearch(""); setSearchInput(""); setPage(1); }}
-              className="px-3 py-1.5 border border-border text-muted-foreground rounded-lg text-xs hover:bg-red-50"
+              className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-xs hover:bg-red-50"
             >清除</button>
           )}
         </div>
@@ -2399,36 +2399,36 @@ function GradingOrdersTab() {
             onClick={() => { setStatusFilter(opt.value); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
               statusFilter === opt.value
-                ? "bg-primary text-white"
-                : "bg-muted/50 text-muted-foreground hover:bg-gray-200"
+                ? "bg-[#06038d] text-white"
+                : "bg-gray-100/50 text-gray-500 hover:bg-gray-200"
             }`}
           >{opt.label}</button>
         ))}
       </div>
 
-      <div className="text-sm text-muted-foreground">共 {total} 筆鑑定訂單</div>
+      <div className="text-sm text-gray-500">共 {total} 筆鑑定訂單</div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#06038d]" />
         </div>
       ) : filteredBySearch.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">目前沒有符合條件的訂單</div>
+        <div className="text-center py-12 text-gray-500">目前沒有符合條件的訂單</div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-muted/30 border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">訂單號</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">申請人</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">卡牌數</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">金額</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">進度狀態</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">付款狀態</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">付款方式</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">申請日期</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">操作</th>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">訂單號</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">申請人</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">卡牌數</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">金額</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">進度狀態</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">付款狀態</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">付款方式</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">申請日期</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -2446,23 +2446,23 @@ function GradingOrdersTab() {
                       onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold text-primary">{sub.orderNo}</span>
+                        <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
                         {sub.batchId && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">批次 #{sub.batchId}</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5">批次 #{sub.batchId}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-foreground text-sm">{sub.user?.name ?? "—"}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[140px]">{sub.user?.email ?? ""}</p>
+                        <p className="font-semibold text-gray-900 text-sm">{sub.user?.name ?? "—"}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[140px]">{sub.user?.email ?? ""}</p>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/10 text-foreground font-bold text-sm">{sub.itemCount ?? 0}</span>
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/10 text-gray-900 font-bold text-sm">{sub.itemCount ?? 0}</span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-primary whitespace-nowrap">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
+                        <span className="font-bold text-[#06038d] whitespace-nowrap">HK${parseFloat(sub.totalFeeHkd).toLocaleString()}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-muted/50 text-muted-foreground"}`}>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[sub.status] ?? "bg-gray-100/50 text-gray-500"}`}>
                           {STATUS_OPTIONS.find((s) => s.value === sub.status)?.label ?? sub.status}
                         </span>
                       </td>
@@ -2477,15 +2477,15 @@ function GradingOrdersTab() {
                             <Clock className="h-3 w-3" />已付款（差價待付）
                           </span>
                         ) : isPaid ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-foreground">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-gray-900">
                             <CheckCheck className="h-3 w-3" />已付款
                           </span>
                         ) : hasAlipayPending ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-foreground">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-gray-900">
                             <AlertCircle className="h-3 w-3" />截圖待審
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-gray-500">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -2494,11 +2494,11 @@ function GradingOrdersTab() {
                         ) : sub.paymentMethod === "alipay_hk" ? (
                           <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-100 px-1.5 py-0.5 rounded font-semibold">支付宝HK</span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-gray-500">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
                           {new Date(sub.createdAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </td>
@@ -2506,7 +2506,7 @@ function GradingOrdersTab() {
                         <Button
                           size="sm"
                           onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-3 text-xs"
+                          className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground h-7 px-3 text-xs"
                         >
                           <Eye className="h-3 w-3 mr-1" />管理
                         </Button>
@@ -2519,17 +2519,17 @@ function GradingOrdersTab() {
           </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <span className="text-xs text-muted-foreground">第 {page} / {totalPages} 頁</span>
+              <span className="text-xs text-gray-500">第 {page} / {totalPages} 頁</span>
               <div className="flex gap-2">
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-muted/30 text-foreground"
+                  className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-900"
                 >上一頁</button>
                 <button
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-muted/30 text-foreground"
+                  className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-900"
                 >下一頁</button>
               </div>
             </div>
@@ -2623,7 +2623,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
     <div className="space-y-6">
       {/* Revenue summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-primary text-white rounded-xl p-5">
+        <div className="bg-[#06038d] text-white rounded-xl p-5">
           <p className="text-xs text-white/70 mb-1">已確認收款</p>
           <p className="text-3xl font-bold">HK${confirmedRevenue.toLocaleString()}</p>
           <p className="text-xs text-white/60 mt-1">{allActive.filter((s: any) => {
@@ -2632,12 +2632,12 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
             return true;
           }).length} 筆已確認</p>
         </div>
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-xs text-gray-500 mb-1">待確認收益</p>
           <p className="text-3xl font-bold text-orange-500">HK${(totalRevenue - confirmedRevenue).toLocaleString()}</p>
           <p className="text-xs text-gray-400 mt-1">{allActive.filter((s: any) => UNPAID_STATUSES_DASH.includes(s.status)).length} 筆進行中</p>
         </div>
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-xs text-gray-500 mb-1">逾期未付款</p>
           <p className="text-3xl font-bold text-red-500">{overdue.length}</p>
           <p className="text-xs text-gray-400 mt-1">需要跟進</p>
@@ -2646,7 +2646,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
 
       {/* Task cards */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">待處理任務</h3>
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">待處理任務</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {taskCards.map((card) => (
             <button
@@ -2660,7 +2660,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
                   {card.count}
                 </span>
               </div>
-              <p className="font-semibold text-foreground text-sm">{card.title}</p>
+              <p className="font-semibold text-gray-900 text-sm">{card.title}</p>
               <p className="text-xs text-gray-500 mt-0.5">{card.desc}</p>
             </button>
           ))}
@@ -2669,7 +2669,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
 
       {/* Status overview */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">全部訂單狀態概覽</h3>
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">全部訂單狀態概覽</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {[
             { label: "截圖待審核", count: pendingReview.length, color: "text-amber-400 bg-amber-50" },
@@ -2677,7 +2677,7 @@ function DashboardTab({ onNavigate }: { onNavigate: (section: string) => void })
             { label: "已收件", count: received.length, color: "text-indigo-700 bg-indigo-50" },
             { label: "鑑定完成", count: graded.length, color: "text-green-700 bg-green-50" },
             { label: "付款逾期", count: overdue.length, color: "text-red-400 bg-red-50" },
-            { label: "已完成", count: completed.length, color: "text-muted-foreground bg-muted/30" },
+            { label: "已完成", count: completed.length, color: "text-gray-500 bg-gray-50" },
           ].map((item) => (
             <div key={item.label} className={`${item.color} rounded-lg p-3 flex items-center justify-between`}>
               <span className="text-xs font-medium">{item.label}</span>
@@ -2746,12 +2746,12 @@ function TaskCenterTab() {
             onClick={() => setActiveTask(tab.id)}
             className={`rounded-xl p-4 text-left border-2 transition-all ${
               activeTask === tab.id
-                ? "border-primary bg-primary/5"
-                : "border-border bg-card hover:border-border"
+                ? "border-[#06038d] bg-[#06038d]/5"
+                : "border-gray-200 bg-white hover:border-gray-200"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-muted-foreground">{tab.label}</span>
+              <span className="text-xs font-semibold text-gray-500">{tab.label}</span>
               <span className={`${tab.color} text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center`}>
                 {tab.count}
               </span>
@@ -2762,15 +2762,15 @@ function TaskCenterTab() {
       </div>
 
       {/* Current task list */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 bg-muted/30">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
           <p className="text-sm font-semibold text-gray-800">
             {taskTabs.find(t => t.id === activeTask)?.label} — {currentList.length} 筆
           </p>
           <p className="text-xs text-gray-500 mt-0.5">{taskTabs.find(t => t.id === activeTask)?.desc}</p>
         </div>
         {isLoading ? (
-          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
         ) : currentList.length === 0 ? (
           <div className="flex flex-col items-center py-10 text-gray-400">
             <CheckCircle2 className="h-10 w-10 mb-2 text-green-400" />
@@ -2790,20 +2790,20 @@ function TaskCenterTab() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {currentList.map((sub: any) => (
-                <tr key={sub.id} className="hover:bg-muted/30/50 transition-colors">
+                <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3">
-                    <span className="font-mono text-xs font-semibold text-primary">{sub.orderNo}</span>
+                    <span className="font-mono text-xs font-semibold text-[#06038d]">{sub.orderNo}</span>
                     <p className="text-xs text-gray-400 mt-0.5">{new Date(sub.createdAt).toLocaleDateString("zh-HK")}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground text-sm">{sub.user?.name ?? "—"}</p>
+                    <p className="font-medium text-gray-900 text-sm">{sub.user?.name ?? "—"}</p>
                     <p className="text-xs text-gray-400 truncate max-w-[120px]">{sub.user?.email ?? ""}</p>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-50 text-foreground font-bold text-sm">{sub.itemCount ?? 0}</span>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-50 text-gray-900 font-bold text-sm">{sub.itemCount ?? 0}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-bold text-foreground">HK${parseFloat(sub.totalFeeHkd || "0").toLocaleString()}</span>
+                    <span className="font-bold text-gray-900">HK${parseFloat(sub.totalFeeHkd || "0").toLocaleString()}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs text-gray-600">{sub.batch?.batchName ?? <span className="text-gray-300">未分配</span>}</span>
@@ -2812,7 +2812,7 @@ function TaskCenterTab() {
                     <Button
                       size="sm"
                       onClick={() => { setSelectedId(sub.id); setShowDetail(true); }}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground h-7 px-3 text-xs"
+                      className="bg-[#06038d] hover:bg-[#06038d]/90 text-[#06038d]-foreground h-7 px-3 text-xs"
                     >
                       <Eye className="h-3 w-3 mr-1" />
                       處理
@@ -2859,7 +2859,7 @@ function ReviewsManagementTab() {
     </span>
   );
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#06038d]" /></div>;
 
   const reviews = data?.reviews ?? [];
   const avgRating = data?.avgRating ?? 0;
@@ -2874,10 +2874,10 @@ function ReviewsManagementTab() {
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-1">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
           <p className="text-xs text-gray-500">平均評分</p>
           <div className="flex items-center gap-2">
-            <span className="text-3xl font-bold text-primary">{avgRating.toFixed(1)}</span>
+            <span className="text-3xl font-bold text-[#06038d]">{avgRating.toFixed(1)}</span>
             <div className="flex gap-0.5">
               {[1,2,3,4,5].map(i => (
                 <Star key={i} className={`h-5 w-5 ${i <= Math.round(avgRating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
@@ -2885,19 +2885,19 @@ function ReviewsManagementTab() {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-1">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
           <p className="text-xs text-gray-500">評價總數</p>
-          <p className="text-3xl font-bold text-primary">{total}</p>
+          <p className="text-3xl font-bold text-[#06038d]">{total}</p>
         </div>
-        <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-1">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-1">
           <p className="text-xs text-gray-500">公開評價</p>
           <p className="text-3xl font-bold text-green-600">{reviews.filter((r: any) => r.isPublic).length}</p>
         </div>
       </div>
 
       {/* Rating distribution */}
-      <div className="bg-card rounded-xl border border-border p-4">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">評分分佈</h3>
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">評分分佈</h3>
         <div className="space-y-2">
           {dist.map(({ rating, count }) => (
             <div key={rating} className="flex items-center gap-3">
@@ -2906,7 +2906,7 @@ function ReviewsManagementTab() {
                   <Star key={i} className={`h-3.5 w-3.5 ${i <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
                 ))}
               </div>
-              <div className="flex-1 bg-muted/50 rounded-full h-2">
+              <div className="flex-1 bg-gray-100/50 rounded-full h-2">
                 <div
                   className="bg-yellow-400 h-2 rounded-full transition-all"
                   style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%" }}
@@ -2920,8 +2920,8 @@ function ReviewsManagementTab() {
 
       {/* Monthly trend chart */}
       {monthlyStats && monthlyStats.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3">月度評分趨勢</h3>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-500 mb-3">月度評分趨勢</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={monthlyStats} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -2935,10 +2935,10 @@ function ReviewsManagementTab() {
       )}
 
       {/* Reviews list */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-muted-foreground">所有評價</h3>
+          <MessageSquare className="h-4 w-4 text-[#06038d]" />
+          <h3 className="text-sm font-semibold text-gray-500">所有評價</h3>
           <span className="ml-auto text-xs text-gray-400">{total} 則</span>
         </div>
         {reviews.length === 0 ? (
@@ -2951,7 +2951,7 @@ function ReviewsManagementTab() {
                   <div className="flex items-center gap-2 mb-1">
                     {renderStars(review.rating)}
                     <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("zh-HK")}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${review.isPublic ? "bg-green-100 text-green-700" : "bg-muted/50 text-gray-500"}`}>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${review.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100/50 text-gray-500"}`}>
                       {review.isPublic ? "公開" : "隱藏"}
                     </span>
                   </div>
@@ -3026,14 +3026,14 @@ function BannerManagementTab() {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <div className="bg-white border border-border rounded-xl p-5 shadow-sm">
-        <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Upload className="h-4 w-4 text-[#06038d]" />
           上傳走馬燈圖片
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">選擇圖片</label>
+            <label className="block text-sm font-medium text-gray-900 mb-2">選擇圖片</label>
             <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-[#06038d] rounded-lg cursor-pointer hover:bg-blue-50 transition-colors overflow-hidden">
               {preview ? (
                 <img src={preview} alt="preview" className="h-full w-full object-contain" />
@@ -3041,7 +3041,7 @@ function BannerManagementTab() {
                 <div className="flex flex-col items-center gap-2 text-[#06038d]">
                   <Image className="h-8 w-8" />
                   <span className="text-sm">點擊選擇圖片</span>
-                  <span className="text-xs text-muted-foreground">支援 JPG / PNG / WebP</span>
+                  <span className="text-xs text-gray-500">支援 JPG / PNG / WebP</span>
                 </div>
               )}
               <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -3049,7 +3049,7 @@ function BannerManagementTab() {
           </div>
           <div className="flex flex-col justify-between">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">圖片說明（選填）</label>
+              <label className="block text-sm font-medium text-gray-900 mb-2">圖片說明（選填）</label>
               <Input
                 placeholder="例如：2025 夏季特賣活動"
                 value={altText}
@@ -3067,20 +3067,20 @@ function BannerManagementTab() {
             </Button>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-3">建議尺寸：寬 1200px 以上，高 400–600px，橫向比例較佳</p>
+        <p className="text-xs text-gray-500 mt-3">建議尺寸：寬 1200px 以上，高 400–600px，橫向比例較佳</p>
       </div>
 
       {/* Images List */}
-      <div className="bg-white border border-border rounded-xl p-5 shadow-sm">
-        <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Image className="h-4 w-4 text-[#06038d]" />
           走馬燈圖片列表
-          <span className="ml-auto text-xs text-muted-foreground font-normal">{images?.length ?? 0} 張圖片</span>
+          <span className="ml-auto text-xs text-gray-500 font-normal">{images?.length ?? 0} 張圖片</span>
         </h3>
         {isLoading ? (
           <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
         ) : !images || images.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-gray-500">
             <Image className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">尚未上傳任何走馬燈圖片</p>
             <p className="text-xs mt-1">上傳圖片後將自動顯示在 PSA 鑑定頁面走馬燈中</p>
@@ -3088,7 +3088,7 @@ function BannerManagementTab() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {images.map((img) => (
-              <div key={img.id} className={`relative rounded-lg border overflow-hidden shadow-sm transition-opacity ${img.isActive ? 'border-border' : 'border-dashed border-gray-300 opacity-60'}`}>
+              <div key={img.id} className={`relative rounded-lg border overflow-hidden shadow-sm transition-opacity ${img.isActive ? 'border-gray-200' : 'border-dashed border-gray-300 opacity-60'}`}>
                 <img
                   src={img.imageUrl}
                   alt={img.altText || `Banner ${img.id}`}
@@ -3103,7 +3103,7 @@ function BannerManagementTab() {
                   <span className="text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">#{img.sortOrder + 1}</span>
                 </div>
                 <div className="p-3 bg-white">
-                  <p className="text-xs text-muted-foreground truncate mb-2">{img.altText || '（無說明）'}</p>
+                  <p className="text-xs text-gray-500 truncate mb-2">{img.altText || '（無說明）'}</p>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -3155,13 +3155,13 @@ export default function AdminGrading() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">PSA 代客鑑定管理</h2>
-        <p className="text-muted-foreground text-sm mt-1">管理鑑定申請、出團批次、訂單及服務層級</p>
+        <h2 className="text-2xl font-bold text-gray-900">PSA 代客鑑定管理</h2>
+        <p className="text-gray-500 text-sm mt-1">管理鑑定申請、出團批次、訂單及服務層級</p>
       </div>
 
       {/* Section tabs */}
       <div className="relative mb-6">
-        <div className="overflow-x-auto border-b border-border -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="overflow-x-auto border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
           <div className="flex gap-0.5 min-w-max sm:min-w-0">
             {sections.map((s) => (
               <button
@@ -3169,8 +3169,8 @@ export default function AdminGrading() {
                 onClick={() => setActiveSection(s.id)}
                 className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeSection === s.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-primary"
+                    ? "border-[#06038d] text-[#06038d]"
+                    : "border-transparent text-gray-500 hover:text-[#06038d]"
                 }`}
               >
                 {s.icon}
