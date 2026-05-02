@@ -200,30 +200,26 @@ function GradingBannerCarousel() {
   const doubled = [...images, ...images];
 
   return (
-    <section
-      className="bg-white py-8 overflow-hidden"
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
-    >
+    <section className="bg-white py-8 overflow-hidden">
       {/* Edge fade masks */}
       <div className="relative">
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-white to-transparent" />
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-white to-transparent" />
         <div
           ref={trackRef}
-          className="flex gap-4 pl-4 will-change-transform"
+          className="flex items-end gap-3 pl-3 will-change-transform"
           style={{ width: 'max-content' }}
         >
           {doubled.map((img, idx) => (
             <div
               key={`${img.id}-${idx}`}
-              className="flex-shrink-0 rounded-xl overflow-hidden shadow-md bg-gray-100"
-              style={{ width: '100px', height: '140px' }}
+              className="flex-shrink-0 rounded-xl overflow-hidden shadow-md"
+              style={{ width: '110px' }}
             >
               <img
                 src={img.imageUrl}
                 alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
-                className="w-full h-full object-contain"
+                className="w-full h-auto block"
                 draggable={false}
               />
             </div>
