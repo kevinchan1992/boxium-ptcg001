@@ -159,12 +159,14 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
                       {card.nameJa}
                     </p>
                   )}
-                  <p
-                    className="text-[9px] sm:text-[11px] md:text-xs lg:text-sm font-bold tabular-nums"
-                    style={{ color: "#06038d" }}
-                  >
-                    {formatCurrency(card.currentPrice)}
-                  </p>
+                  <div style={{ color: "#06038d" }}>
+                    <p className="text-[8px] sm:text-[9px] md:text-[10px] font-semibold leading-tight">
+                      HKD
+                    </p>
+                    <p className="text-[9px] sm:text-[11px] md:text-xs lg:text-sm font-bold tabular-nums leading-tight">
+                      {(() => { const v = card.currentPrice; const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0); return isNaN(n) ? '0.00' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
