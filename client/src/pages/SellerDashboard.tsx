@@ -3289,6 +3289,21 @@ export default function SellerDashboard() {
                   {/* Real-time fee calculation - dynamic from API */}
                   {listingForm.price && parseFloat(listingForm.price) >= 4 && (() => {
                     const price = parseFloat(listingForm.price);
+                    // Admin accounts are exempt from platform fees
+                    if (isAdmin) {
+                      return (
+                        <div className="mt-2 rounded-lg border p-2.5 bg-green-50 border-green-200">
+                          <div className="flex items-center justify-between text-xs font-semibold text-green-800">
+                            <span>管理員帳號（免平台費）</span>
+                            <span>預計平台費 HKD 0.00</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs mt-1 opacity-75 text-green-800">
+                            <span>預計實收</span>
+                            <span className="font-bold">HKD {price.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      );
+                    }
                     // Use dynamic fee tiers from API, fallback to hardcoded defaults
                     let rate = 0.055;
                     let tierIndex = 0;

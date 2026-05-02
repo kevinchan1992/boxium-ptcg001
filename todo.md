@@ -8918,3 +8918,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] 在 GitHub Actions workflow 中，執行完畢後呼叫平台 API 更新 snkrdunkLastExecutedAt
 - [ ] 更新 schema 並執行 pnpm db:push
 - [ ] 保存 checkpoint
+
+## 管理員上架免平台費
+- [x] 管理員帳號上架商品時前端顯示「免平台費」（管理員帳號（免平台費）提示）
+- [x] 後端已確認：管理員走 adminCreatePlatformListing（sellerType='platform'），calcPlatformFeeWithRate 只對 seller 收費，無需修改
