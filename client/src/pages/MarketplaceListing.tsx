@@ -171,7 +171,7 @@ const CONDITION_TO_GRADES: Record<string, string[]> = {
 
 function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: number; listingPriceHkd: number; condition?: string }) {
   const { t } = useTranslation();
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(90);
 
   const { data: history, isLoading } = trpc.prices.getHistory.useQuery(
     { cardId, source: "snkrdunk", limit: 100, days: 90 },
@@ -222,9 +222,8 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
 
   const stats = useMemo(() => {
     if (!filteredHistory || filteredHistory.length === 0) return null;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const recent = filteredHistory.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
+    // Use all available filteredHistory for stats (not limited to 30 days)
+    const recent = filteredHistory;
     if (recent.length === 0) return null;
     const prices = recent.map(h => parseFloat(h.price as string));
     const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
@@ -373,7 +372,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：BOXIUM{isGradeFallback ? ' · 所有品相（參考）' : condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
+        <p className="text-xs text-gray-400">數據來源：BOXIUM{isGradeFallback ? ' · 所有品相（參考）' : condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 圖表顯示近 {days} 天（共 {filteredHistory.length} 筆記錄）</p>
       </div>
     </div>
   );
