@@ -33,8 +33,13 @@ jobs:
           node-version: '22'
 
       - name: Install script dependencies
-        working-directory: scripts
-        run: npm install
+        run: |
+          # Temporarily rename root package.json to prevent npm from picking it up
+          mv package.json package.json.bak
+          cd scripts
+          npm install
+          cd ..
+          mv package.json.bak package.json
 
       - name: Run SNKRDUNK batch update
         working-directory: scripts
