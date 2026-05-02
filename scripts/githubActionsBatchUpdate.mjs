@@ -55,11 +55,54 @@ function extractSnkrdunkId(url) {
 }
 function parseJapaneseDate(dateStr) {
   if (!dateStr) return new Date();
+
+  // Absolute date: YYYY/MM/DD
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     return new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
   }
-  return new Date(dateStr);
+
+  // Relative time: N日前, N時間前, N分前, 今日, 昨日, etc.
+  const now = new Date();
+  const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+  // 「N日前」 = N days ago
+  const daysAgo = dateStr.match(/(\d+)日前/);
+  if (daysAgo) {
+    return new Date(nowUTC - parseInt(daysAgo[1]) * 86400000);
+  }
+
+  // 「N時間前」 = N hours ago (round to same day)
+  const hoursAgo = dateStr.match(/(\d+)時間前/);
+  if (hoursAgo) {
+    const ms = now.getTime() - parseInt(hoursAgo[1]) * 3600000;
+    const d = new Date(ms);
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  }
+
+  // 「N分前」 = N minutes ago (round to today)
+  const minsAgo = dateStr.match(/(\d+)分前/);
+  if (minsAgo) {
+    return new Date(nowUTC);
+  }
+
+  // 「今日」 = today
+  if (dateStr === '今日' || dateStr === '今天') {
+    return new Date(nowUTC);
+  }
+
+  // 「昨日」 = yesterday
+  if (dateStr === '昨日' || dateStr === '昨天') {
+    return new Date(nowUTC - 86400000);
+  }
+
+  // Fallback: try native Date parse, if invalid return today
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) {
+    console.warn(`[parseJapaneseDate] Unknown date format: "${dateStr}", using today`);
+    return new Date(nowUTC);
+  }
+  return parsed;
 }
 function computeRecordHash({ cardId, source, grade, soldAt, jpyPrice, sourcePosition }) {
   const ng = (g) => g ? g.trim().toUpperCase().replace(/\s+/g, ' ') : '__none__';
