@@ -34,11 +34,10 @@ jobs:
 
       - name: Install script dependencies
         working-directory: scripts
-        run: |
-          npm init -y
-          npm install mysql2 axios
+        run: npm install
 
       - name: Run SNKRDUNK batch update
+        working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
@@ -46,7 +45,6 @@ jobs:
           REQUEST_TIMEOUT_MS: '15000'
           MAX_CONSECUTIVE_ERR: '50'
           NODE_ENV: 'production'
-        working-directory: scripts
         run: |
           echo "Starting SNKRDUNK batch update..."
           echo "PARALLEL=$PARALLEL, SKIP_HOURS=$SKIP_HOURS"

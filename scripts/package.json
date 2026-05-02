@@ -1,0 +1,11 @@
+{
+  "name": "boxium-scripts",
+  "version": "1.0.0",
+  "description": "Standalone scripts for GitHub Actions",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.7.0",
+    "mysql2": "^3.11.0"
+  }
+}
