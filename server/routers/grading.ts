@@ -12,6 +12,7 @@ import {
   gradingSubmissions,
   gradingSubmissionItems,
   gradingReviews,
+  gradingBannerImages,
   users,
   type GradingServiceTier,
   type GradingBatch,
@@ -2773,5 +2774,102 @@ export const gradingRouter = router({
   getMyShippingAddresses: protectedProcedure
     .query(async ({ ctx }) => {
       return getUserShippingAddresses(ctx.user.id);
+    }),
+
+  // ─── Grading Banner Images ────────────────────────────────────────────────
+
+  /** Get all active banner images (public, for frontend carousel) */
+  getBannerImages: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return db
+        .select()
+        .from(gradingBannerImages)
+        .where(eq(gradingBannerImages.isActive, true))
+        .orderBy(asc(gradingBannerImages.sortOrder), asc(gradingBannerImages.id));
+    }),
+
+  /** Get all banner images (admin, includes inactive) */
+  adminGetBannerImages: adminProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return db
+        .select()
+        .from(gradingBannerImages)
+        .orderBy(asc(gradingBannerImages.sortOrder), asc(gradingBannerImages.id));
+    }),
+
+  /** Upload a new banner image (admin only) */
+  adminUploadBannerImage: adminProcedure
+    .input(z.object({
+      imageBase64: z.string(),
+      mimeType: z.string().default("image/jpeg"),
+      altText: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { storagePut } = await import("../storage");
+      const suffix = Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      const ext = input.mimeType.split("/")[1] || "jpg";
+      const key = `grading-banner/${suffix}.${ext}`;
+      const buffer = Buffer.from(input.imageBase64, "base64");
+      const { url } = await storagePut(key, buffer, input.mimeType);
+      const existing = await db
+        .select({ sortOrder: gradingBannerImages.sortOrder })
+        .from(gradingBannerImages)
+        .orderBy(desc(gradingBannerImages.sortOrder))
+        .limit(1);
+      const nextOrder = existing.length > 0 ? (existing[0].sortOrder + 1) : 0;
+      await db.insert(gradingBannerImages).values({
+        imageUrl: url,
+        imageKey: key,
+        altText: input.altText ?? null,
+        sortOrder: nextOrder,
+        isActive: true,
+      });
+      return { success: true, url };
+    }),
+
+  /** Delete a banner image (admin only) */
+  adminDeleteBannerImage: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.delete(gradingBannerImages).where(eq(gradingBannerImages.id, input.id));
+      return { success: true };
+    }),
+
+  /** Toggle banner image active status (admin only) */
+  adminToggleBannerImage: adminProcedure
+    .input(z.object({ id: z.number(), isActive: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db
+        .update(gradingBannerImages)
+        .set({ isActive: input.isActive })
+        .where(eq(gradingBannerImages.id, input.id));
+      return { success: true };
+    }),
+
+  /** Update sort order of banner images (admin only) */
+  adminReorderBannerImages: adminProcedure
+    .input(z.object({
+      items: z.array(z.object({ id: z.number(), sortOrder: z.number() })),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      for (const item of input.items) {
+        await db
+          .update(gradingBannerImages)
+          .set({ sortOrder: item.sortOrder })
+          .where(eq(gradingBannerImages.id, item.id));
+      }
+      return { success: true };
     }),
 });

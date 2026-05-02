@@ -60,6 +60,8 @@ import {
   MapPin,
   DollarSign,
   Check,
+  Image,
+  Upload,
 } from "lucide-react";
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -2974,8 +2976,170 @@ function ReviewsManagementTab() {
   );
 }
 
+// ─── Banner Management Tab ───────────────────────────────────────────────────
+function BannerManagementTab() {
+  const utils = trpc.useUtils();
+  const { data: images, isLoading } = trpc.grading.adminGetBannerImages.useQuery();
+  const uploadMutation = trpc.grading.adminUploadBannerImage.useMutation({
+    onSuccess: () => {
+      utils.grading.adminGetBannerImages.invalidate();
+      setUploading(false);
+      setPreview(null);
+      setImageBase64("");
+      setAltText("");
+      toast.success("圖片上傳成功！");
+    },
+    onError: (e: any) => { toast.error("上傳失敗: " + e.message); setUploading(false); },
+  });
+  const deleteMutation = trpc.grading.adminDeleteBannerImage.useMutation({
+    onSuccess: () => { utils.grading.adminGetBannerImages.invalidate(); toast.success("圖片已刪除"); },
+  });
+  const toggleMutation = trpc.grading.adminToggleBannerImage.useMutation({
+    onSuccess: () => utils.grading.adminGetBannerImages.invalidate(),
+  });
+
+  const [preview, setPreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string>("");
+  const [mimeType, setMimeType] = useState<string>("image/jpeg");
+  const [altText, setAltText] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMimeType(file.type || "image/jpeg");
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setPreview(result);
+      setImageBase64(result.split(",")[1]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleUpload() {
+    if (!imageBase64) return;
+    setUploading(true);
+    uploadMutation.mutate({ imageBase64, mimeType, altText: altText || undefined });
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Upload Section */}
+      <div className="bg-white border border-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+          <Upload className="h-4 w-4 text-[#06038d]" />
+          上傳走馬燈圖片
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">選擇圖片</label>
+            <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-[#06038d] rounded-lg cursor-pointer hover:bg-blue-50 transition-colors overflow-hidden">
+              {preview ? (
+                <img src={preview} alt="preview" className="h-full w-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-[#06038d]">
+                  <Image className="h-8 w-8" />
+                  <span className="text-sm">點擊選擇圖片</span>
+                  <span className="text-xs text-muted-foreground">支援 JPG / PNG / WebP</span>
+                </div>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            </label>
+          </div>
+          <div className="flex flex-col justify-between">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">圖片說明（選填）</label>
+              <Input
+                placeholder="例如：2025 夏季特賣活動"
+                value={altText}
+                onChange={(e) => setAltText(e.target.value)}
+                className="mb-3"
+              />
+            </div>
+            <Button
+              onClick={handleUpload}
+              disabled={!imageBase64 || uploading}
+              className="w-full bg-[#06038d] hover:bg-[#0805b0] text-white"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              {uploading ? "上傳中..." : "上傳圖片"}
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">建議尺寸：寬 1200px 以上，高 400–600px，橫向比例較佳</p>
+      </div>
+
+      {/* Images List */}
+      <div className="bg-white border border-border rounded-xl p-5 shadow-sm">
+        <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+          <Image className="h-4 w-4 text-[#06038d]" />
+          走馬燈圖片列表
+          <span className="ml-auto text-xs text-muted-foreground font-normal">{images?.length ?? 0} 張圖片</span>
+        </h3>
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#06038d]" /></div>
+        ) : !images || images.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Image className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">尚未上傳任何走馬燈圖片</p>
+            <p className="text-xs mt-1">上傳圖片後將自動顯示在 PSA 鑑定頁面走馬燈中</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {images.map((img) => (
+              <div key={img.id} className={`relative rounded-lg border overflow-hidden shadow-sm transition-opacity ${img.isActive ? 'border-border' : 'border-dashed border-gray-300 opacity-60'}`}>
+                <img
+                  src={img.imageUrl}
+                  alt={img.altText || `Banner ${img.id}`}
+                  className="w-full h-40 object-cover"
+                />
+                <div className="absolute top-2 left-2">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${img.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {img.isActive ? '顯示中' : '已隱藏'}
+                  </span>
+                </div>
+                <div className="absolute top-2 right-2">
+                  <span className="text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">#{img.sortOrder + 1}</span>
+                </div>
+                <div className="p-3 bg-white">
+                  <p className="text-xs text-muted-foreground truncate mb-2">{img.altText || '（無說明）'}</p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs h-7"
+                      onClick={() => toggleMutation.mutate({ id: img.id, isActive: !img.isActive })}
+                    >
+                      {img.isActive ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                      {img.isActive ? '隱藏' : '顯示'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs h-7 text-red-600 hover:bg-red-50 border-red-200"
+                      onClick={() => {
+                        if (confirm('確定要刪除此圖片嗎？')) {
+                          deleteMutation.mutate({ id: img.id });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      刪除
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminGrading() {
-  const [activeSection, setActiveSection] = useState<"dashboard" | "tasks" | "batches" | "submissions" | "orders" | "tiers" | "reviews">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "tasks" | "batches" | "submissions" | "orders" | "tiers" | "reviews" | "banner">("dashboard");
 
   const sections = [
     { id: "dashboard" as const, label: "儀表板", icon: <BarChart3 className="h-4 w-4" /> },
@@ -2985,6 +3149,7 @@ export default function AdminGrading() {
     { id: "orders" as const, label: "收益統計", icon: <TrendingUp className="h-4 w-4" /> },
     { id: "tiers" as const, label: "服務層級", icon: <Award className="h-4 w-4" /> },
     { id: "reviews" as const, label: "客戶評價", icon: <Star className="h-4 w-4" /> },
+    { id: "banner" as const, label: "走馬燈管理", icon: <Image className="h-4 w-4" /> },
   ];
 
   return (
@@ -3026,6 +3191,7 @@ export default function AdminGrading() {
       {activeSection === "orders" && <GradingOrdersTab />}
       {activeSection === "tiers" && <ServiceTierManagement />}
       {activeSection === "reviews" && <ReviewsManagementTab />}
+      {activeSection === "banner" && <BannerManagementTab />}
     </div>
   );
 }

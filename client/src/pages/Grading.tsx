@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -166,7 +166,61 @@ const FAQS = [
   },
 ];
 
-// ─── Public Reviews Section ──────────────────────────────────────────────────
+// ─── Grading Banner Carousel ───────────────────────────────────────────────────────────────────
+function GradingBannerCarousel() {
+  const { data: images } = trpc.grading.getBannerImages.useQuery();
+  const [current, setCurrent] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!images || images.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 3500);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [images?.length]);
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <section className="bg-white py-6 overflow-hidden">
+      <div className="relative w-full">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {images.map((img, idx) => (
+            <div key={img.id} className="w-full flex-shrink-0 px-4 md:px-8">
+              <div className="max-w-5xl mx-auto">
+                <img
+                  src={img.imageUrl}
+                  alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
+                  className="w-full h-48 md:h-64 lg:h-72 object-cover rounded-xl shadow-sm"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        {images.length > 1 && (
+          <div className="flex justify-center gap-2 mt-3">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrent(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === current ? 'bg-[#06038d] w-5' : 'bg-gray-300 w-2'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── Public Reviews Section ───────────────────────────────────────────────────────────────────
 function PublicReviewsSection() {
   const { data, isLoading } = trpc.grading.getPublicReviews.useQuery({ limit: 6 });
 
@@ -287,6 +341,8 @@ export default function Grading() {
         </section>
       )}
 
+      {/* ── Grading Banner Carousel ── */}
+      <GradingBannerCarousel />
       {/* ── Features ── */}
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">

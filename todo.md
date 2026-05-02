@@ -8953,3 +8953,22 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 在首頁「熱門卡牌」區域上方新增商城商品走馬燈（無限循環向左捲動）
 - [x] 設計美觀專業的商品卡（圖片、品相標籤、名稱、價格）
 - [x] hover 時暫停捲動，點擊跳轉商品詳情頁
+
+## 🖼️ PSA 鑑定頁面走馬燈圖片管理
+
+- [ ] 資料庫新增 gradingBannerImages 表（id, imageUrl, imageKey, sortOrder, isActive, createdAt）
+- [ ] 後端 API：上傳圖片到 S3、刪除、排序、查詢公開圖片列表
+- [ ] Admin 後台新增「鑑定走馬燈管理」功能（上傳/刪除/排序/顯示隱藏）
+- [ ] PSA 鑑定頁面「為何選擇 BOXIUM 鑑定服務？」上方插入圖片走馬燈組件（白色底色、無限循環、hover 暫停）
+
+## 🖼️ PSA 鑑定頁面走馬燈圖片管理
+
+- [ ] 資料庫新增 gradingBannerImages 表
+- [ ] 後端 API：上傳圖片到 S3、刪除、排序、查詢公開圖片列表
+- [ ] Admin 後台新增鑑定走馬燈管理功能
+- [ ] PSA 鑑定頁面插入圖片走馬燈組件
+
+- [x] PSA 鑑定頁面走馬燈：資料庫新增 gradingBannerImages 表
+- [x] PSA 鑑定頁面走馬燈：後端 API（getBannerImages, adminGetBannerImages, adminUploadBannerImage, adminDeleteBannerImage, adminToggleBannerImage, adminReorderBannerImages）
+- [x] PSA 鑑定頁面走馬燈：Admin 後台「走馬燈管理」tab（上傳圖片、顯示/隱藏、刪除）
+- [x] PSA 鑑定頁面走馬燈：「為何選擇 BOXIUM 鑑定服務？」上方插入圖片走馬燈組件（白底、自動輪播、圓點指示器）

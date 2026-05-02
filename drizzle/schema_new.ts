@@ -1758,3 +1758,21 @@ export const exportJobs = mysqlTable("exportJobs", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type ExportJob = typeof exportJobs.$inferSelect;
+
+// ─── Grading Banner Images ─────────────────────────────────────────────────
+// Images displayed in the PSA grading page image carousel/marquee
+export const gradingBannerImages = mysqlTable("gradingBannerImages", {
+  id: int("id").autoincrement().primaryKey(),
+  imageUrl: text("imageUrl").notNull(),
+  imageKey: varchar("imageKey", { length: 512 }).notNull(),
+  altText: varchar("altText", { length: 256 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  sortOrderIdx: index("gbi_sortOrder_idx").on(table.sortOrder),
+  isActiveIdx: index("gbi_isActive_idx").on(table.isActive),
+}));
+export type GradingBannerImage = typeof gradingBannerImages.$inferSelect;
+export type InsertGradingBannerImage = typeof gradingBannerImages.$inferInsert;
