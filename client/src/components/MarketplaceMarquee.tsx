@@ -45,17 +45,17 @@ function MarqueeCard({ item }: { item: ListingItem }) {
           {/* Image area */}
           <div
             className="relative overflow-hidden"
-            style={{ background: "#f7f8ff" }}
+            style={{ height: "140px", background: "#f7f8ff" }}
           >
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={item.title}
-                className="w-full h-auto block"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
             ) : (
-              <div className="w-full flex items-center justify-center bg-gray-50" style={{ height: "140px" }}>
+              <div className="w-full h-full flex items-center justify-center bg-gray-50">
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                   <span className="text-gray-400 text-xs font-bold">?</span>
                 </div>
