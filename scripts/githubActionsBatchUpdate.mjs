@@ -1,16 +1,14 @@
 /**
  * GitHub Actions SNKRDUNK Batch Update Script
  *
- * Self-contained ES Module that replicates the core logic from
- * server/persistentSnkrdunkBatchUpdate.ts without requiring the full
- * Express/tRPC server to be running.
+ * Self-contained ES Module using ONLY Node.js built-in modules + mysql2.
+ * NO axios dependency - uses Node.js 22 built-in fetch() API.
  *
  * Required env: DATABASE_URL (MySQL connection string)
  * Optional env: PARALLEL, SKIP_HOURS, MAX_CONSECUTIVE_ERR, REQUEST_TIMEOUT_MS
  */
 
 import mysql from 'mysql2/promise';
-import axios from 'axios';
 import { createHash } from 'crypto';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
@@ -125,20 +123,42 @@ function validateHistory(entries, productType = 'single_card') {
   });
 }
 
-// ─── SNKRDUNK API Fetcher ─────────────────────────────────────────────────────
+// ─── SNKRDUNK API Fetcher (using built-in fetch) ──────────────────────────────
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { ...options, signal: controller.signal });
+    return resp;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchPriceHistoryFromApi(productId, productType = 'single_card') {
   const history = [];
   for (let page = 1; page <= 20; page++) {
     const url = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=${page}&per_page=100`;
-    const resp = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': `https://snkrdunk.com/apparels/${productId}`,
-      },
-      timeout: CONFIG.REQUEST_TIMEOUT,
-    });
-    const data = resp.data;
+    let resp;
+    try {
+      resp = await fetchWithTimeout(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'Referer': `https://snkrdunk.com/apparels/${productId}`,
+        },
+      }, CONFIG.REQUEST_TIMEOUT);
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw Object.assign(new Error(`Request timeout after ${CONFIG.REQUEST_TIMEOUT}ms`), { code: 'ECONNABORTED' });
+      }
+      throw err;
+    }
+    if (!resp.ok) {
+      if (resp.status === 404) break;
+      throw new Error(`HTTP ${resp.status} for product ${productId}`);
+    }
+    const data = await resp.json();
     if (!data.history || !Array.isArray(data.history) || data.history.length === 0) break;
     for (const item of data.history) {
       history.push({
@@ -276,7 +296,7 @@ async function processSingleProduct(product) {
     await updateDataSourceStatus(product.dataSourceId, 'success');
     return { success: true, productKey };
   } catch (err) {
-    const isTimeout = err.code === 'ECONNABORTED' || (err.message && err.message.includes('timeout'));
+    const isTimeout = err.code === 'ECONNABORTED' || (err.name === 'AbortError') || (err.message && err.message.includes('timeout'));
     await updateDataSourceStatus(product.dataSourceId, 'failed').catch(() => {});
     return { success: false, productKey, isTimeout, error: err.message || String(err) };
   }

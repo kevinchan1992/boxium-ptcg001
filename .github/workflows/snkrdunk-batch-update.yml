@@ -32,17 +32,19 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install script dependencies
+      - name: Install script dependencies (mysql2 only, isolated from repo)
         run: |
-          # Temporarily rename root package.json to prevent npm from picking it up
-          mv package.json package.json.bak
-          cd scripts
-          npm install
-          cd ..
-          mv package.json.bak package.json
+          # Copy script + package.json to /tmp to avoid npm traversing repo root
+          mkdir -p /tmp/snkrdunk-runner
+          cp scripts/githubActionsBatchUpdate.mjs /tmp/snkrdunk-runner/
+          cp scripts/package.json /tmp/snkrdunk-runner/
+          cd /tmp/snkrdunk-runner
+          npm install --ignore-scripts
+          echo "Dependencies installed:"
+          ls node_modules/ | head -20
 
       - name: Run SNKRDUNK batch update
-        working-directory: scripts
+        working-directory: /tmp/snkrdunk-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
