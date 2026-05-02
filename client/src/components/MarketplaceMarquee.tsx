@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ShoppingBag, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
 
@@ -8,7 +8,7 @@ interface ListingItem {
   title: string;
   priceHkd: string | null;
   condition: string;
-  images: string | null; // JSON string
+  images: string | null;
   sellerType: string;
   status: string;
 }
@@ -33,54 +33,63 @@ function MarqueeCard({ item }: { item: ListingItem }) {
 
   return (
     <Link href={`/marketplace/${item.id}`}>
-      <div
-        className="group relative flex-shrink-0 w-[155px] sm:w-[175px] cursor-pointer"
-        style={{ margin: "0 8px" }}
-      >
-        {/* Card container */}
+      {/* No margin — seamless connection between cards */}
+      <div className="group relative flex-shrink-0 w-[160px] sm:w-[180px] cursor-pointer">
         <div
-          className="relative rounded-2xl overflow-hidden transition-all duration-300 group-hover:scale-[1.04] group-hover:shadow-2xl"
+          className="relative overflow-hidden transition-all duration-300 group-hover:brightness-95"
           style={{
-            background: "linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)",
-            boxShadow: "0 4px 20px rgba(6,3,141,0.10), 0 1px 4px rgba(0,0,0,0.06)",
-            border: "1px solid rgba(6,3,141,0.08)",
+            background: "#ffffff",
+            borderRight: "1px solid #f0f0f5",
           }}
         >
           {/* Image area */}
           <div
             className="relative overflow-hidden"
-            style={{ height: "135px", background: "linear-gradient(135deg, #06038d0a 0%, #f0f0ff 100%)" }}
+            style={{ height: "140px", background: "#f7f8ff" }}
           >
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ShoppingBag className="w-10 h-10 text-gray-300" />
+              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400 text-xs font-bold">?</span>
+                </div>
               </div>
             )}
-            {/* Platform badge */}
+
+            {/* BOXIUM Logo badge — top left */}
             {isPlatform && (
               <div
-                className="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: "#06038d", color: "#fff", letterSpacing: "0.03em" }}
+                className="absolute top-2 left-2"
+                style={{
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+                }}
               >
-                BOXIUM
+                <img
+                  src="/boxium-logo.png"
+                  alt="BOXIUM"
+                  className="block"
+                  style={{ height: "18px", width: "auto", maxWidth: "52px", display: "block" }}
+                />
               </div>
             )}
-            {/* Bottom gradient overlay */}
+
+            {/* Bottom gradient */}
             <div
-              className="absolute bottom-0 left-0 right-0 h-8"
-              style={{ background: "linear-gradient(to top, rgba(255,255,255,0.9), transparent)" }}
+              className="absolute bottom-0 left-0 right-0 h-6"
+              style={{ background: "linear-gradient(to top, rgba(247,248,255,0.9), transparent)" }}
             />
           </div>
 
           {/* Info area */}
-          <div className="px-3 py-2.5">
+          <div className="px-3 py-2.5" style={{ background: "#ffffff" }}>
             {/* Condition badge */}
             <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-md mb-1.5 ${conditionBadge}`}>
               {conditionLabel}
@@ -120,21 +129,19 @@ export function MarketplaceMarquee() {
 
   if (isLoading) {
     return (
-      <section
-        className="py-8 overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #06038d 0%, #0a05c4 50%, #1a0a8a 100%)" }}
-      >
+      <section className="py-8 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 rounded-full bg-yellow-400" />
-            <div className="h-5 w-32 bg-white/20 rounded animate-pulse" />
+            <div className="w-1 h-6 rounded-full bg-[#06038d]" />
+            <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
           </div>
         </div>
-        <div className="flex gap-4 px-4">
+        <div className="flex">
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[155px] sm:w-[175px] h-[215px] rounded-2xl bg-white/10 animate-pulse"
+              className="flex-shrink-0 w-[160px] sm:w-[180px] h-[215px] bg-gray-100 animate-pulse"
+              style={{ borderRight: "1px solid #f0f0f5" }}
             />
           ))}
         </div>
@@ -146,40 +153,41 @@ export function MarketplaceMarquee() {
 
   // Duplicate for seamless infinite loop
   const doubled = [...listings, ...listings];
-
-  // Speed: ~190px/s, adjust duration based on count
   const duration = Math.max(25, listings.length * 2.5);
 
   return (
-    <section
-      className="py-8 overflow-hidden relative"
-      style={{ background: "linear-gradient(135deg, #06038d 0%, #0a05c4 50%, #1a0a8a 100%)" }}
-    >
-      {/* Subtle dot pattern */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
+    <section className="py-8 bg-white border-b border-gray-100">
       {/* Section header */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-5 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-1 h-6 rounded-full bg-yellow-400" />
+            {/* Accent bar */}
+            <div className="w-1 h-6 rounded-full bg-[#06038d]" />
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-yellow-300" />
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+              {/* BOXIUM Logo in header — blue-yellow original logo */}
+              <div
+                style={{
+                  borderRadius: "5px",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                  flexShrink: 0,
+                }}
+              >
+                <img
+                  src="/boxium-logo.png"
+                  alt="BOXIUM"
+                  style={{ height: "22px", width: "auto", maxWidth: "64px", display: "block" }}
+                />
+              </div>
+              <h2 className="text-sm sm:text-base font-bold tracking-wide" style={{ color: "#1a1a2e" }}>
                 商城精選商品
               </h2>
               <span
                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full ml-1"
                 style={{
-                  background: "rgba(255,220,0,0.15)",
-                  color: "#FFD700",
-                  border: "1px solid rgba(255,220,0,0.3)",
+                  background: "rgba(6,3,141,0.08)",
+                  color: "#06038d",
+                  border: "1px solid rgba(6,3,141,0.15)",
                 }}
               >
                 {listings.length} 件在售
@@ -187,7 +195,10 @@ export function MarketplaceMarquee() {
             </div>
           </div>
           <Link href="/marketplace">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-yellow-300 hover:text-yellow-100 transition-colors cursor-pointer group">
+            <div
+              className="flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer group"
+              style={{ color: "#06038d" }}
+            >
               查看全部
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
             </div>
@@ -195,12 +206,14 @@ export function MarketplaceMarquee() {
         </div>
       </div>
 
-      {/* Marquee track with edge fade */}
+      {/* Marquee track — seamless, no gaps */}
       <div
-        className="relative"
+        className="relative overflow-hidden"
         style={{
-          maskImage: "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
+          borderTop: "1px solid #f0f0f5",
+          borderBottom: "1px solid #f0f0f5",
+          maskImage: "linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)",
         }}
       >
         <div
