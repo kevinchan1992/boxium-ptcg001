@@ -33,7 +33,10 @@ jobs:
           node-version: '22'
 
       - name: Install script dependencies
-        run: npm install mysql2 axios
+        working-directory: scripts
+        run: |
+          npm init -y
+          npm install mysql2 axios
 
       - name: Run SNKRDUNK batch update
         env:
@@ -43,15 +46,16 @@ jobs:
           REQUEST_TIMEOUT_MS: '15000'
           MAX_CONSECUTIVE_ERR: '50'
           NODE_ENV: 'production'
+        working-directory: scripts
         run: |
           echo "Starting SNKRDUNK batch update..."
           echo "PARALLEL=$PARALLEL, SKIP_HOURS=$SKIP_HOURS"
-          node scripts/githubActionsBatchUpdate.mjs
+          node githubActionsBatchUpdate.mjs
 
       - name: Upload failure logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: batch-update-failure-${{ github.run_id }}
-          path: '*.log'
+          path: 'scripts/*.log'
           retention-days: 7
