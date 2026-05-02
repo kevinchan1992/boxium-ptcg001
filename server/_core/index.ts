@@ -1640,6 +1640,71 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: GitHub Actions Batch Update Report ─────────────
+  // Called by GitHub Actions after completing SNKRDUNK batch update
+  // Auth: Bearer token via Authorization header (CRON_SECRET)
+  // Writes a completed task record into scheduledTasks so it appears in Admin Task History
+  app.post("/api/scheduled/github-batch-report", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        console.warn('[ScheduledTask] github-batch-report: invalid or missing CRON_SECRET token');
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+
+      const {
+        totalItems = 0,
+        successCount = 0,
+        failureCount = 0,
+        durationMs = 0,
+        startedAt,
+        status = 'completed',
+        runId,
+        runUrl,
+      } = req.body || {};
+
+      console.log(`[ScheduledTask] github-batch-report: total=${totalItems} success=${successCount} fail=${failureCount} duration=${durationMs}ms`);
+
+      const { getDb } = await import('../db');
+      const { scheduledTasks: scheduledTasksTable } = await import('../../drizzle/schema_new');
+      const db = await getDb();
+      if (!db) {
+        return res.status(500).json({ error: 'Database not available' });
+      }
+
+      const startTime = startedAt ? new Date(startedAt) : new Date(Date.now() - Number(durationMs));
+      const endTime = new Date();
+      const finalStatus = String(status) === 'failed' ? 'failed' : 'completed';
+
+      await db.insert(scheduledTasksTable).values({
+        taskType: 'batch_snkrdunk_update',
+        status: finalStatus as 'completed' | 'failed',
+        totalItems: Number(totalItems),
+        processedItems: Number(totalItems),
+        successCount: Number(successCount),
+        failureCount: Number(failureCount),
+        progress: 100,
+        startedAt: startTime,
+        completedAt: endTime,
+        activeProcessingMs: Number(durationMs),
+        metadata: JSON.stringify({
+          source: 'github_actions',
+          runId: runId || null,
+          runUrl: runUrl || null,
+          errors: [],
+        }),
+      });
+
+      console.log(`[ScheduledTask] github-batch-report: task record inserted successfully (${finalStatus})`);
+      return res.json({ success: true, insertedAt: endTime.toISOString() });
+    } catch (err: any) {
+      console.error('[ScheduledTask] github-batch-report failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to insert task record', detail: err?.message });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   app.use(

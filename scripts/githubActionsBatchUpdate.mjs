@@ -400,14 +400,60 @@ async function main() {
   }
 
   const elapsed = (Date.now() - startTime) / 1000;
+  const durationMs = Date.now() - startTime;
   console.log('='.repeat(60));
   console.log(`[BatchUpdate] COMPLETED: ${successCount} success, ${failCount} failed in ${Math.ceil(elapsed / 60)}min`);
   console.log('='.repeat(60));
 
   await (await getPool()).end();
 
+  // ─── Report results to platform API ──────────────────────────────────────────────────
+  const platformUrl = process.env.PLATFORM_URL;
+  const cronSecret = process.env.CRON_SECRET;
+  const runId = process.env.GITHUB_RUN_ID || null;
+  const runUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && runId
+    ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`
+    : null;
+
   const failRate = failCount / (successCount + failCount || 1);
-  if (failRate > 0.5 && failCount > 100) {
+  const finalStatus = (failRate > 0.5 && failCount > 100) ? 'failed' : 'completed';
+
+  if (platformUrl && cronSecret) {
+    try {
+      const reportUrl = `${platformUrl}/api/scheduled/github-batch-report`;
+      const body = JSON.stringify({
+        totalItems: toUpdate.length,
+        successCount,
+        failureCount: failCount,
+        durationMs,
+        startedAt: new Date(startTime).toISOString(),
+        status: finalStatus,
+        runId,
+        runUrl,
+      });
+      const resp = await fetch(reportUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cronSecret}`,
+        },
+        body,
+        signal: AbortSignal.timeout(15000),
+      });
+      if (resp.ok) {
+        console.log(`[BatchUpdate] Platform report sent successfully (${resp.status})`);
+      } else {
+        const text = await resp.text().catch(() => '');
+        console.warn(`[BatchUpdate] Platform report failed: HTTP ${resp.status} - ${text}`);
+      }
+    } catch (reportErr) {
+      console.warn(`[BatchUpdate] Platform report error (non-fatal): ${reportErr.message}`);
+    }
+  } else {
+    console.log('[BatchUpdate] PLATFORM_URL or CRON_SECRET not set, skipping platform report');
+  }
+
+  if (finalStatus === 'failed') {
     console.error(`[BatchUpdate] High failure rate: ${(failRate * 100).toFixed(1)}%`);
     process.exit(1);
   }

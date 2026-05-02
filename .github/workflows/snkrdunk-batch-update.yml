@@ -47,6 +47,8 @@ jobs:
         working-directory: /tmp/snkrdunk-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
           SKIP_HOURS: ${{ github.event.inputs.skip_hours || '12' }}
           REQUEST_TIMEOUT_MS: '15000'
