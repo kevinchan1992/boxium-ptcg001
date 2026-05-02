@@ -8922,3 +8922,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ## 管理員上架免平台費
 - [x] 管理員帳號上架商品時前端顯示「免平台費」（管理員帳號（免平台費）提示）
 - [x] 後端已確認：管理員走 adminCreatePlatformListing（sellerType='platform'），calcPlatformFeeWithRate 只對 seller 收費，無需修改
+
+## ✅ BOXIUM 市場參考價按 condition/grade 篩選
+- [x] 在 MarketplaceListing.tsx 的 SnkrdunkPriceBlock 組件加入 CONDITION_TO_GRADES 映射表（psa10→PSA10/PSA 10, psa9→PSA9/PSA 9, raw_a→A, raw_b→B, 等）
+- [x] 加入 filteredHistory useMemo：根據 condition 對應的 grade 陣列篩選 priceHistory 記錄（客戶端篩選）
+- [x] chartData 和 stats useMemo 改用 filteredHistory（不再用全部 history）
+- [x] 標題和底部說明文字改用 CONDITION_FULL 顯示人類可讀的 grade 標籤（如「PSA 10」）
+- [x] 調用端傳入 condition={listing.condition}
+- [x] TypeScript 0 errors，dev server HMR 正常
+- [x] 保存 checkpoint

@@ -153,6 +153,22 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
 
 // ─── SNKRDUNK Price Block ──────────────────────────────────────────────────────
 
+// Map ConditionValue to SNKRDUNK grade strings stored in DB
+const CONDITION_TO_GRADES: Record<string, string[]> = {
+  psa10: ["PSA10", "PSA 10"],
+  psa9: ["PSA9", "PSA 9"],
+  psa8_below: ["PSA8\u4ee5\u4e0b"],
+  bgs10: ["BGS10 GL", "BGS10 BL"],
+  bgs9: ["BGS 9.5", "BGS9.5"],
+  bgs8_below: ["BGS9\u4ee5\u4e0b"],
+  tag10: ["ARS10", "ARS10+"],
+  tag9_below: ["ARS9", "ARS8\u4ee5\u4e0b"],
+  raw_a: ["A"],
+  raw_b: ["B"],
+  raw_c: ["C"],
+  raw_d: ["D"],
+};
+
 function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: number; listingPriceHkd: number; condition?: string }) {
   const { t } = useTranslation();
   const [days, setDays] = useState(7);
@@ -162,11 +178,19 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
     { enabled: !!cardId }
   );
 
+  // Filter history by condition-matched grades (client-side)
+  const matchedGrades = condition ? CONDITION_TO_GRADES[condition] : undefined;
+  const filteredHistory = useMemo(() => {
+    if (!history) return [];
+    if (!matchedGrades || matchedGrades.length === 0) return history;
+    return history.filter(h => h.grade && matchedGrades.includes(h.grade));
+  }, [history, matchedGrades]);
+
   const chartData = useMemo(() => {
-    if (!history || history.length === 0) return [];
+    if (!filteredHistory || filteredHistory.length === 0) return [];
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    const filtered = history.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
+    const filtered = filteredHistory.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
     // Group by date, keyed by ISO date string (YYYY-MM-DD) for correct sorting
     const byDateKey: Record<string, { label: string; prices: number[] }> = {};
     for (const h of filtered) {
@@ -188,13 +212,13 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       avg: Math.round(prices.reduce((s, p) => s + p, 0) / prices.length),
       count: prices.length,
     }));
-  }, [history, days]);
+  }, [filteredHistory, days]);
 
   const stats = useMemo(() => {
-    if (!history || history.length === 0) return null;
+    if (!filteredHistory || filteredHistory.length === 0) return null;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
-    const recent = history.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
+    const recent = filteredHistory.filter(h => h.soldAt && new Date(h.soldAt) >= cutoff);
     if (recent.length === 0) return null;
     const prices = recent.map(h => parseFloat(h.price as string));
     const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
@@ -203,8 +227,8 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
     const now = new Date();
     const d7 = new Date(); d7.setDate(d7.getDate() - 7);
     const d14 = new Date(); d14.setDate(d14.getDate() - 14);
-    const last7 = history.filter(h => h.soldAt && new Date(h.soldAt) >= d7);
-    const prev7 = history.filter(h => h.soldAt && new Date(h.soldAt) >= d14 && new Date(h.soldAt) < d7);
+    const last7 = filteredHistory.filter(h => h.soldAt && new Date(h.soldAt) >= d7);
+    const prev7 = filteredHistory.filter(h => h.soldAt && new Date(h.soldAt) >= d14 && new Date(h.soldAt) < d7);
     let trend: "up" | "down" | "flat" = "flat";
     let trendPct = 0;
     if (last7.length > 0 && prev7.length > 0) {
@@ -215,7 +239,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
       else if (trendPct < -2) trend = "down";
     }
     return { avg, min, max, count: recent.length, trend, trendPct };
-  }, [history]);
+  }, [filteredHistory]);
 
   if (isLoading) {
     return (
@@ -255,7 +279,9 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           <TrendIcon className="w-4 h-4 text-white" />
           <div>
             <span className="text-white font-semibold text-sm">{t("marketplaceListing.boxiumMarketPrice")}</span>
-            {condition && <span className="ml-2 text-white/60 text-xs">({condition})</span>}
+            {condition && CONDITION_FULL[condition as ConditionValue] && (
+              <span className="ml-2 text-white/70 text-xs">({CONDITION_FULL[condition as ConditionValue]})</span>
+            )}
           </div>
         </div>
         <a
@@ -332,7 +358,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：BOXIUM{condition ? ` · ${condition}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
+        <p className="text-xs text-gray-400">數據來源：BOXIUM{condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 近 {days} 天 {chartData.reduce((s, d) => s + d.count, 0)} 筆成交記錄</p>
       </div>
     </div>
   );
@@ -1117,7 +1143,7 @@ export default function MarketplaceListing() {
           <div className="p-4 sm:p-6">
             {activeTab === "price" && (
               (listing as any).cardId
-                ? <SnkrdunkPriceBlock cardId={(listing as any).cardId} listingPriceHkd={price} />
+                ? <SnkrdunkPriceBlock cardId={(listing as any).cardId} listingPriceHkd={price} condition={listing.condition} />
                 : <div className="text-center py-8 text-gray-400">
                     <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>{t("marketplaceListing.tabs.price.noData")}</p>
