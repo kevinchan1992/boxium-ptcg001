@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   AreaChart,
   Area,
@@ -2977,19 +2977,14 @@ function ReviewsManagementTab() {
 }
 
 // ─── Banner Management Tab ───────────────────────────────────────────────────
+type PendingFile = { file: File; preview: string; altText: string; uploading: boolean; done: boolean; error: string | null };
+
 function BannerManagementTab() {
   const utils = trpc.useUtils();
   const { data: images, isLoading } = trpc.grading.adminGetBannerImages.useQuery();
   const uploadMutation = trpc.grading.adminUploadBannerImage.useMutation({
-    onSuccess: () => {
-      utils.grading.adminGetBannerImages.invalidate();
-      setUploading(false);
-      setPreview(null);
-      setImageBase64("");
-      setAltText("");
-      toast.success("圖片上傳成功！");
-    },
-    onError: (e: any) => { toast.error("上傳失敗: " + e.message); setUploading(false); },
+    onSuccess: () => { utils.grading.adminGetBannerImages.invalidate(); },
+    onError: (e: any) => { toast.error("上傳失敗: " + e.message); },
   });
   const deleteMutation = trpc.grading.adminDeleteBannerImage.useMutation({
     onSuccess: () => { utils.grading.adminGetBannerImages.invalidate(); toast.success("圖片已刪除"); },
@@ -2998,76 +2993,128 @@ function BannerManagementTab() {
     onSuccess: () => utils.grading.adminGetBannerImages.invalidate(),
   });
 
-  const [preview, setPreview] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string>("");
-  const [mimeType, setMimeType] = useState<string>("image/jpeg");
-  const [altText, setAltText] = useState<string>("");
-  const [uploading, setUploading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMimeType(file.type || "image/jpeg");
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result as string;
-      setPreview(result);
-      setImageBase64(result.split(",")[1]);
-    };
-    reader.readAsDataURL(file);
+  function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newPending: PendingFile[] = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      altText: "",
+      uploading: false,
+      done: false,
+      error: null,
+    }));
+    setPendingFiles(prev => [...prev, ...newPending]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleUpload() {
-    if (!imageBase64) return;
-    setUploading(true);
-    uploadMutation.mutate({ imageBase64, mimeType, altText: altText || undefined });
+  function removePending(idx: number) {
+    setPendingFiles(prev => prev.filter((_, i) => i !== idx));
   }
+
+  async function uploadAll() {
+    const toUpload = pendingFiles.filter(f => !f.done);
+    if (!toUpload.length) return;
+    setBatchUploading(true);
+    let successCount = 0;
+    for (let i = 0; i < pendingFiles.length; i++) {
+      const pf = pendingFiles[i];
+      if (pf.done) continue;
+      setPendingFiles(prev => prev.map((f, idx) => idx === i ? { ...f, uploading: true } : f));
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = ev => resolve((ev.target?.result as string).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(pf.file);
+        });
+        await uploadMutation.mutateAsync({ imageBase64: base64, mimeType: pf.file.type || "image/jpeg", altText: pf.altText || undefined });
+        setPendingFiles(prev => prev.map((f, idx) => idx === i ? { ...f, uploading: false, done: true } : f));
+        successCount++;
+      } catch (err: any) {
+        setPendingFiles(prev => prev.map((f, idx) => idx === i ? { ...f, uploading: false, error: err.message || "上傳失敗" } : f));
+      }
+    }
+    setBatchUploading(false);
+    if (successCount > 0) {
+      toast.success(`成功上傳 ${successCount} 張圖片！`);
+      setTimeout(() => setPendingFiles(prev => prev.filter(f => !f.done)), 1500);
+    }
+  }
+
+  const pendingCount = pendingFiles.filter(f => !f.done).length;
 
   return (
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h3 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
           <Upload className="h-4 w-4 text-[#06038d]" />
-          上傳走馬燈圖片
+          批量上傳走馬燈圖片
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">選擇圖片</label>
-            <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-[#06038d] rounded-lg cursor-pointer hover:bg-blue-50 transition-colors overflow-hidden">
-              {preview ? (
-                <img src={preview} alt="preview" className="h-full w-full object-contain" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-[#06038d]">
-                  <Image className="h-8 w-8" />
-                  <span className="text-sm">點擊選擇圖片</span>
-                  <span className="text-xs text-gray-500">支援 JPG / PNG / WebP</span>
-                </div>
-              )}
-              <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            </label>
+        <p className="text-xs text-gray-500 mb-4">建議尺寸：直向比例（如 400×560px），可一次選擇多張圖片批量上傳</p>
+        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#06038d] rounded-xl cursor-pointer hover:bg-blue-50 transition-colors mb-4">
+          <div className="flex flex-col items-center gap-1 text-[#06038d]">
+            <Upload className="h-7 w-7" />
+            <span className="text-sm font-medium">點擊或拖曳圖片至此</span>
+            <span className="text-xs text-gray-400">支援 JPG / PNG / WebP，可多選</span>
           </div>
-          <div className="flex flex-col justify-between">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">圖片說明（選填）</label>
-              <Input
-                placeholder="例如：2025 夏季特賣活動"
-                value={altText}
-                onChange={(e) => setAltText(e.target.value)}
-                className="mb-3"
-              />
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFilesChange} />
+        </label>
+
+        {pendingFiles.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">待上傳：{pendingCount} 張</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setPendingFiles([])} disabled={batchUploading}>清除全部</Button>
+                <Button size="sm" className="text-xs h-7 bg-[#06038d] hover:bg-[#0805b0] text-white" onClick={uploadAll} disabled={batchUploading || pendingCount === 0}>
+                  {batchUploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
+                  {batchUploading ? "上傳中..." : `上傳全部 (${pendingCount})`}
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handleUpload}
-              disabled={!imageBase64 || uploading}
-              className="w-full bg-[#06038d] hover:bg-[#0805b0] text-white"
-            >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-              {uploading ? "上傳中..." : "上傳圖片"}
-            </Button>
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3">
+              {pendingFiles.map((pf, idx) => (
+                <div key={idx} className="relative group">
+                  <div
+                    className={`rounded-xl overflow-hidden border-2 ${
+                      pf.done ? 'border-green-400' : pf.error ? 'border-red-400' : pf.uploading ? 'border-blue-400' : 'border-gray-200'
+                    }`}
+                    style={{ aspectRatio: '5/7' }}
+                  >
+                    <img src={pf.preview} alt="" className="w-full h-full object-cover" />
+                    {pf.uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 text-white animate-spin" />
+                      </div>
+                    )}
+                    {pf.done && (
+                      <div className="absolute inset-0 bg-green-500/40 flex items-center justify-center">
+                        <CheckCircle2 className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                    {pf.error && (
+                      <div className="absolute inset-0 bg-red-500/40 flex items-center justify-center p-1">
+                        <span className="text-white text-[9px] text-center">{pf.error}</span>
+                      </div>
+                    )}
+                  </div>
+                  {!pf.uploading && !pf.done && (
+                    <button
+                      onClick={() => removePending(idx)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >×</button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <p className="text-xs text-gray-500 mt-3">建議尺寸：寬 1200px 以上，高 400–600px，橫向比例較佳</p>
+        )}
       </div>
 
       {/* Images List */}
@@ -3086,48 +3133,44 @@ function BannerManagementTab() {
             <p className="text-xs mt-1">上傳圖片後將自動顯示在 PSA 鑑定頁面走馬燈中</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
             {images.map((img) => (
-              <div key={img.id} className={`relative rounded-lg border overflow-hidden shadow-sm transition-opacity ${img.isActive ? 'border-gray-200' : 'border-dashed border-gray-300 opacity-60'}`}>
+              <div
+                key={img.id}
+                className={`relative group rounded-xl overflow-hidden border-2 ${
+                  img.isActive ? 'border-gray-200' : 'border-dashed border-gray-300 opacity-50'
+                }`}
+                style={{ aspectRatio: '5/7' }}
+              >
                 <img
                   src={img.imageUrl}
                   alt={img.altText || `Banner ${img.id}`}
-                  className="w-full h-40 object-cover"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute top-2 left-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${img.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {img.isActive ? '顯示中' : '已隱藏'}
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                  <button
+                    className="w-full text-xs py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-medium flex items-center justify-center gap-1"
+                    onClick={() => toggleMutation.mutate({ id: img.id, isActive: !img.isActive })}
+                  >
+                    {img.isActive ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    {img.isActive ? '隱藏' : '顯示'}
+                  </button>
+                  <button
+                    className="w-full text-xs py-1 rounded-lg bg-red-500/80 hover:bg-red-600 text-white font-medium flex items-center justify-center gap-1"
+                    onClick={() => { if (confirm('確定要刪除此圖片嗎？')) deleteMutation.mutate({ id: img.id }); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    刪除
+                  </button>
+                </div>
+                {/* Status badge */}
+                <div className="absolute top-1 left-1">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    img.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+                  }`}>
+                    {img.isActive ? '顯示' : '隱藏'}
                   </span>
-                </div>
-                <div className="absolute top-2 right-2">
-                  <span className="text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">#{img.sortOrder + 1}</span>
-                </div>
-                <div className="p-3 bg-white">
-                  <p className="text-xs text-gray-500 truncate mb-2">{img.altText || '（無說明）'}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs h-7"
-                      onClick={() => toggleMutation.mutate({ id: img.id, isActive: !img.isActive })}
-                    >
-                      {img.isActive ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
-                      {img.isActive ? '隱藏' : '顯示'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs h-7 text-red-600 hover:bg-red-50 border-red-200"
-                      onClick={() => {
-                        if (confirm('確定要刪除此圖片嗎？')) {
-                          deleteMutation.mutate({ id: img.id });
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      刪除
-                    </Button>
-                  </div>
                 </div>
               </div>
             ))}

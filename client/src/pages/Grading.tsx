@@ -167,54 +167,68 @@ const FAQS = [
 ];
 
 // ─── Grading Banner Carousel ───────────────────────────────────────────────────────────────────
+// PSA App style: portrait cards, full image, infinite auto-scroll, no controls
 function GradingBannerCarousel() {
   const { data: images } = trpc.grading.getBannerImages.useQuery();
-  const [current, setCurrent] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number | null>(null);
+  const posRef = useRef(0);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
-    if (!images || images.length <= 1) return;
-    timerRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length);
-    }, 3500);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    if (!images || images.length === 0) return;
+    const track = trackRef.current;
+    if (!track) return;
+    const speed = 0.7; // px per frame
+    const step = () => {
+      if (!pausedRef.current) {
+        posRef.current += speed;
+        // Reset when we've scrolled exactly half (the duplicated set)
+        const half = track.scrollWidth / 2;
+        if (posRef.current >= half) posRef.current -= half;
+        track.style.transform = `translateX(-${posRef.current}px)`;
+      }
+      animRef.current = requestAnimationFrame(step);
+    };
+    animRef.current = requestAnimationFrame(step);
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [images?.length]);
 
   if (!images || images.length === 0) return null;
 
+  // Duplicate for seamless infinite loop
+  const doubled = [...images, ...images];
+
   return (
-    <section className="bg-white py-6 overflow-hidden">
-      <div className="relative w-full">
+    <section
+      className="bg-white py-8 overflow-hidden"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
+      {/* Edge fade masks */}
+      <div className="relative">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-white to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-white to-transparent" />
         <div
-          className="flex transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${current * 100}%)` }}
+          ref={trackRef}
+          className="flex gap-4 pl-4 will-change-transform"
+          style={{ width: 'max-content' }}
         >
-          {images.map((img, idx) => (
-            <div key={img.id} className="w-full flex-shrink-0 px-4 md:px-8">
-              <div className="max-w-5xl mx-auto">
-                <img
-                  src={img.imageUrl}
-                  alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
-                  className="w-full h-48 md:h-64 lg:h-72 object-cover rounded-xl shadow-sm"
-                  draggable={false}
-                />
-              </div>
+          {doubled.map((img, idx) => (
+            <div
+              key={`${img.id}-${idx}`}
+              className="flex-shrink-0 rounded-2xl overflow-hidden shadow-lg"
+              style={{ width: '160px', height: '224px' }}
+            >
+              <img
+                src={img.imageUrl}
+                alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
+                className="w-full h-full object-cover"
+                draggable={false}
+              />
             </div>
           ))}
         </div>
-        {images.length > 1 && (
-          <div className="flex justify-center gap-2 mt-3">
-            {images.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrent(idx)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  idx === current ? 'bg-[#06038d] w-5' : 'bg-gray-300 w-2'
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
