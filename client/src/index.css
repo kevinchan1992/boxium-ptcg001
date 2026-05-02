@@ -157,6 +157,10 @@
   select {
     font-size: 16px !important;
   }
+  /* Global checkbox accent color: BOXIUM blue #06038D */
+  input[type="checkbox"] {
+    accent-color: #06038D;
+  }
 }
 
 @layer components {

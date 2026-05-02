@@ -8931,3 +8931,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 調用端傳入 condition={listing.condition}
 - [x] TypeScript 0 errors，dev server HMR 正常
 - [x] 保存 checkpoint
+
+## ✅ 全平台 Checkbox 統一藍色樣式
+- [x] 修改 shadcn Checkbox 組件（checkbox.tsx）：checked 狀態改為 BOXIUM 藍色 #06038D（移除 primary/orange 覆蓋）
+- [x] 修改 Cart.tsx：移除 Checkbox 的 green 覆蓋樣式，背景改為藍色 #06038D/5，CheckCircle 圖示改為藍色
+- [x] 在 index.css @layer base 加入全局 input[type="checkbox"] { accent-color: #06038D }，統一所有原生 checkbox 顯示藍色
+- [x] TypeScript 0 errors 確認 + checkpoint

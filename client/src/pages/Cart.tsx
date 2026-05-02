@@ -1809,7 +1809,7 @@ function CheckoutDialog({
               <div
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
                   agreeTerms
-                    ? 'bg-green-50 border-green-300'
+                    ? 'bg-[#06038D]/5 border-[#06038D]/30'
                     : 'bg-gray-50 border-gray-200'
                 }`}
               >
@@ -1818,11 +1818,7 @@ function CheckoutDialog({
                     id="agree-terms"
                     checked={agreeTerms}
                     onCheckedChange={(checked) => setAgreeTerms(checked === true)}
-                    className={`transition-all duration-200 ${
-                      agreeTerms
-                        ? 'border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500'
-                        : ''
-                    }`}
+                    className="transition-all duration-200"
                   />
                 </div>
                 <div className="flex-1 flex items-start gap-2">
@@ -1839,7 +1835,7 @@ function CheckoutDialog({
                       agreeTerms ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
                     }`}
                   >
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-[#06038D]" />
                   </div>
                 </div>
               </div>
