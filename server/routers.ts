@@ -2065,7 +2065,10 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           });
         }
 
-        const workflowFile = `${input.workflow}.yml`;
+        // Both jobs are now in the same workflow file; listings trigger uses snkrdunk-batch-update.yml
+        const workflowFile = 'snkrdunk-batch-update.yml';
+        // For listings-only trigger, pass skip_hours=9999 to prevent price history job from running
+        const isListingsOnly = input.workflow === 'snkrdunk-listings-batch-update';
         const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/dispatches`;
 
         const resp = await fetch(apiUrl, {
@@ -2076,7 +2079,12 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
             'X-GitHub-Api-Version': '2022-11-28',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ ref: githubBranch }),
+          body: JSON.stringify({
+            ref: githubBranch,
+            inputs: isListingsOnly
+              ? { skip_hours: '9999', parallel: '1', listings_parallel: '4', skip_hot_cache_hours: '1' }
+              : {},
+          }),
           signal: AbortSignal.timeout(15000),
         });
 
@@ -2091,7 +2099,7 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           if (resp.status === 404) {
             throw new TRPCError({
               code: 'NOT_FOUND',
-              message: `找不到 workflow 文件 ${workflowFile}，請確認已推送到 GitHub。`,
+              message: `找不到 workflow 文件 ${workflowFile}，請確認已推送到 GitHub（snkrdunk-batch-update.yml）。`,
             });
           }
           throw new TRPCError({
@@ -2131,7 +2139,8 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
 
         if (!githubPat) return null;
 
-        const workflowFile = `${input.workflow}.yml`;
+        // Both jobs are in the same workflow file; always query snkrdunk-batch-update.yml
+        const workflowFile = 'snkrdunk-batch-update.yml';
         const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/runs?per_page=1`;
 
         try {
