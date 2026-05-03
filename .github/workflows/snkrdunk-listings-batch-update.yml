@@ -65,4 +65,3 @@ jobs:
           name: listings-update-failure-${{ github.run_id }}
           path: 'scripts/*.log'
           retention-days: 7
-# re-indexed 2026-05-03 v2
