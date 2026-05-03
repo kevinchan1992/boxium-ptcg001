@@ -2048,6 +2048,71 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         }
       }),
 
+    // 手動觸發 GitHub Actions workflow
+    triggerGitHubActionsWorkflow: adminProcedure
+      .input(z.object({
+        workflow: z.enum(['snkrdunk-batch-update', 'snkrdunk-listings-batch-update']),
+      }))
+      .mutation(async ({ input }) => {
+        const githubPat = process.env.GITHUB_PAT;
+        const githubRepo = process.env.GITHUB_REPO || 'kevinchan1992/boxium-ptcg001';
+        const githubBranch = process.env.GITHUB_BRANCH || '主要的';
+
+        if (!githubPat) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'GITHUB_PAT 未設定，請在後台 Secrets 設定 GitHub Personal Access Token',
+          });
+        }
+
+        const workflowFile = `${input.workflow}.yml`;
+        const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/dispatches`;
+
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${githubPat}`,
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ref: githubBranch }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        if (!resp.ok) {
+          const body = await resp.text().catch(() => '');
+          if (resp.status === 401 || resp.status === 403) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: `GitHub PAT 無效或權限不足（HTTP ${resp.status}）。請確認 PAT 有 workflow 權限。`,
+            });
+          }
+          if (resp.status === 404) {
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: `找不到 workflow 文件 ${workflowFile}，請確認已推送到 GitHub。`,
+            });
+          }
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `GitHub API 回應錯誤 HTTP ${resp.status}: ${body.slice(0, 200)}`,
+          });
+        }
+
+        const workflowNames: Record<string, string> = {
+          'snkrdunk-batch-update': 'SNKRDUNK 價格歷史批量更新',
+          'snkrdunk-listings-batch-update': 'SNKRDUNK 在售商品批量更新',
+        };
+
+        return {
+          success: true,
+          message: `${workflowNames[input.workflow]} 已成功觸發，請前往 GitHub Actions 查看進度`,
+          workflow: input.workflow,
+          repoUrl: `https://github.com/${githubRepo}/actions`,
+        };
+      }),
+
     // 獲取排程設定
     getScheduleConfig: publicProcedure
       .query(async ({ ctx }) => {

@@ -856,6 +856,22 @@ export function AdminScheduleManagement() {
  */
 function GitHubActionsGuide() {
   const [expanded, setExpanded] = useState(false);
+
+  const triggerWorkflow = trpc.admin.triggerGitHubActionsWorkflow.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message, {
+        action: {
+          label: '查看 Actions',
+          onClick: () => window.open(data.repoUrl, '_blank'),
+        },
+        duration: 8000,
+      });
+    },
+    onError: (err) => {
+      toast.error(`觸發失敗：${err.message}`);
+    },
+  });
+
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader
@@ -881,8 +897,9 @@ function GitHubActionsGuide() {
             <div>
               <p className="text-green-300 text-sm font-medium">Workflow 已就緒</p>
               <p className="text-green-400/80 text-xs mt-1">
-                <code className="bg-gray-800 px-1 rounded">.github/workflows/snkrdunk-batch-update.yml</code> 已加入倉庫，
-                每日凌晨 01:00 HKT 自動執行。
+                兩個 workflow 均已就緒：<br/>
+                <code className="bg-gray-800 px-1 rounded">snkrdunk-batch-update.yml</code> — 每日 01:00 HKT 更新價格歷史<br/>
+                <code className="bg-gray-800 px-1 rounded">snkrdunk-listings-batch-update.yml</code> — 每 6 小時更新在售商品
               </p>
             </div>
           </div>
@@ -919,16 +936,54 @@ function GitHubActionsGuide() {
             </ol>
           </div>
 
+          {/* 手動觸發按鈕 */}
+          <div className="space-y-2">
+            <p className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
+              <Play className="w-3.5 h-3.5" />
+              立即手動觸發 GitHub Actions
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border-blue-700 text-xs h-9 justify-start"
+                disabled={triggerWorkflow.isPending}
+                onClick={() => triggerWorkflow.mutate({ workflow: 'snkrdunk-batch-update' })}
+              >
+                {triggerWorkflow.isPending && triggerWorkflow.variables?.workflow === 'snkrdunk-batch-update' ? (
+                  <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 mr-2" />
+                )}
+                觸發：價格歷史更新
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-purple-900/30 hover:bg-purple-800/50 text-purple-300 border-purple-700 text-xs h-9 justify-start"
+                disabled={triggerWorkflow.isPending}
+                onClick={() => triggerWorkflow.mutate({ workflow: 'snkrdunk-listings-batch-update' })}
+              >
+                {triggerWorkflow.isPending && triggerWorkflow.variables?.workflow === 'snkrdunk-listings-batch-update' ? (
+                  <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 mr-2" />
+                )}
+                觸發：在售商品更新
+              </Button>
+            </div>
+            <p className="text-gray-500 text-xs">需要設定 GITHUB_PAT secret（有 workflow 權限的 Personal Access Token）</p>
+          </div>
           {/* 快速連結 */}
           <div className="flex flex-wrap gap-2">
             <a
-              href="https://github.com"
+              href="https://github.com/kevinchan1992/boxium-ptcg001/actions"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-md transition-colors"
             >
               <Github className="w-3.5 h-3.5" />
-              前往 GitHub
+              前往 GitHub Actions
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
