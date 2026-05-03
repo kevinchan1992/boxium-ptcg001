@@ -165,7 +165,7 @@ export const pricingRouter = router({
                   (item: any) => !item.status || item.status === 'on-sale'
                 );
                 snkrdunkListings = onSaleCachedListings.map((item: any) => ({
-                  id: `snkrdunk-${item.url}`,
+                  id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
                   title: `${card.name} ${item.grade}`,
                   price: item.price,
                   currency: item.currency,
@@ -215,7 +215,7 @@ export const pricingRouter = router({
                   }
                   
                   snkrdunkListings = mergedListings.map((item) => ({
-                    id: `snkrdunk-${item.url}`,
+                    id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
                     title: `${card.name} ${item.grade}`,
                     price: item.price,
                     currency: item.currency,

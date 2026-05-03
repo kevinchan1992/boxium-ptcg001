@@ -45,6 +45,7 @@ interface SnkrdunkApiResponse {
 
 export interface SnkrdunkListing {
   url: string;
+  listingId?: string; // Unique listing ID for deduplication
   price: number;
   currency: string;
   grade: string;
@@ -141,6 +142,7 @@ export async function scrapeSnkrdunkListingsViaApi(
 
       return {
         url: `https://snkrdunk.com/apparels/${snkrdunkId}/used`,
+        listingId: String(item.id), // Unique listing ID for deduplication
         price: priceInHKD,
         currency: "HKD",
         grade,
