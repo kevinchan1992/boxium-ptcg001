@@ -4,37 +4,43 @@
  * Directly calls SNKRDUNK's internal REST API instead of using Playwright browser automation.
  * This approach is ~50-100x faster (0.2-0.5s vs 20-33s per request).
  * 
- * API endpoint discovered from SNKRDUNK's Vue.js frontend bundle:
- *   GET /en/v1/trading-cards/{tradingCardId}/used-listings
+ * API endpoint (confirmed from browser network requests 2026-05-03):
+ *   GET /v1/apparels/{apparelId}/used
  * 
  * Parameters:
- *   - perPage: number (items per page, max 50)
+ *   - perPage: number (items per page)
  *   - page: number (page number, 1-indexed)
- *   - sortType: 'latest' | 'priceAsc' | 'priceDesc'
- *   - isOnlyOnSale: boolean (true = only on-sale items, false = include sold)
- *   - conditionId: number (optional, filter by condition)
+ *   - order: string (empty = default sort)
+ *   - withAllColors: boolean
+ *   - isSaleOnly: boolean (true = only on-sale items)
+ *   - conditionIds: number (-1 = all conditions)
  * 
- * Response: { usedTradingCards: Array<UsedTradingCard> }
+ * Response: { apparelUsedItems: Array<ApparelUsedItem> }
+ * Note: price is in JPY (integer), condition in displayShortConditionTitle
  */
 
 import { convertToHKD } from "../utils/currency";
 import { logPerformance } from "./performanceTracker";
 
-const SNKRDUNK_API_BASE = "https://snkrdunk.com/en/v1";
+const SNKRDUNK_API_BASE = "https://snkrdunk.com/v1";
 
 interface SnkrdunkApiItem {
   id: number;
-  tradingCardId: number;
-  listingUID: string;
-  price: string;         // e.g. "US $2271", "SG $3048", "HK $11999"
-  condition: string;     // e.g. "PSA 10", "A", "B", "D", "BGS 9.5"
-  thumbnailUrl: string;
-  isNew: boolean;
-  isSold: boolean;
+  price: number;                    // JPY integer, e.g. 2000
+  commaPrice: string;               // e.g. "¥2,000"
+  status: number;                   // 0 = on-sale
+  statusText: string;               // e.g. "出品中/入札中"
+  displayShortConditionTitle: string; // e.g. "PSA10", "A", "B", "C", "D"
+  displayWearCount: string;         // same as displayShortConditionTitle
+  wearCount: string;                // internal condition key
+  primaryPhoto: { id: number; imageUrl: string } | null;
+  isDisplaySold: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SnkrdunkApiResponse {
-  usedTradingCards: SnkrdunkApiItem[];
+  apparelUsedItems: SnkrdunkApiItem[];
 }
 
 export interface SnkrdunkListing {
@@ -47,71 +53,46 @@ export interface SnkrdunkListing {
 }
 
 /**
- * Parse price string from SNKRDUNK API response
- * Examples: "US $2271", "SG $3048", "HK $11,999", "$114"
+ * Convert JPY price to HKD via convertToHKD utility
+ * SNKRDUNK API returns prices in JPY (integer)
  */
-function parsePrice(priceStr: string): { amount: number; currency: string } {
-  // Match currency prefix and amount
-  const match = priceStr.match(/(?:(US|SG|HK)\s*)?\$([\d,]+)/);
-  if (!match) {
-    return { amount: 0, currency: "SGD" };
-  }
-
-  const prefix = match[1] || "";
-  const amount = parseInt(match[2].replace(/,/g, ""), 10);
-
-  let currency: string;
-  switch (prefix) {
-    case "US":
-      currency = "USD";
-      break;
-    case "SG":
-      currency = "SGD";
-      break;
-    case "HK":
-      currency = "HKD";
-      break;
-    default:
-      // No prefix defaults to SGD (SNKRDUNK is Singapore-based for EN site)
-      currency = "SGD";
-      break;
-  }
-
-  return { amount, currency };
+function parsePriceJPY(priceJPY: number): { amount: number; currency: string } {
+  return { amount: priceJPY, currency: "JPY" };
 }
 
 /**
- * Fetch used listings from SNKRDUNK API for a specific trading card
+ * Fetch used listings from SNKRDUNK API for a specific apparel/card
  */
 async function fetchSnkrdunkApiPage(
   snkrdunkId: string,
   options: {
     page?: number;
     perPage?: number;
-    sortType?: string;
-    isOnlyOnSale?: boolean;
+    isSaleOnly?: boolean;
   } = {}
 ): Promise<SnkrdunkApiItem[]> {
   const {
     page = 1,
     perPage = 50,
-    sortType = "latest",
-    isOnlyOnSale = true,
+    isSaleOnly = true,
   } = options;
 
-  const url = new URL(`${SNKRDUNK_API_BASE}/trading-cards/${snkrdunkId}/used-listings`);
+  const url = new URL(`${SNKRDUNK_API_BASE}/apparels/${snkrdunkId}/used`);
   url.searchParams.set("perPage", String(perPage));
   url.searchParams.set("page", String(page));
-  url.searchParams.set("sortType", sortType);
-  url.searchParams.set("isOnlyOnSale", String(isOnlyOnSale));
+  url.searchParams.set("order", "");
+  url.searchParams.set("withAllColors", "false");
+  url.searchParams.set("isSaleOnly", String(isSaleOnly));
+  url.searchParams.set("conditionIds", "-1");
 
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "application/json",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": `https://snkrdunk.com/en/trading-cards/${snkrdunkId}/used`,
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "ja,en;q=0.9",
+      "Referer": `https://snkrdunk.com/apparels/${snkrdunkId}/used`,
+      "Origin": "https://snkrdunk.com",
     },
     signal: AbortSignal.timeout(10000), // 10 second timeout
   });
@@ -121,14 +102,14 @@ async function fetchSnkrdunkApiPage(
   }
 
   const data = (await response.json()) as SnkrdunkApiResponse;
-  return data.usedTradingCards || [];
+  return data.apparelUsedItems || [];
 }
 
 /**
- * Scrape SNKRDUNK PSA 10 listings using direct HTTP API calls
- * Replaces the Playwright-based scraper for dramatically improved performance.
+ * Scrape SNKRDUNK listings using direct HTTP API calls
+ * Uses the correct /v1/apparels/{id}/used endpoint discovered from browser network requests.
  * 
- * @param snkrdunkId - SNKRDUNK product ID (e.g., "737036")
+ * @param snkrdunkId - SNKRDUNK apparel ID (e.g., "753270")
  * @returns Array of all condition listings sorted by price (lowest first)
  */
 export async function scrapeSnkrdunkListingsViaApi(
@@ -140,7 +121,7 @@ export async function scrapeSnkrdunkListingsViaApi(
 
   try {
     // Only fetch on-sale items - we only want to show items currently available for purchase
-    const onSaleItems = await fetchSnkrdunkApiPage(snkrdunkId, { isOnlyOnSale: true, perPage: 50 });
+    const onSaleItems = await fetchSnkrdunkApiPage(snkrdunkId, { isSaleOnly: true, perPage: 50 });
 
     console.log(`[SNKRDUNK API] Fetched ${onSaleItems.length} on-sale items`);
 
@@ -151,15 +132,19 @@ export async function scrapeSnkrdunkListingsViaApi(
 
     // Convert to unified listing format
     const listings: SnkrdunkListing[] = allItems.map((item) => {
-      const { amount, currency } = parsePrice(item.price);
+      const { amount, currency } = parsePriceJPY(item.price);
       const priceInHKD = convertToHKD(amount, currency);
 
+      // Normalize condition: PSA10 → PSA 10, A/B/C/D stay as-is
+      const rawCondition = item.displayShortConditionTitle || item.displayWearCount || "";
+      const grade = rawCondition.replace(/^PSA(\d)/, "PSA $1").replace(/^BGS(\d)/, "BGS $1");
+
       return {
-        url: `https://snkrdunk.com/en/trading-cards/used/listings/${item.listingUID}`,
+        url: `https://snkrdunk.com/apparels/${snkrdunkId}/used`,
         price: priceInHKD,
         currency: "HKD",
-        grade: item.condition,
-        image: item.thumbnailUrl || undefined,
+        grade,
+        image: item.primaryPhoto?.imageUrl || undefined,
         status: 'on-sale' as const,
       };
     });
