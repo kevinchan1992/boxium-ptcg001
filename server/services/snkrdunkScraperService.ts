@@ -16,6 +16,7 @@ interface SnkrdunkListing {
   currency: string;
   grade: string;
   url: string;
+  listingId?: string; // Unique listing ID for individual product URL
   image?: string;
   status?: 'on-sale' | 'sold';
 }
