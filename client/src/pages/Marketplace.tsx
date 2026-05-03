@@ -735,7 +735,7 @@ export default function Marketplace() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={t("marketplace.search.placeholder")}
-                    className="pl-12 pr-10 bg-white border-0 text-gray-900 placeholder:text-gray-400 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base w-full"
+                    className="pl-12 pr-10 bg-white/10 border border-white/20 text-white placeholder:text-white/50 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base w-full"
                   />
                   {searchInput && (
                     <button
