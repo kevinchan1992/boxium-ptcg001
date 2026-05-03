@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, AlertCircle, ShoppingBag } from "lucide-react";
+import { AlertCircle, ShoppingBag, Tag } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
@@ -41,15 +40,18 @@ export default function PricingSearch() {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   // Fetch search results from database (with pagination)
+  // NOTE: grade filter parsing happens server-side in cards.search (pricing-only logic)
   const { data: searchData, isLoading, error } = trpc.cards.search.useQuery(
     { query: query || "", limit: ITEMS_PER_PAGE, offset },
     { enabled: !!query, retry: 1 }
   );
 
-  // Extract cards array from response
+  // Extract cards array and grade label from response
   const searchResults = searchData?.cards || [];
   const total = searchData?.total || 0;
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  // gradeLabel is returned by the server when a grade keyword was detected (e.g. "BGS 9.5")
+  const gradeLabel: string | null = (searchData as any)?.gradeLabel ?? null;
 
   // Get card IDs for lowest listing price query
   const cardIds = useMemo(() => searchResults.map((c: any) => c.id), [searchResults]);
@@ -76,39 +78,26 @@ export default function PricingSearch() {
     if (uncachedIds.length === 0) return;
 
     // Trigger background scraping for all uncached cards on the page (up to 50)
-    // Load test confirmed: 30 concurrent scrapes only add ~8% latency to search API
-    // HTTP API is fast (~0.2-1.5s/card), so 50 cards complete within ~10-15s
     const batchToRefresh = uncachedIds.slice(0, 50);
     setIsRefreshing(true);
     triggerRefresh.mutate(
       { cardIds: batchToRefresh },
       {
         onSettled: () => {
-          // After background scraping completes, refetch prices to show updated values
-          // Wait 8s: HTTP API is fast (~0.2-1.5s/card), 50 cards complete in ~8-15s
           setTimeout(() => {
             refetchPrices();
             setIsRefreshing(false);
-          }, 8000); // wait 8s for scraping to complete
+          }, 8000);
         },
       }
     );
   }, [cardIds, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // New search always resets to page 1
-      setLocation(`/pricing/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
 
   const handleCardClick = (cardId: number) => {
     setLocation(`/pricing/${cardId}`);
   };
 
   const goToPage = (page: number) => {
-    // Update URL with new page number so browser back/forward works
     const newParams = new URLSearchParams();
     newParams.set("q", query);
     if (page > 1) newParams.set("page", String(page));
@@ -159,7 +148,7 @@ export default function PricingSearch() {
 
       {/* Results Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-2xl font-bold text-foreground">
             {t("pricing.searchResultsFor")}: "{query}"
           </h2>
@@ -174,12 +163,42 @@ export default function PricingSearch() {
             </div>
           )}
         </div>
+
+        {/* Grade filter badge — only shown when a grade keyword was detected */}
+        {gradeLabel && !isLoading && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-sm font-medium">
+              <Tag className="w-3.5 h-3.5" />
+              <span>品相過濾：{gradeLabel} 在售商品</span>
+            </div>
+            <button
+              onClick={() => {
+                // Strip the grade keyword from the query and re-search
+                const stripped = query.replace(
+                  /\b(psa\s*\d+(\.\d+)?|bgs\s*\d+(\.\d+)?|ars\s*\d+\+?|grade\s*[a-d]|中古[abcd])\b/gi,
+                  ""
+                ).replace(/\s+/g, " ").trim();
+                if (stripped) {
+                  setLocation(`/pricing/search?q=${encodeURIComponent(stripped)}`);
+                } else {
+                  setLocation("/pricing");
+                }
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+            >
+              清除過濾
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <p className="text-muted-foreground mt-2">{t("pricing.searching")}</p>
         ) : (
           <>
             <p className="text-muted-foreground mt-2">
-              {t("pricing.foundCards", { count: total })}
+              {gradeLabel
+                ? `找到 ${total} 張卡牌有 ${gradeLabel} 在售商品`
+                : t("pricing.foundCards", { count: total })}
             </p>
             {totalPages > 1 && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -235,6 +254,14 @@ export default function PricingSearch() {
                         <p className="text-muted-foreground text-xs">{t("pricing.noImage")}</p>
                       </div>
                     )}
+                    {/* Grade badge on card thumbnail when grade filter is active */}
+                    {gradeLabel && (
+                      <div className="absolute bottom-1 left-1 right-1">
+                        <div className="bg-blue-500/80 backdrop-blur-sm text-white text-[8px] sm:text-[9px] font-bold px-1 py-0.5 rounded text-center truncate">
+                          {gradeLabel}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="p-1.5 sm:p-2 flex flex-col">
                     <h3 className="font-semibold text-foreground text-[9px] sm:text-xs mb-0 sm:mb-0.5 line-clamp-2 leading-tight">
@@ -265,7 +292,9 @@ export default function PricingSearch() {
                           <div className="h-2 sm:h-2.5 w-2/3 rounded animate-pulse bg-muted-foreground/15" />
                         </div>
                       ) : (
-                        <p className="text-[9px] sm:text-xs text-muted-foreground">--</p>
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground/60">
+                          {t("pricing.noListings")}
+                        </p>
                       )}
                     </div>
                   </div>

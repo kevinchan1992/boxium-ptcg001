@@ -48,11 +48,152 @@ export async function getDb() {
 }
 
 // Card queries
+
+/**
+ * Parse a grade filter keyword from the search query.
+ * Returns { gradeFilter: string[], cleanQuery: string } where
+ * gradeFilter is an array of DB grade values to match (OR logic),
+ * and cleanQuery is the query with the grade token removed.
+ */
+export function parseGradeFilter(query: string): { gradeFilter: string[] | null; cleanQuery: string; gradeLabel: string | null } {
+  const lower = query.toLowerCase().trim();
+  // Map of input patterns → DB grade values (from priceHistory and listings)
+  const gradeMap: Array<{ pattern: RegExp; grades: string[]; label: string }> = [
+    { pattern: /\bpsa\s*10\b/, grades: ['PSA10', 'PSA 10'], label: 'PSA 10' },
+    { pattern: /\bpsa\s*9(?!\.5|\d)\b/, grades: ['PSA9', 'PSA 9'], label: 'PSA 9' },
+    { pattern: /\bpsa\s*8\b/, grades: ['PSA8以下', 'PSA 8以下'], label: 'PSA 8以下' },
+    { pattern: /\bbgs\s*10\b/, grades: ['BGS10 GL', 'BGS10 BL', 'BGS 10 GL', 'BGS 10 BL'], label: 'BGS 10' },
+    { pattern: /\bbgs\s*9\.5\b/, grades: ['BGS9.5', 'BGS 9.5'], label: 'BGS 9.5' },
+    { pattern: /\bbgs\s*9(?!\.5|\d)\b/, grades: ['BGS9以下', 'BGS 9以下'], label: 'BGS 9以下' },
+    { pattern: /\bars\s*10\+?\b/, grades: ['ARS10', 'ARS10+'], label: 'ARS 10' },
+    { pattern: /\bars\s*9\b/, grades: ['ARS9'], label: 'ARS 9' },
+    { pattern: /\bars\s*8\b/, grades: ['ARS8以下'], label: 'ARS 8以下' },
+    { pattern: /\bgrade[:\s]*a\b|\b中古a\b/, grades: ['A'], label: '中古 A' },
+    { pattern: /\bgrade[:\s]*b\b|\b中古b\b/, grades: ['B'], label: '中古 B' },
+    { pattern: /\bgrade[:\s]*c\b|\b中古c\b/, grades: ['C'], label: '中古 C' },
+    { pattern: /\bgrade[:\s]*d\b|\b中古d\b/, grades: ['D'], label: '中古 D' },
+  ];
+  for (const { pattern, grades, label } of gradeMap) {
+    if (pattern.test(lower)) {
+      // Remove the matched grade token from the query
+      const cleanQuery = query.replace(new RegExp(pattern.source, 'i'), '').replace(/\s+/g, ' ').trim();
+      return { gradeFilter: grades, cleanQuery, gradeLabel: label };
+    }
+  }
+  return { gradeFilter: null, cleanQuery: query, gradeLabel: null };
+}
+
+/**
+ * Search cards that have active listings of a specific grade in snkrdunkListingsCache.
+ * If cleanQuery is non-empty, also filter by card name/number.
+ * Returns cards sorted by lowest listing price of that grade (ascending).
+ */
+async function searchCardsByGrade(
+  gradeFilter: string[],
+  cleanQuery: string,
+  limit: number,
+  offset: number,
+  db: any
+): Promise<{ cards: any[]; total: number }> {
+  const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
+
+  // Fetch all cache rows (we need to parse JSON to filter by grade)
+  // For performance, limit to rows with non-empty listings
+  const allCacheRows = await db
+    .select({
+      cardId: snkrdunkListingsCache.cardId,
+      listings: snkrdunkListingsCache.listings,
+    })
+    .from(snkrdunkListingsCache);
+
+  // Filter rows that have at least one listing matching the grade filter
+  const matchingCardIds: number[] = [];
+  const gradeMinPriceMap = new Map<number, number>(); // cardId → lowest price for this grade
+
+  for (const row of allCacheRows) {
+    try {
+      const items: Array<{ price: number; currency: string; grade: string; status?: string }> =
+        typeof row.listings === 'string' ? JSON.parse(row.listings) : (row.listings as any);
+      const gradeItems = items.filter(
+        (item) =>
+          (!item.status || item.status === 'on-sale') &&
+          gradeFilter.some(g => item.grade === g)
+      );
+      if (gradeItems.length > 0) {
+        matchingCardIds.push(row.cardId);
+        const minPrice = Math.min(...gradeItems.map(i => i.price));
+        if (isFinite(minPrice) && minPrice > 0) {
+          gradeMinPriceMap.set(row.cardId, Math.round(minPrice * 100) / 100);
+        }
+      }
+    } catch {
+      // skip malformed
+    }
+  }
+
+  if (matchingCardIds.length === 0) return { cards: [], total: 0 };
+
+  // If there's a clean query, further filter by card name/number
+  let finalCardIds = matchingCardIds;
+  if (cleanQuery.trim()) {
+    const tokens = tokenizeSearchQuery(cleanQuery.trim());
+    if (tokens.length > 0) {
+      const tokenConditions = tokens.map(token => {
+        const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
+        const conditions = [
+          ...namePatterns.map(p => like(cards.name, p)),
+          ...namePatterns.map(p => like(cards.nameJa, p)),
+          ...cnPatterns.map(p => like(cards.cardNumber, p)),
+        ];
+        return or(...conditions)!;
+      });
+      const whereCondition = and(
+        inArray(cards.id, matchingCardIds),
+        ...(tokenConditions.length === 1 ? [tokenConditions[0]] : tokenConditions)
+      );
+      const nameMatches = await db.select({ id: cards.id }).from(cards).where(whereCondition);
+      finalCardIds = nameMatches.map((r: any) => r.id);
+    }
+  }
+
+  if (finalCardIds.length === 0) return { cards: [], total: 0 };
+
+  // Fetch full card data
+  const matchingCards = await db
+    .select()
+    .from(cards)
+    .where(inArray(cards.id, finalCardIds));
+
+  // Sort by lowest grade listing price (ascending, cards with price first)
+  const cardsWithPrice = matchingCards.map((card: any) => ({
+    ...card,
+    latestPrice: gradeMinPriceMap.get(card.id) || null,
+  }));
+  cardsWithPrice.sort((a: any, b: any) => {
+    const pa = a.latestPrice || Infinity;
+    const pb = b.latestPrice || Infinity;
+    return pa - pb;
+  });
+
+  return {
+    cards: cardsWithPrice.slice(offset, offset + limit),
+    total: cardsWithPrice.length,
+  };
+}
+
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
 
   const trimmedQuery = query.trim();
+
+  // ── Grade filter detection ────────────────────────────────────────────────
+  // If the query contains a grade keyword (e.g. "bgs9.5", "psa10"), extract it
+  // and filter results to cards that have listings of that grade in the cache.
+  const { gradeFilter, cleanQuery } = parseGradeFilter(trimmedQuery);
+  if (gradeFilter) {
+    return searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
+  }
 
   // ── Pure series code query (e.g. "SV10", "SM-P", "ST01", "SM", "ST") ───────
   // When the user types only a set code or partial prefix, do a prefix match

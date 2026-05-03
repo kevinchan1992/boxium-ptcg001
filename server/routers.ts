@@ -570,8 +570,10 @@ export const appRouter = router({
         offset: z.number().optional().default(0),
       }))
       .query(async ({ input }) => {
+        const { parseGradeFilter } = await import('./db');
+        const { gradeLabel } = parseGradeFilter(input.query);
         const results = await db.searchCards(input.query, input.limit, input.offset);
-        return results;
+        return { ...results, gradeLabel };
       }),
 
     /**
