@@ -164,17 +164,27 @@ export const pricingRouter = router({
                 const onSaleCachedListings = cachedListings.filter(
                   (item: any) => !item.status || item.status === 'on-sale'
                 );
-                snkrdunkListings = onSaleCachedListings.map((item: any) => ({
-                  id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
-                  title: `${card.name} ${item.grade}`,
-                  price: item.price,
-                  currency: item.currency,
-                  imageUrl: item.image || card.imageUrl || '',
-                  source: 'snkrdunk' as const,
-                  buyUrl: item.url,
-                  seller: 'SNKRDUNK',
-                  condition: item.grade,
-                }));
+                snkrdunkListings = onSaleCachedListings.map((item: any) => {
+                  // Fix URL: if listingId exists but URL is still the list page, build individual URL
+                  let buyUrl = item.url;
+                  if (item.listingId && item.url && item.url.endsWith('/used')) {
+                    const snkrdunkMatch = item.url.match(/apparels\/(\d+)/);
+                    if (snkrdunkMatch) {
+                      buyUrl = `https://snkrdunk.com/apparels/${snkrdunkMatch[1]}/used/${item.listingId}`;
+                    }
+                  }
+                  return {
+                    id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
+                    title: `${card.name} ${item.grade}`,
+                    price: item.price,
+                    currency: item.currency,
+                    imageUrl: item.image || card.imageUrl || '',
+                    source: 'snkrdunk' as const,
+                    buyUrl,
+                    seller: 'SNKRDUNK',
+                    condition: item.grade,
+                  };
+                });
                 console.log(`[Pricing Router] Hot cache returned ${snkrdunkListings.length} on-sale listings (filtered from ${cachedListings.length} total)`);
               } else {
                 // Hot cache expired or doesn't exist, scrape new data
@@ -214,17 +224,27 @@ export const pricingRouter = router({
                     await db.clearSnkrdunkCacheByCardId(actualCardId);
                   }
                   
-                  snkrdunkListings = mergedListings.map((item) => ({
-                    id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
-                    title: `${card.name} ${item.grade}`,
-                    price: item.price,
-                    currency: item.currency,
-                    imageUrl: item.image || card.imageUrl || '',
-                    source: 'snkrdunk' as const,
-                    buyUrl: item.url,
-                    seller: 'SNKRDUNK',
-                    condition: item.grade,
-                  }));
+                  snkrdunkListings = mergedListings.map((item) => {
+                    // Fix URL: if listingId exists but URL is still the list page, build individual URL
+                    let buyUrl = item.url;
+                    if (item.listingId && item.url && item.url.endsWith('/used')) {
+                      const snkrdunkMatch = item.url.match(/apparels\/(\d+)/);
+                      if (snkrdunkMatch) {
+                        buyUrl = `https://snkrdunk.com/apparels/${snkrdunkMatch[1]}/used/${item.listingId}`;
+                      }
+                    }
+                    return {
+                      id: item.listingId ? `snkrdunk-${item.listingId}` : `snkrdunk-${item.url}-${Math.random().toString(36).slice(2)}`,
+                      title: `${card.name} ${item.grade}`,
+                      price: item.price,
+                      currency: item.currency,
+                      imageUrl: item.image || card.imageUrl || '',
+                      source: 'snkrdunk' as const,
+                      buyUrl,
+                      seller: 'SNKRDUNK',
+                      condition: item.grade,
+                    };
+                  });
                   console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
                 } catch (scrapeError) {
                   // If scraping fails, clear the old cache and log detailed error

@@ -140,9 +140,10 @@ export async function scrapeSnkrdunkListingsViaApi(
       const rawCondition = item.displayShortConditionTitle || item.displayWearCount || "";
       const grade = rawCondition.replace(/^PSA(\d)/, "PSA $1").replace(/^BGS(\d)/, "BGS $1");
 
+      const listingId = String(item.id);
       return {
-        url: `https://snkrdunk.com/apparels/${snkrdunkId}/used`,
-        listingId: String(item.id), // Unique listing ID for deduplication
+        url: `https://snkrdunk.com/apparels/${snkrdunkId}/used/${listingId}`,
+        listingId, // Unique listing ID for deduplication
         price: priceInHKD,
         currency: "HKD",
         grade,
