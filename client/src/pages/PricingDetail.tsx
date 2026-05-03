@@ -21,23 +21,47 @@ interface PricingItem {
   condition?: string;
 }
 
-// Grade filter options
-const GRADE_FILTERS = [
-  { key: "all", label: "全部" },
-  { key: "PSA10", label: "PSA 10" },
-  { key: "A", label: "A品" },
-  { key: "B", label: "B品" },
-  { key: "C", label: "C品" },
-  { key: "D", label: "D品" },
-  { key: "Used", label: "中古" },
-];
+// Grade sort order (higher = shown first)
+const GRADE_SORT_ORDER: Record<string, number> = {
+  "PSA10": 100,
+  "PSA9": 90,
+  "PSA8": 80,
+  "PSA7": 70,
+  "PSA6": 60,
+  "PSA5": 50,
+  "PSA4": 40,
+  "PSA3": 30,
+  "PSA2": 20,
+  "PSA1": 10,
+  "BGS10": 95,
+  "BGS9.5": 85,
+  "BGS9": 75,
+  "BGS8.5": 65,
+  "BGS8": 55,
+  "A": 45,
+  "B": 35,
+  "C": 25,
+  "D": 15,
+  "Used": 5,
+  "other": 0,
+};
 
-// Normalize condition string to a filter key
+// Normalize condition string to a canonical filter key
 function normalizeCondition(condition?: string): string {
   if (!condition) return "other";
   const c = condition.trim().toUpperCase();
-  // PSA 10
-  if (c === "PSA 10" || c === "PSA10") return "PSA10";
+  // PSA grades: PSA10, PSA 10, PSA10GL, etc.
+  const psaMatch = c.match(/^PSA\s*(\d+(?:\.\d+)?)/);
+  if (psaMatch) return `PSA${psaMatch[1]}`;
+  // BGS grades: BGS9.5, BGS 9.5, etc.
+  const bgsMatch = c.match(/^BGS\s*(\d+(?:\.\d+)?)/);
+  if (bgsMatch) return `BGS${bgsMatch[1]}`;
+  // SGC grades
+  const sgcMatch = c.match(/^SGC\s*(\d+(?:\.\d+)?)/);
+  if (sgcMatch) return `SGC${sgcMatch[1]}`;
+  // ARS grades (SNKRDUNK internal)
+  const arsMatch = c.match(/^ARS\s*(\d+(?:\.\d+)?)/);
+  if (arsMatch) return `ARS${arsMatch[1]}`;
   // SNKRDUNK A/B/C/D grades
   if (c === "A" || c === "A品") return "A";
   if (c === "B" || c === "B品") return "B";
@@ -45,7 +69,27 @@ function normalizeCondition(condition?: string): string {
   if (c === "D" || c === "D品") return "D";
   // eBay used/ungraded
   if (c === "USED" || c === "UNGRADED" || c === "GRADED") return "Used";
-  return "other";
+  // Fallback: return the original trimmed value so it still shows as a filter
+  return condition.trim();
+}
+
+// Get display label for a normalized grade key
+function getGradeLabel(key: string): string {
+  if (key === "Used") return "中古";
+  if (key === "A") return "A品";
+  if (key === "B") return "B品";
+  if (key === "C") return "C品";
+  if (key === "D") return "D品";
+  // PSA10 → PSA 10, BGS9.5 → BGS 9.5, etc.
+  const psaMatch = key.match(/^PSA(\d+(?:\.\d+)?)$/);
+  if (psaMatch) return `PSA ${psaMatch[1]}`;
+  const bgsMatch = key.match(/^BGS(\d+(?:\.\d+)?)$/);
+  if (bgsMatch) return `BGS ${bgsMatch[1]}`;
+  const sgcMatch = key.match(/^SGC(\d+(?:\.\d+)?)$/);
+  if (sgcMatch) return `SGC ${sgcMatch[1]}`;
+  const arsMatch = key.match(/^ARS(\d+(?:\.\d+)?)$/);
+  if (arsMatch) return `ARS ${arsMatch[1]}`;
+  return key;
 }
 
 export default function PricingDetail() {
@@ -118,11 +162,23 @@ export default function PricingDetail() {
     ? filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length
     : 0;
 
-  // Check which grade filters have data
+  // Dynamically compute which grades have listings, sorted by importance
   const availableGrades = useMemo(() => {
     const all = pricingData?.listings || [];
-    const gradeSet = new Set(all.map((item) => normalizeCondition(item.condition)));
-    return gradeSet;
+    const gradeCountMap = new Map<string, number>();
+    for (const item of all) {
+      const key = normalizeCondition(item.condition);
+      gradeCountMap.set(key, (gradeCountMap.get(key) || 0) + 1);
+    }
+    // Sort by GRADE_SORT_ORDER descending; unknown grades go after known ones alphabetically
+    return Array.from(gradeCountMap.entries())
+      .sort(([a], [b]) => {
+        const orderA = GRADE_SORT_ORDER[a] ?? 1;
+        const orderB = GRADE_SORT_ORDER[b] ?? 1;
+        if (orderB !== orderA) return orderB - orderA;
+        return a.localeCompare(b);
+      })
+      .map(([key, count]) => ({ key, label: getGradeLabel(key), count }));
   }, [pricingData?.listings]);
 
   if (cardLoading) {
@@ -237,36 +293,34 @@ export default function PricingDetail() {
           <h2 className="text-base sm:text-xl font-bold text-foreground mr-2">
             {t("pricing.allListings")}
           </h2>
-          {/* Grade filter buttons */}
+          {/* Grade filter buttons - dynamically show only grades with listings */}
           <div className="flex flex-wrap gap-1.5">
-            {GRADE_FILTERS.map((filter) => {
-              const hasData = filter.key === "all" 
-                ? (pricingData?.listings?.length || 0) > 0
-                : availableGrades.has(filter.key);
-              return (
-                <button
-                  key={filter.key}
-                  onClick={() => setActiveGrade(filter.key)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${
-                    activeGrade === filter.key
-                      ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                      : hasData
-                      ? "bg-muted border-border text-foreground hover:border-primary/50 hover:text-primary"
-                      : "bg-muted/40 border-border/40 text-muted-foreground cursor-default opacity-50"
-                  }`}
-                  disabled={!hasData && filter.key !== "all"}
-                >
-                  {filter.label}
-                  {hasData && filter.key !== "all" && (
-                    <span className="ml-1 text-[10px] opacity-70">
-                      ({(pricingData?.listings || []).filter(
-                        (item) => normalizeCondition(item.condition) === filter.key
-                      ).length})
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            {/* "All" button always shown */}
+            <button
+              onClick={() => setActiveGrade("all")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                activeGrade === "all"
+                  ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                  : "bg-muted border-border text-foreground hover:border-primary/50 hover:text-primary"
+              }`}
+            >
+              全部
+            </button>
+            {/* Dynamic grade buttons - only show grades that have listings */}
+            {availableGrades.map(({ key, label, count }) => (
+              <button
+                key={key}
+                onClick={() => setActiveGrade(key)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                  activeGrade === key
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted border-border text-foreground hover:border-primary/50 hover:text-primary"
+                }`}
+              >
+                {label}
+                <span className="ml-1 text-[10px] opacity-70">({count})</span>
+              </button>
+            ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -396,7 +450,7 @@ export default function PricingDetail() {
             <p className="text-muted-foreground">
               {activeGrade === "all" 
                 ? t("pricing.noListings") 
-                : `暫無 ${GRADE_FILTERS.find(f => f.key === activeGrade)?.label} 在售商品`
+                : `暫無 ${getGradeLabel(activeGrade)} 在售商品`
               }
             </p>
           </div>
