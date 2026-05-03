@@ -2,7 +2,7 @@ name: SNKRDUNK Batch Price Update
 
 on:
   schedule:
-    - cron: '0 17 * * *'
+    - cron: '7 17 * * *'
   workflow_dispatch:
     inputs:
       skip_hours:
