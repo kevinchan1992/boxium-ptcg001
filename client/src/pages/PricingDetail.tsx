@@ -291,7 +291,9 @@ export default function PricingDetail() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-base sm:text-xl font-bold text-foreground mr-2">
-            {t("pricing.allListings")}
+            {activeGrade === "all"
+              ? t("pricing.allListings")
+              : `${getGradeLabel(activeGrade)} 在售商品（按價格排序）`}
           </h2>
           {/* Grade filter buttons - dynamically show only grades with listings */}
           <div className="flex flex-wrap gap-1.5">
