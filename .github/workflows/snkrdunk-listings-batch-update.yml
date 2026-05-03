@@ -64,4 +64,4 @@ jobs:
         with:
           name: listings-update-failure-${{ github.run_id }}
           path: 'scripts/*.log'
-          retention-days: 7 
+          retention-days: 7
