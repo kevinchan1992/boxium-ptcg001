@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, RefreshCw, Database, AlertCircle, Flame, List, ExternalLink } from "lucide-react";
+import { Trash2, RefreshCw, Database, AlertCircle, Flame, List, ExternalLink, ShoppingBag, CheckCircle2, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatHKLocale } from "@/lib/formatDate";
 import { toast } from "sonner";
@@ -40,6 +40,12 @@ export function AdminCacheManagement() {
   
   // Fetch detailed cache statistics
   const { data: detailedStats, refetch: refetchDetailedStats } = trpc.admin.getDetailedCacheStats.useQuery();
+
+  // Fetch on-sale listings cache statistics
+  const { data: listingsStats, refetch: refetchListingsStats } = trpc.admin.getListingsCacheStats.useQuery(
+    undefined,
+    { refetchInterval: 30000 }
+  );
   
   // Batch update state
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
@@ -607,6 +613,88 @@ export function AdminCacheManagement() {
             className="w-full md:w-auto"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
+            刷新統計
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* On-Sale Listings Cache Statistics */}
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+            在售商品快取統計
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+            snkrdunkListingsCache — 每 6 小時由 GitHub Actions 批量更新
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {listingsStats ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-zinc-800 p-3 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">已快取卡牌</p>
+                  <p className="text-xl font-bold text-white">{listingsStats.totalCount.toLocaleString()}</p>
+                </div>
+                <div className="bg-green-900/20 border border-green-800 p-3 rounded-lg">
+                  <p className="text-xs text-green-400 mb-1">熱快取 (&lt;1h)</p>
+                  <p className="text-xl font-bold text-green-400">{listingsStats.hotCount.toLocaleString()}</p>
+                </div>
+                <div className="bg-yellow-900/20 border border-yellow-800 p-3 rounded-lg">
+                  <p className="text-xs text-yellow-400 mb-1">冷快取 (1-6h)</p>
+                  <p className="text-xl font-bold text-yellow-400">{listingsStats.coldCount.toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-900/20 border border-orange-800 p-3 rounded-lg">
+                  <p className="text-xs text-orange-400 mb-1">已過期 (&gt;6h)</p>
+                  <p className="text-xl font-bold text-orange-400">{listingsStats.expiredCount.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-start gap-3 p-3 bg-zinc-800 rounded-lg">
+                  <Clock className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-400">最後批量更新</p>
+                    <p className="text-sm font-medium text-white mt-0.5">
+                      {listingsStats.lastBatchUpdate ? formatHKLocale(listingsStats.lastBatchUpdate) : "尚未更新"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-zinc-800 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-400">更新排程</p>
+                    <p className="text-sm font-medium text-white mt-0.5">每 6 小時（HKT 09:07 / 15:07 / 21:07 / 03:07）</p>
+                  </div>
+                </div>
+              </div>
+              {listingsStats.totalCount > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>快取新鮮度</span>
+                    <span>{(((listingsStats.hotCount + listingsStats.coldCount) / listingsStats.totalCount) * 100).toFixed(1)}% 有效</span>
+                  </div>
+                  <div className="flex h-2.5 rounded-full overflow-hidden bg-zinc-700">
+                    <div className="bg-green-500 transition-all" style={{ width: `${(listingsStats.hotCount / listingsStats.totalCount) * 100}%` }} />
+                    <div className="bg-yellow-500 transition-all" style={{ width: `${(listingsStats.coldCount / listingsStats.totalCount) * 100}%` }} />
+                    <div className="bg-orange-500 transition-all" style={{ width: `${(listingsStats.expiredCount / listingsStats.totalCount) * 100}%` }} />
+                  </div>
+                  <div className="flex gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />熱快取</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />冷快取</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" />已過期</span>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-400">載入中...</span>
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="text-xs" onClick={() => refetchListingsStats()}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             刷新統計
           </Button>
         </CardContent>

@@ -852,10 +852,42 @@ export function AdminScheduleManagement() {
 }
 
 /**
- * GitHubActionsGuide - 說明如何設定 GitHub Actions 沙盒獨立批次更新
+ * WorkflowStatusBadge - 顯示 GitHub Actions workflow 執行狀態
  */
+function WorkflowStatusBadge({ status, conclusion }: { status: string; conclusion: string | null }) {
+  if (status === 'queued') {
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-900/40 text-yellow-300 border border-yellow-700"><RefreshCw className="w-3 h-3 animate-spin" />排隊中</span>;
+  }
+  if (status === 'in_progress') {
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-900/40 text-blue-300 border border-blue-700"><RefreshCw className="w-3 h-3 animate-spin" />執行中</span>;
+  }
+  if (status === 'completed') {
+    if (conclusion === 'success') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-900/40 text-green-300 border border-green-700"><CheckCircle2 className="w-3 h-3" />成功</span>;
+    if (conclusion === 'failure') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-900/40 text-red-300 border border-red-700"><XCircle className="w-3 h-3" />失敗</span>;
+    if (conclusion === 'cancelled') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-300 border border-gray-600"><XCircle className="w-3 h-3" />已取消</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-300 border border-gray-600"><CheckCircle2 className="w-3 h-3" />{conclusion ?? '完成'}</span>;
+  }
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-400 border border-gray-600">{status}</span>;
+}
+
 function GitHubActionsGuide() {
   const [expanded, setExpanded] = useState(false);
+  const [pollingWorkflow, setPollingWorkflow] = useState<string | null>(null);
+
+  const { data: priceUpdateStatus } = trpc.admin.getWorkflowRunStatus.useQuery(
+    { workflow: 'snkrdunk-batch-update' },
+    { refetchInterval: pollingWorkflow === 'snkrdunk-batch-update' ? 8000 : 30000, enabled: expanded }
+  );
+
+  const { data: listingsUpdateStatus } = trpc.admin.getWorkflowRunStatus.useQuery(
+    { workflow: 'snkrdunk-listings-batch-update' },
+    { refetchInterval: pollingWorkflow === 'snkrdunk-listings-batch-update' ? 8000 : 30000, enabled: expanded }
+  );
+
+  useEffect(() => {
+    if (pollingWorkflow === 'snkrdunk-batch-update' && priceUpdateStatus?.status === 'completed') setPollingWorkflow(null);
+    if (pollingWorkflow === 'snkrdunk-listings-batch-update' && listingsUpdateStatus?.status === 'completed') setPollingWorkflow(null);
+  }, [pollingWorkflow, priceUpdateStatus?.status, listingsUpdateStatus?.status]);
 
   const triggerWorkflow = trpc.admin.triggerGitHubActionsWorkflow.useMutation({
     onSuccess: (data) => {
@@ -866,6 +898,8 @@ function GitHubActionsGuide() {
         },
         duration: 8000,
       });
+      setPollingWorkflow(data.workflow);
+      setTimeout(() => setPollingWorkflow(null), 10 * 60 * 1000);
     },
     onError: (err) => {
       toast.error(`觸發失敗：${err.message}`);
@@ -936,17 +970,35 @@ function GitHubActionsGuide() {
             </ol>
           </div>
 
-          {/* 手動觸發按鈕 */}
-          <div className="space-y-2">
+          {/* 手動觸發按鈕 + 狀態 */}
+          <div className="space-y-3">
             <p className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
               <Play className="w-3.5 h-3.5" />
               立即手動觸發 GitHub Actions
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+            {/* Price History Workflow */}
+            <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-blue-300">價格歷史更新</span>
+                {priceUpdateStatus && (
+                  <div className="flex items-center gap-2">
+                    <WorkflowStatusBadge status={priceUpdateStatus.status} conclusion={priceUpdateStatus.conclusion} />
+                    <a href={priceUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-300">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+              {priceUpdateStatus && (
+                <p className="text-xs text-gray-500">
+                  #{priceUpdateStatus.runNumber} · {priceUpdateStatus.event === 'schedule' ? '排程' : '手動'} · {formatHKLocale(priceUpdateStatus.updatedAt)}
+                </p>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border-blue-700 text-xs h-9 justify-start"
+                className="w-full bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border-blue-700 text-xs h-8 justify-start"
                 disabled={triggerWorkflow.isPending}
                 onClick={() => triggerWorkflow.mutate({ workflow: 'snkrdunk-batch-update' })}
               >
@@ -955,12 +1007,32 @@ function GitHubActionsGuide() {
                 ) : (
                   <Play className="w-3.5 h-3.5 mr-2" />
                 )}
-                觸發：價格歷史更新
+                立即觸發
               </Button>
+            </div>
+
+            {/* Listings Workflow */}
+            <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-purple-300">在售商品更新</span>
+                {listingsUpdateStatus && (
+                  <div className="flex items-center gap-2">
+                    <WorkflowStatusBadge status={listingsUpdateStatus.status} conclusion={listingsUpdateStatus.conclusion} />
+                    <a href={listingsUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-300">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+              {listingsUpdateStatus && (
+                <p className="text-xs text-gray-500">
+                  #{listingsUpdateStatus.runNumber} · {listingsUpdateStatus.event === 'schedule' ? '排程' : '手動'} · {formatHKLocale(listingsUpdateStatus.updatedAt)}
+                </p>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-purple-900/30 hover:bg-purple-800/50 text-purple-300 border-purple-700 text-xs h-9 justify-start"
+                className="w-full bg-purple-900/30 hover:bg-purple-800/50 text-purple-300 border-purple-700 text-xs h-8 justify-start"
                 disabled={triggerWorkflow.isPending}
                 onClick={() => triggerWorkflow.mutate({ workflow: 'snkrdunk-listings-batch-update' })}
               >
@@ -969,10 +1041,11 @@ function GitHubActionsGuide() {
                 ) : (
                   <Play className="w-3.5 h-3.5 mr-2" />
                 )}
-                觸發：在售商品更新
+                立即觸發
               </Button>
             </div>
-            <p className="text-gray-500 text-xs">需要設定 GITHUB_PAT secret（有 workflow 權限的 Personal Access Token）</p>
+
+            <p className="text-gray-500 text-xs">觸發後每 8 秒自動更新狀態，完成後恢復 30 秒輪詢</p>
           </div>
           {/* 快速連結 */}
           <div className="flex flex-wrap gap-2">

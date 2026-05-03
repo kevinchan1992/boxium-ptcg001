@@ -6090,3 +6090,65 @@ export async function clearEbayCacheByCardId(cardId: number): Promise<number> {
     .where(eq(ebayListingsCache.cardId, cardId));
   return result[0].affectedRows || 0;
 }
+
+/**
+ * Get statistics for snkrdunkListingsCache (on-sale listings cache)
+ */
+export async function getSnkrdunkListingsCacheStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
+  const now = Date.now();
+  const HOT_THRESHOLD = new Date(now - 60 * 60 * 1000);       // 1 hour ago
+  const COLD_THRESHOLD = new Date(now - 6 * 60 * 60 * 1000);  // 6 hours ago
+
+  // Total cached cards
+  const [totalRow] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(snkrdunkListingsCache);
+  const totalCount = Number(totalRow?.count ?? 0);
+
+  // Hot cache (updated within 1 hour)
+  const [hotRow] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(snkrdunkListingsCache)
+    .where(sql`${snkrdunkListingsCache.createdAt} >= ${HOT_THRESHOLD}`);
+  const hotCount = Number(hotRow?.count ?? 0);
+
+  // Cold cache (1-6 hours)
+  const [coldRow] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(snkrdunkListingsCache)
+    .where(
+      and(
+        sql`${snkrdunkListingsCache.createdAt} < ${HOT_THRESHOLD}`,
+        sql`${snkrdunkListingsCache.createdAt} >= ${COLD_THRESHOLD}`
+      )
+    );
+  const coldCount = Number(coldRow?.count ?? 0);
+
+  // Expired (older than 6 hours)
+  const expiredCount = Math.max(0, totalCount - hotCount - coldCount);
+
+  // Latest batch update time (most recent createdAt)
+  const [latestRow] = await db
+    .select({ latestAt: sql<string>`MAX(${snkrdunkListingsCache.createdAt})` })
+    .from(snkrdunkListingsCache);
+  const lastBatchUpdate = latestRow?.latestAt ?? null;
+
+  // Oldest entry
+  const [oldestRow] = await db
+    .select({ oldestAt: sql<string>`MIN(${snkrdunkListingsCache.createdAt})` })
+    .from(snkrdunkListingsCache);
+  const oldestEntry = oldestRow?.oldestAt ?? null;
+
+  return {
+    totalCount,
+    hotCount,
+    coldCount,
+    expiredCount,
+    lastBatchUpdate,
+    oldestEntry,
+  };
+}

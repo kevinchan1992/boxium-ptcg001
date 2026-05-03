@@ -2113,6 +2113,58 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         };
       }),
 
+    // 獲取在售商品快取統計
+    getListingsCacheStats: adminProcedure
+      .query(async () => {
+        const stats = await db.getSnkrdunkListingsCacheStats();
+        return stats;
+      }),
+
+    // 獲取 GitHub Actions workflow 最新執行狀態
+    getWorkflowRunStatus: adminProcedure
+      .input(z.object({
+        workflow: z.enum(['snkrdunk-batch-update', 'snkrdunk-listings-batch-update']),
+      }))
+      .query(async ({ input }) => {
+        const githubPat = process.env.GITHUB_PAT;
+        const githubRepo = process.env.GITHUB_REPO || 'kevinchan1992/boxium-ptcg001';
+
+        if (!githubPat) return null;
+
+        const workflowFile = `${input.workflow}.yml`;
+        const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/runs?per_page=1`;
+
+        try {
+          const resp = await fetch(apiUrl, {
+            headers: {
+              'Authorization': `Bearer ${githubPat}`,
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+
+          if (!resp.ok) return null;
+
+          const data = await resp.json() as any;
+          const run = data.workflow_runs?.[0];
+          if (!run) return null;
+
+          return {
+            id: run.id as number,
+            status: run.status as string,           // queued | in_progress | completed
+            conclusion: run.conclusion as string | null,  // success | failure | cancelled | null
+            createdAt: run.created_at as string,
+            updatedAt: run.updated_at as string,
+            htmlUrl: run.html_url as string,
+            runNumber: run.run_number as number,
+            event: run.event as string,             // schedule | workflow_dispatch
+          };
+        } catch {
+          return null;
+        }
+      }),
+
     // 獲取排程設定
     getScheduleConfig: publicProcedure
       .query(async ({ ctx }) => {
