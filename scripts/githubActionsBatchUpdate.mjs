@@ -13,13 +13,15 @@ import { createHash } from 'crypto';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
-  PARALLEL: parseInt(process.env.PARALLEL || '8', 10),
+  PARALLEL: parseInt(process.env.PARALLEL || '4', 10),  // Reduced from 8 to 4 to avoid rate limiting
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '12', 10),
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || '15000', 10),
   DELAY_AFTER_ERROR: 500,
   PROGRESS_LOG_INTERVAL: 100,
   JPY_TO_HKD_RATE: 0.055,
+  MAX_RETRIES: 3,           // Retry transient errors up to 3 times
+  RETRY_DELAY_MS: 2000,     // Wait 2s between retries
 };
 
 // ─── Database Connection ──────────────────────────────────────────────────────
@@ -199,7 +201,13 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
     }
     if (!resp.ok) {
       if (resp.status === 404) break;
-      throw new Error(`HTTP ${resp.status} for product ${productId}`);
+      // Transient errors: don't mark as failed, let retry handle it
+      const isTransient = resp.status === 429 || resp.status === 503 || resp.status === 502 || resp.status === 500;
+      const err = Object.assign(new Error(`HTTP ${resp.status} for product ${productId}`), {
+        httpStatus: resp.status,
+        isTransient,
+      });
+      throw err;
     }
     const data = await resp.json();
     if (!data.history || !Array.isArray(data.history) || data.history.length === 0) break;
@@ -222,7 +230,7 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
 async function getAllSnkrdunkProducts() {
   const db = await getPool();
   const [rows] = await db.execute(
-    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, c.name
+    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus, c.name
      FROM dataSources ds
      LEFT JOIN cards c ON c.id = ds.cardId
      WHERE ds.source = 'snkrdunk' AND ds.isActive = 1`
@@ -240,6 +248,7 @@ async function getAllSnkrdunkProducts() {
       productType: pt,
       snkrdunkId: sid,
       lastFetchedAt: row.lastFetchedAt ? new Date(row.lastFetchedAt) : null,
+      lastFetchStatus: row.lastFetchStatus || null,
       sourceUrl: row.sourceUrl || '',
       dataSourceId: row.dataSourceId,
     });
@@ -300,8 +309,8 @@ async function updateDataSourceStatus(dataSourceId, status) {
   );
 }
 
-// ─── Process Single Product ───────────────────────────────────────────────────
-async function processSingleProduct(product) {
+// ─── Process Single Product (with retry) ─────────────────────────────────────
+async function processSingleProduct(product, attempt = 1) {
   const productKey = `${product.productType}:${product.id}`;
   try {
     const pt = product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
@@ -340,8 +349,25 @@ async function processSingleProduct(product) {
     return { success: true, productKey };
   } catch (err) {
     const isTimeout = err.code === 'ECONNABORTED' || (err.name === 'AbortError') || (err.message && err.message.includes('timeout'));
-    await updateDataSourceStatus(product.dataSourceId, 'failed').catch(() => {});
-    return { success: false, productKey, isTimeout, error: err.message || String(err) };
+    const isTransient = isTimeout || err.isTransient === true;
+
+    // Auto-retry transient errors (rate limit, timeout, server errors)
+    if (isTransient && attempt < CONFIG.MAX_RETRIES) {
+      const waitMs = CONFIG.RETRY_DELAY_MS * attempt; // exponential backoff: 2s, 4s, 6s
+      console.warn(`[BatchUpdate] RETRY ${attempt}/${CONFIG.MAX_RETRIES - 1} for ${productKey} after ${waitMs}ms: ${err.message}`);
+      await delay(waitMs);
+      return processSingleProduct(product, attempt + 1);
+    }
+
+    // Only mark as 'failed' for permanent errors; transient errors keep previous status
+    const newStatus = isTransient ? null : 'failed';
+    if (newStatus) {
+      await updateDataSourceStatus(product.dataSourceId, newStatus).catch(() => {});
+    }
+    // Log error for debugging in GitHub Actions
+    const retryInfo = attempt > 1 ? ` (after ${attempt - 1} retries)` : '';
+    console.error(`[BatchUpdate] ERROR ${productKey}${retryInfo}: ${err.message}${isTransient ? ' (transient, skipped)' : ' (failed)'}`);
+    return { success: false, productKey, isTimeout, isTransient, error: err.message || String(err) };
   }
 }
 
@@ -358,8 +384,21 @@ async function main() {
 
   const now = new Date();
   const skipMs = CONFIG.SKIP_HOURS * 3600 * 1000;
-  const toUpdate = allProducts.filter(p => !p.lastFetchedAt || (now - p.lastFetchedAt) >= skipMs);
-  console.log(`[BatchUpdate] Skipping ${allProducts.length - toUpdate.length} recently updated, processing ${toUpdate.length}`);
+
+  // Sort: failed products first (priority retry), then by lastFetchedAt ascending (oldest first)
+  const toUpdate = allProducts
+    .filter(p => !p.lastFetchedAt || (now - p.lastFetchedAt) >= skipMs)
+    .sort((a, b) => {
+      const aFailed = a.lastFetchStatus === 'failed' ? 0 : 1;
+      const bFailed = b.lastFetchStatus === 'failed' ? 0 : 1;
+      if (aFailed !== bFailed) return aFailed - bFailed; // failed first
+      const aTime = a.lastFetchedAt ? a.lastFetchedAt.getTime() : 0;
+      const bTime = b.lastFetchedAt ? b.lastFetchedAt.getTime() : 0;
+      return aTime - bTime; // oldest first
+    });
+
+  const failedCount = toUpdate.filter(p => p.lastFetchStatus === 'failed').length;
+  console.log(`[BatchUpdate] Skipping ${allProducts.length - toUpdate.length} recently updated, processing ${toUpdate.length} (${failedCount} previously failed → priority)`);
 
   if (!toUpdate.length) {
     console.log('[BatchUpdate] Nothing to update. All products are up to date.');
@@ -367,36 +406,66 @@ async function main() {
     return;
   }
 
-  let successCount = 0, failCount = 0, consecutiveErrors = 0;
+  async function runBatch(items, label) {
+    let successCount = 0, failCount = 0, transientFailCount = 0, consecutiveErrors = 0;
+    const transientFailed = [];
 
-  for (let i = 0; i < toUpdate.length; i += CONFIG.PARALLEL) {
-    const batch = toUpdate.slice(i, i + CONFIG.PARALLEL);
-    const results = await Promise.allSettled(batch.map(p => processSingleProduct(p)));
+    for (let i = 0; i < items.length; i += CONFIG.PARALLEL) {
+      const batch = items.slice(i, i + CONFIG.PARALLEL);
+      const results = await Promise.allSettled(batch.map(p => processSingleProduct(p)));
 
-    let batchHadError = false;
-    for (const r of results) {
-      if (r.status === 'fulfilled') {
-        if (r.value.success) { successCount++; consecutiveErrors = 0; }
-        else { failCount++; batchHadError = true; if (!r.value.isTimeout) consecutiveErrors++; }
-      } else { failCount++; batchHadError = true; consecutiveErrors++; }
+      let batchHadError = false;
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled') {
+          if (r.value.success) {
+            successCount++; consecutiveErrors = 0;
+          } else {
+            failCount++; batchHadError = true;
+            if (r.value.isTransient) {
+              transientFailCount++;
+              transientFailed.push(batch[idx]);
+            } else if (!r.value.isTimeout) {
+              consecutiveErrors++;
+            }
+          }
+        } else {
+          failCount++; batchHadError = true; consecutiveErrors++;
+        }
+      });
+
+      const total = successCount + failCount;
+      if (total % CONFIG.PROGRESS_LOG_INTERVAL === 0 || i + CONFIG.PARALLEL >= items.length) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speed = elapsed > 0 ? total / elapsed : 0;
+        const eta = speed > 0 ? (items.length - total) / speed : 0;
+        console.log(
+          `[BatchUpdate] ${label} ${total}/${items.length} | ✅${successCount} ❌${failCount} ` +
+          `| ${speed.toFixed(1)}/s | ETA:${Math.ceil(eta / 60)}min`
+        );
+      }
+
+      if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
+        console.error(`[BatchUpdate] Auto-stopped: ${consecutiveErrors} consecutive errors`);
+        break;
+      }
+      if (batchHadError) await delay(CONFIG.DELAY_AFTER_ERROR);
     }
+    return { successCount, failCount, transientFailCount, transientFailed };
+  }
 
-    const total = successCount + failCount;
-    if (total % CONFIG.PROGRESS_LOG_INTERVAL === 0 || i + CONFIG.PARALLEL >= toUpdate.length) {
-      const elapsed = (Date.now() - startTime) / 1000;
-      const speed = elapsed > 0 ? total / elapsed : 0;
-      const eta = speed > 0 ? (toUpdate.length - total) / speed : 0;
-      console.log(
-        `[BatchUpdate] ${total}/${toUpdate.length} | ✅${successCount} ❌${failCount} ` +
-        `| ${speed.toFixed(1)}/s | ETA:${Math.ceil(eta / 60)}min`
-      );
-    }
+  // ── Main batch ──
+  const mainResult = await runBatch(toUpdate, '');
+  let successCount = mainResult.successCount;
+  let failCount = mainResult.failCount;
 
-    if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
-      console.error(`[BatchUpdate] Auto-stopped: ${consecutiveErrors} consecutive errors`);
-      break;
-    }
-    if (batchHadError) await delay(CONFIG.DELAY_AFTER_ERROR);
+  // ── Retry round: re-process transient failures once more ──
+  if (mainResult.transientFailed.length > 0) {
+    console.log(`[BatchUpdate] Retry round: ${mainResult.transientFailed.length} transient failures, retrying...`);
+    await delay(5000); // wait 5s before retry round
+    const retryResult = await runBatch(mainResult.transientFailed, '[Retry]');
+    successCount += retryResult.successCount;
+    failCount = failCount - mainResult.transientFailed.length + retryResult.failCount;
+    console.log(`[BatchUpdate] Retry round done: +${retryResult.successCount} recovered, ${retryResult.failCount} still failed`);
   }
 
   const elapsed = (Date.now() - startTime) / 1000;
