@@ -18,9 +18,9 @@ on:
         required: false
         default: '1'
       listings_parallel:
-        description: '[Listings] Number of parallel workers (default: 4)'
+        description: '[Listings] Number of parallel workers (default: 8)'
         required: false
-        default: '4'
+        default: '8'
 permissions:
   contents: read
 jobs:
@@ -69,7 +69,7 @@ jobs:
   listings-batch-update:
     name: Update SNKRDUNK On-Sale Listings Cache
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PARALLEL: ${{ github.event.inputs.listings_parallel || '4' }}
+          PARALLEL: ${{ github.event.inputs.listings_parallel || '8' }}
           SKIP_HOT_CACHE_HOURS: ${{ github.event.inputs.skip_hot_cache_hours || '1' }}
           REQUEST_TIMEOUT_MS: '12000'
           MAX_CONSECUTIVE_ERR: '30'
