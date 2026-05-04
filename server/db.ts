@@ -59,8 +59,8 @@ export function parseGradeFilter(query: string): { gradeFilter: string[] | null;
   const lower = query.toLowerCase().trim();
   // Map of input patterns → DB grade values (from priceHistory and listings)
   const gradeMap: Array<{ pattern: RegExp; grades: string[]; label: string }> = [
-    { pattern: /\bpsa\s*10\b/, grades: ['PSA10', 'PSA 10'], label: 'PSA 10' },
-    { pattern: /\bpsa\s*9(?!\.5|\d)\b/, grades: ['PSA9', 'PSA 9'], label: 'PSA 9' },
+    { pattern: /\bpsa\s*10\b/, grades: ['PSA 10', 'PSA10'], label: 'PSA 10' },
+    { pattern: /\bpsa\s*9(?!\.5|\d)\b/, grades: ['PSA 9', 'PSA9'], label: 'PSA 9' },
     { pattern: /\bpsa\s*8\b/, grades: ['PSA8以下', 'PSA 8以下'], label: 'PSA 8以下' },
     { pattern: /\bbgs\s*10\b/, grades: ['BGS10 GL', 'BGS10 BL', 'BGS 10 GL', 'BGS 10 BL'], label: 'BGS 10' },
     { pattern: /\bbgs\s*9\.5\b/, grades: ['BGS9.5', 'BGS 9.5'], label: 'BGS 9.5' },
@@ -213,7 +213,7 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     const latestPrices = await db
       .select({ cardId: priceHistory.cardId, price: priceHistory.price, soldAt: priceHistory.soldAt })
       .from(priceHistory)
-      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA10'), eq(priceHistory.isSuspectedBulk, false)))
+      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA 10'), eq(priceHistory.isSuspectedBulk, false)))
       .orderBy(desc(priceHistory.soldAt));
 
     const priceMap = new Map<number, number>();
@@ -268,7 +268,7 @@ export async function searchCards(query: string, limit: number = 20, offset: num
       and(
         inArray(priceHistory.cardId, cardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         eq(priceHistory.isSuspectedBulk, false)
       )
     )
@@ -1856,7 +1856,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
     .where(
       and(
         eq(priceHistory.source, "snkrdunk"),
-        eq(priceHistory.grade, "PSA10"),
+        eq(priceHistory.grade, 'PSA 10'),
         gte(priceHistory.soldAt, fourteenDaysAgo),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.isSuspectedBulk, false)
@@ -1984,7 +1984,7 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
       and(
         inArray(priceHistory.cardId, allTopCardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         eq(priceHistory.isSuspectedBulk, false),
         sql`${priceHistory.soldAt} IS NOT NULL`
       )
@@ -2210,7 +2210,7 @@ export async function getTrendingBySearches(options: {
       and(
         inArray(priceHistory.cardId, cardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10')
+        eq(priceHistory.grade, 'PSA 10')
       )
     )
     .orderBy(desc(priceHistory.createdAt));
@@ -2263,7 +2263,7 @@ export async function getTrendingByPriceIncrease(options: {
         lte(priceHistory.soldAt, now),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10')
+        eq(priceHistory.grade, 'PSA 10')
       )
     )
     .orderBy(asc(priceHistory.soldAt));
@@ -2382,7 +2382,7 @@ export async function getTrendingByPriceDecrease(options: {
         lte(priceHistory.soldAt, now),
         sql`${priceHistory.soldAt} IS NOT NULL`,
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         eq(priceHistory.isSuspectedBulk, false)
       )
     )
@@ -2513,7 +2513,7 @@ export async function getNewlyAddedCards(options: {
       and(
         inArray(priceHistory.cardId, cardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10')
+        eq(priceHistory.grade, 'PSA 10')
       )
     )
     .orderBy(desc(priceHistory.createdAt));

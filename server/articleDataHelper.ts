@@ -32,7 +32,7 @@ export async function getTrendingCards(
     .where(
       and(
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         gte(priceHistory.soldAt, startDate)
       )
     )
@@ -80,7 +80,7 @@ export async function getMostTradedCards(
     .where(
       and(
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         gte(priceHistory.soldAt, startDate)
       )
     )
@@ -120,7 +120,7 @@ export async function getTopGainersCards(
     .where(
       and(
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         gte(priceHistory.soldAt, startDate)
       )
     );

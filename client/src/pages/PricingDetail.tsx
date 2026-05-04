@@ -23,21 +23,21 @@ interface PricingItem {
 
 // Grade sort order (higher = shown first)
 const GRADE_SORT_ORDER: Record<string, number> = {
-  "PSA10": 100,
-  "PSA9": 90,
-  "PSA8": 80,
-  "PSA7": 70,
-  "PSA6": 60,
-  "PSA5": 50,
-  "PSA4": 40,
-  "PSA3": 30,
-  "PSA2": 20,
-  "PSA1": 10,
-  "BGS10": 95,
-  "BGS9.5": 85,
-  "BGS9": 75,
-  "BGS8.5": 65,
-  "BGS8": 55,
+  "PSA 10": 100, "PSA10": 100,
+  "PSA 9": 90, "PSA9": 90,
+  "PSA 8": 80, "PSA8": 80,
+  "PSA 7": 70, "PSA7": 70,
+  "PSA 6": 60, "PSA6": 60,
+  "PSA 5": 50, "PSA5": 50,
+  "PSA 4": 40, "PSA4": 40,
+  "PSA 3": 30, "PSA3": 30,
+  "PSA 2": 20, "PSA2": 20,
+  "PSA 1": 10, "PSA1": 10,
+  "BGS 10": 95, "BGS10": 95,
+  "BGS 9.5": 85, "BGS9.5": 85,
+  "BGS 9": 75, "BGS9": 75,
+  "BGS 8.5": 65, "BGS8.5": 65,
+  "BGS 8": 55, "BGS8": 55,
   "A": 45,
   "B": 35,
   "C": 25,
@@ -395,7 +395,7 @@ export default function PricingDetail() {
                 {item.condition && (
                   <div className="absolute top-2 left-2">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      normalizeCondition(item.condition) === "PSA10"
+                      normalizeCondition(item.condition) === "PSA10" || normalizeCondition(item.condition) === "PSA 10"
                         ? "bg-blue-600 text-white"
                         : normalizeCondition(item.condition) === "A"
                         ? "bg-green-600 text-white"

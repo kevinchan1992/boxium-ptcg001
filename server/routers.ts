@@ -209,16 +209,16 @@ export const appRouter = router({
                   cutoffDate.setDate(cutoffDate.getDate() - input.days);
                   return productHistory.filter(record =>
                     new Date(record.soldAt || record.createdAt) >= cutoffDate &&
-                    (record.grade === 'PSA 10' || record.grade === 'PSA10')
+                    (record.grade === 'PSA 10')
                   );
                 })()
               : productHistory.filter(record =>
-                  (record.grade === 'PSA 10' || record.grade === 'PSA10')
+                  (record.grade === 'PSA 10')
                 );
 
             const groupedByDate = new Map<string, any[]>();
             for (const record of recentHistory) {
-              if (record.grade !== 'PSA 10' && record.grade !== 'PSA10') continue;
+              if (record.grade !== 'PSA 10') continue;
               if (record.source !== 'snkrdunk') continue;
               const date = new Date(record.soldAt || record.createdAt);
               const dateStr = date.toISOString().split('T')[0];
@@ -688,21 +688,21 @@ export const appRouter = router({
       .query(async ({ input }) => {
         // Map frontend condition values to database grade values
         const conditionToGrade: Record<string, string> = {
-          psa10: 'PSA10',
-          psa9: 'PSA9',
-          psa8_below: 'PSA8\u4ee5\u4e0b',
-          bgs10: 'PSA10',
-          bgs9: 'PSA10',
-          bgs8_below: 'PSA10',
-          tag10: 'PSA10',
-          tag9_below: 'PSA10',
+          psa10: 'PSA 10',
+          psa9: 'PSA 9',
+          psa8_below: 'PSA 8以下',
+          bgs10: 'PSA 10',
+          bgs9: 'PSA 10',
+          bgs8_below: 'PSA 10',
+          tag10: 'PSA 10',
+          tag9_below: 'PSA 10',
           raw_a: 'A',
           raw_b: 'B',
           raw_c: 'C',
           raw_d: 'D',
         };
 
-        const grade = conditionToGrade[input.condition] || 'PSA10';
+        const grade = conditionToGrade[input.condition] || 'PSA 10';
         const isFallback = ['bgs10','bgs9','bgs8_below','tag10','tag9_below'].includes(input.condition);
 
         const result = await db.getCardPriceByGrade(input.cardId, grade);
@@ -710,7 +710,7 @@ export const appRouter = router({
           ...result,
           condition: input.condition,
           isFallback,
-          fallbackGrade: isFallback ? 'PSA10' : null,
+          fallbackGrade: isFallback ? 'PSA 10' : null,
         };
       }),
 
@@ -794,11 +794,11 @@ export const appRouter = router({
                 cutoffDate.setDate(cutoffDate.getDate() - input.days);
                 return allHistory.filter(record => 
                   new Date(record.soldAt || record.createdAt) >= cutoffDate &&
-                  (record.grade === "PSA 10" || record.grade === "PSA10")
+                  (record.grade === 'PSA 10')
                 );
               })()
             : allHistory.filter(record => 
-                (record.grade === "PSA 10" || record.grade === "PSA10")
+                (record.grade === 'PSA 10')
               );
 
           // Group by date (SNKRDUNK only)
@@ -806,7 +806,7 @@ export const appRouter = router({
           
           for (const record of recentHistory) {
             // Only include PSA 10 records from SNKRDUNK
-            if (record.grade !== "PSA 10" && record.grade !== "PSA10") continue;
+            if (record.grade !== 'PSA 10') continue;
             if (record.source !== "snkrdunk") continue;
             
             const date = new Date(record.soldAt || record.createdAt);

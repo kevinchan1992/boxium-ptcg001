@@ -8,7 +8,7 @@
  * - fixOrphanDataSources.ts (orphan fix)
  * 
  * Rules applied to every incoming price record BEFORE it is written to the DB:
- * 1. Grade normalisation  – "PSA 10" → "PSA10", "PSA 9" → "PSA9", etc.
+ * 1. Grade normalisation  – "PSA10" → "PSA 10", "PSA9" → "PSA 9", etc.
  * 2. Grade allowlist       – only known grades are accepted; unknown values are
  *                            stored as-is but flagged in logs.
  * 3. Minimum JPY threshold – PSA10 records below 5,000 JPY are almost certainly
@@ -31,46 +31,52 @@ export interface RawPriceEntry {
 // 1. Grade normalisation map
 // ---------------------------------------------------------------------------
 const GRADE_NORMALISE: Record<string, string> = {
-  "PSA 10":    "PSA10",
-  "PSA 9":     "PSA9",
-  "PSA 8":     "PSA8",
-  "PSA 7":     "PSA7",
-  "PSA 6":     "PSA6",
-  "PSA 5":     "PSA5",
-  "PSA 4":     "PSA4",
-  "PSA 3":     "PSA3",
-  "PSA 2":     "PSA2",
-  "PSA 1":     "PSA1",
-  "BGS 10":    "BGS10",
-  "BGS 9.5":   "BGS9.5",
-  "BGS 9":     "BGS9",
-  "BGS 10 BL": "BGS10 BL",
-  "PSA8以下":  "PSA8以下",
-  // Already-normalised values pass through unchanged
+  // API returns "PSA10" (no space) → canonical "PSA 10" (with space)
+  // GitHub Actions also normalises to "PSA 10", so both paths agree.
+  "PSA10":     "PSA 10",
+  "PSA9":      "PSA 9",
+  "PSA8":      "PSA 8",
+  "PSA7":      "PSA 7",
+  "PSA6":      "PSA 6",
+  "PSA5":      "PSA 5",
+  "PSA4":      "PSA 4",
+  "PSA3":      "PSA 3",
+  "PSA2":      "PSA 2",
+  "PSA1":      "PSA 1",
+  "BGS10":     "BGS 10",
+  "BGS9.5":    "BGS 9.5",
+  "BGS9":      "BGS 9",
+  "BGS10 BL":  "BGS 10 BL",
+  "BGS10 GL":  "BGS 10 GL",
+  "BGS9以下":  "BGS 9以下",
+  "PSA8以下":  "PSA 8以下",
+  // Already-normalised values (with space) pass through unchanged
 };
 
 // Known valid grades (after normalisation)
 const KNOWN_GRADES = new Set([
-  "PSA10", "PSA9", "PSA8", "PSA7", "PSA6", "PSA5",
-  "PSA4", "PSA3", "PSA2", "PSA1",
-  "PSA8以下",
-  "BGS10", "BGS10 BL", "BGS9.5", "BGS9",
+  "PSA 10", "PSA 9", "PSA 8", "PSA 7", "PSA 6", "PSA 5",
+  "PSA 4", "PSA 3", "PSA 2", "PSA 1",
+  "PSA 8以下",
+  "BGS 10", "BGS 10 BL", "BGS 10 GL", "BGS 9.5", "BGS 9", "BGS 9以下",
+  "ARS10", "ARS10+", "ARS9", "ARS8以下",
   "A", "B", "C", "D",
-  "中古",
+  "中古", "他鑑定品",
 ]);
 
 // Minimum JPY thresholds per grade
-// PSA10: real market data shows PSA10 Pokemon cards almost never sell below ¥10,000.
-// The bug that triggered this fix: a non-PSA10 card (JPY 21,000) was mis-classified
-// as PSA10 because the old threshold of ¥5,000 was too permissive.
+// PSA 10: real market data shows PSA 10 Pokemon cards almost never sell below ¥10,000.
+// The bug that triggered this fix: a non-PSA 10 card (JPY 21,000) was mis-classified
+// as PSA 10 because the old threshold of ¥5,000 was too permissive.
 const MIN_JPY_BY_GRADE: Record<string, number> = {
-  PSA10:    10000,  // PSA10 cards should never sell for < ¥10,000
-  PSA9:     3000,
-  PSA8:     1000,
-  "PSA8以下": 500,
-  BGS10:    10000,
-  "BGS10 BL": 10000,
-  BGS9:     3000,
+  "PSA 10":    10000,  // PSA 10 cards should never sell for < ¥10,000
+  "PSA 9":     3000,
+  "PSA 8":     1000,
+  "PSA 8以下": 500,
+  "BGS 10":    10000,
+  "BGS 10 BL": 10000,
+  "BGS 10 GL": 10000,
+  "BGS 9":     3000,
   // For ungraded (A/B/C/D/中古) we use the global minimum
 };
 

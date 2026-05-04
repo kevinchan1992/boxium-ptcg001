@@ -155,14 +155,14 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
 
 // Map ConditionValue to SNKRDUNK grade strings stored in DB
 const CONDITION_TO_GRADES: Record<string, string[]> = {
-  psa10: ["PSA10", "PSA 10"],
-  psa9: ["PSA9", "PSA 9"],
-  psa8_below: ["PSA8\u4ee5\u4e0b"],
-  bgs10: ["BGS10 GL", "BGS10 BL"],
+  psa10: ["PSA 10", "PSA10"],
+  psa9: ["PSA 9", "PSA9"],
+  psa8_below: ["PSA 8以下", "PSA8以下"],
+  bgs10: ["BGS 10 GL", "BGS 10 BL", "BGS10 GL", "BGS10 BL"],
   bgs9: ["BGS 9.5", "BGS9.5"],
-  bgs8_below: ["BGS9\u4ee5\u4e0b"],
+  bgs8_below: ["BGS 9以下", "BGS9以下"],
   tag10: ["ARS10", "ARS10+"],
-  tag9_below: ["ARS9", "ARS8\u4ee5\u4e0b"],
+  tag9_below: ["ARS9", "ARS8以下"],
   raw_a: ["A"],
   raw_b: ["B"],
   raw_c: ["C"],

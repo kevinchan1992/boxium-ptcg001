@@ -71,7 +71,7 @@ export interface ArticleDataContext {
 async function calculateCardPriceStats(
   db: any,
   cardId: number,
-  grade: 'PSA10' | 'A',
+  grade: 'PSA 10' | 'A',
   timeRange: '7d' | '30d' | '60d' | 'all'
 ): Promise<CardPriceStats> {
   // Map timeRange to days
@@ -146,7 +146,7 @@ export async function getArticleDataContext(
   // 2. Calculate individual price statistics for each card
   const cardsWithStats = await Promise.all(
     cardData.map(async (card) => {
-      const psa10Stats = await calculateCardPriceStats(db, card.id, 'PSA10', timeRange);
+      const psa10Stats = await calculateCardPriceStats(db, card.id, 'PSA 10', timeRange);
       const usedGradeAStats = await calculateCardPriceStats(db, card.id, 'A', timeRange);
       
       // Calculate peak price for this card
@@ -191,7 +191,7 @@ export async function getArticleDataContext(
       and(
         inArray(priceHistory.cardId, cardIds),
         eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA10'),
+        eq(priceHistory.grade, 'PSA 10'),
         gte(priceHistory.soldAt, startDate)
       )
     )

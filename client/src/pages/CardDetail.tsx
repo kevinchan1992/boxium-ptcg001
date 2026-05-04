@@ -136,7 +136,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const activePriceLoading = isSealedProduct ? sealedPriceLoading : priceLoading;
 
   const { data: psa10PriceHistory = [], isLoading: psa10Loading } = trpc.prices.getHistory.useQuery(
-    { cardId: cardId!, source: "snkrdunk", grade: "PSA10", limit: 500, days: 90 },
+    { cardId: cardId!, source: "snkrdunk", grade: "PSA 10", limit: 500, days: 90 },
     { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
 
