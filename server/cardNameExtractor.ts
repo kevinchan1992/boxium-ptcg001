@@ -122,14 +122,14 @@ export async function extractAndFormatCardData(text: string, limit: number = 20)
     const card = await db.getCardById(cardId);
     if (!card) continue;
     
-    // Get latest SNKRDUNK PSA10 price
-    const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', 'PSA10', 1, undefined);
+    // Get latest SNKRDUNK PSA 10 price
+    const latestPrices = await db.getPriceHistory(cardId, 'snkrdunk', 'PSA 10', 1, undefined);
     const latestPrice = latestPrices.length > 0 ? latestPrices[0].price : null;
     const priceDate = latestPrices.length > 0 ? latestPrices[0].soldAt : null;
     
     formattedData += `卡牌：${card.name}${card.nameJa ? ` (${card.nameJa})` : ''} [${card.cardNumber}]\n`;
     if (latestPrice) {
-      formattedData += `- 最新價格：HKD ${parseFloat(latestPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}（SNKRDUNK PSA10）\n`;
+      formattedData += `- 最新價格：HKD ${parseFloat(latestPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}（SNKRDUNK PSA 10）\n`;
       if (priceDate) {
         formattedData += `- 價格日期：${new Date(priceDate).toISOString().split('T')[0]}\n`;
       }

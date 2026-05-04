@@ -1423,17 +1423,19 @@ const snkrdunkId = extractSnkrdunkId(input.url);
             sourceIdentifier: snkrdunkId,
           });
 
-          // Save price history
+          // Save price history (with grade normalisation to ensure consistent format)
+          const { normaliseGrade: normaliseGradeForAdd } = await import('./utils/priceValidator');
           for (const priceEntry of cardData.priceHistory) {
             const priceHkd = convertJpyToHkd(priceEntry.price);
+            const normalisedGradeForAdd = productType === 'sealed_product' ? undefined : normaliseGradeForAdd(priceEntry.grade);
             await db.addPriceHistory({
               cardId: productId, // This is the ID of either a card or sealed product
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
               jpyPrice: priceEntry.price, // Original JPY price for stable deduplication
-              grade: priceEntry.grade,
-              quantity: priceEntry.quantity, // Add quantity field for sealed products
+              grade: normalisedGradeForAdd,
+              quantity: productType === 'sealed_product' ? priceEntry.quantity : undefined,
               productType, // Add productType field
               soldAt: priceEntry.soldAt,
               listingUrl: input.url,
@@ -1489,17 +1491,19 @@ try {
             ensureOgImageExists(dataSource.cardId, cardData.imageUrl || null).catch(() => {});
           }
 
-          // Save new price history
+          // Save new price history (with grade normalisation to ensure consistent format)
+          const { normaliseGrade } = await import('./utils/priceValidator');
           for (const priceEntry of cardData.priceHistory) {
             const priceHkd = convertJpyToHkd(priceEntry.price);
+            const normalisedGrade = productType === 'sealed_product' ? undefined : normaliseGrade(priceEntry.grade);
             await db.addPriceHistory({
               cardId: dataSource.cardId,
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
               jpyPrice: priceEntry.price, // Original JPY price for stable deduplication
-              grade: priceEntry.grade,
-              quantity: priceEntry.quantity,
+              grade: normalisedGrade,
+              quantity: productType === 'sealed_product' ? priceEntry.quantity : undefined,
               productType,
               soldAt: priceEntry.soldAt,
               listingUrl: dataSource.sourceUrl,
