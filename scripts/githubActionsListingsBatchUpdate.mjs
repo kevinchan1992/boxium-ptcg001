@@ -18,6 +18,9 @@ import mysql from 'mysql2/promise';
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '4', 10),
+  // Max cards to process per run (0 = no limit, process all)
+  // Default: 18528 = 55582 / 3, so 3 runs cover all cards every 24h
+  BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18528', 10),
   // Skip cards whose hot cache is still valid (updated within this many hours)
   // Default: 1 hour — matches the hotExpiresAt TTL in the cache
   SKIP_HOT_CACHE_HOURS: parseFloat(process.env.SKIP_HOT_CACHE_HOURS || '1'),
@@ -171,7 +174,7 @@ async function getAllSnkrdunkCards() {
      WHERE ds.source = 'snkrdunk'
        AND ds.isActive = 1
        AND (ds.productType IS NULL OR ds.productType = 'single_card')
-     ORDER BY ds.cardId`
+     ORDER BY COALESCE(slc.hotExpiresAt, '1970-01-01') ASC, ds.cardId ASC`
   );
 
   // Deduplicate by cardId (take first occurrence)
@@ -248,7 +251,7 @@ async function main() {
   const startTime = Date.now();
   console.log('='.repeat(60));
   console.log('[ListingsUpdate] GitHub Actions SNKRDUNK Listings Batch Update');
-  console.log(`[ListingsUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOT_CACHE_HOURS=${CONFIG.SKIP_HOT_CACHE_HOURS}`);
+  console.log(`[ListingsUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT}, SKIP_HOT_CACHE_HOURS=${CONFIG.SKIP_HOT_CACHE_HOURS}`);
   console.log('='.repeat(60));
 
   const allCards = await getAllSnkrdunkCards();
@@ -267,8 +270,16 @@ async function main() {
     return ageMs >= skipMs; // Only update if cache is older than SKIP_HOT_CACHE_HOURS
   });
 
+  // Apply BATCH_LIMIT: only process the oldest N cards per run
+  const limitedToUpdate = CONFIG.BATCH_LIMIT > 0 && toUpdate.length > CONFIG.BATCH_LIMIT
+    ? toUpdate.slice(0, CONFIG.BATCH_LIMIT)
+    : toUpdate;
   const skippedCount = allCards.length - toUpdate.length;
+  const batchLimited = CONFIG.BATCH_LIMIT > 0 && toUpdate.length > CONFIG.BATCH_LIMIT;
   console.log(`[ListingsUpdate] Skipping ${skippedCount} cards with fresh hot cache, updating ${toUpdate.length} cards`);
+  if (batchLimited) {
+    console.log(`[ListingsUpdate] BATCH_LIMIT=${CONFIG.BATCH_LIMIT}: processing oldest ${limitedToUpdate.length} of ${toUpdate.length} eligible cards (remaining will be updated in next run)`);
+  }
 
   if (!toUpdate.length) {
     console.log('[ListingsUpdate] Nothing to update. All cards have fresh listings cache.');
@@ -333,7 +344,7 @@ async function main() {
   }
 
   // ── Main batch ──
-  const mainResult = await runBatch(toUpdate, '');
+  const mainResult = await runBatch(limitedToUpdate, '');
   let successCount = mainResult.successCount;
   let failCount = mainResult.failCount;
   let totalListings = mainResult.totalListings;
