@@ -14,7 +14,8 @@ import { createHash } from 'crypto';
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '4', 10),  // Reduced from 8 to 4 to avoid rate limiting
-  SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '12', 10),
+  SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
+  BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; default = ~55642/3 per run
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || '15000', 10),
   DELAY_AFTER_ERROR: 500,
@@ -376,7 +377,7 @@ async function main() {
   const startTime = Date.now();
   console.log('='.repeat(60));
   console.log('[BatchUpdate] GitHub Actions SNKRDUNK Batch Update');
-  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}`);
+  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT || 'unlimited'}`);
   console.log('='.repeat(60));
 
   const allProducts = await getAllSnkrdunkProducts();
@@ -398,7 +399,13 @@ async function main() {
     });
 
   const failedCount = toUpdate.filter(p => p.lastFetchStatus === 'failed').length;
-  console.log(`[BatchUpdate] Skipping ${allProducts.length - toUpdate.length} recently updated, processing ${toUpdate.length} (${failedCount} previously failed → priority)`);
+
+  // Apply BATCH_LIMIT: only process the oldest N products per run (incremental update)
+  const limitedToUpdate = CONFIG.BATCH_LIMIT > 0 ? toUpdate.slice(0, CONFIG.BATCH_LIMIT) : toUpdate;
+  console.log(`[BatchUpdate] Skipping ${allProducts.length - toUpdate.length} recently updated, ${toUpdate.length} eligible (${failedCount} previously failed → priority)`);
+  if (CONFIG.BATCH_LIMIT > 0 && toUpdate.length > CONFIG.BATCH_LIMIT) {
+    console.log(`[BatchUpdate] BATCH_LIMIT=${CONFIG.BATCH_LIMIT}: processing ${limitedToUpdate.length}/${toUpdate.length} (oldest first)`);
+  }
 
   if (!toUpdate.length) {
     console.log('[BatchUpdate] Nothing to update. All products are up to date.');
@@ -454,7 +461,7 @@ async function main() {
   }
 
   // ── Main batch ──
-  const mainResult = await runBatch(toUpdate, '');
+  const mainResult = await runBatch(limitedToUpdate, '');
   let successCount = mainResult.successCount;
   let failCount = mainResult.failCount;
 
