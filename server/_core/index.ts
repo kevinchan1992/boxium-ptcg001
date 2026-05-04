@@ -1615,31 +1615,6 @@ async function startServer() {
     }
   });
 
-  // ─── Scheduled Task Endpoint: Trending Cards Daily Recalculation ─────────────
-  // Called by external Manus scheduled task daily at 06:00 HKT
-  // Auth: Bearer token via Authorization header (CRON_SECRET)
-  app.post("/api/scheduled/trending-cards", async (req, res) => {
-    try {
-      const cronSecret = process.env.CRON_SECRET;
-      const authHeader = req.headers['authorization'] || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      if (!cronSecret || token !== cronSecret) {
-        console.warn('[ScheduledTask] trending-cards: invalid or missing CRON_SECRET token');
-        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
-      }
-      console.log('[ScheduledTask] trending-cards triggered via cron token');
-      const { calculateAndCacheTrendingCards } = await import("../db");
-      const startTime = Date.now();
-      await calculateAndCacheTrendingCards();
-      const durationMs = Date.now() - startTime;
-      console.log(`[ScheduledTask] trending-cards completed in ${durationMs}ms`);
-      return res.json({ success: true, durationMs, calculatedAt: new Date().toISOString() });
-    } catch (err: any) {
-      console.error('[ScheduledTask] trending-cards failed:', err?.message);
-      return res.status(500).json({ error: 'Calculation failed', detail: err?.message });
-    }
-  });
-
   // ─── Scheduled Task Endpoint: GitHub Actions Batch Update Report ─────────────
   // Called by GitHub Actions after completing SNKRDUNK batch update
   // Auth: Bearer token via Authorization header (CRON_SECRET)
