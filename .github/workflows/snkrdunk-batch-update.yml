@@ -18,9 +18,13 @@ on:
         required: false
         default: '1'
       listings_parallel:
-        description: '[Listings] Number of parallel workers (default: 8)'
+        description: '[Listings] Number of parallel workers (default: 4)'
         required: false
-        default: '8'
+        default: '4'
+      listings_batch_limit:
+        description: '[Listings] Max cards per run (0=all, default: 18528 = ~55582/3)'
+        required: false
+        default: '18528'
 permissions:
   contents: read
 jobs:
@@ -69,7 +73,7 @@ jobs:
   listings-batch-update:
     name: Update SNKRDUNK On-Sale Listings Cache
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -92,14 +96,15 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PARALLEL: ${{ github.event.inputs.listings_parallel || '8' }}
+          PARALLEL: ${{ github.event.inputs.listings_parallel || '4' }}
           SKIP_HOT_CACHE_HOURS: ${{ github.event.inputs.skip_hot_cache_hours || '1' }}
+          BATCH_LIMIT: ${{ github.event.inputs.listings_batch_limit || '18528' }}
           REQUEST_TIMEOUT_MS: '12000'
           MAX_CONSECUTIVE_ERR: '30'
           NODE_ENV: 'production'
         run: |
           echo "Starting SNKRDUNK listings batch update..."
-          echo "PARALLEL=$PARALLEL, SKIP_HOT_CACHE_HOURS=$SKIP_HOT_CACHE_HOURS"
+          echo "PARALLEL=$PARALLEL, BATCH_LIMIT=$BATCH_LIMIT, SKIP_HOT_CACHE_HOURS=$SKIP_HOT_CACHE_HOURS"
           node githubActionsListingsBatchUpdate.mjs
       - name: Upload failure logs
         if: failure()
