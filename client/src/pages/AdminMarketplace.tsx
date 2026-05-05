@@ -3451,7 +3451,7 @@ function AlipayPendingTab() {
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
                   placeholder="例：截圖金額不符、截圖不清晰、收款方不符等"
-                  className="border-gray-300 focus:border-red-500 focus:ring-red-200"
+                  className="border-gray-300 focus:border-red-500 focus:ring-red-200 text-black"
                 />
               </div>
               {/* Warning */}

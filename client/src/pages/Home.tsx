@@ -433,10 +433,11 @@ function CtaSection() {
   );
 }
 
-// ─── HeroQuickAccess: magazine-style horizontal nav bar ───────────────
+// ─── HeroQuickAccess: magazine-style horizontal nav bar ──────────────────────────────────────────────────────
 function HeroQuickAccess() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
+  const { data: stats } = trpc.cards.getStats.useQuery();
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -447,9 +448,17 @@ function HeroQuickAccess() {
     return () => obs.disconnect();
   }, []);
 
+  // Format numbers dynamically from DB stats
+  const cardCountDesc = stats?.totalCards
+    ? `${stats.totalCards.toLocaleString()}+ 張卡牌資料庫`
+    : "55,000+ 張卡牌資料庫";
+  const priceRecordDesc = stats?.totalPriceRecords
+    ? `${Math.round(stats.totalPriceRecords / 10000)}萬+ 全球成交記錄`
+    : "121萬+ 全球成交記錄";
+
   const items = [
-    { tag: "SEARCH",  href: "/research",    label: "卡牌搜尋", desc: "55,000+ 張卡牌資料庫" },
-    { tag: "PRICING", href: "/pricing",     label: "市場格價", desc: "121萬+ 全球成交記錄" },
+    { tag: "SEARCH",  href: "/research",    label: "卡牌搜尋", desc: cardCountDesc },
+    { tag: "PRICING", href: "/pricing",     label: "市場格價", desc: priceRecordDesc },
     { tag: "GRADING", href: "/grading",     label: "PSA 鑑定", desc: "專業代客鑑定服務" },
     { tag: "MARKET",  href: "/marketplace", label: "市集",    desc: "安全交易平台" },
   ];

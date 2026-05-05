@@ -3477,27 +3477,28 @@ export async function updateListing(id: number, data: Partial<InsertMarketplaceL
 }
 
 /**
- * Atomically reserve listing stock by setting status to 'reserved'.
- * Returns true if reservation succeeded (listing was 'active' with sufficient stock).
- * Returns false if listing was already reserved, sold, or had insufficient stock.
- * Reserved listings are hidden from marketplace until payment completes or order is cancelled.
+ * Check stock availability without locking (first-come-first-served).
+ * Returns true if stock is available, false if insufficient stock.
+ * Products are NOT locked until payment is confirmed (claimListingAsSold).
+ * Only disputes trigger a 'reserved' lock (handled separately by admin).
  */
 export async function reserveListingStock(listingId: number, quantity: number): Promise<boolean> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Atomically check availability AND set status to 'reserved' to prevent double-booking.
-  // This hides the listing from marketplace while awaiting payment.
-  // If already 'reserved' by another order, return false (first-come-first-served).
-  const result = await db.execute(
-    sql`UPDATE marketplaceListings
-        SET status = 'reserved',
-            updatedAt = NOW()
-        WHERE id = ${listingId}
-          AND status = 'active'
-          AND quantity >= ${quantity}`
-  );
-  const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
-  return affectedRows > 0;
+  // Just check availability — do NOT change status or deduct quantity here.
+  // Stock is only deducted atomically when payment succeeds (claimListingAsSold).
+  const rows = await db
+    .select({ qty: marketplaceListings.quantity })
+    .from(marketplaceListings)
+    .where(
+      and(
+        eq(marketplaceListings.id, listingId),
+        eq(marketplaceListings.status, 'active'),
+        gte(marketplaceListings.quantity, quantity)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 /**
@@ -3516,7 +3517,7 @@ export async function claimListingAsSold(listingId: number, quantity: number): P
             status = 'sold',
             updatedAt = NOW()
         WHERE id = ${listingId}
-          AND status IN ('active', 'reserved')
+          AND status = 'active'
           AND quantity >= ${quantity}`
   );
   const affectedRows = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
@@ -3525,7 +3526,8 @@ export async function claimListingAsSold(listingId: number, quantity: number): P
 
 /**
  * Restore listing stock after order cancellation / payment timeout.
- * Re-activates the listing if it was marked as sold or reserved.
+ * Re-activates the listing if it was marked as sold.
+ * Note: Since normal purchases don't lock stock, this is only needed when payment fails.
  */
 export async function restoreListingStock(listingId: number, quantity: number): Promise<void> {
   const db = await getDb();

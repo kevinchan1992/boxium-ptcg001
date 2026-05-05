@@ -2576,13 +2576,7 @@ All three checks must pass for verified to be true. Respond with JSON only match
     }))
     .mutation(async ({ ctx, input }) => {
       const listing = await getListingById(input.listingId);
-      if (!listing) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在" });
-      }
-      // Allow 'active' or 'reserved' status.
-      // 'reserved' means the buyer already has a pending_payment order (idempotent retry).
-      // If 'reserved' by another buyer, reserveListingStock below will reject it.
-      if (!['active', 'reserved'].includes(listing.status) || listing.quantity < 1) {
+      if (!listing || listing.status !== "active" || listing.quantity < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "商品不存在或已售出" });
       }
       // P0 Fix #1: Reject Alipay HK for C2C seller items
@@ -2590,6 +2584,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       if (listing.sellerType === "seller") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "個人賣家商品僅支援 Stripe 信用卡付款，不支援支付寶 HK。" });
       }
+      // Check if listing is locked by another user's pending order
+      // First-come-first-served: no locking, buyers compete at payment time
       // Check if this buyer has an existing pending order for idempotency
       const existingOrder = await getActiveOrderByListingId(input.listingId);
       const activeOrder = existingOrder?.buyerId === ctx.user.id ? existingOrder : null;
@@ -2608,9 +2604,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       // ── If buyer has an existing Stripe pending order, cancel it first (payment method switch) ──
       if (activeOrder && activeOrder.buyerId === ctx.user.id && activeOrder.paymentMethod === 'stripe') {
         await updateMarketplaceOrder(activeOrder.id, { orderStatus: 'cancelled', paymentStatus: 'cancelled', updatedAt: new Date() });
-        // Restore stock: the listing was reserved when the Stripe order was created, restore it so we can re-reserve for Alipay
-        await restoreListingStock(listing.id, 1);
-        console.log(`[createAlipayOrder] Cancelled existing Stripe order ${activeOrder.orderNo} and restored stock for payment method switch`);
+        // Single-item Stripe orders don't call reserveListingStock, so no stock to restore here.
+        console.log(`[createAlipayOrder] Cancelled existing Stripe order ${activeOrder.orderNo} for payment method switch`);
       }
 
       // ── Idempotency: reuse existing pending_payment Alipay order for same buyer+listing ──
@@ -2631,12 +2626,6 @@ All three checks must pass for verified to be true. Respond with JSON only match
           content: `訂單 ${existingOrderNo} 買家重新提交支付寶 HK 付款截圖，請前往管理後台審核。商品：${listing.title}，金額：HKD ${effectivePrice.toFixed(2)}`,
         }).catch(() => {});
         return { orderNo: existingOrderNo };
-      }
-
-      // Reserve the listing stock before creating the order
-      const reserved = await reserveListingStock(listing.id, 1);
-      if (!reserved) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "商品已被其他買家預訂，請稍後再試" });
       }
 
       const orderNo = await generateOrderNo();
@@ -2759,15 +2748,10 @@ All three checks must pass for verified to be true. Respond with JSON only match
 
       for (const item of input.items) {
         const listing = await getListingById(item.listingId);
-        if (!listing) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品 #${item.listingId} 不存在` });
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
         }
-        // Allow 'active' or 'reserved' status.
-        // 'reserved' means the buyer already has a pending_payment order for this listing (idempotent retry).
-        // If 'reserved' by another buyer, the stock check below will reject it.
-        if (!['active', 'reserved'].includes(listing.status) || listing.quantity < 1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」不存在或已售出` });
-        }
+        // First-come-first-served: no locking, no need to check or cancel existing orders
 
         let effectivePrice = parseFloat(listing.priceHkd as string);
         let offerRecord: any = null;
@@ -2816,20 +2800,11 @@ All three checks must pass for verified to be true. Respond with JSON only match
         paymentStatus: "pending",
       });
 
-      // Step 3.5: Reserve stock for items without existing pending_payment orders.
-      // Items that already have a pending_payment order (idempotent retry) skip reservation
-      // since the listing is already 'reserved' for this buyer.
+      // Step 3.5: Check stock availability for ALL items (first-come-first-served)
       for (const { listing } of orderItems) {
-        // Check if buyer already has a pending_payment order for this listing
-        const existingOrderForReserve = await getActiveOrderByListingId(listing.id);
-        if (existingOrderForReserve && existingOrderForReserve.buyerId === ctx.user.id) {
-          // Already reserved for this buyer — skip reserveListingStock
-          console.log(`[createBatchStripeOrder] Listing ${listing.id} already reserved for buyer ${ctx.user.id}, skipping reserve`);
-          continue;
-        }
         const available = await reserveListingStock(listing.id, 1);
         if (!available) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」已被其他買家預訂，請稍後再試` });
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
         }
       }
 
@@ -2986,12 +2961,8 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const preCheckListings: Array<{ listingId: number; sellerType: string }> = [];
       for (const item of input.items) {
         const listing = await getListingById(item.listingId);
-        if (!listing) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品 #${item.listingId} 不存在` });
-        }
-        // Allow 'active' or 'reserved' (buyer's own pending order = idempotent retry)
-        if (!['active', 'reserved'].includes(listing.status) || listing.quantity < 1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」不存在或已售出` });
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
         }
         preCheckListings.push({ listingId: item.listingId, sellerType: listing.sellerType });
       }
@@ -3009,20 +2980,13 @@ All three checks must pass for verified to be true. Respond with JSON only match
       const batchRef = input.items.length > 1 ? `BATCH-${Date.now()}-${ctx.user.id}` : undefined;
 
       // Pre-process: validate, handle existing orders, and collect items needing new orders
-      const itemsToCreate: Array<{ listing: any; effectivePrice: number; offerId?: number; isIdempotent?: boolean }> = [];
+      const itemsToCreate: Array<{ listing: any; effectivePrice: number; offerId?: number }> = [];
       for (const item of input.items) {
         const listing = await getListingById(item.listingId);
-        if (!listing) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品 #${item.listingId} 不存在` });
+        if (!listing || listing.status !== "active" || listing.quantity < 1) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing?.title ?? item.listingId}」不存在或已售出` });
         }
-        // Allow 'active' or 'reserved' (buyer's own pending order = idempotent retry)
-        if (!['active', 'reserved'].includes(listing.status) || listing.quantity < 1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」不存在或已售出` });
-        }
-
-        // Check if buyer already has a pending_payment order for this listing (idempotent)
-        const existingAlipayOrder = await getActiveOrderByListingId(listing.id);
-        const isIdempotent = !!(existingAlipayOrder && existingAlipayOrder.buyerId === ctx.user.id);
+        // First-come-first-served: no locking, no need to check or cancel existing orders
 
         let effectivePrice = parseFloat(listing.priceHkd as string);
         if (item.offerId) {
@@ -3035,35 +2999,21 @@ All three checks must pass for verified to be true. Respond with JSON only match
           }
           effectivePrice = parseFloat(offerRecord.offerPriceHkd as string);
         }
-        itemsToCreate.push({ listing, effectivePrice, offerId: item.offerId, isIdempotent });
+        itemsToCreate.push({ listing, effectivePrice, offerId: item.offerId });
       }
 
-      // Reserve stock for new items only (skip items with existing pending_payment orders)
-      for (const { listing, isIdempotent } of itemsToCreate) {
-        if (isIdempotent) {
-          console.log(`[createBatchAlipayOrder] Listing ${listing.id} already reserved for buyer ${ctx.user.id}, skipping reserve`);
-          continue;
-        }
+      // Check stock availability for new items (first-come-first-served, no locking)
+      for (const { listing } of itemsToCreate) {
         const available = await reserveListingStock(listing.id, 1);
         if (!available) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」已被其他買家預訂，請稍後再試` });
+          throw new TRPCError({ code: "BAD_REQUEST", message: `商品「${listing.title}」庫存不足，可能已被其他買家搶購` });
         }
       }
 
-      // Create new orders for items that need them (skip idempotent items with existing orders)
+      // Create new orders for items that need them
       // Fetch tiers once for batch processing
       const alipayFeeTiers = await getPlatformFeeTiers();
-      for (const { listing, effectivePrice, isIdempotent } of itemsToCreate) {
-        if (isIdempotent) {
-          // Reuse existing order — add to createdOrders for response
-          const existingAlipayOrderForReuse = await getActiveOrderByListingId(listing.id);
-          if (existingAlipayOrderForReuse) {
-            console.log(`[createBatchAlipayOrder] Reusing existing order ${existingAlipayOrderForReuse.orderNo} for listing ${listing.id}`);
-            createdOrders.push({ orderNo: existingAlipayOrderForReuse.orderNo, listingTitle: listing.title, effectivePrice });
-            totalAmount += effectivePrice;
-          }
-          continue;
-        }
+      for (const { listing, effectivePrice } of itemsToCreate) {
         const itemFeeRate = getFeeRateForAmount(effectivePrice, alipayFeeTiers);
         const orderNo = await generateOrderNo();
         await createMarketplaceOrder({
