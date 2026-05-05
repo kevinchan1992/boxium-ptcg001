@@ -3169,16 +3169,29 @@ function AlipayPendingTab() {
                 </div>
               </div>
               {/* Content */}
-              <div className="px-4 py-3 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="px-4 py-3 bg-white flex flex-col gap-3">
+                {/* Proof image - shown prominently at top */}
+                {order.alipayProofImageUrl && (
+                  <div className="rounded-xl overflow-hidden border-2 border-[#06038d]/20 bg-gray-50">
+                    <div className="px-3 py-1.5 bg-[#06038d]/5 border-b border-[#06038d]/10 flex items-center justify-between">
+                      <p className="text-xs font-semibold text-[#06038d]">📸 買家付款截圖</p>
+                      <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                        <Eye className="w-3 h-3" />放大查看
+                      </a>
+                    </div>
+                    <img
+                      src={order.alipayProofImageUrl}
+                      alt="付款截圖"
+                      className="max-h-64 object-contain w-full p-2 cursor-pointer"
+                      onClick={() => window.open(order.alipayProofImageUrl, '_blank')}
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex-1 space-y-0.5 text-xs text-gray-600">
                   {order.shippingName && <p>買家：<span className="font-medium text-gray-900">{order.shippingName}</span></p>}
                   {order.listingId && <p>商品編號：<span className="font-mono font-semibold text-[#06038d]">#BOXIUM-{order.listingId}</span></p>}
                   {order.listingTitle && <p>商品：{order.listingTitle}</p>}
-                  {order.alipayProofImageUrl && (
-                    <a href={order.alipayProofImageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 mt-1">
-                      <Eye className="w-3 h-3" />查看付款截圖
-                    </a>
-                  )}
                   {order.alipayProofStatus === "pending_review" && (() => {
                     const submittedMs = order.alipayProofSubmittedAt ? new Date(order.alipayProofSubmittedAt).getTime() : null;
                     const isOverdue = submittedMs !== null && (Date.now() - submittedMs) > 48 * 60 * 60 * 1000;
@@ -3245,6 +3258,7 @@ function AlipayPendingTab() {
                     onClick={() => { setSelectedOrder(order); setNote(""); }}>
                     <CheckCircle className="w-3 h-3 mr-1" />確認收款
                   </Button>
+                </div>
                 </div>
               </div>
             </div>
