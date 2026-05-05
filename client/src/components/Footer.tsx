@@ -99,8 +99,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  最新消息
+                <Link href="/grading" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
+                  PSA 鑑定
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
+                  平台介紹
                 </Link>
               </li>
             </ul>
@@ -109,11 +114,6 @@ export default function Footer() {
           {/* Col 3: About Us */}
           <FooterAccordion title={t("footer.aboutUs")}>
             <ul className="space-y-3">
-              <li>
-                <Link href="/about" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.platformIntro")}
-                </Link>
-              </li>
               <li>
                 <Link href="/contact" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
                   聯絡我們
