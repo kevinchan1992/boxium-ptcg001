@@ -1677,80 +1677,142 @@ export default function OrderDetail() {
 
       {/* Reupload Alipay Proof Dialog */}
       <Dialog open={showReuploadDialog} onOpenChange={(v) => { if (!v) { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); } }}>
-        <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>
-              {reuploadVerifyResult?.verified ? "截圖驗證成功" : "上傳支付寶 HK 截圖"}
-            </DialogTitle>
-          </DialogHeader>
-          {reuploadVerifyResult?.verified ? (
-            <div className="text-center space-y-4 py-4">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-              <p className="font-bold text-lg text-[#06038D]">截圖已提交！</p>
-              <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單。</p>
-              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); utils.marketplace.getOrderByNo.invalidate({ orderNo }); }}>關閉</Button>
-            </div>
-          ) : (
-            <div className="space-y-4 py-2">
-              <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
-                <p className="font-bold text-[#06038D]">付款金額：HKD {parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}</p>
-                <p className="text-gray-500 mt-1">請上傳支付寶 HK 的付款成功截圖，系統將自動驗證金額是否一致。</p>
-              </div>
-              <div>
-                <Label>付款截圖 *</Label>
-                <div className="mt-2 border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center">
-                  {isReuploadUploading ? (
-                    <div className="flex flex-col items-center gap-2 text-gray-400">
-                      <Loader2 className="w-8 h-8 animate-spin" />
-                      <p className="text-sm">上傳中...</p>
-                    </div>
-                  ) : reuploadProofUrl ? (
-                    <div className="space-y-3">
-                      <img src={reuploadProofUrl} alt="付款截圖" className="max-h-40 mx-auto rounded object-contain" />
-                      {isReuploadVerifying ? (
-                        <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>AI 正在驗證付款金額...</span>
-                        </div>
-                      ) : reuploadVerifyResult ? (
-                        <div className="rounded-xl p-3 text-sm space-y-2 bg-red-50 border border-red-200">
-                          <div className="flex items-center gap-2 font-medium">
-                            <XCircle className="w-4 h-4 text-red-600" />
-                            <span className="text-red-800">驗證未通過，請重新上傳</span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {[
-                              { ok: reuploadVerifyResult.payeeVerified, label: `收款方：${reuploadVerifyResult.detectedPayee ?? "未識別"}${!reuploadVerifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
-                              { ok: reuploadVerifyResult.amountVerified, label: `金額：${reuploadVerifyResult.currency ?? "HKD"} ${reuploadVerifyResult.detectedAmount ?? "未識別"}${!reuploadVerifyResult.amountVerified ? ` （需為 HKD ${parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}）` : ""}` },
-                              { ok: reuploadVerifyResult.statusVerified, label: `狀態：${reuploadVerifyResult.detectedStatus ?? "未識別"}${!reuploadVerifyResult.statusVerified ? " （需為「成功」）" : ""}` },
-                            ].map((item, i) => (
-                              <div key={i} className="flex items-center gap-2 text-xs">
-                                {item.ok ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
-                                <span className={item.ok ? "text-green-700" : "text-red-700"}>{item.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); }}>重新上傳截圖</button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div>
-                      <input type="file" accept="image/*" onChange={(e) => handleReuploadProof(e, order!.orderNo, order?.subtotalHkd as string ?? "0")} className="hidden" id="reupload-proof-input" />
-                      <label htmlFor="reupload-proof-input" className="cursor-pointer">
-                        <div className="text-3xl mb-2">📷</div>
-                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
-                        <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
-                      </label>
-                    </div>
-                  )}
+        <DialogContent className="p-0 gap-0 bg-white text-gray-900 w-[calc(100vw-2rem)] max-w-md rounded-2xl overflow-hidden max-h-[90dvh] flex flex-col">
+          {/* Header */}
+          <div className="bg-[#06038d] px-5 py-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                  {reuploadVerifyResult?.verified
+                    ? <CheckCircle className="w-5 h-5 text-white" />
+                    : <span className="text-lg">📸</span>
+                  }
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    {reuploadVerifyResult?.verified ? "截圖已提交" : "上傳支付寶 HK 截圖"}
+                  </h2>
+                  <p className="text-xs text-white/70 mt-0.5">訂單 {order?.orderNo}</p>
                 </div>
               </div>
-              <Button variant="outline" className="w-full text-[#06038D] border-gray-200" onClick={() => setShowReuploadDialog(false)}>關閉</Button>
+              <button
+                onClick={() => setShowReuploadDialog(false)}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <XCircle className="w-4 h-4 text-white" />
+              </button>
             </div>
-          )}
+          </div>
+
+          {/* Body - scrollable */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {reuploadVerifyResult?.verified ? (
+              <div className="text-center space-y-4 py-6">
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-xl text-[#06038D]">截圖已提交！</p>
+                  <p className="text-sm text-gray-500 mt-2">管理員核對收款後將確認你的訂單。</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Amount info */}
+                <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">需付金額</span>
+                    <span className="text-xl font-bold text-[#06038D]">HKD {parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">請上傳支付寶 HK 付款成功截圖，截圖須清晰顯示金額、收款方及「成功」狀態。</p>
+                </div>
+
+                {/* Upload area */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">付款截圖 <span className="text-red-500">*</span></p>
+                  <div className="border-2 border-dashed border-[#06038D]/30 rounded-xl overflow-hidden bg-gray-50">
+                    {isReuploadUploading ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-12">
+                        <Loader2 className="w-10 h-10 animate-spin text-[#06038D]" />
+                        <p className="text-sm text-gray-500">上傳中，請稍候...</p>
+                      </div>
+                    ) : reuploadProofUrl ? (
+                      <div>
+                        <img src={reuploadProofUrl} alt="付款截圖" className="w-full max-h-56 object-contain p-2" />
+                        {isReuploadVerifying && (
+                          <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm py-3 border-t border-gray-100 bg-indigo-50">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>AI 正在驗證付款金額...</span>
+                          </div>
+                        )}
+                        {reuploadVerifyResult && !reuploadVerifyResult.verified && (
+                          <div className="p-3 bg-red-50 border-t border-red-200">
+                            <div className="flex items-center gap-2 font-semibold text-sm text-red-700 mb-2">
+                              <XCircle className="w-4 h-4 flex-shrink-0" />
+                              驗證未通過，請檢查以下項目
+                            </div>
+                            <div className="space-y-1.5">
+                              {[
+                                { ok: reuploadVerifyResult.payeeVerified, label: `收款方：${reuploadVerifyResult.detectedPayee ?? "未識別"}${!reuploadVerifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
+                                { ok: reuploadVerifyResult.amountVerified, label: `金額：${reuploadVerifyResult.currency ?? "HKD"} ${reuploadVerifyResult.detectedAmount ?? "未識別"}${!reuploadVerifyResult.amountVerified ? ` （需為 HKD ${parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}）` : ""}` },
+                                { ok: reuploadVerifyResult.statusVerified, label: `狀態：${reuploadVerifyResult.detectedStatus ?? "未識別"}${!reuploadVerifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                              ].map((item, i) => (
+                                <div key={i} className="flex items-start gap-2 text-xs">
+                                  {item.ok
+                                    ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0 mt-0.5" />
+                                    : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />}
+                                  <span className={item.ok ? "text-green-700" : "text-red-700"}>{item.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              className="mt-3 w-full text-xs text-[#06038D] font-medium border border-[#06038D]/30 rounded-lg py-1.5 hover:bg-[#06038D]/5 transition-colors"
+                              onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); }}
+                            >
+                              🔄 重新選擇截圖
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <input type="file" accept="image/*" onChange={(e) => handleReuploadProof(e, order!.orderNo, order?.subtotalHkd as string ?? "0")} className="hidden" id="reupload-proof-input" />
+                        <label htmlFor="reupload-proof-input" className="cursor-pointer flex flex-col items-center justify-center py-10 gap-3 hover:bg-[#06038D]/5 transition-colors">
+                          <div className="w-14 h-14 rounded-full bg-[#06038D]/10 flex items-center justify-center">
+                            <span className="text-2xl">📷</span>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-medium text-[#06038D]">點擊選擇截圖</p>
+                            <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 pb-5 pt-3 border-t border-gray-100 flex-shrink-0">
+            {reuploadVerifyResult?.verified ? (
+              <Button
+                className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 rounded-xl font-semibold"
+                onClick={() => { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); utils.marketplace.getOrderByNo.invalidate({ orderNo }); }}
+              >
+                完成
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full text-gray-600 border-gray-200 h-11 rounded-xl"
+                onClick={() => setShowReuploadDialog(false)}
+              >
+                取消
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
