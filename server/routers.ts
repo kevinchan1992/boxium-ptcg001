@@ -26,6 +26,7 @@ import { emailRouter } from "./routers/email";
 import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
+import { contactRouter } from "./routers/contact";
 
 export const appRouter = router({
   system: systemRouter,
@@ -4573,6 +4574,7 @@ UNBREAKABLE RULES:
   }),
 
   marketplace: marketplaceRouter,
+  contact: contactRouter,
   notifications: notificationsRouter,
   auction: auctionRouter,
   grading: gradingRouter,

@@ -1,24 +1,38 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Mail, MessageSquare, Facebook, Instagram, MapPin, Clock, ChevronRight, Send, CheckCircle } from "lucide-react";
+import { Mail, MessageSquare, Facebook, Instagram, MapPin, Clock, ChevronRight, Send, CheckCircle, AlertCircle } from "lucide-react";
 import Footer from "@/components/Footer";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function Contact() {
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+
+  const sendMessage = trpc.contact.sendMessage.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+    },
+    onError: (err) => {
+      toast.error(err.message || "發送失敗，請稍後再試或直接發送電郵至 boxium.asia@gmail.com");
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    // Simulate form submission (redirect to email)
-    await new Promise((r) => setTimeout(r, 800));
-    const mailtoUrl = `mailto:boxium.asia@gmail.com?subject=${encodeURIComponent(form.subject || "聯絡 BOXIUM")}&body=${encodeURIComponent(`姓名：${form.name}\n電郵：${form.email}\n\n${form.message}`)}`;
-    window.location.href = mailtoUrl;
-    setSubmitting(false);
-    setSubmitted(true);
+    if (!form.subject) {
+      toast.error("請選擇主題");
+      return;
+    }
+    sendMessage.mutate({
+      name: form.name,
+      email: form.email,
+      subject: form.subject,
+      message: form.message,
+    });
   };
 
   const contactChannels = [
@@ -271,11 +285,11 @@ export default function Contact() {
 
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={sendMessage.isPending}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
                     style={{ backgroundColor: "#06038d", color: "white" }}
                   >
-                    {submitting ? (
+                    {sendMessage.isPending ? (
                       <span className="flex items-center gap-2">
                         <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -292,7 +306,7 @@ export default function Contact() {
                   </button>
 
                   <p className="text-xs text-gray-400 text-center">
-                    點擊「發送訊息」將開啟您的電郵應用程式。您也可以直接發送電郵至{" "}
+                    訊息將直接發送至我們的信箱，或直接發送電郵至{" "}
                     <a href="mailto:boxium.asia@gmail.com" className="underline hover:text-[#06038d]">
                       boxium.asia@gmail.com
                     </a>
