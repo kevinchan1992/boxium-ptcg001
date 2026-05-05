@@ -111,9 +111,9 @@ describe('Seller Suspension Email Templates', () => {
     const result = buildSellerSuspendedEmail({
       sellerName: '測試賣家',
       reason: '違反平台規定',
-      appealEmail: 'support@boxium.asia',
+      appealEmail: 'boxium.asia@gmail.com',
     });
-    expect(result.html).toContain('support@boxium.asia');
+    expect(result.html).toContain('boxium.asia@gmail.com');
   });
 
   it('buildSellerUnsuspendedEmail should return correct subject', async () => {

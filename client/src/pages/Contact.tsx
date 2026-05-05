@@ -15,7 +15,7 @@ export default function Contact() {
     setSubmitting(true);
     // Simulate form submission (redirect to email)
     await new Promise((r) => setTimeout(r, 800));
-    const mailtoUrl = `mailto:support@boxium.asia?subject=${encodeURIComponent(form.subject || "聯絡 BOXIUM")}&body=${encodeURIComponent(`姓名：${form.name}\n電郵：${form.email}\n\n${form.message}`)}`;
+    const mailtoUrl = `mailto:boxium.asia@gmail.com?subject=${encodeURIComponent(form.subject || "聯絡 BOXIUM")}&body=${encodeURIComponent(`姓名：${form.name}\n電郵：${form.email}\n\n${form.message}`)}`;
     window.location.href = mailtoUrl;
     setSubmitting(false);
     setSubmitted(true);
@@ -25,9 +25,9 @@ export default function Contact() {
     {
       icon: Mail,
       title: "電子郵件",
-      value: "support@boxium.asia",
+      value: "boxium.asia@gmail.com",
       desc: "一般查詢及技術支援",
-      href: "mailto:support@boxium.asia",
+      href: "mailto:boxium.asia@gmail.com",
       color: "#06038d",
     },
     {
@@ -55,7 +55,7 @@ export default function Contact() {
     },
     {
       q: "交易出現問題怎麼辦？",
-      a: "請透過訂單頁面的「聯絡賣家」功能溝通，或直接發送電郵至 support@boxium.asia。",
+      a: "請透過訂單頁面的「聯絡賣家」功能溝通，或直接發送電郵至 boxium.asia@gmail.com。",
     },
     {
       q: "如何申請 PSA 鑑定服務？",
@@ -293,8 +293,8 @@ export default function Contact() {
 
                   <p className="text-xs text-gray-400 text-center">
                     點擊「發送訊息」將開啟您的電郵應用程式。您也可以直接發送電郵至{" "}
-                    <a href="mailto:support@boxium.asia" className="underline hover:text-[#06038d]">
-                      support@boxium.asia
+                    <a href="mailto:boxium.asia@gmail.com" className="underline hover:text-[#06038d]">
+                      boxium.asia@gmail.com
                     </a>
                   </p>
                 </form>

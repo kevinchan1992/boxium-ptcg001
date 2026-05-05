@@ -84,7 +84,7 @@ describe("buildSellerRejectedEmail", () => {
     const { html } = buildSellerRejectedEmail({
       displayName: "TestSeller",
     });
-    expect(html).toContain("support@boxium.asia");
+    expect(html).toContain("boxium.asia@gmail.com");
     expect(html).toContain("聯絡客服");
   });
 
