@@ -115,6 +115,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/contact" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
+                  聯絡我們
+                </Link>
+              </li>
+              <li>
                 <Link href="/disclaimer" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
                   {t("footer.disclaimer")}
                 </Link>

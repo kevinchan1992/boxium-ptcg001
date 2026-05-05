@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag, ScanSearch, LineChart, Award, Store, ArrowRight } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag, ScanSearch, LineChart, Award, Store, ArrowRight, MessageSquare, Shield, Zap, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -522,6 +522,162 @@ function HeroQuickAccess() {
 }
 
 
+// ─── AboutUsSection: brand story + values + contact CTA ─────────────────────
+function AboutUsSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [vis, setVis] = useState(false);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVis(true); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    if (sectionRef.current) obs.observe(sectionRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const values = [
+    {
+      icon: Zap,
+      title: "即時數據",
+      desc: "每 12 小時自動更新，整合 SNKRDUNK 及全球市場的真實成交記錄。",
+    },
+    {
+      icon: Shield,
+      title: "安全交易",
+      desc: "市集採用 Stripe 支付保障，買賣雙方均受平台條款保護。",
+    },
+    {
+      icon: Users,
+      title: "玩家社群",
+      desc: "為 TCG 愛好者打造的專屬平台，追蹤卡牌動態、交流收藏樂趣。",
+    },
+  ];
+
+  return (
+    <section
+      ref={sectionRef}
+      className="w-full py-14 md:py-20 px-4"
+      style={{ backgroundColor: "#f0f2ff" }}
+    >
+      <div
+        className="max-w-6xl mx-auto"
+        style={{
+          opacity: vis ? 1 : 0,
+          transform: vis ? "translateY(0)" : "translateY(32px)",
+          transition: "opacity 0.6s ease, transform 0.6s ease",
+        }}
+      >
+        {/* Section header */}
+        <div className="text-center mb-10 md:mb-14">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4"
+            style={{ backgroundColor: "#06038d", color: "#FEDD00" }}
+          >
+            About Us
+          </div>
+          <h2
+            className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 leading-tight"
+            style={{ color: "#06038d" }}
+          >
+            關於 BOXIUM
+          </h2>
+          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+            BOXIUM 是專為 TCG 集換式卡牌愛好者打造的綜合平台，整合全球市場數據，提供即時、準確的卡牌價格資訊，並設有安全可靠的二手交易市集。
+          </p>
+        </div>
+
+        {/* Two-column: story + values */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          {/* Left: brand story */}
+          <div className="bg-white rounded-2xl p-7 md:p-9 shadow-sm border border-[#06038d]/10">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
+              style={{ backgroundColor: "#06038d" }}
+            >
+              <img src="/boxium-logo.png" alt="BOXIUM" className="h-7 object-contain" />
+            </div>
+            <h3 className="text-lg font-bold mb-3" style={{ color: "#06038d" }}>
+              我們的故事
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              BOXIUM 由一群熱愛 TCG 的玩家創立，深知卡牌市場資訊分散、價格難以追蹤的痛點。我們致力於整合 SNKRDUNK 等全球交易平台的真實成交數據，讓每位玩家都能輕鬆掌握市場行情。
+            </p>
+            <p className="text-gray-600 text-sm leading-relaxed mb-6">
+              從 Pokémon 到 One Piece、遊戲王，我們覆蓋多款主流 TCG，並持續擴展數據來源，為收藏家和投資者提供最可靠的參考依據。
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["Pokémon TCG", "One Piece", "遊戲王", "PSA 鑑定"].map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs font-semibold px-3 py-1 rounded-full"
+                  style={{ backgroundColor: "#06038d15", color: "#06038d" }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: values + contact CTA */}
+          <div className="space-y-4">
+            {values.map((v) => (
+              <div
+                key={v.title}
+                className="bg-white rounded-xl p-5 shadow-sm border border-[#06038d]/10 flex items-start gap-4"
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "#06038d" }}
+                >
+                  <v.icon className="w-5 h-5 text-[#FEDD00]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold mb-1" style={{ color: "#06038d" }}>
+                    {v.title}
+                  </h4>
+                  <p className="text-gray-600 text-xs leading-relaxed">{v.desc}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Contact CTA card */}
+            <div
+              className="rounded-xl p-5 flex items-center justify-between gap-4"
+              style={{ backgroundColor: "#06038d" }}
+            >
+              <div>
+                <div className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">聯絡我們</div>
+                <p className="text-white/80 text-sm">有任何問題或建議？歡迎與我們聯繫。</p>
+              </div>
+              <Link
+                href="/contact"
+                className="flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-lg flex-shrink-0 transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
+              >
+                <MessageSquare className="w-4 h-4" />
+                聯絡
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom: quick links to about page */}
+        <div className="mt-8 text-center">
+          <Link
+            href="/about"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors hover:underline"
+            style={{ color: "#06038d" }}
+          >
+            了解更多關於 BOXIUM
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const { t } = useTranslation();
   
@@ -673,6 +829,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* About Us Section */}
+      <AboutUsSection />
 
       {/* CTA Section - Full-width 3-color panels with scroll-in animation */}
       <CtaSection />
