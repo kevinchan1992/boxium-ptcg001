@@ -2,10 +2,10 @@ name: SNKRDUNK Listings Batch Update
 
 on:
   schedule:
-    # Runs every 6 hours at :07 to avoid GitHub Actions peak queue congestion
-    # UTC times: 01:07, 07:07, 13:07, 19:07
-    # HKT times: 09:07, 15:07, 21:07, 03:07
-    - cron: '7 1,7,13,19 * * *'
+    # Runs once daily at UTC 07:07 to stay within 2,000 min/month free quota
+    # HKT: 15:07 daily
+    # Budget: ~30 runs/month × 50 min = ~1,500 min/month
+    - cron: '7 7 * * *'
   workflow_dispatch:
     inputs:
       parallel:
