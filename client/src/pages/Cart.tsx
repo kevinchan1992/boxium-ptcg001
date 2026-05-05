@@ -1158,10 +1158,12 @@ function CheckoutDialog({
     setIsValidatingStock(true);
     try {
       const freshCart = await utils.marketplace.getMyCart.fetch();
-      const freshActiveIds = new Set(
-        (freshCart ?? []).filter((i) => i.status === "active").map((i) => i.listingId)
+      // Items are available if: status is 'active', OR buyer already has a pending_payment order
+      // (listing is 'reserved' for this buyer — idempotent retry is allowed)
+      const freshAvailableIds = new Set(
+        (freshCart ?? []).filter((i) => i.status === "active" || (i as any).hasPendingOrder).map((i) => i.listingId)
       );
-      const nowUnavailable = activeItems.filter((i) => !freshActiveIds.has(i.listingId));
+      const nowUnavailable = activeItems.filter((i) => !freshAvailableIds.has(i.listingId));
       if (nowUnavailable.length > 0) {
         const names = nowUnavailable.map((i) => i.title).join("、");
         toast.error(`以下商品已下架或售出，已自動從購物車移除：${names}`);
