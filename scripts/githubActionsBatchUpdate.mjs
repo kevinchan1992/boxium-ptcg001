@@ -1,11 +1,17 @@
 /**
- * GitHub Actions SNKRDUNK Batch Update Script
+ * GitHub Actions SNKRDUNK Batch Update Script v3.0 (Smart Skip)
  *
  * Self-contained ES Module using ONLY Node.js built-in modules + mysql2.
  * NO axios dependency - uses Node.js 22 built-in fetch() API.
  *
+ * v3.0 changes:
+ *   - Smart Skip: empty cards (no price history) are only re-checked every EMPTY_CARD_RECHECK_DAYS days
+ *     (83.9% of cards have no history → skipping them reduces workload by ~6x)
+ *   - Priority sort: failed > has-history > empty cards > oldest first
+ *   - BATCH_LIMIT now applies AFTER smart-skip filtering
+ *
  * Required env: DATABASE_URL (MySQL connection string)
- * Optional env: PARALLEL, SKIP_HOURS, MAX_CONSECUTIVE_ERR, REQUEST_TIMEOUT_MS
+ * Optional env: PARALLEL, SKIP_HOURS, MAX_CONSECUTIVE_ERR, REQUEST_TIMEOUT_MS, EMPTY_CARD_RECHECK_DAYS
  */
 
 import mysql from 'mysql2/promise';
@@ -15,7 +21,10 @@ import { createHash } from 'crypto';
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
-  BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; default = ~55642/3 per run
+  BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; applies AFTER smart-skip
+  // v3.0 Smart Skip: empty cards (no price history) are only re-checked every N days
+  // Real-world data: 83.9% of cards (46,775/55,734) have no history → 6x speedup
+  EMPTY_CARD_RECHECK_DAYS: parseInt(process.env.EMPTY_CARD_RECHECK_DAYS || '7', 10),
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || '15000', 10),
   DELAY_AFTER_ERROR: 300,   // Reduced from 500ms to 300ms
@@ -237,6 +246,14 @@ async function getAllSnkrdunkProducts() {
      LEFT JOIN cards c ON c.id = ds.cardId
      WHERE ds.source = 'snkrdunk' AND ds.isActive = 1`
   );
+
+  // v3.0 Smart Skip: load set of cardIds that have at least one price history record
+  const [histRows] = await db.execute(
+    `SELECT DISTINCT cardId FROM priceHistory WHERE source = 'snkrdunk' LIMIT 100000`
+  );
+  const cardIdsWithHistory = new Set(histRows.map(r => r.cardId));
+  console.log(`[BatchUpdate] Smart Skip: ${cardIdsWithHistory.size} cards have price history`);
+
   const unique = new Map();
   for (const row of rows) {
     const pt = row.productType || 'single_card';
@@ -253,6 +270,7 @@ async function getAllSnkrdunkProducts() {
       lastFetchStatus: row.lastFetchStatus || null,
       sourceUrl: row.sourceUrl || '',
       dataSourceId: row.dataSourceId,
+      hasHistory: cardIdsWithHistory.has(row.cardId), // v3.0 Smart Skip flag
     });
   }
   return Array.from(unique.values());
@@ -386,24 +404,44 @@ async function main() {
 
   const now = new Date();
   const skipMs = CONFIG.SKIP_HOURS * 3600 * 1000;
+  const emptyCardSkipMs = CONFIG.EMPTY_CARD_RECHECK_DAYS * 24 * 60 * 60 * 1000; // v3.0 Smart Skip
 
-  // Sort: failed products first (priority retry), then by lastFetchedAt ascending (oldest first)
+  // v3.0 Smart Skip filter:
+  //   - Skip recently updated (within SKIP_HOURS) → same as before
+  //   - Skip empty cards (no history) updated within EMPTY_CARD_RECHECK_DAYS days
+  //   - Never skip cards with no lastFetchedAt (never fetched before)
+  let skippedRecent = 0;
+  let skippedEmpty = 0;
   const toUpdate = allProducts
-    .filter(p => !p.lastFetchedAt || (now - p.lastFetchedAt) >= skipMs)
+    .filter(p => {
+      const age = p.lastFetchedAt ? (now - p.lastFetchedAt) : Infinity;
+      if (age < skipMs) { skippedRecent++; return false; }         // recently updated
+      if (!p.hasHistory && age < emptyCardSkipMs) { skippedEmpty++; return false; } // empty card within recheck window
+      return true;
+    })
     .sort((a, b) => {
+      // Priority: failed first, then has-history, then empty cards, then oldest first
       const aFailed = a.lastFetchStatus === 'failed' ? 0 : 1;
       const bFailed = b.lastFetchStatus === 'failed' ? 0 : 1;
-      if (aFailed !== bFailed) return aFailed - bFailed; // failed first
+      if (aFailed !== bFailed) return aFailed - bFailed;
+      const aHist = a.hasHistory ? 0 : 1;
+      const bHist = b.hasHistory ? 0 : 1;
+      if (aHist !== bHist) return aHist - bHist; // has-history first
       const aTime = a.lastFetchedAt ? a.lastFetchedAt.getTime() : 0;
       const bTime = b.lastFetchedAt ? b.lastFetchedAt.getTime() : 0;
       return aTime - bTime; // oldest first
     });
 
   const failedCount = toUpdate.filter(p => p.lastFetchStatus === 'failed').length;
+  const withHistoryCount = toUpdate.filter(p => p.hasHistory).length;
 
-  // Apply BATCH_LIMIT: only process the oldest N products per run (incremental update)
+  // Apply BATCH_LIMIT: only process the oldest N products per run (after smart-skip)
   const limitedToUpdate = CONFIG.BATCH_LIMIT > 0 ? toUpdate.slice(0, CONFIG.BATCH_LIMIT) : toUpdate;
-  console.log(`[BatchUpdate] Skipping ${allProducts.length - toUpdate.length} recently updated, ${toUpdate.length} eligible (${failedCount} previously failed → priority)`);
+  console.log(
+    `[BatchUpdate] Smart Skip v3.0: ${allProducts.length} total → ` +
+    `skipped ${skippedRecent} recent + ${skippedEmpty} empty (${CONFIG.EMPTY_CARD_RECHECK_DAYS}d) → ` +
+    `${toUpdate.length} eligible (${withHistoryCount} with history, ${failedCount} failed → priority)`
+  );
   if (CONFIG.BATCH_LIMIT > 0 && toUpdate.length > CONFIG.BATCH_LIMIT) {
     console.log(`[BatchUpdate] BATCH_LIMIT=${CONFIG.BATCH_LIMIT}: processing ${limitedToUpdate.length}/${toUpdate.length} (oldest first)`);
   }

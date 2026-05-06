@@ -2,13 +2,15 @@ name: SNKRDUNK Listings Batch Update
 
 on:
   schedule:
-    - cron: '7 1,7,13,19 * * *'
+    # Every 12 hours: HKT 02:00 (UTC 18:00 prev day) and HKT 14:00 (UTC 06:00)
+    - cron: '0 18 * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       parallel:
-        description: 'Number of parallel workers (default: 4)'
+        description: 'Number of parallel workers (default: 8)'
         required: false
-        default: '4'
+        default: '8'
       skip_hot_cache_hours:
         description: 'Skip cards updated within N hours (default: 1)'
         required: false
@@ -46,7 +48,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PARALLEL: ${{ github.event.inputs.parallel || '4' }}
+          PARALLEL: ${{ github.event.inputs.parallel || '8' }}
           SKIP_HOT_CACHE_HOURS: ${{ github.event.inputs.skip_hot_cache_hours || '1' }}
           REQUEST_TIMEOUT_MS: '12000'
           MAX_CONSECUTIVE_ERR: '30'
