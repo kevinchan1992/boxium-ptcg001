@@ -345,6 +345,7 @@ export interface BatchTaskProgress {
   startedAt: Date | null;
   completedAt: Date | null;
   errors: Array<{ cardId: number; cardName: string; error: string }>;
+  metadata?: string | null; // JSON metadata (speed, ETA, source, etc.)
 }
 
 /**

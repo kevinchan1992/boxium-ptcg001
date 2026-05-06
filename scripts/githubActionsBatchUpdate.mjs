@@ -13,13 +13,14 @@ import { createHash } from 'crypto';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
-  PARALLEL: parseInt(process.env.PARALLEL || '4', 10),  // Reduced from 8 to 4 to avoid rate limiting
+  PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
   BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; default = ~55642/3 per run
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || '15000', 10),
-  DELAY_AFTER_ERROR: 500,
+  DELAY_AFTER_ERROR: 300,   // Reduced from 500ms to 300ms
   PROGRESS_LOG_INTERVAL: 100,
+  PROGRESS_REPORT_INTERVAL: 500, // POST mid-run progress to platform every N items
   JPY_TO_HKD_RATE: 0.055,
   MAX_RETRIES: 3,           // Retry transient errors up to 3 times
   RETRY_DELAY_MS: 2000,     // Wait 2s between retries
@@ -413,6 +414,44 @@ async function main() {
     return;
   }
 
+  // ─── Mid-run progress reporter ───────────────────────────────────────────────
+  const platformUrl = process.env.PLATFORM_URL;
+  const cronSecret = process.env.CRON_SECRET;
+  const runId = process.env.GITHUB_RUN_ID || null;
+  let lastReportedTotal = 0;
+
+  async function reportProgressToplatform(processedItems, successCount, failCount, totalItems) {
+    if (!platformUrl || !cronSecret) return;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const speedPerSec = elapsed > 0 ? processedItems / elapsed : 0;
+    const remaining = totalItems - processedItems;
+    const etaMinutes = speedPerSec > 0 ? Math.ceil(remaining / speedPerSec / 60) : 0;
+    try {
+      await fetch(`${platformUrl}/api/scheduled/github-batch-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cronSecret}`,
+          'User-Agent': 'Mozilla/5.0 (compatible; BoxiumGitHubActions/1.0)',
+        },
+        body: JSON.stringify({
+          runId,
+          totalItems,
+          processedItems,
+          successCount,
+          failureCount: failCount,
+          startedAt: new Date(startTime).toISOString(),
+          speedPerSec: Math.round(speedPerSec * 10) / 10,
+          etaMinutes,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (e) {
+      // Non-fatal: progress report failure should not stop the batch
+      console.warn(`[BatchUpdate] Progress report failed (non-fatal): ${e.message}`);
+    }
+  }
+
   async function runBatch(items, label) {
     let successCount = 0, failCount = 0, transientFailCount = 0, consecutiveErrors = 0;
     const transientFailed = [];
@@ -451,6 +490,12 @@ async function main() {
         );
       }
 
+      // Mid-run progress report to platform every PROGRESS_REPORT_INTERVAL items
+      if (total - lastReportedTotal >= CONFIG.PROGRESS_REPORT_INTERVAL) {
+        lastReportedTotal = total;
+        await reportProgressToplatform(total, successCount, failCount, limitedToUpdate.length);
+      }
+
       if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
         console.error(`[BatchUpdate] Auto-stopped: ${consecutiveErrors} consecutive errors`);
         break;
@@ -484,9 +529,7 @@ async function main() {
   await (await getPool()).end();
 
   // ─── Report results to platform API ──────────────────────────────────────────────────
-  const platformUrl = process.env.PLATFORM_URL;
-  const cronSecret = process.env.CRON_SECRET;
-  const runId = process.env.GITHUB_RUN_ID || null;
+  // platformUrl, cronSecret, runId are already defined above (mid-run progress reporter)
   const runUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && runId
     ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`
     : null;

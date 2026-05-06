@@ -1680,6 +1680,94 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: GitHub Actions Batch Update Progress (mid-run) ─────────────
+  // Called by GitHub Actions periodically during SNKRDUNK batch update
+  // Creates or updates a 'running' scheduledTask record so Admin can see live progress
+  app.post("/api/scheduled/github-batch-progress", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+      const {
+        runId,
+        totalItems = 0,
+        processedItems = 0,
+        successCount = 0,
+        failureCount = 0,
+        startedAt,
+        speedPerSec = 0,
+        etaMinutes = 0,
+      } = req.body || {};
+
+      const { getDb } = await import('../db');
+      const { scheduledTasks: scheduledTasksTable } = await import('../../drizzle/schema_new');
+      const { eq, and } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database not available' });
+
+      const progress = Number(totalItems) > 0 ? Math.min(99, Math.round((Number(processedItems) / Number(totalItems)) * 100)) : 0;
+      const startTime = startedAt ? new Date(startedAt) : new Date();
+      const ghRunId = String(runId || '');
+
+      // Find existing running task for this GitHub run
+      const existing = await db.query.scheduledTasks.findFirst({
+        where: and(
+          eq(scheduledTasksTable.taskType, 'batch_snkrdunk_update'),
+          eq(scheduledTasksTable.status, 'running')
+        ),
+        orderBy: (t: any, { desc }: any) => [desc(t.startedAt)],
+      });
+
+      if (existing) {
+        await db.update(scheduledTasksTable)
+          .set({
+            totalItems: Number(totalItems),
+            processedItems: Number(processedItems),
+            successCount: Number(successCount),
+            failureCount: Number(failureCount),
+            progress,
+            metadata: JSON.stringify({
+              source: 'github_actions',
+              runId: ghRunId,
+              speedPerSec: Number(speedPerSec),
+              etaMinutes: Number(etaMinutes),
+              errors: [],
+            }),
+          })
+          .where(eq(scheduledTasksTable.id, existing.id));
+        console.log(`[ScheduledTask] github-batch-progress: updated task ${existing.id} (${processedItems}/${totalItems}, ${progress}%)`);
+      } else {
+        await db.insert(scheduledTasksTable).values({
+          taskType: 'batch_snkrdunk_update',
+          status: 'running',
+          totalItems: Number(totalItems),
+          processedItems: Number(processedItems),
+          successCount: Number(successCount),
+          failureCount: Number(failureCount),
+          progress,
+          startedAt: startTime,
+          completedAt: null,
+          activeProcessingMs: 0,
+          metadata: JSON.stringify({
+            source: 'github_actions',
+            runId: ghRunId,
+            speedPerSec: Number(speedPerSec),
+            etaMinutes: Number(etaMinutes),
+            errors: [],
+          }),
+        });
+        console.log(`[ScheduledTask] github-batch-progress: created running task (${processedItems}/${totalItems}, ${progress}%)`);
+      }
+      return res.json({ success: true, progress });
+    } catch (err: any) {
+      console.error('[ScheduledTask] github-batch-progress failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to update progress', detail: err?.message });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   app.use(

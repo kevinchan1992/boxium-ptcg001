@@ -1987,6 +1987,16 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           // use the larger of totalItems and processedItems as the denominator
           const processedItems = runningTask.processedItems || 0;
           const totalItems = Math.max(runningTask.totalItems || 0, processedItems);
+          // Parse metadata for speed/ETA from GitHub Actions mid-run reports
+          let speedPerSec = 0;
+          let etaMinutes = 0;
+          let source = 'platform';
+          try {
+            const meta = runningTask.metadata ? JSON.parse(runningTask.metadata as string) : {};
+            speedPerSec = meta.speedPerSec || 0;
+            etaMinutes = meta.etaMinutes || 0;
+            source = meta.source || 'platform';
+          } catch {}
           return {
             isRunning: true,
             isPaused: runningTask.status === 'paused',
@@ -1999,6 +2009,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
             startTime: runningTask.startedAt ? new Date(runningTask.startedAt).getTime() : null,
             endTime: null,
             taskId: runningTask.taskId,
+            speedPerSec,
+            etaMinutes,
+            source,
           };
         }
         return {
@@ -2013,6 +2026,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           startTime: null,
           endTime: null,
           taskId: null,
+          speedPerSec: 0,
+          etaMinutes: 0,
+          source: 'platform',
         };
       }),
 

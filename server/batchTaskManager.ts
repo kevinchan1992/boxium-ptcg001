@@ -120,6 +120,7 @@ export async function getLatestRunningTask(
     startedAt: task.startedAt,
     completedAt: task.completedAt,
     errors: metadata.errors || [],
+    metadata: task.metadata, // raw JSON string for speed/ETA/source
   };
 }
 

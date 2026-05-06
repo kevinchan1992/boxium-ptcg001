@@ -703,6 +703,27 @@ export function AdminScheduleManagement() {
                     {progress.totalCards > 0 ? Math.min(100, Math.round((progress.processedCards / progress.totalCards) * 100)) : 0}%
                   </span>
                 </div>
+                {/* 速度和 ETA */}
+                {((progress as any)?.speedPerSec > 0 || (progress as any)?.etaMinutes > 0) && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      {(progress as any)?.speedPerSec > 0 && (
+                        <span className="flex items-center gap-1 text-blue-400">
+                          <span className="font-mono">{(progress as any).speedPerSec.toFixed(1)}</span>
+                          <span className="text-gray-500">張/秒</span>
+                        </span>
+                      )}
+                      {(progress as any)?.source === 'github_actions' && (
+                        <span className="text-gray-500 text-xs">GitHub Actions</span>
+                      )}
+                    </div>
+                    {(progress as any)?.etaMinutes > 0 && (
+                      <span className="text-yellow-400">
+                        預計剩餘 {(progress as any).etaMinutes} 分鐘
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             
