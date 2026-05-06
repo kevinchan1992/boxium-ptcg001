@@ -1,10 +1,7 @@
 name: SNKRDUNK Batch Price Update
 on:
   schedule:
-    # Runs every other day (odd days) at UTC 01:07 to stay within 2,000 min/month free quota
-    # HKT: 09:07 on odd days of month
-    # Budget: ~15 runs/month × 55 min = ~825 min/month
-    - cron: '7 1 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31 * *'
+    - cron: '7 1,9,17 * * *'
   workflow_dispatch:
     inputs:
       skip_hours:

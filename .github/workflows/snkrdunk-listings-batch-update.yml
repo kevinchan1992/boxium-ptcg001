@@ -2,10 +2,7 @@ name: SNKRDUNK Listings Batch Update
 
 on:
   schedule:
-    # Runs once daily at UTC 07:07 to stay within 2,000 min/month free quota
-    # HKT: 15:07 daily
-    # Budget: ~30 runs/month × 50 min = ~1,500 min/month
-    - cron: '7 7 * * *'
+    - cron: '7 1,7,13,19 * * *'
   workflow_dispatch:
     inputs:
       parallel:
@@ -37,7 +34,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Copy script + package.json to /tmp to avoid npm traversing repo root
           mkdir -p /tmp/snkrdunk-listings-runner
           cp scripts/githubActionsListingsBatchUpdate.mjs /tmp/snkrdunk-listings-runner/
           cp scripts/package.json /tmp/snkrdunk-listings-runner/
