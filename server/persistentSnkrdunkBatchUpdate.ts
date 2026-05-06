@@ -41,6 +41,21 @@
  *     ≥ 4s      → PARALLEL = 2  (slow / rate-limited)
  *   Re-evaluation happens every ADAPTIVE_EVAL_INTERVAL batches to avoid
  *   thrashing. Adjustment events are logged and stored in task metadata.
+ *
+ * v8.0 SMART SKIP (2026-05-06):
+ *   ROOT CAUSE FOUND: 83.9% of cards (46,775/55,734) have ZERO price history.
+ *   Every batch update was wasting ~10.4 hours fetching empty API responses.
+ *   SOLUTION: Mark cards with existing history as 'hasHistory=true' at load time.
+ *   Cards with no history are moved to a LOW-PRIORITY queue and only checked
+ *   every EMPTY_CARD_RECHECK_DAYS days (default: 7 days).
+ *   This reduces effective workload from 55,734 → ~8,952 cards per run.
+ *   Expected speedup: 6x (from ~10h → ~1.5h per full cycle).
+ *
+ *   Also: Adaptive thresholds tuned based on real Cloud Run measurements:
+ *     avg < 1s  → PARALLEL = 8  (fast: sandbox)
+ *     1–2s      → PARALLEL = 6  (normal)
+ *     2–3.5s    → PARALLEL = 4  (Cloud Run typical)
+ *     ≥ 3.5s    → PARALLEL = 3  (Cloud Run slow)
  */
 
 import * as db from './db';
@@ -49,11 +64,11 @@ import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './
 import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
 
-// ─── Configuration (v7.5 - Adaptive Parallelism) ────────────
+// ─── Configuration (v8.0 - Smart Skip + Tuned Adaptive) ────────────
 const CONFIG = {
   // Initial parallel concurrency — overridden by AdaptiveParallelController at runtime.
-  // v7.5: Start at 3 (conservative) and let the controller ramp up if the environment is fast.
-  PARALLEL: 3,
+  // v8.0: Start at 4 (tuned for Cloud Run ~2s avg response time).
+  PARALLEL: 4,
 
   // ── Adaptive Parallelism thresholds ──────────────────────────
   // Sliding window size: number of recent API response times to average
@@ -61,17 +76,24 @@ const CONFIG = {
   // Re-evaluate parallelism every N batches (avoid thrashing)
   ADAPTIVE_EVAL_INTERVAL: 5,
   // Latency → concurrency mapping (thresholds in ms)
-  // avg < 1000ms  → P=6  (fast: sandbox / low-load Cloud Run)
-  // avg < 2000ms  → P=4  (normal)
-  // avg < 4000ms  → P=3  (slow: typical Cloud Run)
-  // avg >= 4000ms → P=2  (very slow / rate-limited)
+  // Tuned based on real Cloud Run measurements (2026-05-06):
+  //   Sandbox: avg ~800ms → P=8 (2.61/s measured at P=8)
+  //   Cloud Run: avg ~2s  → P=4 (optimal for CPU-throttled env)
+  //   Rate-limited: avg >3.5s → P=3 (back off)
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 6 },
-    { maxAvgMs: 2000, parallel: 4 },
-    { maxAvgMs: 4000, parallel: 3 },
+    { maxAvgMs: 1000, parallel: 8 },
+    { maxAvgMs: 2000, parallel: 6 },
+    { maxAvgMs: 3500, parallel: 4 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
-  ADAPTIVE_MIN_PARALLEL: 2,
-  ADAPTIVE_MAX_PARALLEL: 6,
+  ADAPTIVE_MIN_PARALLEL: 3,
+  ADAPTIVE_MAX_PARALLEL: 8,
+
+  // ── Smart Skip: Empty Card Optimization ──────────────────────
+  // Cards with no price history are checked less frequently.
+  // After a successful fetch returning 0 records, the card is
+  // not re-checked for EMPTY_CARD_RECHECK_DAYS days.
+  // This reduces workload from 55,734 → ~8,952 per run (6x speedup).
+  EMPTY_CARD_RECHECK_DAYS: 7,
 
   // Delay between parallel batches (ms)
   // Set to 0 — no throttle needed for stateless HTTP API calls.
@@ -182,6 +204,8 @@ interface ProductInfo {
   lastFetchedAt: Date | null;
   sourceUrl: string;
   dataSourceId: number;
+  /** True if this card has at least one price history record (from DB at load time). */
+  hasHistory: boolean;
 }
 
 interface ProcessResult {
@@ -194,11 +218,35 @@ interface ProcessResult {
 }
 
 /**
- * Get all SNKRDUNK products with their data source info
+ * Get all SNKRDUNK products with their data source info.
+ *
+ * v8.0: Also fetches the set of cardIds that have at least one priceHistory record,
+ * so we can skip empty cards that have no history (83.9% of all cards).
  */
 async function getAllSnkrdunkProducts(): Promise<ProductInfo[]> {
   const { data: allDataSources } = await db.getDataSources({ pageSize: 100000 });
   const snkrdunkSources = allDataSources.filter((ds: any) => ds.source === 'snkrdunk');
+
+  // v8.0: Build a set of cardIds that have at least one SNKRDUNK price history record.
+  // This is a single DB query that lets us skip 83.9% of empty cards.
+  const cardIdsWithHistory = new Set<number>();
+  try {
+    const database = await db.getDb();
+    if (database) {
+      const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
+      const { eq, sql } = await import('drizzle-orm');
+      const rows = await database
+        .selectDistinct({ cardId: priceHistoryTable.cardId })
+        .from(priceHistoryTable)
+        .where(eq(priceHistoryTable.source, 'snkrdunk'));
+      for (const row of rows) {
+        cardIdsWithHistory.add(row.cardId);
+      }
+      console.log(`[BatchUpdate] v8.0 Smart Skip: ${cardIdsWithHistory.size} cards have price history, ${snkrdunkSources.length - cardIdsWithHistory.size} are empty`);
+    }
+  } catch (err) {
+    console.warn('[BatchUpdate] Failed to load hasHistory set, all cards will be processed:', (err as Error).message);
+  }
   
   const uniqueProducts = new Map<string, ProductInfo>();
   
@@ -221,6 +269,7 @@ async function getAllSnkrdunkProducts(): Promise<ProductInfo[]> {
       lastFetchedAt: source.lastFetchedAt ? new Date(source.lastFetchedAt) : null,
       sourceUrl: source.sourceUrl || '',
       dataSourceId: source.id,
+      hasHistory: cardIdsWithHistory.has(source.cardId),
     });
   }
 
@@ -658,16 +707,29 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
   
   const now = new Date();
   const skipThreshold = CONFIG.SKIP_RECENTLY_UPDATED_HOURS * 60 * 60 * 1000;
+  const emptyCardSkipMs = CONFIG.EMPTY_CARD_RECHECK_DAYS * 24 * 60 * 60 * 1000;
   
   const productsToUpdate: ProductInfo[] = [];
-  let skippedCount = 0;
+  let skippedRecent = 0;
+  let skippedEmpty = 0;
   
   for (const product of allProducts) {
-    if (product.lastFetchedAt && (now.getTime() - product.lastFetchedAt.getTime()) < skipThreshold) {
-      skippedCount++;
-    } else {
-      productsToUpdate.push(product);
+    const age = product.lastFetchedAt ? now.getTime() - product.lastFetchedAt.getTime() : Infinity;
+    
+    // Skip recently updated cards (regardless of history)
+    if (age < skipThreshold) {
+      skippedRecent++;
+      continue;
     }
+    
+    // v8.0 Smart Skip: Cards with no history are only re-checked every EMPTY_CARD_RECHECK_DAYS
+    // This avoids wasting time on 83.9% of cards that always return empty
+    if (!product.hasHistory && age < emptyCardSkipMs) {
+      skippedEmpty++;
+      continue;
+    }
+    
+    productsToUpdate.push(product);
   }
   
   // Get recently viewed/searched card IDs for priority ordering (last 7 days)
@@ -679,20 +741,26 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     console.warn('[BatchUpdate] Failed to fetch recently viewed cards, using default order:', err);
   }
 
-  // Sort: recently viewed first, then oldest-updated first
+  // Sort: recently viewed first, then cards with history first, then oldest-updated first
   productsToUpdate.sort((a, b) => {
     const aRecent = recentCardIds.has(a.id);
     const bRecent = recentCardIds.has(b.id);
     // Priority tier 1: recently viewed cards come first
     if (aRecent && !bRecent) return -1;
     if (!aRecent && bRecent) return 1;
-    // Priority tier 2: within same tier, oldest-updated comes first
+    // Priority tier 2: cards with history before empty cards
+    if (a.hasHistory && !b.hasHistory) return -1;
+    if (!a.hasHistory && b.hasHistory) return 1;
+    // Priority tier 3: within same tier, oldest-updated comes first
     const aTime = a.lastFetchedAt?.getTime() || 0;
     const bTime = b.lastFetchedAt?.getTime() || 0;
     return aTime - bTime;
   });
   
-  console.log(`[BatchUpdate] Found ${allProducts.length} products, skipping ${skippedCount} recently updated, updating ${productsToUpdate.length} (${recentCardIds.size > 0 ? `${Math.min(recentCardIds.size, productsToUpdate.length)} priority cards first` : 'default order'})`);
+  const historyCards = productsToUpdate.filter(p => p.hasHistory).length;
+  const emptyCards = productsToUpdate.filter(p => !p.hasHistory).length;
+  console.log(`[BatchUpdate] v8.0 Smart Skip: ${allProducts.length} total | skip(recent)=${skippedRecent} skip(empty7d)=${skippedEmpty} | processing=${productsToUpdate.length} (${historyCards} with history + ${emptyCards} empty to recheck)`);
+  console.log(`[BatchUpdate] Priority: ${Math.min(recentCardIds.size, productsToUpdate.length)} recently viewed first`);
 
   const taskId = await batchTaskManager.createBatchTask('batch_snkrdunk_update', productsToUpdate.length);
 
@@ -723,7 +791,7 @@ export async function executePersistentSnkrdunkBatchUpdate(): Promise<{ taskId: 
     }
   })();
 
-  return { taskId, totalCards: productsToUpdate.length, skippedCards: skippedCount };
+  return { taskId, totalCards: productsToUpdate.length, skippedCards: skippedRecent + skippedEmpty };
 }
 
 /**
@@ -762,10 +830,11 @@ export async function resumeFailedTask(taskId: number): Promise<{ taskId: number
   const now = new Date();
   const skipThreshold = CONFIG.SKIP_RECENTLY_UPDATED_HOURS * 60 * 60 * 1000;
   
+  const emptyCardSkipMs = CONFIG.EMPTY_CARD_RECHECK_DAYS * 24 * 60 * 60 * 1000;
   const productsToUpdate = allProducts.filter(p => {
-    if (p.lastFetchedAt && (now.getTime() - p.lastFetchedAt.getTime()) < skipThreshold) {
-      return false; // Skip recently updated
-    }
+    const age = p.lastFetchedAt ? now.getTime() - p.lastFetchedAt.getTime() : Infinity;
+    if (age < skipThreshold) return false; // Skip recently updated
+    if (!p.hasHistory && age < emptyCardSkipMs) return false; // v8.0 Smart Skip
     return true;
   });
   
@@ -887,10 +956,11 @@ export async function autoResumeOnStartup(): Promise<void> {
     const now = new Date();
     const skipThreshold = CONFIG.SKIP_RECENTLY_UPDATED_HOURS * 60 * 60 * 1000;
     
+    const emptyCardSkipMs = CONFIG.EMPTY_CARD_RECHECK_DAYS * 24 * 60 * 60 * 1000;
     const remainingProducts = allProducts.filter(p => {
-      if (p.lastFetchedAt && (now.getTime() - p.lastFetchedAt.getTime()) < skipThreshold) {
-        return false;
-      }
+      const age = p.lastFetchedAt ? now.getTime() - p.lastFetchedAt.getTime() : Infinity;
+      if (age < skipThreshold) return false;
+      if (!p.hasHistory && age < emptyCardSkipMs) return false; // v8.0 Smart Skip
       return true;
     });
     

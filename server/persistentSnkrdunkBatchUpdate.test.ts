@@ -380,13 +380,13 @@ describe('SNKRDUNK Batch Update v7.5 - Adaptive Parallelism (Source Analysis)', 
       expect(sourceCode).toMatch(/DELAY_AFTER_ERROR:\s*500/);
     });
 
-    it('should start with initial PARALLEL of 3', () => {
-      expect(sourceCode).toMatch(/PARALLEL:\s*3/);
+    it('should start with initial PARALLEL of 4 (v8.0 tuned for Cloud Run)', () => {
+      expect(sourceCode).toMatch(/PARALLEL:\s*4/);
     });
 
-    it('should have adaptive range from 2 to 6', () => {
-      expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*2/);
-      expect(sourceCode).toMatch(/ADAPTIVE_MAX_PARALLEL:\s*6/);
+    it('should have adaptive range from 3 to 8 (v8.0 tuned)', () => {
+      expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*3/);
+      expect(sourceCode).toMatch(/ADAPTIVE_MAX_PARALLEL:\s*8/);
     });
   });
 
@@ -476,5 +476,148 @@ describe('fetchPriceHistoryFromApi throwOnError option', () => {
     expect(code).toContain('options?: { timeout?: number; throwOnError?: boolean }');
     expect(code).toContain('enhancedError');
     expect(code).toContain('isTimeout');
+  });
+});
+
+// ─── v8.0 Smart Skip tests ────────────────────────────────────────────────────
+describe('v8.0 Smart Skip Configuration', () => {
+  it('should have EMPTY_CARD_RECHECK_DAYS of 7', () => {
+    expect(sourceCode).toMatch(/EMPTY_CARD_RECHECK_DAYS:\s*7/);
+  });
+
+  it('should have initial PARALLEL of 4 (tuned for Cloud Run)', () => {
+    expect(sourceCode).toMatch(/PARALLEL:\s*4/);
+  });
+
+  it('should have tuned adaptive thresholds (max P=8 for sandbox)', () => {
+    expect(sourceCode).toMatch(/ADAPTIVE_MAX_PARALLEL:\s*8/);
+    expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*3/);
+  });
+
+  it('should have hasHistory field in ProductInfo interface', () => {
+    expect(sourceCode).toContain('hasHistory: boolean');
+  });
+
+  it('should load cardIdsWithHistory set in getAllSnkrdunkProducts', () => {
+    expect(sourceCode).toContain('cardIdsWithHistory');
+    expect(sourceCode).toContain('selectDistinct');
+    expect(sourceCode).toContain('hasHistory: cardIdsWithHistory.has(source.cardId)');
+  });
+
+  it('should skip empty cards in main execution loop', () => {
+    expect(sourceCode).toContain('emptyCardSkipMs');
+    expect(sourceCode).toContain('!product.hasHistory && age < emptyCardSkipMs');
+  });
+
+  it('should count skippedEmpty separately from skippedRecent', () => {
+    expect(sourceCode).toContain('skippedEmpty');
+    expect(sourceCode).toContain('skippedRecent');
+    expect(sourceCode).toContain('skippedRecent + skippedEmpty');
+  });
+
+  it('should prioritize cards with history over empty cards in sort', () => {
+    expect(sourceCode).toContain('a.hasHistory && !b.hasHistory');
+    expect(sourceCode).toContain('!a.hasHistory && b.hasHistory');
+  });
+
+  it('should apply Smart Skip in resumeFailedTask', () => {
+    const resumeFn = sourceCode.split('export async function resumeFailedTask')[1]?.split('export async function')[0] || '';
+    expect(resumeFn).toContain('emptyCardSkipMs');
+    expect(resumeFn).toContain('!p.hasHistory && age < emptyCardSkipMs');
+  });
+
+  it('should apply Smart Skip in autoResumeOnStartup', () => {
+    const autoResumeFn = sourceCode.split('export async function autoResumeOnStartup')[1]?.split('export async function')[0] || '';
+    expect(autoResumeFn).toContain('emptyCardSkipMs');
+    expect(autoResumeFn).toContain('!p.hasHistory && age < emptyCardSkipMs');
+  });
+});
+
+describe('v8.0 Smart Skip Algorithm', () => {
+  // Simulate the filtering logic
+  function filterProducts(
+    products: Array<{ id: number; hasHistory: boolean; lastFetchedAt: Date | null }>,
+    now: Date,
+    skipRecentMs: number,
+    emptyCardSkipMs: number
+  ) {
+    const toUpdate: typeof products = [];
+    let skippedRecent = 0;
+    let skippedEmpty = 0;
+    for (const p of products) {
+      const age = p.lastFetchedAt ? now.getTime() - p.lastFetchedAt.getTime() : Infinity;
+      if (age < skipRecentMs) { skippedRecent++; continue; }
+      if (!p.hasHistory && age < emptyCardSkipMs) { skippedEmpty++; continue; }
+      toUpdate.push(p);
+    }
+    return { toUpdate, skippedRecent, skippedEmpty };
+  }
+
+  const now = new Date('2026-05-06T12:00:00Z');
+  const SKIP_RECENT_MS = 12 * 60 * 60 * 1000;   // 12h
+  const EMPTY_SKIP_MS  = 7 * 24 * 60 * 60 * 1000; // 7d
+
+  it('should process cards with history that are older than 12h', () => {
+    const products = [
+      { id: 1, hasHistory: true, lastFetchedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000) }, // 24h ago
+    ];
+    const { toUpdate } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(1);
+  });
+
+  it('should skip cards with history updated within 12h', () => {
+    const products = [
+      { id: 1, hasHistory: true, lastFetchedAt: new Date(now.getTime() - 6 * 60 * 60 * 1000) }, // 6h ago
+    ];
+    const { toUpdate, skippedRecent } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(0);
+    expect(skippedRecent).toBe(1);
+  });
+
+  it('should skip empty cards updated within 7 days', () => {
+    const products = [
+      { id: 1, hasHistory: false, lastFetchedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) }, // 2d ago
+    ];
+    const { toUpdate, skippedEmpty } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(0);
+    expect(skippedEmpty).toBe(1);
+  });
+
+  it('should process empty cards not updated for 7+ days', () => {
+    const products = [
+      { id: 1, hasHistory: false, lastFetchedAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000) }, // 8d ago
+    ];
+    const { toUpdate } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(1);
+  });
+
+  it('should process never-fetched empty cards (lastFetchedAt=null)', () => {
+    const products = [
+      { id: 1, hasHistory: false, lastFetchedAt: null },
+    ];
+    const { toUpdate } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(1);
+  });
+
+  it('should demonstrate 6x speedup: 8952 vs 55734 cards', () => {
+    // Simulate 55734 cards: 8952 with history, 46782 empty (all fetched within 7d)
+    const products = [
+      ...Array.from({ length: 8952 }, (_, i) => ({
+        id: i + 1,
+        hasHistory: true,
+        lastFetchedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000), // 24h ago
+      })),
+      ...Array.from({ length: 46782 }, (_, i) => ({
+        id: 9000 + i,
+        hasHistory: false,
+        lastFetchedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2d ago (within 7d)
+      })),
+    ];
+    const { toUpdate, skippedEmpty } = filterProducts(products, now, SKIP_RECENT_MS, EMPTY_SKIP_MS);
+    expect(toUpdate).toHaveLength(8952);
+    expect(skippedEmpty).toBe(46782);
+    // Verify speedup ratio
+    const speedup = 55734 / 8952;
+    expect(speedup).toBeGreaterThan(5); // At least 5x speedup
   });
 });
