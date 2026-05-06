@@ -10,7 +10,7 @@
  */
 
 /**
- * SNKRDUNK Persistent Batch Update (v7.3 - PARALLEL=8)
+ * SNKRDUNK Persistent Batch Update (v7.4 - PARALLEL=3 for Cloud Run)
  * 
  * v7 proved controlled 2-parallel is STABLE and FAST (~3.6/s, 0 failures).
  * 
@@ -37,6 +37,14 @@
  * DELAY_AFTER_ERROR: 1000ms → 500ms (faster recovery).
  * REQUEST_TIMEOUT: 30s → 15s (fail fast on slow/dead endpoints).
  * Expected throughput: ~7-8 c/s (2x vs v7.2 at P=4).
+ * 
+ * v7.4 DOWNGRADE: PARALLEL reduced from 8 → 3 (2026-05-06).
+ * Investigation revealed Cloud Run deployed server is CPU-throttled (0.08 vCPU).
+ * P=8 caused event loop congestion: actual speed only 0.5/s vs expected 4-5/s.
+ * P=3 reduces CPU pressure while maintaining 3x speedup over sequential.
+ * Test data: P=8 on sandbox = 4.32/s, deployed = 0.5/s (8.6x slowdown).
+ * Root cause: Cloud Run CPU throttling + DB insert overhead at high concurrency.
+ * Expected deployed speed at P=3: ~1.5-2/s (3x improvement over current 0.5/s).
  */
 
 import * as db from './db';
@@ -45,14 +53,15 @@ import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './
 import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
 
-// ─── Configuration (v7.3 - Higher Parallelism) ──────────────
+// ─── Configuration (v7.4 - Cloud Run Optimized) ──────────────
 const CONFIG = {
   // Number of products to process in parallel
-  // v7.3: Raised to 8 (2026-03-31). SNKRDUNK API is stateless HTTP.
-  // Each product: 1 API call (avg ~0.3s) + 2 DB ops (drizzle releases immediately).
-  // Expected peak DB connections: ~8-10, safe with pool=20.
-  // Expected throughput: ~7-8 c/s (2x vs v7.2 at P=4).
-  PARALLEL: 8,
+  // v7.4: Reduced to 3 (2026-05-06). Cloud Run CPU throttling investigation.
+  // P=8 caused event loop congestion on deployed server (0.08 vCPU Cloud Run).
+  // Actual deployed speed at P=8: 0.5/s vs sandbox 4.32/s (8.6x slowdown).
+  // P=3 reduces CPU pressure while maintaining 3x speedup over sequential.
+  // Expected deployed throughput: ~1.5-2/s.
+  PARALLEL: 3,
 
   // Delay between parallel batches (ms)
   // Set to 0 — no throttle needed for stateless HTTP API calls.

@@ -8972,3 +8972,25 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] PSA 鑑定頁面走馬燈：後端 API（getBannerImages, adminGetBannerImages, adminUploadBannerImage, adminDeleteBannerImage, adminToggleBannerImage, adminReorderBannerImages）
 - [x] PSA 鑑定頁面走馬燈：Admin 後台「走馬燈管理」tab（上傳圖片、顯示/隱藏、刪除）
 - [x] PSA 鑑定頁面走馬燈：「為何選擇 BOXIUM 鑑定服務？」上方插入圖片走馬燈組件（白底、自動輪播、圓點指示器）
+
+---
+
+## 🔍 調查並修復任務 3900002 進度緩慢問題
+
+### 問題描述
+任務 3900002（SNKRDUNK 批量價格更新）進度十分緩慢，1小時25分鐘只處理了 2476/37745 張卡牌（0.5/s）。
+
+### 根本原因
+**Cloud Run CPU 節流**：部署環境（Cloud Run）CPU 資源有限（約 0.08 vCPU），PARALLEL=8 導致 Node.js 事件循環壅塞。
+- 沙盒測試：P=8 → 4.32/s（正常）
+- 部署環境：P=8 → 0.5/s（慢 8.6 倍）
+- 批次群集分析：每批只有 1-5 個成功（非 8 個），平均間隔 7.3 秒（非預期 1.5 秒）
+
+### 修復方案
+- [x] 將 PARALLEL 從 8 降至 3（適合 Cloud Run CPU 限制）
+- [x] 更新版本注釋（v7.4）
+- [x] 儲存 checkpoint 並部署
+
+### 預期效果
+- 修復後預計速度：1.5-2/s（比目前 0.5/s 快 3-4 倍）
+- 剩餘 35269 張卡牌 ETA：約 5-6 小時（原本 19.6 小時）
