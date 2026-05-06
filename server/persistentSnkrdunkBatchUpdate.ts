@@ -10,41 +10,37 @@
  */
 
 /**
- * SNKRDUNK Persistent Batch Update (v7.4 - PARALLEL=3 for Cloud Run)
- * 
+ * SNKRDUNK Persistent Batch Update (v7.5 - Adaptive Parallelism)
+ *
  * v7 proved controlled 2-parallel is STABLE and FAST (~3.6/s, 0 failures).
- * 
+ *
  * v7.1 FIX: Metadata save was failing because processedProductKeys array
  * grew beyond MySQL TEXT column limit (65KB) at ~3000 keys.
- * 
+ *
  * SOLUTION: Stop storing processedProductKeys in metadata.
  * Instead, use processedCount (integer) for resume tracking.
  * On resume, rely on SKIP_RECENTLY_UPDATED_HOURS to skip already-updated
  * products (their lastFetchedAt is recent), which is more reliable anyway.
  * The in-memory processedKeys Set is still used during a single run to
  * prevent re-processing within the same execution.
- * 
+ *
  * v7.2 UPGRADE: PARALLEL raised from 2 → 4 after stability testing (2026-03-09).
- * Test result: 20/20 success at P=4, throughput 4.07 c/s (1.7x vs P=2).
- * DB connection pool peak at P=4: ~6-7 connections (safe within pool=10).
- * Other tasks (cachePreloader, trendingCards, autoCompleteOrders) are all
- * sequential and do not compete with batch update connections.
- * 
  * v7.3 UPGRADE: PARALLEL raised from 4 → 8 (2026-03-31).
- * SNKRDUNK API is stateless HTTP — no session/cookie limits per connection.
- * Each product: 1 API call (avg ~0.3s) + 2 DB ops (drizzle releases immediately).
- * DELAY_BETWEEN_BATCHES: 50ms → 0ms (no throttle needed for stateless HTTP).
- * DELAY_AFTER_ERROR: 1000ms → 500ms (faster recovery).
- * REQUEST_TIMEOUT: 30s → 15s (fail fast on slow/dead endpoints).
- * Expected throughput: ~7-8 c/s (2x vs v7.2 at P=4).
- * 
  * v7.4 DOWNGRADE: PARALLEL reduced from 8 → 3 (2026-05-06).
- * Investigation revealed Cloud Run deployed server is CPU-throttled (0.08 vCPU).
- * P=8 caused event loop congestion: actual speed only 0.5/s vs expected 4-5/s.
- * P=3 reduces CPU pressure while maintaining 3x speedup over sequential.
- * Test data: P=8 on sandbox = 4.32/s, deployed = 0.5/s (8.6x slowdown).
- * Root cause: Cloud Run CPU throttling + DB insert overhead at high concurrency.
- * Expected deployed speed at P=3: ~1.5-2/s (3x improvement over current 0.5/s).
+ *   Investigation revealed Cloud Run deployed server is CPU-throttled (0.08 vCPU).
+ *   P=8 caused event loop congestion: actual speed only 0.5/s vs expected 4-5/s.
+ *   Root cause: Cloud Run CPU throttling + DB insert overhead at high concurrency.
+ *
+ * v7.5 ADAPTIVE PARALLELISM (2026-05-06):
+ *   Replaced static PARALLEL=3 with AdaptiveParallelController.
+ *   The controller maintains a sliding window of recent API response times and
+ *   automatically adjusts concurrency based on observed latency:
+ *     avg < 1s  → PARALLEL = 6  (fast environment, e.g., sandbox)
+ *     1–2s      → PARALLEL = 4  (normal)
+ *     2–4s      → PARALLEL = 3  (slightly slow, e.g., Cloud Run)
+ *     ≥ 4s      → PARALLEL = 2  (slow / rate-limited)
+ *   Re-evaluation happens every ADAPTIVE_EVAL_INTERVAL batches to avoid
+ *   thrashing. Adjustment events are logged and stored in task metadata.
  */
 
 import * as db from './db';
@@ -53,43 +49,129 @@ import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './
 import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
 
-// ─── Configuration (v7.4 - Cloud Run Optimized) ──────────────
+// ─── Configuration (v7.5 - Adaptive Parallelism) ────────────
 const CONFIG = {
-  // Number of products to process in parallel
-  // v7.4: Reduced to 3 (2026-05-06). Cloud Run CPU throttling investigation.
-  // P=8 caused event loop congestion on deployed server (0.08 vCPU Cloud Run).
-  // Actual deployed speed at P=8: 0.5/s vs sandbox 4.32/s (8.6x slowdown).
-  // P=3 reduces CPU pressure while maintaining 3x speedup over sequential.
-  // Expected deployed throughput: ~1.5-2/s.
+  // Initial parallel concurrency — overridden by AdaptiveParallelController at runtime.
+  // v7.5: Start at 3 (conservative) and let the controller ramp up if the environment is fast.
   PARALLEL: 3,
+
+  // ── Adaptive Parallelism thresholds ──────────────────────────
+  // Sliding window size: number of recent API response times to average
+  ADAPTIVE_WINDOW_SIZE: 20,
+  // Re-evaluate parallelism every N batches (avoid thrashing)
+  ADAPTIVE_EVAL_INTERVAL: 5,
+  // Latency → concurrency mapping (thresholds in ms)
+  // avg < 1000ms  → P=6  (fast: sandbox / low-load Cloud Run)
+  // avg < 2000ms  → P=4  (normal)
+  // avg < 4000ms  → P=3  (slow: typical Cloud Run)
+  // avg >= 4000ms → P=2  (very slow / rate-limited)
+  ADAPTIVE_THRESHOLDS: [
+    { maxAvgMs: 1000, parallel: 6 },
+    { maxAvgMs: 2000, parallel: 4 },
+    { maxAvgMs: 4000, parallel: 3 },
+  ] as Array<{ maxAvgMs: number; parallel: number }>,
+  ADAPTIVE_MIN_PARALLEL: 2,
+  ADAPTIVE_MAX_PARALLEL: 6,
 
   // Delay between parallel batches (ms)
   // Set to 0 — no throttle needed for stateless HTTP API calls.
   DELAY_BETWEEN_BATCHES: 0,
 
   // Delay after error (ms)
-  // Reduced from 1000ms to 500ms to recover faster.
   DELAY_AFTER_ERROR: 500,
 
   // API request timeout (ms)
-  // Reduced from 30s to 15s to fail fast on slow/dead endpoints.
   REQUEST_TIMEOUT: 15000,
-  
+
   // Max consecutive errors before stopping (HTTP errors only, not timeouts)
   MAX_CONSECUTIVE_ERRORS: 50,
-  
+
   // Progress save interval (save metadata every N products)
   PROGRESS_SAVE_INTERVAL: 200,
-  
+
   // Progress DB update interval (update task progress every N products)
   PROGRESS_DB_INTERVAL: 50,
-  
+
   // Skip products updated within this many hours
   SKIP_RECENTLY_UPDATED_HOURS: 12,
-  
-  // Max auto-resume attempts (raised from 3 to 20 to survive frequent sandbox restarts)
+
+  // Max auto-resume attempts
   MAX_AUTO_RESUME_ATTEMPTS: 20,
 };
+
+// ─── Adaptive Parallel Controller ───────────────────────────────
+/**
+ * Tracks recent API response times and dynamically adjusts the parallel
+ * concurrency level to match the current environment's capacity.
+ *
+ * Design goals:
+ *  - Start conservatively (initial PARALLEL=3) and ramp up if fast.
+ *  - React to sustained slowness (e.g., Cloud Run CPU throttle) by reducing.
+ *  - Avoid thrashing: only re-evaluate every ADAPTIVE_EVAL_INTERVAL batches.
+ *  - Emit structured log lines for observability.
+ */
+class AdaptiveParallelController {
+  private responseTimes: number[] = [];
+  private currentParallel: number;
+  private batchCount = 0;
+  private adjustmentLog: Array<{ batchIndex: number; avgMs: number; from: number; to: number; ts: string }> = [];
+
+  constructor(initialParallel: number) {
+    this.currentParallel = initialParallel;
+  }
+
+  /** Record the wall-clock duration of a single API request (ms). */
+  recordResponseTime(ms: number): void {
+    this.responseTimes.push(ms);
+    if (this.responseTimes.length > CONFIG.ADAPTIVE_WINDOW_SIZE) {
+      this.responseTimes.shift();
+    }
+  }
+
+  /** Called after each batch completes. May adjust currentParallel. */
+  onBatchComplete(batchIndex: number): void {
+    this.batchCount++;
+    if (this.batchCount % CONFIG.ADAPTIVE_EVAL_INTERVAL !== 0) return;
+    if (this.responseTimes.length < Math.min(5, CONFIG.ADAPTIVE_WINDOW_SIZE)) return;
+
+    const avg = this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length;
+    const desired = this.computeDesiredParallel(avg);
+
+    if (desired !== this.currentParallel) {
+      const prev = this.currentParallel;
+      this.currentParallel = desired;
+      const entry = { batchIndex, avgMs: Math.round(avg), from: prev, to: desired, ts: new Date().toISOString() };
+      this.adjustmentLog.push(entry);
+      if (this.adjustmentLog.length > 20) this.adjustmentLog.shift();
+      console.log(`[BatchUpdate] ⚡ Adaptive: avg=${Math.round(avg)}ms → PARALLEL ${prev} → ${desired}`);
+    }
+  }
+
+  private computeDesiredParallel(avgMs: number): number {
+    for (const { maxAvgMs, parallel } of CONFIG.ADAPTIVE_THRESHOLDS) {
+      if (avgMs < maxAvgMs) return parallel;
+    }
+    return CONFIG.ADAPTIVE_MIN_PARALLEL;
+  }
+
+  get parallel(): number {
+    return this.currentParallel;
+  }
+
+  get avgResponseMs(): number {
+    if (this.responseTimes.length === 0) return 0;
+    return Math.round(this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length);
+  }
+
+  /** Serialise for metadata storage. */
+  toMetadata() {
+    return {
+      currentParallel: this.currentParallel,
+      avgResponseMs: this.avgResponseMs,
+      adjustmentLog: this.adjustmentLog.slice(-10),
+    };
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────
 interface ProductInfo {
@@ -107,6 +189,8 @@ interface ProcessResult {
   productKey: string;
   error?: { cardId: number; cardName: string; error: string };
   isTimeout?: boolean;
+  /** Wall-clock time of the SNKRDUNK API call in ms (0 if not measured). */
+  apiResponseMs: number;
 }
 
 /**
@@ -151,39 +235,6 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Save task metadata (compact format - no full key list)
- * 
- * v7.1: Only stores processedCount, errors (last 50), and resumeCount.
- * This keeps metadata well under MySQL TEXT 65KB limit.
- */
-async function saveTaskMetadata(
-  taskId: number, 
-  processedCount: number, 
-  errors: Array<{ cardId: number; cardName: string; error: string }>,
-  resumeCount: number,
-): Promise<void> {
-  try {
-    const database = await db.getDb();
-    if (!database) return;
-    
-    const { scheduledTasks } = await import('../drizzle/schema_new');
-    const { eq } = await import('drizzle-orm');
-    
-    const metadata = {
-      errors: errors.slice(-50), // Keep last 50 errors (was 100)
-      processedCount,
-      resumeCount,
-    };
-    
-    await database.update(scheduledTasks)
-      .set({ metadata: JSON.stringify(metadata) })
-      .where(eq(scheduledTasks.id, taskId));
-  } catch (e) {
-    console.error(`[BatchUpdate] Failed to save metadata: ${(e as Error).message}`);
-  }
-}
-
-/**
  * Process a single product - fetch prices and save to DB.
  * Returns a result object (never throws).
  */
@@ -195,11 +246,13 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
     const productType: "single_card" | "sealed_product" = 
       product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
     
+    const apiStart = Date.now();
     const rawPriceHistory = await fetchPriceHistoryFromApi(
-      product.snkrdunkId, 
+      product.snkrdunkId,
       productType,
       { timeout: CONFIG.REQUEST_TIMEOUT, throwOnError: true }
     );
+    const apiResponseMs = Date.now() - apiStart;
 
     // Validate and filter using unified validator (grade normalisation + min-price + IQR)
     const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
@@ -327,8 +380,8 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
     
     // Step 3: Update data source status (1 DB op)
     await db.updateDataSourceFetchStatus(product.dataSourceId, "success");
-    
-    return { success: true, productKey };
+
+    return { success: true, productKey, apiResponseMs };
     
   } catch (error: any) {
     const isTimeout = error.isTimeout || 
@@ -340,6 +393,7 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
       success: false,
       productKey,
       isTimeout,
+      apiResponseMs: 0,
       error: {
         cardId: product.id,
         cardName: product.name,
@@ -350,11 +404,46 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
 }
 
 /**
- * Core batch processing — v7.2 CONTROLLED PARALLEL
- * 
- * Processes products in groups of 4 using Promise.allSettled.
- * Each group is fully resolved before starting the next group.
- * This keeps DB connections at max 6-7 (well within pool of 10).
+ * Save task metadata (compact format - no full key list)
+ *
+ * v7.1: Only stores processedCount, errors (last 50), and resumeCount.
+ * v7.5: Also stores adaptive controller state (currentParallel, avgResponseMs, adjustmentLog).
+ */
+async function saveTaskMetadata(
+  taskId: number,
+  processedCount: number,
+  errors: Array<{ cardId: number; cardName: string; error: string }>,
+  resumeCount: number,
+  adaptiveState?: { currentParallel: number; avgResponseMs: number; adjustmentLog: unknown[] },
+): Promise<void> {
+  try {
+    const database = await db.getDb();
+    if (!database) return;
+
+    const { scheduledTasks } = await import('../drizzle/schema_new');
+    const { eq } = await import('drizzle-orm');
+
+    const metadata: Record<string, unknown> = {
+      errors: errors.slice(-50),
+      processedCount,
+      resumeCount,
+    };
+    if (adaptiveState) metadata.adaptive = adaptiveState;
+
+    await database.update(scheduledTasks)
+      .set({ metadata: JSON.stringify(metadata) })
+      .where(eq(scheduledTasks.id, taskId));
+  } catch (e) {
+    console.error(`[BatchUpdate] Failed to save metadata: ${(e as Error).message}`);
+  }
+}
+
+/**
+ * Core batch processing — v7.5 ADAPTIVE PARALLEL
+ *
+ * Processes products in groups using Promise.allSettled.
+ * The group size (PARALLEL) is dynamically adjusted by AdaptiveParallelController
+ * based on observed API response times.
  */
 async function runControlledParallelProcessing(
   taskId: number,
@@ -370,23 +459,29 @@ async function runControlledParallelProcessing(
   let pendingSuccessFlush = 0;
   let pendingFailFlush = 0;
   const startTime = Date.now();
-  
+
+  // ─── Adaptive controller ─────────────────────────────────────────
+  const adaptive = new AdaptiveParallelController(CONFIG.PARALLEL);
+
   // Filter out already processed
   const remaining = productsToUpdate.filter(p => {
     const key = `${p.productType}:${p.id}`;
     return !processedKeys.has(key);
   });
-  
+
   if (remaining.length === 0) {
     console.log(`[BatchUpdate] All products already processed, completing task`);
     await batchTaskManager.completeTask(taskId, 'completed');
     return;
   }
-  
-  console.log(`[BatchUpdate] v7.1 Controlled Parallel (${CONFIG.PARALLEL}): Processing ${remaining.length} products (${processedKeys.size} already done)`);
-  
-  // ─── Process in pairs ─────────────────────────────────────────
-  for (let i = 0; i < remaining.length; i += CONFIG.PARALLEL) {
+
+  console.log(`[BatchUpdate] v7.5 Adaptive Parallel (initial=${CONFIG.PARALLEL}, range=${CONFIG.ADAPTIVE_MIN_PARALLEL}-${CONFIG.ADAPTIVE_MAX_PARALLEL}): Processing ${remaining.length} products (${processedKeys.size} already done)`);
+
+  // ─── Process in adaptive batches ──────────────────────────────────────
+  let i = 0;
+  let batchIndex = 0;
+  while (i < remaining.length) {
+    const currentParallel = adaptive.parallel;
     // Check pause/cancel every 20 products
     if (i % 20 === 0 && i > 0) {
       try {
@@ -406,21 +501,30 @@ async function runControlledParallelProcessing(
       }
     }
     
-    // Get the current batch (1 or 2 products)
-    const batch = remaining.slice(i, i + CONFIG.PARALLEL);
-    
+    // Get the current batch using adaptive.parallel
+    const batch = remaining.slice(i, i + currentParallel);
+
     // Process batch in parallel
     const results = await Promise.allSettled(
       batch.map(product => processSingleProduct(product))
     );
-    
+
+    // Feed response times into adaptive controller
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.apiResponseMs > 0) {
+        adaptive.recordResponseTime(result.value.apiResponseMs);
+      }
+    }
+    adaptive.onBatchComplete(batchIndex);
+    batchIndex++;
+
     // Process results
     let batchHadError = false;
     for (const result of results) {
       if (result.status === 'fulfilled') {
         const r = result.value;
         processedKeys.add(r.productKey);
-        
+
         if (r.success) {
           successCount++;
           pendingSuccessFlush++;
@@ -429,11 +533,11 @@ async function runControlledParallelProcessing(
           failCount++;
           pendingFailFlush++;
           batchHadError = true;
-          
+
           if (r.error) {
             errors.push(r.error);
           }
-          
+
           // Only count non-timeout errors as consecutive
           if (!r.isTimeout) {
             consecutiveErrors++;
@@ -447,7 +551,10 @@ async function runControlledParallelProcessing(
         consecutiveErrors++;
       }
     }
-    
+
+    // Advance index by the batch size used in this iteration
+    i += currentParallel;
+
     // Flush progress to DB periodically
     if (pendingSuccessFlush >= CONFIG.PROGRESS_DB_INTERVAL) {
       await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
@@ -457,33 +564,33 @@ async function runControlledParallelProcessing(
       await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
       pendingFailFlush = 0;
     }
-    
+
     // Log progress periodically
     const totalProcessed = successCount + failCount;
     if (totalProcessed % 100 === 0 && totalProcessed > 0) {
       const elapsed = (Date.now() - startTime) / 1000;
       const speed = totalProcessed / elapsed;
       const eta = speed > 0 ? (remaining.length - i) / speed : 0;
-      console.log(`[BatchUpdate] Progress: ${i + CONFIG.PARALLEL}/${remaining.length} | Success: ${successCount} | Fail: ${failCount} | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min`);
+      console.log(`[BatchUpdate] Progress: ${i}/${remaining.length} | Success: ${successCount} | Fail: ${failCount} | Speed: ${speed.toFixed(1)}/s | ETA: ${Math.ceil(eta / 60)}min | P=${adaptive.parallel} avgApi=${adaptive.avgResponseMs}ms`);
     }
-    
-    // Save metadata periodically (v7.1: compact format, no key list)
+
+    // Save metadata periodically (v7.5: includes adaptive state)
     if (processedKeys.size % CONFIG.PROGRESS_SAVE_INTERVAL === 0) {
-      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
+      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount, adaptive.toMetadata());
     }
-    
+
     // Stop if too many consecutive HTTP errors
     if (consecutiveErrors >= CONFIG.MAX_CONSECUTIVE_ERRORS) {
       const errorMsg = `Auto-stopped: ${consecutiveErrors} consecutive HTTP errors. Last: ${errors[errors.length - 1]?.error || 'unknown'}`;
       console.error(`[BatchUpdate] ${errorMsg}`);
-      
+
       // Flush remaining
       if (pendingSuccessFlush > 0) await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
       if (pendingFailFlush > 0) await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
-      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
+      await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount, adaptive.toMetadata());
       // Record session time before stopping
       await batchTaskManager.addTaskActiveProcessingMs(taskId, Date.now() - startTime);
-      
+
       try {
         const database = await db.getDb();
         if (database) {
@@ -494,11 +601,11 @@ async function runControlledParallelProcessing(
             .where(eq(scheduledTasks.id, taskId));
         }
       } catch (e) {}
-      
+
       await batchTaskManager.completeTask(taskId, 'failed');
       return;
     }
-    
+
     // Delay between batches
     if (batchHadError) {
       await delay(CONFIG.DELAY_AFTER_ERROR);
@@ -514,18 +621,18 @@ async function runControlledParallelProcessing(
   if (pendingFailFlush > 0) {
     await batchTaskManager.updateTaskProgressBulkFailure(taskId, pendingFailFlush);
   }
-  await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount);
-  
+  await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount, adaptive.toMetadata());
+
   // ─── Record actual processing time for this session ──────────
   const sessionMs = Date.now() - startTime;
   await batchTaskManager.addTaskActiveProcessingMs(taskId, sessionMs);
-  
+
   // ─── Complete ─────────────────────────────────────────────────
   const elapsed = sessionMs / 1000;
   const speed = (successCount + failCount) / elapsed;
-  console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes (${speed.toFixed(1)}/s)`);
-  console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed`);
-  
+  console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes (${speed.toFixed(1)}/s) | finalP=${adaptive.parallel} avgApi=${adaptive.avgResponseMs}ms`);
+  console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed | Adaptive adjustments: ${adaptive.toMetadata().adjustmentLog.length}`);
+
   await batchTaskManager.completeTask(taskId, 'completed');
 }
 

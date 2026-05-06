@@ -8994,3 +8994,35 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 ### 預期效果
 - 修復後預計速度：1.5-2/s（比目前 0.5/s 快 3-4 倍）
 - 剩餘 35269 張卡牌 ETA：約 5-6 小時（原本 19.6 小時）
+
+---
+
+## ⚡ 動態並發數調整功能（Adaptive Parallelism v7.5）
+
+### 目標
+根據實際 API 回應時間自動調整 PARALLEL 值，讓系統在不同環境（本機/Cloud Run）自動最佳化。
+
+### 演算法設計
+- **AdaptiveParallelController** 類別：滑動視窗（20 個樣本）追蹤 API 回應時間
+- 每 5 批次評估一次，根據平均回應時間選擇最佳並發數：
+  - avgMs < 1000ms → P=6（快速環境）
+  - avgMs 1000-2000ms → P=4
+  - avgMs 2000-4000ms → P=3（Cloud Run 預設）
+  - avgMs ≥ 4000ms → P=2（嚴重節流）
+- 調整日誌記錄在 metadata 中，方便事後分析
+
+### 任務清單
+- [x] 設計 AdaptiveParallelController 類別（滑動視窗 + 閾值表）
+- [x] 更新 ProcessResult 介面加入 apiResponseMs 欄位
+- [x] 修改 processSingleProduct 計時 API 呼叫時間
+- [x] 改主循環為 while + currentParallel（動態切片）
+- [x] 整合 adaptive.recordResponseTime / onBatchComplete
+- [x] 更新進度日誌顯示 P= 和 avgApi= 狀態
+- [x] 更新 saveTaskMetadata 傳入 adaptive.toMetadata()
+- [x] 撰寫 56 項單元測試（全部通過）
+  - [x] AdaptiveParallelController 單元測試（初始化、滑動視窗、調整邏輯、日誌）
+  - [x] v7.5 源碼結構分析測試（整合、ProcessResult、架構、穩定性、配置）
+  - [x] Batch Task Manager 原子更新測試
+  - [x] fetchPriceHistoryFromApi throwOnError 測試
+- [x] TypeScript 編譯無錯誤
+- [x] 儲存 checkpoint 並部署
