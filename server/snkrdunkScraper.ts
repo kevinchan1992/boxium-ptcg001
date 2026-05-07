@@ -5,6 +5,12 @@
 
 import axios from "axios";
 import * as cheerio from "cheerio";
+import https from "https";
+
+// Disable HTTP Keep-Alive to prevent stale TLS connections after Cloud Run restarts.
+// Without this, axios reuses TCP connections that become invalid after instance restart,
+// causing 'Client network socket disconnected before secure TLS connection was established'.
+const noKeepAliveAgent = new https.Agent({ keepAlive: false });
 
 export interface SnkrdunkCardData {
   name: string;
@@ -56,7 +62,9 @@ export async function fetchCardDetailsFromApi(productId: string): Promise<{
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json",
         "Referer": `https://snkrdunk.com/apparels/${productId}`,
+        "Connection": "close",
       },
+      httpsAgent: noKeepAliveAgent,
       timeout: 15000,
     });
 
@@ -149,7 +157,9 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "application/json",
           "Referer": `https://snkrdunk.com/apparels/${productId}`,
+          "Connection": "close",
         },
+        httpsAgent: noKeepAliveAgent,
         timeout,
       });
       const data = response.data;
