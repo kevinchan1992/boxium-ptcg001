@@ -360,8 +360,8 @@ describe('SNKRDUNK Batch Update v7.5 - Adaptive Parallelism (Source Analysis)', 
   });
 
   describe('Configuration Safety', () => {
-    it('should have REQUEST_TIMEOUT of 15 seconds', () => {
-      expect(sourceCode).toMatch(/REQUEST_TIMEOUT:\s*15000/);
+    it('should have REQUEST_TIMEOUT of 8 seconds (v8.1 reduced from 15s)', () => {
+      expect(sourceCode).toMatch(/REQUEST_TIMEOUT:\s*8000/);
     });
 
     it('should have MAX_CONSECUTIVE_ERRORS of 50', () => {
@@ -376,16 +376,16 @@ describe('SNKRDUNK Batch Update v7.5 - Adaptive Parallelism (Source Analysis)', 
       expect(sourceCode).toMatch(/MAX_AUTO_RESUME_ATTEMPTS:\s*20/);
     });
 
-    it('should have error delay of 500ms', () => {
-      expect(sourceCode).toMatch(/DELAY_AFTER_ERROR:\s*500/);
+    it('should have error delay of 200ms (v8.1 reduced from 500ms)', () => {
+      expect(sourceCode).toMatch(/DELAY_AFTER_ERROR:\s*200/);
     });
 
     it('should start with initial PARALLEL of 4 (v8.0 tuned for Cloud Run)', () => {
       expect(sourceCode).toMatch(/PARALLEL:\s*4/);
     });
 
-    it('should have adaptive range from 3 to 8 (v8.0 tuned)', () => {
-      expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*3/);
+    it('should have adaptive range from 2 to 8 (v8.1: min reduced to 2)', () => {
+      expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*2/);
       expect(sourceCode).toMatch(/ADAPTIVE_MAX_PARALLEL:\s*8/);
     });
   });
@@ -491,7 +491,7 @@ describe('v8.0 Smart Skip Configuration', () => {
 
   it('should have tuned adaptive thresholds (max P=8 for sandbox)', () => {
     expect(sourceCode).toMatch(/ADAPTIVE_MAX_PARALLEL:\s*8/);
-    expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*3/);
+    expect(sourceCode).toMatch(/ADAPTIVE_MIN_PARALLEL:\s*2/);
   });
 
   it('should have hasHistory field in ProductInfo interface', () => {

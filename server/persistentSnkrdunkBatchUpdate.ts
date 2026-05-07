@@ -42,6 +42,14 @@
  *   Re-evaluation happens every ADAPTIVE_EVAL_INTERVAL batches to avoid
  *   thrashing. Adjustment events are logged and stored in task metadata.
  *
+ * v8.1 TIMEOUT BACKOFF (2026-05-07):
+ *   REQUEST_TIMEOUT: 15000ms → 8000ms (halves wait time for timeout cards)
+ *   DELAY_AFTER_ERROR: 500ms → 200ms (faster recovery)
+ *   Added consecutive-timeout counter: if ≥3 timeouts in a row, drop PARALLEL
+ *   to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS before resuming.
+ *   This prevents the "cold start" problem where Cloud Run + SNKRDUNK rate-limit
+ *   causes the first N batches to all timeout, wasting hours.
+ *
  * v8.0 SMART SKIP (2026-05-06):
  *   ROOT CAUSE FOUND: 83.9% of cards (46,775/55,734) have ZERO price history.
  *   Every batch update was wasting ~10.4 hours fetching empty API responses.
@@ -85,8 +93,14 @@ const CONFIG = {
     { maxAvgMs: 2000, parallel: 6 },
     { maxAvgMs: 3500, parallel: 4 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
-  ADAPTIVE_MIN_PARALLEL: 3,
+  ADAPTIVE_MIN_PARALLEL: 2,
   ADAPTIVE_MAX_PARALLEL: 8,
+  // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
+  // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
+  CONSECUTIVE_TIMEOUT_THRESHOLD: 3,
+  // How long to wait (ms) after hitting the consecutive timeout threshold.
+  // Gives SNKRDUNK time to lift rate-limiting before resuming.
+  TIMEOUT_BACKOFF_DELAY_MS: 30000,
 
   // ── Smart Skip: Empty Card Optimization ──────────────────────
   // Cards with no price history are checked less frequently.
@@ -100,10 +114,13 @@ const CONFIG = {
   DELAY_BETWEEN_BATCHES: 0,
 
   // Delay after error (ms)
-  DELAY_AFTER_ERROR: 500,
+  // v8.1: Reduced from 500 → 200ms for faster recovery.
+  DELAY_AFTER_ERROR: 200,
 
   // API request timeout (ms)
-  REQUEST_TIMEOUT: 15000,
+  // v8.1: Reduced from 15000 → 8000ms. Timeout cards are retried on next run anyway;
+  // cutting the wait time in half significantly reduces total time when many cards timeout.
+  REQUEST_TIMEOUT: 8000,
 
   // Max consecutive errors before stopping (HTTP errors only, not timeouts)
   MAX_CONSECUTIVE_ERRORS: 50,
@@ -503,6 +520,7 @@ async function runControlledParallelProcessing(
   const processedKeys = new Set(alreadyProcessedKeys);
   const errors: Array<{ cardId: number; cardName: string; error: string }> = [];
   let consecutiveErrors = 0;
+  let consecutiveTimeouts = 0; // v8.1: track consecutive timeouts for backoff
   let successCount = 0;
   let failCount = 0;
   let pendingSuccessFlush = 0;
@@ -569,6 +587,7 @@ async function runControlledParallelProcessing(
 
     // Process results
     let batchHadError = false;
+    let batchTimeouts = 0;
     for (const result of results) {
       if (result.status === 'fulfilled') {
         const r = result.value;
@@ -578,6 +597,7 @@ async function runControlledParallelProcessing(
           successCount++;
           pendingSuccessFlush++;
           consecutiveErrors = 0;
+          consecutiveTimeouts = 0; // v8.1: reset on success
         } else {
           failCount++;
           pendingFailFlush++;
@@ -590,6 +610,8 @@ async function runControlledParallelProcessing(
           // Only count non-timeout errors as consecutive
           if (!r.isTimeout) {
             consecutiveErrors++;
+          } else {
+            batchTimeouts++; // v8.1: count timeouts in this batch
           }
         }
       } else {
@@ -653,6 +675,29 @@ async function runControlledParallelProcessing(
 
       await batchTaskManager.completeTask(taskId, 'failed');
       return;
+    }
+
+    // v8.1: Consecutive timeout backoff
+    // If all cards in this batch timed out, increment the consecutive timeout counter.
+    // Once threshold is reached, drop to ADAPTIVE_MIN_PARALLEL and wait before resuming.
+    // This handles the "cold start" problem: Cloud Run + SNKRDUNK rate-limit causes
+    // the first N batches to all timeout, wasting hours at high parallelism.
+    if (batchTimeouts === currentParallel && currentParallel > 0) {
+      consecutiveTimeouts++;
+      if (consecutiveTimeouts >= CONFIG.CONSECUTIVE_TIMEOUT_THRESHOLD) {
+        const prevParallel = adaptive.parallel;
+        // Force parallel down to minimum via internal state
+        // (AdaptiveParallelController doesn't have a forceSet, so we record a fake slow time)
+        for (let t = 0; t < CONFIG.ADAPTIVE_WINDOW_SIZE; t++) {
+          adaptive.recordResponseTime(CONFIG.REQUEST_TIMEOUT + 1000);
+        }
+        adaptive.onBatchComplete(batchIndex); // trigger re-evaluation
+        console.log(`[BatchUpdate] ⚠️ Timeout backoff: ${consecutiveTimeouts} consecutive full-timeout batches. P: ${prevParallel} → ${adaptive.parallel}. Waiting ${CONFIG.TIMEOUT_BACKOFF_DELAY_MS / 1000}s...`);
+        await delay(CONFIG.TIMEOUT_BACKOFF_DELAY_MS);
+        consecutiveTimeouts = 0; // reset after backoff
+      }
+    } else if (batchTimeouts === 0) {
+      consecutiveTimeouts = 0; // reset if no timeouts in this batch
     }
 
     // Delay between batches
