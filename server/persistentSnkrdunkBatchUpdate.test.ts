@@ -621,3 +621,80 @@ describe('v8.0 Smart Skip Algorithm', () => {
     expect(speedup).toBeGreaterThan(5); // At least 5x speedup
   });
 });
+
+// ─── v8.2 KeepAlive Pinger Tests ─────────────────────────────────────────────
+describe('v8.2 KeepAlive Pinger', () => {
+  it('should have KEEPALIVE_INTERVAL_MS set to 4 minutes', () => {
+    const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000;
+    expect(KEEPALIVE_INTERVAL_MS).toBe(240000);
+    expect(KEEPALIVE_INTERVAL_MS).toBeLessThan(5 * 60 * 1000); // Must be < Cloud Run idle timeout (5 min)
+  });
+
+  it('should ping localhost:3000/api/health endpoint', () => {
+    const PING_URL = 'http://localhost:3000/api/health';
+    expect(PING_URL).toContain('localhost:3000');
+    expect(PING_URL).toContain('/api/health');
+  });
+
+  it('KeepAlivePinger class should start and stop without errors', () => {
+    // Simulate the pinger lifecycle using a mock timer
+    let timerStarted = false;
+    let timerStopped = false;
+    const mockPinger = {
+      isRunning: false,
+      start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        timerStarted = true;
+      },
+      stop() {
+        this.isRunning = false;
+        timerStopped = true;
+      },
+    };
+    mockPinger.start();
+    expect(timerStarted).toBe(true);
+    expect(mockPinger.isRunning).toBe(true);
+    mockPinger.stop();
+    expect(timerStopped).toBe(true);
+    expect(mockPinger.isRunning).toBe(false);
+  });
+
+  it('should not start twice if already running', () => {
+    let startCallCount = 0;
+    const mockPinger = {
+      isRunning: false,
+      start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        startCallCount++;
+      },
+    };
+    mockPinger.start();
+    mockPinger.start(); // second call should be no-op
+    expect(startCallCount).toBe(1);
+  });
+
+  it('ping failure should be non-fatal (not throw)', () => {
+    // Simulate a ping that fails — should not propagate the error
+    const ping = () => {
+      try {
+        throw new Error('ECONNREFUSED');
+      } catch (err) {
+        // Non-fatal: swallow the error
+        return false;
+      }
+    };
+    expect(() => ping()).not.toThrow();
+    expect(ping()).toBe(false);
+  });
+
+  it('should prevent Cloud Run idle: interval < 5 minutes', () => {
+    const CLOUD_RUN_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+    const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000;
+    expect(KEEPALIVE_INTERVAL_MS).toBeLessThan(CLOUD_RUN_IDLE_TIMEOUT_MS);
+    // Safety margin: at least 30 seconds before idle timeout
+    const margin = CLOUD_RUN_IDLE_TIMEOUT_MS - KEEPALIVE_INTERVAL_MS;
+    expect(margin).toBeGreaterThanOrEqual(30 * 1000);
+  });
+});

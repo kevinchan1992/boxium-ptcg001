@@ -9026,3 +9026,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
   - [x] fetchPriceHistoryFromApi throwOnError 測試
 - [x] TypeScript 編譯無錯誤
 - [x] 儲存 checkpoint 並部署
+- [x] Cloud Run 保活 Ping 機制（KeepAlive Pinger v8.2）：每 4 分鐘向自身發送 HTTP 請求，防止 Cloud Run 閒置關閉

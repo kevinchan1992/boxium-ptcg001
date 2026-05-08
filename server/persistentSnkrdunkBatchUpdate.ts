@@ -42,6 +42,15 @@
  *   Re-evaluation happens every ADAPTIVE_EVAL_INTERVAL batches to avoid
  *   thrashing. Adjustment events are logged and stored in task metadata.
  *
+ * v8.2 CLOUD RUN KEEPALIVE PING (2026-05-08):
+ *   ROOT CAUSE FOUND: Cloud Run idles and suspends the Node.js process when there
+ *   is no incoming HTTP traffic. Investigation of task 3900023 showed 98% of the
+ *   828-minute wall time was idle (only 18 minutes of active processing).
+ *   SOLUTION: KeepAlive Pinger sends a self-HTTP GET to localhost:3000/api/health
+ *   every KEEPALIVE_INTERVAL_MS (4 minutes) while the batch task runs.
+ *   This keeps the Cloud Run instance active and prevents process suspension.
+ *   Expected improvement: active processing ratio from 2% → ~95%.
+ *
  * v8.1 TIMEOUT BACKOFF (2026-05-07):
  *   REQUEST_TIMEOUT: 15000ms → 8000ms (halves wait time for timeout cards)
  *   DELAY_AFTER_ERROR: 500ms → 200ms (faster recovery)
@@ -71,6 +80,7 @@ import * as batchTaskManager from './batchTaskManager';
 import { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } from './snkrdunkScraper';
 import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
+import http from 'http';
 
 // ─── Configuration (v8.0 - Smart Skip + Tuned Adaptive) ────────────
 const CONFIG = {
@@ -124,6 +134,12 @@ const CONFIG = {
 
   // Max consecutive errors before stopping (HTTP errors only, not timeouts)
   MAX_CONSECUTIVE_ERRORS: 50,
+
+  // ── Cloud Run KeepAlive Ping (v8.2) ──────────────────────────
+  // Interval (ms) between self-ping requests to prevent Cloud Run idle shutdown.
+  // Cloud Run suspends instances after ~5 minutes of no incoming HTTP traffic.
+  // Set to 4 minutes (240,000ms) to stay well within the idle timeout.
+  KEEPALIVE_INTERVAL_MS: 4 * 60 * 1000,
 
   // Progress save interval (save metadata every N products)
   PROGRESS_SAVE_INTERVAL: 200,
@@ -209,6 +225,58 @@ class AdaptiveParallelController {
       avgResponseMs: this.avgResponseMs,
       adjustmentLog: this.adjustmentLog.slice(-10),
     };
+  }
+}
+
+// ─── KeepAlive Pinger (v8.2) ────────────────────────────────────
+/**
+ * Sends a lightweight self-HTTP ping to localhost:3000/api/health every
+ * KEEPALIVE_INTERVAL_MS to prevent Cloud Run from suspending the process
+ * due to idle timeout (~5 minutes of no incoming traffic).
+ *
+ * Usage:
+ *   const pinger = new KeepAlivePinger();
+ *   pinger.start();
+ *   // ... do work ...
+ *   pinger.stop();
+ */
+class KeepAlivePinger {
+  private timer: NodeJS.Timeout | null = null;
+  private pingCount = 0;
+  private isRunning = false;
+
+  start(): void {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.timer = setInterval(() => {
+      this.ping();
+    }, CONFIG.KEEPALIVE_INTERVAL_MS);
+    console.log(`[KeepAlive] Started pinger (interval=${CONFIG.KEEPALIVE_INTERVAL_MS / 1000}s)`);
+  }
+
+  stop(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.isRunning = false;
+    console.log(`[KeepAlive] Stopped pinger after ${this.pingCount} pings`);
+  }
+
+  private ping(): void {
+    const req = http.get('http://localhost:3000/api/health', { timeout: 5000 }, (res) => {
+      this.pingCount++;
+      console.log(`[KeepAlive] Ping #${this.pingCount} → HTTP ${res.statusCode}`);
+      res.resume(); // discard response body
+    });
+    req.on('error', (err) => {
+      // Non-fatal: ping failure doesn't stop the batch task
+      console.warn(`[KeepAlive] Ping failed: ${err.message}`);
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      console.warn(`[KeepAlive] Ping timed out`);
+    });
   }
 }
 
@@ -527,10 +595,15 @@ async function runControlledParallelProcessing(
   let pendingFailFlush = 0;
   const startTime = Date.now();
 
-  // ─── Adaptive controller ─────────────────────────────────────────
+  // ─── Adaptive controller ─────────────────────────────────────────────────────
   const adaptive = new AdaptiveParallelController(CONFIG.PARALLEL);
 
-  // Filter out already processed
+  // ─── KeepAlive Pinger (v8.2) ───────────────────────────────────────────────
+  // Prevents Cloud Run from suspending the process due to idle timeout.
+  const pinger = new KeepAlivePinger();
+  pinger.start();
+
+  // ─── Filter out already processed ────────────────────────────────────────────
   const remaining = productsToUpdate.filter(p => {
     const key = `${p.productType}:${p.id}`;
     return !processedKeys.has(key);
@@ -661,6 +734,7 @@ async function runControlledParallelProcessing(
       await saveTaskMetadata(taskId, processedKeys.size, errors, resumeCount, adaptive.toMetadata());
       // Record session time before stopping
       await batchTaskManager.addTaskActiveProcessingMs(taskId, Date.now() - startTime);
+      pinger.stop(); // v8.2: stop keepalive on early exit
 
       try {
         const database = await db.getDb();
@@ -707,8 +781,10 @@ async function runControlledParallelProcessing(
       await delay(CONFIG.DELAY_BETWEEN_BATCHES);
     }
   }
-  
-  // ─── Flush remaining progress ─────────────────────────────────
+   // ─── Stop KeepAlive Pinger ───────────────────────────────────────────────────────────
+  pinger.stop();
+
+  // ─── Flush remaining progress ─────────────────────────────
   if (pendingSuccessFlush > 0) {
     await batchTaskManager.updateTaskProgressBulkSuccess(taskId, pendingSuccessFlush);
   }
@@ -721,7 +797,7 @@ async function runControlledParallelProcessing(
   const sessionMs = Date.now() - startTime;
   await batchTaskManager.addTaskActiveProcessingMs(taskId, sessionMs);
 
-  // ─── Complete ─────────────────────────────────────────────────
+  // ─── Complete ───────────────────────────────────────────────────────────
   const elapsed = sessionMs / 1000;
   const speed = (successCount + failCount) / elapsed;
   console.log(`[BatchUpdate] ✅ Completed: ${remaining.length} products in ${Math.ceil(elapsed / 60)} minutes (${speed.toFixed(1)}/s) | finalP=${adaptive.parallel} avgApi=${adaptive.avgResponseMs}ms`);
