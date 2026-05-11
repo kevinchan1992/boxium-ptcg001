@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star, Package, ChevronDown } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -55,18 +55,9 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Tab state: 'cards' | 'boxes'
-  const [activeTab, setActiveTab] = useState<'cards' | 'boxes'>('cards');
-
   // Fetch trending cards (top 5 based on PSA10 price increase)
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
     { limit: 5 },
-    { retry: 1 }
-  );
-
-  // Fetch sealed products for the boxes tab
-  const { data: sealedProducts = [], isLoading: isLoadingBoxes } = trpc.products.listSealedProducts.useQuery(
-    undefined,
     { retry: 1 }
   );
 
@@ -92,10 +83,6 @@ export default function Home() {
 
   const handleCardClick = (cardId: number) => {
     setLocation(`/card/${cardId}`);
-  };
-
-  const handleBoxClick = (boxId: number) => {
-    setLocation(`/sealed-product/${boxId}`);
   };
 
   const handleCameraClick = () => {
@@ -321,9 +308,7 @@ export default function Home() {
               if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
             }}
             cardLinkPrefix="card"
-            inputClassName={`w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary ${
-              activeTab === 'cards' ? 'pr-24' : 'pr-24'
-            }`}
+            inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
             placeholder=""
           />
           {/* Typing Animation Placeholder (only when input is empty) */}
@@ -337,122 +322,48 @@ export default function Home() {
               />
             </div>
           )}
-          {/* Right side: Category dropdown + Camera */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-            {/* Category dropdown */}
-            <div className="relative">
-              <select
-                value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value as 'cards' | 'boxes')}
-                className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-zinc-800/90 border border-zinc-700/60 text-xs font-medium text-zinc-200 cursor-pointer focus:outline-none focus:border-primary/60 hover:border-zinc-500 transition-colors"
-              >
-                <option value="cards">{t('research.tabCards', '卡牌')}</option>
-                <option value="boxes">{t('research.tabBoxes', '卡盒')}</option>
-              </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
-            </div>
-            {/* Divider */}
-            <div className="w-px h-4 bg-zinc-700" />
-            {/* Camera Button */}
-            <button
-              type="button"
-              onClick={handleCameraClick}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="圖片搜尋"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-          </div>
+          {/* Camera Button */}
+          <button
+            type="button"
+            onClick={handleCameraClick}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
+            title="圖片搜尋"
+          >
+            <Camera className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Content Area */}
-        {activeTab === 'cards' ? (
-          /* Top Gainers - Daily Price Increase Top 5 */
-          <div className="flex justify-center gap-4 flex-wrap">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground">{t('research.loading')}</span>
-              </div>
-            ) : popularCards.length > 0 ? (
-              popularCards.map((card: any) => (
-                <button
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
-                  className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
-                >
-                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
-                    <img
-                      src={card.imageUrl || 'https://via.placeholder.com/128x176?text=No+Image'}
-                      alt={card.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                      loading="lazy"
-                    />
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                <p>{t('research.noResults')}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Sealed Products / Boxes */
-          <div className="w-full">
-            {isLoadingBoxes ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground">{t('research.loading')}</span>
-              </div>
-            ) : sealedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                {sealedProducts.map((box: any) => (
-                  <button
-                    key={box.id}
-                    onClick={() => handleBoxClick(box.id)}
-                    className="group flex items-center gap-3 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-primary/50 hover:bg-zinc-900 transition-all text-left"
-                  >
-                    {/* Box Image */}
-                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-800">
-                      {box.imageUrl ? (
-                        <img
-                          src={box.imageUrl}
-                          alt={box.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-zinc-600" />
-                        </div>
-                      )}
-                    </div>
-                    {/* Box Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">{box.name}</p>
-                      {box.nameJa && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{box.nameJa}</p>
-                      )}
-                      {box.latestPrice != null && (
-                        <p className="text-sm font-bold text-primary mt-1">
-                          HKD {box.latestPrice.toLocaleString('en-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      )}
-                    </div>
-                    {/* Arrow */}
-                    <Search className="w-4 h-4 text-zinc-600 group-hover:text-primary flex-shrink-0 transition-colors" />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>{t('research.noBoxes', '暫無卡盒資料')}</p>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Top Gainers - Daily Price Increase Top 5 */}
+        <div className="flex justify-center gap-4 mt-12 flex-wrap">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">{t("research.loading")}</span>
+            </div>
+          ) : popularCards.length > 0 ? (
+            popularCards.map((card: any) => (
+              <button
+                key={card.id}
+                onClick={() => handleCardClick(card.id)}
+                className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
+              >
+                <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
+                  <img
+                    src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
+                    alt={card.name}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                    loading="lazy"
+                  />
+                </div>
+
+              </button>
+            ))
+          ) : (
+            <div className="w-full text-center py-12 text-muted-foreground">
+              <p>{t("research.noResults")}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Image Upload Bottom Sheet */}
