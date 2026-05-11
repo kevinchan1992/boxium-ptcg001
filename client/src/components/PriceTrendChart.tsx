@@ -33,6 +33,7 @@ interface PriceTrendChartProps {
   trendData: PriceTrendData[];
   stats: PriceTrendStats;
   isLoading?: boolean;
+  isSealedProduct?: boolean;
 }
 
 export function PriceTrendChart({
@@ -40,6 +41,7 @@ export function PriceTrendChart({
   trendData,
   stats,
   isLoading = false,
+  isSealedProduct = false,
 }: PriceTrendChartProps) {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("all");
@@ -109,7 +111,9 @@ export function PriceTrendChart({
         <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-            <span className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</span>
+            <span className="text-sm font-semibold text-white">
+              {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
+            </span>
           </div>
         </div>
         <div className="flex items-center justify-center h-64 bg-zinc-900/30">
@@ -130,8 +134,16 @@ export function PriceTrendChart({
         </div>
         <div className="flex flex-col items-center justify-center h-48 bg-zinc-900/30 gap-3">
           <TrendingUp className="w-10 h-10 text-zinc-700" />
-          <p className="text-zinc-400 text-sm font-medium">{t("cardDetail.noPsa10Data", "此卡牌暫無 PSA 10 成交記錄")}</p>
-          <p className="text-zinc-600 text-xs">{t("cardDetail.noPsa10DataSub", "PSA 10 成交數據將在有新記錄時自動更新")}</p>
+          <p className="text-zinc-400 text-sm font-medium">
+            {isSealedProduct
+              ? t("cardDetail.noSealedTrendData", "此卡盒暫無成交記錄")
+              : t("cardDetail.noPsa10Data", "此卡牌暫無 PSA 10 成交記錄")}
+          </p>
+          <p className="text-zinc-600 text-xs">
+            {isSealedProduct
+              ? t("cardDetail.noSealedTrendDataSub", "成交數據將在有新記錄時自動更新")
+              : t("cardDetail.noPsa10DataSub", "PSA 10 成交數據將在有新記錄時自動更新")}
+          </p>
         </div>
       </div>
     );
@@ -152,7 +164,9 @@ export function PriceTrendChart({
           <div className="flex items-start gap-2">
             <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block mt-0.5 shrink-0" />
             <div>
-              <h3 className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</h3>
+              <h3 className="text-sm font-semibold text-white">
+                {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
+              </h3>
               <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{cardName}</p>
             </div>
           </div>
@@ -245,7 +259,7 @@ export function PriceTrendChart({
                 stroke: "#0A1628",
                 strokeWidth: 2,
               }}
-              name="SNKRDUNK PSA 10"
+              name={isSealedProduct ? "SNKRDUNK 卡盒" : "SNKRDUNK PSA 10"}
               isAnimationActive={true}
               animationDuration={600}
             />

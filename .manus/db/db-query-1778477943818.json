@@ -1,0 +1,36 @@
+{
+  "query": "\n-- 確認三個 ID 的資料\nSELECT id, name, nameJa, boxType, imageUrl FROM sealedProducts WHERE id IN (1, 1020001, 1020003);\n\n-- 查看 dataSources 記錄\nSELECT id, cardId, source, sourceUrl, productType, lastFetchStatus FROM dataSources WHERE cardId IN (1, 1020001, 1020003) AND productType = 'sealed_product';\n\n-- 查看 priceHistory 記錄數量\nSELECT cardId, COUNT(*) as cnt FROM priceHistory WHERE productType = 'sealed_product' AND cardId IN (1, 1020001, 1020003) GROUP BY cardId;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 確認三個 ID 的資料\nSELECT id, name, nameJa, boxType, imageUrl FROM sealedProducts WHERE id IN (1, 1020001, 1020003);\n\n-- 查看 dataSources 記錄\nSELECT id, cardId, source, sourceUrl, productType, lastFetchStatus FROM dataSources WHERE cardId IN (1, 1020001, 1020003) AND productType = 'sealed_product';\n\n-- 查看 priceHistory 記錄數量\nSELECT cardId, COUNT(*) as cnt FROM priceHistory WHERE productType = 'sealed_product' AND cardId IN (1, 1020001, 1020003) GROUP BY cardId;\n",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "boxType": "booster_box",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp"
+    },
+    {
+      "id": "1020001",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "boxType": "booster_box",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp"
+    },
+    {
+      "id": "1020003",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "boxType": "booster_box",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp"
+    }
+  ],
+  "messages": [
+    "id\tcardId\tsource\tsourceUrl\tproductType\tlastFetchStatus",
+    "1830002\t1020003\tsnkrdunk\thttps://snkrdunk.com/apparels/687430\tsealed_product\tsuccess",
+    "cardId\tcnt",
+    "1020003\t20"
+  ],
+  "stdout": "id\tname\tnameJa\tboxType\timageUrl\n1\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tbooster_box\thttps://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp\n1020001\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tbooster_box\thttps://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp\n1020003\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tbooster_box\thttps://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp\nid\tcardId\tsource\tsourceUrl\tproductType\tlastFetchStatus\n1830002\t1020003\tsnkrdunk\thttps://snkrdunk.com/apparels/687430\tsealed_product\tsuccess\ncardId\tcnt\n1020003\t20\n",
+  "stderr": "",
+  "execution_time_ms": 2283
+}

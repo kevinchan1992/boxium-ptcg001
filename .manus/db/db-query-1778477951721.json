@@ -1,0 +1,9 @@
+{
+  "query": "\n-- 刪除 id=1 和 id=1020001 的 priceHistory（如有）\nDELETE FROM priceHistory WHERE productType = 'sealed_product' AND cardId IN (1, 1020001);\n\n-- 刪除 id=1 和 id=1020001 的 dataSources（如有）\nDELETE FROM dataSources WHERE productType = 'sealed_product' AND cardId IN (1, 1020001);\n\n-- 刪除 id=1 和 id=1020001 的 sealedProducts\nDELETE FROM sealedProducts WHERE id IN (1, 1020001);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 刪除 id=1 和 id=1020001 的 priceHistory（如有）\nDELETE FROM priceHistory WHERE productType = 'sealed_product' AND cardId IN (1, 1020001);\n\n-- 刪除 id=1 和 id=1020001 的 dataSources（如有）\nDELETE FROM dataSources WHERE productType = 'sealed_product' AND cardId IN (1, 1020001);\n\n-- 刪除 id=1 和 id=1020001 的 sealedProducts\nDELETE FROM sealedProducts WHERE id IN (1, 1020001);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2274
+}

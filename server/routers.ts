@@ -167,31 +167,47 @@ export const appRouter = router({
               groupedByDate.get(dateStr)!.push(record);
             }
 
+            // Helper: parse quantity string to number (e.g. "5盒" → 5, "1" → 1)
+            const parseQty = (q: string | null | undefined): number => {
+              if (!q) return 1;
+              const n = parseInt(q.replace(/[^0-9]/g, ''), 10);
+              return isNaN(n) || n <= 0 ? 1 : n;
+            };
+
+            // Calculate unit price (per box) for each record
+            const toUnitPrice = (r: any): number => {
+              const total = parseFloat(r.price);
+              const qty = parseQty(r.quantity);
+              return total / qty;
+            };
+
             const trendData = Array.from(groupedByDate.entries())
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([date, records]) => {
-                const prices = records.map(r => parseFloat(r.price));
+                const unitPrices = records.map(toUnitPrice);
                 return {
                   date,
-                  snkrdunkPrice: prices.length > 0
-                    ? prices.reduce((a, b) => a + b, 0) / prices.length
+                  snkrdunkPrice: unitPrices.length > 0
+                    ? unitPrices.reduce((a, b) => a + b, 0) / unitPrices.length
                     : undefined,
-                  snkrdunkCount: prices.length,
+                  snkrdunkCount: records.length,
                 };
               });
 
-            const allPrices = recentHistory
+            const allUnitPrices = recentHistory
               .filter(r => r.source === 'snkrdunk')
-              .map(r => parseFloat(r.price));
+              .map(toUnitPrice);
+
+            const sortedByDate = recentHistory
+              .filter(r => r.source === 'snkrdunk')
+              .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime());
 
             const stats = {
-              snkrdunk: allPrices.length > 0 ? {
-                minPrice: Math.min(...allPrices),
-                maxPrice: Math.max(...allPrices),
-                avgPrice: allPrices.reduce((a, b) => a + b, 0) / allPrices.length,
-                latestPrice: parseFloat(recentHistory
-                  .filter(r => r.source === 'snkrdunk')
-                  .sort((a: any, b: any) => new Date(b.soldAt || b.createdAt).getTime() - new Date(a.soldAt || a.createdAt).getTime())[0]?.price || '0'),
+              snkrdunk: allUnitPrices.length > 0 ? {
+                minPrice: Math.min(...allUnitPrices),
+                maxPrice: Math.max(...allUnitPrices),
+                avgPrice: allUnitPrices.reduce((a, b) => a + b, 0) / allUnitPrices.length,
+                latestPrice: sortedByDate.length > 0 ? toUnitPrice(sortedByDate[0]) : 0,
               } : { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 },
             };
 

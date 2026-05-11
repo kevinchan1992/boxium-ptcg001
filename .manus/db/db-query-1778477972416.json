@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, nameJa, boxType FROM sealedProducts ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name, nameJa, boxType FROM sealedProducts ORDER BY id;",
+  "rows": [
+    {
+      "id": "3",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Pack",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」パック",
+      "boxType": "booster_box"
+    },
+    {
+      "id": "1020003",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "boxType": "booster_box"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnameJa\tboxType\n3\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Pack\tポケモンカードゲームMEGA 拡張パック「インフェルノX」パック\tbooster_box\n1020003\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tbooster_box\n",
+  "stderr": "",
+  "execution_time_ms": 1697
+}

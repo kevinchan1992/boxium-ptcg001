@@ -767,6 +767,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               snkrdunk: { minPrice: 0, maxPrice: 0, avgPrice: 0, latestPrice: 0 }
             }}
             isLoading={activeTrendLoading}
+            isSealedProduct={isSealedProduct}
           />
         </div>
 
