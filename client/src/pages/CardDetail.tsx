@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
-import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink, ShoppingCart, Tag } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
@@ -26,6 +26,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const [, sealedParams] = useRoute("/sealed-product/:id");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const ebayRef = useRef<HTMLDivElement>(null);
 
   const cardId = sealedProductId ??
     (sealedParams?.id ? parseInt(sealedParams.id, 10) : null) ??
@@ -146,6 +147,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   );
 
   const activeRecentPrices = isSealedProduct ? sealedRecentPrices : psa10PriceHistory;
+
+  // eBay listings for sealed products
+  const { data: ebayData, isLoading: ebayLoading, refetch: refetchEbay } = trpc.pricing.getListings.useQuery(
+    { sealedProductId: cardId! },
+    { enabled: !!cardId && isSealedProduct, retry: 1, staleTime: 30 * 60 * 1000 }
+  );
+  const ebayListings = ebayData?.listings || [];
 
   const { data: priceTrendData, isLoading: trendLoading } = trpc.cards.getPriceTrendData.useQuery(
     { cardId: cardId!, days: 0 },
@@ -442,11 +450,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             <div className="flex flex-wrap gap-2">
               <BrandButton
                 size="sm"
-                onClick={() => setLocation(`/pricing/${product.id}${isSealedProduct ? '?type=sealed_product' : ''}`)}
+                onClick={() => {
+                  if (isSealedProduct) {
+                    // Scroll to eBay section
+                    ebayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    setLocation(`/pricing/${product.id}`);
+                  }
+                }}
                 className="flex items-center gap-1.5"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
-                {t("cardDetail.comparePrice")}
+                {isSealedProduct ? <ShoppingCart className="w-3.5 h-3.5" /> : <ExternalLink className="w-3.5 h-3.5" />}
+                {isSealedProduct ? '查看在售商品' : t("cardDetail.comparePrice")}
               </BrandButton>
               <Button
                 size="sm"
@@ -830,6 +845,111 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
         </div>
       </div>
+
+      {/* ── eBay Listings Section (Sealed Products only) ── */}
+      {isSealedProduct && (
+        <div ref={ebayRef} className="mt-4 sm:mt-6 rounded-xl border border-zinc-800 overflow-hidden">
+          {/* Header */}
+          <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-4 rounded-full bg-blue-400 inline-block" />
+              <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-blue-400" />
+                eBay 在售商品
+              </h3>
+              {!ebayLoading && (
+                <span className="text-xs text-zinc-500">（按價格排序）</span>
+              )}
+            </div>
+            <button
+              onClick={() => refetchEbay()}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              刷新
+            </button>
+          </div>
+
+          {/* Content */}
+          {ebayLoading ? (
+            <div className="py-12 flex items-center justify-center bg-zinc-900/30">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+              <span className="ml-2 text-sm text-zinc-400">正在搜尋 eBay 在售商品...</span>
+            </div>
+          ) : ebayListings.length === 0 ? (
+            <div className="py-12 text-center bg-zinc-900/30">
+              <ShoppingCart className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+              <p className="text-zinc-500 text-sm">目前 eBay 沒有找到相關在售商品</p>
+              <p className="text-zinc-600 text-xs mt-1">可嘗試刷新或稍後再查看</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-4 bg-zinc-900/30">
+              {ebayListings.map((item: any, index: number) => (
+                <a
+                  key={item.id || index}
+                  href={item.buyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col bg-zinc-800/60 rounded-xl overflow-hidden border border-zinc-700/50 hover:border-blue-500/50 hover:bg-zinc-800 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-square overflow-hidden bg-zinc-900">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-8 h-8 text-zinc-600" />
+                      </div>
+                    )}
+                    {/* eBay badge */}
+                    <div className="absolute top-1.5 right-1.5 bg-[#e53238] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                      eBay
+                    </div>
+                    {/* Price badge */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-2">
+                      <p className="text-green-400 font-bold text-sm">
+                        {formatCurrency(item.price)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+                    <p className="text-[11px] text-zinc-300 leading-tight line-clamp-3 group-hover:text-white transition-colors">
+                      {item.title}
+                    </p>
+                    {item.seller && (
+                      <p className="text-[10px] text-zinc-500 truncate">
+                        賣家: {item.seller}
+                      </p>
+                    )}
+                    <div className="mt-auto pt-1.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-blue-400 font-medium group-hover:text-blue-300">
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        前往購買
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+
+          {/* Footer note */}
+          {ebayListings.length > 0 && (
+            <div className="px-4 py-2.5 bg-zinc-900/50 border-t border-zinc-800 flex items-center gap-1.5">
+              <Tag className="w-3 h-3 text-zinc-500" />
+              <p className="text-[11px] text-zinc-500">
+                共 {ebayListings.length} 件在售商品・價格已換算為 HKD・點擊前往 eBay 購買
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Similar Cards Section */}
       {!isSealedProduct && cardId && (
