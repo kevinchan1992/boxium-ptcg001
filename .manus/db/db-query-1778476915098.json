@@ -1,0 +1,26 @@
+{
+  "query": "\nSELECT * FROM sealedProducts WHERE id = 1020001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT * FROM sealedProducts WHERE id = 1020001;\n",
+  "rows": [
+    {
+      "id": "1020001",
+      "gameId": "1",
+      "name": "Pokemon Card Game MEGA Expansion Pack \"Inferno X\" Box",
+      "nameJa": "ポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス",
+      "nameZh": "NULL",
+      "boxType": "booster_box",
+      "itemCount": "NULL",
+      "setName": "NULL",
+      "series": "NULL",
+      "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp",
+      "releaseDate": "NULL",
+      "createdAt": "2026-05-11 05:17:56",
+      "updatedAt": "2026-05-11 05:17:56",
+      "styleCode": "pkmn-tcg-M2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tgameId\tname\tnameJa\tnameZh\tboxType\titemCount\tsetName\tseries\timageUrl\treleaseDate\tcreatedAt\tupdatedAt\tstyleCode\n1020001\t1\tPokemon Card Game MEGA Expansion Pack \"Inferno X\" Box\tポケモンカードゲームMEGA 拡張パック「インフェルノX」ボックス\tNULL\tbooster_box\tNULL\tNULL\tNULL\thttps://cdn.snkrdunk.com/upload_bg_removed/20250926055512-0.webp\tNULL\t2026-05-11 05:17:56\t2026-05-11 05:17:56\tpkmn-tcg-M2\n",
+  "stderr": "",
+  "execution_time_ms": 1869
+}

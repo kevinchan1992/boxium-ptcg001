@@ -1290,6 +1290,7 @@ export const appRouter = router({
         search: z.string().optional(),
         status: z.enum(["all", "success", "pending", "failed"]).optional(),
         gameId: z.number().int().positive().optional(),
+        productType: z.enum(["all", "single_card", "sealed_product"]).optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
         const sources = await db.getDataSources(input);
@@ -1307,6 +1308,7 @@ export const appRouter = router({
         search: z.string().optional(),
         status: z.enum(["all", "success", "pending", "failed"]).optional(),
         gameId: z.number().int().positive().optional(),
+        productType: z.enum(["all", "single_card", "sealed_product"]).optional(),
       }).optional())
       .query(async ({ input }) => {
         const ids = await db.getAllFilteredDataSourceIds(input);

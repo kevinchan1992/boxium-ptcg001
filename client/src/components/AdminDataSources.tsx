@@ -31,11 +31,12 @@ export function AdminDataSources() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "pending" | "failed">("all");
   const [gameFilter, setGameFilter] = useState<number | undefined>(undefined); // undefined = all games
+  const [productTypeFilter, setProductTypeFilter] = useState<"all" | "single_card" | "sealed_product">("all");
 
   // Clear selected items when filter changes
   useEffect(() => {
     setSelectedIds([]);
-  }, [statusFilter, searchQuery, gameFilter]);
+  }, [statusFilter, searchQuery, gameFilter, productTypeFilter]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
 
@@ -47,12 +48,14 @@ export function AdminDataSources() {
     search: searchQuery || undefined,
     status: statusFilter,
     gameId: gameFilter,
+    productType: productTypeFilter,
   });
   const statsQuery = trpc.admin.getDataSourceStats.useQuery();
   const allFilteredIdsQuery = trpc.admin.getAllFilteredDataSourceIds.useQuery({
     search: searchQuery || undefined,
     status: statusFilter,
     gameId: gameFilter,
+    productType: productTypeFilter,
   });
   const allUrlsQuery = trpc.admin.getAllDataSourceUrls.useQuery(); // Get all URLs for deduplication
 
@@ -692,6 +695,31 @@ export function AdminDataSources() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">產品類型：</Label>
+                <Select
+                  value={productTypeFilter}
+                  onValueChange={(value: "all" | "single_card" | "sealed_product") => {
+                    setProductTypeFilter(value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      全部 {statsQuery.data ? `(${statsQuery.data.total})` : ''}
+                    </SelectItem>
+                    <SelectItem value="single_card">
+                      卡牌 {statsQuery.data ? `(${statsQuery.data.singleCard})` : ''}
+                    </SelectItem>
+                    <SelectItem value="sealed_product">
+                      卡盒 {statsQuery.data ? `(${statsQuery.data.sealedProduct})` : ''}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
                 <Label className="text-sm text-muted-foreground whitespace-nowrap">狀態篩選：</Label>
                 <Select value={statusFilter} onValueChange={(value: any) => {
                   setStatusFilter(value);
@@ -716,7 +744,7 @@ export function AdminDataSources() {
                   </SelectContent>
                 </Select>
               </div>
-              {(searchQuery || gameFilter !== undefined || statusFilter !== "all") && (
+              {(searchQuery || gameFilter !== undefined || statusFilter !== "all" || productTypeFilter !== "all") && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -724,6 +752,7 @@ export function AdminDataSources() {
                     setSearchQuery("");
                     setGameFilter(undefined);
                     setStatusFilter("all");
+                    setProductTypeFilter("all");
                     setPage(1);
                   }}
                   className="text-muted-foreground hover:text-foreground"
@@ -736,7 +765,7 @@ export function AdminDataSources() {
               <div className="flex items-center gap-4">
                 <h2 className="text-base sm:text-lg font-semibold text-foreground">
                   數據源列表
-                  {(searchQuery || gameFilter !== undefined || statusFilter !== "all") && dataSourcesQuery.data && (
+                  {(searchQuery || gameFilter !== undefined || statusFilter !== "all" || productTypeFilter !== "all") && dataSourcesQuery.data && (
                     <span className="ml-2 text-sm font-normal text-muted-foreground">
                       篩選結果：{dataSourcesQuery.data.total} 條
                     </span>

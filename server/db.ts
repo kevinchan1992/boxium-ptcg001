@@ -661,7 +661,7 @@ export async function checkDataSourceExists(url: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number }) {
+export async function getDataSources(options?: { page?: number; pageSize?: number; search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number; productType?: "all" | "single_card" | "sealed_product" }) {
   const db = await getDb();
   if (!db) return { data: [], total: 0, totalPages: 0 };
 
@@ -679,6 +679,9 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
   }
   if (options?.gameId) {
     conditions.push(eq(dataSources.gameId, options.gameId));
+  }
+  if (options?.productType && options.productType !== "all") {
+    conditions.push(eq(dataSources.productType, options.productType));
   }
 
    // ── Smart search: multi-token fuzzy matching ───────────────────────────
@@ -2958,22 +2961,25 @@ export async function getRandomCards(count: number = 10) {
  */
 export async function getDataSourceStats() {
   const db = await getDb();
-  if (!db) return { total: 0, success: 0, pending: 0, failed: 0 };
+  if (!db) return { total: 0, success: 0, pending: 0, failed: 0, singleCard: 0, sealedProduct: 0 };
 
   try {
     const result = await db
       .select({
         status: dataSources.lastFetchStatus,
+        productType: dataSources.productType,
         count: sql<number>`count(*)`,
       })
       .from(dataSources)
-      .groupBy(dataSources.lastFetchStatus);
+      .groupBy(dataSources.lastFetchStatus, dataSources.productType);
 
     const stats = {
       total: 0,
       success: 0,
       pending: 0,
       failed: 0,
+      singleCard: 0,
+      sealedProduct: 0,
     };
 
     for (const row of result) {
@@ -2981,25 +2987,31 @@ export async function getDataSourceStats() {
       stats.total += count;
       
       if (row.status === "success") {
-        stats.success = count;
+        stats.success += count;
       } else if (row.status === "pending") {
-        stats.pending = count;
+        stats.pending += count;
       } else if (row.status === "failed") {
-        stats.failed = count;
+        stats.failed += count;
+      }
+
+      if (row.productType === "single_card") {
+        stats.singleCard += count;
+      } else if (row.productType === "sealed_product") {
+        stats.sealedProduct += count;
       }
     }
 
     return stats;
   } catch (error) {
     console.error("[Database] Failed to get data source stats:", error);
-    return { total: 0, success: 0, pending: 0, failed: 0 };
+    return { total: 0, success: 0, pending: 0, failed: 0, singleCard: 0, sealedProduct: 0 };
   }
 }
 
 /**
  * Get all data source IDs that match the filter criteria
  */
-export async function getAllFilteredDataSourceIds(options?: { search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number }) {
+export async function getAllFilteredDataSourceIds(options?: { search?: string; status?: "all" | "success" | "pending" | "failed"; gameId?: number; productType?: "all" | "single_card" | "sealed_product" }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -3014,6 +3026,9 @@ export async function getAllFilteredDataSourceIds(options?: { search?: string; s
   }
   if (options?.gameId) {
     conditions.push(eq(dataSources.gameId, options.gameId));
+  }
+  if (options?.productType && options.productType !== "all") {
+    conditions.push(eq(dataSources.productType, options.productType));
   }
 
    // ── Smart search: multi-token fuzzy matching ───────────────────────────

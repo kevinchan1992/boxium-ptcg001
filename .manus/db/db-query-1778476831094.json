@@ -1,0 +1,314 @@
+{
+  "query": "\n-- 先查看要刪除的 ID 範圍\nSELECT id, name FROM sealedProducts WHERE name = 'Test Booster Box' ORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \n-- 先查看要刪除的 ID 範圍\nSELECT id, name FROM sealedProducts WHERE name = 'Test Booster Box' ORDER BY id;\n",
+  "rows": [
+    {
+      "id": "2",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "30001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "30002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "30003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "60001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "60002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "60003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "60004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "90001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "90002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "120001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "150001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "180001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "180002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "210001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "210002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "210003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "210004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "210005",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "240001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "240002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "240003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "240004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "270001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "270002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "270003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "300001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "330001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "360001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "360002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "360003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "360004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "360005",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "390001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "390002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "390003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "390004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "390005",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "420001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "420002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "420003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "450001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "450002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "450003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "480001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "480002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "510001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "510002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "510003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "510004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "540001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "540002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "540003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "540004",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "570001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "570002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "600001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "630001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "630002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "660001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "660002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "660003",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "690001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "690002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "720001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "750001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "780001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "810001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "840001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "870001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "900001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "900002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "930001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "960001",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "960002",
+      "name": "Test Booster Box"
+    },
+    {
+      "id": "990001",
+      "name": "Test Booster Box"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n2\tTest Booster Box\n30001\tTest Booster Box\n30002\tTest Booster Box\n30003\tTest Booster Box\n60001\tTest Booster Box\n60002\tTest Booster Box\n60003\tTest Booster Box\n60004\tTest Booster Box\n90001\tTest Booster Box\n90002\tTest Booster Box\n120001\tTest Booster Box\n150001\tTest Booster Box\n180001\tTest Booster Box\n180002\tTest Booster Box\n210001\tTest Booster Box\n210002\tTest Booster Box\n210003\tTest Booster Box\n210004\tTest Booster Box\n210005\tTest Booster Box\n240001\tTest Booster Box\n240002\tTest Booster Box\n240003\tTest Booster Box\n240004\tTest Booster Box\n270001\tTest Booster Box\n270002\tTest Booster Box\n270003\tTest Booster Box\n300001\tTest Booster Box\n330001\tTest Booster Box\n360001\tTest Booster Box\n360002\tTest Booster Box\n360003\tTest Booster Box\n360004\tTest Booster Box\n360005\tTest Booster Box\n390001\tTest Booster Box\n390002\tTest Booster Box\n390003\tTest Booster Box\n390004\tTest Booster Box\n390005\tTest Booster Box\n420001\tTest Booster Box\n420002\tTest Booster Box\n420003\tTest Booster Box\n450001\tTest Booster Box\n450002\tTest Booster Box\n450003\tTest Booster Box\n480001\tTest Booster Box\n480002\tTest Booster Box\n510001\tTest Booster Box\n510002\tTest Booster Box\n510003\tTest Booster Box\n510004\tTest Booster Box\n540001\tTest Booster Box\n540002\tTest Booster Box\n540003\tTest Booster Box\n540004\tTest Booster Box\n570001\tTest Booster Box\n570002\tTest Booster Box\n600001\tTest Booster Box\n630001\tTest Booster Box\n630002\tTest Booster Box\n660001\tTest Booster Box\n660002\tTest Booster Box\n660003\tTest Booster Box\n690001\tTest Booster Box\n690002\tTest Booster Box\n720001\tTest Booster Box\n750001\tTest Booster Box\n780001\tTest Booster Box\n810001\tTest Booster Box\n840001\tTest Booster Box\n870001\tTest Booster Box\n900001\tTest Booster Box\n900002\tTest Booster Box\n930001\tTest Booster Box\n960001\tTest Booster Box\n960002\tTest Booster Box\n990001\tTest Booster Box\n",
+  "stderr": "",
+  "execution_time_ms": 1799
+}

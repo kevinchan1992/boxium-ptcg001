@@ -9027,3 +9027,21 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] TypeScript 編譯無錯誤
 - [x] 儲存 checkpoint 並部署
 - [x] Cloud Run 保活 Ping 機制（KeepAlive Pinger v8.2）：每 4 分鐘向自身發送 HTTP 請求，防止 Cloud Run 閒置關閉
+
+
+---
+
+## ✅ 卡盒測試數據清理 + Admin 後台產品類型篩選
+
+### 任務清單
+- [x] 清理 76 個 Test Booster Box 測試記錄（sealedProducts 表）
+- [x] 清理相關 priceHistory 和 dataSources 測試記錄
+- [x] 保留真實卡盒：id=1（Inferno X Box）、id=3（Inferno X Pack）、id=1020001（Inferno X Box 完整版）
+- [x] 後端 getDataSources 函數加入 productType 篩選支援
+- [x] 後端 getAllFilteredDataSourceIds 函數加入 productType 篩選支援
+- [x] 後端 getDataSourceStats 函數加入 singleCard/sealedProduct 統計
+- [x] 後端 routers.ts 更新 getDataSources 和 getAllFilteredDataSourceIds 路由加入 productType 參數
+- [x] 前端 AdminDataSources 組件加入「產品類型」篩選下拉選單（卡牌/卡盒）
+- [x] 前端篩選結果計數和清除篩選邏輯更新
+- [x] TypeScript 編譯無錯誤
+- [ ] 保存 checkpoint
