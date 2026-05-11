@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star, Package } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star, Package, ChevronDown } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -321,7 +321,9 @@ export default function Home() {
               if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
             }}
             cardLinkPrefix="card"
-            inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
+            inputClassName={`w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary ${
+              activeTab === 'cards' ? 'pr-24' : 'pr-24'
+            }`}
             placeholder=""
           />
           {/* Typing Animation Placeholder (only when input is empty) */}
@@ -335,41 +337,30 @@ export default function Home() {
               />
             </div>
           )}
-          {/* Camera Button */}
-          <button
-            type="button"
-            onClick={handleCameraClick}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
-            title="圖片搜尋"
-          >
-            <Camera className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Tab Switcher: Cards / Boxes */}
-        <div className="flex justify-center mt-10 mb-4">
-          <div className="inline-flex rounded-xl bg-zinc-900/60 border border-zinc-800 p-1 gap-1">
+          {/* Right side: Category dropdown + Camera */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+            {/* Category dropdown */}
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as 'cards' | 'boxes')}
+                className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-zinc-800/90 border border-zinc-700/60 text-xs font-medium text-zinc-200 cursor-pointer focus:outline-none focus:border-primary/60 hover:border-zinc-500 transition-colors"
+              >
+                <option value="cards">{t('research.tabCards', '卡牌')}</option>
+                <option value="boxes">{t('research.tabBoxes', '卡盒')}</option>
+              </select>
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
+            </div>
+            {/* Divider */}
+            <div className="w-px h-4 bg-zinc-700" />
+            {/* Camera Button */}
             <button
-              onClick={() => setActiveTab('cards')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'cards'
-                  ? 'bg-primary text-primary-foreground shadow'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              type="button"
+              onClick={handleCameraClick}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="圖片搜尋"
             >
-              <Search className="w-3.5 h-3.5" />
-              {t('research.tabCards', '卡牌')}
-            </button>
-            <button
-              onClick={() => setActiveTab('boxes')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'boxes'
-                  ? 'bg-primary text-primary-foreground shadow'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Package className="w-3.5 h-3.5" />
-              {t('research.tabBoxes', '卡盒')}
+              <Camera className="w-5 h-5" />
             </button>
           </div>
         </div>
