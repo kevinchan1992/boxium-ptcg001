@@ -585,12 +585,34 @@ export const appRouter = router({
         query: z.string(),
         limit: z.number().optional().default(20),
         offset: z.number().optional().default(0),
+        includeSealedProducts: z.boolean().optional().default(true),
       }))
       .query(async ({ input }) => {
         const { parseGradeFilter } = await import('./db');
         const { gradeLabel } = parseGradeFilter(input.query);
         const results = await db.searchCards(input.query, input.limit, input.offset);
-        return { ...results, gradeLabel };
+
+        // Also search sealed products and merge into results
+        let sealedResults: any[] = [];
+        if (input.includeSealedProducts && input.query.trim()) {
+          try {
+            const sealedData = await db.searchSealedProducts(input.query, 10, 0);
+            sealedResults = (sealedData.products || []).map((p: any) => ({
+              ...p,
+              productType: 'sealed_product' as const,
+            }));
+          } catch (e) {
+            // ignore sealed product search errors
+          }
+        }
+
+        // Merge: sealed products first (they're more specific), then cards
+        const mergedCards = [...sealedResults, ...(results.cards || [])];
+        return {
+          cards: mergedCards,
+          total: results.total + sealedResults.length,
+          gradeLabel,
+        };
       }),
 
     /**

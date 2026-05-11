@@ -93,8 +93,12 @@ export default function PricingSearch() {
     );
   }, [cardIds, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCardClick = (cardId: number) => {
-    setLocation(`/pricing/${cardId}`);
+  const handleCardClick = (card: any) => {
+    if (card.productType === 'sealed_product') {
+      setLocation(`/sealed-product/${card.id}`);
+    } else {
+      setLocation(`/pricing/${card.id}`);
+    }
   };
 
   const goToPage = (page: number) => {
@@ -235,10 +239,11 @@ export default function PricingSearch() {
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
             {searchResults.map((card: any) => {
               const lowestPrice = lowestPrices[card.id];
+              const isSealedProduct = card.productType === 'sealed_product';
               return (
                 <div
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
+                  key={`${isSealedProduct ? 'sealed' : 'card'}-${card.id}`}
+                  onClick={() => handleCardClick(card)}
                   className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-[1.03] hover:shadow-lg"
                 >
                   <div className="aspect-[2/3] relative bg-muted">
@@ -254,8 +259,16 @@ export default function PricingSearch() {
                         <p className="text-muted-foreground text-xs">{t("pricing.noImage")}</p>
                       </div>
                     )}
+                    {/* Sealed product badge */}
+                    {isSealedProduct && (
+                      <div className="absolute top-1 left-1">
+                        <div className="bg-purple-600/90 backdrop-blur-sm text-white text-[7px] sm:text-[8px] font-bold px-1 py-0.5 rounded">
+                          卡盒
+                        </div>
+                      </div>
+                    )}
                     {/* Grade badge on card thumbnail when grade filter is active */}
-                    {gradeLabel && (
+                    {gradeLabel && !isSealedProduct && (
                       <div className="absolute bottom-1 left-1 right-1">
                         <div className="bg-blue-500/80 backdrop-blur-sm text-white text-[8px] sm:text-[9px] font-bold px-1 py-0.5 rounded text-center truncate">
                           {gradeLabel}
@@ -277,24 +290,41 @@ export default function PricingSearch() {
                         #{card.cardNumber}
                       </p>
                     )}
-                    {/* Lowest active listing price from SNKRDUNK */}
+                    {/* Price display */}
                     <div className="mt-auto pt-1">
-                      {lowestPrice !== undefined ? (
-                        <div className="flex items-center gap-0.5">
-                          <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-orange-400 flex-shrink-0" />
-                          <p className="text-[9px] sm:text-xs font-bold text-orange-400 truncate">
-                            HKD {lowestPrice.toLocaleString()}起
+                      {isSealedProduct ? (
+                        // Sealed product: show latest sold price
+                        card.latestPrice ? (
+                          <div className="flex items-center gap-0.5">
+                            <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-400 flex-shrink-0" />
+                            <p className="text-[9px] sm:text-xs font-bold text-green-400 truncate">
+                              HKD {Number(card.latestPrice).toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground/60">
+                            {t("pricing.noListings")}
                           </p>
-                        </div>
-                      ) : isRefreshing ? (
-                        <div className="space-y-1">
-                          <div className="h-2 sm:h-2.5 w-full rounded animate-pulse bg-muted-foreground/20" />
-                          <div className="h-2 sm:h-2.5 w-2/3 rounded animate-pulse bg-muted-foreground/15" />
-                        </div>
+                        )
                       ) : (
-                        <p className="text-[9px] sm:text-[10px] text-muted-foreground/60">
-                          {t("pricing.noListings")}
-                        </p>
+                        // Regular card: show lowest active listing price
+                        lowestPrice !== undefined ? (
+                          <div className="flex items-center gap-0.5">
+                            <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-orange-400 flex-shrink-0" />
+                            <p className="text-[9px] sm:text-xs font-bold text-orange-400 truncate">
+                              HKD {lowestPrice.toLocaleString()}起
+                            </p>
+                          </div>
+                        ) : isRefreshing ? (
+                          <div className="space-y-1">
+                            <div className="h-2 sm:h-2.5 w-full rounded animate-pulse bg-muted-foreground/20" />
+                            <div className="h-2 sm:h-2.5 w-2/3 rounded animate-pulse bg-muted-foreground/15" />
+                          </div>
+                        ) : (
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground/60">
+                            {t("pricing.noListings")}
+                          </p>
+                        )
                       )}
                     </div>
                   </div>

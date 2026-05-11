@@ -28,14 +28,69 @@ export const pricingRouter = router({
       z.object({
         cardId: z.number().optional(),
         snkrdunkId: z.string().optional(),
-      }).refine(data => data.cardId || data.snkrdunkId, {
-        message: 'Either cardId or snkrdunkId must be provided',
+        sealedProductId: z.number().optional(),
+      }).refine(data => data.cardId || data.snkrdunkId || data.sealedProductId, {
+        message: 'Either cardId, snkrdunkId, or sealedProductId must be provided',
       })
     )
     .query(async ({ input }) => {
-      const { cardId, snkrdunkId } = input;
+      const { cardId, snkrdunkId, sealedProductId } = input;
 
-      console.log(`[Pricing Router] Get listings for cardId: ${cardId}, snkrdunkId: ${snkrdunkId}`);
+      console.log(`[Pricing Router] Get listings for cardId: ${cardId}, snkrdunkId: ${snkrdunkId}, sealedProductId: ${sealedProductId}`);
+
+      // ── Sealed Product path ───────────────────────────────────────────────
+      if (sealedProductId) {
+        try {
+          const sealedProduct = await db.getSealedProductById(sealedProductId);
+          if (!sealedProduct) throw new Error('Sealed product not found');
+
+          // Search eBay for the sealed product by name
+          let ebayListings: any[] = [];
+          try {
+            const searchQuery = sealedProduct.name;
+            console.log(`[Pricing Router] eBay sealed product search: "${searchQuery}"`);
+            const rawResults = await fetchEbayListings({ cardName: searchQuery });
+            const filtered = (rawResults || []).filter((item: any) => {
+              const t = item.title.toLowerCase();
+              // Exclude accessories
+              const excludeItems = ['sleeve', 'sleeves', 'playmat', 'binder', 'holder', 'toploader', 'protector', 'lot', 'bundle', 'collection'];
+              return !excludeItems.some(p => t.includes(p));
+            }).map((item: any) => ({
+              id: item.id,
+              title: item.title,
+              price: item.currency === 'HKD' ? item.price : convertToHKD(item.price, item.currency),
+              currency: 'HKD',
+              imageUrl: item.image,
+              source: 'ebay' as const,
+              buyUrl: item.productUrl,
+              seller: item.seller?.name,
+              condition: 'Used',
+            }));
+            ebayListings = filtered;
+            console.log(`[Pricing Router] eBay sealed product: ${ebayListings.length} listings`);
+          } catch (e) {
+            console.error('[Pricing Router] eBay sealed product error:', e);
+          }
+
+          // Sort by price
+          ebayListings.sort((a, b) => a.price - b.price);
+
+          return {
+            card: {
+              id: sealedProduct.id,
+              name: sealedProduct.name,
+              nameJa: sealedProduct.nameJa,
+              imageUrl: sealedProduct.imageUrl,
+              cardNumber: null,
+              productType: 'sealed_product' as const,
+            },
+            listings: ebayListings,
+          };
+        } catch (error) {
+          console.error('[Pricing Router] Sealed product listings error:', error);
+          throw new Error('Failed to fetch sealed product listings');
+        }
+      }
 
       try {
         // Step 1: Get card details from database (support both cardId and snkrdunkId)
