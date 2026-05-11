@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useState, useMemo, useEffect } from "react";
+import { useRoute, useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
@@ -97,8 +97,19 @@ export default function PricingDetail() {
   const { data: user } = trpc.auth.me.useQuery();
   const [, params] = useRoute("/pricing/:id");
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const idParam = params?.id;
   const cardId = idParam ? parseInt(idParam, 10) : null;
+
+  // If this is a sealed product, redirect to the sealed product detail page
+  const typeParam = new URLSearchParams(searchString).get("type");
+  const isSealedProductRedirect = typeParam === "sealed_product" && !!idParam;
+
+  useEffect(() => {
+    if (isSealedProductRedirect) {
+      setLocation(`/sealed-product/${idParam}`, { replace: true });
+    }
+  }, [isSealedProductRedirect, idParam, setLocation]);
 
   // Active grade filter - default to "all"
   const [activeGrade, setActiveGrade] = useState<string>("all");
@@ -115,10 +126,11 @@ export default function PricingDetail() {
   });
 
   // Fetch pricing data (eBay + SNKRDUNK) - use database ID
+  // Do NOT fetch if this is a sealed product redirect (wrong ID would be used)
   const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
     { cardId: cardId! },
     { 
-      enabled: !!cardId, 
+      enabled: !!cardId && !isSealedProductRedirect, 
       retry: 1,
       staleTime: 30 * 60 * 1000, // 30 minutes cache
     }
