@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
+import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star, Package } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -55,9 +55,18 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Tab state: 'cards' | 'boxes'
+  const [activeTab, setActiveTab] = useState<'cards' | 'boxes'>('cards');
+
   // Fetch trending cards (top 5 based on PSA10 price increase)
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
     { limit: 5 },
+    { retry: 1 }
+  );
+
+  // Fetch sealed products for the boxes tab
+  const { data: sealedProducts = [], isLoading: isLoadingBoxes } = trpc.products.listSealedProducts.useQuery(
+    undefined,
     { retry: 1 }
   );
 
@@ -83,6 +92,10 @@ export default function Home() {
 
   const handleCardClick = (cardId: number) => {
     setLocation(`/card/${cardId}`);
+  };
+
+  const handleBoxClick = (boxId: number) => {
+    setLocation(`/sealed-product/${boxId}`);
   };
 
   const handleCameraClick = () => {
@@ -333,37 +346,122 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Top Gainers - Daily Price Increase Top 5 */}
-        <div className="flex justify-center gap-4 mt-12 flex-wrap">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="ml-2 text-sm text-muted-foreground">{t("research.loading")}</span>
-            </div>
-          ) : popularCards.length > 0 ? (
-            popularCards.map((card: any) => (
-              <button
-                key={card.id}
-                onClick={() => handleCardClick(card.id)}
-                className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
-              >
-                <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
-                  <img
-                    src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
-                    alt={card.name}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                    loading="lazy"
-                  />
-                </div>
-
-              </button>
-            ))
-          ) : (
-            <div className="w-full text-center py-12 text-muted-foreground">
-              <p>{t("research.noResults")}</p>
-            </div>
-          )}
+        {/* Tab Switcher: Cards / Boxes */}
+        <div className="flex justify-center mt-10 mb-4">
+          <div className="inline-flex rounded-xl bg-zinc-900/60 border border-zinc-800 p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('cards')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'cards'
+                  ? 'bg-primary text-primary-foreground shadow'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              {t('research.tabCards', '卡牌')}
+            </button>
+            <button
+              onClick={() => setActiveTab('boxes')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'boxes'
+                  ? 'bg-primary text-primary-foreground shadow'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              {t('research.tabBoxes', '卡盒')}
+            </button>
+          </div>
         </div>
+
+        {/* Content Area */}
+        {activeTab === 'cards' ? (
+          /* Top Gainers - Daily Price Increase Top 5 */
+          <div className="flex justify-center gap-4 flex-wrap">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-sm text-muted-foreground">{t('research.loading')}</span>
+              </div>
+            ) : popularCards.length > 0 ? (
+              popularCards.map((card: any) => (
+                <button
+                  key={card.id}
+                  onClick={() => handleCardClick(card.id)}
+                  className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
+                >
+                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
+                    <img
+                      src={card.imageUrl || 'https://via.placeholder.com/128x176?text=No+Image'}
+                      alt={card.name}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                      loading="lazy"
+                    />
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="w-full text-center py-12 text-muted-foreground">
+                <p>{t('research.noResults')}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Sealed Products / Boxes */
+          <div className="w-full">
+            {isLoadingBoxes ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-sm text-muted-foreground">{t('research.loading')}</span>
+              </div>
+            ) : sealedProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                {sealedProducts.map((box: any) => (
+                  <button
+                    key={box.id}
+                    onClick={() => handleBoxClick(box.id)}
+                    className="group flex items-center gap-3 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-primary/50 hover:bg-zinc-900 transition-all text-left"
+                  >
+                    {/* Box Image */}
+                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-800">
+                      {box.imageUrl ? (
+                        <img
+                          src={box.imageUrl}
+                          alt={box.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-6 h-6 text-zinc-600" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Box Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">{box.name}</p>
+                      {box.nameJa && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{box.nameJa}</p>
+                      )}
+                      {box.latestPrice != null && (
+                        <p className="text-sm font-bold text-primary mt-1">
+                          HKD {box.latestPrice.toLocaleString('en-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      )}
+                    </div>
+                    {/* Arrow */}
+                    <Search className="w-4 h-4 text-zinc-600 group-hover:text-primary flex-shrink-0 transition-colors" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="w-full text-center py-12 text-muted-foreground">
+                <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>{t('research.noBoxes', '暫無卡盒資料')}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Image Upload Bottom Sheet */}

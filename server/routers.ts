@@ -105,6 +105,45 @@ export const appRouter = router({
         };
       }),
 
+    listSealedProducts: publicProcedure
+      .query(async () => {
+        const products = await db.getAllSealedProducts();
+        if (products.length === 0) return [];
+        // Get latest price for each product using getDb()
+        const { getDb } = await import('./db');
+        const dbConn = await getDb();
+        if (!dbConn) return products.map(p => ({ id: p.id, name: p.name, nameJa: p.nameJa, imageUrl: p.imageUrl, series: p.series, boxType: p.boxType, latestPrice: null }));
+
+        const productIds = products.map(p => p.id);
+        const { priceHistory: ph } = await import('../drizzle/schema_new');
+        const { inArray: inArr, eq: eqOp, and: andOp, desc: descOp } = await import('drizzle-orm');
+
+        const latestPrices = await dbConn
+          .select()
+          .from(ph)
+          .where(andOp(inArr(ph.cardId, productIds), eqOp(ph.productType, 'sealed_product')))
+          .orderBy(descOp(ph.soldAt))
+          .limit(productIds.length * 10);
+
+        const priceMap = new Map<number, number>();
+        for (const row of latestPrices) {
+          if (!priceMap.has(row.cardId)) {
+            const qty = row.quantity ? parseInt(row.quantity.replace(/[^0-9]/g, ''), 10) || 1 : 1;
+            priceMap.set(row.cardId, parseFloat(row.price) / qty);
+          }
+        }
+
+        return products.map(p => ({
+          id: p.id,
+          name: p.name,
+          nameJa: p.nameJa,
+          imageUrl: p.imageUrl,
+          series: p.series,
+          boxType: p.boxType,
+          latestPrice: priceMap.get(p.id) ?? null,
+        }));
+      }),
+
     getPriceHistory: publicProcedure
       .input(z.object({
         productId: z.number(),
