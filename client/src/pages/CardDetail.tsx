@@ -119,8 +119,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;
-    if (grade === "中古") return "中古";
-    return grade.replace(/\s+/g, '');
+    // Return grade as-is — DB stores canonical form with spaces (e.g. "PSA 10")
+    // Do NOT strip spaces: "PSA 10" → "PSA10" would break the grade filter
+    return grade;
   };
 
   const { data: priceHistory = [], isLoading: priceLoading } = trpc.prices.getHistory.useQuery(
