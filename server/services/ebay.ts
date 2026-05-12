@@ -239,6 +239,114 @@ export async function fetchEbayListings(params: EbaySearchParams): Promise<EbayL
 }
 
 /**
+ * Fetch eBay listings using image search (searchByImage API)
+ * Downloads the image from URL, converts to Base64, and searches eBay
+ * 
+ * @param imageUrl - URL of the product image to search with
+ * @param categoryIds - Optional category IDs to filter results
+ * @returns Array of formatted eBay listings
+ */
+export async function fetchEbayListingsByImage(
+  imageUrl: string,
+  categoryIds: string = '183454' // Pokemon TCG category
+): Promise<EbayListing[]> {
+  const startTime = Date.now();
+
+  try {
+    console.log(`[eBay Image Search] Downloading image from: ${imageUrl}`);
+
+    // Step 1: Download the image and convert to Base64
+    const imageResponse = await fetch(imageUrl, {
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    console.log(`[eBay Image Search] Image downloaded, size: ${Math.round(imageBuffer.byteLength / 1024)}KB`);
+
+    // Step 2: Get OAuth token
+    const accessToken = await getEbayAccessToken();
+
+    // Step 3: Call searchByImage API
+    const searchUrl = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search_by_image');
+    searchUrl.searchParams.set('category_ids', categoryIds);
+    searchUrl.searchParams.set('limit', '30');
+    searchUrl.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE}');
+
+    console.log('[eBay Image Search] Calling searchByImage API...');
+
+    const response = await fetch(searchUrl.toString(), {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ image: base64Image }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`eBay Image Search failed: ${response.status} ${errorText}`);
+    }
+
+    const data: BrowseApiResponse = await response.json();
+    const items = data.itemSummaries || [];
+    console.log(`[eBay Image Search] Found ${data.total} total, returned ${items.length} listings`);
+
+    // Format results
+    const listings: EbayListing[] = items
+      .filter((item) => item.price && parseFloat(item.price.value) > 0 && item.itemWebUrl)
+      .map((item) => ({
+        id: `ebay-${item.itemId}`,
+        market: 'ebay' as const,
+        title: item.title,
+        price: parseFloat(item.price.value) || 0,
+        currency: item.price.currency || 'USD',
+        image: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || '',
+        productUrl: item.itemWebUrl,
+        seller: {
+          name: item.seller?.username || 'Unknown',
+          rating: item.seller?.feedbackScore || 0,
+        },
+        grade: 'Used',
+        condition: item.condition || 'Used',
+        lastUpdated: new Date().toISOString(),
+      }));
+
+    const responseTime = Date.now() - startTime;
+    await logPerformance({
+      source: 'ebay',
+      operationType: 'single',
+      status: 'success',
+      responseTime,
+      itemsProcessed: listings.length,
+    }).catch(() => {});
+
+    console.log(`[eBay Image Search] Returning ${listings.length} valid listings`);
+    return listings;
+
+  } catch (error: any) {
+    console.error('[eBay Image Search] Error:', error.message || error);
+    const responseTime = Date.now() - startTime;
+    await logPerformance({
+      source: 'ebay',
+      operationType: 'single',
+      status: 'error',
+      responseTime,
+      itemsProcessed: 0,
+      errorMessage: error.message || String(error),
+    }).catch(() => {});
+    return [];
+  }
+}
+
+/**
  * Test function to verify eBay Browse API integration
  */
 export async function testEbayAPI() {

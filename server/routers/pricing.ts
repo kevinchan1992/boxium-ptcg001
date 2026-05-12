@@ -1,7 +1,7 @@
 import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { fetchEbayListings } from '../services/ebay';
+import { fetchEbayListings, fetchEbayListingsByImage } from '../services/ebay';
 import { scrapeSnkrdunkListings } from '../services/snkrdunkScraperService';
 import { convertToHKD } from '../utils/currency';
 import * as db from '../db';
@@ -44,12 +44,36 @@ export const pricingRouter = router({
           const sealedProduct = await db.getSealedProductById(sealedProductId);
           if (!sealedProduct) throw new Error('Sealed product not found');
 
-          // Search eBay for the sealed product by name
+          // Search eBay for the sealed product
+          // Strategy: image search first (more accurate), fallback to text search
           let ebayListings: any[] = [];
           try {
-            const searchQuery = sealedProduct.name;
-            console.log(`[Pricing Router] eBay sealed product search: "${searchQuery}"`);
-            const rawResults = await fetchEbayListings({ cardName: searchQuery });
+            let rawResults: any[] = [];
+
+            // Primary: image-based search (most accurate for box products)
+            if (sealedProduct.imageUrl) {
+              console.log(`[Pricing Router] eBay image search for sealed product id=${sealedProduct.id}`);
+              rawResults = await fetchEbayListingsByImage(sealedProduct.imageUrl);
+              console.log(`[Pricing Router] Image search returned ${rawResults.length} results`);
+            }
+
+            // Fallback: text search if image search returned no results or no image
+            if (rawResults.length === 0) {
+              let searchQuery: string;
+              if (sealedProduct.nameJa) {
+                searchQuery = sealedProduct.nameJa.substring(0, 80);
+              } else {
+                const cleaned = sealedProduct.name
+                  .replace(/[,\."'\(\)\[\]]/g, ' ')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+                searchQuery = cleaned.length > 60
+                  ? cleaned.substring(0, 60).replace(/\s+\S*$/, '').trim()
+                  : cleaned;
+              }
+              console.log(`[Pricing Router] eBay text search fallback: "${searchQuery}"`);
+              rawResults = await fetchEbayListings({ cardName: searchQuery });
+            }
             const filtered = (rawResults || []).filter((item: any) => {
               const t = item.title.toLowerCase();
               // Exclude accessories
