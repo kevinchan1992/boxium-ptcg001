@@ -680,28 +680,41 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </div>
             {/* Grade Filter - single cards only */}
             {!isSealedProduct && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {priceLoading && activeGrade && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
+                )}
                 {grades.map((grade) => (
                   <button
                     key={grade}
                     onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border ${activeGrade === grade
-                      ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
-                      : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                      }`}
+                    disabled={priceLoading}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border relative ${
+                      activeGrade === grade
+                        ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
+                        : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                    } ${priceLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     {grade}
+                    {activeGrade === grade && priceLoading && (
+                      <span className="absolute inset-0 rounded-lg bg-[#1565C0]/40 animate-pulse" />
+                    )}
                   </button>
                 ))}
               </div>
             )}
           </div>
           {activePriceLoading ? (
-            <div className="flex items-center justify-center py-10 bg-zinc-900/50">
+            <div className="flex flex-col items-center justify-center py-10 bg-zinc-900/50 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#FFD600]" />
+              {activeGrade && (
+                <p className="text-xs text-zinc-500 animate-pulse">
+                  正在載入 {activeGrade} 成交記錄...
+                </p>
+              )}
             </div>
           ) : activePriceHistory.length > 0 ? (
-            <div className="overflow-y-auto max-h-80 overflow-x-auto">
+            <div className="overflow-y-auto max-h-80 overflow-x-auto transition-opacity duration-300">
               <table className="w-full">
                 <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
                   <tr>
