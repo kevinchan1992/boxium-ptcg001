@@ -996,7 +996,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { cardId, productType: inputProductType } = input;
-        const COOLDOWN_HOURS = 3;
+        const COOLDOWN_HOURS = 1;
         const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
 
         console.log(`[PriceRefresh] Triggered for cardId: ${cardId}, productType: ${inputProductType}`);
@@ -1552,17 +1552,29 @@ try {
             ensureOgImageExists(dataSource.cardId, cardData.imageUrl || null).catch(() => {});
           }
 
-          // Save new price history (with grade normalisation to ensure consistent format)
+          // Save new price history with per-group sourcePosition (same as persistentSnkrdunkBatchUpdate.ts)
+          // This ensures same-day same-price records each get a unique recordHash
+          // and are NOT incorrectly deduplicated away.
           const { normaliseGrade } = await import('./utils/priceValidator');
+          const groupCounters = new Map<string, number>();
           for (const priceEntry of cardData.priceHistory) {
             const priceHkd = convertJpyToHkd(priceEntry.price);
             const normalisedGrade = productType === 'sealed_product' ? undefined : normaliseGrade(priceEntry.grade);
+            const jpyPrice = priceEntry.price;
+            const soldAtStr = priceEntry.soldAt
+              ? priceEntry.soldAt.toISOString().slice(0, 10)
+              : 'unknown';
+            const gradeKey = normalisedGrade ?? 'null';
+            const groupKey = `${soldAtStr}|${gradeKey}|${jpyPrice}`;
+            const sourcePosition = groupCounters.get(groupKey) ?? 0;
+            groupCounters.set(groupKey, sourcePosition + 1);
             await db.addPriceHistory({
               cardId: dataSource.cardId,
               source: "snkrdunk",
               price: priceHkd.toString(),
               currency: "HKD",
-              jpyPrice: priceEntry.price, // Original JPY price for stable deduplication
+              jpyPrice,
+              sourcePosition,
               grade: normalisedGrade,
               quantity: productType === 'sealed_product' ? priceEntry.quantity : undefined,
               productType,
