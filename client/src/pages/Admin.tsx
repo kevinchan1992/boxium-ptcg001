@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Database, TrendingUp, FileText,
   HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical,
   Settings, ShoppingCart, PanelLeftClose, PanelLeft, Menu, X,
-  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight
+  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight, Package
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -23,6 +23,7 @@ import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import AdminQuickPublish from "@/components/AdminQuickPublish";
 import AdminCardInventory from "@/components/AdminCardInventory";
+import AdminSealedProducts from "@/components/AdminSealedProducts";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,7 @@ const SECTIONS: SectionDef[] = [
     icon: <FileText className="w-[18px] h-[18px]" />,
     tabs: [
       { id: "datasources", label: "數據源管理", icon: <Database className="w-4 h-4" /> },
+      { id: "sealed-products", label: "卡盒管理", icon: <Package className="w-4 h-4" /> },
       { id: "trending", label: "熱門卡牌", icon: <TrendingUp className="w-4 h-4" /> },
       { id: "blog", label: "博客管理", icon: <FileText className="w-4 h-4" /> },
       { id: "quick-publish", label: "AI 出文章", icon: <Wand2 className="w-4 h-4" /> },
@@ -143,6 +145,7 @@ function TabContent({ tabId }: { tabId: string }) {
     case "dashboard": return <AdminDashboard />;
     case "users": return <AdminUserManagement />;
     case "datasources": return <AdminDataSources />;
+    case "sealed-products": return <AdminSealedProducts />;
     case "trending": return <AdminTrendingCards />;
     case "blog": return <AdminBlogManagement />;
     case "quick-publish": return <AdminQuickPublish />;

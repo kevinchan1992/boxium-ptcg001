@@ -74,11 +74,26 @@ export const pricingRouter = router({
               console.log(`[Pricing Router] eBay text search fallback: "${searchQuery}"`);
               rawResults = await fetchEbayListings({ cardName: searchQuery });
             }
+            // Build relevance keywords from product name for filtering
+            const nameWords = (sealedProduct.nameJa || sealedProduct.name || '')
+              .toLowerCase()
+              .replace(/[,\."'\(\)\[\]]/g, ' ')
+              .split(/\s+/)
+              .filter((w: string) => w.length >= 3)
+              .slice(0, 5);
+            // Box-type keywords (must contain at least one)
+            const boxKeywords = ['box', 'booster', 'ボックス', 'パック', 'pack', 'sealed'];
+
             const filtered = (rawResults || []).filter((item: any) => {
               const t = item.title.toLowerCase();
               // Exclude accessories
-              const excludeItems = ['sleeve', 'sleeves', 'playmat', 'binder', 'holder', 'toploader', 'protector', 'lot', 'bundle', 'collection'];
-              return !excludeItems.some(p => t.includes(p));
+              const excludeItems = ['sleeve', 'sleeves', 'playmat', 'binder', 'holder', 'toploader', 'protector', 'lot', 'bundle', 'collection', 'single card', 'single'];
+              if (excludeItems.some(p => t.includes(p))) return false;
+              // Must contain at least one box-related keyword
+              const hasBoxKeyword = boxKeywords.some(k => t.includes(k));
+              // Must match at least one word from the product name
+              const hasNameMatch = nameWords.length === 0 || nameWords.some((w: string) => t.includes(w));
+              return hasBoxKeyword || hasNameMatch;
             }).map((item: any) => ({
               id: item.id,
               title: item.title,

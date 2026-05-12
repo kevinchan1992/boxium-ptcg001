@@ -3010,6 +3010,33 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         const result = await manualRefreshTrendingCache();
         return result;
       }),
+
+    // 更新卡盒封面圖
+    updateSealedProductImage: adminProcedure
+      .input(z.object({
+        sealedProductId: z.number(),
+        imageUrl: z.string().url(),
+      }))
+      .mutation(async ({ input }) => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const { sealedProducts } = await import('../drizzle/schema_new');
+        await dbInstance
+          .update(sealedProducts)
+          .set({ imageUrl: input.imageUrl })
+          .where(eq(sealedProducts.id, input.sealedProductId));
+        return { success: true };
+      }),
+
+    // 獲取所有卡盒列表（供 Admin 管理用）
+    listSealedProductsAdmin: adminProcedure
+      .query(async () => {
+        const dbInstance = await db.getDb();
+        if (!dbInstance) return [];
+        const { sealedProducts } = await import('../drizzle/schema_new');
+        const results = await dbInstance.select().from(sealedProducts);
+        return results;
+      }),
   }),
 
   watchlist: router({
