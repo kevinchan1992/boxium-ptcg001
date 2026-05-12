@@ -1057,21 +1057,41 @@ export const appRouter = router({
           // Step 5: Write to priceHistory table (exactly like batch update)
           const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
           const validatedPriceHistory = validateAndFilterPriceHistory(priceHistoryData, productType);
+
+          // Assign per-group sourcePosition (same logic as persistentSnkrdunkBatchUpdate.ts)
+          // This ensures same-day same-price records each get a unique recordHash
+          // and are NOT incorrectly deduplicated away.
+          // groupKey = "YYYY-MM-DD|grade|jpyPrice" — position resets to 0 for each unique group.
+          const groupCounters = new Map<string, number>();
           let recordsAdded = 0;
           for (const priceItem of validatedPriceHistory) {
             const priceHKD = convertJpyToHkd(priceItem.price);
-            await db.addPriceHistory({
+            const gradeNorm = productType === 'single_card'
+              ? (priceItem.normalisedGrade ?? priceItem.grade ?? null)
+              : null;
+            const jpyPrice = priceItem.jpyPrice ?? priceItem.price;
+            const soldAtStr = priceItem.soldAt
+              ? priceItem.soldAt.toISOString().slice(0, 10)
+              : 'unknown';
+            const gradeKey = gradeNorm ?? 'null';
+            const groupKey = `${soldAtStr}|${gradeKey}|${jpyPrice}`;
+            const sourcePosition = groupCounters.get(groupKey) ?? 0;
+            groupCounters.set(groupKey, sourcePosition + 1);
+
+            const result = await db.addPriceHistory({
               cardId: cardId,
               source: 'snkrdunk',
               price: priceHKD.toString(),
               currency: 'HKD',
-              jpyPrice: priceItem.jpyPrice ?? priceItem.price, // Original JPY price for stable deduplication
-              grade: productType === 'sealed_product' ? undefined : (priceItem.normalisedGrade ?? priceItem.grade),
+              jpyPrice,
+              sourcePosition,
+              grade: productType === 'sealed_product' ? undefined : (gradeNorm ?? undefined),
               quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
               productType,
               soldAt: priceItem.soldAt,
             });
-            recordsAdded++;
+            // Only count records that were actually inserted (not skipped by dedup)
+            if (result !== null) recordsAdded++;
           }
 
           // Step 6: Update data source fetch status (exactly like batch update)
