@@ -330,10 +330,10 @@
     "priceHistory": "Price History",
     "priceIncrease": "↑ Up",
     "priceTrend": "30-Day Trend",
-    "priceUpToDate": "Prices are up to date",
+    "priceUpToDate": "Up to date",
     "priceUpdateFailed": "Price update failed",
-    "priceUpdated": "Prices updated",
-    "priceUpdating": "Updating latest transaction prices...",
+    "priceUpdated": "Updated",
+    "priceUpdating": "Updating...",
     "productName": "Product Name",
     "productTitle": "Product Title",
     "quantity": "Quantity",
@@ -345,7 +345,7 @@
     "share": "Share",
     "singleCard": "Single Card",
     "source": "Source",
-    "styleCode": "Style Code",
+    "styleCode": "Series Code",
     "timeRange": {
       "30days": "30 Days",
       "7days": "7 Days",
@@ -355,7 +355,14 @@
     "timeRangeLabel": "PSA 10 Time Range",
     "title": "Title",
     "usdPrice": "USD Price",
-    "usedGrade": "Used"
+    "usedGrade": "Used",
+    "records": "transactions",
+    "noPsa10Data": "No PSA 10 transaction records for this card",
+    "noPsa10DataSub": "PSA 10 transaction data will update automatically when new records are available",
+    "avgPrice": "Avg",
+    "latestPrice": "Latest",
+    "minPriceLabel": "Min",
+    "maxPriceLabel": "Max"
   },
   "cardSelectionDialog": {
     "avgPrice": "Average Price",
@@ -495,7 +502,8 @@
     "research": "Card Research",
     "seller": "Seller",
     "terms": "Terms of Service",
-    "trending": "Trending"
+    "trending": "Trending",
+    "auctionTerms": "Auction Terms"
   },
   "disclaimerPage": {
     "contactInfo": "For any questions, please contact us: boxium.asia@gmail.com",
@@ -623,7 +631,13 @@
     "trendingCardsDesc": "Based on PSA 10 this-week vs last-week weighted average price change (7-day half-life)",
     "usdPrice": "USD Price",
     "viewMarketTrends": "Compare Market Prices",
-    "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World"
+    "welcome": "Welcome to Boxium ~ Gaming Enthusiasts' World",
+    "searchCardsDesc": "Search cards, view price trends and market data",
+    "exploreNow": "Explore Now",
+    "marketTrendsDesc": "View market price trends and compare across platforms",
+    "viewTrends": "View Trends",
+    "marketplaceDesc": "Browse marketplace items, join auctions, trade safely",
+    "browseNow": "Browse Now"
   },
   "login": {
     "description": "Enter your account and password to log in to BOXIUM PTCG",
@@ -902,9 +916,14 @@
     "admin": "Admin",
     "dashboard": "Dashboard",
     "favorites": "My Favorites",
-    "login": "Login/Register",
+    "login": "Login",
     "logout": "Logout",
-    "user": "User"
+    "user": "User",
+    "home": "Home",
+    "research": "Search",
+    "trending": "Trending",
+    "marketplace": "Market",
+    "profile": "Profile"
   },
   "notifications": {
     "all": "All",
@@ -913,7 +932,7 @@
     "deleteAllReadError": "Delete failed",
     "deleteAllReadSuccess": "All read notifications deleted",
     "deleteError": "Delete failed",
-    "deleteSuccess": "刪除成功",
+    "deleteSuccess": "Deleted successfully",
     "description": "View all system notifications and trade updates",
     "filter": {
       "all": "All",
