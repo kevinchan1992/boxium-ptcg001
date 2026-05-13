@@ -12,7 +12,7 @@
  * 5. Send push token to backend for storage
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { trpc } from "@/lib/trpc";
 import {
@@ -23,6 +23,8 @@ import { toast } from "sonner";
 
 export function CapacitorInit() {
   const { data: user } = trpc.auth.me.useQuery();
+  const registerToken = trpc.mobile.registerPushToken.useMutation();
+  const registeredTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -56,21 +58,16 @@ export function CapacitorInit() {
     if (user) {
       initPushNotifications(
         async (token) => {
-          // Send token to backend for storage
-          // The backend will use this to send targeted push notifications
+          // Avoid re-registering the same token
+          if (registeredTokenRef.current === token.value) return;
+          registeredTokenRef.current = token.value;
+          // Send token to backend via tRPC
           try {
-            const response = await fetch("/api/push-token", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({
-                token: token.value,
-                platform: token.platform,
-              }),
+            await registerToken.mutateAsync({
+              token: token.value,
+              platform: token.platform as "ios" | "android" | "web",
             });
-            if (!response.ok) {
-              console.warn("[CapacitorInit] Failed to register push token");
-            }
+            console.log("[CapacitorInit] Push token registered successfully");
           } catch {
             console.warn("[CapacitorInit] Push token registration failed");
           }

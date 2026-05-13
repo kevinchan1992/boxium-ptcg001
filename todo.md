@@ -9063,4 +9063,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 加入 PWA manifest.json
 - [x] 建立 Capacitor 打包說明文件（README-mobile.md）
 - [x] 撰寫並通過 37 項單元測試（capacitor.integration.test.ts）
-- [ ] 保存 checkpoint
+- [x] 保存 checkpoint（version: a831b5ae）

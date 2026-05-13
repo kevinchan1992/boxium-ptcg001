@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `devicePushTokens` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `token` varchar(512) NOT NULL,\n  `platform` enum('ios','android','web') NOT NULL,\n  `deviceId` varchar(256) DEFAULT NULL,\n  `isActive` tinyint(1) NOT NULL DEFAULT '1',\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `dpt_userId_idx` (`userId`),\n  KEY `dpt_token_idx` (`token`(255)),\n  KEY `dpt_platform_idx` (`platform`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE TABLE IF NOT EXISTS `devicePushTokens` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `token` varchar(512) NOT NULL,\n  `platform` enum('ios','android','web') NOT NULL,\n  `deviceId` varchar(256) DEFAULT NULL,\n  `isActive` tinyint(1) NOT NULL DEFAULT '1',\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `dpt_userId_idx` (`userId`),\n  KEY `dpt_token_idx` (`token`(255)),\n  KEY `dpt_platform_idx` (`platform`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1894
+}

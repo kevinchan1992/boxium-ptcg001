@@ -1777,3 +1777,22 @@ export const gradingBannerImages = mysqlTable("gradingBannerImages", {
 }));
 export type GradingBannerImage = typeof gradingBannerImages.$inferSelect;
 export type InsertGradingBannerImage = typeof gradingBannerImages.$inferInsert;
+
+// ─── Device Push Tokens (Capacitor APP) ───────────────────────────────────
+// Stores FCM / APNs push notification tokens for registered devices
+export const devicePushTokens = mysqlTable("devicePushTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // FK to users table
+  token: varchar("token", { length: 512 }).notNull(),
+  platform: mysqlEnum("platform", ["ios", "android", "web"]).notNull(),
+  deviceId: varchar("deviceId", { length: 256 }), // Optional device fingerprint for dedup
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("dpt_userId_idx").on(table.userId),
+  tokenIdx: index("dpt_token_idx").on(table.token),
+  platformIdx: index("dpt_platform_idx").on(table.platform),
+}));
+export type DevicePushToken = typeof devicePushTokens.$inferSelect;
+export type InsertDevicePushToken = typeof devicePushTokens.$inferInsert;

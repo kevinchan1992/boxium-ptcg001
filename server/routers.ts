@@ -27,6 +27,7 @@ import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
 import { contactRouter } from "./routers/contact";
+import { mobileRouter } from "./routers/mobile";
 
 export const appRouter = router({
   system: systemRouter,
@@ -4700,6 +4701,7 @@ UNBREAKABLE RULES:
   auction: auctionRouter,
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
+  mobile: mobileRouter,
 });
 
 export type AppRouter = typeof appRouter;
