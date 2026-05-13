@@ -49,6 +49,9 @@ import GradingMaintenanceGuard from "./components/GradingMaintenanceGuard";
 import SellerCenterMaintenanceGuard from "./components/SellerCenterMaintenanceGuard";
 import MessageCenter from "./components/MessageCenter";
 import { trpc } from "./lib/trpc";
+import { CapacitorInit } from "./components/CapacitorInit";
+import { BottomTabBar } from "./components/BottomTabBar";
+import { useCapacitor } from "./hooks/useCapacitor";
 
 
 
@@ -63,11 +66,13 @@ function Router() {
     window.scrollTo(0, 0);
   }, [location]);
 
+  const { isNative } = useCapacitor();
+
   return (
     <PageWrapper>
       <TopNav />
       {user && <MessageCenter />}
-      <div className="pt-14">
+      <div className={`pt-14 ${isNative ? 'has-bottom-tab' : ''}`}>
         <Switch>
       <Route path={"/"} component={Home} />
 
@@ -154,6 +159,7 @@ function Router() {
       <Route component={NotFound} />
         </Switch>
       </div>
+      <BottomTabBar />
     </PageWrapper>
   );
 }
@@ -172,6 +178,7 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <CapacitorInit />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

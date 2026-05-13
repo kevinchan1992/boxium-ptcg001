@@ -1,0 +1,129 @@
+/**
+ * capacitor-app.css
+ * 
+ * Styles applied specifically when running inside a Capacitor native app.
+ * These styles are imported globally in main.tsx and activated via the
+ * `.capacitor-native` class added to <body> when Capacitor.isNativePlatform() is true.
+ *
+ * Key areas:
+ * 1. Safe Area insets (iOS Dynamic Island, Notch, Home Indicator)
+ * 2. Disable browser-default behaviors (long-press menu, double-tap zoom)
+ * 3. Bottom Tab Bar spacing
+ */
+
+/* ── 1. Safe Area CSS Variables ─────────────────────────────────────────── */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* Bottom Tab Bar height (used to offset content) */
+  --bottom-tab-bar-height: 60px;
+}
+
+/* ── 2. Disable Browser Default Behaviors (APP mode only) ───────────────── */
+.capacitor-native {
+  /* Disable long-press context menu (iOS "Copy/Paste" popup) */
+  -webkit-touch-callout: none;
+  
+  /* Disable double-tap zoom */
+  touch-action: manipulation;
+  
+  /* Disable rubber-band scroll effect on body */
+  overscroll-behavior: none;
+}
+
+/* Disable text selection globally in app mode, but allow in inputs */
+.capacitor-native * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.capacitor-native input,
+.capacitor-native textarea,
+.capacitor-native [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ── 3. Top Navigation Safe Area (iOS Notch / Dynamic Island) ───────────── */
+/* The TopNav is fixed at top-0. In native app, we need to push it down
+   by the safe area inset so it doesn't overlap with the status bar. */
+.capacitor-native nav[class*="fixed"][class*="top-0"] {
+  padding-top: env(safe-area-inset-top, 0px);
+  /* Increase height to accommodate safe area */
+  height: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
+/* The main content area needs extra top padding to account for the taller nav */
+.capacitor-native .pt-14 {
+  padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
+/* ── 4. Bottom Safe Area (Home Indicator) ───────────────────────────────── */
+/* When bottom tab bar is shown, add extra padding for the home indicator */
+.capacitor-native body {
+  padding-bottom: 0; /* Reset - handled by tab bar */
+}
+
+/* Bottom Tab Bar container */
+.capacitor-native .bottom-tab-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  height: calc(var(--bottom-tab-bar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Main content area offset when bottom tab bar is visible */
+.capacitor-native .has-bottom-tab {
+  padding-bottom: calc(var(--bottom-tab-bar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── 5. Tap Highlight & Active States ───────────────────────────────────── */
+.capacitor-native * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Subtle press feedback for interactive elements */
+.capacitor-native button:active,
+.capacitor-native a:active,
+.capacitor-native [role="button"]:active {
+  opacity: 0.75;
+  transition: opacity 0.1s ease;
+}
+
+/* ── 6. Scroll Improvements for Native Feel ─────────────────────────────── */
+.capacitor-native {
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent page-level bounce scroll, allow it only in scrollable containers */
+.capacitor-native html,
+.capacitor-native body {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+.capacitor-native #root {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ── 7. Status Bar Overlay Compensation ─────────────────────────────────── */
+/* When StatusBar overlaysWebView is false (our config), the status bar
+   takes up space. The safe-area-inset-top handles this automatically. */
+.capacitor-native .status-bar-spacer {
+  height: env(safe-area-inset-top, 0px);
+  background-color: var(--background);
+}
+
+/* ── 8. Keyboard Avoidance ───────────────────────────────────────────────── */
+/* When keyboard is shown, Capacitor's Keyboard plugin resizes the body.
+   Ensure input fields are visible above the keyboard. */
+.capacitor-native input:focus,
+.capacitor-native textarea:focus {
+  scroll-margin-bottom: 20px;
+}

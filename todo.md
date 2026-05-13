@@ -9045,3 +9045,22 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 前端篩選結果計數和清除篩選邏輯更新
 - [x] TypeScript 編譯無錯誤
 - [ ] 保存 checkpoint
+
+---
+
+## 📱 Capacitor 手機 APP 開發
+
+- [x] 安裝 Capacitor 核心套件（@capacitor/core, @capacitor/cli 8.3.4）
+- [x] 安裝 Capacitor 平台套件（@capacitor/ios 8.3.4, @capacitor/android 8.3.4）
+- [x] 安裝 Capacitor 插件（push-notifications 8.0.4, haptics 8.0.2, status-bar 8.0.2, keyboard 8.0.2）
+- [x] 建立 capacitor.config.ts 配置文件（appId: asia.boxium.ptcg）
+- [x] 建立 useCapacitor hook（APP 模式偵測）
+- [x] 加入 APP 模式 Safe Area CSS（頂部 TopNav 適配 iOS 劉海）
+- [x] 加入停用瀏覽器預設行為 CSS（長按選單、雙擊縮放）
+- [x] 建立底部 Tab Bar 組件（APP 模式專用）
+- [x] 整合推播通知服務（PushNotificationService）
+- [x] 整合生物識別登入（BiometricAuth）
+- [x] 加入 PWA manifest.json
+- [x] 建立 Capacitor 打包說明文件（README-mobile.md）
+- [x] 撰寫並通過 37 項單元測試（capacitor.integration.test.ts）
+- [ ] 保存 checkpoint
