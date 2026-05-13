@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name FROM cards WHERE name LIKE '%Luffy%SEC%' AND name LIKE '%2nd%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name FROM cards WHERE name LIKE '%Luffy%SEC%' AND name LIKE '%2nd%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1292462",
+      "name": "Monkey D Luffy SEC [OP05-119] (Champion Ship 2023 World Final 2nd Prize)"
+    },
+    {
+      "id": "1295521",
+      "name": "Monkey.D.Luffy SEC [OP05-119] [EN](ANNIVERSARY SET \"English 2nd ANNIVERSARY SET English Ver.\")"
+    },
+    {
+      "id": "1380741",
+      "name": "Monkey.D.Luffy SEC [OP05-119](ANNIVERSARY SET \"English 2nd ANNIVERSARY SET Japanese Ver.\")"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1292462\tMonkey D Luffy SEC [OP05-119] (Champion Ship 2023 World Final 2nd Prize)\n1295521\tMonkey.D.Luffy SEC [OP05-119] [EN](ANNIVERSARY SET \"English 2nd ANNIVERSARY SET English Ver.\")\n1380741\tMonkey.D.Luffy SEC [OP05-119](ANNIVERSARY SET \"English 2nd ANNIVERSARY SET Japanese Ver.\")\n",
+  "stderr": "",
+  "execution_time_ms": 1816
+}

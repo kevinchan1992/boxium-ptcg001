@@ -25,6 +25,9 @@ export interface RawPriceEntry {
   soldAt: Date;
   grade?: string;
   quantity?: string;
+  // Relative-time dedup fields (for SNKRDUNK "N時間前" records)
+  isRelativeTime?: boolean;  // true if date was "N時間前" in API response
+  estimatedSoldAt?: Date;    // Precise estimated timestamp (crawlTime - N hours)
 }
 
 // ---------------------------------------------------------------------------

@@ -1089,6 +1089,9 @@ export const appRouter = router({
               quantity: productType === 'sealed_product' ? (priceItem.quantity || undefined) : undefined,
               productType,
               soldAt: priceItem.soldAt,
+              // Pass relative-time dedup fields so dynamic time-window check can run
+              isRelativeTime: priceItem.isRelativeTime,
+              estimatedSoldAt: priceItem.estimatedSoldAt,
             });
             // Only count records that were actually inserted (not skipped by dedup)
             if (result !== null) recordsAdded++;
@@ -1580,6 +1583,9 @@ try {
               productType,
               soldAt: priceEntry.soldAt,
               listingUrl: dataSource.sourceUrl,
+              // Pass relative-time dedup fields so dynamic time-window check can run
+              isRelativeTime: priceEntry.isRelativeTime,
+              estimatedSoldAt: priceEntry.estimatedSoldAt,
             });
           }
 

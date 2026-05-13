@@ -1,0 +1,48 @@
+{
+  "query": "SELECT id, name FROM cards WHERE name LIKE '%Moltres%' OR name LIKE '%Galarian%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name FROM cards WHERE name LIKE '%Moltres%' OR name LIKE '%Galarian%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "270002",
+      "name": "Galarian Zigzagoon: PROMO[S-P 135](S-P Promotional cards)"
+    },
+    {
+      "id": "270103",
+      "name": "Moltres [Pt3 098/100](Expansion Pack \"Beat of the Frontier\")"
+    },
+    {
+      "id": "300007",
+      "name": "Galarian Obstagoon UR[S4 119/100](Expansion Pack \"Vorteker of Heaven\")"
+    },
+    {
+      "id": "300017",
+      "name": "Galarian Perrserker UR[S2 113/096](Expansion Pack \"Rebellion Crash\")"
+    },
+    {
+      "id": "330103",
+      "name": "Moltres R[DP4EX DPBP#177](Expansion Pack \"Dawn Dash\", \"Moonlit Pursuit\")"
+    },
+    {
+      "id": "360092",
+      "name": "Galarian Stunfisk U[S11 078/100](Expansion Pack \"Lost Abyss\")"
+    },
+    {
+      "id": "360094",
+      "name": "Galarian Perrserker V RR[S11 079/100](Expansion Pack \"Lost Abyss\")"
+    },
+    {
+      "id": "360116",
+      "name": "Galarian Perrserker V SR[S11 108/100](Expansion Pack \"Lost Abyss\")"
+    },
+    {
+      "id": "360125",
+      "name": "Moltres R[s10b 012/071](Enhanced Expansion Pack \"Pokemon GO\")"
+    }
+  ],
+  "messages": [
+    "270170\tMoltres [e5 018/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t"
+  ],
+  "stdout": "id\tname\n270002\tGalarian Zigzagoon: PROMO[S-P 135](S-P Promotional cards)\n270103\tMoltres [Pt3 098/100](Expansion Pack \"Beat of the Frontier\")\n270170\tMoltres [e5 018/088](Expansion Pack Vol.5 \"Mysterious Mountains\")\t\n300007\tGalarian Obstagoon UR[S4 119/100](Expansion Pack \"Vorteker of Heaven\")\n300017\tGalarian Perrserker UR[S2 113/096](Expansion Pack \"Rebellion Crash\")\n330103\tMoltres R[DP4EX DPBP#177](Expansion Pack \"Dawn Dash\", \"Moonlit Pursuit\")\n360092\tGalarian Stunfisk U[S11 078/100](Expansion Pack \"Lost Abyss\")\n360094\tGalarian Perrserker V RR[S11 079/100](Expansion Pack \"Lost Abyss\")\n360116\tGalarian Perrserker V SR[S11 108/100](Expansion Pack \"Lost Abyss\")\n360125\tMoltres R[s10b 012/071](Enhanced Expansion Pack \"Pokemon GO\")\n",
+  "stderr": "",
+  "execution_time_ms": 1832
+}

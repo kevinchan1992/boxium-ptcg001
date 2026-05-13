@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name FROM cards WHERE name LIKE '%422%' OR name LIKE '%Start Deck%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name FROM cards WHERE name LIKE '%422%' OR name LIKE '%Start Deck%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "180001",
+      "name": "Pikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")"
+    },
+    {
+      "id": "300014",
+      "name": "Pal Pad[SD 094/127](V Start Deck \"Grass Fushigibana - Colorless Eievui\")"
+    },
+    {
+      "id": "330343",
+      "name": "Pineco [SVD 001/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330346",
+      "name": "Heracross [SVD 002/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330347",
+      "name": "Cacnea [SVD 003/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330348",
+      "name": "Amoonguss [SVD 005/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330349",
+      "name": "Rowlet [SVD 006/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330350",
+      "name": "Dartrix [SVD 007/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330351",
+      "name": "Foongus [SVD 004/139](Selected ex Start Deck)"
+    },
+    {
+      "id": "330352",
+      "name": "Arboliva [SVD 011/139](Selected ex Start Deck)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n180001\tPikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")\n300014\tPal Pad[SD 094/127](V Start Deck \"Grass Fushigibana - Colorless Eievui\")\n330343\tPineco [SVD 001/139](Selected ex Start Deck)\n330346\tHeracross [SVD 002/139](Selected ex Start Deck)\n330347\tCacnea [SVD 003/139](Selected ex Start Deck)\n330348\tAmoonguss [SVD 005/139](Selected ex Start Deck)\n330349\tRowlet [SVD 006/139](Selected ex Start Deck)\n330350\tDartrix [SVD 007/139](Selected ex Start Deck)\n330351\tFoongus [SVD 004/139](Selected ex Start Deck)\n330352\tArboliva [SVD 011/139](Selected ex Start Deck)\n",
+  "stderr": "",
+  "execution_time_ms": 1833
+}

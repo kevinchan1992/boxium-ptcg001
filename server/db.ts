@@ -1140,6 +1140,9 @@ export async function addPriceHistory(data: {
   soldAt?: Date;
   listingUrl?: string;
   recordHash?: string; // Pre-computed SHA-256 dedup key (optional, computed here if absent)
+  // Relative-time dedup fields (for SNKRDUNK "N時間前" records)
+  isRelativeTime?: boolean;    // true if this record came from "N時間前" API response
+  estimatedSoldAt?: Date;      // Precise estimated timestamp (crawlTime - N hours)
 }) {
   const db = await getDb();
   if (!db) return null;
@@ -1163,6 +1166,37 @@ export async function addPriceHistory(data: {
       .limit(1);
     if (existing.length > 0) {
       // Already exists — skip insert to avoid duplicate
+      return null;
+    }
+  }
+
+  // Dynamic time-window dedup for relative-time records ("N時間前")
+  // These records have an estimated soldAt that shifts each crawl, so we can't rely on
+  // the stable hash alone. Instead, check if a record with the same price+grade+sourcePosition
+  // already exists within ±1.5 hours of the estimated timestamp.
+  if (data.source === 'snkrdunk' && data.isRelativeTime && data.estimatedSoldAt && data.jpyPrice != null) {
+    const toleranceMs = 1.5 * 60 * 60 * 1000; // ±1.5 hours
+    const windowStart = new Date(data.estimatedSoldAt.getTime() - toleranceMs);
+    const windowEnd = new Date(data.estimatedSoldAt.getTime() + toleranceMs);
+    const gradeVal = data.grade ?? null;
+    const existingInWindow = await db
+      .select({ id: priceHistory.id })
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.cardId, data.cardId),
+          eq(priceHistory.source, data.source),
+          eq(priceHistory.jpyPrice, data.jpyPrice),
+          eq(priceHistory.sourcePosition, sourcePosition),
+          gradeVal !== null ? eq(priceHistory.grade, gradeVal) : isNull(priceHistory.grade),
+          gte(priceHistory.soldAt, windowStart),
+          lte(priceHistory.soldAt, windowEnd)
+        )
+      )
+      .limit(1);
+    if (existingInWindow.length > 0) {
+      // Same transaction already captured in a previous crawl — skip
+      console.log(`[RelativeTimeDedup] Skipping duplicate: cardId=${data.cardId} jpyPrice=${data.jpyPrice} grade=${gradeVal} pos=${sourcePosition} est=${data.estimatedSoldAt.toISOString()}`);
       return null;
     }
   }

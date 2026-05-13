@@ -1,0 +1,13 @@
+{
+  "query": "\nSELECT COUNT(*) as duplicate_count\nFROM (\n  SELECT \n    p1.id as id1,\n    p2.id as id2\n  FROM priceHistory p1\n  JOIN priceHistory p2 ON (\n    p1.id < p2.id\n    AND p1.cardId = p2.cardId\n    AND p1.source = p2.source\n    AND p1.source = 'snkrdunk'\n    AND p1.jpyPrice = p2.jpyPrice\n    AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n    AND p1.sourcePosition = p2.sourcePosition\n    AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n  )\n) as dupes;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT COUNT(*) as duplicate_count\nFROM (\n  SELECT \n    p1.id as id1,\n    p2.id as id2\n  FROM priceHistory p1\n  JOIN priceHistory p2 ON (\n    p1.id < p2.id\n    AND p1.cardId = p2.cardId\n    AND p1.source = p2.source\n    AND p1.source = 'snkrdunk'\n    AND p1.jpyPrice = p2.jpyPrice\n    AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n    AND p1.sourcePosition = p2.sourcePosition\n    AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n  )\n) as dupes;\n",
+  "rows": [
+    {
+      "duplicate_count": "227757"
+    }
+  ],
+  "messages": [],
+  "stdout": "duplicate_count\n227757\n",
+  "stderr": "",
+  "execution_time_ms": 6628
+}

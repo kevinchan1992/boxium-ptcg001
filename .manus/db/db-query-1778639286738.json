@@ -1,0 +1,26 @@
+{
+  "query": "\nSELECT \n  CASE \n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) = 0 THEN '0小時（同一時間）'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 1 THEN '1小時內'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 6 THEN '1-6小時'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 24 THEN '6-24小時（跨天）'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 48 THEN '24-48小時（2天）'\n    ELSE '48-72小時（3天）'\n  END as time_diff_bucket,\n  COUNT(*) as pair_count\nFROM priceHistory p1\nJOIN priceHistory p2 ON (\n  p1.id < p2.id\n  AND p1.cardId = p2.cardId\n  AND p1.source = 'snkrdunk'\n  AND p1.jpyPrice = p2.jpyPrice\n  AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n  AND p1.sourcePosition = p2.sourcePosition\n  AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n)\nGROUP BY time_diff_bucket\nORDER BY pair_count DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  CASE \n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) = 0 THEN '0小時（同一時間）'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 1 THEN '1小時內'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 6 THEN '1-6小時'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 24 THEN '6-24小時（跨天）'\n    WHEN ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 48 THEN '24-48小時（2天）'\n    ELSE '48-72小時（3天）'\n  END as time_diff_bucket,\n  COUNT(*) as pair_count\nFROM priceHistory p1\nJOIN priceHistory p2 ON (\n  p1.id < p2.id\n  AND p1.cardId = p2.cardId\n  AND p1.source = 'snkrdunk'\n  AND p1.jpyPrice = p2.jpyPrice\n  AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n  AND p1.sourcePosition = p2.sourcePosition\n  AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n)\nGROUP BY time_diff_bucket\nORDER BY pair_count DESC;\n",
+  "rows": [
+    {
+      "time_diff_bucket": "6-24小時（跨天）",
+      "pair_count": "109256"
+    },
+    {
+      "time_diff_bucket": "24-48小時（2天）",
+      "pair_count": "63850"
+    },
+    {
+      "time_diff_bucket": "48-72小時（3天）",
+      "pair_count": "52475"
+    },
+    {
+      "time_diff_bucket": "0小時（同一時間）",
+      "pair_count": "2176"
+    }
+  ],
+  "messages": [],
+  "stdout": "time_diff_bucket\tpair_count\n6-24小時（跨天）\t109256\n24-48小時（2天）\t63850\n48-72小時（3天）\t52475\n0小時（同一時間）\t2176\n",
+  "stderr": "",
+  "execution_time_ms": 5196
+}

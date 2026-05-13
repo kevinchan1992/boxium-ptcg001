@@ -1,0 +1,120 @@
+{
+  "query": "\nSELECT \n  p1.id, p2.id as id2,\n  p1.cardId, p1.jpyPrice, p1.grade, p1.sourcePosition,\n  p1.soldAt as soldAt1, p2.soldAt as soldAt2,\n  ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) as hour_diff\nFROM priceHistory p1\nJOIN priceHistory p2 ON (\n  p1.id < p2.id\n  AND p1.cardId = p2.cardId\n  AND p1.source = 'snkrdunk'\n  AND p2.source = 'snkrdunk'\n  AND p1.jpyPrice = p2.jpyPrice\n  AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n  AND p1.sourcePosition = p2.sourcePosition\n  AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n)\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  p1.id, p2.id as id2,\n  p1.cardId, p1.jpyPrice, p1.grade, p1.sourcePosition,\n  p1.soldAt as soldAt1, p2.soldAt as soldAt2,\n  ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) as hour_diff\nFROM priceHistory p1\nJOIN priceHistory p2 ON (\n  p1.id < p2.id\n  AND p1.cardId = p2.cardId\n  AND p1.source = 'snkrdunk'\n  AND p2.source = 'snkrdunk'\n  AND p1.jpyPrice = p2.jpyPrice\n  AND COALESCE(p1.grade, '') = COALESCE(p2.grade, '')\n  AND p1.sourcePosition = p2.sourcePosition\n  AND ABS(TIMESTAMPDIFF(HOUR, p1.soldAt, p2.soldAt)) <= 72\n)\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "53507888",
+      "id2": "64773540",
+      "cardId": "1293591",
+      "jpyPrice": "11000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-18 00:00:00",
+      "soldAt2": "2026-01-16 00:00:00",
+      "hour_diff": "48"
+    },
+    {
+      "id": "53507882",
+      "id2": "64773529",
+      "cardId": "1293591",
+      "jpyPrice": "17000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-22 00:00:00",
+      "soldAt2": "2026-01-21 00:00:00",
+      "hour_diff": "24"
+    },
+    {
+      "id": "53507881",
+      "id2": "64773533",
+      "cardId": "1293591",
+      "jpyPrice": "15000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-23 00:00:00",
+      "soldAt2": "2026-01-20 00:00:00",
+      "hour_diff": "72"
+    },
+    {
+      "id": "64773524",
+      "id2": "64773525",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-28 00:00:00",
+      "soldAt2": "2026-01-26 00:00:00",
+      "hour_diff": "48"
+    },
+    {
+      "id": "64773520",
+      "id2": "64773524",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-30 00:00:00",
+      "soldAt2": "2026-01-28 00:00:00",
+      "hour_diff": "48"
+    },
+    {
+      "id": "64773519",
+      "id2": "64773520",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-31 00:00:00",
+      "soldAt2": "2026-01-30 00:00:00",
+      "hour_diff": "24"
+    },
+    {
+      "id": "64773519",
+      "id2": "64773524",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-01-31 00:00:00",
+      "soldAt2": "2026-01-28 00:00:00",
+      "hour_diff": "72"
+    },
+    {
+      "id": "64773517",
+      "id2": "64773519",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-02-01 00:00:00",
+      "soldAt2": "2026-01-31 00:00:00",
+      "hour_diff": "24"
+    },
+    {
+      "id": "64773517",
+      "id2": "64773520",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "0",
+      "soldAt1": "2026-02-01 00:00:00",
+      "soldAt2": "2026-01-30 00:00:00",
+      "hour_diff": "48"
+    },
+    {
+      "id": "64773518",
+      "id2": "64773521",
+      "cardId": "1293591",
+      "jpyPrice": "13000",
+      "grade": "A",
+      "sourcePosition": "1",
+      "soldAt1": "2026-02-01 00:00:00",
+      "soldAt2": "2026-01-30 00:00:00",
+      "hour_diff": "48"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid2\tcardId\tjpyPrice\tgrade\tsourcePosition\tsoldAt1\tsoldAt2\thour_diff\n53507888\t64773540\t1293591\t11000\tA\t0\t2026-01-18 00:00:00\t2026-01-16 00:00:00\t48\n53507882\t64773529\t1293591\t17000\tA\t0\t2026-01-22 00:00:00\t2026-01-21 00:00:00\t24\n53507881\t64773533\t1293591\t15000\tA\t0\t2026-01-23 00:00:00\t2026-01-20 00:00:00\t72\n64773524\t64773525\t1293591\t13000\tA\t0\t2026-01-28 00:00:00\t2026-01-26 00:00:00\t48\n64773520\t64773524\t1293591\t13000\tA\t0\t2026-01-30 00:00:00\t2026-01-28 00:00:00\t48\n64773519\t64773520\t1293591\t13000\tA\t0\t2026-01-31 00:00:00\t2026-01-30 00:00:00\t24\n64773519\t64773524\t1293591\t13000\tA\t0\t2026-01-31 00:00:00\t2026-01-28 00:00:00\t72\n64773517\t64773519\t1293591\t13000\tA\t0\t2026-02-01 00:00:00\t2026-01-31 00:00:00\t24\n64773517\t64773520\t1293591\t13000\tA\t0\t2026-02-01 00:00:00\t2026-01-30 00:00:00\t48\n64773518\t64773521\t1293591\t13000\tA\t1\t2026-02-01 00:00:00\t2026-01-30 00:00:00\t48\n",
+  "stderr": "",
+  "execution_time_ms": 4444
+}

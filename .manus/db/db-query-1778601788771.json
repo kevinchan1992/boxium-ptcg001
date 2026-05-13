@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, sourceUrl, sourceIdentifier FROM dataSources WHERE cardId = 1380741 AND source = 'snkrdunk' LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, sourceUrl, sourceIdentifier FROM dataSources WHERE cardId = 1380741 AND source = 'snkrdunk' LIMIT 3;",
+  "rows": [
+    {
+      "id": "1385437",
+      "sourceUrl": "https://snkrdunk.com/apparels/744848",
+      "sourceIdentifier": "744848"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsourceUrl\tsourceIdentifier\n1385437\thttps://snkrdunk.com/apparels/744848\t744848\n",
+  "stderr": "",
+  "execution_time_ms": 1838
+}

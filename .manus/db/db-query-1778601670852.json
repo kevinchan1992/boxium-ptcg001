@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, name FROM cards WHERE name LIKE '%Luffy%' AND name LIKE '%OP05%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name FROM cards WHERE name LIKE '%Luffy%' AND name LIKE '%OP05%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1290573",
+      "name": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP05-119](Booster Pack \"Awakening Of The New Era\")"
+    },
+    {
+      "id": "1290605",
+      "name": "Monkey D Luffy SEC [OP05-119] (Booster Pack Awakening of the New Era)"
+    },
+    {
+      "id": "1290606",
+      "name": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)"
+    },
+    {
+      "id": "1290658",
+      "name": "Monkey D Luffy L [OP05-060] (Booster Pack Awakening of the New Era)"
+    },
+    {
+      "id": "1291999",
+      "name": "Monkey.D.Luffy SEC [OP05-119] [EN](Booster Pack \"Awakening Of The New Era\")"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1290573\tMonkey.D.Luffy SEC-SP (Comic Parallel) [OP05-119](Booster Pack \"Awakening Of The New Era\")\n1290605\tMonkey D Luffy SEC [OP05-119] (Booster Pack Awakening of the New Era)\n1290606\tMonkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)\n1290658\tMonkey D Luffy L [OP05-060] (Booster Pack Awakening of the New Era)\n1291999\tMonkey.D.Luffy SEC [OP05-119] [EN](Booster Pack \"Awakening Of The New Era\")\n",
+  "stderr": "",
+  "execution_time_ms": 1856
+}

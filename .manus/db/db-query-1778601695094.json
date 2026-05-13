@@ -1,0 +1,160 @@
+{
+  "query": "SELECT id, soldAt, grade, jpyPrice, price, sourcePosition, recordHash, createdAt FROM priceHistory WHERE cardId = 1380741 AND grade = 'PSA 10' AND source = 'snkrdunk' ORDER BY soldAt DESC, sourcePosition ASC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, soldAt, grade, jpyPrice, price, sourcePosition, recordHash, createdAt FROM priceHistory WHERE cardId = 1380741 AND grade = 'PSA 10' AND source = 'snkrdunk' ORDER BY soldAt DESC, sourcePosition ASC LIMIT 15;",
+  "rows": [
+    {
+      "id": "64199113",
+      "soldAt": "2026-05-13 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "0",
+      "recordHash": "54924420d80678ebee506d2cee76a5bad4ffc3c9d5c981c5328483872648b0ea",
+      "createdAt": "2026-05-12 15:55:17"
+    },
+    {
+      "id": "64199114",
+      "soldAt": "2026-05-13 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "1",
+      "recordHash": "18367bdff527267b3e233b926bc5cf94bff22137135fd5b5d9bba31e58e347b0",
+      "createdAt": "2026-05-12 15:55:17"
+    },
+    {
+      "id": "63438213",
+      "soldAt": "2026-05-12 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "0",
+      "recordHash": "f42ff88d87f7f92d651e48b9888d58b69ce00a7cd24a8f30e190cd74b4e66bcb",
+      "createdAt": "2026-05-12 05:55:29"
+    },
+    {
+      "id": "63438214",
+      "soldAt": "2026-05-12 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "1",
+      "recordHash": "9520bab599969a41790cf725b111cd8f8c160a657c40bf649bbaf2f443a2797c",
+      "createdAt": "2026-05-12 05:55:29"
+    },
+    {
+      "id": "60968392",
+      "soldAt": "2026-05-10 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "55000",
+      "price": "3025.00",
+      "sourcePosition": "0",
+      "recordHash": "8b55cdfd37509147e71fb9af1f7084337b13c1cc04c4a15a18b7c7c42d56c5d3",
+      "createdAt": "2026-05-09 23:52:57"
+    },
+    {
+      "id": "60968394",
+      "soldAt": "2026-05-10 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "38000",
+      "price": "2090.00",
+      "sourcePosition": "0",
+      "recordHash": "9234a596403a98dd662480b88fb4d2d80dec6ea37e83aa49c66c71d72a362cab",
+      "createdAt": "2026-05-09 23:52:57"
+    },
+    {
+      "id": "60968393",
+      "soldAt": "2026-05-10 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "0",
+      "recordHash": "91fa525867b1e7a711484a0f820475bdc886d49c0847fc51e16dac74f2ffe6e0",
+      "createdAt": "2026-05-09 23:52:57"
+    },
+    {
+      "id": "60218648",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "32000",
+      "price": "1760.00",
+      "sourcePosition": "0",
+      "recordHash": "16805cc34b07347502e0690105f916551989e7ee5d8be3052756fa057a7df5ab",
+      "createdAt": "2026-05-08 22:53:34"
+    },
+    {
+      "id": "60660613",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "38000",
+      "price": "2090.00",
+      "sourcePosition": "0",
+      "recordHash": "556f823c37d0551fac1c5b22d6a30fbabbbf0f99f19bb4318cc9000a3193aebf",
+      "createdAt": "2026-05-09 11:24:59"
+    },
+    {
+      "id": "60660612",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "54000",
+      "price": "2970.00",
+      "sourcePosition": "0",
+      "recordHash": "553a50d1424f601895783e1fac17363caaa788bc80d37dd1cbf21b3afcbc6ca5",
+      "createdAt": "2026-05-09 11:24:59"
+    },
+    {
+      "id": "60660611",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "55000",
+      "price": "3025.00",
+      "sourcePosition": "0",
+      "recordHash": "d249b2c66fc93fe003d96dad9e2dcdf9fa3bea2ec7584efebe6247296b5beede",
+      "createdAt": "2026-05-09 11:24:59"
+    },
+    {
+      "id": "60218649",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "31000",
+      "price": "1705.00",
+      "sourcePosition": "0",
+      "recordHash": "0ceea3d1312ccb7cde8b88e48083a32aa30ac05c2fe2c27d25141d4a028623be",
+      "createdAt": "2026-05-08 22:53:34"
+    },
+    {
+      "id": "60218647",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "33000",
+      "price": "1815.00",
+      "sourcePosition": "0",
+      "recordHash": "e3c8997447553374bc68649777fdb2e55a7c010ba21683d785be3fa8cfe7f085",
+      "createdAt": "2026-05-08 22:53:34"
+    },
+    {
+      "id": "60218646",
+      "soldAt": "2026-05-09 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "33333",
+      "price": "1833.32",
+      "sourcePosition": "0",
+      "recordHash": "1fd56a6fc92b5157e3dcbdbeb29ccd18cee2b90c00504acbd35cdb92c9aa85b3",
+      "createdAt": "2026-05-08 22:53:34"
+    },
+    {
+      "id": "59419429",
+      "soldAt": "2026-05-08 00:00:00",
+      "grade": "PSA 10",
+      "jpyPrice": "31000",
+      "price": "1705.00",
+      "sourcePosition": "0",
+      "recordHash": "66388913e762c91ab32078a74d8ba22adbfd5e38ea25eb1c5b1d5fe46ed163b5",
+      "createdAt": "2026-05-08 09:29:41"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsoldAt\tgrade\tjpyPrice\tprice\tsourcePosition\trecordHash\tcreatedAt\n64199113\t2026-05-13 00:00:00\tPSA 10\t54000\t2970.00\t0\t54924420d80678ebee506d2cee76a5bad4ffc3c9d5c981c5328483872648b0ea\t2026-05-12 15:55:17\n64199114\t2026-05-13 00:00:00\tPSA 10\t54000\t2970.00\t1\t18367bdff527267b3e233b926bc5cf94bff22137135fd5b5d9bba31e58e347b0\t2026-05-12 15:55:17\n63438213\t2026-05-12 00:00:00\tPSA 10\t54000\t2970.00\t0\tf42ff88d87f7f92d651e48b9888d58b69ce00a7cd24a8f30e190cd74b4e66bcb\t2026-05-12 05:55:29\n63438214\t2026-05-12 00:00:00\tPSA 10\t54000\t2970.00\t1\t9520bab599969a41790cf725b111cd8f8c160a657c40bf649bbaf2f443a2797c\t2026-05-12 05:55:29\n60968392\t2026-05-10 00:00:00\tPSA 10\t55000\t3025.00\t0\t8b55cdfd37509147e71fb9af1f7084337b13c1cc04c4a15a18b7c7c42d56c5d3\t2026-05-09 23:52:57\n60968394\t2026-05-10 00:00:00\tPSA 10\t38000\t2090.00\t0\t9234a596403a98dd662480b88fb4d2d80dec6ea37e83aa49c66c71d72a362cab\t2026-05-09 23:52:57\n60968393\t2026-05-10 00:00:00\tPSA 10\t54000\t2970.00\t0\t91fa525867b1e7a711484a0f820475bdc886d49c0847fc51e16dac74f2ffe6e0\t2026-05-09 23:52:57\n60218648\t2026-05-09 00:00:00\tPSA 10\t32000\t1760.00\t0\t16805cc34b07347502e0690105f916551989e7ee5d8be3052756fa057a7df5ab\t2026-05-08 22:53:34\n60660613\t2026-05-09 00:00:00\tPSA 10\t38000\t2090.00\t0\t556f823c37d0551fac1c5b22d6a30fbabbbf0f99f19bb4318cc9000a3193aebf\t2026-05-09 11:24:59\n60660612\t2026-05-09 00:00:00\tPSA 10\t54000\t2970.00\t0\t553a50d1424f601895783e1fac17363caaa788bc80d37dd1cbf21b3afcbc6ca5\t2026-05-09 11:24:59\n60660611\t2026-05-09 00:00:00\tPSA 10\t55000\t3025.00\t0\td249b2c66fc93fe003d96dad9e2dcdf9fa3bea2ec7584efebe6247296b5beede\t2026-05-09 11:24:59\n60218649\t2026-05-09 00:00:00\tPSA 10\t31000\t1705.00\t0\t0ceea3d1312ccb7cde8b88e48083a32aa30ac05c2fe2c27d25141d4a028623be\t2026-05-08 22:53:34\n60218647\t2026-05-09 00:00:00\tPSA 10\t33000\t1815.00\t0\te3c8997447553374bc68649777fdb2e55a7c010ba21683d785be3fa8cfe7f085\t2026-05-08 22:53:34\n60218646\t2026-05-09 00:00:00\tPSA 10\t33333\t1833.32\t0\t1fd56a6fc92b5157e3dcbdbeb29ccd18cee2b90c00504acbd35cdb92c9aa85b3\t2026-05-08 22:53:34\n59419429\t2026-05-08 00:00:00\tPSA 10\t31000\t1705.00\t0\t66388913e762c91ab32078a74d8ba22adbfd5e38ea25eb1c5b1d5fe46ed163b5\t2026-05-08 09:29:41\n",
+  "stderr": "",
+  "execution_time_ms": 1832
+}

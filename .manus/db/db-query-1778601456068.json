@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name FROM cards WHERE name LIKE '%Galarian Moltres%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, name FROM cards WHERE name LIKE '%Galarian Moltres%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "545488",
+      "name": "Galarian Moltres V SR[S5a 077/070](Enhanced Expansion Pack\"Peerless Fighters\")"
+    },
+    {
+      "id": "545562",
+      "name": "Galarian Moltres V CSR[S8b 242/184](High Class Pack\"VMAX Climax Box\")"
+    },
+    {
+      "id": "720694",
+      "name": "Galarian Moltres P [SWSH125](Sword & Shield \"Promotional Card\")"
+    },
+    {
+      "id": "751787",
+      "name": "Galarian Moltres R[s7D 026/067](Expansion Pack \"Skyscraping Perfect\")"
+    },
+    {
+      "id": "780464",
+      "name": "Galarian Moltres V [SI 254/414](Sword & Shield \"Start Deck 100\")"
+    },
+    {
+      "id": "781599",
+      "name": "Galarian Moltres V[SI 422/414](Start Deck 100)"
+    },
+    {
+      "id": "781636",
+      "name": "Galarian Moltres V SR: SA[S5a 078/070](Enhanced Expansion Pack \"Peerless Fighters\")"
+    },
+    {
+      "id": "812948",
+      "name": "Galarian Moltres AR[s12a 190/172](High Class Pack \"VSTAR  Universe\")"
+    },
+    {
+      "id": "813096",
+      "name": "Galarian Moltres V RR[s12a 080/172](High Class Pack \"VSTAR Universe\")"
+    },
+    {
+      "id": "814524",
+      "name": "Galarian Moltres V RR[s8b 096/184](High Class Pack \"VMAX Climax\")"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n545488\tGalarian Moltres V SR[S5a 077/070](Enhanced Expansion Pack\"Peerless Fighters\")\n545562\tGalarian Moltres V CSR[S8b 242/184](High Class Pack\"VMAX Climax Box\")\n720694\tGalarian Moltres P [SWSH125](Sword & Shield \"Promotional Card\")\n751787\tGalarian Moltres R[s7D 026/067](Expansion Pack \"Skyscraping Perfect\")\n780464\tGalarian Moltres V [SI 254/414](Sword & Shield \"Start Deck 100\")\n781599\tGalarian Moltres V[SI 422/414](Start Deck 100)\n781636\tGalarian Moltres V SR: SA[S5a 078/070](Enhanced Expansion Pack \"Peerless Fighters\")\n812948\tGalarian Moltres AR[s12a 190/172](High Class Pack \"VSTAR  Universe\")\n813096\tGalarian Moltres V RR[s12a 080/172](High Class Pack \"VSTAR Universe\")\n814524\tGalarian Moltres V RR[s8b 096/184](High Class Pack \"VMAX Climax\")\n",
+  "stderr": "",
+  "execution_time_ms": 1886
+}

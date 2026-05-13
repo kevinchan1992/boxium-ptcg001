@@ -398,6 +398,18 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
       if (database) {
         const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
         
+        // ─── Skip relative-time records ("N時間前") in batch update ────────────
+        // Batch update runs twice daily (10:00 and 22:00 HKT). Records with relative
+        // timestamps ("N時間前") have unstable soldAt values that shift with each crawl,
+        // making stable hash-based dedup impossible. These records will be captured in
+        // the next batch run (≤12h later) once SNKRDUNK converts them to absolute dates.
+        // This avoids duplicate records without sacrificing meaningful data freshness.
+        const relativeTimeSkipped = priceHistory.filter((e: any) => e.isRelativeTime).length;
+        const absolutePriceHistory = priceHistory.filter((e: any) => !e.isRelativeTime);
+        if (relativeTimeSkipped > 0) {
+          console.log(`[BatchUpdate] Skipped ${relativeTimeSkipped} relative-time records (will be captured in next run)`);
+        }
+        
         // Assign sourcePosition using PER-GROUP relative position (not global index).
         // Key insight: sourcePosition must be stable across scrape runs.
         // Using global index (idx) causes duplicates because when new records are added
@@ -406,7 +418,7 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
         // so the same transaction always gets the same sourcePosition regardless of
         // how many new records have been added since the last scrape.
         const groupCounters = new Map<string, number>();
-        const records = priceHistory.map((entry) => {
+        const records = absolutePriceHistory.map((entry: any) => {
           const soldAtStr = entry.soldAt ? entry.soldAt.toISOString().slice(0, 10) : 'unknown';
           const gradeNorm = productType === 'single_card' ? (entry.normalisedGrade ?? null) : null;
           const jpyPrice = entry.jpyPrice ?? entry.price;
@@ -437,6 +449,11 @@ async function processSingleProduct(product: ProductInfo): Promise<ProcessResult
             soldAt: entry.soldAt,
             listingUrl: product.sourceUrl,
             recordHash,
+            // Pass relative-time dedup fields for dynamic time-window dedup in addPriceHistory
+            // Note: batch update uses direct DB insert (not addPriceHistory), so these are
+            // included here for completeness but not actively used in the batch path.
+            isRelativeTime: (entry as any).isRelativeTime,
+            estimatedSoldAt: (entry as any).estimatedSoldAt,
           };
         });
         

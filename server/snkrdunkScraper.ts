@@ -123,6 +123,64 @@ export async function scrapeSnkrdunkPage(url: string, productType: "single_card"
 }
 
 /**
+ * Parse Japanese date string to Date object, returning both a stable soldAt (date-only)
+ * and an estimatedSoldAt (precise timestamp for relative-time records).
+ *
+ * For absolute dates ("YYYY/MM/DD") and day-relative ("N日前"):
+ *   soldAt = UTC midnight of that date (stable, timezone-independent)
+ *   estimatedSoldAt = same as soldAt
+ *
+ * For hour-relative ("N時間前"):
+ *   soldAt = UTC midnight of the estimated JST date (for display/grouping)
+ *   estimatedSoldAt = crawlTime - N hours (precise timestamp, used for dynamic dedup window)
+ *
+ * @param dateStr  Raw date string from SNKRDUNK API
+ * @param crawlTime  The moment this batch fetch started (captured once per fetchPriceHistoryFromApi call)
+ */
+function parseJapaneseDateWithMeta(dateStr: string, crawlTime: Date): { soldAt: Date; estimatedSoldAt: Date } {
+  // Format 1: YYYY/MM/DD (absolute date)
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    return { soldAt: d, estimatedSoldAt: d };
+  }
+
+  // Format 2: "N日前" (N days ago)
+  const daysAgoMatch = dateStr.match(/(\d+)日前/);
+  if (daysAgoMatch) {
+    const daysAgo = parseInt(daysAgoMatch[1], 10);
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const crawlJst = new Date(crawlTime.getTime() + jstOffsetMs);
+    const targetJst = new Date(crawlJst.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const d = new Date(Date.UTC(targetJst.getUTCFullYear(), targetJst.getUTCMonth(), targetJst.getUTCDate(), 0, 0, 0, 0));
+    return { soldAt: d, estimatedSoldAt: d };
+  }
+
+  // Format 3: "N時間前" (N hours ago) — relative-time record
+  // estimatedSoldAt = precise timestamp (crawlTime - N hours)
+  // soldAt = UTC midnight of the estimated JST date (for display grouping)
+  const hoursAgoMatch = dateStr.match(/(\d+)時間前/);
+  if (hoursAgoMatch) {
+    const hoursAgo = parseInt(hoursAgoMatch[1], 10);
+    const estimatedSoldAt = new Date(crawlTime.getTime() - hoursAgo * 60 * 60 * 1000);
+    // Convert to JST date for the date-only soldAt
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const estimatedJst = new Date(estimatedSoldAt.getTime() + jstOffsetMs);
+    const soldAt = new Date(Date.UTC(estimatedJst.getUTCFullYear(), estimatedJst.getUTCMonth(), estimatedJst.getUTCDate(), 0, 0, 0, 0));
+    return { soldAt, estimatedSoldAt };
+  }
+
+  // Fallback: treat as today
+  const jstOffsetMs = 9 * 60 * 60 * 1000;
+  const crawlJst = new Date(crawlTime.getTime() + jstOffsetMs);
+  const d = new Date(Date.UTC(crawlJst.getUTCFullYear(), crawlJst.getUTCMonth(), crawlJst.getUTCDate(), 0, 0, 0, 0));
+  return { soldAt: d, estimatedSoldAt: d };
+}
+
+/**
  * Fetch price history from SNKRDUNK API
  * API endpoint: /v1/apparels/{id}/sales-history
  */
@@ -131,6 +189,8 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
   jpyPrice: number; // Same as price - explicit JPY value for deduplication
   currency: string;
   soldAt: Date;
+  isRelativeTime?: boolean; // true if date was "N時間前" (relative hours), needs dynamic dedup
+  estimatedSoldAt?: Date;   // Precise estimated timestamp for relative-time records
   grade?: string;
   quantity?: string;
 }>> {
@@ -138,11 +198,16 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
   const throwOnError = options?.throwOnError || false;
   const PER_PAGE = 100;
   const MAX_PAGES = 20; // Safety cap: max 2000 records per card
+  // Record crawl time ONCE at the start of this fetch, so all relative-time calculations
+  // within this batch use the same reference point (avoids drift across pages).
+  const crawlTime = new Date();
   const priceHistory: Array<{
     price: number;
     jpyPrice: number;
     currency: string;
     soldAt: Date;
+    isRelativeTime?: boolean;
+    estimatedSoldAt?: Date;
     grade?: string;
     quantity?: string;
   }> = [];
@@ -171,18 +236,24 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
 
       // Parse each record on this page
       for (const item of data.history) {
+        // Detect relative-time records ("N時間前") before parsing
+        const isRelativeTime = /\d+時間前/.test(item.date);
+        const { soldAt, estimatedSoldAt } = parseJapaneseDateWithMeta(item.date, crawlTime);
         const record: {
           price: number;
           jpyPrice: number;
           currency: string;
           soldAt: Date;
+          isRelativeTime?: boolean;
+          estimatedSoldAt?: Date;
           grade?: string;
           quantity?: string;
         } = {
           price: item.price,       // Original JPY price
           jpyPrice: item.price,    // Store JPY for stable deduplication (unaffected by exchange rate)
           currency: "JPY",
-          soldAt: parseJapaneseDate(item.date),
+          soldAt,
+          ...(isRelativeTime ? { isRelativeTime: true, estimatedSoldAt } : {}),
         };
         
         // For single cards: store grade from "condition" field (e.g., "PSA 10", "中古")
@@ -217,56 +288,9 @@ export async function fetchPriceHistoryFromApi(productId: string, productType: "
   }
 }
 
-/**
- * Parse Japanese date string to Date object
- * Examples: "2025/12/10" → Date object
- * 
- * IMPORTANT: Uses UTC midnight (Date.UTC) to ensure the same date string
- * always produces the EXACT same timestamp, regardless of server timezone
- * or when the scraping runs. This is critical for deduplication via UNIQUE INDEX.
- */
+/** @deprecated Use parseJapaneseDateWithMeta instead */
 function parseJapaneseDate(dateStr: string): Date {
-  // Format 1: YYYY/MM/DD (absolute date)
-  const parts = dateStr.split("/");
-  if (parts.length === 3) {
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-indexed
-    const day = parseInt(parts[2], 10);
-    // Use Date.UTC to get a stable, timezone-independent timestamp at midnight UTC
-    return new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
-  }
-  
-  // Format 2: "N日前" (N days ago) - e.g., "2日前", "3日前"
-  // SNKRDUNK uses this for very recent sales (within ~7 days)
-  // We calculate the actual date by subtracting N days from today (JST midnight = UTC-9 = UTC+9)
-  // Use JST (Japan Standard Time, UTC+9) since SNKRDUNK is a Japanese platform
-  const daysAgoMatch = dateStr.match(/(\d+)日前/);
-  if (daysAgoMatch) {
-    const daysAgo = parseInt(daysAgoMatch[1], 10);
-    // Get today in JST: UTC+9
-    const nowUtc = new Date();
-    const jstOffsetMs = 9 * 60 * 60 * 1000;
-    const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
-    // Calculate the target date in JST
-    const targetJst = new Date(nowJst.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-    // Store as UTC midnight of that JST date (consistent with absolute date format)
-    return new Date(Date.UTC(targetJst.getUTCFullYear(), targetJst.getUTCMonth(), targetJst.getUTCDate(), 0, 0, 0, 0));
-  }
-  
-  // Format 3: "N時間前" (N hours ago) - treat as today
-  const hoursAgoMatch = dateStr.match(/(\d+)時間前/);
-  if (hoursAgoMatch) {
-    const nowUtc = new Date();
-    const jstOffsetMs = 9 * 60 * 60 * 1000;
-    const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
-    return new Date(Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate(), 0, 0, 0, 0));
-  }
-  
-  // Fallback: return UTC midnight of today (JST)
-  const nowUtc = new Date();
-  const jstOffsetMs = 9 * 60 * 60 * 1000;
-  const nowJst = new Date(nowUtc.getTime() + jstOffsetMs);
-  return new Date(Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate(), 0, 0, 0, 0));
+  return parseJapaneseDateWithMeta(dateStr, new Date()).soldAt;
 }
 
 /**
@@ -297,6 +321,8 @@ export async function fetchPriceHistory(url: string, productType: "single_card" 
   jpyPrice: number;  // Same as price - explicit JPY value for deduplication
   currency: string;
   soldAt: Date;
+  isRelativeTime?: boolean;
+  estimatedSoldAt?: Date;
   grade?: string;
   quantity?: string;
 }>> {
