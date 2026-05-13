@@ -27,6 +27,8 @@ export function AdminDataSources() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [batchUpdateStatus, setBatchUpdateStatus] = useState<Record<number, 'pending' | 'updating' | 'success' | 'failed'>>({});
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<number | null>(null);
+  const [refreshResult, setRefreshResult] = useState<Record<number, { priceCount: number; timestamp: number } | null>>({});
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "pending" | "failed">("all");
@@ -74,12 +76,18 @@ export function AdminDataSources() {
   });
 
   const refreshDataSourceMutation = trpc.admin.refreshDataSource.useMutation({
-    onSuccess: () => {
-      toast.success("數據源已更新");
+    onSuccess: (data, variables) => {
+      const id = variables.dataSourceId;
+      setRefreshingId(null);
+      setRefreshResult(prev => ({ ...prev, [id]: { priceCount: data.priceCount ?? 0, timestamp: Date.now() } }));
+      toast.success(`爬取完成，共 ${data.priceCount ?? 0} 筆價格記錄`);
       utils.admin.getDataSources.invalidate();
+      // Auto-clear result indicator after 8 seconds
+      setTimeout(() => setRefreshResult(prev => ({ ...prev, [id]: null })), 8000);
     },
     onError: (error: any) => {
-      toast.error(`更新失敗: ${error.message}`);
+      setRefreshingId(null);
+      toast.error(`爬取失敗: ${error.message}`);
     },
   });
 
@@ -257,6 +265,8 @@ export function AdminDataSources() {
   };
 
   const handleRefresh = (dataSourceId: number) => {
+    setRefreshingId(dataSourceId);
+    setRefreshResult(prev => ({ ...prev, [dataSourceId]: null }));
     refreshDataSourceMutation.mutate({ dataSourceId });
   };
 
@@ -973,11 +983,31 @@ export function AdminDataSources() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleRefresh(source.id)}
-                        disabled={refreshDataSourceMutation.isPending}
-                        className="flex-1 sm:flex-none h-8 text-xs"
+                        disabled={refreshingId === source.id}
+                        className={`flex-1 sm:flex-none h-8 text-xs transition-all ${
+                          refreshingId === source.id
+                            ? 'border-blue-500/50 text-blue-400 bg-blue-500/10'
+                            : refreshResult[source.id]
+                            ? 'border-green-500/50 text-green-400 bg-green-500/10'
+                            : ''
+                        }`}
                       >
-                        <RefreshCw className="w-3 h-3 mr-1.5" />
-                        重新爬取
+                        {refreshingId === source.id ? (
+                          <>
+                            <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                            爬取中...
+                          </>
+                        ) : refreshResult[source.id] ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1.5" />
+                            {refreshResult[source.id]!.priceCount} 筆記錄
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-1.5" />
+                            重新爬取
+                          </>
+                        )}
                       </Button>
                       <span className="text-xs text-muted-foreground ml-auto">ID: {source.id}</span>
                     </div>
