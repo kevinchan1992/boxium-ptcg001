@@ -54,20 +54,21 @@ const config: CapacitorConfig = {
     },
     // Local Notifications (for scheduled price alerts)
     LocalNotifications: {
-      smallIcon: "ic_stat_icon_config_sample",
-      iconColor: "#FF6B2B",
-      sound: "beep.wav",
+      smallIcon: "ic_stat_notify", // Custom notification icon in assets/android/
+      iconColor: "#FEDD00", // BOXIUM brand yellow
     },
     // SplashScreen configuration
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 2500,
       launchAutoHide: true,
-      backgroundColor: "#000000",
+      backgroundColor: "#1212C8", // BOXIUM brand blue
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
+      iosSpinnerStyle: "small",
+      spinnerColor: "#FEDD00", // BOXIUM brand yellow
     },
   },
 };

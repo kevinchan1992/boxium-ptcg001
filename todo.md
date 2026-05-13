@@ -9064,3 +9064,26 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 建立 Capacitor 打包說明文件（README-mobile.md）
 - [x] 撰寫並通過 37 項單元測試（capacitor.integration.test.ts）
 - [x] 保存 checkpoint（version: a831b5ae）
+
+
+---
+
+## 📱 APP 圖示與啟動畫面
+
+- [x] 生成 1024×1024 主圖示（assets/icon.png）
+- [x] 生成 2732×2732 啟動畫面（assets/splash.png）
+- [x] 生成 13 個 iOS 圖示尺寸（assets/ios/）
+- [x] 生成 5 個 Android 密度 × 2 變體（assets/android/）
+- [x] 生成 Android 通知圖示（ic_stat_notify.png）
+- [x] 安裝 @capacitor/assets 工具
+- [x] 更新 capacitor.config.ts SplashScreen 品牌色（#1212C8）
+- [x] pnpm build 成功（dist/public/index.html 確認存在）
+
+## 📱 Hello Boxium 驗證（需在 macOS 執行）
+
+- [ ] 在 macOS 執行 npx cap add ios && npx cap add android
+- [ ] 執行 npx cap sync 同步代碼
+- [ ] 執行 npx capacitor-assets generate 生成所有圖示
+- [ ] 在 Xcode 模擬器確認 Hello Boxium 顯示正常
+- [ ] 設置 Firebase 項目並下載 google-services.json
+- [ ] 在 Xcode 設置 Bundle ID 和 Push Notifications capability
