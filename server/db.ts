@@ -1046,12 +1046,13 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
 
   if (matchingProducts.length === 0) return { products: [], total: 0 };
 
-  // Get latest price for each sealed product
+  // Get recent prices for each sealed product (up to 10 per product for weighted avg)
   const productIds = matchingProducts.map(p => p.id);
-  const latestPrices = await db
+  const recentPrices = await db
     .select({
       cardId: priceHistory.cardId,
       price: priceHistory.price,
+      quantity: priceHistory.quantity,
       soldAt: priceHistory.soldAt,
     })
     .from(priceHistory)
@@ -1064,11 +1065,38 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
     )
     .orderBy(desc(priceHistory.soldAt));
 
-  // Create price map (productId -> latest price)
+  // Helper: parse quantity string to number (e.g. "5盒" → 5, "1" → 1)
+  const parseQtyForSearch = (q: string | null | undefined): number => {
+    if (!q) return 1;
+    const n = parseInt(q.replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) || n <= 0 ? 1 : n;
+  };
+
+  // Group by productId and compute time-weighted average unit price (14-day half-life, latest 10 records)
+  // This matches the reference price calculation on the sealed product detail page.
   const priceMap = new Map<number, number>();
-  for (const price of latestPrices) {
-    if (!priceMap.has(price.cardId)) {
-      priceMap.set(price.cardId, Number(price.price));
+  const recordsByProduct = new Map<number, typeof recentPrices>();
+  for (const row of recentPrices) {
+    if (!recordsByProduct.has(row.cardId)) recordsByProduct.set(row.cardId, []);
+    recordsByProduct.get(row.cardId)!.push(row);
+  }
+  const now = new Date();
+  for (const [productId, records] of recordsByProduct.entries()) {
+    const top10 = records.slice(0, 10);
+    let weightedSum = 0;
+    let totalWeight = 0;
+    for (const r of top10) {
+      const unitPrice = Number(r.price) / parseQtyForSearch(r.quantity);
+      if (isNaN(unitPrice) || unitPrice <= 0) continue;
+      const daysAgo = r.soldAt
+        ? (now.getTime() - new Date(r.soldAt).getTime()) / (1000 * 60 * 60 * 24)
+        : 30;
+      const w = Math.pow(2, -daysAgo / 14); // 14-day half-life
+      weightedSum += unitPrice * w;
+      totalWeight += w;
+    }
+    if (totalWeight > 0) {
+      priceMap.set(productId, weightedSum / totalWeight);
     }
   }
 
