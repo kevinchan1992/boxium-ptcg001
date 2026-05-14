@@ -29,6 +29,9 @@ import { cardInventoryRouter } from "./routers/cardInventory";
 import { contactRouter } from "./routers/contact";
 import { mobileRouter } from "./routers/mobile";
 
+// In-memory cache for getStats (avoids expensive COUNT(*) on large tables)
+let statsCache: { data: { totalCards: number; totalPriceRecords: number }; fetchedAt: number } | null = null;
+
 export const appRouter = router({
   system: systemRouter,
 
@@ -766,16 +769,22 @@ export const appRouter = router({
     getStats: publicProcedure
       .query(async () => {
         try {
+          // In-memory cache: refresh at most once every 5 minutes to avoid expensive COUNT(*) on large tables
+          const now = Date.now();
+          if (statsCache && now - statsCache.fetchedAt < 5 * 60 * 1000) {
+            return statsCache.data;
+          }
           const [totalCards, totalPriceRecords] = await Promise.all([
             db.getTotalCardCount(),
             db.getTotalPriceRecordCount(),
           ]);
-          return {
-            totalCards,
-            totalPriceRecords,
-          };
+          const data = { totalCards, totalPriceRecords };
+          statsCache = { data, fetchedAt: now };
+          return data;
         } catch (error: any) {
           console.error("[getStats] Error:", error);
+          // Return stale cache on error if available
+          if (statsCache) return statsCache.data;
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to get stats: ${error.message}`,

@@ -620,7 +620,9 @@ export const trendingCardsCache = mysqlTable("trendingCardsCache", {
   currentPrice: decimal("currentPrice", { precision: 10, scale: 2 }).notNull(), // Current price
   calculatedAt: timestamp("calculatedAt").notNull(), // When this was calculated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  cardIdIdx: index("tcc_cardId_idx").on(table.cardId),
+}));
 
 export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
 export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
@@ -820,6 +822,10 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   listingModeIdx: index("ml_listingMode_idx").on(table.listingMode),
   auctionStatusIdx: index("ml_auctionStatus_idx").on(table.auctionStatus),
   auctionEndAtIdx: index("ml_auctionEndAt_idx").on(table.auctionEndAt),
+  // Composite index for homepage/marketplace listing queries: status + listingMode + createdAt
+  statusListingModeCreatedAtIdx: index("ml_status_listingMode_createdAt_idx").on(table.status, table.listingMode, table.createdAt),
+  // Composite index for tcgSeries filter queries
+  statusTcgSeriesCreatedAtIdx: index("ml_status_tcgSeries_createdAt_idx").on(table.status, table.tcgSeries, table.createdAt),
 }));
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
 export type InsertMarketplaceListing = typeof marketplaceListings.$inferInsert;
