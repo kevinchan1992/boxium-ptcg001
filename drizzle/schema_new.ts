@@ -100,6 +100,8 @@ export const cards = mysqlTable("cards", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   gameIdIdx: index("idx_cards_gameId").on(table.gameId),
+  nameIdx: index("cards_name_idx").on(table.name),
+  nameJaIdx: index("cards_nameJa_idx").on(table.nameJa),
 }));
 
 export type Card = typeof cards.$inferSelect;

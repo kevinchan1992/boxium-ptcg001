@@ -24,6 +24,40 @@ export function invalidateTrendingCache() {
   _trendingCache.clear();
 }
 
+// In-memory cache for search results (TTL 5 minutes, max 200 entries)
+type SearchCacheEntry = { data: { cards: any[]; total: number }; fetchedAt: number };
+const _searchCache = new Map<string, SearchCacheEntry>();
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SEARCH_CACHE_MAX = 200;
+
+function getSearchCacheKey(query: string, limit: number, offset: number): string {
+  return `${query.toLowerCase().trim()}|${limit}|${offset}`;
+}
+
+function getFromSearchCache(key: string): { cards: any[]; total: number } | null {
+  const entry = _searchCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > SEARCH_CACHE_TTL_MS) {
+    _searchCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setSearchCache(key: string, data: { cards: any[]; total: number }): void {
+  // Evict oldest entry if at capacity
+  if (_searchCache.size >= SEARCH_CACHE_MAX) {
+    const oldestKey = _searchCache.keys().next().value;
+    if (oldestKey) _searchCache.delete(oldestKey);
+  }
+  _searchCache.set(key, { data, fetchedAt: Date.now() });
+}
+
+/** Invalidate search cache (call after card data changes) */
+export function invalidateSearchCache() {
+  _searchCache.clear();
+}
+
 /**
  * Hong Kong timezone offset for MySQL session.
  * Forces all TIMESTAMP/DATETIME operations to use UTC+8.
@@ -197,17 +231,24 @@ async function searchCardsByGrade(
 }
 
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
+  const trimmedQuery = query.trim();
+
+  // ── In-memory cache check ────────────────────────────────────────────────
+  const cacheKey = getSearchCacheKey(trimmedQuery, limit, offset);
+  const cachedResult = getFromSearchCache(cacheKey);
+  if (cachedResult) return cachedResult;
+
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
-
-  const trimmedQuery = query.trim();
 
   // ── Grade filter detection ────────────────────────────────────────────────
   // If the query contains a grade keyword (e.g. "bgs9.5", "psa10"), extract it
   // and filter results to cards that have listings of that grade in the cache.
   const { gradeFilter, cleanQuery } = parseGradeFilter(trimmedQuery);
   if (gradeFilter) {
-    return searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
+    const gradeResult = await searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
+    setSearchCache(cacheKey, gradeResult);
+    return gradeResult;
   }
 
   // ── Pure series code query (e.g. "SV10", "SM-P", "ST01", "SM", "ST") ───────
@@ -237,7 +278,9 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     }
     const sortedCards = matchingCards.sort((a, b) => (priceMap.get(b.id) || 0) - (priceMap.get(a.id) || 0));
     const cardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
-    return { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
+    const seriesResult = { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
+    setSearchCache(cacheKey, seriesResult);
+    return seriesResult;
   }
 
   // ── Multi-token fuzzy search ───────────────────────────────────────────────
@@ -319,10 +362,12 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     return priceB - priceA;
   });
 
-  return {
+  const finalResult = {
     cards: cardsWithScore.slice(offset, offset + limit),
     total: cardsWithScore.length,
   };
+  setSearchCache(cacheKey, finalResult);
+  return finalResult;
 }
 
 export async function getCardById(id: number) {
