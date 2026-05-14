@@ -58,6 +58,48 @@ export function invalidateSearchCache() {
   _searchCache.clear();
 }
 
+// In-memory cache for getPriceStatistics (TTL 5 minutes, keyed by cardId+source+grade)
+type PriceStatsEntry = {
+  data: { avgPrice: string; minPrice: string; maxPrice: string; count: number } | null;
+  fetchedAt: number;
+};
+const _priceStatsCache = new Map<string, PriceStatsEntry>();
+const PRICE_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const PRICE_STATS_CACHE_MAX = 500;
+
+function getPriceStatsCacheKey(cardId: number, source?: string, grade?: string): string {
+  return `${cardId}|${source ?? ''}|${grade ?? ''}`;
+}
+
+function getFromPriceStatsCache(key: string): PriceStatsEntry['data'] | undefined {
+  const entry = _priceStatsCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.fetchedAt > PRICE_STATS_CACHE_TTL_MS) {
+    _priceStatsCache.delete(key);
+    return undefined;
+  }
+  return entry.data;
+}
+
+function setPriceStatsCache(key: string, data: PriceStatsEntry['data']): void {
+  if (_priceStatsCache.size >= PRICE_STATS_CACHE_MAX) {
+    const oldestKey = _priceStatsCache.keys().next().value;
+    if (oldestKey) _priceStatsCache.delete(oldestKey);
+  }
+  _priceStatsCache.set(key, { data, fetchedAt: Date.now() });
+}
+
+/** Invalidate price statistics cache for a specific card (call after price data changes) */
+export function invalidatePriceStatsCache(cardId?: number) {
+  if (cardId === undefined) {
+    _priceStatsCache.clear();
+    return;
+  }
+  for (const key of Array.from(_priceStatsCache.keys())) {
+    if (key.startsWith(`${cardId}|`)) _priceStatsCache.delete(key);
+  }
+}
+
 /**
  * Hong Kong timezone offset for MySQL session.
  * Forces all TIMESTAMP/DATETIME operations to use UTC+8.
@@ -604,6 +646,11 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
 }
 
 export async function getPriceStatistics(cardId: number, source?: string, grade?: string) {
+  // Check in-memory cache first
+  const cacheKey = getPriceStatsCacheKey(cardId, source, grade);
+  const cached = getFromPriceStatsCache(cacheKey);
+  if (cached !== undefined) return cached;
+
   const db = await getDb();
   if (!db) return null;
 
@@ -618,23 +665,28 @@ export async function getPriceStatistics(cardId: number, source?: string, grade?
   }
 
   const prices = await db
-    .select()
+    .select({ price: priceHistory.price })
     .from(priceHistory)
     .where(and(...conditions));
 
-  if (prices.length === 0) return null;
+  if (prices.length === 0) {
+    setPriceStatsCache(cacheKey, null);
+    return null;
+  }
 
   const priceValues = prices.map(p => parseFloat(p.price));
   const avgPrice = priceValues.reduce((a, b) => a + b, 0) / priceValues.length;
   const minPrice = Math.min(...priceValues);
   const maxPrice = Math.max(...priceValues);
 
-  return {
+  const result = {
     avgPrice: avgPrice.toFixed(2),
     minPrice: minPrice.toFixed(2),
     maxPrice: maxPrice.toFixed(2),
     count: prices.length,
   };
+  setPriceStatsCache(cacheKey, result);
+  return result;
 }
 
 // Market trends queries
