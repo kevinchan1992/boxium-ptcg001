@@ -99,12 +99,12 @@ const CONFIG = {
   //   Cloud Run: avg ~2s  → P=4 (optimal for CPU-throttled env)
   //   Rate-limited: avg >3.5s → P=3 (back off)
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 8 },
-    { maxAvgMs: 2000, parallel: 6 },
-    { maxAvgMs: 3500, parallel: 4 },
+    { maxAvgMs: 1000, parallel: 3 },  // v8.3: capped at 3 to prevent Cloud Run OOM (512MB RAM)
+    { maxAvgMs: 2000, parallel: 2 },
+    { maxAvgMs: 3500, parallel: 2 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
-  ADAPTIVE_MIN_PARALLEL: 2,
-  ADAPTIVE_MAX_PARALLEL: 8,
+  ADAPTIVE_MIN_PARALLEL: 1,
+  ADAPTIVE_MAX_PARALLEL: 3,  // v8.3: hard cap at 3 — prevents OOM on Cloud Run 512MB
   // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
   // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
   CONSECUTIVE_TIMEOUT_THRESHOLD: 3,

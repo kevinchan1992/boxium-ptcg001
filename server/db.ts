@@ -120,6 +120,13 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
+        // Connection pool settings to prevent "Connection lost" errors during BatchUpdate
+        connectionLimit: 10,          // max concurrent connections (default: 10)
+        waitForConnections: true,     // queue requests when pool is exhausted
+        queueLimit: 50,               // max queued requests (0 = unlimited)
+        enableKeepAlive: true,        // send keepalive packets to prevent idle disconnects
+        keepAliveInitialDelay: 10000, // start keepalive after 10s idle
+        connectTimeout: 30000,        // 30s connection timeout
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
         typeCast: function(field: any, next: any) {
           if (field.type === 'TINY' && field.length === 1) {
