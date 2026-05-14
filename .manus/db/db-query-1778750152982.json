@@ -1,0 +1,73 @@
+{
+  "query": "\nSELECT \n  ci.id,\n  ci.cardName AS inventory_name,\n  ci.linkedCardId,\n  c.name AS linked_card_name,\n  CASE WHEN ci.imageUrl IS NULL THEN 'NULL' ELSE 'HAS_IMAGE' END AS ci_has_image\nFROM cardInventory ci\nLEFT JOIN cards c ON ci.linkedCardId = c.id\nWHERE ci.linkedCardId IS NOT NULL\n  AND c.id IS NOT NULL\n  AND c.name != ci.cardName\nORDER BY ci.buyDate DESC\nLIMIT 15;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute \nSELECT \n  ci.id,\n  ci.cardName AS inventory_name,\n  ci.linkedCardId,\n  c.name AS linked_card_name,\n  CASE WHEN ci.imageUrl IS NULL THEN 'NULL' ELSE 'HAS_IMAGE' END AS ci_has_image\nFROM cardInventory ci\nLEFT JOIN cards c ON ci.linkedCardId = c.id\nWHERE ci.linkedCardId IS NOT NULL\n  AND c.id IS NOT NULL\n  AND c.name != ci.cardName\nORDER BY ci.buyDate DESC\nLIMIT 15;\n",
+  "rows": [
+    {
+      "id": "60001",
+      "inventory_name": "Tony Tony.Chopper R [EB02-003](Promotional Card \"ONE PIECE CHOPPER’s 1 Issue Supplement\")",
+      "linkedCardId": "1295597",
+      "linked_card_name": "Tony Tony.Chopper R [EB02-003](Extra Booster \"Anime 25th Collection\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "60002",
+      "inventory_name": "Pikachu ex [SVM 038/175](Start Deck \"Generations\")",
+      "linkedCardId": "180001",
+      "linked_card_name": "Pikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "60012",
+      "inventory_name": "Umbreon & Darkrai GX SR[SM12a 181/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+      "linkedCardId": "546097",
+      "linked_card_name": "Umbreon & Darkrai GX SR: SA[SM12a 182/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "60013",
+      "inventory_name": "Rayquaza EX [XYD 005/018](Mega Battle Deck 60 \"Mega Rayquaza EX\")",
+      "linkedCardId": "210027",
+      "linked_card_name": "M Rayquaza EX: PROMO[S8a-P 024/025](Promo Card Pack 25th Anniversary Edition)",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "60017",
+      "inventory_name": "Lugia : Old Back [No.249](Pokemon Card neo \"Premium File 3\")",
+      "linkedCardId": "721178",
+      "linked_card_name": "Lugia : Old Back [neo1 No.249](Pokemon Card neo Expansion Pack \"Gold Silver to a New World...\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "60018",
+      "inventory_name": "Pikachu V [SI 129/414](Sword & Shield \"Start Deck 100\")",
+      "linkedCardId": "545580",
+      "linked_card_name": "Pikachu V CSR[S8b 222/184](High Class Pack\"VMAX Climax Box\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "53",
+      "inventory_name": "Pikachu V [SH 019/053](The Family Pokemon Card Game \"Pikachu V\")",
+      "linkedCardId": "545580",
+      "linked_card_name": "Pikachu V CSR[S8b 222/184](High Class Pack\"VMAX Climax Box\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "56",
+      "inventory_name": "Pikachu C[s10b 027/071](Enhanced Expansion Pack \"Pokemon GO\")",
+      "linkedCardId": "545548",
+      "linked_card_name": "Pikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")",
+      "ci_has_image": "HAS_IMAGE"
+    },
+    {
+      "id": "57",
+      "inventory_name": "Pikachu C[s10b 027/071](Enhanced Expansion Pack \"Pokemon GO\")",
+      "linkedCardId": "545548",
+      "linked_card_name": "Pikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")",
+      "ci_has_image": "HAS_IMAGE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tinventory_name\tlinkedCardId\tlinked_card_name\tci_has_image\n60001\tTony Tony.Chopper R [EB02-003](Promotional Card \"ONE PIECE CHOPPER’s 1 Issue Supplement\")\t1295597\tTony Tony.Chopper R [EB02-003](Extra Booster \"Anime 25th Collection\")\tHAS_IMAGE\n60002\tPikachu ex [SVM 038/175](Start Deck \"Generations\")\t180001\tPikachu ex SAR Style [MC 764/742](Start Deck 100 \"Battle Collection\")\tHAS_IMAGE\n60012\tUmbreon & Darkrai GX SR[SM12a 181/173](High Class Pack \"Tag Team GX Tag All Stars\")\t546097\tUmbreon & Darkrai GX SR: SA[SM12a 182/173](High Class Pack \"Tag Team GX Tag All Stars\")\tHAS_IMAGE\n60013\tRayquaza EX [XYD 005/018](Mega Battle Deck 60 \"Mega Rayquaza EX\")\t210027\tM Rayquaza EX: PROMO[S8a-P 024/025](Promo Card Pack 25th Anniversary Edition)\tHAS_IMAGE\n60017\tLugia : Old Back [No.249](Pokemon Card neo \"Premium File 3\")\t721178\tLugia : Old Back [neo1 No.249](Pokemon Card neo Expansion Pack \"Gold Silver to a New World...\")\tHAS_IMAGE\n60018\tPikachu V [SI 129/414](Sword & Shield \"Start Deck 100\")\t545580\tPikachu V CSR[S8b 222/184](High Class Pack\"VMAX Climax Box\")\tHAS_IMAGE\n53\tPikachu V [SH 019/053](The Family Pokemon Card Game \"Pikachu V\")\t545580\tPikachu V CSR[S8b 222/184](High Class Pack\"VMAX Climax Box\")\tHAS_IMAGE\n56\tPikachu C[s10b 027/071](Enhanced Expansion Pack \"Pokemon GO\")\t545548\tPikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")\tHAS_IMAGE\n57\tPikachu C[s10b 027/071](Enhanced Expansion Pack \"Pokemon GO\")\t545548\tPikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")\tHAS_IMAGE\n",
+  "stderr": "",
+  "execution_time_ms": 1717
+}
