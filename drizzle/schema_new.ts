@@ -155,6 +155,12 @@ export const priceHistory = mysqlTable("priceHistory", {
   sourceIdx: index("source_idx").on(table.source),
   // Index for productType to optimize product type queries
   productTypeIdx: index("idx_price_productType").on(table.productType),
+  // Composite index for card detail PSA 10 queries: (cardId, grade, soldAt DESC)
+  // Optimizes: WHERE cardId = ? AND grade = 'PSA 10' ORDER BY soldAt DESC
+  cardIdGradeSoldAtIdx: index("ph_cardId_grade_soldAt_idx").on(table.cardId, table.grade, table.soldAt),
+  // Composite index for cross-card trending calculations: (source, grade, soldAt)
+  // Optimizes: WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND soldAt >= ?
+  sourceGradeSoldAtIdx: index("ph_source_grade_soldAt_idx").on(table.source, table.grade, table.soldAt),
 }));
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
