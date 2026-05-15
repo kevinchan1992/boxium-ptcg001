@@ -59,6 +59,24 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // ── Pre-warm DB connection pool ────────────────────────────────────────────
+  // getDb() is lazy-initialized: the first call creates the MySQL connection pool
+  // and establishes a TiDB connection (cross-region, ~5s). Pre-warming here
+  // ensures the pool is ready before any request arrives, eliminating the
+  // 5-7s cold start delay on the first user request.
+  import('../db').then(async ({ getDb }) => {
+    try {
+      const db = await getDb();
+      if (db) {
+        // Run a lightweight query to verify the connection is live
+        await db.execute('SELECT 1');
+        console.log('[DB] Connection pool pre-warmed successfully');
+      }
+    } catch (e: any) {
+      console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
+    }
+  }).catch(() => {});
+
   // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
   // This is required for rate limiting and bot detection to work correctly
   // Without this, X-Forwarded-For can be spoofed by attackers
