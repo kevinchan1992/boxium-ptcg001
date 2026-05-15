@@ -1,0 +1,9 @@
+{
+  "query": "CREATE INDEX idx_datasources_cardId ON dataSources (cardId);\nCREATE INDEX idx_datasources_cardId_source ON dataSources (cardId, source);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE INDEX idx_datasources_cardId ON dataSources (cardId);\nCREATE INDEX idx_datasources_cardId_source ON dataSources (cardId, source);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 49618
+}

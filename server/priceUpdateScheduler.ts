@@ -1341,12 +1341,24 @@ export async function runHotCardPoll(limit: number = 100): Promise<{ updated: nu
 
     console.log(`[HotCardPoll] Found ${topCardIds.length} hot cards to update`);
 
-    // Get data sources for these cards
+    // Get data sources for these cards — query directly by cardId (indexed) instead of loading all 100k rows
     const dbModule = await import('./db');
-    const { data: allDataSources } = await dbModule.getDataSources({ pageSize: 100000 });
-    const snkrdunkSources = allDataSources.filter((ds: any) =>
-      ds.source === 'snkrdunk' && topCardIds.includes(ds.cardId)
-    );
+    const database = await dbModule.getDb();
+    if (!database) {
+      console.warn('[HotCardPoll] Database not available');
+      hotCardPollRunning = false;
+      return { updated: 0, skipped: 0, failed: 0 };
+    }
+    const { dataSources: dataSourcesTable } = await import('../drizzle/schema_new');
+    const { eq, inArray, and } = await import('drizzle-orm');
+    const snkrdunkSources = await database
+      .select()
+      .from(dataSourcesTable)
+      .where(and(
+        inArray(dataSourcesTable.cardId, topCardIds),
+        eq(dataSourcesTable.source, 'snkrdunk'),
+        eq(dataSourcesTable.isActive, 1)
+      ));
 
     // Deduplicate by cardId + productType (same as batch update)
     const { extractSnkrdunkId, fetchPriceHistoryFromApi, convertJpyToHkd } = await import('./snkrdunkScraper');
@@ -1366,14 +1378,8 @@ export async function runHotCardPoll(limit: number = 100): Promise<{ updated: nu
     // Process in parallel batches of 2 (conservative to avoid API rate limits)
     const PARALLEL = 2;
     const { validateAndFilterPriceHistory } = await import('./utils/priceValidator');
-    const database = await dbModule.getDb();
-    if (!database) {
-      console.warn('[HotCardPoll] Database not available');
-      hotCardPollRunning = false;
-      return { updated: 0, skipped: 0, failed: 0 };
-    }
-    const { priceHistory: priceHistoryTable, dataSources: dataSourcesTable } = await import('../drizzle/schema_new');
-    const { eq, and, gte, lte, sql } = await import('drizzle-orm');
+    const { priceHistory: priceHistoryTable } = await import('../drizzle/schema_new');
+    const { sql, gte, lte } = await import('drizzle-orm');
 
     for (let i = 0; i < products.length; i += PARALLEL) {
       const batch = products.slice(i, i + PARALLEL);

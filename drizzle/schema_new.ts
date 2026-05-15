@@ -263,6 +263,8 @@ export const dataSources = mysqlTable("dataSources", {
 }, (table) => ({
   gameIdIdx: index("idx_datasources_gameId").on(table.gameId),
   productTypeIdx: index("idx_datasources_productType").on(table.productType),
+  cardIdIdx: index("idx_datasources_cardId").on(table.cardId),
+  cardIdSourceIdx: index("idx_datasources_cardId_source").on(table.cardId, table.source),
 }));
 
 export type DataSource = typeof dataSources.$inferSelect;
