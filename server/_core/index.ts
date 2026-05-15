@@ -1836,6 +1836,14 @@ async function startServer() {
     serveStatic(app);
   }
 
+  // ─── Manus Heartbeat KeepAlive endpoint ────────────────────────────────────
+  // Called by Manus platform every 60s to keep Cloud Run instance warm.
+  // This is the CORRECT way to prevent Cloud Run cold starts — external HTTP
+  // pings from the platform, not in-process setInterval (which dies with the instance).
+  app.post("/api/scheduled/keepalive", (req, res) => {
+    res.json({ ok: true, ts: Date.now(), uptime: process.uptime() });
+  });
+
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
@@ -1919,30 +1927,11 @@ async function startServer() {
     startWeeklyBlogReportScheduler();
     // Start the scraperPerformanceLogs auto-cleanup scheduler (daily at 03:30 HKT, retains 10 days)
     startScraperPerformanceLogsCleanupScheduler();
-
-    // ── 24/7 Cloud Run KeepAlive Pinger ──────────────────────────────────────
-    // Cloud Run scales to 0 instances after ~5 minutes of inactivity, causing
-    // 5-7 second cold starts for every user request. This pinger sends a
-    // lightweight self-HTTP GET to /api/health every 4 minutes to keep the
-    // instance warm at all times (not just during batch update windows).
-    if (process.env.NODE_ENV === 'production') {
-      let keepAliveCount = 0;
-      const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
-      setInterval(() => {
-        keepAliveCount++;
-        const req = http.get({
-          hostname: 'localhost',
-          port,
-          path: '/api/health',
-          headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (always-on)' },
-        }, (res) => {
-          res.resume(); // drain response
-        });
-        req.on('error', () => { /* non-fatal */ });
-        req.setTimeout(5000, () => req.destroy());
-      }, KEEPALIVE_INTERVAL_MS);
-      console.log(`[KeepAlive] 24/7 pinger started (interval=${KEEPALIVE_INTERVAL_MS / 1000}s)`);
-    }
+    // NOTE: Cloud Run KeepAlive is handled by Manus Heartbeat (external HTTP cron).
+    // The platform POSTs to /api/scheduled/keepalive every 60s from outside Cloud Run,
+    // which is the ONLY reliable way to keep instances warm.
+    // In-process setInterval does NOT survive Cloud Run instance termination.
+    console.log('[KeepAlive] Using Manus Heartbeat external cron for Cloud Run warmup.');
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();
