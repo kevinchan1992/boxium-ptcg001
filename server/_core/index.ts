@@ -1647,6 +1647,13 @@ async function startServer() {
     }
   });
 
+  // ─── Manus Heartbeat KeepAlive endpoint ────────────────────────────────────
+  // Called by Manus platform every 60s to keep Cloud Run instance warm.
+  // MUST be defined BEFORE serveStatic() so it is not swallowed by the SPA fallthrough.
+  app.post("/api/scheduled/keepalive", (_req, res) => {
+    res.json({ ok: true, ts: Date.now(), uptime: process.uptime() });
+  });
+
   // ─── Scheduled Task Endpoint: GitHub Actions Batch Update Report ─────────────
   // Called by GitHub Actions after completing SNKRDUNK batch update
   // Auth: Bearer token via Authorization header (CRON_SECRET)
@@ -1835,14 +1842,6 @@ async function startServer() {
   } else {
     serveStatic(app);
   }
-
-  // ─── Manus Heartbeat KeepAlive endpoint ────────────────────────────────────
-  // Called by Manus platform every 60s to keep Cloud Run instance warm.
-  // This is the CORRECT way to prevent Cloud Run cold starts — external HTTP
-  // pings from the platform, not in-process setInterval (which dies with the instance).
-  app.post("/api/scheduled/keepalive", (req, res) => {
-    res.json({ ok: true, ts: Date.now(), uptime: process.uptime() });
-  });
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
