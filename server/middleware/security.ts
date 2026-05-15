@@ -157,7 +157,7 @@ async function persistEvent(type: SecurityEventType, ip: string, userAgent: stri
   }
 }
 
-export async function loadBlockedIpCache(): Promise<void> {
+async function loadBlockedIpCache() {
   if (blockedIpCacheLoaded) return;
   blockedIpCacheLoaded = true;
   try {

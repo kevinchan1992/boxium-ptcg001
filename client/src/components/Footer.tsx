@@ -140,7 +140,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/auction/terms" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  {t("footer.auctionTerms")}
+                  {t("footer.auctionTerms", "買賣條款")}
                 </Link>
               </li>
               <li>

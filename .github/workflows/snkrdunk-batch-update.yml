@@ -1,10 +1,9 @@
 name: SNKRDUNK Batch Price Update
 on:
   schedule:
-    # Once daily: HKT 02:00 (UTC 18:00 prev day)
-    # Note: This schedule is automatically disabled when Admin sets mode to 'platform'.
-    # To disable manually: go to GitHub Actions → SNKRDUNK Batch Price Update → Disable workflow.
+    # Every 12 hours: HKT 02:00 (UTC 18:00 prev day) and HKT 14:00 (UTC 06:00)
     - cron: '0 18 * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       skip_hours:
@@ -25,7 +24,6 @@ on:
         default: '7'
 permissions:
   contents: read
-  actions: write
 jobs:
   batch-update:
     name: Update SNKRDUNK Price History

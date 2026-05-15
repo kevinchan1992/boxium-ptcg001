@@ -322,10 +322,10 @@
     "priceHistory": "価格履歴",
     "priceIncrease": "↑ 上昇",
     "priceTrend": "30日間のトレンド",
-    "priceUpToDate": "最新",
+    "priceUpToDate": "価格は最新です",
     "priceUpdateFailed": "価格の更新に失敗しました",
-    "priceUpdated": "更新済み",
-    "priceUpdating": "更新中...",
+    "priceUpdated": "価格が更新されました",
+    "priceUpdating": "最新の取引価格を更新中...",
     "productTitle": "商品タイトル",
     "referencePrice": "参考価格",
     "series": "シリーズ",
@@ -352,17 +352,7 @@
     "sealedProduct": "シールド商品",
     "sealedReferencePrice": "参考価格",
     "singleCard": "シングルカード",
-    "styleCode": "シリーズコード",
-    "records": "件の取引",
-    "noPsa10Data": "このカードの PSA 10 取引記録はまだありません",
-    "noPsa10DataSub": "PSA 10 取引データは新しい記録が追加されると自動更新されます",
-    "avgPrice": "平均",
-    "latestPrice": "最新",
-    "minPriceLabel": "最低",
-    "maxPriceLabel": "最高",
-    "sealedChartTitle": "ボックス価格トレンド（1ボックスあたり）",
-    "noSealedTrendData": "このボックスの取引記録はまだありません",
-    "noSealedTrendDataSub": "取引データは新しい記録が追加されると自動更新されます"
+    "styleCode": "シリーズ番号"
   },
   "cardSelectionDialog": {
     "avgPrice": "平均価格",
@@ -502,8 +492,7 @@
     "research": "カード研究",
     "seller": "セラー",
     "terms": "利用規約",
-    "trending": "ランキング",
-    "auctionTerms": "オークション規約"
+    "trending": "ランキング"
   },
   "disclaimerPage": {
     "contactInfo": "ご不明な点がございましたら、お問い合わせください：boxium.asia@gmail.com",
@@ -631,13 +620,7 @@
     "trendingCardsDesc": "PSA 10グレード最近の取引価格上昇率に基づく",
     "usdPrice": "米ドル価格",
     "viewMarketTrends": "市場価格を比較する",
-    "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界",
-    "searchCardsDesc": "カードを検索し、価格トレンドと市場データを確認",
-    "exploreNow": "今すぐ探索",
-    "marketTrendsDesc": "市場価格トレンドを確認し、各プラットフォームを比較",
-    "viewTrends": "トレンドを見る",
-    "marketplaceDesc": "マーケットプレイスを閲覧し、オークションに参加、安全取引",
-    "browseNow": "今すぐ閲覧"
+    "welcome": "Boxiumへようこそ〜ゲーム愛好家の世界"
   },
   "login": {
     "description": "アカウントとパスワードを入力してBOXIUM PTCGにログインしてください",
@@ -916,14 +899,9 @@
     "admin": "管理画面",
     "dashboard": "ダッシュボード",
     "favorites": "マイお気に入り",
-    "login": "ログイン",
+    "login": "ログイン/登録",
     "logout": "ログアウト",
-    "user": "ユーザー",
-    "home": "ホーム",
-    "research": "検索",
-    "trending": "トレンド",
-    "marketplace": "マーケット",
-    "profile": "マイページ"
+    "user": "ユーザー"
   },
   "notifications": {
     "all": "すべて",
@@ -932,7 +910,7 @@
     "deleteAllReadError": "削除に失敗しました",
     "deleteAllReadSuccess": "すべての既読通知を削除しました",
     "deleteError": "削除に失敗しました",
-    "deleteSuccess": "削除しました",
+    "deleteSuccess": "刪除成功",
     "description": "すべてのシステム通知と取引の更新を表示します",
     "filter": {
       "all": "すべて",

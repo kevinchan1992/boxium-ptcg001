@@ -22,8 +22,6 @@ export interface SnkrdunkCardData {
     jpyPrice: number;  // Same as price (JPY) - kept for clarity
     currency: string;
     soldAt: Date;
-    isRelativeTime?: boolean; // true if date was "N時間前" (relative hours), needs dynamic dedup
-    estimatedSoldAt?: Date;   // Precise estimated timestamp for relative-time records
     grade?: string; // For single cards (e.g., "PSA 10", "中古")
     quantity?: string; // For sealed products (e.g., "10盒", "1盒")
   }>;
