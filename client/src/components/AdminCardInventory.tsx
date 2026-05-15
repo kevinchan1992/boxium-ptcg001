@@ -1090,6 +1090,7 @@ function BuyFormDialog({
   const isEdit = !!editItem;
   const [manualMode, setManualMode] = useState(isEdit);
   const [selectedCard, setSelectedCard] = useState<CardSearchResult | null>(null);
+  const [cardSearchOpen, setCardSearchOpen] = useState(false);
 
   const [form, setForm] = useState({
     itemType: editItem?.itemType ?? "card",
@@ -1217,11 +1218,72 @@ function BuyFormDialog({
             />
           )}
 
-          {/* Selected card preview */}
+          {/* Edit mode: card search button + modal */}
+          {isEdit && (
+            <>
+              <CardSearchModal
+                open={cardSearchOpen}
+                onClose={() => setCardSearchOpen(false)}
+                onSelect={(card) => { handleCardSelect(card); setCardSearchOpen(false); }}
+                title="重新搜尋並關聯卡牌"
+              />
+              {/* Current linked card preview (or newly selected card) */}
+              {(selectedCard || form.imageUrl) && (
+                <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border">
+                  <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-muted shadow">
+                    {(selectedCard?.imageUrl ?? form.imageUrl) ? (
+                      <img
+                        src={selectedCard?.imageUrl ?? form.imageUrl ?? ""}
+                        alt={selectedCard?.name ?? form.cardName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageOff className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm line-clamp-2">{selectedCard?.name ?? form.cardName}</div>
+                    {selectedCard ? (
+                      <div className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                        已更新關聯卡牌
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground mt-0.5">目前關聯的卡牌圖片</div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCardSearchOpen(true)}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    重新選擇
+                  </button>
+                </div>
+              )}
+              {/* If no image at all, show a search button */}
+              {!selectedCard && !form.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setCardSearchOpen(true)}
+                  className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
+                >
+                  <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">點擊搜尋並關聯正確卡牌...</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Selected card preview (new record mode) */}
           {(manualMode || isEdit) && (
             <>
-              {/* Show selected card preview */}
-              {selectedCard && (
+              {/* Show selected card preview for new record mode only */}
+              {!isEdit && selectedCard && (
                 <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border">
                   <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-muted">
                     {selectedCard.imageUrl ? (

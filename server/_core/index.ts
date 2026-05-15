@@ -9,6 +9,7 @@ import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
+import http from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 // Manus OAuth removed
@@ -17,7 +18,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler, startGradingAwaitingPaymentCleanupScheduler, startGradingUpgradeOverdueReminderScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler, startGradingAwaitingPaymentCleanupScheduler, startGradingUpgradeOverdueReminderScheduler, startScraperPerformanceLogsCleanupScheduler } from "../priceUpdateScheduler";
 import { startWeeklyBlogReportScheduler } from "../weeklyBlogScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
@@ -58,6 +59,33 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // ── Pre-warm DB connection pool + security caches (NON-BLOCKING) ─────────────
+  // getDb() is lazy-initialized: the first call creates the MySQL connection pool
+  // and establishes a TiDB connection (cross-region, ~5s).
+  // IMPORTANT: We do NOT await this here — Cloud Run requires the server to start
+  // listening on the port quickly. Blocking startServer() for 5-7s causes Cloud Run
+  // health checks to time out and return 503. Instead, we fire-and-forget the pre-warm
+  // so server.listen() is called immediately, and DB is ready within a few seconds.
+  Promise.resolve().then(async () => {
+    try {
+      const { getDb } = await import('../db');
+      const db = await getDb();
+      if (db) {
+        await db.execute('SELECT 1');
+        console.log('[DB] Connection pool pre-warmed successfully');
+      }
+      // Pre-warm security caches so manualBlockCheck never awaits DB on hot path
+      const { loadBlockedIpCache, loadAdminWhitelistFromDb } = await import('../middleware/security');
+      await Promise.all([
+        loadBlockedIpCache().catch(() => {}),
+        loadAdminWhitelistFromDb().catch(() => {}),
+      ]);
+      console.log('[DB] Security caches pre-warmed successfully');
+    } catch (e: any) {
+      console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
+    }
+  });
 
   // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
   // This is required for rate limiting and bot detection to work correctly
@@ -927,7 +955,13 @@ async function startServer() {
   
   // Google OAuth routes — apply auth rate limiter
   app.use("/api/auth", authLimiter, googleOAuthRouter);
-  
+
+  // Lightweight health check endpoint — used by KeepAlive Pinger in batch update tasks
+  // to prevent Cloud Run idle shutdown during long-running background jobs.
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString(), uptime: process.uptime() });
+  });
+
   // Sitemap.xml route
   app.get("/sitemap.xml", async (req, res) => {
     try {
@@ -1615,6 +1649,13 @@ async function startServer() {
     }
   });
 
+  // ─── Manus Heartbeat KeepAlive endpoint ────────────────────────────────────
+  // Called by Manus platform every 60s to keep Cloud Run instance warm.
+  // MUST be defined BEFORE serveStatic() so it is not swallowed by the SPA fallthrough.
+  app.post("/api/scheduled/keepalive", (_req, res) => {
+    res.json({ ok: true, ts: Date.now(), uptime: process.uptime() });
+  });
+
   // ─── Scheduled Task Endpoint: GitHub Actions Batch Update Report ─────────────
   // Called by GitHub Actions after completing SNKRDUNK batch update
   // Auth: Bearer token via Authorization header (CRON_SECRET)
@@ -1855,7 +1896,6 @@ async function startServer() {
     // Start the payment reminder scheduler (every hour at :45, reminds buyers 12h before auto-cancel)
     startPaymentReminderScheduler();
     // Start the hot card polling scheduler (every 30 minutes, updates top 100 most-viewed cards)
-    startHotCardPollScheduler();
     // Start the cart expiry cleanup scheduler (daily at 03:00 HKT, removes 14-day-old cart items)
     startCartExpiryCleanupScheduler();
     // Start the Alipay review timeout reminder scheduler (every hour, notifies admin if proof pending >24hrs)
@@ -1886,6 +1926,38 @@ async function startServer() {
     startGradingUpgradeOverdueReminderScheduler();
     // Start the weekly blog report scheduler (every Monday at 08:00 HKT)
     startWeeklyBlogReportScheduler();
+    // Start the scraperPerformanceLogs auto-cleanup scheduler (daily at 03:30 HKT, retains 10 days)
+    startScraperPerformanceLogsCleanupScheduler();
+    // ─── Cloud Run KeepAlive (Dual Strategy) ──────────────────────────────────
+    // Strategy 1: In-process setInterval self-ping every 4 minutes
+    //   → Prevents Cloud Run idle timeout from terminating an ACTIVE instance
+    //   → Same pattern as KeepAlivePinger in persistentSnkrdunkBatchUpdate.ts (proven effective)
+    // Strategy 2: Manus Heartbeat external cron every 30s (two jobs at :00 and :30)
+    //   → Wakes up a COLD instance after it has been terminated
+    // Both strategies work together: setInterval keeps warm instances alive,
+    // Heartbeat revives cold instances after termination.
+    if (process.env.NODE_ENV === 'production') {
+      const keepAlivePort = process.env.PORT || '3000';
+      let keepAlivePingCount = 0;
+      const keepAliveTimer = setInterval(() => {
+        const req = http.get(
+          `http://localhost:${keepAlivePort}/api/health`,
+          {
+            timeout: 5000,
+            headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (internal-24x7-pinger)' },
+          },
+          (res) => {
+            keepAlivePingCount++;
+            console.log(`[KeepAlive] Self-ping #${keepAlivePingCount} → HTTP ${res.statusCode} (uptime=${process.uptime().toFixed(0)}s)`);
+            res.resume();
+          }
+        );
+        req.on('error', (err: Error) => console.warn(`[KeepAlive] Self-ping failed: ${err.message}`));
+        req.on('timeout', () => { req.destroy(); console.warn('[KeepAlive] Self-ping timed out'); });
+      }, 4 * 60 * 1000); // Every 4 minutes (Cloud Run idle timeout is ~5 minutes)
+      keepAliveTimer.unref(); // Don't prevent graceful shutdown
+      console.log('[KeepAlive] 24/7 self-ping started (interval=240s) + Manus Heartbeat external cron (interval=30s)');
+    }
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();

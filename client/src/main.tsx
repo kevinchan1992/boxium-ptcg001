@@ -27,6 +27,7 @@ window.addEventListener("error", (e) => {
   }
 }, true);
 import "./mobile-touch-optimization.css";
+import "./capacitor-app.css";
 import "./i18n";
 
 // Initialize Sentry for frontend error monitoring

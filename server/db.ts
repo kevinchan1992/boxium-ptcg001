@@ -9,6 +9,97 @@ import { ENV } from './_core/env';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _db: any | null = null;
 
+// In-memory cache for trending cards (refreshed daily, TTL 30 minutes for safety)
+type TrendingCardResult = {
+  id: number; name: string | null; nameJa: string | null; imageUrl: string | null;
+  cardNumber: string | null; series: string | null; rank: number; gameId: number | null;
+  priceChange7d: number; oldPrice: number; currentPrice: number; calculatedAt: Date | null;
+  priceChange: number; priceChangeFormatted: string;
+};
+const _trendingCache = new Map<string, { data: TrendingCardResult[]; fetchedAt: number }>();
+const TRENDING_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+/** Invalidate the in-memory trending cache (called after calculateAndCacheTrendingCards) */
+export function invalidateTrendingCache() {
+  _trendingCache.clear();
+}
+
+// In-memory cache for search results (TTL 5 minutes, max 200 entries)
+type SearchCacheEntry = { data: { cards: any[]; total: number }; fetchedAt: number };
+const _searchCache = new Map<string, SearchCacheEntry>();
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SEARCH_CACHE_MAX = 200;
+
+function getSearchCacheKey(query: string, limit: number, offset: number): string {
+  return `${query.toLowerCase().trim()}|${limit}|${offset}`;
+}
+
+function getFromSearchCache(key: string): { cards: any[]; total: number } | null {
+  const entry = _searchCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > SEARCH_CACHE_TTL_MS) {
+    _searchCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setSearchCache(key: string, data: { cards: any[]; total: number }): void {
+  // Evict oldest entry if at capacity
+  if (_searchCache.size >= SEARCH_CACHE_MAX) {
+    const oldestKey = _searchCache.keys().next().value;
+    if (oldestKey) _searchCache.delete(oldestKey);
+  }
+  _searchCache.set(key, { data, fetchedAt: Date.now() });
+}
+
+/** Invalidate search cache (call after card data changes) */
+export function invalidateSearchCache() {
+  _searchCache.clear();
+}
+
+// In-memory cache for getPriceStatistics (TTL 5 minutes, keyed by cardId+source+grade)
+type PriceStatsEntry = {
+  data: { avgPrice: string; minPrice: string; maxPrice: string; count: number } | null;
+  fetchedAt: number;
+};
+const _priceStatsCache = new Map<string, PriceStatsEntry>();
+const PRICE_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const PRICE_STATS_CACHE_MAX = 500;
+
+function getPriceStatsCacheKey(cardId: number, source?: string, grade?: string): string {
+  return `${cardId}|${source ?? ''}|${grade ?? ''}`;
+}
+
+function getFromPriceStatsCache(key: string): PriceStatsEntry['data'] | undefined {
+  const entry = _priceStatsCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.fetchedAt > PRICE_STATS_CACHE_TTL_MS) {
+    _priceStatsCache.delete(key);
+    return undefined;
+  }
+  return entry.data;
+}
+
+function setPriceStatsCache(key: string, data: PriceStatsEntry['data']): void {
+  if (_priceStatsCache.size >= PRICE_STATS_CACHE_MAX) {
+    const oldestKey = _priceStatsCache.keys().next().value;
+    if (oldestKey) _priceStatsCache.delete(oldestKey);
+  }
+  _priceStatsCache.set(key, { data, fetchedAt: Date.now() });
+}
+
+/** Invalidate price statistics cache for a specific card (call after price data changes) */
+export function invalidatePriceStatsCache(cardId?: number) {
+  if (cardId === undefined) {
+    _priceStatsCache.clear();
+    return;
+  }
+  for (const key of Array.from(_priceStatsCache.keys())) {
+    if (key.startsWith(`${cardId}|`)) _priceStatsCache.delete(key);
+  }
+}
+
 /**
  * Hong Kong timezone offset for MySQL session.
  * Forces all TIMESTAMP/DATETIME operations to use UTC+8.
@@ -29,6 +120,13 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
+        // Connection pool settings to prevent "Connection lost" errors during BatchUpdate
+        connectionLimit: 10,          // max concurrent connections (default: 10)
+        waitForConnections: true,     // queue requests when pool is exhausted
+        queueLimit: 50,               // max queued requests (0 = unlimited)
+        enableKeepAlive: true,        // send keepalive packets to prevent idle disconnects
+        keepAliveInitialDelay: 10000, // start keepalive after 10s idle
+        connectTimeout: 30000,        // 30s connection timeout
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
         typeCast: function(field: any, next: any) {
           if (field.type === 'TINY' && field.length === 1) {
@@ -182,17 +280,24 @@ async function searchCardsByGrade(
 }
 
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
+  const trimmedQuery = query.trim();
+
+  // ── In-memory cache check ────────────────────────────────────────────────
+  const cacheKey = getSearchCacheKey(trimmedQuery, limit, offset);
+  const cachedResult = getFromSearchCache(cacheKey);
+  if (cachedResult) return cachedResult;
+
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
-
-  const trimmedQuery = query.trim();
 
   // ── Grade filter detection ────────────────────────────────────────────────
   // If the query contains a grade keyword (e.g. "bgs9.5", "psa10"), extract it
   // and filter results to cards that have listings of that grade in the cache.
   const { gradeFilter, cleanQuery } = parseGradeFilter(trimmedQuery);
   if (gradeFilter) {
-    return searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
+    const gradeResult = await searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
+    setSearchCache(cacheKey, gradeResult);
+    return gradeResult;
   }
 
   // ── Pure series code query (e.g. "SV10", "SM-P", "ST01", "SM", "ST") ───────
@@ -222,7 +327,9 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     }
     const sortedCards = matchingCards.sort((a, b) => (priceMap.get(b.id) || 0) - (priceMap.get(a.id) || 0));
     const cardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
-    return { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
+    const seriesResult = { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
+    setSearchCache(cacheKey, seriesResult);
+    return seriesResult;
   }
 
   // ── Multi-token fuzzy search ───────────────────────────────────────────────
@@ -304,10 +411,12 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     return priceB - priceA;
   });
 
-  return {
+  const finalResult = {
     cards: cardsWithScore.slice(offset, offset + limit),
     total: cardsWithScore.length,
   };
+  setSearchCache(cacheKey, finalResult);
+  return finalResult;
 }
 
 export async function getCardById(id: number) {
@@ -544,6 +653,11 @@ export async function getPriceHistory(cardId: number, source?: string, grade?: s
 }
 
 export async function getPriceStatistics(cardId: number, source?: string, grade?: string) {
+  // Check in-memory cache first
+  const cacheKey = getPriceStatsCacheKey(cardId, source, grade);
+  const cached = getFromPriceStatsCache(cacheKey);
+  if (cached !== undefined) return cached;
+
   const db = await getDb();
   if (!db) return null;
 
@@ -558,23 +672,28 @@ export async function getPriceStatistics(cardId: number, source?: string, grade?
   }
 
   const prices = await db
-    .select()
+    .select({ price: priceHistory.price })
     .from(priceHistory)
     .where(and(...conditions));
 
-  if (prices.length === 0) return null;
+  if (prices.length === 0) {
+    setPriceStatsCache(cacheKey, null);
+    return null;
+  }
 
   const priceValues = prices.map(p => parseFloat(p.price));
   const avgPrice = priceValues.reduce((a, b) => a + b, 0) / priceValues.length;
   const minPrice = Math.min(...priceValues);
   const maxPrice = Math.max(...priceValues);
 
-  return {
+  const result = {
     avgPrice: avgPrice.toFixed(2),
     minPrice: minPrice.toFixed(2),
     maxPrice: maxPrice.toFixed(2),
     count: prices.length,
   };
+  setPriceStatsCache(cacheKey, result);
+  return result;
 }
 
 // Market trends queries
@@ -1081,7 +1200,7 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
     recordsByProduct.get(row.cardId)!.push(row);
   }
   const now = new Date();
-  for (const [productId, records] of recordsByProduct.entries()) {
+  for (const [productId, records] of Array.from(recordsByProduct.entries())) {
     const top10 = records.slice(0, 10);
     let weightedSum = 0;
     let totalWeight = 0;
@@ -2112,21 +2231,29 @@ export async function calculateAndCacheTrendingCards(): Promise<void> {
   }
 
   console.log("[calculateAndCacheTrendingCards] Cache updated successfully (per-game top 5, currentPrice = PSA10 latest-5 median)");
+  // Invalidate in-memory cache so next request fetches fresh data from DB
+  invalidateTrendingCache();
 }
 
 /**
  * Get cached trending cards (TOP 5)
  */
 export async function getCachedTrendingCards(gameId?: number) {
-  const db = await getDb();
-  if (!db) {
-    console.log('[getCachedTrendingCards] DB connection failed');
-    return [];
+  const cacheKey = gameId !== undefined ? `game_${gameId}` : 'all';
+  const now = Date.now();
+
+  // Return in-memory cache if still fresh (TTL: 30 minutes)
+  const cached = _trendingCache.get(cacheKey);
+  if (cached && now - cached.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return cached.data;
   }
 
-  console.log('[getCachedTrendingCards] Querying trendingCardsCache...');
-  
-  const cached = await db
+  const db = await getDb();
+  if (!db) {
+    return cached?.data ?? []; // Return stale cache on DB failure
+  }
+
+  const rows = await db
     .select({
       cardId: trendingCardsCache.cardId,
       rank: trendingCardsCache.rank,
@@ -2147,10 +2274,7 @@ export async function getCachedTrendingCards(gameId?: number) {
     .where(gameId !== undefined ? eq(cards.gameId, gameId) : undefined)
     .orderBy(trendingCardsCache.rank);
 
-  console.log('[getCachedTrendingCards] Query result count:', cached.length);
-  console.log('[getCachedTrendingCards] Raw cached data:', JSON.stringify(cached, null, 2));
-
-  const result = cached.map(item => ({
+  const result: TrendingCardResult[] = rows.map(item => ({
     id: item.cardId,
     name: item.name,
     nameJa: item.nameJa,
@@ -2168,8 +2292,8 @@ export async function getCachedTrendingCards(gameId?: number) {
     priceChangeFormatted: `+${parseFloat(item.priceChange7d as any).toFixed(1)}%`,
   }));
 
-  console.log('[getCachedTrendingCards] Mapped result count:', result.length);
-  console.log('[getCachedTrendingCards] Final result:', JSON.stringify(result, null, 2));
+  // Store in memory cache
+  _trendingCache.set(cacheKey, { data: result, fetchedAt: now });
   return result;
 }
 
@@ -6369,4 +6493,52 @@ export async function getSnkrdunkListingsCacheStats() {
     lastBatchUpdate,
     oldestEntry,
   };
+}
+
+/**
+ * Optimised query for batch update: fetch all active SNKRDUNK data sources
+ * with their associated card name in a single indexed query.
+ *
+ * Replaces the old pattern:
+ *   getDataSources({ pageSize: 100000 }).then(r => r.data.filter(ds => ds.source === 'snkrdunk'))
+ *
+ * The old pattern loaded ALL 57,000+ rows from dataSources (including eBay, etc.)
+ * into memory before filtering. This new function uses the existing
+ * idx_datasources_cardId_source composite index to fetch only snkrdunk rows.
+ */
+export async function getSnkrdunkDataSourcesForBatch(): Promise<Array<{
+  id: number;
+  cardId: number;
+  source: string;
+  sourceUrl: string;
+  productType: string;
+  lastFetchedAt: Date | null;
+  card: { id: number; name: string | null; nameJa: string | null } | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: dataSources.id,
+      cardId: dataSources.cardId,
+      source: dataSources.source,
+      sourceUrl: dataSources.sourceUrl,
+      productType: dataSources.productType,
+      lastFetchedAt: dataSources.lastFetchedAt,
+      card: {
+        id: cards.id,
+        name: cards.name,
+        nameJa: cards.nameJa,
+      },
+    })
+    .from(dataSources)
+    .leftJoin(cards, eq(dataSources.cardId, cards.id))
+    .where(and(
+      eq(dataSources.source, 'snkrdunk'),
+      eq(dataSources.isActive, 1),
+    ))
+    .orderBy(asc(dataSources.cardId));
+
+  return rows as any[];
 }

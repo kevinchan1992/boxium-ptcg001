@@ -1,0 +1,54 @@
+{
+  "name": "BOXIUM TCG",
+  "short_name": "BOXIUM",
+  "description": "集換式卡牌市場數據平台 - PSA 10 價格追蹤與熱門排行榜",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "categories": ["games", "shopping", "finance"],
+  "icons": [
+    {
+      "src": "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/favicon-32_bea3756b.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/apple-touch-icon_ee0990b0.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "卡牌搜尋",
+      "short_name": "搜尋",
+      "description": "搜尋 TCG 卡牌價格",
+      "url": "/research",
+      "icons": []
+    },
+    {
+      "name": "熱門排行",
+      "short_name": "排行",
+      "description": "查看 24 小時熱門卡牌",
+      "url": "/trending",
+      "icons": []
+    },
+    {
+      "name": "二手市集",
+      "short_name": "市集",
+      "description": "瀏覽二手卡牌市集",
+      "url": "/marketplace",
+      "icons": []
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -157,7 +157,7 @@ async function persistEvent(type: SecurityEventType, ip: string, userAgent: stri
   }
 }
 
-async function loadBlockedIpCache() {
+export async function loadBlockedIpCache(): Promise<void> {
   if (blockedIpCacheLoaded) return;
   blockedIpCacheLoaded = true;
   try {
@@ -363,13 +363,15 @@ export function isManuallyBlocked(ip: string): boolean {
 
 // ─── Manual Block Middleware ──────────────────────────────────────────────────
 
-export async function manualBlockCheck(req: Request, res: Response, next: NextFunction) {
+export function manualBlockCheck(req: Request, res: Response, next: NextFunction) {
   // Internal system requests (schedulers, batch updates) bypass IP block checks.
-  // They are server-originated and cannot be spoofed by external attackers.
   if (isInternalSystemRequest(req)) return next();
 
-  // Ensure cache is loaded
-  if (!blockedIpCacheLoaded) await loadBlockedIpCache();
+  // If cache is not yet loaded (cold start), let the request through.
+  // The background pre-warm (loadBlockedIpCache) will populate the cache shortly.
+  // This prevents blocking every request for 1-2s waiting for DB during cold start.
+  if (!blockedIpCacheLoaded) return next();
+
   const ip = getClientIp(req);
   if (isManuallyBlocked(ip)) {
     console.warn(`[ManualBlock] Blocked IP attempted access — IP: ${ip} path: ${req.path}`);

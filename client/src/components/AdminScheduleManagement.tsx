@@ -459,20 +459,7 @@ export function AdminScheduleManagement() {
     },
   });
 
-  // 手動觸發熱門卡牌快速更新
-  const triggerHotCardPoll = trpc.admin.triggerHotCardPoll.useMutation({
-    onSuccess: (data) => {
-      toast.success("熱門卡牌更新完成", {
-        description: `已更新 ${data.updated} 張，跳過 ${data.skipped} 張，失敗 ${data.failed} 張`,
-      });
-      refetch();
-    },
-    onError: (error) => {
-      toast.error("熱門卡牌更新失敗", {
-        description: error.message,
-      });
-    },
-  });
+
   
   return (
     <div className="space-y-6">
@@ -529,13 +516,13 @@ export function AdminScheduleManagement() {
               {snkrdunkUpdateMode === 'github_actions' && (
                 <div className="flex items-start gap-2 p-2 bg-green-900/20 border border-green-800 rounded text-xs text-green-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>GitHub Actions 模式：平台內建排程已停用，全部更新由 GitHub Actions 執行。不會重複執行，節省伺服器資源。</span>
+                  <span>GitHub Actions 模式：儲存時會自動啟用 GitHub Actions 排程、停用平台內建 cron，避免重複執行。每日 02:00 HKT 執行一次。</span>
                 </div>
               )}
               {snkrdunkUpdateMode === 'platform' && (
-                <div className="flex items-start gap-2 p-2 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-300">
+                <div className="flex items-start gap-2 p-2 bg-blue-900/20 border border-blue-800 rounded text-xs text-blue-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>平台排程模式：由本平台伺服器執行排程。若 GitHub Actions 同時啟用，將會重複執行。</span>
+                  <span>平台內建排程模式：儲存時會自動停用 GitHub Actions 排程，由平台伺服器獨立執行，不會重複。</span>
                 </div>
               )}
             </div>
@@ -799,49 +786,7 @@ export function AdminScheduleManagement() {
             </Button>
           </div>
           
-          {/* 熱門卡牌快速更新 */}
-          <div className="space-y-3 p-4 bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-white font-medium text-sm sm:text-base">熱門卡牌快速更新</Label>
-                <p className="text-sm text-gray-400">
-                  每 30 分鐘自動更新最近 7 天被查看最多的前 100 張卡牌
-                </p>
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                (schedule as any)?.hotCardPollSchedulerRunning
-                  ? 'bg-green-900 text-green-300'
-                  : 'bg-red-900 text-red-300'
-              }`}>
-                {(schedule as any)?.hotCardPollSchedulerRunning ? '✓ 排程運行中' : '✗ 排程未啟動'}
-              </span>
-            </div>
-            {(schedule as any)?.hotCardPollIsRunning && (
-              <p className="text-xs text-yellow-400">⚡ 目前正在更新熱門卡牌...</p>
-            )}
-            {(schedule as any)?.hotCardPollLastRunAt && (
-              <p className="text-xs text-gray-400">
-                上次執行：{new Date((schedule as any).hotCardPollLastRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })} (HKT)
-                {(schedule as any)?.hotCardPollLastResult && (
-                  <span className="ml-2 text-gray-500">
-                    更新 {(schedule as any).hotCardPollLastResult.updated} 張，跳過 {(schedule as any).hotCardPollLastResult.skipped} 張，失敗 {(schedule as any).hotCardPollLastResult.failed} 張
-                  </span>
-                )}
-              </p>
-            )}
-            <Button
-              onClick={() => triggerHotCardPoll.mutate()}
-              disabled={triggerHotCardPoll.isPending || (schedule as any)?.hotCardPollIsRunning}
-              variant="outline"
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
-            >
-              {triggerHotCardPoll.isPending ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />更新中...</>
-              ) : (
-                <><Play className="w-4 h-4 mr-2" />立即更新熱門卡牌（前 100 張）</>
-              )}
-            </Button>
-          </div>
+
 
           {/* 說明文字 */}
           <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg">

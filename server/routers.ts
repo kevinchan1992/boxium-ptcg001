@@ -27,6 +27,11 @@ import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
 import { contactRouter } from "./routers/contact";
+import { mobileRouter } from "./routers/mobile";
+import { invalidateSessionCache, updateSessionCache } from "./_core/authenticateSession";
+
+// In-memory cache for getStats (avoids expensive COUNT(*) on large tables)
+let statsCache: { data: { totalCards: number; totalPriceRecords: number }; fetchedAt: number } | null = null;
 
 export const appRouter = router({
   system: systemRouter,
@@ -406,6 +411,7 @@ export const appRouter = router({
         const { eq: eqOp } = await import('drizzle-orm');
         await drizzleDb.update(usersTable).set(updateData).where(eqOp(usersTable.id, ctx.user.id));
         const rows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+        if (rows[0]) updateSessionCache(rows[0]);
         return rows[0] || null;
       }),
     changePassword: protectedProcedure
@@ -765,16 +771,22 @@ export const appRouter = router({
     getStats: publicProcedure
       .query(async () => {
         try {
+          // In-memory cache: refresh at most once every 5 minutes to avoid expensive COUNT(*) on large tables
+          const now = Date.now();
+          if (statsCache && now - statsCache.fetchedAt < 5 * 60 * 1000) {
+            return statsCache.data;
+          }
           const [totalCards, totalPriceRecords] = await Promise.all([
             db.getTotalCardCount(),
             db.getTotalPriceRecordCount(),
           ]);
-          return {
-            totalCards,
-            totalPriceRecords,
-          };
+          const data = { totalCards, totalPriceRecords };
+          statsCache = { data, fetchedAt: now };
+          return data;
         } catch (error: any) {
           console.error("[getStats] Error:", error);
+          // Return stale cache on error if available
+          if (statsCache) return statsCache.data;
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to get stats: ${error.message}`,
@@ -2542,26 +2554,16 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {
         const schedule = await db.getPriceUpdateSchedule();
-        const { getPriceUpdateSchedulerStatus, getHotCardPollStatus } = await import('./priceUpdateScheduler');
+        const { getPriceUpdateSchedulerStatus } = await import('./priceUpdateScheduler');
         const schedulerStatus = getPriceUpdateSchedulerStatus();
-        const hotCardStatus = getHotCardPollStatus();
         return {
           ...schedule,
           snkrdunkSchedulerRunning: schedulerStatus.snkrdunkSchedulerRunning,
           snkrdunkScheduler2Running: schedulerStatus.snkrdunkScheduler2Running,
-          hotCardPollSchedulerRunning: hotCardStatus.schedulerActive,
-          hotCardPollIsRunning: hotCardStatus.isRunning,
-          hotCardPollLastRunAt: hotCardStatus.lastRunAt,
-          hotCardPollLastResult: hotCardStatus.lastResult,
         };
       }),
 
-    triggerHotCardPoll: adminProcedure
-      .mutation(async () => {
-        const { runHotCardPoll } = await import('./priceUpdateScheduler');
-        const result = await runHotCardPoll(100);
-        return { success: true, ...result };
-      }),
+
 
     updatePriceUpdateSchedule: adminProcedure
       .input(z.object({
@@ -2577,6 +2579,41 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         await db.updatePriceUpdateSchedule(input);
         // 重啟排程器以應用新設定
         await restartPriceUpdateScheduler();
+
+        // ── 互斥邏輯：切換模式時自動 enable/disable GitHub Actions workflow ──
+        // 選擇 'platform' → 停用 GitHub Actions 排程（避免重複執行）
+        // 選擇 'github_actions' → 啟用 GitHub Actions 排程
+        if (input.snkrdunkUpdateMode) {
+          const githubPat = process.env.GITHUB_PAT;
+          const githubRepo = process.env.GITHUB_REPO || 'kevinchan1992/boxium-ptcg001';
+          const workflowFile = 'snkrdunk-batch-update.yml';
+          if (githubPat) {
+            try {
+              const action = input.snkrdunkUpdateMode === 'platform' ? 'disable' : 'enable';
+              const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/${action}`;
+              const resp = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${githubPat}`,
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                },
+                signal: AbortSignal.timeout(10000),
+              });
+              if (resp.ok || resp.status === 204) {
+                console.log(`[ScheduleMode] GitHub Actions workflow ${action}d (mode → ${input.snkrdunkUpdateMode})`);
+              } else {
+                console.warn(`[ScheduleMode] Failed to ${action} GitHub Actions workflow: HTTP ${resp.status}`);
+              }
+            } catch (err) {
+              // 非致命錯誤：GitHub API 失敗不影響平台排程設定
+              console.warn(`[ScheduleMode] GitHub API error when toggling workflow:`, err);
+            }
+          } else {
+            console.warn('[ScheduleMode] GITHUB_PAT not set, skipping GitHub Actions workflow toggle');
+          }
+        }
+
         return { success: true, message: "排程設定已更新" };
       }),
 
@@ -2964,7 +3001,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { updateUserRole } = await import('./userManagement');
-        return await updateUserRole(input.userId, input.role);
+        const result = await updateUserRole(input.userId, input.role);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
 
     updateUser: adminProcedure
@@ -2976,7 +3015,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       .mutation(async ({ input }) => {
         const { updateUser } = await import('./userManagement');
         const { userId, ...data } = input;
-        return await updateUser(userId, data);
+        const result = await updateUser(userId, data);
+        invalidateSessionCache(userId);
+        return result;
       }),
 
     resetUserPassword: adminProcedure
@@ -3022,7 +3063,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { blockUser } = await import('./userManagement');
-        return await blockUser(input.userId, input.reason);
+        const result = await blockUser(input.userId, input.reason);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
     unblockUser: adminProcedure
       .input(z.object({
@@ -3030,7 +3073,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { unblockUser } = await import('./userManagement');
-        return await unblockUser(input.userId);
+        const result = await unblockUser(input.userId);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
     
     // Get trending rankings cache status
@@ -4700,6 +4745,7 @@ UNBREAKABLE RULES:
   auction: auctionRouter,
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
+  mobile: mobileRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -100,6 +100,8 @@ export const cards = mysqlTable("cards", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   gameIdIdx: index("idx_cards_gameId").on(table.gameId),
+  nameIdx: index("cards_name_idx").on(table.name),
+  nameJaIdx: index("cards_nameJa_idx").on(table.nameJa),
 }));
 
 export type Card = typeof cards.$inferSelect;
@@ -155,6 +157,12 @@ export const priceHistory = mysqlTable("priceHistory", {
   sourceIdx: index("source_idx").on(table.source),
   // Index for productType to optimize product type queries
   productTypeIdx: index("idx_price_productType").on(table.productType),
+  // Composite index for card detail PSA 10 queries: (cardId, grade, soldAt DESC)
+  // Optimizes: WHERE cardId = ? AND grade = 'PSA 10' ORDER BY soldAt DESC
+  cardIdGradeSoldAtIdx: index("ph_cardId_grade_soldAt_idx").on(table.cardId, table.grade, table.soldAt),
+  // Composite index for cross-card trending calculations: (source, grade, soldAt)
+  // Optimizes: WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND soldAt >= ?
+  sourceGradeSoldAtIdx: index("ph_source_grade_soldAt_idx").on(table.source, table.grade, table.soldAt),
 }));
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
@@ -255,6 +263,8 @@ export const dataSources = mysqlTable("dataSources", {
 }, (table) => ({
   gameIdIdx: index("idx_datasources_gameId").on(table.gameId),
   productTypeIdx: index("idx_datasources_productType").on(table.productType),
+  cardIdIdx: index("idx_datasources_cardId").on(table.cardId),
+  cardIdSourceIdx: index("idx_datasources_cardId_source").on(table.cardId, table.source),
 }));
 
 export type DataSource = typeof dataSources.$inferSelect;
@@ -620,7 +630,9 @@ export const trendingCardsCache = mysqlTable("trendingCardsCache", {
   currentPrice: decimal("currentPrice", { precision: 10, scale: 2 }).notNull(), // Current price
   calculatedAt: timestamp("calculatedAt").notNull(), // When this was calculated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  cardIdIdx: index("tcc_cardId_idx").on(table.cardId),
+}));
 
 export type TrendingCardsCache = typeof trendingCardsCache.$inferSelect;
 export type InsertTrendingCardsCache = typeof trendingCardsCache.$inferInsert;
@@ -820,6 +832,10 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   listingModeIdx: index("ml_listingMode_idx").on(table.listingMode),
   auctionStatusIdx: index("ml_auctionStatus_idx").on(table.auctionStatus),
   auctionEndAtIdx: index("ml_auctionEndAt_idx").on(table.auctionEndAt),
+  // Composite index for homepage/marketplace listing queries: status + listingMode + createdAt
+  statusListingModeCreatedAtIdx: index("ml_status_listingMode_createdAt_idx").on(table.status, table.listingMode, table.createdAt),
+  // Composite index for tcgSeries filter queries
+  statusTcgSeriesCreatedAtIdx: index("ml_status_tcgSeries_createdAt_idx").on(table.status, table.tcgSeries, table.createdAt),
 }));
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
 export type InsertMarketplaceListing = typeof marketplaceListings.$inferInsert;
@@ -1777,3 +1793,22 @@ export const gradingBannerImages = mysqlTable("gradingBannerImages", {
 }));
 export type GradingBannerImage = typeof gradingBannerImages.$inferSelect;
 export type InsertGradingBannerImage = typeof gradingBannerImages.$inferInsert;
+
+// ─── Device Push Tokens (Capacitor APP) ───────────────────────────────────
+// Stores FCM / APNs push notification tokens for registered devices
+export const devicePushTokens = mysqlTable("devicePushTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // FK to users table
+  token: varchar("token", { length: 512 }).notNull(),
+  platform: mysqlEnum("platform", ["ios", "android", "web"]).notNull(),
+  deviceId: varchar("deviceId", { length: 256 }), // Optional device fingerprint for dedup
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("dpt_userId_idx").on(table.userId),
+  tokenIdx: index("dpt_token_idx").on(table.token),
+  platformIdx: index("dpt_platform_idx").on(table.platform),
+}));
+export type DevicePushToken = typeof devicePushTokens.$inferSelect;
+export type InsertDevicePushToken = typeof devicePushTokens.$inferInsert;

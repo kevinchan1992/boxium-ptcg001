@@ -99,12 +99,12 @@ const CONFIG = {
   //   Cloud Run: avg ~2s  → P=4 (optimal for CPU-throttled env)
   //   Rate-limited: avg >3.5s → P=3 (back off)
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 8 },
-    { maxAvgMs: 2000, parallel: 6 },
-    { maxAvgMs: 3500, parallel: 4 },
+    { maxAvgMs: 1000, parallel: 3 },  // v8.3: capped at 3 to prevent Cloud Run OOM (512MB RAM)
+    { maxAvgMs: 2000, parallel: 2 },
+    { maxAvgMs: 3500, parallel: 2 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
-  ADAPTIVE_MIN_PARALLEL: 2,
-  ADAPTIVE_MAX_PARALLEL: 8,
+  ADAPTIVE_MIN_PARALLEL: 1,
+  ADAPTIVE_MAX_PARALLEL: 3,  // v8.3: hard cap at 3 — prevents OOM on Cloud Run 512MB
   // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
   // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
   CONSECUTIVE_TIMEOUT_THRESHOLD: 3,
@@ -264,7 +264,13 @@ class KeepAlivePinger {
   }
 
   private ping(): void {
-    const req = http.get('http://localhost:3000/api/health', { timeout: 5000 }, (res) => {
+    const req = http.get({
+      hostname: 'localhost',
+      port: 3000,
+      path: '/api/health',
+      timeout: 5000,
+      headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (internal-batch-pinger)' },
+    }, (res) => {
       this.pingCount++;
       console.log(`[KeepAlive] Ping #${this.pingCount} → HTTP ${res.statusCode}`);
       res.resume(); // discard response body
@@ -309,8 +315,12 @@ interface ProcessResult {
  * so we can skip empty cards that have no history (83.9% of all cards).
  */
 async function getAllSnkrdunkProducts(): Promise<ProductInfo[]> {
-  const { data: allDataSources } = await db.getDataSources({ pageSize: 100000 });
-  const snkrdunkSources = allDataSources.filter((ds: any) => ds.source === 'snkrdunk');
+  // v8.4 OPTIMISATION: Use indexed query instead of pageSize:100000 full-table scan.
+  // Old: getDataSources({ pageSize: 100000 }) loaded ALL 57,000+ rows (eBay + SNKRDUNK)
+  //      into memory, then filtered in JS. Caused ~2-3s DB query + high RAM usage.
+  // New: getSnkrdunkDataSourcesForBatch() uses idx_datasources_cardId_source index
+  //      to fetch ONLY snkrdunk rows directly from MySQL.
+  const snkrdunkSources = await db.getSnkrdunkDataSourcesForBatch();
 
   // v8.0: Build a set of cardIds that have at least one SNKRDUNK price history record.
   // This is a single DB query that lets us skip 83.9% of empty cards.
