@@ -60,30 +60,32 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // ── Pre-warm DB connection pool + security caches (BLOCKING) ────────────────
+  // ── Pre-warm DB connection pool + security caches (NON-BLOCKING) ─────────────
   // getDb() is lazy-initialized: the first call creates the MySQL connection pool
-  // and establishes a TiDB connection (cross-region, ~5s). We AWAIT this here
-  // so the pool is fully ready before server.listen() is called. Without this,
-  // the first user request triggers DB init and blocks for 5-7s.
-  // We also pre-warm the security caches (blocked IPs, admin whitelist) so that
-  // manualBlockCheck never needs to await DB on the hot path.
-  try {
-    const { getDb } = await import('../db');
-    const db = await getDb();
-    if (db) {
-      await db.execute('SELECT 1');
-      console.log('[DB] Connection pool pre-warmed successfully');
+  // and establishes a TiDB connection (cross-region, ~5s).
+  // IMPORTANT: We do NOT await this here — Cloud Run requires the server to start
+  // listening on the port quickly. Blocking startServer() for 5-7s causes Cloud Run
+  // health checks to time out and return 503. Instead, we fire-and-forget the pre-warm
+  // so server.listen() is called immediately, and DB is ready within a few seconds.
+  Promise.resolve().then(async () => {
+    try {
+      const { getDb } = await import('../db');
+      const db = await getDb();
+      if (db) {
+        await db.execute('SELECT 1');
+        console.log('[DB] Connection pool pre-warmed successfully');
+      }
+      // Pre-warm security caches so manualBlockCheck never awaits DB on hot path
+      const { loadBlockedIpCache, loadAdminWhitelistFromDb } = await import('../middleware/security');
+      await Promise.all([
+        loadBlockedIpCache().catch(() => {}),
+        loadAdminWhitelistFromDb().catch(() => {}),
+      ]);
+      console.log('[DB] Security caches pre-warmed successfully');
+    } catch (e: any) {
+      console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
     }
-    // Pre-warm security caches so manualBlockCheck never awaits DB on hot path
-    const { loadBlockedIpCache, loadAdminWhitelistFromDb } = await import('../middleware/security');
-    await Promise.all([
-      loadBlockedIpCache().catch(() => {}),
-      loadAdminWhitelistFromDb().catch(() => {}),
-    ]);
-    console.log('[DB] Security caches pre-warmed successfully');
-  } catch (e: any) {
-    console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
-  }
+  });
 
   // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
   // This is required for rate limiting and bot detection to work correctly
