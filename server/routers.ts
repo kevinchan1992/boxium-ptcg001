@@ -2587,6 +2587,41 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         await db.updatePriceUpdateSchedule(input);
         // 重啟排程器以應用新設定
         await restartPriceUpdateScheduler();
+
+        // ── 互斥邏輯：切換模式時自動 enable/disable GitHub Actions workflow ──
+        // 選擇 'platform' → 停用 GitHub Actions 排程（避免重複執行）
+        // 選擇 'github_actions' → 啟用 GitHub Actions 排程
+        if (input.snkrdunkUpdateMode) {
+          const githubPat = process.env.GITHUB_PAT;
+          const githubRepo = process.env.GITHUB_REPO || 'kevinchan1992/boxium-ptcg001';
+          const workflowFile = 'snkrdunk-batch-update.yml';
+          if (githubPat) {
+            try {
+              const action = input.snkrdunkUpdateMode === 'platform' ? 'disable' : 'enable';
+              const apiUrl = `https://api.github.com/repos/${githubRepo}/actions/workflows/${workflowFile}/${action}`;
+              const resp = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${githubPat}`,
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                },
+                signal: AbortSignal.timeout(10000),
+              });
+              if (resp.ok || resp.status === 204) {
+                console.log(`[ScheduleMode] GitHub Actions workflow ${action}d (mode → ${input.snkrdunkUpdateMode})`);
+              } else {
+                console.warn(`[ScheduleMode] Failed to ${action} GitHub Actions workflow: HTTP ${resp.status}`);
+              }
+            } catch (err) {
+              // 非致命錯誤：GitHub API 失敗不影響平台排程設定
+              console.warn(`[ScheduleMode] GitHub API error when toggling workflow:`, err);
+            }
+          } else {
+            console.warn('[ScheduleMode] GITHUB_PAT not set, skipping GitHub Actions workflow toggle');
+          }
+        }
+
         return { success: true, message: "排程設定已更新" };
       }),
 
