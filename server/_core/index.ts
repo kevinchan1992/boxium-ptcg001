@@ -60,23 +60,30 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // ── Pre-warm DB connection pool ────────────────────────────────────────────
+  // ── Pre-warm DB connection pool + security caches (BLOCKING) ────────────────
   // getDb() is lazy-initialized: the first call creates the MySQL connection pool
-  // and establishes a TiDB connection (cross-region, ~5s). Pre-warming here
-  // ensures the pool is ready before any request arrives, eliminating the
-  // 5-7s cold start delay on the first user request.
-  import('../db').then(async ({ getDb }) => {
-    try {
-      const db = await getDb();
-      if (db) {
-        // Run a lightweight query to verify the connection is live
-        await db.execute('SELECT 1');
-        console.log('[DB] Connection pool pre-warmed successfully');
-      }
-    } catch (e: any) {
-      console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
+  // and establishes a TiDB connection (cross-region, ~5s). We AWAIT this here
+  // so the pool is fully ready before server.listen() is called. Without this,
+  // the first user request triggers DB init and blocks for 5-7s.
+  // We also pre-warm the security caches (blocked IPs, admin whitelist) so that
+  // manualBlockCheck never needs to await DB on the hot path.
+  try {
+    const { getDb } = await import('../db');
+    const db = await getDb();
+    if (db) {
+      await db.execute('SELECT 1');
+      console.log('[DB] Connection pool pre-warmed successfully');
     }
-  }).catch(() => {});
+    // Pre-warm security caches so manualBlockCheck never awaits DB on hot path
+    const { loadBlockedIpCache, loadAdminWhitelistFromDb } = await import('../middleware/security');
+    await Promise.all([
+      loadBlockedIpCache().catch(() => {}),
+      loadAdminWhitelistFromDb().catch(() => {}),
+    ]);
+    console.log('[DB] Security caches pre-warmed successfully');
+  } catch (e: any) {
+    console.warn('[DB] Pre-warm failed (non-fatal):', e.message);
+  }
 
   // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
   // This is required for rate limiting and bot detection to work correctly
