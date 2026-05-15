@@ -1,0 +1,20 @@
+{
+  "query": "SELECT @@hostname, @@version, NOW() as server_time; SELECT COUNT(*) as user_count FROM users; SELECT COUNT(*) as card_count FROM cards;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT @@hostname, @@version, NOW() as server_time; SELECT COUNT(*) as user_count FROM users; SELECT COUNT(*) as card_count FROM cards;",
+  "rows": [
+    {
+      "@@hostname": "localhost",
+      "@@version": "8.0.11-TiDB-v8.5.3-serverless",
+      "server_time": "2026-05-15 12:36:10"
+    }
+  ],
+  "messages": [
+    "user_count",
+    "24",
+    "card_count",
+    "55714"
+  ],
+  "stdout": "@@hostname\t@@version\tserver_time\nlocalhost\t8.0.11-TiDB-v8.5.3-serverless\t2026-05-15 12:36:10\nuser_count\n24\ncard_count\n55714\n",
+  "stderr": "",
+  "execution_time_ms": 2169
+}

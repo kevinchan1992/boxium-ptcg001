@@ -28,6 +28,7 @@ import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
 import { contactRouter } from "./routers/contact";
 import { mobileRouter } from "./routers/mobile";
+import { invalidateSessionCache, updateSessionCache } from "./_core/authenticateSession";
 
 // In-memory cache for getStats (avoids expensive COUNT(*) on large tables)
 let statsCache: { data: { totalCards: number; totalPriceRecords: number }; fetchedAt: number } | null = null;
@@ -410,6 +411,7 @@ export const appRouter = router({
         const { eq: eqOp } = await import('drizzle-orm');
         await drizzleDb.update(usersTable).set(updateData).where(eqOp(usersTable.id, ctx.user.id));
         const rows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+        if (rows[0]) updateSessionCache(rows[0]);
         return rows[0] || null;
       }),
     changePassword: protectedProcedure
@@ -2999,7 +3001,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { updateUserRole } = await import('./userManagement');
-        return await updateUserRole(input.userId, input.role);
+        const result = await updateUserRole(input.userId, input.role);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
 
     updateUser: adminProcedure
@@ -3011,7 +3015,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       .mutation(async ({ input }) => {
         const { updateUser } = await import('./userManagement');
         const { userId, ...data } = input;
-        return await updateUser(userId, data);
+        const result = await updateUser(userId, data);
+        invalidateSessionCache(userId);
+        return result;
       }),
 
     resetUserPassword: adminProcedure
@@ -3057,7 +3063,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { blockUser } = await import('./userManagement');
-        return await blockUser(input.userId, input.reason);
+        const result = await blockUser(input.userId, input.reason);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
     unblockUser: adminProcedure
       .input(z.object({
@@ -3065,7 +3073,9 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
       }))
       .mutation(async ({ input }) => {
         const { unblockUser } = await import('./userManagement');
-        return await unblockUser(input.userId);
+        const result = await unblockUser(input.userId);
+        invalidateSessionCache(input.userId);
+        return result;
       }),
     
     // Get trending rankings cache status

@@ -32,14 +32,26 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Generate a JWT token for a user
+ * Generate a v2 JWT token for a user.
+ * The payload carries the full user snapshot so that authenticateSession can
+ * reconstruct the User object without a DB round-trip (zero DB query per request).
  */
 export function generateToken(user: User): string {
   return jwt.sign(
     {
+      v: 2,
       id: user.id,
       email: user.email,
       role: user.role,
+      name: user.name,
+      phone: user.phone,
+      emailVerified: user.emailVerified,
+      isBlocked: user.isBlocked,
+      loginMethod: user.loginMethod,
+      googleId: user.googleId,
+      createdAt: user.createdAt?.getTime(),
+      updatedAt: user.updatedAt?.getTime(),
+      lastSignedIn: user.lastSignedIn?.getTime(),
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
