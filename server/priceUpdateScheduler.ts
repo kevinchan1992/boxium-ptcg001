@@ -2805,3 +2805,56 @@ export function stopGradingUpgradeOverdueReminderScheduler() {
     gradingUpgradeOverdueCronJob = null;
   }
 }
+
+// ─── scraperPerformanceLogs Auto-Cleanup Scheduler ──────────────────────────
+/**
+ * Automatically purges scraperPerformanceLogs rows older than 10 days.
+ * Runs daily at 03:30 HKT (well after the 02:00 batch update finishes).
+ *
+ * Rationale: performanceTracker.ts writes one row per scraped card per run.
+ * With ~12,922 cards per daily batch update, the table grows by ~12,922 rows/day.
+ * Without cleanup, this accumulates to millions of rows within weeks, causing
+ * slow admin queries and unnecessary DB storage usage.
+ *
+ * Retention policy: keep last 10 days (~129,220 rows max) — sufficient for
+ * the admin scraper performance dashboard (7-day view).
+ */
+let scraperPerformanceLogsCleanupCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startScraperPerformanceLogsCleanupScheduler() {
+  if (scraperPerformanceLogsCleanupCronJob) return;
+
+  // 03:30 HKT daily (UTC+8 → cron runs in server local time which is UTC, so 03:30 HKT = 19:30 UTC)
+  scraperPerformanceLogsCleanupCronJob = cron.schedule('30 19 * * *', async () => {
+    const startedAt = Date.now();
+    console.log('[ScraperLogsCleanup] Starting daily cleanup — retaining last 10 days');
+    try {
+      const { scraperPerformanceLogs } = await import('../drizzle/schema_new');
+      const { lt } = await import('drizzle-orm');
+      const database = await import('./db').then((m: any) => m.getDb());
+      if (!database) {
+        console.warn('[ScraperLogsCleanup] DB not available, skipping');
+        return;
+      }
+      // Delete rows older than 10 days
+      const cutoff = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+      const result = await database
+        .delete(scraperPerformanceLogs)
+        .where(lt(scraperPerformanceLogs.createdAt, cutoff));
+      const deleted = (result as any)?.[0]?.affectedRows ?? 0;
+      const elapsed = Date.now() - startedAt;
+      console.log(`[ScraperLogsCleanup] Done — deleted ${deleted} rows older than ${cutoff.toISOString()} (${elapsed}ms)`);
+    } catch (err) {
+      console.error('[ScraperLogsCleanup] Error during cleanup:', (err as Error).message);
+    }
+  }, { timezone: 'UTC' });
+
+  console.log('[ScraperLogsCleanup] Scheduler started — runs daily at 03:30 HKT (19:30 UTC), retaining 10 days');
+}
+
+export function stopScraperPerformanceLogsCleanupScheduler() {
+  if (scraperPerformanceLogsCleanupCronJob) {
+    scraperPerformanceLogsCleanupCronJob.stop();
+    scraperPerformanceLogsCleanupCronJob = null;
+  }
+}
