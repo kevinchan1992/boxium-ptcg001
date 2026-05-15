@@ -927,7 +927,13 @@ async function startServer() {
   
   // Google OAuth routes — apply auth rate limiter
   app.use("/api/auth", authLimiter, googleOAuthRouter);
-  
+
+  // Lightweight health check endpoint — used by KeepAlive Pinger in batch update tasks
+  // to prevent Cloud Run idle shutdown during long-running background jobs.
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Sitemap.xml route
   app.get("/sitemap.xml", async (req, res) => {
     try {

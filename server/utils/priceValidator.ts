@@ -17,6 +17,12 @@
  * 5. IQR outlier filter    – when a batch of records is available for the same
  *                            grade, values outside [Q1 - 3×IQR, Q3 + 3×IQR] are
  *                            dropped (very conservative: only extreme outliers).
+ *
+ * Logging:
+ * - By default (silent=true), all per-record warnings are suppressed to avoid
+ *   flooding the server log during batch updates (12,000+ cards × multiple records).
+ * - Pass { silent: false } to validateAndFilterPriceHistory() for verbose output
+ *   (e.g., during manual data source adds or debugging).
  */
 
 export interface RawPriceEntry {
@@ -105,7 +111,7 @@ export function isAboveMinimumPrice(
 // ---------------------------------------------------------------------------
 // 2. Normalise a single grade string
 // ---------------------------------------------------------------------------
-export function normaliseGrade(raw: string | undefined | null): string | undefined {
+export function normaliseGrade(raw: string | undefined | null, silent = true): string | undefined {
   if (!raw) return undefined;
   const trimmed = raw.trim();
   // Direct lookup first
@@ -113,7 +119,7 @@ export function normaliseGrade(raw: string | undefined | null): string | undefin
   // Already a known normalised value
   if (KNOWN_GRADES.has(trimmed)) return trimmed;
   // Unknown grade: log and return as-is (don't silently drop)
-  console.warn(`[PriceValidator] Unknown grade value: "${trimmed}" – storing as-is`);
+  if (!silent) console.warn(`[PriceValidator] Unknown grade value: "${trimmed}" – storing as-is`);
   return trimmed;
 }
 
@@ -123,12 +129,13 @@ export function normaliseGrade(raw: string | undefined | null): string | undefin
 export function isValidPriceEntry(
   entry: RawPriceEntry,
   normalisedGrade: string | undefined,
+  silent = true,
 ): boolean {
   const jpyPrice = entry.jpyPrice ?? entry.price;
 
   // Global floor
   if (jpyPrice < GLOBAL_MIN_JPY) {
-    console.warn(
+    if (!silent) console.warn(
       `[PriceValidator] Dropping record: JPY ${jpyPrice} is below global minimum ${GLOBAL_MIN_JPY}` +
       ` (grade: ${normalisedGrade ?? "none"}, soldAt: ${entry.soldAt.toISOString()})`
     );
@@ -139,7 +146,7 @@ export function isValidPriceEntry(
   if (normalisedGrade && MIN_JPY_BY_GRADE[normalisedGrade]) {
     const minJpy = MIN_JPY_BY_GRADE[normalisedGrade];
     if (jpyPrice < minJpy) {
-      console.warn(
+      if (!silent) console.warn(
         `[PriceValidator] Dropping ${normalisedGrade} record: JPY ${jpyPrice} < min ${minJpy}` +
         ` (soldAt: ${entry.soldAt.toISOString()})`
       );
@@ -157,6 +164,7 @@ export function isValidPriceEntry(
 export function filterOutliersByIQR<T extends RawPriceEntry>(
   entries: T[],
   grade: string | undefined,
+  silent = true,
 ): T[] {
   if (entries.length < 5) return entries; // Not enough data for IQR
 
@@ -171,7 +179,7 @@ export function filterOutliersByIQR<T extends RawPriceEntry>(
   const filtered: T[] = entries.filter(e => {
     const p = e.jpyPrice ?? e.price;
     if (p < lower || p > upper) {
-      console.warn(
+      if (!silent) console.warn(
         `[PriceValidator] IQR outlier dropped: JPY ${p} outside [${Math.round(lower)}, ${Math.round(upper)}]` +
         ` (grade: ${grade ?? "none"}, Q1=${Math.round(q1)}, Q3=${Math.round(q3)}, IQR=${Math.round(iqr)})`
       );
@@ -180,7 +188,7 @@ export function filterOutliersByIQR<T extends RawPriceEntry>(
     return true;
   });
 
-  if (filtered.length < entries.length) {
+  if (!silent && filtered.length < entries.length) {
     console.log(
       `[PriceValidator] IQR filter: kept ${filtered.length}/${entries.length} records for grade ${grade ?? "none"}`
     );
@@ -209,17 +217,21 @@ export interface ValidatedPriceEntry extends RawPriceEntry {
 export function validateAndFilterPriceHistory(
   entries: RawPriceEntry[],
   productType: "single_card" | "sealed_product" = "single_card",
+  options: { silent?: boolean } = {},
 ): ValidatedPriceEntry[] {
+  // Default to silent=true to avoid flooding logs during batch updates (12,000+ cards)
+  const silent = options.silent !== false;
+
   if (!entries || entries.length === 0) return [];
 
   // Step 1: Normalise grades and apply per-entry validation
   const normalised: ValidatedPriceEntry[] = [];
   for (const entry of entries) {
     const normalisedGrade = productType === "single_card"
-      ? normaliseGrade(entry.grade)
+      ? normaliseGrade(entry.grade, silent)
       : undefined; // Sealed products don't use grade
 
-    if (!isValidPriceEntry(entry, normalisedGrade)) continue;
+    if (!isValidPriceEntry(entry, normalisedGrade, silent)) continue;
 
     normalised.push({ ...entry, normalisedGrade });
   }
@@ -236,7 +248,7 @@ export function validateAndFilterPriceHistory(
 
   const result: ValidatedPriceEntry[] = [];
   byGrade.forEach((gradeEntries, gradeKey) => {
-    const filtered = filterOutliersByIQR(gradeEntries, gradeKey === "__none__" ? undefined : gradeKey);
+    const filtered = filterOutliersByIQR(gradeEntries, gradeKey === "__none__" ? undefined : gradeKey, silent);
     result.push(...filtered);
   });
 

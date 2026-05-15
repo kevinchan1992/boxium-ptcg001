@@ -309,8 +309,12 @@ interface ProcessResult {
  * so we can skip empty cards that have no history (83.9% of all cards).
  */
 async function getAllSnkrdunkProducts(): Promise<ProductInfo[]> {
-  const { data: allDataSources } = await db.getDataSources({ pageSize: 100000 });
-  const snkrdunkSources = allDataSources.filter((ds: any) => ds.source === 'snkrdunk');
+  // v8.4 OPTIMISATION: Use indexed query instead of pageSize:100000 full-table scan.
+  // Old: getDataSources({ pageSize: 100000 }) loaded ALL 57,000+ rows (eBay + SNKRDUNK)
+  //      into memory, then filtered in JS. Caused ~2-3s DB query + high RAM usage.
+  // New: getSnkrdunkDataSourcesForBatch() uses idx_datasources_cardId_source index
+  //      to fetch ONLY snkrdunk rows directly from MySQL.
+  const snkrdunkSources = await db.getSnkrdunkDataSourcesForBatch();
 
   // v8.0: Build a set of cardIds that have at least one SNKRDUNK price history record.
   // This is a single DB query that lets us skip 83.9% of empty cards.

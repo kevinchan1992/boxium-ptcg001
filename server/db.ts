@@ -6494,3 +6494,51 @@ export async function getSnkrdunkListingsCacheStats() {
     oldestEntry,
   };
 }
+
+/**
+ * Optimised query for batch update: fetch all active SNKRDUNK data sources
+ * with their associated card name in a single indexed query.
+ *
+ * Replaces the old pattern:
+ *   getDataSources({ pageSize: 100000 }).then(r => r.data.filter(ds => ds.source === 'snkrdunk'))
+ *
+ * The old pattern loaded ALL 57,000+ rows from dataSources (including eBay, etc.)
+ * into memory before filtering. This new function uses the existing
+ * idx_datasources_cardId_source composite index to fetch only snkrdunk rows.
+ */
+export async function getSnkrdunkDataSourcesForBatch(): Promise<Array<{
+  id: number;
+  cardId: number;
+  source: string;
+  sourceUrl: string;
+  productType: string;
+  lastFetchedAt: Date | null;
+  card: { id: number; name: string | null; nameJa: string | null } | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: dataSources.id,
+      cardId: dataSources.cardId,
+      source: dataSources.source,
+      sourceUrl: dataSources.sourceUrl,
+      productType: dataSources.productType,
+      lastFetchedAt: dataSources.lastFetchedAt,
+      card: {
+        id: cards.id,
+        name: cards.name,
+        nameJa: cards.nameJa,
+      },
+    })
+    .from(dataSources)
+    .leftJoin(cards, eq(dataSources.cardId, cards.id))
+    .where(and(
+      eq(dataSources.source, 'snkrdunk'),
+      eq(dataSources.isActive, 1),
+    ))
+    .orderBy(asc(dataSources.cardId));
+
+  return rows as any[];
+}

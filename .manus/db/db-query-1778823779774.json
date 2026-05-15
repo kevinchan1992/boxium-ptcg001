@@ -1,0 +1,65 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, startedAt, completedAt FROM scheduledTasks ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, startedAt, completedAt FROM scheduledTasks ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "4170001",
+      "taskType": "batch_snkrdunk_update",
+      "status": "running",
+      "totalItems": "12922",
+      "processedItems": "351",
+      "successCount": "351",
+      "failureCount": "0",
+      "startedAt": "2026-05-15 04:52:25",
+      "completedAt": "NULL"
+    },
+    {
+      "id": "4140001",
+      "taskType": "batch_snkrdunk_update",
+      "status": "failed",
+      "totalItems": "8109",
+      "processedItems": "4053",
+      "successCount": "4053",
+      "failureCount": "0",
+      "startedAt": "2026-05-14 17:00:04",
+      "completedAt": "2026-05-14 22:03:58"
+    },
+    {
+      "id": "4110001",
+      "taskType": "batch_snkrdunk_update",
+      "status": "completed",
+      "totalItems": "14549",
+      "processedItems": "9042",
+      "successCount": "9042",
+      "failureCount": "0",
+      "startedAt": "2026-05-14 09:11:40",
+      "completedAt": "2026-05-14 16:30:48"
+    },
+    {
+      "id": "4080013",
+      "taskType": "batch_snkrdunk_update",
+      "status": "failed",
+      "totalItems": "20",
+      "processedItems": "0",
+      "successCount": "0",
+      "failureCount": "0",
+      "startedAt": "2026-05-13 09:13:32",
+      "completedAt": "2026-05-13 11:29:50"
+    },
+    {
+      "id": "4080012",
+      "taskType": "batch_snkrdunk_update",
+      "status": "failed",
+      "totalItems": "10",
+      "processedItems": "0",
+      "successCount": "0",
+      "failureCount": "0",
+      "startedAt": "2026-05-13 09:13:31",
+      "completedAt": "2026-05-13 11:29:50"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\tstartedAt\tcompletedAt\n4170001\tbatch_snkrdunk_update\trunning\t12922\t351\t351\t0\t2026-05-15 04:52:25\tNULL\n4140001\tbatch_snkrdunk_update\tfailed\t8109\t4053\t4053\t0\t2026-05-14 17:00:04\t2026-05-14 22:03:58\n4110001\tbatch_snkrdunk_update\tcompleted\t14549\t9042\t9042\t0\t2026-05-14 09:11:40\t2026-05-14 16:30:48\n4080013\tbatch_snkrdunk_update\tfailed\t20\t0\t0\t0\t2026-05-13 09:13:32\t2026-05-13 11:29:50\n4080012\tbatch_snkrdunk_update\tfailed\t10\t0\t0\t0\t2026-05-13 09:13:31\t2026-05-13 11:29:50\n",
+  "stderr": "",
+  "execution_time_ms": 1821
+}

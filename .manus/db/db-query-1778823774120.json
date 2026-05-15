@@ -1,0 +1,32 @@
+{
+  "query": "SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, startedAt, completedAt FROM backgroundTasks ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT id, taskType, status, totalItems, processedItems, successCount, failureCount, startedAt, completedAt FROM backgroundTasks ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "2",
+      "taskType": "refresh_all_cards_cache",
+      "status": "running",
+      "totalItems": "8055",
+      "processedItems": "3260",
+      "successCount": "3220",
+      "failureCount": "40",
+      "startedAt": "2026-02-19 05:12:55",
+      "completedAt": "NULL"
+    },
+    {
+      "id": "1",
+      "taskType": "refresh_all_cards_cache",
+      "status": "cancelled",
+      "totalItems": "8055",
+      "processedItems": "10",
+      "successCount": "10",
+      "failureCount": "0",
+      "startedAt": "2026-02-19 04:58:10",
+      "completedAt": "2026-02-19 04:58:58"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttaskType\tstatus\ttotalItems\tprocessedItems\tsuccessCount\tfailureCount\tstartedAt\tcompletedAt\n2\trefresh_all_cards_cache\trunning\t8055\t3260\t3220\t40\t2026-02-19 05:12:55\tNULL\n1\trefresh_all_cards_cache\tcancelled\t8055\t10\t10\t0\t2026-02-19 04:58:10\t2026-02-19 04:58:58\n",
+  "stderr": "",
+  "execution_time_ms": 1740
+}
