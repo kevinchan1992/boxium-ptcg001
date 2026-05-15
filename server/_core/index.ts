@@ -1893,6 +1893,31 @@ async function startServer() {
     startWeeklyBlogReportScheduler();
     // Start the scraperPerformanceLogs auto-cleanup scheduler (daily at 03:30 HKT, retains 10 days)
     startScraperPerformanceLogsCleanupScheduler();
+
+    // ── 24/7 Cloud Run KeepAlive Pinger ──────────────────────────────────────
+    // Cloud Run scales to 0 instances after ~5 minutes of inactivity, causing
+    // 5-7 second cold starts for every user request. This pinger sends a
+    // lightweight self-HTTP GET to /api/health every 4 minutes to keep the
+    // instance warm at all times (not just during batch update windows).
+    if (process.env.NODE_ENV === 'production') {
+      const http = await import('http');
+      let keepAliveCount = 0;
+      const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
+      setInterval(() => {
+        keepAliveCount++;
+        const req = http.get({
+          hostname: 'localhost',
+          port,
+          path: '/api/health',
+          headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (always-on)' },
+        }, (res) => {
+          res.resume(); // drain response
+        });
+        req.on('error', () => { /* non-fatal */ });
+        req.setTimeout(5000, () => req.destroy());
+      }, KEEPALIVE_INTERVAL_MS);
+      console.log(`[KeepAlive] 24/7 pinger started (interval=${KEEPALIVE_INTERVAL_MS / 1000}s)`);
+    }
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();
