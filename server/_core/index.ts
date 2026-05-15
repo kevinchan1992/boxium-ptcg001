@@ -9,6 +9,7 @@ import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
+import http from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 // Manus OAuth removed
@@ -1918,8 +1919,6 @@ async function startServer() {
     // lightweight self-HTTP GET to /api/health every 4 minutes to keep the
     // instance warm at all times (not just during batch update windows).
     if (process.env.NODE_ENV === 'production') {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const http = require('http') as typeof import('http');
       let keepAliveCount = 0;
       const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
       setInterval(() => {
