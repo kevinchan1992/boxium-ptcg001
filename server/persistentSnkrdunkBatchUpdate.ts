@@ -264,7 +264,13 @@ class KeepAlivePinger {
   }
 
   private ping(): void {
-    const req = http.get('http://localhost:3000/api/health', { timeout: 5000 }, (res) => {
+    const req = http.get({
+      hostname: 'localhost',
+      port: 3000,
+      path: '/api/health',
+      timeout: 5000,
+      headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (internal-batch-pinger)' },
+    }, (res) => {
       this.pingCount++;
       console.log(`[KeepAlive] Ping #${this.pingCount} → HTTP ${res.statusCode}`);
       res.resume(); // discard response body
