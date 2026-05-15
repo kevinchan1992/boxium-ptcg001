@@ -959,7 +959,7 @@ async function startServer() {
   // Lightweight health check endpoint — used by KeepAlive Pinger in batch update tasks
   // to prevent Cloud Run idle shutdown during long-running background jobs.
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({ status: "ok", timestamp: new Date().toISOString(), uptime: process.uptime() });
   });
 
   // Sitemap.xml route
