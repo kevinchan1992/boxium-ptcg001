@@ -1928,11 +1928,36 @@ async function startServer() {
     startWeeklyBlogReportScheduler();
     // Start the scraperPerformanceLogs auto-cleanup scheduler (daily at 03:30 HKT, retains 10 days)
     startScraperPerformanceLogsCleanupScheduler();
-    // NOTE: Cloud Run KeepAlive is handled by Manus Heartbeat (external HTTP cron).
-    // The platform POSTs to /api/scheduled/keepalive every 60s from outside Cloud Run,
-    // which is the ONLY reliable way to keep instances warm.
-    // In-process setInterval does NOT survive Cloud Run instance termination.
-    console.log('[KeepAlive] Using Manus Heartbeat external cron for Cloud Run warmup.');
+    // ─── Cloud Run KeepAlive (Dual Strategy) ──────────────────────────────────
+    // Strategy 1: In-process setInterval self-ping every 4 minutes
+    //   → Prevents Cloud Run idle timeout from terminating an ACTIVE instance
+    //   → Same pattern as KeepAlivePinger in persistentSnkrdunkBatchUpdate.ts (proven effective)
+    // Strategy 2: Manus Heartbeat external cron every 30s (two jobs at :00 and :30)
+    //   → Wakes up a COLD instance after it has been terminated
+    // Both strategies work together: setInterval keeps warm instances alive,
+    // Heartbeat revives cold instances after termination.
+    if (process.env.NODE_ENV === 'production') {
+      const keepAlivePort = process.env.PORT || '3000';
+      let keepAlivePingCount = 0;
+      const keepAliveTimer = setInterval(() => {
+        const req = http.get(
+          `http://localhost:${keepAlivePort}/api/health`,
+          {
+            timeout: 5000,
+            headers: { 'User-Agent': 'BoxiumKeepAlive/1.0 (internal-24x7-pinger)' },
+          },
+          (res) => {
+            keepAlivePingCount++;
+            console.log(`[KeepAlive] Self-ping #${keepAlivePingCount} → HTTP ${res.statusCode} (uptime=${process.uptime().toFixed(0)}s)`);
+            res.resume();
+          }
+        );
+        req.on('error', (err: Error) => console.warn(`[KeepAlive] Self-ping failed: ${err.message}`));
+        req.on('timeout', () => { req.destroy(); console.warn('[KeepAlive] Self-ping timed out'); });
+      }, 4 * 60 * 1000); // Every 4 minutes (Cloud Run idle timeout is ~5 minutes)
+      keepAliveTimer.unref(); // Don't prevent graceful shutdown
+      console.log('[KeepAlive] 24/7 self-ping started (interval=240s) + Manus Heartbeat external cron (interval=30s)');
+    }
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();
