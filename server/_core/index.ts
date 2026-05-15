@@ -17,7 +17,7 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler, startGradingAwaitingPaymentCleanupScheduler, startGradingUpgradeOverdueReminderScheduler, startScraperPerformanceLogsCleanupScheduler } from "../priceUpdateScheduler";
+import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler, startGradingAwaitingPaymentCleanupScheduler, startGradingUpgradeOverdueReminderScheduler, startScraperPerformanceLogsCleanupScheduler } from "../priceUpdateScheduler";
 import { startWeeklyBlogReportScheduler } from "../weeklyBlogScheduler";
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
@@ -1861,7 +1861,6 @@ async function startServer() {
     // Start the payment reminder scheduler (every hour at :45, reminds buyers 12h before auto-cancel)
     startPaymentReminderScheduler();
     // Start the hot card polling scheduler (every 30 minutes, updates top 100 most-viewed cards)
-    startHotCardPollScheduler();
     // Start the cart expiry cleanup scheduler (daily at 03:00 HKT, removes 14-day-old cart items)
     startCartExpiryCleanupScheduler();
     // Start the Alipay review timeout reminder scheduler (every hour, notifies admin if proof pending >24hrs)

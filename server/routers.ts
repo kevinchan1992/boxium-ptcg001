@@ -2552,26 +2552,16 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {
         const schedule = await db.getPriceUpdateSchedule();
-        const { getPriceUpdateSchedulerStatus, getHotCardPollStatus } = await import('./priceUpdateScheduler');
+        const { getPriceUpdateSchedulerStatus } = await import('./priceUpdateScheduler');
         const schedulerStatus = getPriceUpdateSchedulerStatus();
-        const hotCardStatus = getHotCardPollStatus();
         return {
           ...schedule,
           snkrdunkSchedulerRunning: schedulerStatus.snkrdunkSchedulerRunning,
           snkrdunkScheduler2Running: schedulerStatus.snkrdunkScheduler2Running,
-          hotCardPollSchedulerRunning: hotCardStatus.schedulerActive,
-          hotCardPollIsRunning: hotCardStatus.isRunning,
-          hotCardPollLastRunAt: hotCardStatus.lastRunAt,
-          hotCardPollLastResult: hotCardStatus.lastResult,
         };
       }),
 
-    triggerHotCardPoll: adminProcedure
-      .mutation(async () => {
-        const { runHotCardPoll } = await import('./priceUpdateScheduler');
-        const result = await runHotCardPoll(100);
-        return { success: true, ...result };
-      }),
+
 
     updatePriceUpdateSchedule: adminProcedure
       .input(z.object({
