@@ -1,9 +1,8 @@
 name: SNKRDUNK Batch Price Update
 on:
   schedule:
-    # Every 12 hours: HKT 02:00 (UTC 18:00 prev day) and HKT 14:00 (UTC 06:00)
+    # Once daily at HKT 02:00 (UTC 18:00 prev day)
     - cron: '0 18 * * *'
-    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       skip_hours:
