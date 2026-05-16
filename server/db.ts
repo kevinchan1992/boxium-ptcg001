@@ -24,32 +24,34 @@ export function invalidateTrendingCache() {
   _trendingCache.clear();
 }
 
-// In-memory cache for search results (TTL 5 minutes, max 200 entries)
-type SearchCacheEntry = { data: { cards: any[]; total: number }; fetchedAt: number };
+// In-memory cache for search results (TTL 5 minutes, max 100 entries)
+// Key: normalized query string only — stores ALL matching cards (no pagination).
+// Pagination is done in-memory by slicing the cached array, so page 2+ never hits the DB.
+type SearchCacheEntry = { allCards: any[]; total: number; fetchedAt: number };
 const _searchCache = new Map<string, SearchCacheEntry>();
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const SEARCH_CACHE_MAX = 200;
+const SEARCH_CACHE_MAX = 100;
 
-function getSearchCacheKey(query: string, limit: number, offset: number): string {
-  return `${query.toLowerCase().trim()}|${limit}|${offset}`;
+function getSearchCacheKey(query: string): string {
+  return query.toLowerCase().trim();
 }
 
-function getFromSearchCache(key: string): { cards: any[]; total: number } | null {
+function getFromSearchCache(key: string): { allCards: any[]; total: number } | null {
   const entry = _searchCache.get(key);
   if (!entry) return null;
   if (Date.now() - entry.fetchedAt > SEARCH_CACHE_TTL_MS) {
     _searchCache.delete(key);
     return null;
   }
-  return entry.data;
+  return { allCards: entry.allCards, total: entry.total };
 }
 
-function setSearchCache(key: string, data: { cards: any[]; total: number }): void {
+function setSearchCache(key: string, allCards: any[], total: number): void {
   if (_searchCache.size >= SEARCH_CACHE_MAX) {
     const oldestKey = _searchCache.keys().next().value;
     if (oldestKey) _searchCache.delete(oldestKey);
   }
-  _searchCache.set(key, { data, fetchedAt: Date.now() });
+  _searchCache.set(key, { allCards, total, fetchedAt: Date.now() });
 }
 
 /** Invalidate search cache (call after card data changes) */
@@ -274,10 +276,13 @@ async function searchCardsByGrade(
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
   const trimmedQuery = query.trim();
 
-  // ── In-memory cache check ────────────────────────────────────────────────
-  const cacheKey = getSearchCacheKey(trimmedQuery, limit, offset);
-  const cachedResult = getFromSearchCache(cacheKey);
-  if (cachedResult) return cachedResult;
+  // ── In-memory cache check (keyed by query only, stores ALL results) ─────────
+  // This means page 2+ is served from cache without any DB query.
+  const cacheKey = getSearchCacheKey(trimmedQuery);
+  const cached = getFromSearchCache(cacheKey);
+  if (cached) {
+    return { cards: cached.allCards.slice(offset, offset + limit), total: cached.total };
+  }
 
   const db = await getDb();
   if (!db) return { cards: [], total: 0 };
@@ -287,9 +292,9 @@ export async function searchCards(query: string, limit: number = 20, offset: num
   // and filter results to cards that have listings of that grade in the cache.
   const { gradeFilter, cleanQuery } = parseGradeFilter(trimmedQuery);
   if (gradeFilter) {
-    const gradeResult = await searchCardsByGrade(gradeFilter, cleanQuery, limit, offset, db);
-    setSearchCache(cacheKey, gradeResult);
-    return gradeResult;
+    const gradeResult = await searchCardsByGrade(gradeFilter, cleanQuery, 999999, 0, db);
+    setSearchCache(cacheKey, gradeResult.cards, gradeResult.total);
+    return { cards: gradeResult.cards.slice(offset, offset + limit), total: gradeResult.total };
   }
 
   // ── Pure series code query (e.g. "SV10", "SM-P", "ST01", "SM", "ST") ───────
@@ -318,10 +323,9 @@ export async function searchCards(query: string, limit: number = 20, offset: num
       if (!priceMap.has(price.cardId)) priceMap.set(price.cardId, Number(price.price));
     }
     const sortedCards = matchingCards.sort((a, b) => (priceMap.get(b.id) || 0) - (priceMap.get(a.id) || 0));
-    const cardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
-    const seriesResult = { cards: cardsWithPrice.slice(offset, offset + limit), total: cardsWithPrice.length };
-    setSearchCache(cacheKey, seriesResult);
-    return seriesResult;
+    const allCardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
+    setSearchCache(cacheKey, allCardsWithPrice, allCardsWithPrice.length);
+    return { cards: allCardsWithPrice.slice(offset, offset + limit), total: allCardsWithPrice.length };
   }
 
   // ── Multi-token fuzzy search ───────────────────────────────────────────────
@@ -403,12 +407,12 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     return priceB - priceA;
   });
 
-  const finalResult = {
+  // Cache ALL results (not just this page), so subsequent pages are served from memory
+  setSearchCache(cacheKey, cardsWithScore, cardsWithScore.length);
+  return {
     cards: cardsWithScore.slice(offset, offset + limit),
     total: cardsWithScore.length,
   };
-  setSearchCache(cacheKey, finalResult);
-  return finalResult;
 }
 
 export async function getCardById(id: number) {
@@ -1149,10 +1153,40 @@ export async function getAllSealedProducts() {
   return result;
 }
 
+// In-memory cache for sealed product search results (TTL 5 minutes, max 50 entries)
+type SealedSearchCacheEntry = { allProducts: any[]; total: number; fetchedAt: number };
+const _sealedSearchCache = new Map<string, SealedSearchCacheEntry>();
+const SEALED_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const SEALED_SEARCH_CACHE_MAX = 50;
+
+function getFromSealedSearchCache(key: string): { allProducts: any[]; total: number } | null {
+  const entry = _sealedSearchCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > SEALED_SEARCH_CACHE_TTL_MS) {
+    _sealedSearchCache.delete(key);
+    return null;
+  }
+  return { allProducts: entry.allProducts, total: entry.total };
+}
+
+function setFromSealedSearchCache(key: string, allProducts: any[], total: number): void {
+  if (_sealedSearchCache.size >= SEALED_SEARCH_CACHE_MAX) {
+    const oldestKey = _sealedSearchCache.keys().next().value;
+    if (oldestKey) _sealedSearchCache.delete(oldestKey);
+  }
+  _sealedSearchCache.set(key, { allProducts, total, fetchedAt: Date.now() });
+}
+
 /**
  * Search sealed products by name
  */
 export async function searchSealedProducts(query: string, limit: number = 20, offset: number = 0) {
+  const sealedCacheKey = query.toLowerCase().trim();
+  const sealedCached = getFromSealedSearchCache(sealedCacheKey);
+  if (sealedCached) {
+    return { products: sealedCached.allProducts.slice(offset, offset + limit), total: sealedCached.total };
+  }
+
   const db = await getDb();
   if (!db) return { products: [], total: 0 };
 
@@ -1236,9 +1270,11 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
     productType: 'sealed_product' as const,
   }));
 
+  // Cache ALL results so page 2+ is served from memory without DB query
+  setFromSealedSearchCache(sealedCacheKey, productsWithPrice, productsWithPrice.length);
   return {
     products: productsWithPrice.slice(offset, offset + limit),
-    total: matchingProducts.length,
+    total: productsWithPrice.length,
   };
 }
 
