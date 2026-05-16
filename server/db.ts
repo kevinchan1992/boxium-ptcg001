@@ -215,9 +215,11 @@ export async function getDb() {
         bigNumberStrings: false,
         connectionLimit: 10, // Enough for batch update (max 3) + user queries
         waitForConnections: true,
-        queueLimit: 0, // Unlimited queue (requests wait instead of failing)
+        queueLimit: 50, // Limit queue to prevent unbounded waiting during cold starts
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
+        connectTimeout: 10000, // 10s connection timeout (default is 10s, explicit for clarity)
+        // Note: mysql2 does not have acquireTimeout; we use Promise.race in withDbTimeout below
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
         typeCast: function(field: any, next: any) {
           if (field.type === 'TINY' && field.length === 1) {
@@ -370,6 +372,22 @@ async function searchCardsByGrade(
   };
 }
 
+/** Wrap a DB query with a timeout. Throws if the query takes longer than timeoutMs. */
+async function withDbTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`[DB Timeout] ${label} exceeded ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer!);
+    return result;
+  } catch (err) {
+    clearTimeout(timer!);
+    throw err;
+  }
+}
+
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {
   const trimmedQuery = query.trim();
 
@@ -401,10 +419,11 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     const patterns = buildSeriesPrefixPatterns(trimmedQuery);
     if (patterns.length === 0) return { cards: [], total: 0 };
 
-    const matchingCards = await db
-      .select()
-      .from(cards)
-      .where(or(...patterns.map(p => like(cards.cardNumber, p))));
+    const matchingCards = await withDbTimeout<typeof cards.$inferSelect[]>(
+      db.select().from(cards).where(or(...patterns.map(p => like(cards.cardNumber, p)))),
+      15000,
+      `searchCards(seriesCode:${trimmedQuery})`
+    );
 
     if (matchingCards.length === 0) return { cards: [], total: 0 };
 
@@ -439,10 +458,11 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     ? tokenConditions[0]
     : and(...tokenConditions);
 
-  const matchingCards = await db
-    .select()
-    .from(cards)
-    .where(whereCondition);
+  const matchingCards = await withDbTimeout<typeof cards.$inferSelect[]>(
+    db.select().from(cards).where(whereCondition),
+    15000,
+    `searchCards(fuzzy:${trimmedQuery})`
+  );
 
   if (matchingCards.length === 0) return { cards: [], total: 0 };
 

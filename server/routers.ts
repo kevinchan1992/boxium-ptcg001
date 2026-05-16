@@ -593,7 +593,17 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const { parseGradeFilter } = await import('./db');
         const { gradeLabel } = parseGradeFilter(input.query);
-        const results = await db.searchCards(input.query, input.limit, input.offset);
+        let results: { cards: any[]; total: number };
+        try {
+          results = await db.searchCards(input.query, input.limit, input.offset);
+        } catch (err: any) {
+          // DB timeout or connection error — return empty rather than 500
+          console.error('[cards.search] searchCards failed:', err?.message || err);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Search temporarily unavailable, please try again.',
+          });
+        }
 
         // Also search sealed products and merge into results
         let sealedResults: any[] = [];

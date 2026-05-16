@@ -58,6 +58,12 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Cloud Run has a 60s idle timeout on connections. Setting keepAliveTimeout slightly
+  // above 60s (65s) ensures Node doesn't close connections before Cloud Run does,
+  // which prevents 502 errors on keep-alive requests.
+  // headersTimeout must be > keepAliveTimeout to avoid race conditions.
+  server.keepAliveTimeout = 65000; // 65s (> Cloud Run's 60s idle timeout)
+  server.headersTimeout = 70000;   // 70s (must be > keepAliveTimeout)
 
   // Trust the first reverse proxy (Manus CDN) so req.ip returns the real client IP
   // This is required for rate limiting and bot detection to work correctly
