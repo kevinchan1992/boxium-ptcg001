@@ -126,6 +126,12 @@ export async function initPriceUpdateScheduler() {
           // Re-fetch config to get latest lastExecutedAt
           const freshConfig = await getPriceUpdateSchedule();
           if (!freshConfig?.snkrdunkEnabled) return;
+          // ── 互斥：github_actions 模式下跳過 catch-up，避免平台內建排程重複執行 ──
+          const freshUpdateMode = (freshConfig as any).snkrdunkUpdateMode ?? 'platform';
+          if (freshUpdateMode === 'github_actions') {
+            console.log('[PriceUpdateScheduler] Catch-up skipped: mode is github_actions, platform cron disabled');
+            return;
+          }
 
           const freshUpdateTime = freshConfig.snkrdunkUpdateTime || '02:00';
           const missed = wasMissedSince(freshUpdateTime, freshConfig.snkrdunkLastExecutedAt);

@@ -106,7 +106,8 @@ async function _loadGlobalPriceMap(): Promise<Map<number, number>> {
     // Get the latest price per card using a simple approach:
     // SELECT cardId, price FROM priceHistory WHERE ... ORDER BY soldAt DESC
     // Then deduplicate in JS. With LIMIT 30000 we cover all cards with prices.
-    const rows = await db
+    // Wrap in 20s timeout to prevent cold-start DB hangs causing search errors
+    const queryPromise = db
       .select({ cardId: priceHistory.cardId, price: priceHistory.price })
       .from(priceHistory)
       .where(
@@ -118,6 +119,10 @@ async function _loadGlobalPriceMap(): Promise<Map<number, number>> {
       )
       .orderBy(desc(priceHistory.soldAt))
       .limit(10000); // v10.0: reduced from 30000 (only ~2200 unique cards have prices)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('[PriceMap] DB query exceeded 20s timeout')), 20000)
+    );
+    const rows = await Promise.race([queryPromise, timeoutPromise]);
     
     const map = new Map<number, number>();
     for (const row of rows) {
