@@ -9125,3 +9125,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 從 getPriceUpdateSchedulerStatus() 移除 snkrdunkScheduler2Running 欄位
 - [x] TypeScript 零錯誤（npx tsc --noEmit --skipLibCheck）
 - [x] 29 項測試全部通過
+
+## 安全監控誤報修復（2026-05-16）
+
+- [x] 將 /api/health 加入 botDetection 白名單，排除負載均衡器健康檢查誤報
+- [x] TypeScript 零錯誤

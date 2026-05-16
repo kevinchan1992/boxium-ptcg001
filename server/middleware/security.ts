@@ -437,6 +437,11 @@ export function botDetection(req: Request, res: Response, next: NextFunction) {
   // They are authenticated via adminProcedure, so no security risk.
   if (isInternalSystemRequest(req)) return next();
 
+  // ── Health check endpoint bypass ─────────────────────────────────────────────
+  // Load balancers and platform health probes legitimately omit User-Agent.
+  // Recording these as security events causes false-positive alerts.
+  if (req.path === "/api/health") return next();
+
   // Allow known good crawlers
   if (ALLOWED_CRAWLERS.some((p) => p.test(ua))) return next();
 
