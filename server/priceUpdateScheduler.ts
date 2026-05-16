@@ -117,7 +117,7 @@ export async function initPriceUpdateScheduler() {
     if (config.snkrdunkEnabled && updateMode !== 'github_actions') {
       // Fixed daily schedule: use configured time (default 02:00 HKT), single slot only
       const updateTime = config.snkrdunkUpdateTime || '02:00';
-      startSnkrdunkScheduler(updateTime, 1);
+      startSnkrdunkScheduler(updateTime);
 
       // ── Catch-up check: run if scheduled time was missed ──
       // Delay slightly to allow DB connections to stabilize
@@ -167,7 +167,7 @@ export async function initPriceUpdateScheduler() {
  * Start SNKRDUNK price update scheduler
  * @param updateTime - Time in HH:mm format (e.g., "02:00")
  */
-function startSnkrdunkScheduler(updateTime: string, slot: 1 | 2 = 1) {
+function startSnkrdunkScheduler(updateTime: string) {
   // Stop existing job if any
   if (snkrdunkCronJob) {
     snkrdunkCronJob.stop();
@@ -176,10 +176,10 @@ function startSnkrdunkScheduler(updateTime: string, slot: 1 | 2 = 1) {
   const [hour, minute] = updateTime.split(':');
   const cronExpression = `${minute} ${hour} * * *`; // Every day at specified time
 
-  console.log(`[PriceUpdateScheduler] Starting SNKRDUNK scheduler #${slot} with cron: ${cronExpression} (${updateTime})`);
+  console.log(`[PriceUpdateScheduler] Starting SNKRDUNK scheduler with cron: ${cronExpression} (${updateTime} HKT)`);
 
   const job = cron.schedule(cronExpression, async () => {
-    console.log(`[PriceUpdateScheduler] Executing scheduled SNKRDUNK price update (slot #${slot})...`);
+    console.log(`[PriceUpdateScheduler] Executing scheduled SNKRDUNK price update (${updateTime} HKT)...`);
     const startTime = new Date();
     let historyId: number | null = null;
     
