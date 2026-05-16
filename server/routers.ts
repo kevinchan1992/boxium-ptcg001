@@ -11,7 +11,7 @@ import { z } from "zod";
 import { eq, lt, and, sql } from "drizzle-orm";
 import { scheduledTasks, scheduleExecutionHistory } from "../drizzle/schema_new";
 import * as db from "./db";
-import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd } from "./snkrdunkScraper";
+import { extractSnkrdunkId, scrapeSnkrdunkPage, convertJpyToHkd, fetchCardDetailsFromApi, fetchPriceHistoryFromApi } from "./snkrdunkScraper";
 import { downloadAndEncodeImage, getBestImageUrl } from "./imageUtils";
 import { getUpdateStatus, manualUpdateDataSource, getSchedulerStatus, triggerManualUpdateAll } from "./scheduler";
 import { executePersistentSnkrdunkBatchUpdate } from "./persistentSnkrdunkBatchUpdate";
@@ -1542,26 +1542,36 @@ try {
             throw new TRPCError({ code: "NOT_FOUND", message: "Data source not found" });
           }
 
-          // Scrape SNKRDUNK page with correct productType
+          // Use the same API-based scraper as persistentSnkrdunkBatchUpdate (confirmed working in production)
+          // scrapeSnkrdunkPage (axios-based) was replaced here to fix production failures
           const productType = (dataSource.productType as "single_card" | "sealed_product") || "single_card";
-          const cardData = await scrapeSnkrdunkPage(dataSource.sourceUrl, productType);
+          const productId = extractSnkrdunkId(dataSource.sourceUrl);
+          if (!productId) {
+            throw new Error(`Invalid SNKRDUNK URL: Cannot extract product ID from ${dataSource.sourceUrl}`);
+          }
+
+          // Fetch card details and price history using the same API path as batch update
+          const [cardDetails, priceHistory] = await Promise.all([
+            fetchCardDetailsFromApi(productId),
+            fetchPriceHistoryFromApi(productId, productType),
+          ]);
 
           // Update card or sealed product
           if (productType === 'sealed_product') {
             await db.updateSealedProduct(dataSource.cardId, {
-              name: cardData.name,
-              nameJa: cardData.nameJa,
-              imageUrl: cardData.imageUrl || undefined,
-              styleCode: cardData.styleCode || undefined,
+              name: cardDetails.name,
+              nameJa: cardDetails.nameJa,
+              imageUrl: cardDetails.imageUrl || undefined,
+              styleCode: cardDetails.styleCode || undefined,
             });
           } else {
             await db.updateCard(dataSource.cardId, {
-              name: cardData.name,
-              nameJa: cardData.nameJa,
-              imageUrl: cardData.imageUrl || undefined,
+              name: cardDetails.name,
+              nameJa: cardDetails.nameJa,
+              imageUrl: cardDetails.imageUrl || undefined,
             });
             // Pre-generate OG image once (idempotent: skips if already in S3)
-            ensureOgImageExists(dataSource.cardId, cardData.imageUrl || null).catch(() => {});
+            ensureOgImageExists(dataSource.cardId, cardDetails.imageUrl || null).catch(() => {});
           }
 
           // Save new price history with per-group sourcePosition (same as persistentSnkrdunkBatchUpdate.ts)
@@ -1569,10 +1579,16 @@ try {
           // and are NOT incorrectly deduplicated away.
           const { normaliseGrade } = await import('./utils/priceValidator');
           const groupCounters = new Map<string, number>();
-          for (const priceEntry of cardData.priceHistory) {
-            const priceHkd = convertJpyToHkd(priceEntry.price);
+          for (const priceEntry of priceHistory) {
+            const rawPrice = priceEntry.price;
+            // Guard: skip records with invalid price to prevent DB decimal validation errors
+            if (rawPrice === undefined || rawPrice === null || isNaN(rawPrice)) {
+              console.warn(`[refreshDataSource] Skipping record with invalid price: ${rawPrice} (dataSourceId=${input.dataSourceId})`);
+              continue;
+            }
+            const priceHkd = convertJpyToHkd(rawPrice);
             const normalisedGrade = productType === 'sealed_product' ? undefined : normaliseGrade(priceEntry.grade);
-            const jpyPrice = priceEntry.price;
+            const jpyPrice = rawPrice;
             const soldAtStr = priceEntry.soldAt
               ? priceEntry.soldAt.toISOString().slice(0, 10)
               : 'unknown';
@@ -1601,7 +1617,7 @@ try {
           // Update data source status
           await db.updateDataSourceFetchStatus(input.dataSourceId, "success");
 
-          return { success: true, priceCount: cardData.priceHistory.length };
+          return { success: true, priceCount: priceHistory.length };
         } catch (error: any) {
           await db.updateDataSourceFetchStatus(
             input.dataSourceId,

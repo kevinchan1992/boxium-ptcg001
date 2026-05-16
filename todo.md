@@ -9130,3 +9130,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 
 - [x] 將 /api/health 加入 botDetection 白名單，排除負載均衡器健康檢查誤報
 - [x] TypeScript 零錯誤
+
+## 手動重新爬取生產環境失敗修復（2026-05-16）
+
+- [ ] 在 refreshDataSource 錯誤處理中加入完整 stack trace 日誌
+- [ ] 加入 NaN 價格防護（convertJpyToHkd 返回 NaN 時跳過該筆記錄）
+- [ ] 在錯誤訊息中加入更多上下文（哪個步驟失敗）
+- [ ] 統一 refreshDataSource 與 refreshCardPrice 的錯誤格式
