@@ -3,7 +3,6 @@ import { getPriceUpdateSchedule, updateSnkrdunkLastExecutedAt, updateSnkrdunkLas
 import { executePersistentSnkrdunkBatchUpdate } from './persistentSnkrdunkBatchUpdate';
 
 let snkrdunkCronJob: ReturnType<typeof cron.schedule> | null = null;
-let snkrdunkCronJob2: ReturnType<typeof cron.schedule> | null = null;
 
 /**
  * Check if a scheduled time was missed since last execution.
@@ -166,15 +165,12 @@ export async function initPriceUpdateScheduler() {
 
 /**
  * Start SNKRDUNK price update scheduler
- * @param updateTime - Time in HH:mm format (e.g., "09:00")
- * @param slot - 1 for first slot, 2 for second slot
+ * @param updateTime - Time in HH:mm format (e.g., "02:00")
  */
 function startSnkrdunkScheduler(updateTime: string, slot: 1 | 2 = 1) {
-  // Stop existing job for this slot if any
-  if (slot === 1 && snkrdunkCronJob) {
+  // Stop existing job if any
+  if (snkrdunkCronJob) {
     snkrdunkCronJob.stop();
-  } else if (slot === 2 && snkrdunkCronJob2) {
-    snkrdunkCronJob2.stop();
   }
 
   const [hour, minute] = updateTime.split(':');
@@ -237,13 +233,9 @@ function startSnkrdunkScheduler(updateTime: string, slot: 1 | 2 = 1) {
     timezone: 'Asia/Hong_Kong'
   });
 
-  if (slot === 1) {
-    snkrdunkCronJob = job;
-  } else {
-    snkrdunkCronJob2 = job;
-  }
+  snkrdunkCronJob = job;
   job.start();
-  console.log(`[PriceUpdateScheduler] SNKRDUNK scheduler #${slot} started`);
+  console.log(`[PriceUpdateScheduler] SNKRDUNK scheduler started at ${updateTime} HKT`);
 }
 
 
@@ -255,12 +247,7 @@ export function stopSnkrdunkScheduler() {
   if (snkrdunkCronJob) {
     snkrdunkCronJob.stop();
     snkrdunkCronJob = null;
-    console.log('[PriceUpdateScheduler] SNKRDUNK scheduler #1 stopped');
-  }
-  if (snkrdunkCronJob2) {
-    snkrdunkCronJob2.stop();
-    snkrdunkCronJob2 = null;
-    console.log('[PriceUpdateScheduler] SNKRDUNK scheduler #2 stopped');
+    console.log('[PriceUpdateScheduler] SNKRDUNK scheduler stopped');
   }
 }
 
@@ -287,7 +274,6 @@ export async function restartPriceUpdateScheduler() {
 export function getPriceUpdateSchedulerStatus() {
   return {
     snkrdunkSchedulerRunning: snkrdunkCronJob !== null,
-    snkrdunkScheduler2Running: snkrdunkCronJob2 !== null,
   };
 }
 

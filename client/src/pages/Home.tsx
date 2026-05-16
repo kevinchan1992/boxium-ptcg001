@@ -709,8 +709,8 @@ export default function Home() {
   const { data: stats } = trpc.cards.getStats.useQuery();
 
   // Count-up animations for hero stats
-  const animatedCards = useCountUp(stats?.totalCards);
-  const animatedPriceRecords = useCountUp(stats?.totalPriceRecords);
+  const animatedCards = useCountUp(stats?.totalCards ?? undefined);
+  const animatedPriceRecords = useCountUp(stats?.totalPriceRecords ?? undefined);
 
   return (
     <>

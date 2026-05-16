@@ -777,7 +777,7 @@ export const appRouter = router({
             db.getTotalCardCount(),
             db.getTotalPriceRecordCount(),
           ]);
-          const data = { totalCards, totalPriceRecords };
+          const data = { totalCards: totalCards ?? 0, totalPriceRecords: totalPriceRecords ?? 0 };
           statsCache = { data, fetchedAt: now };
           return data;
         } catch (error: any) {

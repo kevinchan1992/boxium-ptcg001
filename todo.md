@@ -9116,3 +9116,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 刪除 server/services/cachePreloader.ts
 - [x] 刪除 server/hotCardPoll.test.ts
 - [x] 更新 scheduler-removal.test.ts（29 項全部通過）
+
+## TypeScript 錯誤修復 + snkrdunkCronJob2 清理（2026-05-16）
+
+- [x] 修復 routers.ts 第 780 行：totalCards/totalPriceRecords 加 `?? 0` 解決 number | null 型別不符
+- [x] 修復 Home.tsx 第 712-713 行：useCountUp 參數加 `?? undefined` 解決 number | null | undefined 不符
+- [x] 從 priceUpdateScheduler.ts 移除 snkrdunkCronJob2 變數及所有 slot-2 邏輯
+- [x] 從 getPriceUpdateSchedulerStatus() 移除 snkrdunkScheduler2Running 欄位
+- [x] TypeScript 零錯誤（npx tsc --noEmit --skipLibCheck）
+- [x] 29 項測試全部通過
