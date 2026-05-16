@@ -1,5 +1,14 @@
 # BOXIUM PTCG 專案待辦事項
 
+## 🚨 緊急：生產環境載入速度極慢
+
+- [x] 診斷問題根因（主 bundle 6.9MB 單一 chunk + 無 session 快取）
+- [x] Route-based code splitting（React.lazy + Suspense）
+- [x] Vendor chunk splitting（React/Recharts/Radix/i18n/tRPC/Stripe 分離）
+- [x] Session 快取（authenticateSession 5 分鐘 TTL）
+- [x] DB 查詢快取（getTotalCardCount/getTotalPriceRecordCount 5 分鐘 TTL）
+- [x] 部署並驗證效能改善
+
 ## ✅ 批量商品選取 + 查看訂單 + 複製訂單號 + 白色文字修復
 
 - [x] AdminMarketplace ListingsTab 商品卡片加入 checkbox 多選功能
@@ -9046,44 +9055,32 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] TypeScript 編譯無錯誤
 - [ ] 保存 checkpoint
 
----
-
-## 📱 Capacitor 手機 APP 開發
-
-- [x] 安裝 Capacitor 核心套件（@capacitor/core, @capacitor/cli 8.3.4）
-- [x] 安裝 Capacitor 平台套件（@capacitor/ios 8.3.4, @capacitor/android 8.3.4）
-- [x] 安裝 Capacitor 插件（push-notifications 8.0.4, haptics 8.0.2, status-bar 8.0.2, keyboard 8.0.2）
-- [x] 建立 capacitor.config.ts 配置文件（appId: asia.boxium.ptcg）
-- [x] 建立 useCapacitor hook（APP 模式偵測）
-- [x] 加入 APP 模式 Safe Area CSS（頂部 TopNav 適配 iOS 劉海）
-- [x] 加入停用瀏覽器預設行為 CSS（長按選單、雙擊縮放）
-- [x] 建立底部 Tab Bar 組件（APP 模式專用）
-- [x] 整合推播通知服務（PushNotificationService）
-- [x] 整合生物識別登入（BiometricAuth）
-- [x] 加入 PWA manifest.json
-- [x] 建立 Capacitor 打包說明文件（README-mobile.md）
-- [x] 撰寫並通過 37 項單元測試（capacitor.integration.test.ts）
-- [x] 保存 checkpoint（version: a831b5ae）
-
 
 ---
 
-## 📱 APP 圖示與啟動畫面
+## 🚨 緊急：生產環境載入速度極慢
 
-- [x] 生成 1024×1024 主圖示（assets/icon.png）
-- [x] 生成 2732×2732 啟動畫面（assets/splash.png）
-- [x] 生成 13 個 iOS 圖示尺寸（assets/ios/）
-- [x] 生成 5 個 Android 密度 × 2 變體（assets/android/）
-- [x] 生成 Android 通知圖示（ic_stat_notify.png）
-- [x] 安裝 @capacitor/assets 工具
-- [x] 更新 capacitor.config.ts SplashScreen 品牌色（#1212C8）
-- [x] pnpm build 成功（dist/public/index.html 確認存在）
+### 問題描述
+生產環境每個頁面載入需要 3-5 秒，API 回應極慢，搜尋結果長時間不顯示。
 
-## 📱 Hello Boxium 驗證（需在 macOS 執行）
+### 根本原因
+1. manualBlockCheck middleware 在每個請求阻塞等待 DB loadBlockedIpCache
+2. getTotalCardCount / getTotalPriceRecordCount 沒有快取，每次查 DB
+3. DB 在 TiDB Cloud us-east-1，每次查詢延遲 ~1.5 秒
 
-- [ ] 在 macOS 執行 npx cap add ios && npx cap add android
-- [ ] 執行 npx cap sync 同步代碼
-- [ ] 執行 npx capacitor-assets generate 生成所有圖示
-- [ ] 在 Xcode 模擬器確認 Hello Boxium 顯示正常
-- [ ] 設置 Firebase 項目並下載 google-services.json
-- [ ] 在 Xcode 設置 Bundle ID 和 Push Notifications capability
+### 修復清單
+- [x] 為 getTotalCardCount 加入 5 分鐘快取
+- [x] 為 getTotalPriceRecordCount 加入 5 分鐘快取
+- [x] 為 authenticateSession 加入 session 快取
+- [x] Route-based code splitting（React.lazy + Suspense）
+- [x] Vendor chunk splitting（React/Recharts/Radix/i18n/tRPC/Stripe 分離）
+- [x] 部署並驗證效能改善
+
+## 加回被回滾的功能
+
+- [x] c6bf527e 買取記錄卡牌搜尋：編輯買取記錄對話框加入卡牌搜尋功能
+- [x] 3bf0b9aa 記憶體快取（getStats 5分鐘 TTL、trending cards 30分鐘 TTL）+ marketplaceListings 複合索引
+- [x] df0a0551 priceHistory 複合索引（cardId+grade+soldAt 和 source+grade+soldAt）
+- [x] 4ca92c69 cards 索引（name/nameJa）+ searchCards 5分鐘快取
+- [x] aa412084 getPriceStatistics 5分鐘快取 + SELECT price 優化
+- [x] 資料庫索引建立完成（8 個索引）

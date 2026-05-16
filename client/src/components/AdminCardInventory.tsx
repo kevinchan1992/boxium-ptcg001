@@ -1296,7 +1296,7 @@ function BuyFormDialog({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm">{selectedCard.name}</div>
-                    <div className="text-xs text-muted-foreground">{[selectedCard.setName, selectedCard.cardNumber].filter(Boolean).join(" · ")}</div>
+                    <div className="text-xs text-muted-foreground">{[selectedCard.setName, selectedCard.cardNumber].filter(Boolean).join(" \u00b7 ")}</div>
                     <div className="text-xs text-green-600 mt-0.5">已從平台資料庫選取</div>
                   </div>
                   <button

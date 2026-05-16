@@ -1,8 +1,0 @@
-{
-  "query": "CREATE FULLTEXT INDEX IF NOT EXISTS `cards_name_nameJa_cardNumber_ft` ON `cards` (`name`, `nameJa`, `cardNumber`);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute CREATE FULLTEXT INDEX IF NOT EXISTS `cards_name_nameJa_cardNumber_ft` ON `cards` (`name`, `nameJa`, `cardNumber`);",
-  "returncode": 1,
-  "logs": [
-    "ERROR 8200 (HY000) at line 1: Unsupported FULLTEXT index"
-  ]
-}

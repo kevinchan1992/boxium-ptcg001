@@ -7,17 +7,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { PageWrapper } from "./components/PageWrapper";
 import { TopNav } from "./components/TopNav";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
-import { CapacitorInit } from "./components/CapacitorInit";
-import { BottomTabBar } from "./components/BottomTabBar";
-import { useCapacitor } from "./hooks/useCapacitor";
 import { trpc } from "./lib/trpc";
 import MessageCenter from "./components/MessageCenter";
 
-// Eagerly loaded pages (critical path - needed on first render)
+// Eagerly loaded pages (critical path)
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
-// Lazily loaded pages (only loaded when navigated to)
+// Lazily loaded pages (code-split per route)
 const CardDetail = lazy(() => import("./pages/CardDetail"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Research = lazy(() => import("./pages/Research"));
@@ -77,13 +74,11 @@ function Router() {
     window.scrollTo(0, 0);
   }, [location]);
 
-  const { isNative } = useCapacitor();
-
   return (
     <PageWrapper>
       <TopNav />
       {user && <MessageCenter />}
-      <div className={`pt-14 ${isNative ? 'has-bottom-tab' : ''}`}>
+      <div className="pt-14">
         <Suspense fallback={<PageLoader />}>
           <Switch>
             <Route path={"/"} component={Home} />
@@ -196,7 +191,6 @@ function Router() {
           </Switch>
         </Suspense>
       </div>
-      <BottomTabBar />
     </PageWrapper>
   );
 }
@@ -215,7 +209,6 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <CapacitorInit />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

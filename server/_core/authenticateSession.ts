@@ -30,6 +30,16 @@ function setCachedUser(userId: number, user: User): void {
   _sessionCache.set(userId, { user, expiry: Date.now() + SESSION_CACHE_TTL_MS });
 }
 
+/** Invalidate cached session for a specific user (e.g. after role change) */
+export function invalidateSessionCache(userId: number): void {
+  _sessionCache.delete(userId);
+}
+
+/** Update cached user data (e.g. after profile update) */
+export function updateSessionCache(user: User): void {
+  setCachedUser(user.id, user);
+}
+
 /**
  * Authenticate a request using session cookie.
  * Returns the user if authenticated, null otherwise.

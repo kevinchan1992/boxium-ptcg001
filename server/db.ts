@@ -45,7 +45,6 @@ function getFromSearchCache(key: string): { cards: any[]; total: number } | null
 }
 
 function setSearchCache(key: string, data: { cards: any[]; total: number }): void {
-  // Evict oldest entry if at capacity
   if (_searchCache.size >= SEARCH_CACHE_MAX) {
     const oldestKey = _searchCache.keys().next().value;
     if (oldestKey) _searchCache.delete(oldestKey);
@@ -120,13 +119,6 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
-        // Connection pool settings to prevent "Connection lost" errors during BatchUpdate
-        connectionLimit: 10,          // max concurrent connections (default: 10)
-        waitForConnections: true,     // queue requests when pool is exhausted
-        queueLimit: 50,               // max queued requests (0 = unlimited)
-        enableKeepAlive: true,        // send keepalive packets to prevent idle disconnects
-        keepAliveInitialDelay: 10000, // start keepalive after 10s idle
-        connectTimeout: 30000,        // 30s connection timeout
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
         typeCast: function(field: any, next: any) {
           if (field.type === 'TINY' && field.length === 1) {
@@ -544,12 +536,24 @@ export async function getAllCards() {
   return result;
 }
 
-export async function getTotalCardCount() {
-  const db = await getDb();
-  if (!db) return 0;
+// ─── Stats count cache (5 min TTL) ─────────────────────────────────────────────────
+let _statsCacheCardCount: number | null = null;
+let _statsCacheCardCountExpiry = 0;
+let _statsCachePriceCount: number | null = null;
+let _statsCachePriceCountExpiry = 0;
+const STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+export async function getTotalCardCount() {
+  const now = Date.now();
+  if (_statsCacheCardCount !== null && now < _statsCacheCardCountExpiry) {
+    return _statsCacheCardCount;
+  }
+  const db = await getDb();
+  if (!db) return _statsCacheCardCount ?? 0;
   const result = await db.select({ count: sql<number>`count(*)` }).from(cards);
-  return result[0]?.count || 0;
+  _statsCacheCardCount = result[0]?.count || 0;
+  _statsCacheCardCountExpiry = now + STATS_CACHE_TTL_MS;
+  return _statsCacheCardCount;
 }
 
 export async function getPopularCards(limit: number = 10) {
@@ -2243,14 +2247,14 @@ export async function getCachedTrendingCards(gameId?: number) {
   const now = Date.now();
 
   // Return in-memory cache if still fresh (TTL: 30 minutes)
-  const cached = _trendingCache.get(cacheKey);
-  if (cached && now - cached.fetchedAt < TRENDING_CACHE_TTL_MS) {
-    return cached.data;
+  const memCached = _trendingCache.get(cacheKey);
+  if (memCached && now - memCached.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return memCached.data;
   }
 
   const db = await getDb();
   if (!db) {
-    return cached?.data ?? []; // Return stale cache on DB failure
+    return memCached?.data ?? []; // Return stale cache on DB failure
   }
 
   const rows = await db
@@ -3304,15 +3308,20 @@ export async function getActiveDataSourceCount() {
  * Get total price record count
  */
 export async function getTotalPriceRecordCount() {
+  const now = Date.now();
+  if (_statsCachePriceCount !== null && now < _statsCachePriceCountExpiry) {
+    return _statsCachePriceCount;
+  }
   const db = await getDb();
-  if (!db) return 0;
-
+  if (!db) return _statsCachePriceCount ?? 0;
   try {
     const result = await db.select({ count: sql<number>`count(*)` }).from(priceHistory);
-    return result[0]?.count || 0;
+    _statsCachePriceCount = result[0]?.count || 0;
+    _statsCachePriceCountExpiry = now + STATS_CACHE_TTL_MS;
+    return _statsCachePriceCount;
   } catch (error) {
     console.error("[Database] Failed to get total price record count:", error);
-    return 0;
+    return _statsCachePriceCount ?? 0;
   }
 }
 
@@ -6493,52 +6502,4 @@ export async function getSnkrdunkListingsCacheStats() {
     lastBatchUpdate,
     oldestEntry,
   };
-}
-
-/**
- * Optimised query for batch update: fetch all active SNKRDUNK data sources
- * with their associated card name in a single indexed query.
- *
- * Replaces the old pattern:
- *   getDataSources({ pageSize: 100000 }).then(r => r.data.filter(ds => ds.source === 'snkrdunk'))
- *
- * The old pattern loaded ALL 57,000+ rows from dataSources (including eBay, etc.)
- * into memory before filtering. This new function uses the existing
- * idx_datasources_cardId_source composite index to fetch only snkrdunk rows.
- */
-export async function getSnkrdunkDataSourcesForBatch(): Promise<Array<{
-  id: number;
-  cardId: number;
-  source: string;
-  sourceUrl: string;
-  productType: string;
-  lastFetchedAt: Date | null;
-  card: { id: number; name: string | null; nameJa: string | null } | null;
-}>> {
-  const db = await getDb();
-  if (!db) return [];
-
-  const rows = await db
-    .select({
-      id: dataSources.id,
-      cardId: dataSources.cardId,
-      source: dataSources.source,
-      sourceUrl: dataSources.sourceUrl,
-      productType: dataSources.productType,
-      lastFetchedAt: dataSources.lastFetchedAt,
-      card: {
-        id: cards.id,
-        name: cards.name,
-        nameJa: cards.nameJa,
-      },
-    })
-    .from(dataSources)
-    .leftJoin(cards, eq(dataSources.cardId, cards.id))
-    .where(and(
-      eq(dataSources.source, 'snkrdunk'),
-      eq(dataSources.isActive, 1),
-    ))
-    .orderBy(asc(dataSources.cardId));
-
-  return rows as any[];
 }
