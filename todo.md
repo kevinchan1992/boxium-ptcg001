@@ -10,6 +10,10 @@
 - [x] Set DELAY_BETWEEN_BATCHES from 0 to 500ms (yield CPU/DB to user requests)
 - [x] Delay autoResumeOnStartup by 30s (let server serve user requests first)
 - [x] Lock all adaptive thresholds to PARALLEL=1 (prevent scaling up on Cloud Run)
+- [x] Convert scheduler static imports to dynamic imports (reduce startup memory 782MB → 448MB)
+- [x] Disable autoResumeOnStartup (prevent OOM on Cloud Run 512MB limit)
+- [x] Defer all schedulers 30s after server.listen (let health check pass first)
+- [x] Stagger auction processors 10s after schedulers
 - [ ] Verify fix in production (deploy required)
 
 ## 🚨 緊急：生產環境載入速度極慢

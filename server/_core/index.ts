@@ -17,8 +17,8 @@ import googleOAuthRouter from "../googleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
-import { initPriceUpdateScheduler, startTrendingCardsScheduler, startAutoCompleteOrdersScheduler, startShippingReminderScheduler, startOfferExpiryReminderScheduler, startOfferExpiryCleanupScheduler, startPaymentTimeoutCancelScheduler, startPaymentReminderScheduler, startHotCardPollScheduler, startCartExpiryCleanupScheduler, startAlipayReviewReminderScheduler, startCartExpiryNotificationScheduler, startConfirmReceiptReminderScheduler, startMeetupAutoCancelScheduler, startListingStockRepairScheduler, startPayoutRetryScheduler, startPayoutHoldScheduler, startDisputeSlaEscalationScheduler, startDispute3DayReminderScheduler, startOrphanAuctionRepairScheduler, startGradingOverdueReminderScheduler, startGradingAwaitingPaymentCleanupScheduler, startGradingUpgradeOverdueReminderScheduler } from "../priceUpdateScheduler";
-import { startWeeklyBlogReportScheduler } from "../weeklyBlogScheduler";
+// v10.1: Scheduler imports moved to dynamic imports inside deferred setTimeout
+// to reduce startup memory footprint and prevent OOM on Cloud Run (512MB limit)
 import { generateSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import {
@@ -1814,108 +1814,89 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     
-    // Recover stalled batch tasks from previous server instance, then auto-resume if eligible
-    // v9.0: Delay batch recovery by 30s to let server finish initialization
-    // and serve the first user requests without competition from batch updates.
+    // v10.0: DISABLED autoResumeOnStartup completely.
+    // Root cause: batch update uses ~200MB+ RAM. Combined with base server (~150MB) + schedulers (~50MB),
+    // total exceeds Cloud Run's 512MB limit → OOM kill → 503 Service Unavailable.
+    // Batch updates should ONLY be triggered via:
+    // 1. Admin UI (manual trigger)
+    // 2. Heartbeat/scheduled external trigger
+    // 3. GitHub Actions workflow
+    // Recovery of stalled tasks is still done (lightweight, just marks them as failed).
     setTimeout(() => {
       import('../batchTaskManager').then(({ recoverStalledTasks }) => {
-        recoverStalledTasks(60).then(async result => { // 60 min: batch updates flush DB every 50 items, so 60 min is safe
+        recoverStalledTasks(60).then(result => {
           if (result.recoveredCount > 0) {
             console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
           }
-          // Auto-resume: if a stalled task was just marked as failed, try to continue from where it left off
-          try {
-            const { autoResumeOnStartup } = await import('../persistentSnkrdunkBatchUpdate');
-            await autoResumeOnStartup();
-          } catch (resumeErr: any) {
-            console.error('[Server] Auto-resume check failed:', resumeErr.message);
-          }
+          // NOTE: autoResumeOnStartup is DISABLED to prevent OOM on Cloud Run (512MB)
+          // Batch updates must be triggered externally (admin UI, heartbeat, or GitHub Actions)
+          console.log('[Server] Batch auto-resume disabled (memory protection). Use admin UI or scheduled trigger.');
         }).catch(err => {
           console.error('[Server] Failed to recover stalled tasks:', err);
         });
       }).catch(err => {
         console.error('[Server] Failed to import batchTaskManager:', err);
       });
-    }, 30_000); // 30s delay: let server serve user requests first
+    }, 10_000); // 10s delay for stalled task recovery (lightweight operation)
     
-    // Start the auto-update scheduler
-    // startScheduler(); // Disabled: use priceUpdateScheduler instead
-    // Start the price update scheduler
-    initPriceUpdateScheduler().catch(err => {
-      console.error('[Server] Failed to initialize price update scheduler:', err);
-    });
-    // Start the trending cards scheduler (daily at 06:00 HKT)
-    startTrendingCardsScheduler();
-    // Start the auto-complete orders scheduler (every hour)
-    startAutoCompleteOrdersScheduler();
-    // Start the shipping overdue reminder scheduler (every hour at :30)
-    startShippingReminderScheduler();
-    // Start the offer expiry reminder scheduler (every hour at :15)
-    startOfferExpiryReminderScheduler();
-    // Start the offer expiry cleanup scheduler (every hour at :45)
-    startOfferExpiryCleanupScheduler();
-    // Start the payment timeout cancel scheduler (every hour at :30)
-    startPaymentTimeoutCancelScheduler();
-    // Start the payment reminder scheduler (every hour at :45, reminds buyers 12h before auto-cancel)
-    startPaymentReminderScheduler();
-    // Start the hot card polling scheduler (every 30 minutes, updates top 100 most-viewed cards)
-    startHotCardPollScheduler();
-    // Start the cart expiry cleanup scheduler (daily at 03:00 HKT, removes 14-day-old cart items)
-    startCartExpiryCleanupScheduler();
-    // Start the Alipay review timeout reminder scheduler (every hour, notifies admin if proof pending >24hrs)
-    startAlipayReviewReminderScheduler();
-    // Start the cart expiry notification scheduler (daily at 10:00 HKT, notifies users 3 days before expiry)
-    startCartExpiryNotificationScheduler();
-    // Start the 7-day confirm receipt reminder scheduler (daily at 09:00 HKT)
-    startConfirmReceiptReminderScheduler();
-    // Start the meetup order auto-cancel scheduler (daily at 02:00 HKT, cancels unconfirmed meetup orders after 7 days)
-    startMeetupAutoCancelScheduler();
-    // Start the listing stock repair scheduler (daily at 04:00 HKT, fixes active listings with quantity=0)
-    startListingStockRepairScheduler();
-    // P2 Fix #8: Start the payout retry scheduler (every 2 hours, retries failed payouts)
-    startPayoutRetryScheduler();
-    // 48-hour cooling period payout scheduler (every hour, triggers payout after cooling period)
-    startPayoutHoldScheduler();
-    // P2 Fix #10: Start the dispute SLA escalation scheduler (every 4 hours)
-    startDisputeSlaEscalationScheduler();
-    // Start the dispute 3-day reminder scheduler (every 6 hours)
-    startDispute3DayReminderScheduler();
-    // Start the orphan auction order repair scheduler (every 2 hours)
-    startOrphanAuctionRepairScheduler();
-    // Start the PSA grading overdue payment reminder scheduler (daily at 10:00 HKT)
-    startGradingOverdueReminderScheduler();
-    // Start the PSA grading awaiting_payment cleanup scheduler (every hour at :10)
-    startGradingAwaitingPaymentCleanupScheduler();
-    // Start the PSA grading upgrade diff fee overdue reminder scheduler (daily at 11:00 HKT)
-    startGradingUpgradeOverdueReminderScheduler();
-    // Start the weekly blog report scheduler (every Monday at 08:00 HKT)
-    startWeeklyBlogReportScheduler();
-    // Pre-load global price map for fast search (non-blocking)
-    import('../db').then(({ preloadGlobalPriceMap }) => {
-      preloadGlobalPriceMap();
-    }).catch(err => {
-      console.error('[Server] Failed to pre-load price map:', err);
-    });
-    // Start the cache preloader service
-    import('../services/cachePreloader').then(({ startCachePreloader }) => {
-      startCachePreloader();
-    }).catch(err => {
-      console.error('[Server] Failed to start cache preloader:', err);
-    });
-    // Start auction lifecycle processors
-    import('../auctionProcessor').then(({ processExpiredAuctions, processScheduledAuctions, notifyEndingSoon, processPaymentReminders }) => {
-      // Process expired auctions every 30 seconds
-      setInterval(() => processExpiredAuctions().catch(console.error), 30_000);
-      // Activate scheduled auctions every 60 seconds
-      setInterval(() => processScheduledAuctions().catch(console.error), 60_000);
-      // Notify ending soon every 5 minutes
-      setInterval(() => notifyEndingSoon().catch(console.error), 5 * 60_000);
-      // Send 12-hour payment reminders every 30 minutes
-      setInterval(() => processPaymentReminders().catch(console.error), 30 * 60_000);
-      console.log('[Server] Auction processors started');
-    }).catch(err => {
-      console.error('[Server] Failed to start auction processors:', err);
-    });
+    // v10.1: DEFER ALL schedulers by 30s to prevent CPU/memory contention during startup.
+    // Cloud Run has 1 vCPU + 512MB RAM. Starting 27 schedulers + cache preloader + auction
+    // processors simultaneously causes CPU starvation → health check fails → 503.
+    // By deferring, the server can respond to user requests immediately after startup.
+    setTimeout(async () => {
+      console.log('[Server] Starting deferred schedulers (30s after boot)...');
+      try {
+        // Dynamic import: only load scheduler modules AFTER server is stable
+        const schedulerModule = await import('../priceUpdateScheduler');
+        const blogModule = await import('../weeklyBlogScheduler');
+        
+        await schedulerModule.initPriceUpdateScheduler();
+        schedulerModule.startTrendingCardsScheduler();
+        schedulerModule.startAutoCompleteOrdersScheduler();
+        schedulerModule.startShippingReminderScheduler();
+        schedulerModule.startOfferExpiryReminderScheduler();
+        schedulerModule.startOfferExpiryCleanupScheduler();
+        schedulerModule.startPaymentTimeoutCancelScheduler();
+        schedulerModule.startPaymentReminderScheduler();
+        schedulerModule.startHotCardPollScheduler();
+        schedulerModule.startCartExpiryCleanupScheduler();
+        schedulerModule.startAlipayReviewReminderScheduler();
+        schedulerModule.startCartExpiryNotificationScheduler();
+        schedulerModule.startConfirmReceiptReminderScheduler();
+        schedulerModule.startMeetupAutoCancelScheduler();
+        schedulerModule.startListingStockRepairScheduler();
+        schedulerModule.startPayoutRetryScheduler();
+        schedulerModule.startPayoutHoldScheduler();
+        schedulerModule.startDisputeSlaEscalationScheduler();
+        schedulerModule.startDispute3DayReminderScheduler();
+        schedulerModule.startOrphanAuctionRepairScheduler();
+        schedulerModule.startGradingOverdueReminderScheduler();
+        schedulerModule.startGradingAwaitingPaymentCleanupScheduler();
+        schedulerModule.startGradingUpgradeOverdueReminderScheduler();
+        blogModule.startWeeklyBlogReportScheduler();
+        console.log('[Server] All cron schedulers initialized.');
+      } catch (err) {
+        console.error('[Server] Failed to initialize schedulers:', err);
+      }
+      // Cache preloader (refreshes SNKRDUNK cache before expiry)
+      import('../services/cachePreloader').then(({ startCachePreloader }) => {
+        startCachePreloader();
+      }).catch(err => {
+        console.error('[Server] Failed to start cache preloader:', err);
+      });
+      // Auction lifecycle processors (delay another 10s to stagger load)
+      setTimeout(() => {
+        import('../auctionProcessor').then(({ processExpiredAuctions, processScheduledAuctions, notifyEndingSoon, processPaymentReminders }) => {
+          setInterval(() => processExpiredAuctions().catch(console.error), 30_000);
+          setInterval(() => processScheduledAuctions().catch(console.error), 60_000);
+          setInterval(() => notifyEndingSoon().catch(console.error), 5 * 60_000);
+          setInterval(() => processPaymentReminders().catch(console.error), 30 * 60_000);
+          console.log('[Server] Auction processors started');
+        }).catch(err => {
+          console.error('[Server] Failed to start auction processors:', err);
+        });
+      }, 10_000); // Stagger auction processors 10s after schedulers
+    }, 30_000); // 30s delay: let server handle user requests first
   });
 }
 

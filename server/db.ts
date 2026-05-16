@@ -30,7 +30,7 @@ export function invalidateTrendingCache() {
 type SearchCacheEntry = { allCards: any[]; total: number; fetchedAt: number };
 const _searchCache = new Map<string, SearchCacheEntry>();
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const SEARCH_CACHE_MAX = 100;
+const SEARCH_CACHE_MAX = 30; // v10.0: reduced from 100 to save memory on Cloud Run (512MB limit)
 
 function getSearchCacheKey(query: string): string {
   return query.toLowerCase().trim();
@@ -117,7 +117,7 @@ async function _loadGlobalPriceMap(): Promise<Map<number, number>> {
         )
       )
       .orderBy(desc(priceHistory.soldAt))
-      .limit(30000);
+      .limit(10000); // v10.0: reduced from 30000 (only ~2200 unique cards have prices)
     
     const map = new Map<number, number>();
     for (const row of rows) {
