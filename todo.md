@@ -1,5 +1,14 @@
 # BOXIUM PTCG 專案待辦事項
 
+## 🚨 緊急：搜尋和整體平台速度問題（2026-05-16）
+
+- [x] Fix search 503 timeout: Replaced per-search priceHistory queries with global in-memory price map (pre-loaded on startup, refreshed every 10 min)
+- [x] Reduce ADAPTIVE_MAX_PARALLEL from 8 to 3 to prevent batch update from starving other queries
+- [x] Add DB connection pool settings (connectionLimit=10, waitForConnections, queueLimit=0)
+- [x] Add LIMIT to sealed products priceHistory query
+- [x] Invalidate price map and search cache after batch update completes
+- [ ] Verify fix in production
+
 ## 🚨 緊急：生產環境載入速度極慢
 
 - [x] 診斷問題根因（主 bundle 6.9MB 單一 chunk + 無 session 快取）

@@ -1,0 +1,52 @@
+{
+  "query": "EXPLAIN SELECT cardId, price, soldAt FROM priceHistory WHERE cardId IN (1,2,3,4,5,6,7,8,9,10) AND source='snkrdunk' AND grade='PSA 10' AND isSuspectedBulk=0 ORDER BY soldAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute EXPLAIN SELECT cardId, price, soldAt FROM priceHistory WHERE cardId IN (1,2,3,4,5,6,7,8,9,10) AND source='snkrdunk' AND grade='PSA 10' AND isSuspectedBulk=0 ORDER BY soldAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "TopN_9",
+      "estRows": "10.00",
+      "task": "root",
+      "access object": "",
+      "operator info": "mua4eq38uvnrovhujbrepi.pricehistory.soldat:desc, offset:?, count:?"
+    },
+    {
+      "id": "└─IndexLookUp_17",
+      "estRows": "10.00",
+      "task": "root",
+      "access object": "",
+      "operator info": ""
+    },
+    {
+      "id": "  ├─IndexRangeScan_13(Build)",
+      "estRows": "584.15",
+      "task": "cop[tikv]",
+      "access object": "table:priceHistory, index:uniq_price_card_source_grade_soldAt_jpyPrice_pos(cardId, source, grade, soldAt, jpyPrice, sourcePosition)",
+      "operator info": "range:[? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], keep order:false"
+    },
+    {
+      "id": "  └─TopN_16(Probe)",
+      "estRows": "10.00",
+      "task": "cop[tikv]",
+      "access object": "",
+      "operator info": "mua4eq38uvnrovhujbrepi.pricehistory.soldat:desc, offset:?, count:?"
+    },
+    {
+      "id": "    └─Selection_15",
+      "estRows": "582.76",
+      "task": "cop[tikv]",
+      "access object": "",
+      "operator info": "eq(mua4eq38uvnrovhujbrepi.pricehistory.issuspectedbulk, ?)"
+    },
+    {
+      "id": "      └─TableRowIDScan_14",
+      "estRows": "584.15",
+      "task": "cop[tikv]",
+      "access object": "table:priceHistory",
+      "operator info": "keep order:false"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\testRows\ttask\taccess object\toperator info\nTopN_9\t10.00\troot\t\tmua4eq38uvnrovhujbrepi.pricehistory.soldat:desc, offset:?, count:?\n└─IndexLookUp_17\t10.00\troot\t\t\n  ├─IndexRangeScan_13(Build)\t584.15\tcop[tikv]\ttable:priceHistory, index:uniq_price_card_source_grade_soldAt_jpyPrice_pos(cardId, source, grade, soldAt, jpyPrice, sourcePosition)\trange:[? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], [? ? ?,? ? ?], keep order:false\n  └─TopN_16(Probe)\t10.00\tcop[tikv]\t\tmua4eq38uvnrovhujbrepi.pricehistory.soldat:desc, offset:?, count:?\n    └─Selection_15\t582.76\tcop[tikv]\t\teq(mua4eq38uvnrovhujbrepi.pricehistory.issuspectedbulk, ?)\n      └─TableRowIDScan_14\t584.15\tcop[tikv]\ttable:priceHistory\tkeep order:false\n",
+  "stderr": "",
+  "execution_time_ms": 1757
+}

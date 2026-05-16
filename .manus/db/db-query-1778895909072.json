@@ -1,0 +1,9 @@
+{
+  "query": "SELECT cardId, price FROM priceHistory ph1 WHERE source='snkrdunk' AND grade='PSA 10' AND isSuspectedBulk=0 AND cardId IN (1,2,3,4,5,6,7,8,9,10) AND soldAt = (SELECT MAX(ph2.soldAt) FROM priceHistory ph2 WHERE ph2.cardId = ph1.cardId AND ph2.source='snkrdunk' AND ph2.grade='PSA 10' AND ph2.isSuspectedBulk=0) LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT cardId, price FROM priceHistory ph1 WHERE source='snkrdunk' AND grade='PSA 10' AND isSuspectedBulk=0 AND cardId IN (1,2,3,4,5,6,7,8,9,10) AND soldAt = (SELECT MAX(ph2.soldAt) FROM priceHistory ph2 WHERE ph2.cardId = ph1.cardId AND ph2.source='snkrdunk' AND ph2.grade='PSA 10' AND ph2.isSuspectedBulk=0) LIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1786
+}

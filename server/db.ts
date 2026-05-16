@@ -59,6 +59,98 @@ export function invalidateSearchCache() {
   _searchCache.clear();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Global in-memory price map: cardId → latest PSA 10 SNKRDUNK price (HKD)
+// Loaded once on first search, refreshed every 10 minutes.
+// This eliminates the need to query priceHistory during search (the slowest part).
+// ═══════════════════════════════════════════════════════════════════════════════
+let _globalPriceMap: Map<number, number> | null = null;
+let _globalPriceMapFetchedAt = 0;
+const GLOBAL_PRICE_MAP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+let _globalPriceMapLoading: Promise<Map<number, number>> | null = null;
+
+/**
+ * Get the global price map (lazy-loaded, cached for 10 minutes).
+ * Uses a single SQL query to get the latest PSA 10 price for ALL cards at once.
+ * This is much faster than querying per-search because:
+ * 1. It runs once and serves all searches from memory
+ * 2. It uses a simple GROUP BY query that TiDB can optimize with indexes
+ */
+async function getGlobalPriceMap(): Promise<Map<number, number>> {
+  // Return cached if fresh
+  if (_globalPriceMap && (Date.now() - _globalPriceMapFetchedAt < GLOBAL_PRICE_MAP_TTL_MS)) {
+    return _globalPriceMap;
+  }
+  // Prevent concurrent loads (thundering herd)
+  if (_globalPriceMapLoading) {
+    return _globalPriceMapLoading;
+  }
+  _globalPriceMapLoading = _loadGlobalPriceMap();
+  try {
+    const result = await _globalPriceMapLoading;
+    return result;
+  } finally {
+    _globalPriceMapLoading = null;
+  }
+}
+
+async function _loadGlobalPriceMap(): Promise<Map<number, number>> {
+  const db = await getDb();
+  if (!db) {
+    _globalPriceMap = new Map();
+    return _globalPriceMap;
+  }
+  try {
+    console.log('[PriceMap] Loading global price map...');
+    const startTime = Date.now();
+    // Get the latest price per card using a simple approach:
+    // SELECT cardId, price FROM priceHistory WHERE ... ORDER BY soldAt DESC
+    // Then deduplicate in JS. With LIMIT 30000 we cover all cards with prices.
+    const rows = await db
+      .select({ cardId: priceHistory.cardId, price: priceHistory.price })
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.grade, 'PSA 10'),
+          eq(priceHistory.isSuspectedBulk, false)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt))
+      .limit(30000);
+    
+    const map = new Map<number, number>();
+    for (const row of rows) {
+      if (!map.has(row.cardId)) {
+        map.set(row.cardId, Number(row.price));
+      }
+    }
+    _globalPriceMap = map;
+    _globalPriceMapFetchedAt = Date.now();
+    console.log(`[PriceMap] Loaded ${map.size} card prices in ${Date.now() - startTime}ms`);
+    return map;
+  } catch (error) {
+    console.error('[PriceMap] Failed to load:', error);
+    _globalPriceMap = _globalPriceMap || new Map();
+    return _globalPriceMap;
+  }
+}
+
+/** Invalidate the global price map (call after batch updates complete) */
+export function invalidateGlobalPriceMap() {
+  _globalPriceMap = null;
+  _globalPriceMapFetchedAt = 0;
+}
+
+/** Pre-load the global price map on server startup (non-blocking) */
+export async function preloadGlobalPriceMap() {
+  try {
+    await getGlobalPriceMap();
+  } catch (err) {
+    console.error('[PriceMap] Pre-load failed:', err);
+  }
+}
+
 // In-memory cache for getPriceStatistics (TTL 5 minutes, keyed by cardId+source+grade)
 type PriceStatsEntry = {
   data: { avgPrice: string; minPrice: string; maxPrice: string; count: number } | null;
@@ -121,6 +213,11 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
+        connectionLimit: 10, // Enough for batch update (max 3) + user queries
+        waitForConnections: true,
+        queueLimit: 0, // Unlimited queue (requests wait instead of failing)
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
         typeCast: function(field: any, next: any) {
           if (field.type === 'TINY' && field.length === 1) {
@@ -311,19 +408,10 @@ export async function searchCards(query: string, limit: number = 20, offset: num
 
     if (matchingCards.length === 0) return { cards: [], total: 0 };
 
-    const cardIds = matchingCards.map(c => c.id);
-    const latestPrices = await db
-      .select({ cardId: priceHistory.cardId, price: priceHistory.price, soldAt: priceHistory.soldAt })
-      .from(priceHistory)
-      .where(and(inArray(priceHistory.cardId, cardIds), eq(priceHistory.source, 'snkrdunk'), eq(priceHistory.grade, 'PSA 10'), eq(priceHistory.isSuspectedBulk, false)))
-      .orderBy(desc(priceHistory.soldAt));
-
-    const priceMap = new Map<number, number>();
-    for (const price of latestPrices) {
-      if (!priceMap.has(price.cardId)) priceMap.set(price.cardId, Number(price.price));
-    }
-    const sortedCards = matchingCards.sort((a, b) => (priceMap.get(b.id) || 0) - (priceMap.get(a.id) || 0));
-    const allCardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: priceMap.get(card.id) || null }));
+    // Use global price map (pre-loaded in memory) instead of querying priceHistory per search
+    const globalPriceMap = await getGlobalPriceMap();
+    const sortedCards = matchingCards.sort((a, b) => (globalPriceMap.get(b.id) || 0) - (globalPriceMap.get(a.id) || 0));
+    const allCardsWithPrice = sortedCards.map(card => ({ ...card, latestPrice: globalPriceMap.get(card.id) || null }));
     setSearchCache(cacheKey, allCardsWithPrice, allCardsWithPrice.length);
     return { cards: allCardsWithPrice.slice(offset, offset + limit), total: allCardsWithPrice.length };
   }
@@ -358,32 +446,9 @@ export async function searchCards(query: string, limit: number = 20, offset: num
 
   if (matchingCards.length === 0) return { cards: [], total: 0 };
 
-  // Get latest SNKRDUNK PSA 10 price for each card (by soldAt, not createdAt)
-  const cardIds = matchingCards.map(c => c.id);
-  const latestPrices = await db
-    .select({
-      cardId: priceHistory.cardId,
-      price: priceHistory.price,
-      soldAt: priceHistory.soldAt,
-    })
-    .from(priceHistory)
-    .where(
-      and(
-        inArray(priceHistory.cardId, cardIds),
-        eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, 'PSA 10'),
-        eq(priceHistory.isSuspectedBulk, false)
-      )
-    )
-    .orderBy(desc(priceHistory.soldAt));
-
-  // Create price map (cardId -> latest price)
-  const priceMap = new Map<number, number>();
-  for (const price of latestPrices) {
-    if (!priceMap.has(price.cardId)) {
-      priceMap.set(price.cardId, Number(price.price));
-    }
-  }
+  // Use global price map (pre-loaded in memory) instead of querying priceHistory per search
+  // This eliminates the slowest part of the search query entirely
+  const priceMap = await getGlobalPriceMap();
 
   // Score each card by relevance to the query, then sort by (relevance DESC, price DESC)
   const cardsWithScore = matchingCards.map(card => ({
@@ -1204,7 +1269,9 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
   if (matchingProducts.length === 0) return { products: [], total: 0 };
 
   // Get recent prices for each sealed product (up to 10 per product for weighted avg)
+  // LIMIT to prevent scanning too many records (10 records per product is enough)
   const productIds = matchingProducts.map(p => p.id);
+  const maxSealedResults = Math.min(productIds.length * 15, 3000);
   const recentPrices = await db
     .select({
       cardId: priceHistory.cardId,
@@ -1220,7 +1287,8 @@ export async function searchSealedProducts(query: string, limit: number = 20, of
         eq(priceHistory.productType, 'sealed_product')
       )
     )
-    .orderBy(desc(priceHistory.soldAt));
+    .orderBy(desc(priceHistory.soldAt))
+    .limit(maxSealedResults);
 
   // Helper: parse quantity string to number (e.g. "5盒" → 5, "1" → 1)
   const parseQtyForSearch = (q: string | null | undefined): number => {

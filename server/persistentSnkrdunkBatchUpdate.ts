@@ -86,7 +86,7 @@ import http from 'http';
 const CONFIG = {
   // Initial parallel concurrency — overridden by AdaptiveParallelController at runtime.
   // v8.0: Start at 4 (tuned for Cloud Run ~2s avg response time).
-  PARALLEL: 4,
+  PARALLEL: 2,
 
   // ── Adaptive Parallelism thresholds ──────────────────────────
   // Sliding window size: number of recent API response times to average
@@ -99,12 +99,12 @@ const CONFIG = {
   //   Cloud Run: avg ~2s  → P=4 (optimal for CPU-throttled env)
   //   Rate-limited: avg >3.5s → P=3 (back off)
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 8 },
-    { maxAvgMs: 2000, parallel: 6 },
-    { maxAvgMs: 3500, parallel: 4 },
+    { maxAvgMs: 1000, parallel: 3 },
+    { maxAvgMs: 2000, parallel: 2 },
+    { maxAvgMs: 3500, parallel: 1 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
-  ADAPTIVE_MIN_PARALLEL: 2,
-  ADAPTIVE_MAX_PARALLEL: 8,
+  ADAPTIVE_MIN_PARALLEL: 1,
+  ADAPTIVE_MAX_PARALLEL: 3,
   // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
   // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
   CONSECUTIVE_TIMEOUT_THRESHOLD: 3,
@@ -821,6 +821,10 @@ async function runControlledParallelProcessing(
   console.log(`[BatchUpdate] Results: ${successCount} success, ${failCount} failed | Adaptive adjustments: ${adaptive.toMetadata().adjustmentLog.length}`);
 
   await batchTaskManager.completeTask(taskId, 'completed');
+  // Invalidate caches so search picks up new prices
+  const { invalidateGlobalPriceMap, invalidateSearchCache } = await import('./db');
+  invalidateGlobalPriceMap();
+  invalidateSearchCache();
 }
 
 /**

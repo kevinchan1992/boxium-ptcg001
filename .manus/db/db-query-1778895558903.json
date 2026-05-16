@@ -1,0 +1,25 @@
+{
+  "query": "SELECT COUNT(*) as total FROM priceHistory; SELECT COUNT(*) as pikachu_cards FROM cards WHERE name LIKE '%Pikachu%' OR nameJa LIKE '%ピカチュウ%'; SELECT COUNT(*) as pikachu_prices FROM priceHistory WHERE cardId IN (SELECT id FROM cards WHERE name LIKE '%Pikachu%' OR nameJa LIKE '%ピカチュウ%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3EnLCdsjufx9mVh.f1fa5d091c5c --database Mua4eQ38uVnrovHUJBRepi --execute SELECT COUNT(*) as total FROM priceHistory; SELECT COUNT(*) as pikachu_cards FROM cards WHERE name LIKE '%Pikachu%' OR nameJa LIKE '%ピカチュウ%'; SELECT COUNT(*) as pikachu_prices FROM priceHistory WHERE cardId IN (SELECT id FROM cards WHERE name LIKE '%Pikachu%' OR nameJa LIKE '%ピカチュウ%');",
+  "rows": [
+    {
+      "total": "940451"
+    },
+    {
+      "total": "pikachu_cards"
+    },
+    {
+      "total": "672"
+    },
+    {
+      "total": "pikachu_prices"
+    },
+    {
+      "total": "136002"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n940451\npikachu_cards\n672\npikachu_prices\n136002\n",
+  "stderr": "",
+  "execution_time_ms": 4464
+}

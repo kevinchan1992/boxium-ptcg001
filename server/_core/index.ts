@@ -1886,6 +1886,12 @@ async function startServer() {
     startGradingUpgradeOverdueReminderScheduler();
     // Start the weekly blog report scheduler (every Monday at 08:00 HKT)
     startWeeklyBlogReportScheduler();
+    // Pre-load global price map for fast search (non-blocking)
+    import('../db').then(({ preloadGlobalPriceMap }) => {
+      preloadGlobalPriceMap();
+    }).catch(err => {
+      console.error('[Server] Failed to pre-load price map:', err);
+    });
     // Start the cache preloader service
     import('../services/cachePreloader').then(({ startCachePreloader }) => {
       startCachePreloader();
