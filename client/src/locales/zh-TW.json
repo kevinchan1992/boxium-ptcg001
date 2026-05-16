@@ -330,10 +330,10 @@
     "priceHistory": "價格歷史",
     "priceIncrease": "↑ 上漲",
     "priceTrend": "近 7 天趋勢",
-    "priceUpToDate": "價格已是最新",
+    "priceUpToDate": "最新",
     "priceUpdateFailed": "價格更新失敗",
-    "priceUpdated": "價格已更新",
-    "priceUpdating": "正在更新最新成交價格...",
+    "priceUpdated": "已更新",
+    "priceUpdating": "更新中...",
     "productName": "產品名稱",
     "productTitle": "商品標題",
     "quantity": "數量",
@@ -355,7 +355,14 @@
     "timeRangeLabel": "PSA 10 時間範圍",
     "title": "標題",
     "usdPrice": "USD 價格",
-    "usedGrade": "中古"
+    "usedGrade": "中古",
+    "records": "筆成交",
+    "noPsa10Data": "此卡牌暫無 PSA 10 成交記錄",
+    "noPsa10DataSub": "PSA 10 成交數據將在有新記錄時自動更新",
+    "avgPrice": "均價",
+    "latestPrice": "最新",
+    "minPriceLabel": "最低",
+    "maxPriceLabel": "最高"
   },
   "cardSelectionDialog": {
     "avgPrice": "平均價格",
@@ -624,7 +631,13 @@
     "trendingCardsDesc": "基於 PSA 10 七天最近成交價格漲幅",
     "usdPrice": "美元價格",
     "viewMarketTrends": "比較市場格價",
-    "welcome": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！"
+    "welcome": "歡迎來到 Boxium ～ 遊戲迷的專屬樂園！",
+    "searchCardsDesc": "搜尋卡片、查看價格走勢與市場數據",
+    "exploreNow": "立即探索",
+    "marketTrendsDesc": "查看市場價格走勢、比較各平台行情",
+    "viewTrends": "查看行情",
+    "marketplaceDesc": "瀏覽市集商品、參與拍賣、安全交易",
+    "browseNow": "立即瀏覽"
   },
   "login": {
     "description": "輸入您的帳號密碼以登入 BOXIUM PTCG",
@@ -903,9 +916,14 @@
     "admin": "管理後台",
     "dashboard": "個人中心",
     "favorites": "我的收藏",
-    "login": "登入/註冊",
+    "login": "登入",
     "logout": "登出",
-    "user": "用戶"
+    "user": "用戶",
+    "home": "首頁",
+    "research": "搜尋",
+    "trending": "排行",
+    "marketplace": "市集",
+    "profile": "我的"
   },
   "notifications": {
     "all": "全部",

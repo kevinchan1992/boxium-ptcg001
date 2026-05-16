@@ -542,17 +542,29 @@ export function scoreCardRelevance(
     }
 
     if (nameUpper.includes(tokenUpper) || (card.name && card.name.toLowerCase().includes(tokenLower))) {
+      // Base score: name contains the token anywhere
       score = Math.max(score, 45);
 
-      // Bonus: a word in the name starts with the token (e.g. "Mario Pikachu" for query "pikachu")
-      // This ranks cards like "Mario Pikachu" higher than cards where token appears mid-word
+      // Check if any word in the name starts with the token
+      // e.g. "Mario Pikachu" for query "pikachu" → "PIKACHU" starts a word
       const nameWords = nameUpper.split(/[\s:,.(\[\-]+/).filter(Boolean);
       const nameJaWords = nameJaUpper.split(/[\s:,.(\[\-]+/).filter(Boolean);
       const wordStartsWithToken =
         nameWords.some(w => w.startsWith(tokenUpper)) ||
         nameJaWords.some(w => w.startsWith(tokenUpper));
-      if (wordStartsWithToken) {
-        score = Math.max(score, 55);
+
+      // Exact word match: the token is exactly one of the words in the name
+      // e.g. "Mario Pikachu" for query "pikachu" → "PIKACHU" is an exact word
+      const exactWordMatch =
+        nameWords.some(w => w === tokenUpper) ||
+        nameJaWords.some(w => w === tokenUpper);
+
+      if (exactWordMatch) {
+        // Exact word match gets same score as "name starts with query" (Tier 5)
+        score = Math.max(score, 60);
+      } else if (wordStartsWithToken) {
+        // Word starts with token (but not exact) gets slightly lower score
+        score = Math.max(score, 57);
       }
     }
   }

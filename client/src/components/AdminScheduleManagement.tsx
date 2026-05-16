@@ -513,13 +513,13 @@ export function AdminScheduleManagement() {
               {snkrdunkUpdateMode === 'github_actions' && (
                 <div className="flex items-start gap-2 p-2 bg-green-900/20 border border-green-800 rounded text-xs text-green-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>GitHub Actions 模式：平台內建排程已停用，全部更新由 GitHub Actions 執行。不會重複執行，節省伺服器資源。</span>
+                  <span>GitHub Actions 模式：儲存時會自動啟用 GitHub Actions 排程、停用平台內建 cron，避免重複執行。每日 02:00 HKT 執行一次。</span>
                 </div>
               )}
               {snkrdunkUpdateMode === 'platform' && (
-                <div className="flex items-start gap-2 p-2 bg-yellow-900/20 border border-yellow-800 rounded text-xs text-yellow-300">
+                <div className="flex items-start gap-2 p-2 bg-blue-900/20 border border-blue-800 rounded text-xs text-blue-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                  <span>平台排程模式：由本平台伺服器執行排程。若 GitHub Actions 同時啟用，將會重複執行。</span>
+                  <span>平台內建排程模式：儲存時會自動停用 GitHub Actions 排程，由平台伺服器獨立執行，不會重複。</span>
                 </div>
               )}
             </div>
