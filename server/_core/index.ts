@@ -1815,24 +1815,28 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     
     // Recover stalled batch tasks from previous server instance, then auto-resume if eligible
-    import('../batchTaskManager').then(({ recoverStalledTasks }) => {
-      recoverStalledTasks(60).then(async result => { // 60 min: batch updates flush DB every 50 items, so 60 min is safe
-        if (result.recoveredCount > 0) {
-          console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
-        }
-        // Auto-resume: if a stalled task was just marked as failed, try to continue from where it left off
-        try {
-          const { autoResumeOnStartup } = await import('../persistentSnkrdunkBatchUpdate');
-          await autoResumeOnStartup();
-        } catch (resumeErr: any) {
-          console.error('[Server] Auto-resume check failed:', resumeErr.message);
-        }
+    // v9.0: Delay batch recovery by 30s to let server finish initialization
+    // and serve the first user requests without competition from batch updates.
+    setTimeout(() => {
+      import('../batchTaskManager').then(({ recoverStalledTasks }) => {
+        recoverStalledTasks(60).then(async result => { // 60 min: batch updates flush DB every 50 items, so 60 min is safe
+          if (result.recoveredCount > 0) {
+            console.log(`[Server] Recovered ${result.recoveredCount} stalled task(s) from previous instance`);
+          }
+          // Auto-resume: if a stalled task was just marked as failed, try to continue from where it left off
+          try {
+            const { autoResumeOnStartup } = await import('../persistentSnkrdunkBatchUpdate');
+            await autoResumeOnStartup();
+          } catch (resumeErr: any) {
+            console.error('[Server] Auto-resume check failed:', resumeErr.message);
+          }
+        }).catch(err => {
+          console.error('[Server] Failed to recover stalled tasks:', err);
+        });
       }).catch(err => {
-        console.error('[Server] Failed to recover stalled tasks:', err);
+        console.error('[Server] Failed to import batchTaskManager:', err);
       });
-    }).catch(err => {
-      console.error('[Server] Failed to import batchTaskManager:', err);
-    });
+    }, 30_000); // 30s delay: let server serve user requests first
     
     // Start the auto-update scheduler
     // startScheduler(); // Disabled: use priceUpdateScheduler instead

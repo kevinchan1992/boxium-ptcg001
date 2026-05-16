@@ -82,29 +82,27 @@ import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
 import http from 'http';
 
-// ─── Configuration (v8.0 - Smart Skip + Tuned Adaptive) ────────────
+// ─── Configuration (v9.0 - User-Request Priority) ────────────────────
+// v9.0: Dramatically reduced parallelism and added delays to prevent
+// batch updates from starving user requests on Cloud Run (1 vCPU, 512MB, 10 DB connections).
 const CONFIG = {
-  // Initial parallel concurrency — overridden by AdaptiveParallelController at runtime.
-  // v8.0: Start at 4 (tuned for Cloud Run ~2s avg response time).
-  PARALLEL: 2,
+  // Initial parallel concurrency — MUST be 1 to avoid starving user requests.
+  // On Cloud Run, each parallel item holds a DB connection for INSERT operations.
+  // With connectionLimit=10, even PARALLEL=2 can cause 9s user request latency.
+  PARALLEL: 1,
 
   // ── Adaptive Parallelism thresholds ──────────────────────────
-  // Sliding window size: number of recent API response times to average
+  // v9.0: ALL thresholds set to 1. Batch update MUST be single-threaded
+  // to coexist with user requests on the same Cloud Run instance.
   ADAPTIVE_WINDOW_SIZE: 20,
-  // Re-evaluate parallelism every N batches (avoid thrashing)
   ADAPTIVE_EVAL_INTERVAL: 5,
-  // Latency → concurrency mapping (thresholds in ms)
-  // Tuned based on real Cloud Run measurements (2026-05-06):
-  //   Sandbox: avg ~800ms → P=8 (2.61/s measured at P=8)
-  //   Cloud Run: avg ~2s  → P=4 (optimal for CPU-throttled env)
-  //   Rate-limited: avg >3.5s → P=3 (back off)
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 3 },
-    { maxAvgMs: 2000, parallel: 2 },
+    { maxAvgMs: 1000, parallel: 1 },
+    { maxAvgMs: 2000, parallel: 1 },
     { maxAvgMs: 3500, parallel: 1 },
   ] as Array<{ maxAvgMs: number; parallel: number }>,
   ADAPTIVE_MIN_PARALLEL: 1,
-  ADAPTIVE_MAX_PARALLEL: 3,
+  ADAPTIVE_MAX_PARALLEL: 1,
   // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
   // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
   CONSECUTIVE_TIMEOUT_THRESHOLD: 3,
@@ -119,9 +117,11 @@ const CONFIG = {
   // This reduces workload from 55,734 → ~8,952 per run (6x speedup).
   EMPTY_CARD_RECHECK_DAYS: 7,
 
-  // Delay between parallel batches (ms)
-  // Set to 0 — no throttle needed for stateless HTTP API calls.
-  DELAY_BETWEEN_BATCHES: 0,
+  // Delay between batches (ms)
+  // v9.0: Set to 500ms to yield CPU/DB connections to user requests.
+  // Without this delay, batch update monopolizes the event loop and DB pool,
+  // causing all user requests to queue for 8-9 seconds.
+  DELAY_BETWEEN_BATCHES: 500,
 
   // Delay after error (ms)
   // v8.1: Reduced from 500 → 200ms for faster recovery.

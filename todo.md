@@ -3,11 +3,14 @@
 ## 🚨 緊急：搜尋和整體平台速度問題（2026-05-16）
 
 - [x] Fix search 503 timeout: Replaced per-search priceHistory queries with global in-memory price map (pre-loaded on startup, refreshed every 10 min)
-- [x] Reduce ADAPTIVE_MAX_PARALLEL from 8 to 3 to prevent batch update from starving other queries
+- [x] Reduce ADAPTIVE_MAX_PARALLEL from 8 to 3 → further to 1 (v9.0: single-threaded batch update)
 - [x] Add DB connection pool settings (connectionLimit=10, waitForConnections, queueLimit=0)
 - [x] Add LIMIT to sealed products priceHistory query
 - [x] Invalidate price map and search cache after batch update completes
-- [ ] Verify fix in production
+- [x] Set DELAY_BETWEEN_BATCHES from 0 to 500ms (yield CPU/DB to user requests)
+- [x] Delay autoResumeOnStartup by 30s (let server serve user requests first)
+- [x] Lock all adaptive thresholds to PARALLEL=1 (prevent scaling up on Cloud Run)
+- [ ] Verify fix in production (deploy required)
 
 ## 🚨 緊急：生產環境載入速度極慢
 
