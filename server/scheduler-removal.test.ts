@@ -102,6 +102,40 @@ describe('Scheduler Removal - AdminScheduleManagement.tsx', () => {
   });
 });
 
+describe('Deleted files - no longer exist', () => {
+  it('weeklyBlogScheduler.ts should be deleted', () => {
+    expect(() => readFileSync(resolve(__dirname, 'weeklyBlogScheduler.ts'), 'utf-8')).toThrow();
+  });
+
+  it('services/cachePreloader.ts should be deleted', () => {
+    expect(() => readFileSync(resolve(__dirname, 'services/cachePreloader.ts'), 'utf-8')).toThrow();
+  });
+
+  it('hotCardPoll.test.ts should be deleted', () => {
+    expect(() => readFileSync(resolve(__dirname, 'hotCardPoll.test.ts'), 'utf-8')).toThrow();
+  });
+});
+
+describe('priceUpdateScheduler.ts - hotCardPoll code removed', () => {
+  const schedulerContent = readFileSync(schedulerPath, 'utf-8');
+
+  it('should NOT contain hotCardPollCronJob variable', () => {
+    expect(schedulerContent).not.toContain('hotCardPollCronJob');
+  });
+
+  it('should NOT contain runHotCardPoll function', () => {
+    expect(schedulerContent).not.toContain('runHotCardPoll');
+  });
+
+  it('should NOT contain startHotCardPollScheduler function', () => {
+    expect(schedulerContent).not.toContain('startHotCardPollScheduler');
+  });
+
+  it('should NOT contain getHotCardPollStatus function', () => {
+    expect(schedulerContent).not.toContain('getHotCardPollStatus');
+  });
+});
+
 describe('initPriceUpdateScheduler - single slot at 02:00', () => {
   const schedulerContent = readFileSync(schedulerPath, 'utf-8');
 

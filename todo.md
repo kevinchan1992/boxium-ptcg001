@@ -9111,3 +9111,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 更新 schema_new.ts 預設值為 02:00
 - [x] 更新 DB 記錄 snkrdunkUpdateTime 為 02:00
 - [x] 新增 scheduler-removal.test.ts 測試（22 項全部通過）
+- [x] 從 priceUpdateScheduler.ts 移除 HotCardPoll 程式碼（~8500 字元）
+- [x] 刪除 server/weeklyBlogScheduler.ts
+- [x] 刪除 server/services/cachePreloader.ts
+- [x] 刪除 server/hotCardPoll.test.ts
+- [x] 更新 scheduler-removal.test.ts（29 項全部通過）
