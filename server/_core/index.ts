@@ -1895,6 +1895,32 @@ async function startServer() {
         });
       }, 10_000); // Stagger auction processors 10s after schedulers
     }, 30_000); // 30s delay: let server handle user requests first
+
+    // KeepAlive Pinger: self-ping every 4 minutes to prevent Cloud Run idle shutdown.
+    // Cloud Run shuts down instances after ~15 minutes of inactivity (min-instances=0).
+    // Without this, cold starts cause 15-35s DB query delays on priceHistory (940k+ rows)
+    // which exceeds the 30s tRPC timeout -> search errors for users.
+    // Uses http (not https) to avoid TLS overhead on localhost.
+    // keepAliveTimer.unref() prevents this from blocking graceful shutdown.
+    setTimeout(() => {
+      const http = require('http');
+      const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
+      const keepAliveTimer = setInterval(() => {
+        const req = http.get(`http://localhost:${port}/api/dev/health`, {
+          headers: { 'User-Agent': 'BoxiumKeepAlive/1.0' },
+          timeout: 10000,
+        }, (res: any) => {
+          // Drain response to free socket
+          res.resume();
+        });
+        req.on('error', () => {
+          // Silently ignore - server may be restarting
+        });
+        req.end();
+      }, KEEPALIVE_INTERVAL_MS);
+      keepAliveTimer.unref(); // Don't block graceful shutdown
+      console.log('[KeepAlive] Self-ping started (every 4 min) to prevent Cloud Run cold starts');
+    }, 60_000); // Start 60s after boot (after schedulers are stable)
   });
 }
 

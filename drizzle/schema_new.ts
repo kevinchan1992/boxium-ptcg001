@@ -163,6 +163,20 @@ export const priceHistory = mysqlTable("priceHistory", {
   // Composite index for cross-card trending calculations: (source, grade, soldAt)
   // Optimizes: WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND soldAt >= ?
   sourceGradeSoldAtIdx: index("ph_source_grade_soldAt_idx").on(table.source, table.grade, table.soldAt),
+  // Covering index for _loadGlobalPriceMap query:
+  // SELECT cardId, price FROM priceHistory
+  // WHERE source='snkrdunk' AND grade='PSA 10' AND isSuspectedBulk=false
+  // ORDER BY soldAt DESC LIMIT 10000
+  // Without isSuspectedBulk in index, MySQL must do 591k+ row table lookups (3s+).
+  // With this covering index, the query runs entirely in-index (~100ms).
+  globalPriceMapIdx: index("ph_global_price_map_idx").on(
+    table.source,
+    table.grade,
+    table.isSuspectedBulk,
+    table.soldAt,
+    table.cardId,
+    table.price
+  ),
 }));
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
