@@ -167,42 +167,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (id.includes('node_modules')) {
-            // React core
-            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
-              return 'vendor-react';
-            }
-            // Recharts (charting library)
-            if (id.includes('/recharts/') || id.includes('/d3-')) {
-              return 'vendor-recharts';
-            }
-            // Radix UI (shadcn primitives)
-            if (id.includes('/@radix-ui/')) {
-              return 'vendor-radix';
-            }
-            // i18next
-            if (id.includes('/i18next') || id.includes('/react-i18next')) {
-              return 'vendor-i18n';
-            }
-            // tRPC + tanstack query
-            if (id.includes('/@trpc/') || id.includes('/@tanstack/')) {
-              return 'vendor-trpc';
-            }
-            // Stripe
-            if (id.includes('/@stripe/')) {
-              return 'vendor-stripe';
-            }
-            // Sentry
-            if (id.includes('/@sentry/')) {
-              return 'vendor-sentry';
-            }
-          }
-        },
-      },
-    },
+
   },
   server: {
     host: true,
