@@ -116,13 +116,11 @@ export async function initPriceUpdateScheduler() {
     // When updateMode is 'github_actions', platform cron is disabled to avoid double-running
     const updateMode = (config as any).snkrdunkUpdateMode ?? 'platform';
     if (config.snkrdunkEnabled && updateMode !== 'github_actions') {
-      startSnkrdunkScheduler(config.snkrdunkUpdateTime, 1);
-      // Start second scheduler if configured
-      if (config.snkrdunkUpdateTime2) {
-        startSnkrdunkScheduler(config.snkrdunkUpdateTime2, 2);
-      }
+      // Fixed daily schedule: use configured time (default 02:00 HKT), single slot only
+      const updateTime = config.snkrdunkUpdateTime || '02:00';
+      startSnkrdunkScheduler(updateTime, 1);
 
-      // ── Catch-up check: run if any scheduled time was missed ──
+      // ── Catch-up check: run if scheduled time was missed ──
       // Delay slightly to allow DB connections to stabilize
       setTimeout(async () => {
         try {
@@ -130,12 +128,10 @@ export async function initPriceUpdateScheduler() {
           const freshConfig = await getPriceUpdateSchedule();
           if (!freshConfig?.snkrdunkEnabled) return;
 
-          const missed1 = wasMissedSince(freshConfig.snkrdunkUpdateTime, freshConfig.snkrdunkLastExecutedAt);
-          const missed2 = freshConfig.snkrdunkUpdateTime2
-            ? wasMissedSince(freshConfig.snkrdunkUpdateTime2, freshConfig.snkrdunkLastExecutedAt)
-            : false;
+          const freshUpdateTime = freshConfig.snkrdunkUpdateTime || '02:00';
+          const missed = wasMissedSince(freshUpdateTime, freshConfig.snkrdunkLastExecutedAt);
 
-          if (missed1 || missed2) {
+          if (missed) {
             // Check cooldown: only one catch-up per HKT calendar day
             const lastCatchupAt = (freshConfig as any).snkrdunkLastCatchupAt as Date | null | undefined;
             if (isCatchupOnCooldown(lastCatchupAt)) {
@@ -148,7 +144,7 @@ export async function initPriceUpdateScheduler() {
               if (alreadyRunning) {
                 console.log('[PriceUpdateScheduler] Catch-up skipped: autoResumeOnStartup already resumed an active task');
               } else {
-                const reason = `missed scheduled run (slot1=${missed1}, slot2=${missed2}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
+                const reason = `missed scheduled run (time=${freshUpdateTime}), last executed: ${freshConfig.snkrdunkLastExecutedAt?.toISOString() ?? 'never'}`;
                 console.log(`[PriceUpdateScheduler] Detected missed execution — ${reason}`);
                 await runCatchupSnkrdunkUpdate(reason);
               }

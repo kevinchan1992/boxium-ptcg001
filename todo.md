@@ -9100,3 +9100,14 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 4ca92c69 cards 索引（name/nameJa）+ searchCards 5分鐘快取
 - [x] aa412084 getPriceStatistics 5分鐘快取 + SELECT price 優化
 - [x] 資料庫索引建立完成（8 個索引）
+
+## 排程器清理（2026-05-16）
+
+- [x] 移除 HotCardPoll 排程器（server/_core/index.ts、server/routers.ts、AdminScheduleManagement.tsx）
+- [x] 移除 CachePreloader 排程器（server/_core/index.ts）
+- [x] 移除 WeeklyBlogReport 排程器（server/_core/index.ts）
+- [x] 更新 initPriceUpdateScheduler 為每日一次 02:00 HKT（移除第二時段）
+- [x] 更新前端 AdminScheduleManagement 顯示為單一時段
+- [x] 更新 schema_new.ts 預設值為 02:00
+- [x] 更新 DB 記錄 snkrdunkUpdateTime 為 02:00
+- [x] 新增 scheduler-removal.test.ts 測試（22 項全部通過）

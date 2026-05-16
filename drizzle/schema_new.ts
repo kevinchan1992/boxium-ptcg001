@@ -584,8 +584,8 @@ export type InsertArticleGenerationHistory = typeof articleGenerationHistory.$in
 export const priceUpdateSchedule = mysqlTable("priceUpdateSchedule", {
   id: int("id").autoincrement().primaryKey(),
   snkrdunkEnabled: boolean("snkrdunkEnabled").default(false).notNull(), // Whether SNKRDUNK update is enabled
-  snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("01:00").notNull(), // First daily update time (HH:mm format)
-  snkrdunkUpdateTime2: varchar("snkrdunkUpdateTime2", { length: 8 }).default("13:00"), // Second daily update time (HH:mm format, null = disabled)
+  snkrdunkUpdateTime: varchar("snkrdunkUpdateTime", { length: 8 }).default("02:00").notNull(), // Daily update time (HH:mm format, fixed 02:00 HKT)
+  snkrdunkUpdateTime2: varchar("snkrdunkUpdateTime2", { length: 8 }), // DEPRECATED: second time slot removed
   snkrdunkLastExecutedAt: timestamp("snkrdunkLastExecutedAt"), // Last SNKRDUNK update execution time
   snkrdunkLastCatchupAt: timestamp("snkrdunkLastCatchupAt"), // Last catch-up execution time (used for cooldown — one catch-up per HKT day)
   snkrdunkUpdateMode: varchar("snkrdunkUpdateMode", { length: 32 }).default("github_actions").notNull(), // 'platform' = use platform cron scheduler; 'github_actions' = GitHub Actions is primary (platform cron disabled)

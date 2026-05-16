@@ -2551,36 +2551,19 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
     getPriceUpdateSchedule: publicProcedure
       .query(async () => {
         const schedule = await db.getPriceUpdateSchedule();
-        const { getPriceUpdateSchedulerStatus, getHotCardPollStatus } = await import('./priceUpdateScheduler');
+        const { getPriceUpdateSchedulerStatus } = await import('./priceUpdateScheduler');
         const schedulerStatus = getPriceUpdateSchedulerStatus();
-        const hotCardStatus = getHotCardPollStatus();
         return {
           ...schedule,
           snkrdunkSchedulerRunning: schedulerStatus.snkrdunkSchedulerRunning,
-          snkrdunkScheduler2Running: schedulerStatus.snkrdunkScheduler2Running,
-          hotCardPollSchedulerRunning: hotCardStatus.schedulerActive,
-          hotCardPollIsRunning: hotCardStatus.isRunning,
-          hotCardPollLastRunAt: hotCardStatus.lastRunAt,
-          hotCardPollLastResult: hotCardStatus.lastResult,
         };
-      }),
-
-    triggerHotCardPoll: adminProcedure
-      .mutation(async () => {
-        const { runHotCardPoll } = await import('./priceUpdateScheduler');
-        const result = await runHotCardPoll(100);
-        return { success: true, ...result };
       }),
 
     updatePriceUpdateSchedule: adminProcedure
       .input(z.object({
         snkrdunkEnabled: z.boolean().optional(),
         snkrdunkUpdateTime: z.string().optional(),
-        snkrdunkUpdateTime2: z.string().nullable().optional(),
         snkrdunkUpdateMode: z.enum(['platform', 'github_actions']).optional(),
-        // eBay 已停用，保留參數但忽略
-        ebayEnabled: z.boolean().optional(),
-        ebayUpdateTime: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         await db.updatePriceUpdateSchedule(input);

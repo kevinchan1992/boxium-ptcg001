@@ -365,8 +365,7 @@ export function AdminScheduleManagement() {
   
   // 本地狀態
   const [snkrdunkEnabled, setSnkrdunkEnabled] = useState(schedule?.snkrdunkEnabled ?? false);
-  const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "01:00");
-  const [snkrdunkTime2, setSnkrdunkTime2] = useState((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
+  const [snkrdunkTime, setSnkrdunkTime] = useState(schedule?.snkrdunkUpdateTime ?? "02:00");
   const [snkrdunkUpdateMode, setSnkrdunkUpdateMode] = useState<'platform' | 'github_actions'>((schedule as any)?.snkrdunkUpdateMode ?? 'github_actions');
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   
@@ -374,8 +373,7 @@ export function AdminScheduleManagement() {
   useEffect(() => {
     if (schedule) {
       setSnkrdunkEnabled(schedule.snkrdunkEnabled ?? false);
-      setSnkrdunkTime(schedule.snkrdunkUpdateTime ?? "01:00");
-      setSnkrdunkTime2((schedule as any)?.snkrdunkUpdateTime2 ?? "13:00");
+      setSnkrdunkTime(schedule.snkrdunkUpdateTime ?? "02:00");
       setSnkrdunkUpdateMode((schedule as any)?.snkrdunkUpdateMode ?? 'github_actions');
     }
   }, [schedule]);
@@ -399,9 +397,8 @@ export function AdminScheduleManagement() {
     updateSchedule.mutate({
       snkrdunkEnabled,
       snkrdunkUpdateTime: snkrdunkTime,
-      snkrdunkUpdateTime2: snkrdunkTime2 || null,
       snkrdunkUpdateMode,
-    } as any);
+    });
   };
   
   // 手動觸發 SNKRDUNK 批量更新
@@ -459,20 +456,7 @@ export function AdminScheduleManagement() {
     },
   });
 
-  // 手動觸發熱門卡牌快速更新
-  const triggerHotCardPoll = trpc.admin.triggerHotCardPoll.useMutation({
-    onSuccess: (data) => {
-      toast.success("熱門卡牌更新完成", {
-        description: `已更新 ${data.updated} 張，跳過 ${data.skipped} 張，失敗 ${data.failed} 張`,
-      });
-      refetch();
-    },
-    onError: (error) => {
-      toast.error("熱門卡牌更新失敗", {
-        description: error.message,
-      });
-    },
-  });
+
   
   return (
     <div className="space-y-6">
@@ -555,28 +539,17 @@ export function AdminScheduleManagement() {
             
             {snkrdunkEnabled && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-white">第一次更新時間（香港時間）</Label>
-                    <Input
-                      type="time"
-                      value={snkrdunkTime}
-                      onChange={(e) => setSnkrdunkTime(e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-white">第二次更新時間（香港時間）</Label>
-                    <Input
-                      type="time"
-                      value={snkrdunkTime2}
-                      onChange={(e) => setSnkrdunkTime2(e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-white">每日更新時間（香港時間）</Label>
+                  <Input
+                    type="time"
+                    value={snkrdunkTime}
+                    onChange={(e) => setSnkrdunkTime(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white max-w-[200px]"
+                  />
                 </div>
                 <p className="text-xs text-gray-400">
-                  每日執行兩次：{snkrdunkTime} 和 {snkrdunkTime2}（香港時間）
+                  每日執行一次：{snkrdunkTime}（香港時間）
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -584,14 +557,7 @@ export function AdminScheduleManagement() {
                       ? 'bg-green-900 text-green-300'
                       : 'bg-red-900 text-red-300'
                   }`}>
-                    排程1 {(schedule as any)?.snkrdunkSchedulerRunning ? '✓ 運行中' : '✗ 未運行'}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    (schedule as any)?.snkrdunkScheduler2Running
-                      ? 'bg-green-900 text-green-300'
-                      : 'bg-red-900 text-red-300'
-                  }`}>
-                    排程2 {(schedule as any)?.snkrdunkScheduler2Running ? '✓ 運行中' : '✗ 未運行'}
+                    排程 {(schedule as any)?.snkrdunkSchedulerRunning ? '✓ 運行中' : '✗ 未運行'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-400">
@@ -799,50 +765,6 @@ export function AdminScheduleManagement() {
             </Button>
           </div>
           
-          {/* 熱門卡牌快速更新 */}
-          <div className="space-y-3 p-4 bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-white font-medium text-sm sm:text-base">熱門卡牌快速更新</Label>
-                <p className="text-sm text-gray-400">
-                  每 30 分鐘自動更新最近 7 天被查看最多的前 100 張卡牌
-                </p>
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                (schedule as any)?.hotCardPollSchedulerRunning
-                  ? 'bg-green-900 text-green-300'
-                  : 'bg-red-900 text-red-300'
-              }`}>
-                {(schedule as any)?.hotCardPollSchedulerRunning ? '✓ 排程運行中' : '✗ 排程未啟動'}
-              </span>
-            </div>
-            {(schedule as any)?.hotCardPollIsRunning && (
-              <p className="text-xs text-yellow-400">⚡ 目前正在更新熱門卡牌...</p>
-            )}
-            {(schedule as any)?.hotCardPollLastRunAt && (
-              <p className="text-xs text-gray-400">
-                上次執行：{new Date((schedule as any).hotCardPollLastRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })} (HKT)
-                {(schedule as any)?.hotCardPollLastResult && (
-                  <span className="ml-2 text-gray-500">
-                    更新 {(schedule as any).hotCardPollLastResult.updated} 張，跳過 {(schedule as any).hotCardPollLastResult.skipped} 張，失敗 {(schedule as any).hotCardPollLastResult.failed} 張
-                  </span>
-                )}
-              </p>
-            )}
-            <Button
-              onClick={() => triggerHotCardPoll.mutate()}
-              disabled={triggerHotCardPoll.isPending || (schedule as any)?.hotCardPollIsRunning}
-              variant="outline"
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
-            >
-              {triggerHotCardPoll.isPending ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />更新中...</>
-              ) : (
-                <><Play className="w-4 h-4 mr-2" />立即更新熱門卡牌（前 100 張）</>
-              )}
-            </Button>
-          </div>
-
           {/* 說明文字 */}
           <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
             <p className="text-sm text-blue-300">
@@ -851,10 +773,9 @@ export function AdminScheduleManagement() {
             <ul className="text-sm text-blue-300 mt-2 space-y-1 list-disc list-inside">
               <li>排程時間使用香港時間（GMT+8）</li>
               <li>建議將更新時間設定在凌晨，避免影響用戶使用</li>
-              <li>預設更新時間為凌晨 01:00</li>
+              <li>預設更新時間為凌晨 02:00</li>
               <li>批量更新可能需要較長時間，請耐心等待</li>
               <li>保存設定後，排程器將自動重啟以應用新設定</li>
-              <li>熱門卡牌快速更新：每 30 分鐘更新最熱門的前 100 張卡牌，提升熱門卡牌的價格即時性</li>
             </ul>
           </div>
         </CardContent>

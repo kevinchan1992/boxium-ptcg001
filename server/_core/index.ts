@@ -1848,7 +1848,6 @@ async function startServer() {
       try {
         // Dynamic import: only load scheduler modules AFTER server is stable
         const schedulerModule = await import('../priceUpdateScheduler');
-        const blogModule = await import('../weeklyBlogScheduler');
         
         await schedulerModule.initPriceUpdateScheduler();
         schedulerModule.startTrendingCardsScheduler();
@@ -1858,7 +1857,6 @@ async function startServer() {
         schedulerModule.startOfferExpiryCleanupScheduler();
         schedulerModule.startPaymentTimeoutCancelScheduler();
         schedulerModule.startPaymentReminderScheduler();
-        schedulerModule.startHotCardPollScheduler();
         schedulerModule.startCartExpiryCleanupScheduler();
         schedulerModule.startAlipayReviewReminderScheduler();
         schedulerModule.startCartExpiryNotificationScheduler();
@@ -1873,17 +1871,11 @@ async function startServer() {
         schedulerModule.startGradingOverdueReminderScheduler();
         schedulerModule.startGradingAwaitingPaymentCleanupScheduler();
         schedulerModule.startGradingUpgradeOverdueReminderScheduler();
-        blogModule.startWeeklyBlogReportScheduler();
         console.log('[Server] All cron schedulers initialized.');
       } catch (err) {
         console.error('[Server] Failed to initialize schedulers:', err);
       }
-      // Cache preloader (refreshes SNKRDUNK cache before expiry)
-      import('../services/cachePreloader').then(({ startCachePreloader }) => {
-        startCachePreloader();
-      }).catch(err => {
-        console.error('[Server] Failed to start cache preloader:', err);
-      });
+
       // Auction lifecycle processors (delay another 10s to stagger load)
       setTimeout(() => {
         import('../auctionProcessor').then(({ processExpiredAuctions, processScheduledAuctions, notifyEndingSoon, processPaymentReminders }) => {
