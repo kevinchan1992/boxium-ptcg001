@@ -1,5 +1,13 @@
 # BOXIUM PTCG 專案待辦事項
 
+## ✅ /pricing/:id 「找不到該卡牌」修復（2026-05-17）
+- [x] 修復 SNKRDUNK 爬蟲超時時 re-throw 導致整個請求失敗的 bug
+- [x] SNKRDUNK 超時時保留舊快取，非超時錯誤才清除快取
+- [x] 前端 retry 從 1 次增加到 3 次，加入 exponential backoff（2s/4s/8s）
+- [x] 新增骨架屏載入動畫（取代空白 spinner）
+- [x] 新增「重試」按鈕（取代只有「返回」的錯誤頁）
+- [x] tRPC 客戶端超時從 45s 提升至 90s（配合 SNKRDUNK 最壞情況 75s）
+
 ## 🚨 緊急：搜尋和整體平台速度問題（2026-05-16）
 
 - [x] Fix search 503 timeout: Replaced per-search priceHistory queries with global in-memory price map (pre-loaded on startup, refreshed every 10 min)

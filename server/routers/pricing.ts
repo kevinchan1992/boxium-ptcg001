@@ -341,13 +341,19 @@ export const pricingRouter = router({
                   });
                   console.log(`[Pricing Router] SNKRDUNK returned ${snkrdunkListings.length} listings`);
                 } catch (scrapeError) {
-                  // If scraping fails, clear the old cache and log detailed error
+                  // If scraping fails, log the error but DO NOT re-throw
+                  // This ensures eBay results still show even when SNKRDUNK times out
                   console.error(`[Pricing Router] SNKRDUNK scraping failed for cardId ${actualCardId}, snkrdunkId ${snkrdunkId}:`, scrapeError);
-                  console.log(`[Pricing Router] Clearing old cache due to scraping failure`);
-                  await db.clearSnkrdunkCacheByCardId(actualCardId);
-                  
-                  // Re-throw error to be caught by outer catch block
-                  throw scrapeError;
+                  const isTimeout = scrapeError instanceof Error &&
+                    (scrapeError.message.includes('timeout') || scrapeError.message.includes('Timeout') || scrapeError.name === 'AbortError' || scrapeError.message.includes('timed out'));
+                  if (!isTimeout) {
+                    // Only clear cache for non-timeout errors (timeouts are transient)
+                    console.log(`[Pricing Router] Clearing old cache due to non-timeout scraping failure`);
+                    await db.clearSnkrdunkCacheByCardId(actualCardId);
+                  } else {
+                    console.log(`[Pricing Router] Timeout error - keeping old cache for next request`);
+                  }
+                  // Fall through with empty snkrdunkListings - eBay results will still show
                 }
                 
               }

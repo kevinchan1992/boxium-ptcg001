@@ -127,12 +127,15 @@ export default function PricingDetail() {
 
   // Fetch pricing data (eBay + SNKRDUNK) - use database ID
   // Do NOT fetch if this is a sealed product redirect (wrong ID would be used)
-  const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError } = trpc.pricing.getListings.useQuery(
+  // retry: 3 with exponential backoff to handle cold-start timeouts (eBay 15s + SNKRDUNK 75s)
+  const { data: pricingData, isLoading: pricingLoading, refetch, error: pricingError, isFetching } = trpc.pricing.getListings.useQuery(
     { cardId: cardId! },
     { 
       enabled: !!cardId && !isSealedProductRedirect, 
-      retry: 1,
+      retry: 3,
+      retryDelay: (attempt) => Math.min(2000 * Math.pow(2, attempt), 15000), // 2s, 4s, 8s
       staleTime: 30 * 60 * 1000, // 30 minutes cache
+      gcTime: 60 * 60 * 1000, // 1 hour
     }
   );
   
@@ -193,16 +196,74 @@ export default function PricingDetail() {
       .map(([key, count]) => ({ key, label: getGradeLabel(key), count }));
   }, [pricingData?.listings]);
 
-  if (cardLoading) {
+  if (cardLoading || (isFetching && !pricingData)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-2 text-sm text-muted-foreground">{t("pricing.loading")}</span>
+      <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8 animate-pulse">
+        {/* Skeleton breadcrumb */}
+        <div className="h-4 w-48 bg-muted rounded mb-6" />
+        {/* Skeleton back/view buttons */}
+        <div className="flex gap-2 mb-4">
+          <div className="h-9 w-20 bg-muted rounded" />
+          <div className="h-9 w-28 bg-muted rounded" />
+        </div>
+        {/* Skeleton card header */}
+        <div className="bg-card rounded-lg border border-border p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-64 aspect-[3/4] bg-muted rounded-lg" />
+            <div className="flex-1 space-y-3">
+              <div className="h-6 w-3/4 bg-muted rounded" />
+              <div className="h-4 w-1/2 bg-muted rounded" />
+              <div className="h-4 w-1/3 bg-muted rounded" />
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                {[0,1,2].map(i => <div key={i} className="bg-muted rounded-lg h-20" />)}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Skeleton listings */}
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-lg border border-border overflow-hidden">
+              <div className="aspect-square bg-muted" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 bg-muted rounded w-full" />
+                <div className="h-3 bg-muted rounded w-2/3" />
+                <div className="h-5 bg-muted rounded w-1/2 mt-1" />
+                <div className="h-8 bg-muted rounded w-full mt-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-center mt-6 gap-2 text-muted-foreground text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>{t("pricing.loading")}</span>
+        </div>
       </div>
     );
   }
 
-  if (cardError || !card) {
+  if (pricingError && !isFetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <p className="text-muted-foreground mb-2">{t("pricing.loadError") || "載入失敗，請重試"}</p>
+          <p className="text-xs text-muted-foreground/60 mb-4">{pricingError?.message}</p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={handleBack}>
+              {t("common.back")}
+            </Button>
+            <Button onClick={() => refetch()} style={{ backgroundColor: '#0804b3', color: 'white' }}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {t("pricing.retry") || "重試"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!card) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
