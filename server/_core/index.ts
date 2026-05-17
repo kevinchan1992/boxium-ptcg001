@@ -1902,8 +1902,8 @@ async function startServer() {
     // which exceeds the 30s tRPC timeout -> search errors for users.
     // Uses http (not https) to avoid TLS overhead on localhost.
     // keepAliveTimer.unref() prevents this from blocking graceful shutdown.
-    setTimeout(() => {
-      const http = require('http');
+    setTimeout(async () => {
+      const { default: http } = await import('http');
       const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
       const keepAliveTimer = setInterval(() => {
         const req = http.get(`http://localhost:${port}/api/dev/health`, {
