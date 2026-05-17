@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "L2C86D5CU2.com.boxium.ptcg",
+        "paths": ["*"]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "L2C86D5CU2.com.boxium.ptcg"
+    ]
+  }
+}

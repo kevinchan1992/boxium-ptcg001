@@ -9251,3 +9251,17 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Legacy JSON scan kept as fallback when index is empty
 - [x] Backfill: 13,612 cards processed, 27,256 index rows created
 - [x] Test: Bgs9.5 search 0.7s (was timeout), Psa10 search 2.1s (5,832 cards)
+
+## iOS App Store Preparation (2026-05-17)
+- [x] Added apple-app-site-association file
+- [x] Added manifest.json (PWA manifest)
+- [x] Added iOS meta tags (apple-mobile-web-app-capable, status-bar-style, theme-color)
+- [x] Added AASA server route with correct Content-Type
+- [ ] Create App ID in Apple Developer (com.boxium.ptcg)
+- [ ] Create App record in App Store Connect
+- [ ] Prepare App Icon (1024x1024 PNG)
+- [ ] Prepare Splash Screen images
+- [ ] Package iOS App with Capacitor
+- [ ] Create Xcode Archive and upload
+- [ ] Fill in App Store info, screenshots, review notes
+- [ ] Submit for review

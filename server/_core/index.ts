@@ -947,6 +947,26 @@ async function startServer() {
   // Google OAuth routes — apply auth rate limiter
   app.use("/api/auth", authLimiter, googleOAuthRouter);
   
+  // Apple App Site Association - required for Universal Links (iOS App)
+  // Must be served with Content-Type: application/json and NO file extension
+  app.get("/.well-known/apple-app-site-association", (_req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      applinks: {
+        apps: [],
+        details: [
+          {
+            appID: "L2C86D5CU2.com.boxium.ptcg",
+            paths: ["*"]
+          }
+        ]
+      },
+      webcredentials: {
+        apps: ["L2C86D5CU2.com.boxium.ptcg"]
+      }
+    });
+  });
+
   // Sitemap.xml route
   app.get("/sitemap.xml", async (req, res) => {
     try {
