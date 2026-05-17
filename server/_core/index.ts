@@ -1807,6 +1807,69 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: Keepalive (Heartbeat) ─────────────────────────
+  // Called by Manus Heartbeat every 60s to keep Cloud Run instance warm
+  app.post("/api/scheduled/keepalive", (_req, res) => {
+    res.json({ ok: true, ts: Date.now() });
+  });
+
+  // ─── Scheduled Task Endpoint: Calculate Trending Cards (Heartbeat) ──────────
+  // Called by Manus Heartbeat daily at HKT 06:00 (UTC 22:00 previous day)
+  // Also supports manual trigger via admin UI
+  app.post("/api/scheduled/calculateTrending", async (req, res) => {
+    try {
+      // Auth: Heartbeat platform sends requests that bypass bot detection
+      // via isInternalSystemRequest (CRON_SECRET Bearer token).
+      // No additional auth needed — the security middleware already validates.
+      console.log('[ScheduledTask] calculateTrending: starting...');
+      const startTime = Date.now();
+
+      const { calculateAndCacheTrendingCards } = await import('../db');
+      const { addScheduleExecutionHistory, updateScheduleExecutionHistory } = await import('../db');
+
+      // Create execution history record
+      let historyId: number | null = null;
+      try {
+        historyId = await addScheduleExecutionHistory({
+          scheduleType: 'trending_update',
+          executionType: 'scheduled',
+          status: 'running',
+          startedAt: new Date(),
+        });
+      } catch (e) {
+        console.warn('[ScheduledTask] calculateTrending: failed to create history record:', e);
+      }
+
+      await calculateAndCacheTrendingCards();
+
+      const durationMs = Date.now() - startTime;
+      console.log(`[ScheduledTask] calculateTrending: completed in ${durationMs}ms`);
+
+      // Update execution history
+      if (historyId !== null) {
+        try {
+          await updateScheduleExecutionHistory(historyId, {
+            status: 'completed',
+            completedAt: new Date(),
+            durationMs,
+          });
+        } catch (e) {
+          console.warn('[ScheduledTask] calculateTrending: failed to update history:', e);
+        }
+      }
+
+      return res.json({ ok: true, durationMs });
+    } catch (err: any) {
+      console.error('[ScheduledTask] calculateTrending failed:', err?.message);
+      return res.status(500).json({
+        error: err?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined,
+        context: { url: req.url },
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   app.use(

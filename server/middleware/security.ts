@@ -602,6 +602,7 @@ export function isInternalSystemRequest(req: Request): boolean {
     "admin.listBatchUpdateTasks",
     "admin.triggerPriceUpdate",
     "admin.runScheduledPriceUpdate",
+    "admin.calculateTrendingCards",
   ];
   if (INTERNAL_PROCEDURES.some((proc) => url.includes(proc))) {
     return true;

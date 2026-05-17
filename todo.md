@@ -9265,3 +9265,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] Create Xcode Archive and upload
 - [ ] Fill in App Store info, screenshots, review notes
 - [ ] Submit for review
+
+## 🚨 生產環境 Trending Cards 計算失敗修復（2026-05-17）
+- [ ] 將 setInterval 排程遷移至 Heartbeat 平台排程（Cloud Run 不支持 in-process timer）
+- [x] 建立 /api/scheduled/calculateTrending 端點
+- [ ] 建立 Heartbeat cron job（每日 HKT 06:00 觸發）
+- [x] 確保 admin 手動觸發「全部重新計算」功能在生產環境正常運作（已加入 INTERNAL_PROCEDURES 白名單）
+- [x] 測試驗證排程和手動觸發均正常（6 tests passed）
