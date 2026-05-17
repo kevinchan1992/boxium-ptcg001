@@ -257,6 +257,22 @@ export async function getDb() {
 
 // Card queries
 
+/** Wrap a DB query with a timeout. Throws if the query takes longer than timeoutMs. */
+async function withDbTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`[DB Timeout] ${label} exceeded ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer!);
+    return result;
+  } catch (err) {
+    clearTimeout(timer!);
+    throw err;
+  }
+}
+
 /**
  * Parse a grade filter keyword from the search query.
  * Returns { gradeFilter: string[], cleanQuery: string } where
@@ -303,16 +319,26 @@ async function searchCardsByGrade(
   offset: number,
   db: any
 ): Promise<{ cards: any[]; total: number }> {
-  const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
-
-  // Fetch all cache rows (we need to parse JSON to filter by grade)
-  // For performance, limit to rows with non-empty listings
-  const allCacheRows = await db
-    .select({
-      cardId: snkrdunkListingsCache.cardId,
-      listings: snkrdunkListingsCache.listings,
-    })
-    .from(snkrdunkListingsCache);
+    const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
+  // Fetch all cache rows with non-empty listings (filter out '[]' and 'null' to reduce data transfer)
+  // Wrapped with a 15s timeout to prevent hanging on large tables in production
+  const allCacheRows = await withDbTimeout(
+    db
+      .select({
+        cardId: snkrdunkListingsCache.cardId,
+        listings: snkrdunkListingsCache.listings,
+      })
+      .from(snkrdunkListingsCache)
+      .where(
+        and(
+          ne(snkrdunkListingsCache.listings, '[]'),
+          ne(snkrdunkListingsCache.listings, 'null'),
+          ne(snkrdunkListingsCache.listings, '')
+        )
+      ),
+    15000,
+    `searchCardsByGrade(grade:${gradeFilter.join(',')})`
+  );
 
   // Filter rows that have at least one listing matching the grade filter
   const matchingCardIds: number[] = [];
@@ -387,22 +413,6 @@ async function searchCardsByGrade(
     cards: cardsWithPrice.slice(offset, offset + limit),
     total: cardsWithPrice.length,
   };
-}
-
-/** Wrap a DB query with a timeout. Throws if the query takes longer than timeoutMs. */
-async function withDbTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`[DB Timeout] ${label} exceeded ${timeoutMs}ms`)), timeoutMs);
-  });
-  try {
-    const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timer!);
-    return result;
-  } catch (err) {
-    clearTimeout(timer!);
-    throw err;
-  }
 }
 
 export async function searchCards(query: string, limit: number = 20, offset: number = 0) {

@@ -1,5 +1,12 @@
 # BOXIUM PTCG 專案待辦事項
 
+## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
+- [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
+- [x] 將 withDbTimeout 移至 parseGradeFilter 之前（確保可用）
+- [x] 為 searchCardsByGrade 的全表查詢加入 15s 超時保護
+- [x] 優化查詢：過濾空 listings（'[]'/'null'/''），減少資料傳輸量
+- [x] 測試：搜尋「Bgs9.5」成功返回 79 張卡牌
+
 ## ✅ /pricing/:id 「找不到該卡牌」修復（2026-05-17）
 - [x] 修復 SNKRDUNK 爬蟲超時時 re-throw 導致整個請求失敗的 bug
 - [x] SNKRDUNK 超時時保留舊快取，非超時錯誤才清除快取
