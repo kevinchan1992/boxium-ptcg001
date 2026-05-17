@@ -9242,3 +9242,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 各卡牌骨架依欄位錯開 40ms 動畫延遲（視覺上更自然）
 - [x] 標題行也顯示骨架佔位（結果數量 + 頁數）
 - [x] 價格行使用橙色調骨架（與真實價格顏色一致）
+
+## snkrdunkGradeIndex optimization (2026-05-17)
+- [x] Created snkrdunkGradeIndex table (cardId, grade, minPrice, listingCount + 3 indexes)
+- [x] DB migration SQL: 0068_add_snkrdunk_grade_index.sql
+- [x] saveSnkrdunkListingsCache now syncs grade index (non-blocking, failure safe)
+- [x] searchCardsByGrade rewritten to use SQL index (O(1) vs full-table JSON scan)
+- [x] Legacy JSON scan kept as fallback when index is empty
+- [x] Backfill: 13,612 cards processed, 27,256 index rows created
+- [x] Test: Bgs9.5 search 0.7s (was timeout), Psa10 search 2.1s (5,832 cards)

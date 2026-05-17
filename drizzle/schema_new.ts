@@ -1843,3 +1843,27 @@ export const searchTokens = mysqlTable("searchTokens", {
 }));
 export type SearchToken = typeof searchTokens.$inferSelect;
 export type InsertSearchToken = typeof searchTokens.$inferInsert;
+
+/**
+ * Normalized grade index for fast grade-based card search.
+ * Each row represents the minimum on-sale price for a specific (cardId, grade) pair.
+ * This table is kept in sync with snkrdunkListingsCache via saveSnkrdunkListingsCache().
+ * Allows O(1) SQL lookup instead of full-table JSON scan.
+ */
+export const snkrdunkGradeIndex = mysqlTable("snkrdunkGradeIndex", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(),
+  grade: varchar("grade", { length: 64 }).notNull(),
+  minPrice: decimal("minPrice", { precision: 12, scale: 2 }).notNull(),
+  listingCount: int("listingCount").notNull().default(1),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  // Primary lookup: grade → matching cardIds (used in searchCardsByGrade)
+  gradeIdx: index("sgi_grade_idx").on(table.grade),
+  // Composite for (cardId, grade) uniqueness checks and per-card cleanup
+  cardIdGradeIdx: index("sgi_cardId_grade_idx").on(table.cardId, table.grade),
+  // For sorting results by price
+  minPriceIdx: index("sgi_minPrice_idx").on(table.minPrice),
+}));
+export type SnkrdunkGradeIndex = typeof snkrdunkGradeIndex.$inferSelect;
+export type InsertSnkrdunkGradeIndex = typeof snkrdunkGradeIndex.$inferInsert;

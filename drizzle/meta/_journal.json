@@ -463,6 +463,13 @@
       "when": 1747490000000,
       "tag": "0067_add_global_price_map_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1747490100000,
+      "tag": "0068_add_snkrdunk_grade_index",
+      "breakpoints": true
     }
   ]
 }

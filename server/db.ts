@@ -311,6 +311,9 @@ export function parseGradeFilter(query: string): { gradeFilter: string[] | null;
  * Search cards that have active listings of a specific grade in snkrdunkListingsCache.
  * If cleanQuery is non-empty, also filter by card name/number.
  * Returns cards sorted by lowest listing price of that grade (ascending).
+ *
+ * v2: Uses the snkrdunkGradeIndex table for O(1) SQL lookup instead of full-table JSON scan.
+ * Falls back to legacy JSON scan if the index table is empty (e.g., before first cache sync).
  */
 async function searchCardsByGrade(
   gradeFilter: string[],
@@ -319,9 +322,90 @@ async function searchCardsByGrade(
   offset: number,
   db: any
 ): Promise<{ cards: any[]; total: number }> {
-    const { snkrdunkListingsCache } = await import('../drizzle/schema_new');
-  // Fetch all cache rows with non-empty listings (filter out '[]' and 'null' to reduce data transfer)
-  // Wrapped with a 15s timeout to prevent hanging on large tables in production
+  const { snkrdunkGradeIndex, snkrdunkListingsCache } = await import('../drizzle/schema_new');
+
+  // ── v2: Fast SQL path via snkrdunkGradeIndex ─────────────────────────────────
+  // Query the normalized index table directly using indexed grade column.
+  // This replaces the full-table JSON scan (~10k rows × JSON.parse) with a
+  // targeted SQL query that returns only matching cardIds.
+  const indexRows = await withDbTimeout(
+    db
+      .select({
+        cardId: snkrdunkGradeIndex.cardId,
+        minPrice: snkrdunkGradeIndex.minPrice,
+      })
+      .from(snkrdunkGradeIndex)
+      .where(inArray(snkrdunkGradeIndex.grade, gradeFilter))
+      .orderBy(asc(snkrdunkGradeIndex.minPrice)),
+    10000,
+    `searchCardsByGrade-index(grade:${gradeFilter.join(',')})`
+  );
+
+  // If index is populated, use it directly
+  if (indexRows.length > 0) {
+    const gradeMinPriceMap = new Map<number, number>();
+    for (const row of indexRows) {
+      const price = Number(row.minPrice);
+      const existing = gradeMinPriceMap.get(row.cardId);
+      if (existing === undefined || price < existing) {
+        gradeMinPriceMap.set(row.cardId, price);
+      }
+    }
+    const matchingCardIds = Array.from(gradeMinPriceMap.keys());
+    if (matchingCardIds.length === 0) return { cards: [], total: 0 };
+
+    // If cleanQuery provided, filter by card name/number
+    let filteredCardIds = matchingCardIds;
+    if (cleanQuery.trim()) {
+      const lowerQuery = cleanQuery.toLowerCase();
+      const cardRows = await withDbTimeout(
+        db.select({ id: cards.id, name: cards.name, nameJa: cards.nameJa, cardNumber: cards.cardNumber })
+          .from(cards)
+          .where(inArray(cards.id, matchingCardIds)),
+        10000,
+        'searchCardsByGrade-nameFilter'
+      );
+      filteredCardIds = cardRows
+        .filter((c: any) =>
+          (c.name && c.name.toLowerCase().includes(lowerQuery)) ||
+          (c.nameJa && c.nameJa.toLowerCase().includes(lowerQuery)) ||
+          (c.cardNumber && c.cardNumber.toLowerCase().includes(lowerQuery))
+        )
+        .map((c: any) => c.id);
+    }
+
+    if (filteredCardIds.length === 0) return { cards: [], total: 0 };
+
+    // Fetch full card data for matching IDs
+    const cardRows = await withDbTimeout(
+      db.select().from(cards).where(inArray(cards.id, filteredCardIds)),
+      10000,
+      'searchCardsByGrade-cardFetch'
+    );
+
+    // Sort by minPrice ascending
+    const priceMap = gradeMinPriceMap;
+    const sorted = cardRows.sort((a: any, b: any) => {
+      const pa = priceMap.get(a.id) ?? Infinity;
+      const pb = priceMap.get(b.id) ?? Infinity;
+      return pa - pb;
+    });
+
+    const globalPriceMap = await getGlobalPriceMap();
+    const cardsWithPrice = sorted.map((card: any) => ({
+      ...card,
+      latestPrice: globalPriceMap.get(card.id) ?? priceMap.get(card.id) ?? null,
+    }));
+
+    return {
+      cards: cardsWithPrice.slice(offset, offset + limit),
+      total: cardsWithPrice.length,
+    };
+  }
+
+  // ── Legacy fallback: full-table JSON scan (used when index is empty) ─────────
+  console.warn('[GradeIndex] Index table empty, falling back to JSON scan');
+  // Fetch all cache rows with non-empty listings
   const allCacheRows = await withDbTimeout(
     db
       .select({
@@ -337,7 +421,7 @@ async function searchCardsByGrade(
         )
       ),
     15000,
-    `searchCardsByGrade(grade:${gradeFilter.join(',')})`
+    `searchCardsByGrade-legacy(grade:${gradeFilter.join(',')})`
   );
 
   // Filter rows that have at least one listing matching the grade filter
@@ -2989,14 +3073,11 @@ export async function saveSnkrdunkListingsCache(data: {
 }) {
   const db = await getDb();
   if (!db) return;
-  
-  const { snkrdunkListingsCache } = await import("../drizzle/schema_new");
-  
+  const { snkrdunkListingsCache, snkrdunkGradeIndex } = await import("../drizzle/schema_new");
   // Delete existing cache for this card
   await db
     .delete(snkrdunkListingsCache)
     .where(eq(snkrdunkListingsCache.cardId, data.cardId));
-  
   // Insert new cache
   await db.insert(snkrdunkListingsCache).values({
     cardId: data.cardId,
@@ -3005,6 +3086,41 @@ export async function saveSnkrdunkListingsCache(data: {
     hotExpiresAt: data.hotExpiresAt,
     expiresAt: data.expiresAt,
   });
+  // ── Sync snkrdunkGradeIndex (normalized grade index for fast search) ─────────
+  // Parse listings and compute minPrice per grade, then upsert into the index table.
+  // This allows searchCardsByGrade to use SQL instead of full-table JSON scan.
+  try {
+    const listings: Array<{ price: number; currency: string; grade: string; status?: string }> =
+      typeof data.listings === 'string' ? JSON.parse(data.listings) : data.listings;
+    // Delete existing grade index rows for this card
+    await db.delete(snkrdunkGradeIndex).where(eq(snkrdunkGradeIndex.cardId, data.cardId));
+    // Compute minPrice + count per grade (on-sale only)
+    const gradeMap = new Map<string, { minPrice: number; count: number }>();
+    for (const item of listings) {
+      if (item.status && item.status !== 'on-sale') continue;
+      if (!item.grade || typeof item.price !== 'number') continue;
+      const existing = gradeMap.get(item.grade);
+      if (!existing) {
+        gradeMap.set(item.grade, { minPrice: item.price, count: 1 });
+      } else {
+        existing.count++;
+        if (item.price < existing.minPrice) existing.minPrice = item.price;
+      }
+    }
+    // Insert new grade index rows
+    if (gradeMap.size > 0) {
+      const rows = Array.from(gradeMap.entries()).map(([grade, { minPrice, count }]) => ({
+        cardId: data.cardId,
+        grade,
+        minPrice: minPrice.toString(),
+        listingCount: count,
+      }));
+      await db.insert(snkrdunkGradeIndex).values(rows);
+    }
+  } catch (err) {
+    // Non-fatal: grade index sync failure should not break the main cache save
+    console.warn(`[GradeIndex] Failed to sync grade index for cardId=${data.cardId}:`, err);
+  }
 }
 
 /**
