@@ -66,11 +66,11 @@ export function invalidateSearchCache() {
 // ═══════════════════════════════════════════════════════════════════════════════
 let _globalPriceMap: Map<number, number> | null = null;
 let _globalPriceMapFetchedAt = 0;
-const GLOBAL_PRICE_MAP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const GLOBAL_PRICE_MAP_TTL_MS = 20 * 60 * 1000; // 20 minutes (v11.1: extended from 10min; GROUP BY query ~1s, less frequent refresh reduces DB load)
 let _globalPriceMapLoading: Promise<Map<number, number>> | null = null;
 
 /**
- * Get the global price map (lazy-loaded, cached for 10 minutes).
+ * Get the global price map (lazy-loaded, cached for 20 minutes).
  * Uses a single SQL query to get the latest PSA 10 price for ALL cards at once.
  * This is much faster than querying per-search because:
  * 1. It runs once and serves all searches from memory
