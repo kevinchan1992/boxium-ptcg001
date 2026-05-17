@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, AlertCircle, Lightbulb } from "lucide-react";
+import { Search, Loader2, AlertCircle, Lightbulb, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
@@ -35,9 +35,16 @@ export default function SearchResults() {
   const offset = (currentPage - 1) * limit;
 
   // Fetch search results with offset support — use products.search to include sealed products
-  const { data: searchData, isLoading, error } = trpc.products.search.useQuery(
+  // Reliability: retry 2x with exponential backoff for cold-start timeouts
+  const { data: searchData, isLoading, isFetching, error, refetch } = trpc.products.search.useQuery(
     { query: query || "", limit, offset },
-    { enabled: !!query, retry: 1 }
+    {
+      enabled: !!query,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(2000 * Math.pow(2, attemptIndex), 10000),
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    }
   );
   
   // Extract items array from response
@@ -208,7 +215,17 @@ export default function SearchResults() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <p className="text-muted-foreground">{t("searchResults.error.message")}</p>
+              <p className="text-muted-foreground mb-4">{t("searchResults.error.message")}</p>
+              <Button
+                onClick={() => refetch()}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isFetching}
+              >
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                {isFetching ? t("pricing.searching") : t("pricing.retrySearch")}
+              </Button>
             </div>
           </div>
         ) : searchResults.length > 0 ? (

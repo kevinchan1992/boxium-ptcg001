@@ -63,10 +63,23 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         // Search both cards and sealed products
-        const [cardsResult, sealedResult] = await Promise.all([
-          db.searchCards(input.query, input.limit, input.offset),
-          db.searchSealedProducts(input.query, input.limit, input.offset),
-        ]);
+        let cardsResult: { cards: any[]; total: number };
+        let sealedResult: { products: any[]; total: number };
+        try {
+          [cardsResult, sealedResult] = await Promise.all([
+            db.searchCards(input.query, input.limit, input.offset),
+            db.searchSealedProducts(input.query, input.limit, input.offset),
+          ]);
+        } catch (err: any) {
+          const isTimeout = err?.message?.includes('Timeout') || err?.message?.includes('timeout');
+          console.error(`[products.search] search failed (${isTimeout ? 'TIMEOUT' : 'ERROR'}):`, err?.message || err);
+          throw new TRPCError({
+            code: isTimeout ? 'TIMEOUT' : 'INTERNAL_SERVER_ERROR',
+            message: isTimeout
+              ? 'Search is warming up, please retry in a few seconds.'
+              : 'Search temporarily unavailable, please try again.',
+          });
+        }
 
         // Merge results with productType tag
         const cardItems = cardsResult.cards.map(c => ({
@@ -597,11 +610,15 @@ export const appRouter = router({
         try {
           results = await db.searchCards(input.query, input.limit, input.offset);
         } catch (err: any) {
-          // DB timeout or connection error — return empty rather than 500
-          console.error('[cards.search] searchCards failed:', err?.message || err);
+          const isTimeout = err?.message?.includes('Timeout') || err?.message?.includes('timeout');
+          console.error(`[cards.search] searchCards failed (${isTimeout ? 'TIMEOUT' : 'ERROR'}):`, err?.message || err);
+          // Use TIMEOUT code for timeout errors (signals client to retry with backoff)
+          // Use INTERNAL_SERVER_ERROR for other failures
           throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Search temporarily unavailable, please try again.',
+            code: isTimeout ? 'TIMEOUT' : 'INTERNAL_SERVER_ERROR',
+            message: isTimeout
+              ? 'Search is warming up, please retry in a few seconds.'
+              : 'Search temporarily unavailable, please try again.',
           });
         }
 

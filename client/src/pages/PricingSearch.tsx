@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ShoppingBag, Tag } from "lucide-react";
+import { AlertCircle, ShoppingBag, Tag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
@@ -41,9 +41,21 @@ export default function PricingSearch() {
 
   // Fetch search results from database (with pagination)
   // NOTE: grade filter parsing happens server-side in cards.search (pricing-only logic)
-  const { data: searchData, isLoading, error } = trpc.cards.search.useQuery(
+  //
+  // Reliability improvements for slow/cold-start responses:
+  // - retry: 2 → retries twice on failure (handles cold-start timeouts)
+  // - retryDelay: exponential backoff starting at 2s (gives server time to warm up)
+  // - staleTime: 60s → prevents unnecessary refetches when navigating back
+  // - gcTime: 5min → keeps data in cache longer for back/forward navigation
+  const { data: searchData, isLoading, isFetching, error, refetch } = trpc.cards.search.useQuery(
     { query: query || "", limit: ITEMS_PER_PAGE, offset },
-    { enabled: !!query, retry: 1 }
+    {
+      enabled: !!query,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(2000 * Math.pow(2, attemptIndex), 10000),
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    }
   );
 
   // Extract cards array and grade label from response
@@ -126,6 +138,16 @@ export default function PricingSearch() {
     return pages;
   };
 
+  // Determine the display state:
+  // - isLoading: initial load (no data yet, first fetch)
+  // - isFetching && !isLoading: background refetch (show stale data with subtle indicator)
+  // - error && !searchData: failed with no cached data → show error with retry
+  // - error && searchData: failed but have stale data → show stale data with warning
+  const showSkeleton = isLoading;
+  const showError = !!error && !searchData;
+  const hasResults = !showSkeleton && !showError && searchResults.length > 0;
+  const showEmpty = !showSkeleton && !showError && searchResults.length === 0 && !!query;
+
   return (
     <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
       {/* Breadcrumb */}
@@ -157,6 +179,7 @@ export default function PricingSearch() {
           <h2 className="text-2xl font-bold text-foreground">
             {t("pricing.searchResultsFor")}: "{query}"
           </h2>
+          {/* Background refresh indicator */}
           {isRefreshing && (
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5 items-center">
@@ -165,6 +188,13 @@ export default function PricingSearch() {
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:300ms]" />
               </div>
               <span className="text-xs text-muted-foreground">更新在售價格中</span>
+            </div>
+          )}
+          {/* Background refetch indicator (when stale data is shown) */}
+          {isFetching && !isLoading && (
+            <div className="flex items-center gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+              <span className="text-xs text-muted-foreground">{t("pricing.searching")}</span>
             </div>
           )}
         </div>
@@ -196,9 +226,9 @@ export default function PricingSearch() {
           </div>
         )}
 
-        {isLoading ? (
+        {showSkeleton ? (
           <p className="text-muted-foreground mt-2">{t("pricing.searching")}</p>
-        ) : (
+        ) : showError ? null : (
           <>
             <p className="text-muted-foreground mt-2">
               {gradeLabel
@@ -215,7 +245,7 @@ export default function PricingSearch() {
       </div>
 
       {/* Results Grid */}
-      {isLoading ? (
+      {showSkeleton ? (
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
           {Array.from({ length: 20 }).map((_, i) => (
             <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
@@ -228,14 +258,24 @@ export default function PricingSearch() {
             </div>
           ))}
         </div>
-      ) : error ? (
+      ) : showError ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="text-muted-foreground">{t("pricing.searchError")}</p>
+            <p className="text-muted-foreground mb-4">{t("pricing.searchError")}</p>
+            <Button
+              onClick={() => refetch()}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={isFetching}
+            >
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? t("pricing.searching") : t("pricing.retrySearch")}
+            </Button>
           </div>
         </div>
-      ) : searchResults.length > 0 ? (
+      ) : hasResults ? (
         <>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
             {searchResults.map((card: any) => {
@@ -378,16 +418,25 @@ export default function PricingSearch() {
             </div>
           )}
         </>
-      ) : (
+      ) : showEmpty ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {query ? t("pricing.noResults") : t("pricing.enterKeyword")}
+              {t("pricing.noResults")}
             </p>
           </div>
         </div>
-      )}
+      ) : !query ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {t("pricing.enterKeyword")}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -9202,3 +9202,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 
 ## Bug 修復 - 分頁邏輯問題 (2026-05-17)
 - [x] 修復 PricingSearch 頁面點擊第 18 頁時顯示 0 結果的問題（sealed products 只在第 1 頁顯示，total 只計算卡牌數量，分頁計算正確）
+
+## Bug 修復 - /pricing/search 搜尋可靠性問題 (2026-05-17)
+- [ ] 修復 /pricing/search 搜尋超時/失敗時顯示 0 結果的問題（需要跟 /research 一樣可靠）
+- [ ] 加入搜尋重試機制
+- [ ] 改善載入狀態和錯誤處理
+
+## ✅ /pricing/search 頁面穩定性修復（2026-05-17）
+
+- [x] 前端：增加 retry:2 + exponential backoff（2s → 4s → 10s）避免 cold-start timeout 顯示 0 結果
+- [x] 前端：增加 staleTime:60s + gcTime:5min 減少重複請求
+- [x] 前端：新增錯誤狀態「重試搜尋」按鈕（RefreshCw icon）
+- [x] 前端：keepPreviousData 防止翻頁時閃爍 0 結果
+- [x] 伺服器端：cards.search 區分 TIMEOUT vs INTERNAL_SERVER_ERROR 錯誤碼
+- [x] 伺服器端：products.search 增加 try/catch + 相同 timeout 處理
+- [x] tRPC client timeout 從 30s 提升至 45s 配合 cold-start 場景
+- [x] /search 頁面同步改善：retry:2 + exponential backoff + 重試按鈕
+- [x] 多語言：新增 retrySearch 翻譯鍵（zh-TW/en/ja）

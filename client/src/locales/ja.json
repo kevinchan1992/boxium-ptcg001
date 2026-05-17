@@ -1293,7 +1293,8 @@
     "totalResults": "合計{{count}}件",
     "uploadFile": "ファイルをアップロード",
     "viewDetail": "詳細を見る",
-    "viewOnSnkrdunk": "SNKRDUNKで見る"
+    "viewOnSnkrdunk": "SNKRDUNKで見る",
+    "retrySearch": "再検索"
   },
   "profile": {
     "addresses": {

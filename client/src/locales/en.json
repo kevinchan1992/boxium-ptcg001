@@ -1293,7 +1293,8 @@
     "totalResults": "{{count}} total",
     "uploadFile": "Upload File",
     "viewDetail": "View Details",
-    "viewOnSnkrdunk": "View on SNKRDUNK"
+    "viewOnSnkrdunk": "View on SNKRDUNK",
+    "retrySearch": "Retry Search"
   },
   "profile": {
     "addresses": {

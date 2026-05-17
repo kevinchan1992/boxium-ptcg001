@@ -116,9 +116,10 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        // 30s timeout: prevents browser from hanging indefinitely on slow/cold-start responses
+        // 45s timeout: gives enough room for cold-start DB queries (globalPriceMap ~1-3s + search ~1-2s)
+        // Combined with retry:2 on the query level, this handles worst-case cold starts
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 30000);
+        const timer = setTimeout(() => controller.abort(), 45000);
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",

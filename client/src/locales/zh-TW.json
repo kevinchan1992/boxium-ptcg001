@@ -1293,7 +1293,8 @@
     "totalResults": "共 {{count}} 筆",
     "uploadFile": "上傳檔案",
     "viewDetail": "查看詳情",
-    "viewOnSnkrdunk": "前往 SNKRDUNK 查看"
+    "viewOnSnkrdunk": "前往 SNKRDUNK 查看",
+    "retrySearch": "重試搜尋"
   },
   "profile": {
     "addresses": {
