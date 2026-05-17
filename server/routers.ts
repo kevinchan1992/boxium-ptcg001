@@ -605,9 +605,11 @@ export const appRouter = router({
           });
         }
 
-        // Also search sealed products and merge into results
+        // Sealed products are only shown on page 1 (offset === 0).
+        // They do NOT affect the pagination total so that page N always
+        // maps to the correct slice of the card result set.
         let sealedResults: any[] = [];
-        if (input.includeSealedProducts && input.query.trim()) {
+        if (input.includeSealedProducts && input.query.trim() && input.offset === 0) {
           try {
             const sealedData = await db.searchSealedProducts(input.query, 10, 0);
             sealedResults = (sealedData.products || []).map((p: any) => ({
@@ -619,11 +621,13 @@ export const appRouter = router({
           }
         }
 
-        // Merge: sealed products first (they're more specific), then cards
+        // Merge: sealed products first (only on page 1), then cards
         const mergedCards = [...sealedResults, ...(results.cards || [])];
         return {
           cards: mergedCards,
-          total: results.total + sealedResults.length,
+          // total reflects ONLY card count for correct pagination calculation
+          total: results.total,
+          sealedCount: sealedResults.length,
           gradeLabel,
         };
       }),

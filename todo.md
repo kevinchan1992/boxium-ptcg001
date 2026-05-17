@@ -9199,3 +9199,6 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 快取命中: 5-9ms (不變)
 - [x] UI 測試: 搜尋頁面正確顯示卡牌圖片、價格、分頁
 - [x] Vitest: 39/39 通過 (cards + eBay filter tests)
+
+## Bug 修復 - 分頁邏輯問題 (2026-05-17)
+- [x] 修復 PricingSearch 頁面點擊第 18 頁時顯示 0 結果的問題（sealed products 只在第 1 頁顯示，total 只計算卡牌數量，分頁計算正確）

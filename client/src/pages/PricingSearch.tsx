@@ -49,6 +49,7 @@ export default function PricingSearch() {
   // Extract cards array and grade label from response
   const searchResults = searchData?.cards || [];
   const total = searchData?.total || 0;
+  const sealedCount = (searchData as any)?.sealedCount || 0;
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
   // gradeLabel is returned by the server when a grade keyword was detected (e.g. "BGS 9.5")
   const gradeLabel: string | null = (searchData as any)?.gradeLabel ?? null;
@@ -202,7 +203,7 @@ export default function PricingSearch() {
             <p className="text-muted-foreground mt-2">
               {gradeLabel
                 ? `找到 ${total} 張卡牌有 ${gradeLabel} 在售商品`
-                : t("pricing.foundCards", { count: total })}
+                : t("pricing.foundCards", { count: total + sealedCount })}
             </p>
             {totalPages > 1 && (
               <p className="text-xs text-muted-foreground mt-1">
