@@ -3,7 +3,8 @@ import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns, scoreCardRelevance } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { createPool } from "mysql2";
-import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia } from "../drizzle/schema_new";
+import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia, searchTokens } from "../drizzle/schema_new";
+import { searchCardIdsByTokens, rebuildTokensForCards, type CardTokenData } from './utils/searchTokenBuilder';
 import { ENV } from './_core/env';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -451,13 +452,22 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     return { cards: allCardsWithPrice.slice(offset, offset + limit), total: allCardsWithPrice.length };
   }
 
-  // ── Multi-token fuzzy search ───────────────────────────────────────────────
+    // ── Multi-token fuzzy search (with token index acceleration) ─────────────────
   // Tokenize the query: "pikachu sm-p" → ["pikachu", "sm-p"]
   // Each token must match at least one of: name, nameJa, cardNumber
   // All tokens must match (AND logic across tokens, OR logic within each token)
   const tokens = tokenizeSearchQuery(trimmedQuery);
   if (tokens.length === 0) return { cards: [], total: 0 };
-  // Build per-token conditions
+
+  // STRATEGY: Use searchTokens table as a pre-filter to narrow candidates.
+  // Then apply LIKE patterns on the full table as a fallback to catch any
+  // cards the token index might have missed (e.g. due to tokenization gaps).
+  let matchingCards: typeof cards.$inferSelect[];
+  
+  const candidateIds = await searchCardIdsByTokens(db, tokens, 'single_card');
+  console.log(`[Search] Token index returned ${candidateIds.size} candidates for query: "${trimmedQuery}"`);
+  
+  // Build LIKE conditions for fallback/supplement
   const tokenConditions = tokens.map(token => {
     const { namePatterns, cardNumberPatterns: cnPatterns } = buildTokenPatterns(token);
     const conditions = [
@@ -465,20 +475,47 @@ export async function searchCards(query: string, limit: number = 20, offset: num
       ...namePatterns.map(p => like(cards.nameJa, p)),
       ...cnPatterns.map(p => like(cards.cardNumber, p)),
     ];
-    // Each token: card must match at least one field
     return or(...conditions)!;
   });
-
-  // All tokens must match
   const whereCondition = tokenConditions.length === 1
     ? tokenConditions[0]
     : and(...tokenConditions);
-
-  const matchingCards = await withDbTimeout<typeof cards.$inferSelect[]>(
-    db.select().from(cards).where(whereCondition),
-    15000,
-    `searchCards(fuzzy:${trimmedQuery})`
-  );
+  
+  if (candidateIds.size > 0 && candidateIds.size < 5000) {
+    // Token index found a manageable candidate set — fetch those cards first
+    const candidateArray = Array.from(candidateIds);
+    const BATCH_SIZE = 2000;
+    const allCandidateCards: typeof cards.$inferSelect[] = [];
+    for (let i = 0; i < candidateArray.length; i += BATCH_SIZE) {
+      const batch = candidateArray.slice(i, i + BATCH_SIZE);
+      const batchCards = await db.select().from(cards).where(inArray(cards.id, batch));
+      allCandidateCards.push(...batchCards);
+    }
+    
+    // Also run LIKE search to catch any cards the token index missed,
+    // but exclude cards we already found (avoid duplicates)
+    const likeResults = await withDbTimeout<typeof cards.$inferSelect[]>(
+      db.select().from(cards).where(
+        and(whereCondition, sql`${cards.id} NOT IN (${sql.raw(candidateArray.join(','))})`)
+      ),
+      15000,
+      `searchCards(supplement:${trimmedQuery})`
+    );
+    
+    if (likeResults.length > 0) {
+      console.log(`[Search] LIKE supplement found ${likeResults.length} additional cards for: "${trimmedQuery}"`);
+    }
+    
+    matchingCards = [...allCandidateCards, ...likeResults];
+  } else {
+    // Fallback: token index returned too many results or no results.
+    // Use the original LIKE-based full scan as a safety net.
+    matchingCards = await withDbTimeout<typeof cards.$inferSelect[]>(
+      db.select().from(cards).where(whereCondition),
+      15000,
+      `searchCards(fuzzy:${trimmedQuery})`
+    );
+  }
 
   if (matchingCards.length === 0) return { cards: [], total: 0 };
 
@@ -6624,4 +6661,173 @@ export async function getSnkrdunkListingsCacheStats() {
     lastBatchUpdate,
     oldestEntry,
   };
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEARCH TOKEN INDEX MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Populate the searchTokens table with tokens for ALL cards and sealed products.
+ * This is a one-time operation (or periodic rebuild) that should be run from admin.
+ * Processes in batches to avoid memory issues with 55k+ cards.
+ */
+export async function populateAllSearchTokens(): Promise<{ cardsProcessed: number; tokensCreated: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  console.log('[SearchTokens] Starting full population...');
+  const startTime = Date.now();
+  let totalTokens = 0;
+  let totalCards = 0;
+  
+  // Clear existing tokens
+  await db.delete(searchTokens);
+  
+  // Process cards in batches of 500
+  const BATCH_SIZE = 500;
+  let offset = 0;
+  
+  while (true) {
+    const cardBatch = await db
+      .select({
+        id: cards.id,
+        name: cards.name,
+        nameJa: cards.nameJa,
+        cardNumber: cards.cardNumber,
+        series: cards.series,
+        rarity: cards.rarity,
+      })
+      .from(cards)
+      .limit(BATCH_SIZE)
+      .offset(offset);
+    
+    if (cardBatch.length === 0) break;
+    
+    const tokenData: CardTokenData[] = cardBatch.map(c => ({
+      id: c.id,
+      name: c.name || '',
+      nameJa: c.nameJa || null,
+      cardNumber: c.cardNumber || null,
+      series: c.series || null,
+      rarity: c.rarity || null,
+      productType: 'single_card' as const,
+    }));
+    
+    const count = await rebuildTokensForCards(db, tokenData);
+    totalTokens += count;
+    totalCards += cardBatch.length;
+    offset += BATCH_SIZE;
+    
+    if (totalCards % 5000 === 0) {
+      console.log(`[SearchTokens] Processed ${totalCards} cards, ${totalTokens} tokens so far...`);
+    }
+  }
+  
+  // Process sealed products
+  let sealedOffset = 0;
+  while (true) {
+    const sealedBatch = await db
+      .select({
+        id: sealedProducts.id,
+        name: sealedProducts.name,
+        nameJa: sealedProducts.nameJa,
+        cardNumber: sealedProducts.styleCode,
+        series: sealedProducts.series,
+        rarity: sql<string>`NULL`,
+      })
+      .from(sealedProducts)
+      .limit(BATCH_SIZE)
+      .offset(sealedOffset);
+    
+    if (sealedBatch.length === 0) break;
+    
+    const tokenData: CardTokenData[] = sealedBatch.map(c => ({
+      id: c.id,
+      name: c.name || '',
+      nameJa: c.nameJa || null,
+      cardNumber: c.cardNumber || null,
+      series: c.series || null,
+      rarity: null,
+      productType: 'sealed_product' as const,
+    }));
+    
+    const count = await rebuildTokensForCards(db, tokenData);
+    totalTokens += count;
+    totalCards += sealedBatch.length;
+    sealedOffset += BATCH_SIZE;
+  }
+  
+  const elapsed = Date.now() - startTime;
+  console.log(`[SearchTokens] Population complete: ${totalCards} items, ${totalTokens} tokens in ${elapsed}ms`);
+  
+  return { cardsProcessed: totalCards, tokensCreated: totalTokens };
+}
+
+/**
+ * Update search tokens for a single card (call after card creation or update).
+ */
+export async function updateSearchTokensForCard(cardId: number, productType: 'single_card' | 'sealed_product' = 'single_card'): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  let cardData: CardTokenData | null = null;
+  
+  if (productType === 'single_card') {
+    const [card] = await db.select({
+      id: cards.id,
+      name: cards.name,
+      nameJa: cards.nameJa,
+      cardNumber: cards.cardNumber,
+      series: cards.series,
+      rarity: cards.rarity,
+    }).from(cards).where(eq(cards.id, cardId)).limit(1);
+    
+    if (card) {
+      cardData = {
+        id: card.id,
+        name: card.name || '',
+        nameJa: card.nameJa || null,
+        cardNumber: card.cardNumber || null,
+        series: card.series || null,
+        rarity: card.rarity || null,
+        productType: 'single_card',
+      };
+    }
+  } else {
+    const [product] = await db.select({
+      id: sealedProducts.id,
+      name: sealedProducts.name,
+      nameJa: sealedProducts.nameJa,
+      cardNumber: sealedProducts.styleCode,
+      series: sealedProducts.series,
+    }).from(sealedProducts).where(eq(sealedProducts.id, cardId)).limit(1);
+    
+    if (product) {
+      cardData = {
+        id: product.id,
+        name: product.name || '',
+        nameJa: product.nameJa || null,
+        cardNumber: product.cardNumber || null,
+        series: product.series || null,
+        rarity: null,
+        productType: 'sealed_product',
+      };
+    }
+  }
+  
+  if (cardData) {
+    await rebuildTokensForCards(db, [cardData]);
+  }
+}
+
+/**
+ * Get the count of search tokens in the database (for admin monitoring).
+ */
+export async function getSearchTokenCount(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(searchTokens);
+  return Number(row?.count ?? 0);
 }

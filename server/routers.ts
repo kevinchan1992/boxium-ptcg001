@@ -3128,6 +3128,17 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
         const results = await dbInstance.select().from(sealedProducts);
         return results;
       }),
+    // Search token index management
+    populateSearchTokens: adminProcedure
+      .mutation(async () => {
+        const result = await db.populateAllSearchTokens();
+        return result;
+      }),
+    getSearchTokenCount: adminProcedure
+      .query(async () => {
+        const count = await db.getSearchTokenCount();
+        return { count };
+      }),
   }),
 
   watchlist: router({

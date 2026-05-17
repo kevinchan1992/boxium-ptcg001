@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9c0936c7-296d-4a78-a501-fc934ff1d70c",
-  "prevId": "dbf88467-2f3f-475a-841c-1353a458c2a8",
+  "id": "832a7558-2bd0-48ef-90d6-705d9cb0f851",
+  "prevId": "9c0936c7-296d-4a78-a501-fc934ff1d70c",
   "tables": {
     "articleGenerationHistory": {
       "name": "articleGenerationHistory",

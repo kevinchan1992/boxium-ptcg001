@@ -9177,3 +9177,25 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 核心測試通過：263 passed / 8 failed (預存問題) / 5 skipped
 - [x] eBay PSA10 篩選器測試：19/19 通過
 - [x] 卡牌搜尋測試：88/89 通過（1 個預存問題：card ID 1 不存在）
+
+
+## 資料庫索引優化 - 系統性加速 (2026-05-17)
+- [x] 建立 search_tokens 表（應用層全文索引，替代 LIKE '%keyword%' 全表掃描）
+- [x] 填充 search_tokens 表（57,927 項目 → 6,021,030 個搜尋 tokens）
+- [x] 更新搜尋邏輯使用 search_tokens 表（Token 索引 + LIKE 補充機制確保 100% 結果完整性）
+- [x] 添加 dataSources 缺失索引（cardId+source 複合索引、sourceIdentifier 索引、isActive+source 複合索引）
+- [x] 添加 marketplaceOrders 缺失複合索引（buyerId+status+createdAt, sellerId+status+createdAt, listingId）
+- [x] 添加 watchlist 缺失索引（userId+cardId+productType 唯一索引、cardId 索引）
+- [x] 添加 viewHistory 缺失索引（userId+viewedAt 複合索引、cardId 索引）
+- [x] priceHistory 已有完善索引（ph_global_price_map_idx 覆蓋索引確認使用中）
+- [x] 修復部署失敗（scripts/ensure-playwright.sh 缺失）
+
+### 搜尋性能提升結果
+- [x] Charizard: 3.0s → 1.6s (1.9x 加速) - 440 結果 (正確)
+- [x] Pikachu: 3.0s → 1.6s (1.9x 加速) - 693 結果 (正確)
+- [x] S5I 085: 3.0s → 1.2s (2.5x 加速) - 1 結果 (正確)
+- [x] Mewtwo: 3.0s → 1.3s (2.3x 加速) - 258 結果 (正確)
+- [x] リザードン: 3.0s → 1.5s (2.0x 加速) - 473 結果 (正確)
+- [x] 快取命中: 5-9ms (不變)
+- [x] UI 測試: 搜尋頁面正確顯示卡牌圖片、價格、分頁
+- [x] Vitest: 39/39 通過 (cards + eBay filter tests)

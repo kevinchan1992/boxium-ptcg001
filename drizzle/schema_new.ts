@@ -196,6 +196,8 @@ export const watchlist = mysqlTable("watchlist", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   productTypeIdx: index("idx_watchlist_productType").on(table.productType),
+  userIdCardIdIdx: uniqueIndex("idx_watchlist_userId_cardId").on(table.userId, table.cardId, table.productType),
+  userIdIdx: index("idx_watchlist_userId").on(table.userId),
 }));
 
 export type Watchlist = typeof watchlist.$inferSelect;
@@ -212,6 +214,8 @@ export const viewHistory = mysqlTable("viewHistory", {
   viewedAt: timestamp("viewedAt").defaultNow().notNull(), // Viewing timestamp
 }, (table) => ({
   productTypeIdx: index("idx_viewhistory_productType").on(table.productType),
+  userIdViewedAtIdx: index("idx_viewhistory_userId_viewedAt").on(table.userId, table.viewedAt),
+  cardIdIdx: index("idx_viewhistory_cardId").on(table.cardId),
 }));
 
 export type ViewHistory = typeof viewHistory.$inferSelect;
@@ -277,6 +281,10 @@ export const dataSources = mysqlTable("dataSources", {
 }, (table) => ({
   gameIdIdx: index("idx_datasources_gameId").on(table.gameId),
   productTypeIdx: index("idx_datasources_productType").on(table.productType),
+  cardIdSourceIdx: index("idx_datasources_cardId_source").on(table.cardId, table.source),
+  sourceLastUpdatedAtIdx: index("idx_datasources_source_lastUpdatedAt").on(table.source, table.lastUpdatedAt),
+  sourceIdentifierIdx: index("idx_datasources_sourceIdentifier").on(table.sourceIdentifier),
+  isActiveSourceIdx: index("idx_datasources_isActive_source").on(table.isActive, table.source),
 }));
 
 export type DataSource = typeof dataSources.$inferSelect;
@@ -945,6 +953,11 @@ export const marketplaceOrders = mysqlTable("marketplaceOrders", {
   buyerIdIdx: index("mo_buyerId_idx").on(table.buyerId),
   orderStatusIdx: index("mo_orderStatus_idx").on(table.orderStatus),
   paymentStatusIdx: index("mo_paymentStatus_idx").on(table.paymentStatus),
+  // Composite indexes for buyer/seller order queries with date ordering
+  buyerIdCreatedAtIdx: index("mo_buyerId_createdAt_idx").on(table.buyerId, table.createdAt),
+  sellerIdCreatedAtIdx: index("mo_sellerId_createdAt_idx").on(table.sellerId, table.createdAt),
+  sellerIdStatusCreatedAtIdx: index("mo_sellerId_status_createdAt_idx").on(table.sellerId, table.orderStatus, table.createdAt),
+  listingIdIdx: index("mo_listingId_idx").on(table.listingId),
   // P0-3 Fix: Prevent duplicate auction orders (race condition protection)
   // Each auction listing can only have one order
   auctionListingUniqueIdx: uniqueIndex("mo_unique_auction_listing").on(table.auctionListingId),
@@ -1805,3 +1818,28 @@ export const gradingBannerImages = mysqlTable("gradingBannerImages", {
 }));
 export type GradingBannerImage = typeof gradingBannerImages.$inferSelect;
 export type InsertGradingBannerImage = typeof gradingBannerImages.$inferInsert;
+
+/**
+ * Search tokens table - application-level search index for fast card/product lookup.
+ * Since TiDB Serverless doesn't support FULLTEXT indexes, we use a token-based
+ * approach where each card's name/nameJa/cardNumber is split into searchable tokens.
+ * Queries use prefix matching (LIKE 'token%') which can leverage B-tree indexes.
+ */
+export const searchTokens = mysqlTable("searchTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(), // Foreign key to cards table
+  productType: mysqlEnum("productType", ["single_card", "sealed_product"]).notNull().default("single_card"),
+  token: varchar("token", { length: 128 }).notNull(), // Lowercased token (word or n-gram)
+  tokenType: mysqlEnum("tokenType", ["name_en", "name_ja", "card_number", "series", "rarity"]).notNull(), // Source field
+}, (table) => ({
+  // Primary search index: token prefix lookup
+  tokenIdx: index("st_token_idx").on(table.token),
+  // Composite index for token prefix search with product type filter
+  tokenProductTypeIdx: index("st_token_productType_idx").on(table.token, table.productType),
+  // Index for rebuilding tokens for a specific card
+  cardIdIdx: index("st_cardId_idx").on(table.cardId),
+  // Composite for cardId + productType (used when deleting/rebuilding tokens for a card)
+  cardIdProductTypeIdx: index("st_cardId_productType_idx").on(table.cardId, table.productType),
+}));
+export type SearchToken = typeof searchTokens.$inferSelect;
+export type InsertSearchToken = typeof searchTokens.$inferInsert;
