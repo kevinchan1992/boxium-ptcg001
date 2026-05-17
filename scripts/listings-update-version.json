@@ -1,6 +1,0 @@
-{
-  "workflow": "snkrdunk-listings-batch-update",
-  "version": "1.0.0",
-  "description": "SNKRDUNK on-sale listings cache batch update",
-  "schedule": "every 6 hours (HKT 09:07, 15:07, 21:07, 03:07)"
-}

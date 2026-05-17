@@ -9137,3 +9137,43 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] 加入 NaN 價格防護（convertJpyToHkd 返回 NaN 時跳過該筆記錄）
 - [ ] 在錯誤訊息中加入更多上下文（哪個步驟失敗）
 - [ ] 統一 refreshDataSource 與 refreshCardPrice 的錯誤格式
+
+
+## ✅ 全面平台測試與代碼清理 (2026-05-17)
+
+### 生產環境測試結果
+- [x] 首頁 (/) - 正常載入，顯示 BOXIUM Logo 和統計數據
+- [x] 卡牌搜尋 (/pricing/search?q=Charizard) - 正常返回 440 張卡牌，分 11 頁
+- [x] PSA 鑑定 (/grading) - 正常載入
+- [x] 市集 (/marketplace) - 正常載入
+- [x] 管理後台 (/admin) - 正確重定向（需要認證）
+
+### API 端點測試
+- [x] cards.getStats: 3ms（55,713 卡牌，941,078 價格記錄）
+- [x] cards.getCardDetail: 4ms
+- [x] cards.getPriceHistory: 4ms
+- [x] cards.getHotCards: 10ms
+- [x] cards.search (Pikachu): 1.07s 首次 / 9ms 快取命中
+- [x] cards.search (Charizard): 3.05s 首次 / 9ms 快取命中
+- [x] pricing.getLowestListingPrices: 220ms
+- [x] health: 2ms
+
+### 資料庫索引驗證
+- [x] GlobalPriceMap 覆蓋索引 (ph_global_price_map_idx) 確認使用中
+- [x] 搜尋快取機制正常運作（首次查詢後快取命中僅需 9ms）
+
+### 代碼清理
+- [x] 刪除 40+ 臨時 .mjs 測試/調試腳本
+- [x] 刪除 29 個臨時分析/調試 Markdown 文件
+- [x] 刪除 5 個臨時 SQL/報告文件
+- [x] 刪除未使用的模板組件 (AIChatBox, DashboardLayout, DashboardLayoutSkeleton, Map)
+- [x] 刪除未使用的頁面組件 (ComponentShowcase, Trending)
+- [x] 刪除 testPdfGen.ts 伺服器文件
+- [x] 移除已廢棄的 getDataSourceHealth/updateDataSourceHealth 函數
+- [x] 刪除舊的 migrations/ 和 scripts/ 目錄（drizzle 已接管遷移）
+- [x] 清理多餘空行和死代碼註釋
+
+### 測試結果
+- [x] 核心測試通過：263 passed / 8 failed (預存問題) / 5 skipped
+- [x] eBay PSA10 篩選器測試：19/19 通過
+- [x] 卡牌搜尋測試：88/89 通過（1 個預存問題：card ID 1 不存在）

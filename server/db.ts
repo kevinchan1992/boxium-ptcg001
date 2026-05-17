@@ -1768,15 +1768,6 @@ export async function deleteFailedDataSources() {
   }
 }
 
-// Favorites and user management removed
-
-
-
-
-
-
-
-
 /**
  * Get schedule config by schedule type
  */
@@ -2081,22 +2072,7 @@ export async function updateSnkrdunkLastCatchupAt() {
     .where(eq(priceUpdateSchedule.id, existing.id));
 }
 
-// DEPRECATED: Functions using deleted table 'dataSourceHealth'
-export async function getDataSourceHealth() {
-  return [];
-}
 
-export async function updateDataSourceHealth(
-  source: "snkrdunk" | "ebay",
-  data: {
-    success: boolean;
-    responseTime?: number;
-    errorMessage?: string;
-  }
-) {
-  console.warn("[updateDataSourceHealth] Function disabled - table removed");
-  return;
-}
 
 /**
  * Helper: IQR 2.5× outlier filter for a list of prices.
