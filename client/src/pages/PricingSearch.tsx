@@ -227,7 +227,10 @@ export default function PricingSearch() {
         )}
 
         {showSkeleton ? (
-          <p className="text-muted-foreground mt-2">{t("pricing.searching")}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <div className="h-3 w-28 rounded-full bg-muted animate-pulse" />
+            <div className="h-3 w-16 rounded-full bg-muted animate-pulse" />
+          </div>
         ) : showError ? null : (
           <>
             <p className="text-muted-foreground mt-2">
@@ -246,18 +249,54 @@ export default function PricingSearch() {
 
       {/* Results Grid */}
       {showSkeleton ? (
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
-              <div className="aspect-[2/3] bg-muted animate-pulse" />
-              <div className="p-1.5 sm:p-2 space-y-1">
-                <div className="h-2 sm:h-2.5 w-full rounded bg-muted animate-pulse" />
-                <div className="h-2 sm:h-2.5 w-3/4 rounded bg-muted animate-pulse" />
-                <div className="h-2 sm:h-2.5 w-1/2 rounded bg-orange-400/20 animate-pulse mt-1" />
+        <>
+          {/* Skeleton header: count + page info placeholder */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="h-4 w-32 rounded-full bg-muted animate-pulse" />
+            <div className="h-3 w-24 rounded-full bg-muted animate-pulse" />
+          </div>
+
+          {/* Skeleton card grid — 40 cards matching real layout */}
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
+            {Array.from({ length: 40 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-card border border-border rounded-xl overflow-hidden"
+                style={{ animationDelay: `${(i % 8) * 40}ms` }}
+              >
+                {/* Card image skeleton */}
+                <div className="aspect-[2/3] relative bg-muted overflow-hidden">
+                  {/* Shimmer sweep */}
+                  <div
+                    className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite]"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+                      animationDelay: `${(i % 8) * 40}ms`,
+                    }}
+                  />
+                </div>
+
+                {/* Card info skeleton */}
+                <div className="p-1.5 sm:p-2 space-y-1">
+                  {/* Title line 1 */}
+                  <div className="h-2 sm:h-2.5 rounded-full bg-muted animate-pulse" style={{ width: `${70 + (i % 3) * 10}%`, animationDelay: `${(i % 8) * 40}ms` }} />
+                  {/* Title line 2 — shorter */}
+                  <div className="h-2 sm:h-2.5 rounded-full bg-muted animate-pulse" style={{ width: `${45 + (i % 4) * 8}%`, animationDelay: `${(i % 8) * 40 + 80}ms` }} />
+                  {/* Price line */}
+                  <div className="h-2 sm:h-2.5 rounded-full bg-orange-400/20 animate-pulse mt-1" style={{ width: `${40 + (i % 3) * 12}%`, animationDelay: `${(i % 8) * 40 + 160}ms` }} />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* Shimmer keyframe injected once */}
+          <style>{`
+            @keyframes shimmer {
+              0%   { transform: translateX(-100%); }
+              100% { transform: translateX(200%); }
+            }
+          `}</style>
+        </>
       ) : showError ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">

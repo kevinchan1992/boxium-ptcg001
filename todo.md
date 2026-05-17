@@ -9219,3 +9219,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] tRPC client timeout 從 30s 提升至 45s 配合 cold-start 場景
 - [x] /search 頁面同步改善：retry:2 + exponential backoff + 重試按鈕
 - [x] 多語言：新增 retrySearch 翻譯鍵（zh-TW/en/ja）
+
+## ✅ /pricing/search 骨架屏動畫（2026-05-17）
+
+- [x] 初始載入時顯示 40 張卡牌骨架屏（與真實佈局相同的 grid）
+- [x] 骨架屏加入 shimmer 掃光動畫（橫向光澤掃過效果）
+- [x] 各卡牌骨架依欄位錯開 40ms 動畫延遲（視覺上更自然）
+- [x] 標題行也顯示骨架佔位（結果數量 + 頁數）
+- [x] 價格行使用橙色調骨架（與真實價格顏色一致）
