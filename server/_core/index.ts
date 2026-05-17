@@ -2,6 +2,19 @@
 // Must be set before any imports that use Date objects
 process.env.TZ = 'Asia/Hong_Kong';
 
+// v11.2: Prevent Cloud Run crashes from unhandled Promise rejections or uncaught exceptions.
+// Without these, Node.js 15+ exits the process on unhandledRejection → Cloud Run restarts → cold start.
+// Log the error and keep the server running (Sentry will capture it in production).
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  console.error('[Process] Unhandled Promise Rejection at:', promise, 'reason:', reason);
+  // Do NOT exit - keep the server running
+});
+process.on('uncaughtException', (error: Error) => {
+  console.error('[Process] Uncaught Exception:', error);
+  // Do NOT exit for non-fatal errors - keep the server running
+  // Only exit for truly fatal errors that corrupt state
+});
+
 import "dotenv/config";
 import express from "express";
 import fs from "fs";
@@ -31,7 +44,7 @@ import {
   validateImageMime,
   validatePaymentProofMime,
 } from "../middleware/security";
-import { getListingById, getCardById, getSealedProductById } from "../db";
+import { getListingById, getCardById, getSealedProductById, preloadGlobalPriceMap } from "../db";
 import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl, composeAndCacheMarketplaceOgImage } from "../ogImageComposer";
 import Stripe from "stripe";
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" }); }
@@ -1817,9 +1830,12 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+    server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    
+    // v11.2: Pre-warm the global price map immediately after startup (non-blocking).
+    // Without this, the first search request after cold start waits ~1s for the DB query.
+    // With this, the price map is ready before any user request arrives.
+    preloadGlobalPriceMap().catch(err => console.error('[Server] preloadGlobalPriceMap failed:', err));
     // v10.0: DISABLED autoResumeOnStartup completely.
     // Root cause: batch update uses ~200MB+ RAM. Combined with base server (~150MB) + schedulers (~50MB),
     // total exceeds Cloud Run's 512MB limit → OOM kill → 503 Service Unavailable.

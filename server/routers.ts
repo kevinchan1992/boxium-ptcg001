@@ -778,9 +778,9 @@ export const appRouter = router({
     getStats: publicProcedure
       .query(async () => {
         try {
-          // In-memory cache: refresh at most once every 5 minutes to avoid expensive COUNT(*) on large tables
+          // In-memory cache: refresh at most once every 60 minutes (v11.2: was 5min; COUNT(*) on TiDB ~1.6s, now uses APPROX_COUNT_DISTINCT ~248ms)
           const now = Date.now();
-          if (statsCache && now - statsCache.fetchedAt < 5 * 60 * 1000) {
+          if (statsCache && now - statsCache.fetchedAt < 60 * 60 * 1000) {
             return statsCache.data;
           }
           const [totalCards, totalPriceRecords] = await Promise.all([

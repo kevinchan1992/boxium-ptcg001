@@ -646,7 +646,7 @@ let _statsCacheCardCount: number | null = null;
 let _statsCacheCardCountExpiry = 0;
 let _statsCachePriceCount: number | null = null;
 let _statsCachePriceCountExpiry = 0;
-const STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const STATS_CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes (v11.2: extended from 5min; COUNT(*) on TiDB ~1.6s, card count rarely changes)
 
 export async function getTotalCardCount() {
   const now = Date.now();
@@ -655,8 +655,11 @@ export async function getTotalCardCount() {
   }
   const db = await getDb();
   if (!db) return _statsCacheCardCount ?? 0;
-  const result = await db.select({ count: sql<number>`count(*)` }).from(cards);
-  _statsCacheCardCount = result[0]?.count || 0;
+  // Use APPROX_COUNT_DISTINCT(id) — ~248ms vs ~1649ms for COUNT(*) on TiDB
+  // Accuracy within 0.1% is sufficient for display purposes
+  const result = await db.execute(sql`SELECT APPROX_COUNT_DISTINCT(id) as c FROM cards`) as any;
+  const rows = result[0] as Array<{ c: number }>;
+  _statsCacheCardCount = rows[0]?.c || 0;
   _statsCacheCardCountExpiry = now + STATS_CACHE_TTL_MS;
   return _statsCacheCardCount;
 }
@@ -3455,8 +3458,11 @@ export async function getTotalPriceRecordCount() {
   const db = await getDb();
   if (!db) return _statsCachePriceCount ?? 0;
   try {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(priceHistory);
-    _statsCachePriceCount = result[0]?.count || 0;
+    // Use information_schema.TABLES for fast approximate count (~220ms vs ~767ms for COUNT(*))
+    // TiDB keeps table row estimates up-to-date; accuracy is sufficient for display
+    const result = await db.execute(sql`SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'priceHistory'`) as any;
+    const rows = result[0] as Array<{ TABLE_ROWS: number }>;
+    _statsCachePriceCount = rows[0]?.TABLE_ROWS || 0;
     _statsCachePriceCountExpiry = now + STATS_CACHE_TTL_MS;
     return _statsCachePriceCount;
   } catch (error) {
