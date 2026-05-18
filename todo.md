@@ -9282,3 +9282,28 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] MarketplaceListing sticky bottom action bar (add to cart / buy now / bid)
 - [ ] AuctionDetail sticky bottom action bar (bid / buy now)
 - [ ] CardDetail sticky bottom action bar (watchlist / view market)
+
+## ✅ P0 手機版優化（2026-05-18）
+- [x] Build BottomTabBar component (Home/Search/Market/Grading/Profile) — 含購物車 badge + framer-motion 動畫
+- [x] Integrate BottomTabBar into App.tsx (show below md breakpoint) + pb-14 padding
+- [x] MarketplaceListing sticky bottom action bar (add to cart / buy now / bid)
+- [x] AuctionDetail sticky bottom action bar (bid / buy now)
+- [x] All 6 BottomTabBar tests pass
+
+## ✅ P1 手機版優化（2026-05-18）
+- [x] Dialog → Bottom Sheet：更新 dialog.tsx bottomSheet 斷點至 lg (1024px)
+- [x] 為 MarketplaceListing、AuctionDetail、Cart、OrderDetail、Profile、SellerDashboard 的 DialogContent 加上 bottomSheet prop
+- [x] usePullToRefresh hook（橡皮筋阻尼效果、passive touch listeners）
+- [x] PullToRefreshIndicator 組件（BOXIUM 品牌色，三態：下拉/放開/更新中）
+- [x] Pull-to-refresh 整合至 Marketplace 和 Research 頁面
+- [x] Research 頁面手機版間距優化（所有內容不需滾動即可看到）
+- [x] MobileSearchOverlay 全螢幕搜尋覆蓋層（搜尋歷史 + 即時建議 3 欄 grid）
+- [x] MobileSearchOverlay 整合至 Research 頁面（手機版用 overlay，桌面版用 dropdown）
+- [x] 21 個 MobileSearchOverlay 測試全部通過
+- [x] All 20 P1 tests pass
+
+## 📋 P2/P3 手機版優化（待實施）
+- [ ] P2：頁面切換動畫（framer-motion route transitions）
+- [ ] P2：SellerDashboard 多步驟上架表單（基本資料 → 定價 → 確認）
+- [ ] P3：PWA（Service Worker + offline cache + Push Notification）
+- [ ] P3：效能優化（route splitting、virtual list、統一骨架屏）

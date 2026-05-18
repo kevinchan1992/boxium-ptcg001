@@ -4,6 +4,7 @@ import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
+import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
 import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -310,8 +311,21 @@ export default function Home() {
           {t("research.searchPlaceholder")}
         </p>
 
-        {/* Search Box with Dropdown */}
-        <div className="relative max-w-2xl mx-auto">
+        {/* Search Box — Mobile: MobileSearchOverlay, Desktop: CardSearchDropdown */}
+        {/* Mobile overlay trigger */}
+        <div className="md:hidden">
+          <MobileSearchOverlay
+            initialQuery={searchQuery}
+            placeholder={randomCardNames[0] || t("research.searchPlaceholder")}
+            onSearch={(q) => {
+              setSearchQuery(q);
+              setLocation(`/search?q=${encodeURIComponent(q)}`);
+            }}
+            cardLinkPrefix="card"
+          />
+        </div>
+        {/* Desktop dropdown */}
+        <div className="hidden md:block relative max-w-2xl mx-auto">
           <CardSearchDropdown
             value={searchQuery}
             onChange={setSearchQuery}
