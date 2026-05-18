@@ -1191,6 +1191,41 @@ export default function MarketplaceListing() {
         )}
       </div>
 
+      {/* ── Mobile Sticky Bottom Action Bar ── */}
+      <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:hidden">
+        <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          {completedOrderNo ? (
+            <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
+              <CheckCircle className="w-5 h-5" />
+              <span>訂單已提交 #{completedOrderNo}</span>
+            </div>
+          ) : listing.status === 'reserved' ? (
+            <div className="flex items-center justify-center gap-2 text-amber-700 font-semibold">
+              <AlertCircle className="w-5 h-5" />
+              <span>爭議處理中，暫時無法購買</span>
+            </div>
+          ) : isAvailable ? (
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <AddToCartButton listingId={listing.id} isLoggedIn={!!me} isAcceptedOffer={!!acceptedOffer} />
+              </div>
+              {listing?.allowOffers && !myPendingOffer && !!me && (
+                <button
+                  className="flex-shrink-0 h-12 px-4 rounded-xl border-2 border-[#06038D] text-[#06038D] font-semibold text-sm flex items-center gap-1.5 bg-white"
+                  onClick={() => setShowOfferDialog(true)}
+                >
+                  <Tag className="w-4 h-4" />
+                  出價
+                </button>
+              )}
+            </div>
+          ) : (
+            <button disabled className="w-full h-12 rounded-xl bg-gray-200 text-gray-400 font-bold text-base cursor-not-allowed">
+              {t("marketplaceListing.status.sold")}
+            </button>
+          )}
+        </div>
+      </div>
       {/* ── Alipay Dialog ── */}
       <Dialog open={showAlipay} onOpenChange={() => setShowAlipay(false)}>
         <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">

@@ -941,7 +941,7 @@ export default function AuctionDetail() {
             )}
 
             {/* Bid panel */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5" data-bid-panel>
               <BidPanel listing={listing} bids={bids} onRefetch={refetch} />
             </div>
 
@@ -1027,6 +1027,33 @@ export default function AuctionDetail() {
           </div>
         </div>
       </div>
+
+      {/* ── Mobile Sticky Bottom Bid Bar ── */}
+      {(listing.auctionStatus === 'active' || listing.auctionStatus === 'ending_soon') && (
+        <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-30 md:hidden">
+          <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500">目前最高出價</p>
+                <p className="text-lg font-black text-[#06038D] leading-tight">
+                  HK${(listing.currentHighestBid ? parseFloat(listing.currentHighestBid) : parseFloat(listing.startingBid || "0")).toLocaleString()}
+                </p>
+              </div>
+              <button
+                className="flex-shrink-0 h-12 px-6 rounded-xl font-black text-sm flex items-center gap-2"
+                style={{ background: '#FEDD00', color: '#06038D' }}
+                onClick={() => {
+                  const bidSection = document.querySelector('[data-bid-panel]');
+                  if (bidSection) bidSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+              >
+                <Gavel className="w-4 h-4" />
+                立即出價
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

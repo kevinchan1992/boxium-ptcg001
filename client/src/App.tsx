@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { PageWrapper } from "./components/PageWrapper";
 import { TopNav } from "./components/TopNav";
+import { BottomTabBar } from "./components/BottomTabBar";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 import { trpc } from "./lib/trpc";
 import MessageCenter from "./components/MessageCenter";
@@ -78,7 +79,7 @@ function Router() {
     <PageWrapper>
       <TopNav />
       {user && <MessageCenter />}
-      <div className="pt-14">
+      <div className="pt-14 pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
         <Suspense fallback={<PageLoader />}>
           <Switch>
             <Route path={"/"} component={Home} />
@@ -191,6 +192,7 @@ function Router() {
           </Switch>
         </Suspense>
       </div>
+      <BottomTabBar />
     </PageWrapper>
   );
 }

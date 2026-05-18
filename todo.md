@@ -9273,3 +9273,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 確保 admin 手動觸發「全部重新計算」功能在生產環境正常運作（已加入 INTERNAL_PROCEDURES 白名單）
 - [x] 測試驗證排程和手動觸發均正常（6 tests passed）
 - [x] 移除 startTrendingCardsScheduler() node-cron 版本（已被 Heartbeat 取代）
+
+## P0 Mobile Optimization
+
+- [ ] Build BottomTabBar component (Home/Search/Market/Grading/Profile)
+- [ ] Integrate BottomTabBar into App.tsx (show below md breakpoint)
+- [ ] Add bottom padding to all pages to avoid BottomTabBar overlap
+- [ ] MarketplaceListing sticky bottom action bar (add to cart / buy now / bid)
+- [ ] AuctionDetail sticky bottom action bar (bid / buy now)
+- [ ] CardDetail sticky bottom action bar (watchlist / view market)
