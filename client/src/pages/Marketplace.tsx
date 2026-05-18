@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation, useSearch, Link } from "wouter";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -560,17 +559,6 @@ export default function Marketplace() {
   const { data: me } = trpc.auth.me.useQuery();
   const utils = trpc.useUtils();
 
-  // ── Pull-to-refresh ──
-  const handlePullRefresh = useCallback(async () => {
-    setPage(1);
-    setAllListings([]);
-    setHasMore(true);
-    await utils.marketplace.getListings.invalidate();
-    await utils.marketplace.getAuctions?.invalidate?.();
-  }, [utils]);
-  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
-    onRefresh: handlePullRefresh,
-  });
   const { data: wishlistIds = [] } = trpc.marketplace.getWishlistIds.useQuery(undefined, { enabled: !!me });
   const toggleWishlistMutation = trpc.marketplace.toggleWishlist.useMutation({
     onSuccess: (res) => {
@@ -715,8 +703,7 @@ export default function Marketplace() {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
-      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+    <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
 
       {/* ── Hero Section ── */}
       <div className="bg-gradient-to-b from-[#06038D] via-[#0a06b0] to-[#06038D] relative overflow-hidden">
