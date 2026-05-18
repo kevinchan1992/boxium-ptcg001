@@ -1257,7 +1257,7 @@ function CheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg max-h-[96vh] mt-2">
+        <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden lg:max-w-lg max-h-[96vh] lg:mt-2">
         <VisuallyHidden><DialogTitle>{t("cart.checkoutDialog.title")}</DialogTitle></VisuallyHidden>
         {/* Header - /seller style */}
         <div className="px-5 pt-5 pb-4 flex-shrink-0" style={{ backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00' }}>

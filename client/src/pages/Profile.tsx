@@ -376,7 +376,7 @@ function ChangePasswordDialog() {
           <Lock className="w-4 h-4 mr-1.5" /> 修改密碼
         </Button>
       </DialogTrigger>
-      <DialogContent style={{ background: "#ffffff", color: "#111827" }}>
+      <DialogContent bottomSheet style={{ background: "#ffffff", color: "#111827" }}>
         <DialogHeader>
           <DialogTitle style={{ color: "#111827" }}>修改密碼</DialogTitle>
           <DialogDescription style={{ color: "#6b7280" }}>請輸入現有密碼及新密碼以完成修改</DialogDescription>

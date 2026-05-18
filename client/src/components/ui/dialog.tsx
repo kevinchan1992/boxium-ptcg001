@@ -129,15 +129,15 @@ function DialogContent({
           "bg-background z-50 grid gap-0 border-0 p-0 shadow-xl duration-200",
           bottomSheet
             ? [
-                // Mobile (<sm): bottom sheet sliding up from bottom
+                // Mobile & Tablet (<lg): bottom sheet sliding up from bottom
                 "fixed inset-x-0 bottom-0 w-full max-h-[95dvh] flex flex-col overflow-hidden rounded-t-2xl pb-[env(safe-area-inset-bottom,0px)]",
                 "data-[state=open]:animate-in data-[state=closed]:animate-out",
                 "data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full",
-                // sm+ (>=640px): centered dialog
-                "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-2rem)] sm:max-h-[92vh] sm:rounded-xl",
-                "sm:-translate-x-1/2 sm:-translate-y-1/2",
-                "sm:data-[state=open]:fade-in-0 sm:data-[state=closed]:fade-out-0",
-                "sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:zoom-out-95",
+                // lg+ (>=1024px): centered dialog
+                "lg:inset-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-h-[92vh] lg:rounded-xl",
+                "lg:-translate-x-1/2 lg:-translate-y-1/2",
+                "lg:data-[state=open]:fade-in-0 lg:data-[state=closed]:fade-out-0",
+                "lg:data-[state=open]:zoom-in-95 lg:data-[state=closed]:zoom-out-95",
               ].join(" ")
             : // Default: always centered dialog
               "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl max-h-[90dvh] overflow-y-auto overscroll-contain",

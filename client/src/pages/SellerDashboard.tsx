@@ -616,7 +616,7 @@ function EditRejectedAuctionDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 border-0 rounded-2xl bg-white text-gray-900">
+      <DialogContent bottomSheet className="lg:max-w-lg max-h-[90vh] overflow-y-auto p-0 border-0 lg:rounded-2xl bg-white text-gray-900">
         {/* Header - BOXIUM deep blue */}
         <div className="bg-[#06038D] px-6 pt-5 pb-5 rounded-t-2xl relative overflow-hidden">
           {/* Decorative circles */}
@@ -3796,7 +3796,7 @@ export default function SellerDashboard() {
 
       {/* Seller Terms Dialog */}
       <Dialog open={showSellerTerms} onOpenChange={(o) => { setShowSellerTerms(o); if (!o) setPendingAuctionSubmit(false); }}>
-        <DialogContent className="max-w-lg bg-[#06038D] text-white">
+        <DialogContent bottomSheet className="lg:max-w-lg bg-[#06038D] text-white">
           <DialogHeader>
             <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2">
               <Gavel className="w-5 h-5" />

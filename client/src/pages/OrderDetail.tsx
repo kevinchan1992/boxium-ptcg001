@@ -112,7 +112,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
       </Button>
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
-        <DialogContent showCloseButton={false} className="sm:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
+        <DialogContent bottomSheet showCloseButton={false} className="lg:max-w-md p-0 overflow-visible border-2 border-[#FEDD00] gap-0">
           <VisuallyHidden><DialogTitle>{t("orderDetail.paymentMethod")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
@@ -1677,7 +1677,7 @@ export default function OrderDetail() {
 
       {/* Reupload Alipay Proof Dialog */}
       <Dialog open={showReuploadDialog} onOpenChange={(v) => { if (!v) { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); } }}>
-        <DialogContent className="p-0 gap-0 bg-white text-gray-900 w-[calc(100vw-2rem)] max-w-md rounded-2xl overflow-hidden max-h-[90dvh] flex flex-col">
+        <DialogContent bottomSheet className="p-0 gap-0 bg-white text-gray-900 w-full lg:max-w-md lg:rounded-2xl overflow-hidden max-h-[90dvh] flex flex-col">
           {/* Header */}
           <div className="bg-[#06038d] px-5 py-4 flex-shrink-0">
             <div className="flex items-center justify-between">

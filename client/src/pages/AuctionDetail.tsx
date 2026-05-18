@@ -119,7 +119,7 @@ function TermsDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-0 rounded-3xl bg-white" showCloseButton={false}>
+      <DialogContent bottomSheet className="lg:max-w-md p-0 overflow-hidden border-0 lg:rounded-3xl bg-white" showCloseButton={false}>
         {/* Close button - top right corner, above everything */}
         <button
           onClick={onClose}
@@ -268,7 +268,7 @@ function AuctionReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent bottomSheet className="lg:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="w-5 h-5 text-amber-500" />為拍賣評分
