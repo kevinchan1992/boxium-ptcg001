@@ -8,6 +8,7 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import * as Sentry from "@sentry/react";
 
 import "./index.css";
+import { registerServiceWorker } from "@/lib/registerSW";
 
 // Suppress ResizeObserver loop warning - this is a known benign browser behavior
 // triggered by recharts and other responsive chart libraries during rapid resize events.
@@ -129,6 +130,9 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+// Register Service Worker for PWA offline support
+registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>

@@ -11,6 +11,7 @@ import { PageTransition } from "./components/PageTransition";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 import { trpc } from "./lib/trpc";
 import MessageCenter from "./components/MessageCenter";
+import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 
 // Eagerly loaded pages (critical path)
 import Home from "./pages/Home";
@@ -196,6 +197,7 @@ function Router() {
         </PageTransition>
       </div>
       <BottomTabBar />
+      <PwaInstallPrompt />
     </PageWrapper>
   );
 }

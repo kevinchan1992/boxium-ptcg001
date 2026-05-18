@@ -4,6 +4,7 @@
   "description": "TCG 集換式卡牌市場數據平台 - PSA 10 價格追蹤與熱門排行榜",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#06038d",
   "theme_color": "#06038d",
   "orientation": "portrait",
@@ -24,10 +25,27 @@
   ],
   "categories": ["finance", "shopping", "entertainment"],
   "screenshots": [],
-  "related_applications": [
+  "shortcuts": [
     {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/boxium-ptcg/id0000000000"
+      "name": "卡牌搜尋",
+      "short_name": "搜尋",
+      "description": "搜尋 TCG 卡牌價格",
+      "url": "/research",
+      "icons": [{"src": "/favicon-192x192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "市集",
+      "short_name": "市集",
+      "description": "瀏覽卡牌市集",
+      "url": "/marketplace",
+      "icons": [{"src": "/favicon-192x192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "市場格價",
+      "short_name": "格價",
+      "description": "查詢市場格價",
+      "url": "/pricing",
+      "icons": [{"src": "/favicon-192x192.png", "sizes": "192x192"}]
     }
   ]
 }
