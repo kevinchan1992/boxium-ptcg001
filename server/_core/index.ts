@@ -1955,7 +1955,7 @@ async function startServer() {
         const schedulerModule = await import('../priceUpdateScheduler');
         
         await schedulerModule.initPriceUpdateScheduler();
-        schedulerModule.startTrendingCardsScheduler();
+        // startTrendingCardsScheduler removed — replaced by Heartbeat cron job (daily-trending-cards-calculation)
         schedulerModule.startAutoCompleteOrdersScheduler();
         schedulerModule.startShippingReminderScheduler();
         schedulerModule.startOfferExpiryReminderScheduler();
