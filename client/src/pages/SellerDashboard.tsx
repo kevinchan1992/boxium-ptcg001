@@ -3097,7 +3097,7 @@ export default function SellerDashboard() {
                 )}
                 {/* Card Picker */}
                 <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}</Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">（選填）</span></Label>
                   {selectedCard ? (
                     <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
                       {selectedCard.imageUrl ? (
@@ -3148,64 +3148,6 @@ export default function SellerDashboard() {
                     <p className="text-xs text-red-500 mt-1">商品名稱至少需要 3 個字元</p>
                   )}
                 </div>
-                <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}</Label>
-                  <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productDescriptionPlaceholder")}
-                    value={listingForm.description}
-                    onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.tcgSeries")}</Label>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    {[
-                      { value: "pokemon",  label: "Pokémon",   logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif" },
-                      { value: "onepiece", label: "One Piece",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif" },
-                      { value: "yugioh",   label: "Yu-Gi-Oh!",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp" },
-                    ].map(series => (
-                      <button
-                        key={series.value}
-                        type="button"
-                        onClick={() => setListingForm(p => ({ ...p, tcgSeries: series.value }))}
-                        className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border-2 transition-all ${
-                          listingForm.tcgSeries === series.value
-                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
-                        }`}
-                      >
-                        <img src={series.logo} alt={series.label} className="h-9 w-auto object-contain" />
-                        <span className={`text-[10px] font-semibold ${
-                          listingForm.tcgSeries === series.value ? "text-[#06038D]" : "text-gray-500"
-                        }`}>{series.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Listing Mode Selector */}
-                <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.listingMode")}</Label>
-                  <div className="mt-1 grid grid-cols-2 gap-2">
-                    {[
-                      { value: "buy_now", label: t("seller.newListing.mode.buyNow"), icon: "🛒", desc: "買家直接以定價購買" },
-                      { value: "auction", label: t("seller.tabs.myAuctionsMobile"), icon: "🔨", desc: "買家競價，時限結標" },
-                    ].map(mode => (
-                      <button
-                        key={mode.value}
-                        type="button"
-                        onClick={() => setListingForm(p => ({ ...p, listingMode: mode.value as any }))}
-                        className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 transition-all text-left ${
-                          listingForm.listingMode === mode.value
-                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
-                        }`}
-                      >
-                        <span className="text-xl">{mode.icon}</span>
-                        <span className={`text-sm font-bold ${ listingForm.listingMode === mode.value ? "text-[#06038D]" : "text-gray-700" }`}>{mode.label}</span>
-                        <span className="text-[10px] text-gray-400">{mode.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-[#06038D] font-semibold">{t("seller.newListing.condition")}</Label>
@@ -3233,17 +3175,77 @@ export default function SellerDashboard() {
             {/* Step 2: Pricing */}
             {listingStep === 2 && (
               <>
-                <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3.5">
-                  <p className="text-xs font-semibold text-[#06038D] mb-1">商品摘要</p>
-                  <p className="text-sm font-bold text-[#06038D] truncate">{listingForm.title}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition}</span>
-                    <span className="text-xs text-[#06038D]/40">·</span>
-                    <span className="text-xs text-[#06038D]/60">數量 {listingForm.quantity}</span>
-                    <span className="text-xs text-[#06038D]/40">·</span>
-                    <span className="text-xs font-semibold text-[#06038D]">{listingForm.listingMode === 'auction' ? '🔨 拍賣' : '🛒 立即購買'}</span>
+                {/* Step 2 summary bar */}
+                <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 flex items-center gap-3">
+                  {listingImages[0] && <img src={listingImages[0]} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-[#06038D] truncate">{listingForm.title}</p>
+                    <p className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} · 數量 {listingForm.quantity}</p>
                   </div>
                 </div>
+
+                {/* TCG Series */}
+                <div>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.tcgSeries")}</Label>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {[
+                      { value: "pokemon",  label: "Pokémon",   logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif" },
+                      { value: "onepiece", label: "One Piece",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif" },
+                      { value: "yugioh",   label: "Yu-Gi-Oh!",  logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp" },
+                    ].map(series => (
+                      <button
+                        key={series.value}
+                        type="button"
+                        onClick={() => setListingForm(p => ({ ...p, tcgSeries: series.value }))}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border-2 transition-all ${
+                          listingForm.tcgSeries === series.value
+                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <img src={series.logo} alt={series.label} className="h-9 w-auto object-contain" />
+                        <span className={`text-[10px] font-semibold ${
+                          listingForm.tcgSeries === series.value ? "text-[#06038D]" : "text-gray-500"
+                        }`}>{series.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Listing Mode */}
+                <div>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.listingMode")}</Label>
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {[
+                      { value: "buy_now", label: t("seller.newListing.mode.buyNow"), icon: "🛒", desc: "買家直接以定價購買" },
+                      { value: "auction", label: t("seller.tabs.myAuctionsMobile"), icon: "🔨", desc: "買家競價，時限結標" },
+                    ].map(mode => (
+                      <button
+                        key={mode.value}
+                        type="button"
+                        onClick={() => setListingForm(p => ({ ...p, listingMode: mode.value as any }))}
+                        className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 transition-all text-left ${
+                          listingForm.listingMode === mode.value
+                            ? "border-[#06038D] bg-[#06038D]/5 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-[#06038D]/40"
+                        }`}
+                      >
+                        <span className="text-xl">{mode.icon}</span>
+                        <span className={`text-sm font-bold ${ listingForm.listingMode === mode.value ? "text-[#06038D]" : "text-gray-700" }`}>{mode.label}</span>
+                        <span className="text-[10px] text-gray-400">{mode.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">（選填）</span></Label>
+                  <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productDescriptionPlaceholder")} rows={3}
+                    value={listingForm.description}
+                    onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
+                </div>
+
                 {/* Buy Now pricing */}
                 {listingForm.listingMode === 'buy_now' && (
                 <div>
@@ -3691,13 +3693,13 @@ export default function SellerDashboard() {
                   listingStep === 1 ? (!listingForm.title || listingForm.title.trim().length < 3 || listingImages.length === 0) :
                   listingStep === 2 ? (
                     listingForm.listingMode === 'auction'
-                      ? (!listingForm.startingBid || !listingForm.auctionEndAt || new Date(listingForm.auctionEndAt) <= new Date())
+                      ? (!listingForm.startingBid)
                       : (!listingForm.price || parseFloat(listingForm.price) < 4.00)
                   ) : false
                 }
                 onClick={() => {
-                  // When entering Step 2 in auction mode, auto-compute auctionEndAt with default 3 days
-                  if (listingStep === 1 && listingForm.listingMode === 'auction' && !listingForm.auctionEndAt) {
+                  // When entering Step 3 in auction mode, auto-compute auctionEndAt with default days
+                  if (listingStep === 2 && listingForm.listingMode === 'auction' && !listingForm.auctionEndAt) {
                     const pad = (n: number) => String(n).padStart(2, '0');
                     const now = new Date();
                     const days = listingForm.auctionDurationDays || 3;
