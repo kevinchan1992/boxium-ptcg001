@@ -291,11 +291,11 @@ export default function Home() {
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateSearchActionData()} />
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-    <div ref={containerRef} className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8">
+        <div ref={containerRef} className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8">
       {/* Hero Section */}
-      <div className="text-center space-y-5 max-w-3xl w-full">
+      <div className="text-center space-y-2 sm:space-y-5 max-w-3xl w-full">
         {/* Logo/Brand */}
-        <div className="space-y-3">
+        <div className="space-y-1 sm:space-y-3">
           <Link href="/">
             <img
               src="/boxium-logo-white.png"
@@ -305,7 +305,6 @@ export default function Home() {
           </Link>
           <h2 className="text-base sm:text-lg font-semibold text-foreground">{t("research.title")}</h2>
         </div>
-
         {/* Subtitle */}
         <p className="text-xs sm:text-sm text-muted-foreground px-4">
           {t("research.searchPlaceholder")}
@@ -346,7 +345,7 @@ export default function Home() {
         </div>
 
         {/* Top Gainers - Daily Price Increase Top 5 */}
-        <div className="flex justify-center gap-4 mt-12 flex-wrap">
+        <div className="flex justify-center gap-3 sm:gap-4 mt-3 sm:mt-12 flex-wrap">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
