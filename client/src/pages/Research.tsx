@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useState, useRef, useEffect } from "react";
+
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop, CheckCircle2, Star } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
@@ -59,20 +58,10 @@ export default function Home() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch trending cards (top 5 based on PSA10 price increase)
-  const utils = trpc.useUtils();
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
     { limit: 5 },
     { retry: 1 }
   );
-
-  // ── Pull-to-refresh ──
-  const handlePullRefresh = useCallback(async () => {
-    await utils.cards.getTrending.invalidate();
-    await utils.cards.getRandomCardNames.invalidate();
-  }, [utils]);
-  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
-    onRefresh: handlePullRefresh,
-  });
 
   // Fetch random card names for placeholder rotation
   const { data: randomCardNames = [] } = trpc.cards.getRandomCardNames.useQuery(
@@ -291,8 +280,7 @@ export default function Home() {
     <>
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateSearchActionData()} />
-      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        <div ref={containerRef} className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8">
+      <div className="h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 overflow-hidden">
       {/* Hero Section */}
       <div className="text-center space-y-2 sm:space-y-5 max-w-3xl w-full">
         {/* Logo/Brand */}
