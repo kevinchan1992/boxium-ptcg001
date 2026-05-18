@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink, ShoppingCart, Tag } from "lucide-react";
+import { CardDetailSkeleton } from "@/components/PageSkeletons";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { PriceTrendChart } from "@/components/PriceTrendChart";
@@ -181,11 +182,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <CardDetailSkeleton />;
   }
 
   if (!product) {

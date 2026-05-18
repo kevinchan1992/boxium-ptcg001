@@ -349,10 +349,12 @@ export default function Home() {
         {/* Top Gainers - Daily Price Increase Top 5 */}
         <div className="flex justify-center gap-3 sm:gap-4 mt-3 sm:mt-12 flex-wrap">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="ml-2 text-sm text-muted-foreground">{t("research.loading")}</span>
-            </div>
+            // 骨架屏：5張卡牌形狀，與實際卡牌尺寸一致，避免版面位移
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="relative w-28 sm:w-32">
+                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted/60 animate-pulse" />
+              </div>
+            ))
           ) : popularCards.length > 0 ? (
             popularCards.map((card: any) => (
               <button
