@@ -310,6 +310,7 @@ export default function Home() {
               setLocation(`/search?q=${encodeURIComponent(q)}`);
             }}
             cardLinkPrefix="card"
+            onCameraClick={handleCameraClick}
           />
         </div>
         {/* Desktop dropdown */}

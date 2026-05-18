@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, Camera, Upload, X, Crop } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
+import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -275,8 +276,22 @@ export default function Pricing() {
           {t("pricing.subtitle")}
         </p>
 
-        {/* Search Box with Dropdown */}
-        <div className="relative max-w-2xl mx-auto">
+        {/* Search Box — Mobile: MobileSearchOverlay, Desktop: CardSearchDropdown */}
+        {/* Mobile overlay trigger */}
+        <div className="md:hidden">
+          <MobileSearchOverlay
+            initialQuery={searchQuery}
+            placeholder={randomCardNames[0] || t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
+            onSearch={(q) => {
+              setSearchQuery(q);
+              setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+            }}
+            cardLinkPrefix="pricing"
+            onCameraClick={handleCameraClick}
+          />
+        </div>
+        {/* Desktop dropdown */}
+        <div className="hidden md:block relative max-w-2xl mx-auto">
           <CardSearchDropdown
             value={searchQuery}
             onChange={setSearchQuery}
