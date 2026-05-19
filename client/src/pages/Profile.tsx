@@ -341,6 +341,91 @@ export default function Profile() {
   );
 }
 
+// ─── Delete Account Dialog ───────────────────────────────────
+function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
+  const [open, setOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
+
+  const deleteAccount = trpc.auth.deleteAccount.useMutation({
+    onSuccess: () => {
+      toast.success("帳號已成功刪除");
+      utils.auth.me.invalidate();
+      setOpen(false);
+      navigate("/");
+    },
+    onError: (err) => toast.error(`刪除失敗：${err.message}`),
+  });
+
+  const handleDelete = () => {
+    if (!confirmEmail.trim()) {
+      toast.error("請輸入您的電子郵件地址以確認");
+      return;
+    }
+    deleteAccount.mutate({ confirmEmail: confirmEmail.trim() });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmEmail(""); }}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style={{ borderColor: "#ef4444", color: "#ef4444" }}
+        >
+          <Trash2 className="w-4 h-4 mr-1.5" /> 刪除帳號
+        </Button>
+      </DialogTrigger>
+      <DialogContent bottomSheet style={{ background: "#ffffff", color: "#111827" }}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2" style={{ color: "#ef4444" }}>
+            <AlertTriangle className="w-5 h-5" /> 刪除帳號
+          </DialogTitle>
+          <DialogDescription style={{ color: "#6b7280" }}>
+            此操作無法復原。刪除後，您的所有個人資料、觀察清單、通知及相關記錄將被永久移除。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" }}>
+            <p className="font-semibold mb-1">請注意：</p>
+            <ul className="space-y-0.5 list-disc list-inside">
+              <li>觀察清單與瀏覽記錄將被刪除</li>
+              <li>通知記錄將被刪除</li>
+              <li>出價與出價記錄將被刪除</li>
+              <li>購物車與收藏清單將被清空</li>
+              <li>您的帳號將無法恢復</li>
+            </ul>
+          </div>
+          <div className="space-y-1.5">
+            <Label style={{ color: "#374151" }}>
+              請輸入您的電子郵件地址 <span className="font-semibold" style={{ color: "#111827" }}>({userEmail})</span> 以確認刪除
+            </Label>
+            <Input
+              type="email"
+              value={confirmEmail}
+              onChange={e => setConfirmEmail(e.target.value)}
+              placeholder={userEmail}
+              style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }}
+              onKeyDown={e => { if (e.key === "Enter") handleDelete(); }}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setOpen(false); setConfirmEmail(""); }} style={{ borderColor: "#d1d5db", color: "#374151", background: "#ffffff" }}>取消</Button>
+          <Button
+            onClick={handleDelete}
+            disabled={deleteAccount.isPending || !confirmEmail.trim()}
+            style={{ background: "#ef4444", color: "white" }}
+          >
+            {deleteAccount.isPending ? "刪除中..." : "確認刪除帳號"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Change Password Dialog ────────────────────────────────────
 function ChangePasswordDialog() {
   const { t } = useTranslation();
@@ -535,6 +620,23 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
         </div>
         <div className="px-4 py-3">
           <ChangePasswordDialog />
+        </div>
+      </div>
+
+      {/* ── Danger Zone: Delete Account ── */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1.5px solid #fecaca", background: "#fff5f5" }}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "#fecaca" }}>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#fee2e2" }}>
+            <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />
+          </div>
+          <span className="text-sm font-bold" style={{ color: "#ef4444" }}>危險區域</span>
+        </div>
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-800">刪除帳號</p>
+            <p className="text-xs text-gray-500 mt-0.5">此操作無法復原，所有資料將被永久刪除</p>
+          </div>
+          <DeleteAccountDialog userEmail={user.email || ""} />
         </div>
       </div>
     </div>

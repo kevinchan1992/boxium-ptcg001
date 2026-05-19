@@ -593,6 +593,85 @@ export const appRouter = router({
         
         return { success: true };
       }),
+
+    deleteAccount: protectedProcedure
+      .input(z.object({
+        confirmEmail: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const userId = ctx.user.id;
+        const userEmail = ctx.user.email;
+
+        // Verify the user typed their own email correctly
+        if (input.confirmEmail.toLowerCase() !== (userEmail || '').toLowerCase()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: '電子郵件地址不符，請重新輸入' });
+        }
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+        try {
+          const {
+            watchlist,
+            viewHistory,
+            notifications,
+            auctionBids,
+            offers,
+            cartItems,
+            userShippingAddresses,
+            userSearchLogs,
+            marketplaceSearchLogs,
+            wishlists,
+            sellerProfiles,
+            gradingSubmissions,
+            users,
+          } = await import('../drizzle/schema_new');
+
+          // Delete user-related records in dependency order
+          // 1. Watchlist
+          await db.delete(watchlist).where(eq(watchlist.userId, userId));
+          // 2. View history
+          await db.delete(viewHistory).where(eq(viewHistory.userId, userId));
+          // 3. Notifications
+          await db.delete(notifications).where(eq(notifications.userId, userId));
+          // 4. Auction bids
+          await db.delete(auctionBids).where(eq(auctionBids.bidderId, userId));
+          // 5. Offers (as buyer)
+          await db.delete(offers).where(eq(offers.buyerId, userId));
+          // 6. Cart items
+          await db.delete(cartItems).where(eq(cartItems.userId, userId));
+          // 7. Shipping addresses
+          await db.delete(userShippingAddresses).where(eq(userShippingAddresses.userId, userId));
+          // 8. User search logs
+          await db.delete(userSearchLogs).where(eq(userSearchLogs.userId, userId));
+          // 9. Marketplace search logs
+          await db.delete(marketplaceSearchLogs).where(eq(marketplaceSearchLogs.userId, userId));
+          // 10. Wishlists
+          await db.delete(wishlists).where(eq(wishlists.userId, userId));
+          // 11. Seller profile (listings are kept for order history integrity, seller anonymized)
+          await db.delete(sellerProfiles).where(eq(sellerProfiles.userId, userId));
+          // 12. Grading submissions created by user
+          await db.delete(gradingSubmissions).where(eq(gradingSubmissions.userId, userId));
+
+          // 13. Finally delete the user record
+          await db.delete(users).where(eq(users.id, userId));
+
+          console.log(`[DeleteAccount] User ${userId} (${userEmail}) account deleted successfully`);
+        } catch (err) {
+          console.error('[DeleteAccount] Error deleting account:', err);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '刪除帳號時發生錯誤，請稍後再試' });
+        }
+
+        // Clear session cookie
+        if (ctx.res && ctx.req) {
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.clearCookie('session', cookieOptions);
+          ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
+          ctx.res.cookie('session', '', { ...cookieOptions, maxAge: 0, expires: new Date(0) });
+        }
+
+        return { success: true };
+      }),
   }),
 
   cards: router({

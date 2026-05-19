@@ -9307,3 +9307,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] P2：SellerDashboard 多步驟上架表單（基本資料 → 定價 → 確認）
 - [ ] P3：PWA（Service Worker + offline cache + Push Notification）
 - [ ] P3：效能優化（route splitting、virtual list、統一骨架屏）
+
+## App Store 5.1.1 compliance: Account Deletion (2026-05-19)
+- [x] Backend: auth.deleteAccount protectedProcedure (server/routers.ts)
+- [x] Frontend: Profile page InfoSection danger zone with DeleteAccountDialog
+- [x] 14 vitest tests pass (server/delete-account.test.ts)
