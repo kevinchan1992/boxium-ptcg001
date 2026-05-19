@@ -27,6 +27,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 // Manus OAuth removed
 import { appRouter } from "../routers";
 import googleOAuthRouter from "../googleOAuth";
+import appleOAuthRouter from "../appleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
@@ -946,6 +947,9 @@ async function startServer() {
   
   // Google OAuth routes — apply auth rate limiter
   app.use("/api/auth", authLimiter, googleOAuthRouter);
+
+  // Apple OAuth routes — apply auth rate limiter
+  app.use("/api/auth", authLimiter, appleOAuthRouter);
   
   // Apple App Site Association - required for Universal Links (iOS App)
   // Must be served with Content-Type: application/json and NO file extension

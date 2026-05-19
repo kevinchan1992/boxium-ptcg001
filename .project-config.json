@@ -7,20 +7,25 @@
   ],
   "dev_command": "pnpm run dev",
   "env_vars": {
-    "DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}"
+    "DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}",
+    "DRIZZLE_DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}"
   },
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663320884517/Mua4eQ38uVnrovHUJBRepi",
-    "access_key_id": "ASIAZV3A2ECZO3MB3I2X",
-    "secret_access_key": "5AQ1zjrWhXBHWvYle5n2RRnjFvD5tFHQ8HK9T5Z5",
-    "session_token": "IQoJb3JpZ2luX2VjELz//////////wEaCXVzLWVhc3QtMSJGMEQCIFPiZGbRNOp5bthMIpyGkdGd6BORnbEXIuPBEgLT6PnHAiB6oCZIjMQiTJkmEqsgbi1Jx5DCTw8IKlVdE1g+Y9WPsyr/AwiF//////////8BEAQaDDY2NTM4NjA5ODg2NiIMZyIHv4wPQvhzWSA5KtMDAC7cYE+35HAu/BBiincKoYO6JuFWlrsP6fO9VcDe3fUCFfG6JjyHkyZYw7GCfkeKHeps2S5NWBCX3ryL8riO4CUTcIVLbokmX5pMyBsRZQzJ/QZwj/F9YoGmBWl24NaJJ7+2xGxWJbj6YwoI6baKhWWO3bs8wgMkW56JsP1C/IeNrDzmEGL9O3bILoAkFkELTvF2blJGJHSmVgs/HmgpY8C+hvLF+7kECqkAh9MqH0PEGQNmQsN/PDQTNPj31WuDvKL46knENfDRsOtujIzsHtaQFr4wWKlD82hTjtwYHeUBjHac/qpCpJeNjLqCjQi4Ja8NObKGXMDXhzwGW0h0gnNM2/wuzr/0wcjmg0Bvnm0hTytjiISDESMBiq4vK9vmfrxGm1cJbG/I5Z5uGq4QuJwpB/uiSBSoIDsCFuNezwG1Y6/Qs34WU4EH3UUSbKMv6gU8suHV8E1WnnxW88R9UrUhqmTAs2H6Y2ToJQDfHGNic2+7d/YVr/GCyMUp0mAN8TLBQ4Y+Wsm4IPtG8Uw94R2YsIhsu8mu4ZjMkOSaSa7fkxSV4ofxBRZ0S4WHrQoS8+nU+2lURupQiHKB7pEQPnrpffIA6cipaOhw8oD2DX1l9Bow886f0AY6ngGWW4b49aSwOjdHfQ4VvqDczwc/MPKFlok+2fmm9sQhJx34VQPBDfr8eAuDJxiFBUIhI7Gc36iN26cVPl/vuGkKId9FQsdOMzumoxYibAnb1rOdxyFkHqgFjaRVLpOcM5OWl86Ep1hHu3xe/YaCwx7Jq87raI4PBL8p1QgiW96stCd8asdRwdEGXXverK+6rMcoWgcsBcxKXa3PNTdlzA==",
-    "expiration": "2026-05-16T15:41:39.000Z"
+    "access_key_id": "ASIAZV3A2ECZEZGIQPUQ",
+    "secret_access_key": "nJJTUForqWJqy6AIc5/yIhjbr+90GSlS5Czsld8g",
+    "session_token": "IQoJb3JpZ2luX2VjEA4aCXVzLWVhc3QtMSJIMEYCIQCwvmcVn4YzLble6TkyLOkQOfE89IMKJK+evTD+PiF72wIhAIl1uh6s3fGG1ERUsoVH3bkuWHW99lDa2Pp2Surj2dDRKv8DCNf//////////wEQBBoMNjY1Mzg2MDk4ODY2Igy+kDhk1fokU5wTWs4q0wNcmrphH1mSxYeocQPKpPlZu2bni5wDnumlw9TGsPl68XW7smfyClrGN2PwvkI6tqEdnJSWWtdzeJpMzl/IzxLaV755W/DiuS+6n8PE3xvvVoLYVQzddprzVXbyPXkLgp2G7ZCZKayzbGN/4v2iBGMSndHC1rabwBjBV/wASbWl/iEK8OKgC44mdcGGWnxmwqASSSCevmupvMXpHa+WKnCwlUrkDtyYZVK/jP+TEtEV2Y7VocHXGlITp2Mp2PogrrbTiHRDeYzrDmR2B4iqYGucvDBZwp6R1/Eo7buGUbUGu5bNryzGJ5V6YrhP1es1LBdw85KkvuoMhM3ZcEVv8zwjVeXbLJpuhojxyKH+LB6JmZdZfmv3rER05P2/dP3VPiGs8pahmeP+a1S6NsQiW+SEgxKtfC6VclZ+qFR9CSS/Uuz75nugYGooHKntsoQxdBJp5ZBV9SDGnjbGxi+uuYwnSGbKdUKl5X2c6qRPZkv7s4Ej94uSae1xi1UiYE2BK4x5847ciJ258VZJGtfefeZDXrl449PleD/6eckToW/xB6KMjOy57lCcXI5FDefEl1DvuLnU0JcQN3ibRArQ+XBFjHg2d2EOUhKkdyBjnsjZlWuhHTDv2rHQBjqcAcR53MyAWLkAHb9ukDIc/cFUg7SI3Cb0Znty8CboVAYQOjdPS5UAITMfSEO1YaRR7O+Xm7kpeNLUSIVYtlCdUU0p6z1sMVAJJ0wp2WCKTRuPfRVyxJXvw+uufZPcC/yxO9y+TFlg6AUHYQC+XzJllrw+S3Ovs6Tt03BjV46MMaK89rCmnh0oByeXH/aYldiuC7FaE0K+5G+6SibIaA==",
+    "expiration": "2026-05-20T02:02:23.000Z"
   },
   "name": "boxium-ptcg",
   "path": "/home/ubuntu/boxium-ptcg",
   "port": 3000,
   "secrets": {
+    "APPLE_CLIENT_ID": "com.boxium.ptcg.web",
+    "APPLE_KEY_ID": "PXR267P35F",
+    "APPLE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg/pQ9taUge1WCInPJ\nAGDyVgJN9CMHEF//5qSOA4VrFhmgCgYIKoZIzj0DAQehRANCAASnhQ729TqmF+Ew\nsEAzzcfNis1uXeQCbTx2px7LE9U68SIbMMXoiFlDFe7x/ptF8p3m7+hEbBHjjTF0\nmV9TO8gu\n-----END PRIVATE KEY-----",
+    "APPLE_TEAM_ID": "L2C86D5CU2",
     "BUILT_IN_FORGE_API_KEY": "NAsYPz6RnpCy3GzXqmxkzq",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
     "CRON_SECRET": "8b18fbb278c6b6f8960a8e27dc88169724dd9f0b4f8a4d220eec3211f4dbc5a5",

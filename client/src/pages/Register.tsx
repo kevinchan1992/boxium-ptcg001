@@ -241,6 +241,12 @@ export default function Register() {
               立即登入
             </Link>
           </div>
+          <div className="text-xs text-center text-muted-foreground">
+            註冊即表示你同意我們的{" "}
+            <a href="https://boxium.asia/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              隱私政策
+            </a>
+          </div>
         </CardFooter>
       </Card>
     </div>

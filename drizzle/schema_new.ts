@@ -58,7 +58,8 @@ export const users = mysqlTable("users", {
   name: text("name"),
   passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt hash (nullable for OAuth users)
   googleId: varchar("googleId", { length: 128 }), // Google OAuth ID (nullable)
-  loginMethod: mysqlEnum("loginMethod", ["password", "google"]).notNull(),
+  appleId: varchar("appleId", { length: 128 }), // Apple OAuth ID (nullable)
+  loginMethod: mysqlEnum("loginMethod", ["password", "google", "apple"]).notNull(),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   emailVerified: boolean("emailVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -295,3 +295,82 @@ export async function findOrCreateGoogleUser(
 
   return { success: true, user: createdUser[0], token };
 }
+
+/**
+ * Find or create a user from Sign in with Apple
+ * Apple may not always return an email (only on first sign-in)
+ */
+export async function findOrCreateAppleUser(
+  appleId: string,
+  email?: string,
+  name?: string
+): Promise<{ success: boolean; user?: User; token?: string; error?: string }> {
+  const db = await getDb();
+  if (!db) {
+    return { success: false, error: "數據庫連接失敗" };
+  }
+
+  // Try to find user by appleId
+  let user = await db.select().from(users).where(eq(users.appleId, appleId)).limit(1);
+
+  if (user.length > 0) {
+    if ((user[0] as any).isBlocked) {
+      const reason = (user[0] as any).blockReason;
+      return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+    }
+    await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user[0].id));
+    const token = generateToken(user[0]);
+    return { success: true, user: user[0], token };
+  }
+
+  // Try to find by email (link Apple to existing account)
+  if (email) {
+    user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (user.length > 0) {
+      if ((user[0] as any).isBlocked) {
+        const reason = (user[0] as any).blockReason;
+        return { success: false, error: reason ? `帳號已被封鎖：${reason}` : "帳號已被封鎖，請聯絡客服" };
+      }
+      await db.update(users).set({ appleId, lastSignedIn: new Date() }).where(eq(users.id, user[0].id));
+      const updatedUser = await db.select().from(users).where(eq(users.id, user[0].id)).limit(1);
+      if (updatedUser.length === 0) return { success: false, error: "更新用戶失敗" };
+      const token = generateToken(updatedUser[0]);
+      return { success: true, user: updatedUser[0], token };
+    }
+  }
+
+  // Apple may not provide email on subsequent sign-ins — require email for new accounts
+  if (!email) {
+    return { success: false, error: "無法取得 Apple 帳號 Email，請使用其他登入方式" };
+  }
+
+  // Create new user
+  const [newUser] = await db.insert(users).values({
+    email,
+    name: name || email.split("@")[0],
+    appleId,
+    loginMethod: "apple",
+    role: "user",
+    emailVerified: true, // Apple accounts are already verified
+  });
+
+  const createdUser = await db.select().from(users).where(eq(users.id, newUser.insertId)).limit(1);
+  if (createdUser.length === 0) return { success: false, error: "創建用戶失敗" };
+
+  const token = generateToken(createdUser[0]);
+
+  // Send welcome email asynchronously
+  const appleNewUser = createdUser[0];
+  if (appleNewUser.email) {
+    import('./emailService').then(({ sendWelcomeEmail }) => {
+      sendWelcomeEmail({
+        userId: appleNewUser.id,
+        userName: appleNewUser.name || appleNewUser.email!.split('@')[0],
+        email: appleNewUser.email!,
+        siteUrl: 'https://boxium.asia',
+      }).catch((err: Error) => console.error('[Auth] Failed to send welcome email (Apple):', err));
+    });
+  }
+
+  return { success: true, user: createdUser[0], token };
+}
