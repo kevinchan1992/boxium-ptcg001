@@ -15,8 +15,14 @@ on:
         required: false
         default: '1'
 
+# Prevent concurrent runs of this workflow.
+concurrency:
+  group: snkrdunk-listings-batch-update
+  cancel-in-progress: false
+
 permissions:
   contents: read
+  actions: read
 
 jobs:
   listings-batch-update:
@@ -27,6 +33,39 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ── Duplicate-run guard ──────────────────────────────────────────────────
+      # GitHub's scheduler can fire multiple times on the same UTC date due to
+      # queue backlog. This step checks if a SUCCESSFUL scheduled run already
+      # completed today (UTC date). If yes, skip the rest of the job.
+      - name: Check for duplicate scheduled run today
+        if: github.event_name == 'schedule'
+        id: dup_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Today (UTC): $TODAY"
+
+          # Fetch the last 10 completed successful scheduled runs
+          RUNS=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/snkrdunk-listings-batch-update.yml/runs?per_page=10&status=success&event=schedule" \
+            --jq '.workflow_runs[].created_at' 2>/dev/null || echo "")
+
+          if echo "$RUNS" | grep -q "^${TODAY}"; then
+            echo "already_ran=true" >> "$GITHUB_OUTPUT"
+            echo "\u26a0\ufe0f  A successful scheduled run already completed today ($TODAY). Skipping duplicate."
+          else
+            echo "already_ran=false" >> "$GITHUB_OUTPUT"
+            echo "\u2705 No successful run found for today ($TODAY). Proceeding."
+          fi
+
+      - name: Skip if duplicate
+        if: github.event_name == 'schedule' && steps.dup_check.outputs.already_ran == 'true'
+        run: |
+          echo "Duplicate run detected \u2014 exiting early to avoid redundant processing."
+          exit 0
+      # ────────────────────────────────────────────────────────────────────────
 
       - name: Set up Node.js 22
         uses: actions/setup-node@v4

@@ -21,8 +21,17 @@ on:
         description: 'Re-check empty cards every N days (default: 7)'
         required: false
         default: '7'
+
+# Prevent concurrent runs — if a new run is triggered while one is already running,
+# cancel the in-progress run and let the new one proceed.
+concurrency:
+  group: snkrdunk-batch-price-update
+  cancel-in-progress: false
+
 permissions:
   contents: read
+  actions: read
+
 jobs:
   batch-update:
     name: Update SNKRDUNK Price History
@@ -31,10 +40,45 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ── Duplicate-run guard ──────────────────────────────────────────────────
+      # GitHub's scheduler can fire multiple times on the same UTC day due to
+      # queue backlog. This step checks if a SUCCESSFUL scheduled run already
+      # completed today (UTC date). If yes, skip the rest of the job.
+      - name: Check for duplicate scheduled run today
+        if: github.event_name == 'schedule'
+        id: dup_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Today (UTC): $TODAY"
+
+          # Fetch the last 10 completed runs for this workflow
+          RUNS=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/snkrdunk-batch-update.yml/runs?per_page=10&status=success&event=schedule" \
+            --jq '.workflow_runs[].created_at' 2>/dev/null || echo "")
+
+          if echo "$RUNS" | grep -q "^${TODAY}"; then
+            echo "already_ran=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️  A successful scheduled run already completed today ($TODAY). Skipping duplicate."
+          else
+            echo "already_ran=false" >> "$GITHUB_OUTPUT"
+            echo "✅ No successful run found for today ($TODAY). Proceeding."
+          fi
+
+      - name: Skip if duplicate
+        if: github.event_name == 'schedule' && steps.dup_check.outputs.already_ran == 'true'
+        run: |
+          echo "Duplicate run detected — exiting early to avoid redundant processing."
+          exit 0
+      # ────────────────────────────────────────────────────────────────────────
+
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Install script dependencies (mysql2 only, isolated from repo)
         run: |
           mkdir -p /tmp/snkrdunk-runner
@@ -44,6 +88,7 @@ jobs:
           npm install --ignore-scripts
           echo "Dependencies installed:"
           ls node_modules/ | head -20
+
       - name: Run SNKRDUNK batch update (Smart Skip v3.0)
         working-directory: /tmp/snkrdunk-runner
         env:
@@ -61,6 +106,7 @@ jobs:
           echo "Starting SNKRDUNK batch update (Smart Skip v3.0)..."
           echo "PARALLEL=$PARALLEL, BATCH_LIMIT=$BATCH_LIMIT, SKIP_HOURS=$SKIP_HOURS, EMPTY_CARD_RECHECK_DAYS=$EMPTY_CARD_RECHECK_DAYS"
           node githubActionsBatchUpdate.mjs
+
       - name: Upload failure logs
         if: failure()
         uses: actions/upload-artifact@v4
