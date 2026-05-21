@@ -77,10 +77,9 @@ export function BottomTabBar() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {/* Backdrop blur bar */}
-      <div className="bg-black/90 backdrop-blur-md border-t border-white/10">
+      <div className="bg-black/90 backdrop-blur-md border-t border-white/10" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         <div className="flex items-stretch h-14">
           {TABS.map((tab) => {
             const active = isTabActive(tab, location);
