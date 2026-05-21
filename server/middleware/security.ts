@@ -547,7 +547,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       // Fonts
       "font-src 'self' data: https://fonts.gstatic.com",
       // Images: self + data URIs + blob + CDN domains
-      "img-src 'self' data: blob: https://*.manus.space https://*.amazonaws.com https://*.supabase.co https://images.pokemontcg.io https://*.snkrdunk.com https://i.ebayimg.com https://www.google-analytics.com https://storage.googleapis.com",
+      "img-src 'self' data: blob: https://*.manus.space https://*.amazonaws.com https://*.cloudfront.net https://*.supabase.co https://images.pokemontcg.io https://*.snkrdunk.com https://i.ebayimg.com https://www.google-analytics.com https://storage.googleapis.com",
       // API connections
       "connect-src 'self' https://api.stripe.com https://*.manus.space https://*.manus.computer https://*.supabase.co wss://*.manus.computer",
       // Stripe 3DS iframe
