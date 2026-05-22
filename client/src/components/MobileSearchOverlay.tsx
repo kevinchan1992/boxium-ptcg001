@@ -318,25 +318,25 @@ export function MobileSearchOverlay({
                   清除
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {history.map((item) => (
                   <div
                     key={item}
-                    className="flex items-center gap-1 bg-muted rounded-full px-3 py-1.5"
+                    className="flex items-center gap-0.5 bg-muted rounded-full px-2.5 py-1 max-w-[160px]"
                   >
                     <button
                       type="button"
                       onClick={() => handleSearch(item)}
-                      className="text-sm text-foreground"
+                      className="text-xs text-foreground truncate"
                     >
                       {item}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemoveHistoryItem(item)}
-                      className="text-muted-foreground hover:text-foreground ml-0.5"
+                      className="text-muted-foreground hover:text-foreground ml-0.5 flex-shrink-0"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 ))}
