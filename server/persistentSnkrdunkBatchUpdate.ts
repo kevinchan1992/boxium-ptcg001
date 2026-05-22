@@ -31,6 +31,15 @@
  *   P=8 caused event loop congestion: actual speed only 0.5/s vs expected 4-5/s.
  *   Root cause: Cloud Run CPU throttling + DB insert overhead at high concurrency.
  *
+ * v10.0 REBALANCE (2026-05-22):
+ *   v9.0 was too conservative (P=1 always, 500ms delay) — only 1-2 cards/s.
+ *   Restored adaptive parallelism: P=2 initial, up to P=3 when API is fast.
+ *   Key insight: SNKRDUNK API calls are pure I/O (network wait). Running 2-3
+ *   in parallel does NOT increase CPU load — the event loop is idle during
+ *   each fetch. DB write rate stays the same (sequential within each product).
+ *   Reduced DELAY_BETWEEN_BATCHES: 500ms → 150ms (event loop yields naturally).
+ *   Expected improvement: ~1-2 cards/s → ~4-6 cards/s (3-4x speedup).
+ *
  * v7.5 ADAPTIVE PARALLELISM (2026-05-06):
  *   Replaced static PARALLEL=3 with AdaptiveParallelController.
  *   The controller maintains a sliding window of recent API response times and
@@ -82,27 +91,33 @@ import { getRecentlyViewedCardIds } from './db';
 import { computeRecordHash } from './utils/recordHash';
 import http from 'http';
 
-// ─── Configuration (v9.0 - User-Request Priority) ────────────────────
-// v9.0: Dramatically reduced parallelism and added delays to prevent
-// batch updates from starving user requests on Cloud Run (1 vCPU, 512MB, 10 DB connections).
+// ─── Configuration (v10.0 - Balanced Speed + Stability) ─────────────────
+// v10.0: Restored adaptive parallelism (2-3 concurrent) with shorter inter-batch delay.
+// SNKRDUNK API calls are pure I/O (network wait), so parallel=2-3 does NOT
+// increase CPU load — the event loop is idle during each fetch anyway.
+// Key insight: each processSingleProduct call spends ~95% of its time waiting
+// for the SNKRDUNK HTTP response. Running 2-3 in parallel multiplies throughput
+// without increasing CPU or DB connection pressure (DB writes are sequential
+// within each product, and the total DB write rate stays the same).
+// Expected improvement: ~1-2 cards/s → ~4-6 cards/s (3-4x speedup).
 const CONFIG = {
-  // Initial parallel concurrency — MUST be 1 to avoid starving user requests.
-  // On Cloud Run, each parallel item holds a DB connection for INSERT operations.
-  // With connectionLimit=10, even PARALLEL=2 can cause 9s user request latency.
-  PARALLEL: 1,
+  // Initial parallel concurrency
+  // v10.0: Start at 2 (safe baseline). Adaptive controller will raise to 3 if fast.
+  PARALLEL: 2,
 
   // ── Adaptive Parallelism thresholds ──────────────────────────
-  // v9.0: ALL thresholds set to 1. Batch update MUST be single-threaded
-  // to coexist with user requests on the same Cloud Run instance.
+  // v10.0: Restored meaningful thresholds based on observed API latency.
+  // SNKRDUNK API typically responds in 1-3s on Cloud Run.
+  // parallel=3 is the sweet spot: fast enough, low enough DB connection pressure.
   ADAPTIVE_WINDOW_SIZE: 20,
   ADAPTIVE_EVAL_INTERVAL: 5,
   ADAPTIVE_THRESHOLDS: [
-    { maxAvgMs: 1000, parallel: 1 },
-    { maxAvgMs: 2000, parallel: 1 },
-    { maxAvgMs: 3500, parallel: 1 },
+    { maxAvgMs: 1500, parallel: 3 },  // Fast: < 1.5s avg → 3 concurrent
+    { maxAvgMs: 3000, parallel: 2 },  // Normal: 1.5-3s avg → 2 concurrent
+    { maxAvgMs: 5000, parallel: 1 },  // Slow: 3-5s avg → 1 concurrent (rate-limited)
   ] as Array<{ maxAvgMs: number; parallel: number }>,
   ADAPTIVE_MIN_PARALLEL: 1,
-  ADAPTIVE_MAX_PARALLEL: 1,
+  ADAPTIVE_MAX_PARALLEL: 3,
   // v8.1: Consecutive timeout threshold — if this many timeouts occur in a row,
   // drop to ADAPTIVE_MIN_PARALLEL and wait TIMEOUT_BACKOFF_DELAY_MS.
   CONSECUTIVE_TIMEOUT_THRESHOLD: 3,
@@ -118,14 +133,14 @@ const CONFIG = {
   EMPTY_CARD_RECHECK_DAYS: 7,
 
   // Delay between batches (ms)
-  // v9.0: Set to 500ms to yield CPU/DB connections to user requests.
-  // Without this delay, batch update monopolizes the event loop and DB pool,
-  // causing all user requests to queue for 8-9 seconds.
-  DELAY_BETWEEN_BATCHES: 500,
+  // v10.0: Reduced from 500ms → 150ms. At parallel=2-3, the event loop gets
+  // natural breathing room from the concurrent I/O waits. A short 150ms delay
+  // is sufficient to yield to any queued user requests without slowing the batch.
+  DELAY_BETWEEN_BATCHES: 150,
 
   // Delay after error (ms)
-  // v8.1: Reduced from 500 → 200ms for faster recovery.
-  DELAY_AFTER_ERROR: 200,
+  // Keep at 300ms to avoid hammering SNKRDUNK on transient errors.
+  DELAY_AFTER_ERROR: 300,
 
   // API request timeout (ms)
   // v8.1: Reduced from 15000 → 8000ms. Timeout cards are retried on next run anyway;

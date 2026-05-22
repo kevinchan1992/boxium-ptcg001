@@ -9313,3 +9313,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Frontend: Profile page InfoSection danger zone with DeleteAccountDialog
 - [x] 14 vitest tests pass (server/delete-account.test.ts)
 - [x] Fix image not displaying: CSP img-src added https://*.cloudfront.net (marketplace images and game logos were blocked by CSP)
+- [x] Optimize SNKRDUNK batch update speed: v10.0 restored adaptive parallelism (P=2-3), reduced DELAY_BETWEEN_BATCHES 500ms→150ms, expected 3-4x speedup
