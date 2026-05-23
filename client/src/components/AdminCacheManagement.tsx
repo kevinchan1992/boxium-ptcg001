@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "wouter";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export function AdminCacheManagement() {
   const [cardIdInput, setCardIdInput] = useState("");
@@ -743,7 +744,7 @@ export function AdminCacheManagement() {
                           <TableCell>
                             {cache.cardImageUrl ? (
                               <img 
-                                src={cache.cardImageUrl} 
+                                src={getProxiedImageUrl(cache.cardImageUrl) ?? ""} 
                                 alt={cache.cardName || "Card"} 
                                 className="w-12 h-16 object-cover rounded"
                               />

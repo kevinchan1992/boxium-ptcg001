@@ -63,6 +63,7 @@ import {
   Image,
   Upload,
 } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
@@ -593,7 +594,7 @@ function SubmissionDetailDialog({
                   {detail.items.map((item: any, idx: number) => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-2.5">
                       {item.cardImageUrl ? (
-                        <img src={item.cardImageUrl} alt={item.cardName} className="w-8 h-11 object-cover rounded shrink-0" />
+                        <img src={getProxiedImageUrl(item.cardImageUrl) ?? ""} alt={item.cardName} className="w-8 h-11 object-cover rounded shrink-0" />
                       ) : (
                         <div className="w-8 h-11 bg-gray-100/50 rounded shrink-0 flex items-center justify-center text-gray-600 text-xs">無</div>
                       )}
@@ -3143,7 +3144,7 @@ function BannerManagementTab() {
                 style={{ aspectRatio: '5/7' }}
               >
                 <img
-                  src={img.imageUrl}
+                  src={getProxiedImageUrl(img.imageUrl) ?? ""}
                   alt={img.altText || `Banner ${img.id}`}
                   className="w-full h-full object-cover"
                 />

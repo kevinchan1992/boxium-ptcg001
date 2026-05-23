@@ -1876,6 +1876,49 @@ async function startServer() {
 
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
+  // ── Image proxy (bypass CDN hotlink protection) ──
+  app.get("/api/img-proxy", async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).send("Missing url");
+    // Only allow known CDN domains for security
+    const allowedHosts = [
+      "cdn.snkrdunk.com",
+      "snkrdunk.com",
+      "img.snkrdunk.com",
+      "media.snkrdunk.com",
+    ];
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return res.status(400).send("Invalid url");
+    }
+    if (!allowedHosts.some(h => parsedUrl.hostname === h || parsedUrl.hostname.endsWith("." + h))) {
+      return res.status(403).send("Domain not allowed");
+    }
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "Referer": "https://www.snkrdunk.com/",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        },
+      });
+      if (!response.ok) {
+        return res.status(response.status).send("Upstream error");
+      }
+      const contentType = response.headers.get("content-type") || "image/webp";
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.set("Content-Type", contentType);
+      res.set("Cache-Control", "public, max-age=86400"); // cache 1 day
+      res.set("Access-Control-Allow-Origin", "*");
+      return res.send(buffer);
+    } catch (err) {
+      console.error("[img-proxy] fetch error:", err);
+      return res.status(502).send("Proxy error");
+    }
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({

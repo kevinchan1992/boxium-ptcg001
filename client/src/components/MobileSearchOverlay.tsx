@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { Search, X, Clock, TrendingUp, ArrowRight, Loader2, Camera } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const HISTORY_KEY = "boxium_search_history";
 const MAX_HISTORY = 8;
@@ -261,7 +262,7 @@ export function MobileSearchOverlay({
                     <div className="w-full aspect-[2/3] relative overflow-hidden rounded-md bg-muted">
                       {card.imageUrl ? (
                         <img
-                          src={card.imageUrl}
+                          src={getProxiedImageUrl(card.imageUrl) ?? ""}
                           alt={card.name ?? ""}
                           className="w-full h-full object-cover"
                           loading="lazy"

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { toast } from "sonner";
 import { ImageIcon, Search, Loader2 } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface CardImagePickerProps {
   onInsert: (imageUrl: string, cardName: string) => void;
@@ -108,7 +109,7 @@ export function CardImagePicker({ onInsert, variant = 'dark' }: CardImagePickerP
                   >
                     {card.imageUrl && (
                       <img
-                        src={card.imageUrl}
+                        src={getProxiedImageUrl(card.imageUrl) ?? ""}
                         alt={card.name}
                         className="w-full h-auto rounded mb-2"
                       />

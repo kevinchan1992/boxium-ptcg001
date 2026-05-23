@@ -31,6 +31,7 @@ import {
   Save,
   ExternalLink,
 } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 // ─── Types ─────────────────────────────────────────────────────────────────────────────
 interface GradingItem {
   id: string;
@@ -173,7 +174,7 @@ function ItemCard({
                 {item.card ? (
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     {item.card.imageUrl && (
-                      <img src={item.card.imageUrl} alt={item.card.name} className="w-14 h-20 object-contain rounded flex-shrink-0" />
+                      <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card.name} className="w-14 h-20 object-contain rounded flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{item.card.name}</p>
@@ -1028,7 +1029,7 @@ export default function GradingSubmit() {
                       <div className="flex items-start gap-2 min-w-0">
                         {!item.isManual && item.card?.imageUrl && (
                           <img
-                            src={item.card.imageUrl}
+                            src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                             alt={cardName}
                             className="w-14 h-20 object-contain rounded flex-shrink-0"
                           />

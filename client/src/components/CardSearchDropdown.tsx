@@ -18,6 +18,7 @@ import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface CardSearchDropdownProps {
   /** Controlled value of the input */
@@ -185,7 +186,7 @@ export function CardSearchDropdown({
                 <div className="w-full aspect-[2/3] relative overflow-hidden rounded-md bg-muted">
                   {card.imageUrl ? (
                     <img
-                      src={card.imageUrl}
+                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
                       alt={card.name ?? ""}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       loading="lazy"

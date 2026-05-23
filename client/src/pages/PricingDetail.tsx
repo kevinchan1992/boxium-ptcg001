@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { toast } from "sonner";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface PricingItem {
   id: string;
@@ -312,7 +313,7 @@ export default function PricingDetail() {
           {/* Card Image */}
           <div className="w-full md:w-64 flex-shrink-0">
             <img
-              src={card.imageUrl || "https://via.placeholder.com/256x352?text=No+Image"}
+              src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/256x352?text=No+Image"}
               alt={card.name}
               className="w-full rounded-lg shadow-lg"
             />
@@ -440,7 +441,7 @@ export default function PricingDetail() {
               {/* Item Image */}
               <div className="aspect-square relative bg-muted">
                 <img
-                  src={item.imageUrl || "https://via.placeholder.com/300?text=No+Image"}
+                  src={getProxiedImageUrl(item.imageUrl) ?? "https://via.placeholder.com/300?text=No+Image"}
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />

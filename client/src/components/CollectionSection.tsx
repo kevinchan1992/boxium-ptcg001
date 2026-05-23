@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import ReactCrop, { type Crop as CropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 // ─── Brand tokens ─────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -451,7 +452,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
                 {/* Yellow accent bar */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: BRAND_YELLOW }} />
                 {form.cardImageUrl ? (
-                  <img src={form.cardImageUrl} alt={form.cardName} className="w-12 h-16 object-contain rounded-xl bg-white/10 shadow-lg ml-1" />
+                  <img src={getProxiedImageUrl(form.cardImageUrl) ?? ""} alt={form.cardName} className="w-12 h-16 object-contain rounded-xl bg-white/10 shadow-lg ml-1" />
                 ) : (
                   <div className="w-12 h-16 rounded-xl bg-white/10 flex items-center justify-center ml-1">
                     <Package className="w-6 h-6 text-white/50" />
@@ -699,7 +700,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
               {matchResults.map((m: any) => (
                 <button key={m.id} onClick={() => handleSelectPhotoMatch(m)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all text-left">
-                  {m.imageUrl && <img src={m.imageUrl} alt={m.name} className="w-12 h-16 object-contain rounded-lg bg-gray-50" />}
+                  {m.imageUrl && <img src={getProxiedImageUrl(m.imageUrl) ?? ""} alt={m.name} className="w-12 h-16 object-contain rounded-lg bg-gray-50" />}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-gray-900 truncate">{m.name}</p>
                     {m.series && <p className="text-xs text-gray-400">{m.series}</p>}
@@ -895,7 +896,7 @@ export function CollectionSection() {
                     {idx + 1}
                   </div>
                   {item.card?.imageUrl && (
-                    <img src={item.card.imageUrl} alt={item.card?.name}
+                    <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
                       className="w-8 h-10 object-contain rounded-lg bg-gray-50"
                     />
                   )}
@@ -1032,7 +1033,7 @@ export function CollectionSection() {
                   >
                     {item.card?.imageUrl ? (
                       <img
-                        src={item.card.imageUrl}
+                        src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
                         className="w-14 h-18 object-contain rounded-lg"
                         style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}

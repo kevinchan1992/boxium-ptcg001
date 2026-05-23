@@ -15,6 +15,7 @@ import ReactCrop, { type Crop as CropType } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import StructuredData from "@/components/StructuredData";
 import { LazyImage } from "@/components/LazyImage";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface MatchedCard {
   id: number;
@@ -365,7 +366,7 @@ export default function Home() {
               >
                 <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
                   <img
-                    src={card.imageUrl || "https://via.placeholder.com/128x176?text=No+Image"}
+                    src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/128x176?text=No+Image"}
                     alt={card.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110"
                     loading="lazy"
@@ -443,7 +444,7 @@ export default function Home() {
                     <div className="w-12 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
                       {card.imageUrl ? (
                         <LazyImage
-                          src={card.imageUrl}
+                          src={getProxiedImageUrl(card.imageUrl) ?? ""}
                           alt={card.name}
                           className="w-full h-full object-cover"
                         />

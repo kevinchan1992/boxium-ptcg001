@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Pencil, Check, X, Package, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default function AdminSealedProducts() {
   const utils = trpc.useUtils();
@@ -106,7 +107,7 @@ export default function AdminSealedProducts() {
                 <div className="relative w-full h-36 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center">
                   {product.imageUrl ? (
                     <img
-                      src={product.imageUrl}
+                      src={getProxiedImageUrl(product.imageUrl) ?? ""}
                       alt={product.name}
                       className="w-full h-full object-contain"
                       onError={(e) => {

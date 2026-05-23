@@ -6,6 +6,7 @@ import { AlertCircle, ShoppingBag, Tag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 40;
 
@@ -329,7 +330,7 @@ export default function PricingSearch() {
                   <div className="aspect-[2/3] relative bg-muted">
                     {card.imageUrl ? (
                       <img
-                        src={card.imageUrl}
+                        src={getProxiedImageUrl(card.imageUrl) ?? ""}
                         alt={card.name}
                         className="w-full h-full object-cover"
                         loading="lazy"

@@ -23,6 +23,7 @@ import {
   Truck,
   Star,
 } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 // Countdown timer component
 function CountdownTimer({ deadline }: { deadline: Date }) {
@@ -217,7 +218,7 @@ function GradingBannerCarousel() {
               style={{ width: '110px' }}
             >
               <img
-                src={img.imageUrl}
+                src={getProxiedImageUrl(img.imageUrl) ?? ""}
                 alt={img.altText || `鑑定走馬燈 ${idx + 1}`}
                 className="w-full h-auto block"
                 draggable={false}

@@ -24,6 +24,7 @@ import {
   Truck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 // Compress image to reduce payload size before uploading as base64
 const compressImageToBase64 = (file: File, maxWidthPx = 1600, quality = 0.82): Promise<{ base64: string; mimeType: string }> =>
@@ -2084,7 +2085,7 @@ export default function GradingOrderDetail() {
                 <div key={item.id} className="p-4 flex items-start gap-3">
                   {item.cardImageUrl ? (
                     <img
-                      src={item.cardImageUrl}
+                      src={getProxiedImageUrl(item.cardImageUrl) ?? ""}
                       alt={item.cardName}
                       className="w-10 h-14 object-contain rounded flex-shrink-0"
                     />

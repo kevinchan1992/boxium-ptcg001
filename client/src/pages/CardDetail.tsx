@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { formatDate } from "@/lib/formatDate";
 import { ImageLightbox, ClickableCardImage } from "@/components/ImageLightbox";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const grades = ["PSA 10", "中古"];
 
@@ -411,14 +412,14 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               {product.imageUrl ? (
                 <>
                   <ClickableCardImage
-                    src={product.imageUrl}
+                    src={getProxiedImageUrl(product.imageUrl) ?? ""}
                     alt={product.name}
                     className="w-full rounded-xl shadow-2xl"
                     style={{ height: "auto" }}
                     onClick={() => setLightboxOpen(true)}
                   />
                   <ImageLightbox
-                    src={product.imageUrl}
+                    src={getProxiedImageUrl(product.imageUrl) ?? ""}
                     alt={product.name}
                     isOpen={lightboxOpen}
                     onClose={() => setLightboxOpen(false)}
@@ -907,7 +908,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   <div className="relative aspect-square overflow-hidden bg-zinc-900">
                     {item.imageUrl ? (
                       <img
-                        src={item.imageUrl}
+                        src={getProxiedImageUrl(item.imageUrl) ?? ""}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -1008,7 +1009,7 @@ function SimilarCardsSection({ cardId, series, cardName }: { cardId: number; ser
             <div className="aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800">
               {card.imageUrl ? (
                 <img
-                  src={card.imageUrl}
+                  src={getProxiedImageUrl(card.imageUrl) ?? ""}
                   alt={card.name}
                   className="w-full h-full object-cover group-hover:brightness-110 transition-all duration-200"
                 />

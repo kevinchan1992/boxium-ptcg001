@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { MarketplaceMarquee } from "@/components/MarketplaceMarquee";
 import StructuredData from "@/components/StructuredData";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 
 
@@ -104,7 +105,7 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
                 <div className="aspect-[2.5/3.5] bg-gray-50 relative overflow-hidden">
                   {card.imageUrl ? (
                     <img
-                      src={card.imageUrl}
+                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
                       alt={card.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"

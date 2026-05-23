@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface ListingItem {
   id: number;
@@ -49,7 +50,7 @@ function MarqueeCard({ item }: { item: ListingItem }) {
           >
             {imageUrl ? (
               <img
-                src={imageUrl}
+                src={getProxiedImageUrl(imageUrl) ?? ""}
                 alt={item.title}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"

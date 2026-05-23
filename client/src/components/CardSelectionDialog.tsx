@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, TrendingUp, TrendingDown, Minus, BarChart3, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface CardSelectionDialogProps {
   open: boolean;
@@ -229,7 +230,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                     <div className="flex gap-3 p-3">
                       {card.imageUrl && (
                         <div className="w-16 h-22 flex-shrink-0 rounded overflow-hidden">
-                          <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                          <img src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">

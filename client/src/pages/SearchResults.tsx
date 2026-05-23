@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default function SearchResults() {
   const { t } = useTranslation();
@@ -246,7 +247,7 @@ export default function SearchResults() {
                 <div className="aspect-[2/3] relative bg-muted">
                   {card.imageUrl ? (
                     <img
-                      src={card.imageUrl}
+                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
                       alt={card.name}
                       className="w-full h-full object-cover"
                       loading="lazy"

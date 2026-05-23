@@ -13,6 +13,7 @@ import { BatchTaskProgressBar } from "@/components/BatchTaskProgressBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 
 
@@ -971,7 +972,7 @@ export function AdminDataSources() {
                       {/* 卡牌圖片：手機版顯示在右側，不被截斷 */}
                       {source.card?.imageUrl && (
                         <img
-                          src={source.card.imageUrl}
+                          src={getProxiedImageUrl(source.card.imageUrl) ?? ""}
                           alt={source.card.name || "Card"}
                           className="w-12 h-16 sm:w-16 sm:h-24 object-cover rounded-md border border-border flex-shrink-0 self-start"
                         />

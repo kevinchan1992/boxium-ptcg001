@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { formatHKLocale } from "@/lib/formatDate";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const POKEMON_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif";
 const ONEPIECE_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif";
@@ -116,7 +117,7 @@ function GameTrendingPanel({
                   {/* 卡牌圖片 */}
                   <div className="aspect-[2.5/3.5] relative overflow-hidden bg-gray-700">
                     {card.imageUrl ? (
-                      <img src={card.imageUrl} alt={card.name ?? ""} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name ?? ""} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">無圖片</div>
                     )}

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ReactCrop, { type Crop as CropType } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -340,7 +341,7 @@ export default function Pricing() {
               >
                 <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
                   <img
-                    src={card.imageUrl}
+                    src={getProxiedImageUrl(card.imageUrl) ?? ""}
                     alt={card.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110"
                   />
