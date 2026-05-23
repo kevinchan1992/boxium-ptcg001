@@ -117,23 +117,58 @@ async function getCroppedImg(image: HTMLImageElement, crop: CropType): Promise<s
 }
 
 // ─── Stats Card ───────────────────────────────────────────────
-function StatCard({ label, value, sub, icon, accent }: {
-  label: string; value: string; sub?: string; icon: React.ReactNode; accent?: string;
+function StatCard({ label, value, sub, icon, accent, glow }: {
+  label: string; value: string; sub?: string; icon: React.ReactNode; accent?: string; glow?: boolean;
 }) {
+  const isGain = accent === GAIN_GREEN;
+  const isLoss = accent === LOSS_RED;
+  const isNeutral = !isGain && !isLoss;
   return (
-    <div className="relative overflow-hidden rounded-2xl p-4 flex flex-col gap-1"
-      style={{ background: "white", border: `1px solid ${BRAND_BLUE}18`, boxShadow: `0 2px 12px ${BRAND_BLUE}08` }}>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ background: `${BRAND_BLUE}10` }}>
+    <div
+      className="relative overflow-hidden rounded-2xl p-4 flex flex-col gap-1"
+      style={{
+        background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
+        boxShadow: isGain
+          ? `0 4px 20px ${BRAND_YELLOW}50, 0 2px 8px ${BRAND_BLUE}40`
+          : isLoss
+          ? `0 4px 20px ${LOSS_RED}30, 0 2px 8px ${BRAND_BLUE}40`
+          : `0 4px 16px ${BRAND_BLUE}40`,
+      }}
+    >
+      {/* Background shimmer */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: isGain
+          ? `radial-gradient(ellipse at top right, ${BRAND_YELLOW}20 0%, transparent 60%)`
+          : `radial-gradient(ellipse at top right, rgba(255,255,255,0.06) 0%, transparent 60%)`,
+      }} />
+      {/* Top row: label + icon */}
+      <div className="flex items-center justify-between mb-1 relative">
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: `${BRAND_YELLOW}cc` }}>
+          {label}
+        </span>
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: isGain ? `${BRAND_YELLOW}25` : "rgba(255,255,255,0.12)" }}
+        >
           {icon}
         </div>
       </div>
-      <span className="text-xl font-black tabular-nums tracking-tight" style={{ color: accent ?? BRAND_BLUE }}>
+      {/* Main value */}
+      <span
+        className="text-2xl font-black tabular-nums tracking-tight leading-none relative"
+        style={{ color: isGain ? BRAND_YELLOW : isLoss ? "#fca5a5" : "white" }}
+      >
         {value}
       </span>
-      {sub && <span className="text-xs text-gray-400 font-medium">{sub}</span>}
+      {/* Sub text */}
+      {sub && (
+        <span
+          className="text-xs font-bold tabular-nums relative"
+          style={{ color: isGain ? `${BRAND_YELLOW}cc` : isLoss ? "#fca5a5" : "rgba(255,255,255,0.6)" }}
+        >
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -820,51 +855,74 @@ export function CollectionSection() {
             <StatCard
               label={t("profile.collection.stats.totalMarketValue")}
               value={formatCurrency(stats.totalMarketValue)}
-              icon={<BarChart3 className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              icon={<BarChart3 className="w-4 h-4" style={{ color: BRAND_YELLOW }} />}
             />
             <StatCard
               label={t("profile.collection.stats.totalCost")}
               value={formatCurrency(stats.totalCost)}
-              icon={<DollarSign className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              icon={<DollarSign className="w-4 h-4 text-white/80" />}
             />
             <StatCard
               label={t("profile.collection.stats.unrealizedGain")}
               value={`${gainPositive ? "+" : ""}${formatCurrency(stats.totalGain)}`}
               sub={`${gainPositive ? "+" : ""}${gainPct.toFixed(1)}%`}
               icon={gainPositive
-                ? <TrendingUp className="w-4 h-4" style={{ color: GAIN_GREEN }} />
-                : <TrendingDown className="w-4 h-4" style={{ color: LOSS_RED }} />}
+                ? <TrendingUp className="w-4 h-4" style={{ color: BRAND_YELLOW }} />
+                : <TrendingDown className="w-4 h-4 text-red-300" />}
               accent={gainPositive ? GAIN_GREEN : LOSS_RED}
             />
             <StatCard
               label={t("profile.collection.stats.holdings")}
               value={`${stats.totalQuantity}`}
               sub={`${stats.totalItems} ${t("profile.collection.stats.entries")}`}
-              icon={<Package className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              icon={<Package className="w-4 h-4 text-white/80" />}
             />
           </div>
 
           {/* Top 3 Gainers */}
           {stats.top3Gainers.length > 0 && (
-            <div className="rounded-2xl p-4 space-y-2"
-              style={{ background: "white", border: `1px solid ${BRAND_BLUE}18`, boxShadow: `0 2px 12px ${BRAND_BLUE}08` }}>
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="w-4 h-4" style={{ color: BRAND_YELLOW }} />
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">{t("profile.collection.stats.top3Gainers")}</span>
+            <div
+              className="relative rounded-2xl p-4 space-y-2 overflow-hidden"
+              style={{
+                background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
+                boxShadow: `0 4px 20px ${BRAND_YELLOW}35, 0 2px 8px ${BRAND_BLUE}40`,
+              }}
+            >
+              {/* Yellow glow top-right */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: `radial-gradient(ellipse at top right, ${BRAND_YELLOW}25 0%, transparent 55%)`,
+              }} />
+              <div className="flex items-center gap-2 mb-3 relative">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${BRAND_YELLOW}25` }}>
+                  <Star className="w-3.5 h-3.5" style={{ color: BRAND_YELLOW }} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_YELLOW }}>
+                  {t("profile.collection.stats.top3Gainers")}
+                </span>
               </div>
               {stats.top3Gainers.map((item: any, idx: number) => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <span className="text-xs font-black w-5 text-center" style={{ color: BRAND_BLUE }}>#{idx + 1}</span>
+                <div key={item.id} className="flex items-center gap-3 relative">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                    style={idx === 0
+                      ? { background: BRAND_YELLOW, color: BRAND_BLUE }
+                      : { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}
+                  >
+                    {idx + 1}
+                  </div>
                   {item.card?.imageUrl && (
-                    <img src={item.card.imageUrl} alt={item.card?.name} className="w-8 h-10 object-contain rounded bg-gray-50" />
+                    <img src={item.card.imageUrl} alt={item.card?.name}
+                      className="w-8 h-10 object-contain rounded-lg"
+                      style={{ background: "rgba(255,255,255,0.1)" }}
+                    />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-900 truncate">{item.card?.name}</p>
+                    <p className="text-xs font-bold text-white truncate">{item.card?.name}</p>
                     <GradeBadge grader={item.grader} grade={item.grade} />
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-black text-emerald-600">+{(item.unrealizedGainPct ?? 0).toFixed(1)}%</p>
-                    <p className="text-xs text-gray-400">{formatCurrency(item.unrealizedGain)}</p>
+                    <p className="text-sm font-black tabular-nums" style={{ color: BRAND_YELLOW }}>+{(item.unrealizedGainPct ?? 0).toFixed(1)}%</p>
+                    <p className="text-xs font-semibold tabular-nums" style={{ color: "rgba(255,255,255,0.6)" }}>{formatCurrency(item.unrealizedGain)}</p>
                   </div>
                 </div>
               ))}
@@ -965,88 +1023,136 @@ export function CollectionSection() {
             const isFallback = item.priceIsFallback;
 
             return (
-              <div key={item.id}
-                className="rounded-2xl overflow-hidden border transition-all hover:shadow-md"
-                style={{ borderColor: `${BRAND_BLUE}12`, background: "white" }}>
-                <div className="flex items-stretch">
-                  {/* Card image */}
-                  <div className="w-16 flex-shrink-0 bg-gray-50 flex items-center justify-center p-2">
+                            <div
+                key={item.id}
+                className="relative rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-0.5"
+                style={{
+                  background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
+                  boxShadow: gainPct != null && gainPct > 0
+                    ? `0 4px 20px ${BRAND_YELLOW}30, 0 2px 8px ${BRAND_BLUE}40`
+                    : gainPct != null && gainPct < 0
+                    ? `0 4px 16px ${LOSS_RED}20, 0 2px 8px ${BRAND_BLUE}40`
+                    : `0 4px 16px ${BRAND_BLUE}30`,
+                }}
+              >
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 pointer-events-none" style={{
+                  background: gainPct != null && gainPct > 0
+                    ? `radial-gradient(ellipse at top right, ${BRAND_YELLOW}18 0%, transparent 55%)`
+                    : `radial-gradient(ellipse at top right, rgba(255,255,255,0.05) 0%, transparent 55%)`,
+                }} />
+                <div className="flex items-stretch relative">
+                  {/* Card image column */}
+                  <div
+                    className="w-20 flex-shrink-0 flex items-center justify-center p-3"
+                    style={{ background: "rgba(0,0,0,0.25)" }}
+                  >
                     {item.card?.imageUrl ? (
-                      <img src={item.card.imageUrl} alt={item.card?.name}
-                        className="w-12 h-16 object-contain rounded-lg" />
+                      <img
+                        src={item.card.imageUrl}
+                        alt={item.card?.name}
+                        className="w-14 h-18 object-contain rounded-lg drop-shadow-lg"
+                        style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }}
+                      />
                     ) : (
-                      <div className="w-12 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-gray-300" />
+                      <div className="w-14 h-18 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
+                        <Package className="w-6 h-6" style={{ color: "rgba(255,255,255,0.3)" }} />
                       </div>
                     )}
                   </div>
-
                   {/* Main content */}
                   <div className="flex-1 min-w-0 p-3">
+                    {/* Top row: name + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-bold text-sm text-gray-900 truncate leading-tight">{item.card?.name}</p>
-                        {item.card?.series && <p className="text-xs text-gray-400 truncate">{item.card.series}</p>}
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <p className="font-black text-sm text-white truncate leading-tight">{item.card?.name}</p>
+                        {item.card?.series && (
+                          <p className="text-xs truncate mt-0.5" style={{ color: `${BRAND_YELLOW}99` }}>{item.card.series}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                           <GradeBadge grader={item.grader} grade={item.grade} />
                           {item.quantity > 1 && (
-                            <span className="text-xs text-gray-500 font-medium">×{item.quantity}</span>
+                            <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)" }}>×{item.quantity}</span>
                           )}
                           {item.isPublic && (
-                            <span className="inline-flex items-center gap-0.5 text-xs text-amber-600">
+                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold" style={{ color: BRAND_YELLOW }}>
                               <Eye className="w-3 h-3" />公開
                             </span>
                           )}
                         </div>
                       </div>
-
                       {/* Actions */}
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={() => { setEditItem(item); setShowAddSheet(true); }}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                        <button
+                          onClick={() => { setEditItem(item); setShowAddSheet(true); }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                          style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}
+                        >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setDeleteItem(item)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                        <button
+                          onClick={() => setDeleteItem(item)}
+                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                          style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}
+                        >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
-
                     {/* Price row */}
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                      <div className="text-xs text-gray-400">
-                        <span>{t("profile.collection.table.purchasePrice")}: </span>
-                        <span className="font-semibold text-gray-700">
+                    <div
+                      className="flex items-center justify-between mt-2 pt-2"
+                      style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+                    >
+                      <div>
+                        <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{t("profile.collection.table.purchasePrice")}</p>
+                        <p className="text-sm font-bold tabular-nums text-white">
                           {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
-                        </span>
+                        </p>
                       </div>
                       <div className="text-right">
+                        <p className="text-xs" style={{ color: `${BRAND_YELLOW}99` }}>{t("profile.collection.table.marketPrice") ?? "市場價"}</p>
                         {hasPrice ? (
                           <div>
-                            <div className="text-xs font-bold text-gray-800">{formatCurrency(item.marketPrice)}</div>
+                            <p className="text-sm font-black tabular-nums" style={{ color: BRAND_YELLOW }}>
+                              {formatCurrency(item.marketPrice)}
+                            </p>
                             {isFallback && (
-                              <div className="text-xs text-gray-400">{t("profile.collection.table.fallbackNote")}</div>
+                              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{t("profile.collection.table.fallbackNote")}</p>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-300">{t("profile.collection.table.noPrice")}</span>
+                          <p className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>—</p>
                         )}
                       </div>
                     </div>
-
                     {/* P&L bar */}
                     {gain != null && item.purchasePrice != null && (
-                      <div className={`flex items-center justify-end gap-1 mt-1.5 px-2 py-1 rounded-lg ${gainBg(gainPct)}`}>
+                      <div
+                        className="flex items-center justify-end gap-1.5 mt-2 px-3 py-1.5 rounded-xl"
+                        style={{
+                          background: gainPct != null && gainPct > 0
+                            ? `${BRAND_YELLOW}20`
+                            : gainPct != null && gainPct < 0
+                            ? "rgba(220,38,38,0.2)"
+                            : "rgba(255,255,255,0.08)",
+                        }}
+                      >
                         {gainPct != null && gainPct > 0
-                          ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                          ? <ArrowUpRight className="w-4 h-4" style={{ color: BRAND_YELLOW }} />
                           : gainPct != null && gainPct < 0
-                            ? <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />
-                            : <Minus className="w-3.5 h-3.5 text-gray-400" />}
-                        <span className={`text-xs font-black ${gainColor(gainPct)}`}>
+                            ? <ArrowDownRight className="w-4 h-4 text-red-400" />
+                            : <Minus className="w-4 h-4" style={{ color: "rgba(255,255,255,0.4)" }} />}
+                        <span
+                          className="text-base font-black tabular-nums"
+                          style={{ color: gainPct != null && gainPct > 0 ? BRAND_YELLOW : gainPct != null && gainPct < 0 ? "#fca5a5" : "rgba(255,255,255,0.5)" }}
+                        >
                           {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
                         </span>
-                        <span className={`text-xs font-semibold ${gainColor(gainPct)}`}>
+                        <span
+                          className="text-xs font-semibold tabular-nums"
+                          style={{ color: gainPct != null && gainPct > 0 ? `${BRAND_YELLOW}cc` : gainPct != null && gainPct < 0 ? "#fca5a5" : "rgba(255,255,255,0.4)" }}
+                        >
                           ({gain >= 0 ? "+" : ""}{formatCurrency(gain)})
                         </span>
                       </div>
