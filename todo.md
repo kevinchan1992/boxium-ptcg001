@@ -9334,3 +9334,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] My Collection 主頁面背景升級（白色背景容器）
 - [x] PhotoSearchSheet 白色背景修復（深藍 header + 白色內容）
 - [x] 刪除確認 Dialog 品牌藍黃風格（深藍按鈕 + 黃色警示圖示）
+## Login + Profile Mobile Improvements (2026-05-23)
+- [x] Login page: Apple/Google button symmetry fix (both use same semi-transparent white style)
+- [x] Profile page mobile: 2-column large button Grid navigation with back button
+- [x] Profile page mobile: Welcome card above Grid menu (user name + avatar + welcome message)
+- [x] Login page: Forgot Password Dialog UI (email input + success state)
+- [x] Backend: auth.forgotPassword procedure (generates reset token, sends email via emailService)
+- [x] Backend: auth.resetPassword procedure (validates token, updates password hash)
+- [x] emailService: sendPasswordResetEmail function (HTML email with reset link)
+- [x] New page: /reset-password (ResetPassword.tsx) with token validation + new password form
+- [x] App.tsx: /reset-password route registered

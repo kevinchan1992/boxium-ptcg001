@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertCircle, Mail } from "lucide-react";
+import { AlertCircle, Mail, KeyRound, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const IS_DEV = import.meta.env.DEV;
@@ -32,6 +40,18 @@ export default function Login() {
   const [devLoading, setDevLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const forgotPasswordMutation = trpc.auth.forgotPassword.useMutation({
+    onSuccess: () => {
+      setForgotSent(true);
+    },
+    onError: (err) => {
+      toast.error(err.message || "發送失敗，請稍後再試");
+    },
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -123,6 +143,7 @@ export default function Login() {
   };
 
   return (
+    <>
     <div
       className="min-h-screen w-full relative flex items-center justify-center overflow-hidden"
       style={{ background: "linear-gradient(135deg, #0a0f2e 0%, #0d1a4a 40%, #0a1535 70%, #060d24 100%)" }}
@@ -247,6 +268,15 @@ export default function Login() {
           >
             {isLoading ? "登入中..." : "登入"}
           </Button>
+          <div className="text-center mt-2">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-xs text-white/50 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
+            >
+              忘記密碼？
+            </button>
+          </div>
         </form>
 
         {/* Divider */}
@@ -339,5 +369,74 @@ export default function Login() {
         style={{ background: "linear-gradient(90deg, transparent, #c9a84c 30%, #c9a84c 70%, transparent)", opacity: 0.4 }}
       />
     </div>
+
+    {/* 忘記密碼 Dialog */}
+    <Dialog open={showForgotPassword} onOpenChange={(open) => {
+      setShowForgotPassword(open);
+      if (!open) { setForgotSent(false); setForgotEmail(""); }
+    }}>
+      <DialogContent className="max-w-sm mx-4">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#06038d15" }}>
+              <KeyRound className="w-4 h-4" style={{ color: "#06038d" }} />
+            </div>
+            <DialogTitle>忘記密碼</DialogTitle>
+          </div>
+          <DialogDescription>
+            {forgotSent
+              ? "重設密碼的電郵已發送，請檢查你的收件包。"
+              : "輸入你的註冊 Email，我們會發送重設密碼的連結。"}
+          </DialogDescription>
+        </DialogHeader>
+
+        {forgotSent ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <CheckCircle2 className="w-12 h-12 text-green-500" />
+            <p className="text-sm text-center text-gray-600">
+              已發送至 <strong>{forgotEmail}</strong>
+            </p>
+            <p className="text-xs text-gray-400 text-center">若沒收到電郵，請檢查垃圾郵件夺。</p>
+          </div>
+        ) : (
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="forgot-email" className="text-sm font-medium">Email 地址</Label>
+              <Input
+                id="forgot-email"
+                type="email"
+                placeholder="your@email.com"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                disabled={forgotPasswordMutation.isPending}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          {forgotSent ? (
+            <Button className="w-full" onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(""); }}>
+              完成
+            </Button>
+          ) : (
+            <div className="flex gap-2 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => setShowForgotPassword(false)}>
+                取消
+              </Button>
+              <Button
+                className="flex-1 font-semibold"
+                style={{ background: "#06038d", color: "white" }}
+                onClick={() => forgotPasswordMutation.mutate({ email: forgotEmail })}
+                disabled={!forgotEmail || forgotPasswordMutation.isPending}
+              >
+                {forgotPasswordMutation.isPending ? "發送中..." : "發送重設連結"}
+              </Button>
+            </div>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

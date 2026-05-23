@@ -43,6 +43,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ResendVerification = lazy(() => import("./pages/ResendVerification"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
@@ -112,6 +113,7 @@ function Router() {
             <Route path="/register" component={Register} />
             <Route path="/verify-email" component={VerifyEmail} />
             <Route path="/resend-verification" component={ResendVerification} />
+            <Route path="/reset-password" component={ResetPassword} />
             <Route path="/profile" component={Profile} />
 
             <Route path="/admin">

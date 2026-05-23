@@ -678,6 +678,113 @@ export const appRouter = router({
 
         return { success: true };
       }),
+
+    forgotPassword: publicProcedure
+      .input(z.object({
+        email: z.string().trim().toLowerCase().email(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import('./db');
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq: eqOp } = await import('drizzle-orm');
+        const crypto = await import('crypto');
+
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+        // Always return success to prevent email enumeration
+        const userResults = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.email, input.email)).limit(1);
+        const user = userResults[0];
+
+        if (user && user.passwordHash) {
+          // Generate a reset token valid for 1 hour
+          const resetToken = crypto.randomBytes(32).toString('hex');
+          const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+          await drizzleDb
+            .update(usersTable)
+            .set({
+              emailVerificationToken: resetToken,
+              emailVerificationExpiry: resetExpiry,
+            })
+            .where(eqOp(usersTable.id, user.id));
+
+          // Send password reset email
+          import('./emailService').then(({ sendPasswordResetEmail }) => {
+            sendPasswordResetEmail({
+              userId: user.id,
+              userName: user.name || user.email!.split('@')[0],
+              email: user.email!,
+              resetToken,
+              siteUrl: 'https://boxium.asia',
+            }).catch((err: Error) => console.error('[Auth] Failed to send password reset email:', err));
+          }).catch(() => {
+            // emailService may not have sendPasswordResetEmail yet — notify owner as fallback
+            import('./_core/notification').then(({ notifyOwner }) => {
+              notifyOwner({
+                title: '密碼重設請求',
+                content: `用戶 ${user.email} 請求重設密碼。重設 Token: ${resetToken}`,
+              }).catch(() => {});
+            });
+          });
+        }
+
+        return { success: true };
+      }),
+
+    resetPassword: publicProcedure
+      .input(z.object({
+        token: z.string().min(1),
+        newPassword: z.string().min(8, '密碼至少需要 8 個字元'),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import('./db');
+        const { users: usersTable } = await import('../drizzle/schema_new');
+        const { eq: eqOp, and: andOp, gt: gtOp } = await import('drizzle-orm');
+        const bcrypt = await import('bcrypt');
+
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+        const now = new Date();
+        const userResults = await drizzleDb
+          .select()
+          .from(usersTable)
+          .where(
+            andOp(
+              eqOp(usersTable.emailVerificationToken, input.token),
+              gtOp(usersTable.emailVerificationExpiry, now)
+            )
+          )
+          .limit(1);
+
+        if (userResults.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: '重設連結無效或已過期，請重新申請忘記密碼',
+          });
+        }
+
+        const user = userResults[0];
+        if (!user.passwordHash) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: '您的帳號使用第三方登入，無法使用此功能',
+          });
+        }
+
+        const newHash = await bcrypt.hash(input.newPassword, 12);
+        await drizzleDb
+          .update(usersTable)
+          .set({
+            passwordHash: newHash,
+            emailVerificationToken: null,
+            emailVerificationExpiry: null,
+          })
+          .where(eqOp(usersTable.id, user.id));
+
+        return { success: true };
+      }),
   }),
 
   cards: router({

@@ -1768,3 +1768,57 @@ export async function sendEmailVerificationEmail({
     dedupeKey: `email_verification_${userId}_${verificationToken}`,
   });
 }
+
+export async function sendPasswordResetEmail({
+  userId,
+  userName,
+  email,
+  resetToken,
+  siteUrl = "https://boxium.asia",
+}: {
+  userId: number;
+  userName: string;
+  email: string;
+  resetToken: string;
+  siteUrl?: string;
+}): Promise<boolean> {
+  const resetUrl = `${siteUrl}/reset-password?token=${resetToken}`;
+  const subject = `🔑 重設您的 BOXIUM 密碼`;
+  const html = wrapHtml(subject, `
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">重設您的密碼 🔑</h2>
+    <p style="margin:0 0 16px;color:#555;font-size:15px;">
+      親愛的 <strong>${userName}</strong>，<br/>
+      我們收到了您的密碼重設請求。請點擊以下按鈕設定新密碼。
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0;font-size:14px;color:#333;">
+            ⏰ 此重設連結將於 <strong>1 小時</strong>後過期。<br/>
+            如果您沒有請求重設密碼，請忽略此電郵，您的密碼不會被更改。
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton("重設密碼", resetUrl)}
+
+    <p style="color:#999;font-size:12px;margin-top:24px;">
+      如果按鈕無法點擊，請複製以下連結到瀏覽器：<br/>
+      <a href="${resetUrl}" style="color:#06038d;word-break:break-all;">${resetUrl}</a>
+    </p>
+    <p style="color:#999;font-size:12px;margin-top:8px;text-align:center;">
+      如有任何問題，歡迎聯絡我們：<a href="mailto:boxium.asia@gmail.com" style="color:#06038d;">boxium.asia@gmail.com</a>
+    </p>
+  `);
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    emailType: 'password_reset',
+    toUserId: userId,
+    skipUnsubscribeCheck: true,
+    dedupeKey: `password_reset_${userId}_${resetToken}`,
+  });
+}

@@ -251,6 +251,29 @@ export default function Profile() {
             </div>
           )}
 
+          {/* Welcome card — shown above menu grid */}
+          {activeSection === 'menu' && user && (
+            <div className="flex items-center gap-3 px-4 py-3.5 mb-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
+              {/* Avatar */}
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2" style={{ background: BRAND_YELLOW, borderColor: `${BRAND_BLUE}30` }}>
+                <User className="w-6 h-6" style={{ color: BRAND_BLUE }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base font-bold text-gray-900 truncate">
+                    {(user as any).name || (user as any).email?.split('@')[0] || '用戶'}
+                  </span>
+                  {(user as any).role === 'admin' && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>管理員</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  👋 歡迎回來！
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Menu grid — shown when no section selected */}
           {activeSection === 'menu' && (
             <div className="grid grid-cols-2 gap-2.5">
