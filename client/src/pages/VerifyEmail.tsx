@@ -1,20 +1,39 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
 
+// Watermark grid (same as Login/Register)
+const WatermarkGrid = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {Array.from({ length: 45 }).map((_, i) => (
+      <img
+        key={i}
+        src="/boxium-logo-white.png"
+        alt=""
+        style={{
+          position: "absolute",
+          width: "120px",
+          left: `${(i % 6) * 18 - 2}%`,
+          top: `${Math.floor(i / 6) * 14 - 2}%`,
+          transform: "rotate(-15deg)",
+          mixBlendMode: "screen" as const,
+          opacity: 0.045,
+        }}
+      />
+    ))}
+  </div>
+);
+
 export default function VerifyEmail() {
   const [, setLocation] = useLocation();
-  const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "success" | "error" | "no-token">("loading");
   const [errorMessage, setErrorMessage] = useState("");
 
   const verifyMutation = trpc.auth.verifyEmail.useMutation({
     onSuccess: () => {
       setStatus("success");
-      // Redirect to home after 3 seconds
       setTimeout(() => {
         window.location.href = "/";
       }, 3000);
@@ -32,116 +51,121 @@ export default function VerifyEmail() {
       setStatus("no-token");
       return;
     }
-    setToken(t);
     verifyMutation.mutate({ token: t });
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md text-center">
-        <CardHeader className="space-y-4 pb-4">
-          <div className="flex justify-center">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/boxium-logo_004f9905.png"
-              alt="BOXIUM"
-              className="h-10 object-contain"
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 pb-8">
+    <div
+      className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d1f3c 40%, #0f2347 70%, #0a1628 100%)" }}
+    >
+      {/* Gold top accent */}
+      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: "linear-gradient(90deg, transparent, #c9a227, transparent)" }} />
+
+      <WatermarkGrid />
+
+      {/* Content card */}
+      <div className="relative z-10 w-full max-w-sm text-center">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src="/boxium-logo.png" alt="BOXIUM" className="h-16 object-contain" />
+        </div>
+
+        {/* Status content */}
+        <div
+          className="rounded-2xl p-8 space-y-6"
+          style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
           {status === "loading" && (
             <>
-              <div className="flex justify-center">
-                <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
-              </div>
+              <Loader2 className="h-16 w-16 mx-auto animate-spin" style={{ color: "#c9a227" }} />
               <div>
-                <CardTitle className="text-xl mb-2">正在驗證電郵地址...</CardTitle>
-                <p className="text-muted-foreground text-sm">請稍候，正在處理您的驗證請求</p>
+                <h2 className="text-xl font-bold text-white mb-2">正在驗證電郵地址...</h2>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>請稍候，正在處理您的驗證請求</p>
               </div>
             </>
           )}
 
           {status === "success" && (
             <>
-              <div className="flex justify-center">
-                <CheckCircle className="h-16 w-16 text-green-500" />
-              </div>
+              <CheckCircle className="h-16 w-16 mx-auto text-green-400" />
               <div>
-                <CardTitle className="text-xl mb-2 text-green-700">電郵驗證成功！🎉</CardTitle>
-                <p className="text-muted-foreground text-sm mb-4">
+                <h2 className="text-xl font-bold text-white mb-2">電郵驗證成功！🎉</h2>
+                <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
                   您的帳號已成功啟用，歡迎加入 BOXIUM PTCG！<br />
                   正在為您跳轉至主頁...
                 </p>
               </div>
-              <Button onClick={() => { window.location.href = "/"; }} className="w-full">
+              <button
+                onClick={() => { window.location.href = "/"; }}
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                style={{ background: "linear-gradient(135deg, #c9a227, #e8c547)", color: "#0a1628" }}
+              >
                 立即前往主頁
-              </Button>
+              </button>
             </>
           )}
 
           {status === "error" && (
             <>
-              <div className="flex justify-center">
-                <XCircle className="h-16 w-16 text-red-500" />
-              </div>
+              <XCircle className="h-16 w-16 mx-auto text-red-400" />
               <div>
-                <CardTitle className="text-xl mb-2 text-red-700">驗證失敗</CardTitle>
-                <p className="text-muted-foreground text-sm mb-4">
-                  {errorMessage}
-                </p>
+                <h2 className="text-xl font-bold text-white mb-2">驗證失敗</h2>
+                <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>{errorMessage}</p>
               </div>
               <div className="space-y-2">
-                <Button
-                  variant="outline"
+                <button
                   onClick={() => setLocation("/resend-verification")}
-                  className="w-full"
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}
                 >
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="h-4 w-4" />
                   重新發送驗證電郵
-                </Button>
-                <Button
-                  variant="ghost"
+                </button>
+                <button
                   onClick={() => setLocation("/")}
-                  className="w-full"
+                  className="w-full py-3 rounded-xl text-sm transition-all"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
                 >
                   返回主頁
-                </Button>
+                </button>
               </div>
             </>
           )}
 
           {status === "no-token" && (
             <>
-              <div className="flex justify-center">
-                <Mail className="h-16 w-16 text-blue-500" />
-              </div>
+              <Mail className="h-16 w-16 mx-auto" style={{ color: "#c9a227" }} />
               <div>
-                <CardTitle className="text-xl mb-2">無效的驗證連結</CardTitle>
-                <p className="text-muted-foreground text-sm mb-4">
+                <h2 className="text-xl font-bold text-white mb-2">無效的驗證連結</h2>
+                <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
                   此驗證連結無效。請從電郵中點擊驗證連結，或重新發送驗證電郵。
                 </p>
               </div>
               <div className="space-y-2">
-                <Button
-                  variant="outline"
+                <button
                   onClick={() => setLocation("/resend-verification")}
-                  className="w-full"
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}
                 >
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="h-4 w-4" />
                   重新發送驗證電郵
-                </Button>
-                <Button
-                  variant="ghost"
+                </button>
+                <button
                   onClick={() => setLocation("/")}
-                  className="w-full"
+                  className="w-full py-3 rounded-xl text-sm transition-all"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
                 >
                   返回主頁
-                </Button>
+                </button>
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Gold bottom accent */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "linear-gradient(90deg, transparent, #c9a227, transparent)" }} />
     </div>
   );
 }
