@@ -9331,3 +9331,6 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Public share toggle (isPublic field + UI indicator)
 - [x] PDF export frontend (loading + auto download)
 - [x] Vitest tests (collection.test.ts) — 23 tests pass
+- [x] My Collection 主頁面背景升級（白色背景容器）
+- [x] PhotoSearchSheet 白色背景修復（深藍 header + 白色內容）
+- [x] 刪除確認 Dialog 品牌藍黃風格（深藍按鈕 + 黃色警示圖示）

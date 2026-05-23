@@ -48,7 +48,7 @@ import {
   Camera, Search, Edit2, Trash2, Download, Filter,
   ChevronDown, ChevronUp, Eye, EyeOff, Loader2,
   BarChart3, Star, ArrowUpRight, ArrowDownRight, Minus,
-  SlidersHorizontal, RefreshCw, X,
+  SlidersHorizontal, RefreshCw, X, AlertTriangle,
 } from "lucide-react";
 import ReactCrop, { type Crop as CropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -629,8 +629,11 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
         title={t("profile.collection.imageSearch.title")}
         description={t("profile.collection.imageSearch.hint")}
         showCloseButton
+        className="!bg-white !text-gray-900"
+        headerStyle={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`, borderBottom: `2px solid ${BRAND_YELLOW}` }}
+        handleStyle={{ background: "rgba(255,255,255,0.4)" }}
       >
-        <div className="space-y-4 pb-6">
+        <div className="space-y-4 pb-6 bg-white">
           {/* Upload area */}
           {!imagePreview && (
             <div
@@ -802,7 +805,7 @@ export function CollectionSection() {
   const gainPositive = gainPct >= 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -1176,10 +1179,16 @@ export function CollectionSection() {
 
       {/* ── Delete confirm ── */}
       <AlertDialog open={!!deleteItem} onOpenChange={(v) => { if (!v) setDeleteItem(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="!bg-white border-0 shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("profile.collection.deleteItem")}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: `${BRAND_YELLOW}22` }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: BRAND_YELLOW }} />
+              </div>
+              <AlertDialogTitle className="text-gray-900 font-black">{t("profile.collection.deleteItem")}</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-gray-500 pl-13">
               {t("profile.collection.confirmDelete")}
               {deleteItem && (
                 <span className="block mt-2 font-semibold text-gray-900">
@@ -1189,10 +1198,11 @@ export function CollectionSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("profile.collection.form.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel className="border-gray-200 text-gray-600 hover:bg-gray-50">{t("profile.collection.form.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteItem && removeMutation.mutate({ itemId: deleteItem.id })}
-              className="bg-red-600 hover:bg-red-700 text-white">
+              className="border-0 text-white font-bold"
+              style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a18b0 100%)` }}>
               {t("profile.collection.deleteItem")}
             </AlertDialogAction>
           </AlertDialogFooter>
