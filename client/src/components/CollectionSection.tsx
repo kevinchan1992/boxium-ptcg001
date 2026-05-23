@@ -389,6 +389,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
         showCloseButton
         handleStyle={{ background: `rgba(255,255,255,0.3)` }}
         headerStyle={{ background: BRAND_BLUE, borderBottom: `1px solid ${BRAND_YELLOW}40`, color: "white" }}
+        className="!bg-white !text-gray-900"
       >
         {/* Step indicator (add mode only) */}
         {!editItem && (
@@ -502,7 +503,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
               <div className="space-y-2">
                 <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.grade")}</Label>
                 <Select value={form.grade} onValueChange={(v) => setForm(f => ({ ...f, grade: v }))}>
-                  <SelectTrigger className="h-11 font-bold border-2" style={{ borderColor: `${BRAND_BLUE}30` }}>
+                  <SelectTrigger className="h-11 font-bold border-2 !bg-white !text-gray-900" style={{ borderColor: `${BRAND_BLUE}30` }}>
                     <SelectValue placeholder={t("profile.collection.form.selectGrade")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -526,7 +527,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
                   <Minus className="w-4 h-4" />
                 </button>
                 <div
-                  className="flex-1 h-10 flex items-center justify-center rounded-xl font-black text-lg tabular-nums border-2"
+                  className="flex-1 h-10 flex items-center justify-center rounded-xl font-black text-lg tabular-nums border-2 bg-white"
                   style={{ borderColor: `${BRAND_BLUE}30`, color: BRAND_BLUE }}
                 >
                   {form.quantity}
@@ -555,7 +556,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
                   type="number" min={0} step="0.01" placeholder="0.00"
                   value={form.purchasePrice}
                   onChange={(e) => setForm(f => ({ ...f, purchasePrice: e.target.value }))}
-                  className="pl-16 h-11 font-bold border-2 text-right pr-4"
+                  className="pl-16 h-11 font-bold border-2 text-right pr-4 !bg-white !text-gray-900 placeholder:!text-gray-400"
                   style={{ borderColor: `${BRAND_BLUE}30` }}
                 />
               </div>
@@ -567,7 +568,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
               <Input
                 type="date" value={form.purchasedAt}
                 onChange={(e) => setForm(f => ({ ...f, purchasedAt: e.target.value }))}
-                className="h-11 font-semibold border-2"
+                className="h-11 font-semibold border-2 !bg-white !text-gray-900"
                 style={{ borderColor: `${BRAND_BLUE}30` }}
               />
             </div>
@@ -580,7 +581,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
                 placeholder={t("profile.collection.form.notesPlaceholder")}
                 value={form.notes}
                 onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
-                className="border-2 resize-none font-medium"
+                className="border-2 resize-none font-medium !bg-white !text-gray-900 placeholder:!text-gray-400"
                 style={{ borderColor: `${BRAND_BLUE}30` }}
               />
             </div>
