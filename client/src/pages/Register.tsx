@@ -183,7 +183,7 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-white/70 text-xs tracking-wider uppercase">Email</Label>
+            <Label htmlFor="email" className="text-white/70 text-xs tracking-wider uppercase text-center block">Email</Label>
             <Input
               id="email" type="email" placeholder="your@email.com"
               value={email} onChange={(e) => setEmail(e.target.value)}
@@ -193,7 +193,7 @@ export default function Register() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-white/70 text-xs tracking-wider uppercase">{t("register.nameLabel")}</Label>
+            <Label htmlFor="name" className="text-white/70 text-xs tracking-wider uppercase text-center block">{t("register.nameLabel")}</Label>
             <Input
               id="name" type="text" placeholder={t("register.namePlaceholder")}
               value={name} onChange={(e) => setName(e.target.value)}
@@ -203,7 +203,7 @@ export default function Register() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-white/70 text-xs tracking-wider uppercase">{t("register.passwordLabel")}</Label>
+            <Label htmlFor="password" className="text-white/70 text-xs tracking-wider uppercase text-center block">{t("register.passwordLabel")}</Label>
             <Input
               id="password" type="password" placeholder="••••••••"
               value={password} onChange={(e) => setPassword(e.target.value)}
@@ -214,7 +214,7 @@ export default function Register() {
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>至少 8 個字符，包含大小寫字母和數字</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirmPassword" className="text-white/70 text-xs tracking-wider uppercase">{t("register.confirmPasswordLabel")}</Label>
+            <Label htmlFor="confirmPassword" className="text-white/70 text-xs tracking-wider uppercase text-center block">{t("register.confirmPasswordLabel")}</Label>
             <Input
               id="confirmPassword" type="password" placeholder="••••••••"
               value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}

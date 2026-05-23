@@ -177,7 +177,7 @@ export default function Login() {
           />
           <div className="flex items-center gap-3 mb-1">
             <div className="h-px w-10" style={{ background: "linear-gradient(90deg, transparent, #c9a84c)" }} />
-            <span className="text-xs tracking-[0.3em] uppercase" style={{ color: "#c9a84c" }}>Trading Card Platform</span>
+            <span className="text-xs tracking-[0.2em] uppercase whitespace-nowrap" style={{ color: "#c9a84c" }}>Trading Card Platform</span>
             <div className="h-px w-10" style={{ background: "linear-gradient(90deg, #c9a84c, transparent)" }} />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide mt-2">{t("login.title")}</h1>
@@ -212,7 +212,7 @@ export default function Login() {
         {/* Email / Password form */}
         <form onSubmit={handleSubmit} className="space-y-4 mb-5">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-white/70 text-xs tracking-wider uppercase">Email</Label>
+            <Label htmlFor="email" className="text-white/70 text-xs tracking-wider uppercase text-center block">Email</Label>
             <Input
               id="email"
               type="email"
@@ -226,7 +226,7 @@ export default function Login() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-white/70 text-xs tracking-wider uppercase">{t("login.form.passwordLabel")}</Label>
+            <Label htmlFor="password" className="text-white/70 text-xs tracking-wider uppercase text-center block">{t("login.form.passwordLabel")}</Label>
             <Input
               id="password"
               type="password"
