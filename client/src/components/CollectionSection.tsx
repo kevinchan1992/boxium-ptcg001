@@ -346,24 +346,40 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
       <BottomSheet
         open={open}
         onOpenChange={onOpenChange}
-        title={editItem ? t("profile.collection.editItem") : t("profile.collection.addCard")}
+        title={
+          <span className="font-black tracking-tight" style={{ color: "white", fontSize: "1.05rem" }}>
+            {editItem ? t("profile.collection.editItem") : t("profile.collection.addCard")}
+          </span>
+        }
         showCloseButton
+        handleStyle={{ background: `rgba(255,255,255,0.3)` }}
+        headerStyle={{ background: BRAND_BLUE, borderBottom: `1px solid ${BRAND_YELLOW}40`, color: "white" }}
       >
         {/* Step indicator (add mode only) */}
         {!editItem && (
-          <div className="flex items-center gap-2 mb-5">
-            {(["select", "details"] as const).map((s, i) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step === s ? "text-white" : i < (step === "details" ? 1 : 0) ? "text-white" : "text-gray-400 bg-gray-100"}`}
-                  style={step === s || (i === 0 && step === "details") ? { background: BRAND_BLUE } : {}}>
-                  {i + 1}
+          <div className="flex items-center gap-3 py-3 px-1 mb-2" style={{ background: `${BRAND_BLUE}08`, borderRadius: 12 }}>
+            {(["select", "details"] as const).map((s, i) => {
+              const isActive = step === s;
+              const isDone = i === 0 && step === "details";
+              return (
+                <div key={s} className="flex items-center gap-2">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-sm transition-all"
+                    style={isActive
+                      ? { background: BRAND_BLUE, color: "white", boxShadow: `0 2px 8px ${BRAND_BLUE}40` }
+                      : isDone
+                      ? { background: BRAND_YELLOW, color: BRAND_BLUE }
+                      : { background: "#e5e7eb", color: "#9ca3af" }}
+                  >
+                    {isDone ? "✓" : i + 1}
+                  </div>
+                  <span className="text-xs font-semibold" style={isActive ? { color: BRAND_BLUE } : isDone ? { color: BRAND_YELLOW } : { color: "#9ca3af" }}>
+                    {s === "select" ? t("profile.collection.form.step1") : t("profile.collection.form.step2")}
+                  </span>
+                  {i === 0 && <div className="w-8 h-px" style={{ background: isDone ? BRAND_YELLOW : "#e5e7eb" }} />}
                 </div>
-                <span className={`text-xs font-medium ${step === s ? "text-gray-900" : "text-gray-400"}`}>
-                  {s === "select" ? t("profile.collection.form.step1") : t("profile.collection.form.step2")}
-                </span>
-                {i === 0 && <div className="w-6 h-px bg-gray-200" />}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -372,25 +388,27 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
           <div className="space-y-4 pb-6">
             <p className="text-sm text-gray-500">{t("profile.collection.emptyHint")}</p>
             <div className="grid grid-cols-2 gap-3">
+              {/* Text search button */}
               <button
                 onClick={() => setShowCardPicker(true)}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-dashed transition-all hover:border-opacity-80"
-                style={{ borderColor: BRAND_BLUE, background: `${BRAND_BLUE}04` }}
+                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all active:scale-95 hover:shadow-md"
+                style={{ borderColor: BRAND_BLUE, background: `${BRAND_BLUE}06` }}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${BRAND_BLUE}12` }}>
-                  <Search className="w-6 h-6" style={{ color: BRAND_BLUE }} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: BRAND_BLUE }}>
+                  <Search className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.searchCard")}</span>
+                <span className="text-sm font-bold" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.searchCard")}</span>
               </button>
+              {/* Photo search button */}
               <button
                 onClick={() => setShowPhotoSearch(true)}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-dashed transition-all hover:border-opacity-80"
-                style={{ borderColor: BRAND_YELLOW, background: `${BRAND_YELLOW}08` }}
+                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all active:scale-95 hover:shadow-md"
+                style={{ borderColor: BRAND_YELLOW, background: `${BRAND_YELLOW}10` }}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${BRAND_YELLOW}20` }}>
-                  <Camera className="w-6 h-6 text-amber-600" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: BRAND_YELLOW }}>
+                  <Camera className="w-6 h-6" style={{ color: BRAND_BLUE }} />
                 </div>
-                <span className="text-sm font-semibold text-amber-700">{t("profile.collection.form.photoSearch")}</span>
+                <span className="text-sm font-bold" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.photoSearch")}</span>
               </button>
             </div>
           </div>
@@ -399,33 +417,44 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
         {/* Step 2: Fill details */}
         {step === "details" && (
           <div className="space-y-4 pb-6">
-            {/* Selected card preview */}
+            {/* Selected card preview — brand blue card */}
             {form.cardId > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: `${BRAND_BLUE}20`, background: `${BRAND_BLUE}04` }}>
-                {form.cardImageUrl && (
-                  <img src={form.cardImageUrl} alt={form.cardName} className="w-12 h-16 object-contain rounded-lg bg-white shadow-sm" />
+              <div
+                className="flex items-center gap-3 p-3 rounded-2xl relative overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`, boxShadow: `0 4px 16px ${BRAND_BLUE}40` }}
+              >
+                {/* Yellow accent bar */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: BRAND_YELLOW }} />
+                {form.cardImageUrl ? (
+                  <img src={form.cardImageUrl} alt={form.cardName} className="w-12 h-16 object-contain rounded-xl bg-white/10 shadow-lg ml-1" />
+                ) : (
+                  <div className="w-12 h-16 rounded-xl bg-white/10 flex items-center justify-center ml-1">
+                    <Package className="w-6 h-6 text-white/50" />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-gray-900 truncate">{form.cardName}</p>
-                  {form.cardSeries && <p className="text-xs text-gray-400 truncate">{form.cardSeries}</p>}
+                  <p className="font-black text-sm text-white truncate leading-tight">{form.cardName}</p>
+                  {form.cardSeries && <p className="text-xs mt-0.5 truncate" style={{ color: `${BRAND_YELLOW}cc` }}>{form.cardSeries}</p>}
                 </div>
                 {!editItem && (
-                  <button onClick={() => setStep("select")} className="text-gray-400 hover:text-gray-600 p-1">
-                    <X className="w-4 h-4" />
+                  <button onClick={() => setStep("select")} className="w-7 h-7 rounded-full flex items-center justify-center transition-colors" style={{ background: "rgba(255,255,255,0.15)", color: "white" }}>
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
             )}
 
             {/* Grader */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.grader")}</Label>
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.grader")}</Label>
               <div className="flex flex-wrap gap-2">
                 {GRADERS.map(g => (
                   <button key={g}
                     onClick={() => handleGraderChange(g)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${form.grader === g ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"}`}
-                    style={form.grader === g ? { background: BRAND_BLUE } : {}}
+                    className="px-4 py-2 rounded-full text-xs font-black border-2 transition-all active:scale-95"
+                    style={form.grader === g
+                      ? { background: BRAND_BLUE, borderColor: BRAND_BLUE, color: "white", boxShadow: `0 2px 8px ${BRAND_BLUE}40` }
+                      : { background: "white", borderColor: "#e5e7eb", color: "#6b7280" }}
                   >
                     {g}
                   </button>
@@ -435,15 +464,15 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
 
             {/* Grade */}
             {(GRADER_GRADES[form.grader]?.length ?? 0) > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.grade")}</Label>
+              <div className="space-y-2">
+                <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.grade")}</Label>
                 <Select value={form.grade} onValueChange={(v) => setForm(f => ({ ...f, grade: v }))}>
-                  <SelectTrigger className="bg-white border-gray-200">
+                  <SelectTrigger className="h-11 font-bold border-2" style={{ borderColor: `${BRAND_BLUE}30` }}>
                     <SelectValue placeholder={t("profile.collection.form.selectGrade")} />
                   </SelectTrigger>
                   <SelectContent>
                     {GRADER_GRADES[form.grader].map(g => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                      <SelectItem key={g} value={g} className="font-semibold">{g}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -451,66 +480,100 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
             )}
 
             {/* Quantity */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.quantity")}</Label>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setForm(f => ({ ...f, quantity: Math.max(1, f.quantity - 1) }))}
-                  className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.quantity")}</Label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setForm(f => ({ ...f, quantity: Math.max(1, f.quantity - 1) }))}
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg transition-all active:scale-90 border-2"
+                  style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE, background: `${BRAND_BLUE}06` }}
+                >
                   <Minus className="w-4 h-4" />
                 </button>
-                <Input type="number" min={1} max={999} value={form.quantity}
-                  onChange={(e) => setForm(f => ({ ...f, quantity: Math.max(1, parseInt(e.target.value) || 1) }))}
-                  className="w-20 text-center font-bold border-gray-200" />
-                <button onClick={() => setForm(f => ({ ...f, quantity: Math.min(999, f.quantity + 1) }))}
-                  className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
+                <div
+                  className="flex-1 h-10 flex items-center justify-center rounded-xl font-black text-lg tabular-nums border-2"
+                  style={{ borderColor: `${BRAND_BLUE}30`, color: BRAND_BLUE }}
+                >
+                  {form.quantity}
+                </div>
+                <button
+                  onClick={() => setForm(f => ({ ...f, quantity: Math.min(999, f.quantity + 1) }))}
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg transition-all active:scale-90"
+                  style={{ background: BRAND_BLUE, color: "white" }}
+                >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Purchase price */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.purchasePrice")}</Label>
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.purchasePrice")}</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">HKD</span>
-                <Input type="number" min={0} step="0.01" placeholder="0.00"
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center rounded-l-xl font-black text-xs"
+                  style={{ background: BRAND_BLUE, color: BRAND_YELLOW }}
+                >
+                  HKD
+                </div>
+                <Input
+                  type="number" min={0} step="0.01" placeholder="0.00"
                   value={form.purchasePrice}
                   onChange={(e) => setForm(f => ({ ...f, purchasePrice: e.target.value }))}
-                  className="pl-12 border-gray-200" />
+                  className="pl-16 h-11 font-bold border-2 text-right pr-4"
+                  style={{ borderColor: `${BRAND_BLUE}30` }}
+                />
               </div>
             </div>
 
             {/* Purchase date */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.purchasedAt")}</Label>
-              <Input type="date" value={form.purchasedAt}
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.purchasedAt")}</Label>
+              <Input
+                type="date" value={form.purchasedAt}
                 onChange={(e) => setForm(f => ({ ...f, purchasedAt: e.target.value }))}
-                className="border-gray-200" />
+                className="h-11 font-semibold border-2"
+                style={{ borderColor: `${BRAND_BLUE}30` }}
+              />
             </div>
 
             {/* Notes */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{t("profile.collection.form.notes")}</Label>
-              <Textarea rows={2} placeholder={t("profile.collection.form.notesPlaceholder")}
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.notes")}</Label>
+              <Textarea
+                rows={2}
+                placeholder={t("profile.collection.form.notesPlaceholder")}
                 value={form.notes}
                 onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
-                className="border-gray-200 resize-none" />
+                className="border-2 resize-none font-medium"
+                style={{ borderColor: `${BRAND_BLUE}30` }}
+              />
             </div>
 
             {/* Public toggle */}
-            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50">
+            <div
+              className="flex items-center justify-between p-4 rounded-2xl border-2"
+              style={{ borderColor: form.isPublic ? `${BRAND_YELLOW}60` : `${BRAND_BLUE}15`, background: form.isPublic ? `${BRAND_YELLOW}08` : `${BRAND_BLUE}04` }}
+            >
               <div>
-                <p className="text-sm font-semibold text-gray-800">{t("profile.collection.form.isPublic")}</p>
-                <p className="text-xs text-gray-400">{t("profile.collection.form.isPublicHint")}</p>
+                <p className="text-sm font-black" style={{ color: BRAND_BLUE }}>{t("profile.collection.form.isPublic")}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t("profile.collection.form.isPublicHint")}</p>
               </div>
-              <Switch checked={form.isPublic} onCheckedChange={(v) => setForm(f => ({ ...f, isPublic: v }))}
-                style={form.isPublic ? { background: BRAND_YELLOW } : {}} />
+              <Switch
+                checked={form.isPublic}
+                onCheckedChange={(v) => setForm(f => ({ ...f, isPublic: v }))}
+                style={form.isPublic ? { background: BRAND_YELLOW } : {}}
+              />
             </div>
 
             {/* Save button */}
-            <Button onClick={handleSubmit} disabled={isSaving} className="w-full h-12 text-base font-bold rounded-xl"
-              style={{ background: BRAND_BLUE, color: "white" }}>
-              {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+            <Button
+              onClick={handleSubmit}
+              disabled={isSaving}
+              className="w-full h-13 text-base font-black rounded-2xl tracking-wide transition-all active:scale-98"
+              style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`, color: "white", boxShadow: `0 4px 16px ${BRAND_BLUE}40`, height: 52 }}
+            >
+              {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Star className="w-4 h-4 mr-2" style={{ color: BRAND_YELLOW }} />}
               {t("profile.collection.form.save")}
             </Button>
           </div>

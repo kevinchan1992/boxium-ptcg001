@@ -34,6 +34,12 @@ interface BottomSheetProps {
   className?: string;
   /** Whether to show the close button (default: true) */
   showCloseButton?: boolean;
+  /** Extra inline styles applied to the header bar */
+  headerStyle?: React.CSSProperties;
+  /** Extra classes applied to the header bar */
+  headerClassName?: string;
+  /** Extra inline styles applied to the drag handle pill */
+  handleStyle?: React.CSSProperties;
 }
 
 /** Minimum downward drag distance (px) to trigger dismiss */
@@ -66,6 +72,9 @@ export function BottomSheet({
   children,
   className,
   showCloseButton = true,
+  headerStyle,
+  headerClassName,
+  handleStyle,
 }: BottomSheetProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const isDesktop = useIsDesktop();
@@ -249,6 +258,7 @@ export function BottomSheet({
           {/* ── Drag handle (mobile/tablet only) — touch/mouse target for swipe ── */}
           <div
             className="flex justify-center pt-3 pb-1 lg:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+            style={handleStyle}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -258,8 +268,9 @@ export function BottomSheet({
             <div
               className={cn(
                 "w-10 h-1 rounded-full transition-colors duration-150",
-                isDragging ? "bg-muted-foreground/60" : "bg-muted-foreground/30"
+                !handleStyle && (isDragging ? "bg-muted-foreground/60" : "bg-muted-foreground/30")
               )}
+              style={handleStyle ? { background: isDragging ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.3)" } : undefined}
             />
           </div>
 
@@ -268,8 +279,10 @@ export function BottomSheet({
             <div
               className={cn(
                 "flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-border/50 min-w-0",
-                "lg:cursor-default cursor-grab active:cursor-grabbing touch-none select-none lg:select-auto lg:touch-auto"
+                "lg:cursor-default cursor-grab active:cursor-grabbing touch-none select-none lg:select-auto lg:touch-auto",
+                headerClassName
               )}
+              style={headerStyle}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -277,7 +290,10 @@ export function BottomSheet({
             >
               <div className="flex-1 min-w-0 overflow-hidden">
                 {title && (
-                  <DialogPrimitive.Title className="text-base font-semibold text-foreground leading-tight truncate">
+                  <DialogPrimitive.Title
+                    className="text-base font-semibold leading-tight truncate"
+                    style={headerStyle ? { color: "inherit" } : undefined}
+                  >
                     {title}
                   </DialogPrimitive.Title>
                 )}
@@ -289,7 +305,8 @@ export function BottomSheet({
               </div>
               {showCloseButton && (
                 <DialogPrimitive.Close
-                  className="ml-2 flex-shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="ml-2 flex-shrink-0 rounded-full p-1.5 transition-colors"
+                  style={headerStyle ? { color: "inherit", opacity: 0.7 } : { color: "var(--muted-foreground)" }}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                 >
