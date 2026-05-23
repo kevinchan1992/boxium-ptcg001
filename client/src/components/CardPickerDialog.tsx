@@ -41,11 +41,11 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
   const debouncedQuery = useDebounce(query, 400);
 
   const { data, isLoading } = trpc.cards.search.useQuery(
-    { query: debouncedQuery, limit: 20 },
+    { query: debouncedQuery, limit: 20, cardsOnly: true },
     { enabled: debouncedQuery.trim().length >= 1 }
   );
 
-  // cards.search returns { cards: [...], total }
+  // cards.search with cardsOnly returns { cards: [...], items: [...], total }
   const results = data?.cards ?? [];
 
   const handleSelect = useCallback((card: (typeof results)[number]) => {

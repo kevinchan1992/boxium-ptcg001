@@ -118,27 +118,43 @@ async function getCroppedImg(image: HTMLImageElement, crop: CropType): Promise<s
 }
 
 // ─── Stats Card ───────────────────────────────────────────────
-function StatCard({ label, value, sub, icon, accent, glow }: {
-  label: string; value: string; sub?: string; icon: React.ReactNode; accent?: string; glow?: boolean;
+function StatCard({ label, value, sub, icon, accent, glow, highlight }: {
+  label: string; value: string; sub?: string; icon: React.ReactNode; accent?: string; glow?: boolean; highlight?: 'yellow' | 'blue' | 'default';
 }) {
   const isGain = accent === GAIN_GREEN;
   const isLoss = accent === LOSS_RED;
+  const isYellow = highlight === 'yellow';
+  const isBlue = highlight === 'blue';
+
+  const accentBarColor = isGain ? GAIN_GREEN : isLoss ? LOSS_RED : isYellow ? BRAND_YELLOW : isBlue ? BRAND_BLUE : BRAND_BLUE;
+  const iconBg = isGain ? '#dcfce7' : isLoss ? '#fee2e2' : isYellow ? `${BRAND_YELLOW}50` : `${BRAND_BLUE}12`;
+  const valueColor = isGain ? GAIN_GREEN : isLoss ? LOSS_RED : isYellow ? '#1a1200' : isBlue ? BRAND_BLUE : '#111827';
+
   return (
     <div
-      className="relative bg-white rounded-2xl p-4 flex flex-col gap-1 overflow-hidden"
-      style={{ border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+      className="relative rounded-2xl p-4 flex flex-col gap-1 overflow-hidden"
+      style={{
+        border: isYellow ? `1.5px solid ${BRAND_YELLOW}` : '1px solid #e5e7eb',
+        background: isYellow
+          ? `linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)`
+          : 'white',
+        boxShadow: isYellow
+          ? `0 2px 10px ${BRAND_YELLOW}60`
+          : '0 1px 4px rgba(0,0,0,0.05)',
+      }}
     >
       {/* Left accent bar */}
       <div className="absolute left-0 top-4 bottom-4 w-[3px] rounded-full"
-        style={{ background: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : BRAND_BLUE }} />
+        style={{ background: accentBarColor }} />
       {/* Top row: label + icon */}
       <div className="flex items-center justify-between mb-1 pl-1">
-        <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+        <span className="text-xs font-semibold uppercase tracking-widest"
+          style={{ color: isYellow ? '#92700a' : '#9ca3af' }}>
           {label}
         </span>
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center"
-          style={{ background: isGain ? "#dcfce7" : isLoss ? "#fee2e2" : `${BRAND_BLUE}12` }}
+          style={{ background: iconBg }}
         >
           {icon}
         </div>
@@ -146,7 +162,7 @@ function StatCard({ label, value, sub, icon, accent, glow }: {
       {/* Main value */}
       <span
         className="text-xl font-black tabular-nums tracking-tight leading-none pl-1"
-        style={{ color: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : "#111827" }}
+        style={{ color: valueColor }}
       >
         {value}
       </span>
@@ -154,7 +170,7 @@ function StatCard({ label, value, sub, icon, accent, glow }: {
       {sub && (
         <span
           className="text-xs font-semibold tabular-nums pl-1"
-          style={{ color: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : "#9ca3af" }}
+          style={{ color: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : isYellow ? '#92700a' : '#9ca3af' }}
         >
           {sub}
         </span>
@@ -743,6 +759,8 @@ export function CollectionSection() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterGrader, setFilterGrader] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
 
   // Sheet state
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -755,10 +773,13 @@ export function CollectionSection() {
 
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
-  const { data: items = [], isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
-    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode },
+  const { data: collectionData, isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
+    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode, page: currentPage, limit: PAGE_SIZE },
     { retry: 1 }
   );
+  const items = collectionData?.items ?? [];
+  const totalItems = collectionData?.total ?? 0;
+  const totalPages = collectionData?.totalPages ?? 1;
 
   const removeMutation = trpc.profile.removeFromCollection.useMutation({
     onSuccess: () => {
@@ -801,8 +822,8 @@ export function CollectionSection() {
         <div>
           <h2 className="text-xl font-black tracking-tight" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
           <p className="text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
-            {items.length > 0
-              ? `${items.length} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
+            {totalItems > 0
+              ? `${totalItems} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
               : t("profile.collection.empty")}
           </p>
         </div>
@@ -810,7 +831,7 @@ export function CollectionSection() {
           {/* PDF export */}
           <div className="relative">
             <Button variant="outline" size="sm" onClick={() => setShowPdfMenu(!showPdfMenu)}
-              disabled={exportingPdf || items.length === 0}
+              disabled={exportingPdf || totalItems === 0}
               className="gap-1.5 text-xs border-gray-200 hover:border-gray-300">
               {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               PDF
@@ -843,18 +864,20 @@ export function CollectionSection() {
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
-      ) : stats && items.length > 0 ? (
+      ) : stats && totalItems > 0 ? (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               label={t("profile.collection.stats.totalMarketValue")}
               value={formatCurrency(stats.totalMarketValue)}
-              icon={<BarChart3 className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              icon={<BarChart3 className="w-4 h-4" style={{ color: '#92700a' }} />}
+              highlight="yellow"
             />
             <StatCard
               label={t("profile.collection.stats.totalCost")}
               value={formatCurrency(stats.totalCost)}
-              icon={<DollarSign className="w-4 h-4 text-gray-400" />}
+              icon={<DollarSign className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              highlight="blue"
             />
             <StatCard
               label={t("profile.collection.stats.unrealizedGain")}
@@ -869,7 +892,8 @@ export function CollectionSection() {
               label={t("profile.collection.stats.holdings")}
               value={`${stats.totalQuantity}`}
               sub={`${stats.totalItems} ${t("profile.collection.stats.entries")}`}
-              icon={<Package className="w-4 h-4 text-gray-400" />}
+              icon={<Package className="w-4 h-4" style={{ color: '#92700a' }} />}
+              highlight="yellow"
             />
           </div>
 
@@ -991,7 +1015,7 @@ export function CollectionSection() {
         <div className="space-y-3">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
         </div>
-      ) : items.length === 0 ? (
+      ) : totalItems === 0 ? (
         <div className="py-16 text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{ background: `${BRAND_BLUE}08` }}>
@@ -1007,6 +1031,50 @@ export function CollectionSection() {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Pagination info */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-1 py-1">
+              <span className="text-xs text-gray-400 font-medium">
+                第 {currentPage} / {totalPages} 頁 · 共 {totalItems} 筆
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all disabled:opacity-30 hover:bg-gray-100"
+                  style={{ color: BRAND_BLUE }}
+                >
+                  <ChevronDown className="w-3.5 h-3.5 rotate-90" />
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                  const p = startPage + i;
+                  if (p > totalPages) return null;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all"
+                      style={p === currentPage
+                        ? { background: BRAND_BLUE, color: 'white' }
+                        : { color: '#6b7280' }
+                      }
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all disabled:opacity-30 hover:bg-gray-100"
+                  style={{ color: BRAND_BLUE }}
+                >
+                  <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+                </button>
+              </div>
+            </div>
+          )}
           {(items as any[]).map((item) => {
             const gain = item.unrealizedGain;
             const gainPct = item.unrealizedGainPct;
@@ -1083,26 +1151,39 @@ export function CollectionSection() {
                         </button>
                       </div>
                     </div>
-                    {/* Price row */}
-                    <div
-                      className="flex items-center justify-between mt-2 pt-2"
-                      style={{ borderTop: "1px solid #f3f4f6" }}
-                    >
-                      <div>
-                        <p className="text-xs text-gray-400">{t("profile.collection.table.purchasePrice")}</p>
+                    {/* Price row — 購入價 vs 市場價 */}
+                    <div className="flex items-stretch gap-2 mt-2">
+                      {/* 購入價 — 左側淡灰底 */}
+                      <div
+                        className="flex-1 rounded-xl px-3 py-2"
+                        style={{ background: '#f8f9fa', border: '1px solid #e5e7eb' }}
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
+                          {t("profile.collection.table.purchasePrice")}
+                        </p>
                         <p className="text-sm font-bold tabular-nums text-gray-700">
                           {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-400">{t("profile.collection.table.marketPrice") ?? "市場價"}</p>
+                      {/* 市場價 — 右側黃色高亮 */}
+                      <div
+                        className="flex-1 rounded-xl px-3 py-2 text-right"
+                        style={{
+                          background: hasPrice ? `${BRAND_YELLOW}20` : '#f8f9fa',
+                          border: hasPrice ? `1px solid ${BRAND_YELLOW}80` : '1px solid #e5e7eb',
+                        }}
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+                          style={{ color: hasPrice ? '#92700a' : '#9ca3af' }}>
+                          {t("profile.collection.table.marketPrice") ?? "市場價"}
+                        </p>
                         {hasPrice ? (
                           <div>
                             <p className="text-sm font-black tabular-nums" style={{ color: BRAND_BLUE }}>
                               {formatCurrency(item.marketPrice)}
                             </p>
                             {isFallback && (
-                              <p className="text-xs text-gray-300">{t("profile.collection.table.fallbackNote")}</p>
+                              <p className="text-[10px] text-gray-400">{t("profile.collection.table.fallbackNote")}</p>
                             )}
                           </div>
                         ) : (
@@ -1146,6 +1227,30 @@ export function CollectionSection() {
               </div>
             );
           })}
+          {/* Bottom pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-2 pb-1">
+              <button
+                onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
+                style={{ background: currentPage === 1 ? '#f3f4f6' : `${BRAND_BLUE}10`, color: BRAND_BLUE, border: `1px solid ${BRAND_BLUE}20` }}
+              >
+                <ChevronDown className="w-3.5 h-3.5 rotate-90" />上一頁
+              </button>
+              <span className="text-xs font-bold" style={{ color: BRAND_BLUE }}>
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
+                style={{ background: currentPage === totalPages ? '#f3f4f6' : BRAND_BLUE, color: currentPage === totalPages ? '#9ca3af' : 'white', border: `1px solid ${currentPage === totalPages ? '#e5e7eb' : BRAND_BLUE}` }}
+              >
+                下一頁<ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 

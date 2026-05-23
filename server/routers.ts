@@ -60,16 +60,21 @@ export const appRouter = router({
         query: z.string(),
         limit: z.number().optional().default(20),
         offset: z.number().optional().default(0),
+        cardsOnly: z.boolean().optional().default(false),
       }))
       .query(async ({ input }) => {
-        // Search both cards and sealed products
+        // Search cards (always); search sealed products only if not cardsOnly
         let cardsResult: { cards: any[]; total: number };
-        let sealedResult: { products: any[]; total: number };
+        let sealedResult: { products: any[]; total: number } = { products: [], total: 0 };
         try {
-          [cardsResult, sealedResult] = await Promise.all([
-            db.searchCards(input.query, input.limit, input.offset),
-            db.searchSealedProducts(input.query, input.limit, input.offset),
-          ]);
+          if (input.cardsOnly) {
+            cardsResult = await db.searchCards(input.query, input.limit, input.offset);
+          } else {
+            [cardsResult, sealedResult] = await Promise.all([
+              db.searchCards(input.query, input.limit, input.offset),
+              db.searchSealedProducts(input.query, input.limit, input.offset),
+            ]);
+          }
         } catch (err: any) {
           const isTimeout = err?.message?.includes('Timeout') || err?.message?.includes('timeout');
           console.error(`[products.search] search failed (${isTimeout ? 'TIMEOUT' : 'ERROR'}):`, err?.message || err);
@@ -117,6 +122,7 @@ export const appRouter = router({
 
         return {
           items: allItems.slice(0, input.limit),
+          cards: cardItems.slice(0, input.limit),
           total: cardsResult.total + sealedResult.total,
         };
       }),
@@ -4864,10 +4870,23 @@ UNBREAKABLE RULES:
         grader: z.string().optional(),
         series: z.string().optional(),
         priceMode: z.enum(["psa10", "grade"]).optional(),
+        page: z.number().min(1).optional().default(1),
+        limit: z.number().min(1).max(100).optional().default(30),
       }).optional())
       .query(async ({ ctx, input }) => {
         const { getUserCollection } = await import("./collection");
-        return getUserCollection(ctx.user.id, input ?? {});
+        const allItems = await getUserCollection(ctx.user.id, input ?? {});
+        const page = input?.page ?? 1;
+        const limit = input?.limit ?? 30;
+        const offset = (page - 1) * limit;
+        const paginatedItems = allItems.slice(offset, offset + limit);
+        return {
+          items: paginatedItems,
+          total: allItems.length,
+          page,
+          limit,
+          totalPages: Math.ceil(allItems.length / limit),
+        };
       }),
     getCollectionStats: protectedProcedure
       .query(async ({ ctx }) => {
