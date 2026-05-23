@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
-import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink, ShoppingCart, Tag } from "lucide-react";
+import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink, ShoppingCart, Tag, BookmarkPlus } from "lucide-react";
 import { CardDetailSkeleton } from "@/components/PageSkeletons";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import { formatDate } from "@/lib/formatDate";
 import { ImageLightbox, ClickableCardImage } from "@/components/ImageLightbox";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { AddEditSheet } from "@/components/CollectionSection";
 
 const grades = ["PSA 10", "中古"];
 
@@ -28,6 +29,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const [, sealedParams] = useRoute("/sealed-product/:id");
   const [activeGrade, setActiveGrade] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showCollectionSheet, setShowCollectionSheet] = useState(false);
   const ebayRef = useRef<HTMLDivElement>(null);
 
   const cardId = sealedProductId ??
@@ -387,6 +389,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const priceTrend = calculatePriceTrend();
 
   return (
+    <>
     <div className="min-h-screen bg-background py-4 px-3 sm:py-6 sm:px-4 md:px-6">
       {/* Breadcrumb */}
       <Breadcrumb
@@ -473,8 +476,23 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   }`}
               >
                 <Heart className={`w-3.5 h-3.5 mr-1.5 ${watchlistStatus?.isInWatchlist ? "fill-current" : ""}`} />
-                {watchlistStatus?.isInWatchlist ? "從收藏中移除" : "加入收藏"}
+                {watchlistStatus?.isInWatchlist ? "從追蹤中移除" : "追蹤"}
               </Button>
+              {/* 加入個人收藏清單 — only for single cards */}
+              {!isSealedProduct && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!user) { toast.error("請先登入才能使用收藏功能"); setLocation("/login"); return; }
+                    setShowCollectionSheet(true);
+                  }}
+                  className="border-zinc-600 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-700"
+                >
+                  <BookmarkPlus className="w-3.5 h-3.5 mr-1.5" />
+                  加入收藏清單
+                </Button>
+              )}
               <ShareButton cardName={product.name} cardId={cardId!} />
             </div>
 
@@ -968,6 +986,23 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         <SimilarCardsSection cardId={cardId} series={product.series ?? null} cardName={product.name} />
       )}
     </div>
+
+    {/* ── Add to Collection Sheet (prefilled with current card) ── */}
+    {!isSealedProduct && (
+      <AddEditSheet
+        open={showCollectionSheet}
+        onOpenChange={setShowCollectionSheet}
+        editItem={null}
+        prefillCard={product && cardId ? {
+          id: cardId,
+          name: product.name,
+          imageUrl: product.imageUrl ?? null,
+          series: product.series ?? null,
+        } : null}
+        onSuccess={() => setShowCollectionSheet(false)}
+      />
+    )}
+    </>
   );
 }
 

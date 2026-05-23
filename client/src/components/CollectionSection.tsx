@@ -223,9 +223,10 @@ interface AddEditSheetProps {
   onOpenChange: (v: boolean) => void;
   editItem?: any | null;
   onSuccess: () => void;
+  prefillCard?: { id: number; name: string; imageUrl?: string | null; series?: string | null } | null;
 }
 
-function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetProps) {
+export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillCard }: AddEditSheetProps) {
   const { t } = useTranslation();
   const utils = trpc.useUtils();
   const [step, setStep] = useState<"select" | "details">(editItem ? "details" : "select");
@@ -268,7 +269,7 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
     onError: (e) => toast.error(t("profile.collection.updateFailed", { error: e.message })),
   });
 
-  // Populate form when editing
+  // Populate form when editing or prefilling from card detail page
   useEffect(() => {
     if (editItem) {
       setForm({
@@ -285,11 +286,14 @@ function AddEditSheet({ open, onOpenChange, editItem, onSuccess }: AddEditSheetP
         isPublic: editItem.isPublic ?? false,
       });
       setStep("details");
+    } else if (prefillCard) {
+      setForm(f => ({ ...DEFAULT_FORM, cardId: prefillCard.id, cardName: prefillCard.name, cardImageUrl: prefillCard.imageUrl ?? null, cardSeries: prefillCard.series ?? null }));
+      setStep("details");
     } else {
       setForm(DEFAULT_FORM);
       setStep("select");
     }
-  }, [editItem, open]);
+  }, [editItem, prefillCard, open]);
 
   const handleCardSelect = (card: SelectedCard) => {
     setForm(f => ({ ...f, cardId: card.id, cardName: card.name, cardImageUrl: card.imageUrl, cardSeries: card.series }));
