@@ -1886,6 +1886,8 @@ async function startServer() {
       "snkrdunk.com",
       "img.snkrdunk.com",
       "media.snkrdunk.com",
+      // CloudFront (Manus S3 CDN) - blocked by some browsers/CSP
+      "cloudfront.net",
     ];
     let parsedUrl: URL;
     try {

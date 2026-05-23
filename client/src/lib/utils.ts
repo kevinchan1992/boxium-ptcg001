@@ -14,6 +14,8 @@ const PROXY_HOSTS = [
   "snkrdunk.com",
   "img.snkrdunk.com",
   "media.snkrdunk.com",
+  // CloudFront (Manus S3 CDN) — blocked by some browsers/CSP configs
+  "cloudfront.net",
 ];
 
 export function getProxiedImageUrl(url: string | null | undefined): string | null {

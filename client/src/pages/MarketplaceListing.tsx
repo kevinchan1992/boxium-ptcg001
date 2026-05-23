@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COLOR, CONDITION_GROUPS, type ConditionValue } from "@/lib/conditions";
 import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -41,7 +42,8 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
   const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const imgs = images && images.length > 0 ? images : null;
+  const imgsRaw = images && images.length > 0 ? images : null;
+  const imgs = imgsRaw ? imgsRaw.map(u => getProxiedImageUrl(u) ?? u) : null;
 
   if (!imgs) {
     return (
@@ -105,7 +107,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
                   : "border-gray-200 hover:border-[#06038D]/50"
               }`}
             >
-              <img src={url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={getProxiedImageUrl(url) ?? url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -453,7 +455,7 @@ function SellerOtherListings({ sellerId, currentListingId }: { sellerId: number;
             >
               <div className="aspect-square bg-gray-50 overflow-hidden">
                 {cover
-                  ? <img src={cover} alt={l.title} className="w-full h-full object-cover" />
+                  ? <img src={getProxiedImageUrl(cover) ?? cover} alt={l.title} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-gray-300" /></div>
                 }
               </div>
@@ -861,7 +863,7 @@ export default function MarketplaceListing() {
                 const series = tcgLogos[(listing as any).tcgSeries as string];
                 return series ? (
                   <div className="mb-2">
-                    <img src={series.logo} alt={series.label} className="h-16 w-auto object-contain" />                  </div>
+                    <img src={getProxiedImageUrl(series.logo) ?? series.logo} alt={series.label} className="h-16 w-auto object-contain" />                  </div>
                 ) : null;
               })()}
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{listing.title}</h1>

@@ -18,6 +18,7 @@ import {
   type ConditionValue
 } from "@/lib/conditions";
 import { useTranslation } from "react-i18next";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 // ─── TCG Series Config (只保留 3 種 + 全部) ──────────────────────────────────
 
@@ -69,7 +70,8 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
     try { return listing.images ? JSON.parse(listing.images) : null; }
     catch { return null; }
   })();
-  const coverImage = images && images.length > 0 ? images[0] : null;
+  const coverImageRaw = images && images.length > 0 ? images[0] : null;
+  const coverImage = getProxiedImageUrl(coverImageRaw);
   const conditionKey = listing.condition as ConditionValue;
   const isWishlisted = wishlistIds?.includes(listing.id) ?? false;
 
@@ -92,7 +94,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
       <div className="relative aspect-square bg-gray-50 overflow-hidden">
         {coverImage ? (
           <img
-            src={coverImage}
+            src={coverImage ?? undefined}
             alt={listing.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -184,7 +186,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
           <div className="flex items-center gap-1.5">
             {listing.tcgSeries && TCG_SERIES_LOGO[listing.tcgSeries] && (
               <img
-                src={TCG_SERIES_LOGO[listing.tcgSeries]}
+                src={getProxiedImageUrl(TCG_SERIES_LOGO[listing.tcgSeries]) ?? undefined}
                 alt={TCG_SERIES_LABEL[listing.tcgSeries] ?? listing.tcgSeries}
                 className="h-6 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
               />
@@ -287,7 +289,7 @@ function SidebarFilter({
               >
                 {s.logo ? (
                   <img
-                    src={s.logo}
+                    src={getProxiedImageUrl(s.logo) ?? undefined}
                     alt={s.label}
                     className="w-12 h-7 object-contain flex-shrink-0"
                   />
@@ -948,7 +950,7 @@ export default function Marketplace() {
                     isActive ? 'bg-white shadow-sm' : ''
                   }`}>
                     <img
-                      src={s.logo}
+                      src={getProxiedImageUrl(s.logo) ?? undefined}
                       alt={s.label}
                       className="h-9 sm:h-10 w-auto object-contain"
                     />
