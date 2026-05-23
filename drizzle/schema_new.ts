@@ -1868,3 +1868,29 @@ export const snkrdunkGradeIndex = mysqlTable("snkrdunkGradeIndex", {
 }));
 export type SnkrdunkGradeIndex = typeof snkrdunkGradeIndex.$inferSelect;
 export type InsertSnkrdunkGradeIndex = typeof snkrdunkGradeIndex.$inferInsert;
+
+/**
+ * User Collections table - stores user's personal card collection (private asset ledger)
+ * Each row represents one collection entry (same card can have multiple entries with different grades)
+ */
+export const userCollections = mysqlTable("userCollections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),                          // FK to users.id
+  cardId: int("cardId").notNull(),                          // FK to cards.id
+  grader: varchar("grader", { length: 16 }).notNull(),      // 'PSA' | 'BGS' | 'TAG' | 'RAW' | 'UNGRADED'
+  grade: varchar("grade", { length: 32 }),                  // e.g. 'PSA 10', 'BGS 9.5', 'A'
+  quantity: int("quantity").notNull().default(1),            // number of copies held
+  purchasePrice: decimal("purchasePrice", { precision: 10, scale: 2 }), // purchase price in HKD (nullable)
+  purchasedAt: timestamp("purchasedAt"),                     // purchase date (nullable)
+  notes: text("notes"),                                      // user notes (nullable)
+  isPublic: boolean("isPublic").notNull().default(false),    // whether this entry is publicly visible
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("uc_userId_idx").on(table.userId),
+  cardIdIdx: index("uc_cardId_idx").on(table.cardId),
+  isPublicIdx: index("uc_isPublic_idx").on(table.isPublic),
+  userCardIdx: index("uc_userId_cardId_idx").on(table.userId, table.cardId),
+}));
+export type UserCollection = typeof userCollections.$inferSelect;
+export type InsertUserCollection = typeof userCollections.$inferInsert;

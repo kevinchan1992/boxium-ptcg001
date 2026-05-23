@@ -1519,7 +1519,9 @@
       "stats": "統計",
       "statsShort": "統計",
       "watchlist": "ウォッチリスト",
-      "watchlistShort": "ウォッチ"
+      "watchlistShort": "ウォッチ",
+      "collection": "コレクション",
+      "collectionShort": "コレクション"
     },
     "user": "ユーザー",
     "watchlist": {
@@ -1563,6 +1565,109 @@
         "item": "商品",
         "price": "価格",
         "status": "ステータス"
+      }
+    },
+    "collection": {
+      "title": "マイコレクション",
+      "shortTitle": "コレクション",
+      "addCard": "コレクションに追加",
+      "editItem": "編集",
+      "deleteItem": "削除",
+      "confirmDelete": "このコレクションエントリを削除してもよろしいですか？",
+      "deleteSuccess": "削除しました",
+      "deleteFailed": "削除失敗：{{error}}",
+      "addSuccess": "コレクションに追加しました",
+      "addFailed": "追加失敗：{{error}}",
+      "updateSuccess": "コレクションを更新しました",
+      "updateFailed": "更新失敗：{{error}}",
+      "empty": "コレクションはまだ空です",
+      "emptyHint": "カード名で検索するか、写真をスキャンしてコレクションを始めましょう",
+      "stats": {
+        "totalMarketValue": "総市場価値",
+        "totalCost": "購入コスト",
+        "unrealizedGain": "含み損益",
+        "holdings": "保有",
+        "cards": "枚",
+        "entries": "件",
+        "top3Gainers": "上昇率 Top 3"
+      },
+      "table": {
+        "card": "カード",
+        "grade": "グレード",
+        "qty": "数量",
+        "purchasePrice": "購入価格",
+        "marketPrice": "市場参考価格",
+        "pnl": "損益",
+        "purchasedAt": "購入日",
+        "actions": "操作",
+        "noPrice": "価格データなし",
+        "fallbackNote": "PSA 10 参考"
+      },
+      "priceMode": {
+        "label": "価格モード",
+        "psa10": "PSA 10 基準",
+        "grade": "グレード別"
+      },
+      "filter": {
+        "allGraders": "全グレーダー",
+        "allSeries": "全シリーズ",
+        "sortBy": "並び替え",
+        "sortByCreatedAt": "追加日",
+        "sortByPurchasedAt": "購入日",
+        "sortByMarketValue": "市場価値",
+        "sortByGain": "損益率"
+      },
+      "form": {
+        "searchCard": "カードを検索",
+        "searchPlaceholder": "カード名を入力して検索...",
+        "photoSearch": "写真検索",
+        "photoHint": "カードの写真をアップロードしてAI識別",
+        "selectedCard": "選択したカード",
+        "grader": "グレーディング会社",
+        "grade": "グレード",
+        "quantity": "数量",
+        "purchasePrice": "購入価格（HKD）",
+        "purchasedAt": "購入日",
+        "notes": "メモ",
+        "notesPlaceholder": "例：購入場所、状態メモ...",
+        "isPublic": "公開する",
+        "isPublicHint": "公開すると他のユーザーが閲覧できます",
+        "save": "保存",
+        "cancel": "キャンセル",
+        "step1": "カードを選択",
+        "step2": "詳細を入力",
+        "selectGrader": "グレーダーを選択",
+        "selectGrade": "グレードを選択",
+        "gradeOptional": "グレード（任意）"
+      },
+      "graders": {
+        "PSA": "PSA",
+        "BGS": "BGS",
+        "TAG": "TAG",
+        "RAW": "RAW",
+        "UNGRADED": "未評価"
+      },
+      "pdf": {
+        "export": "PDFエクスポート",
+        "exportAll": "全件エクスポート",
+        "exportPublic": "公開のみエクスポート",
+        "generating": "PDF生成中...",
+        "success": "PDF準備完了、ダウンロード中...",
+        "failed": "PDF生成失敗：{{error}}"
+      },
+      "imageSearch": {
+        "title": "写真カード検索",
+        "hint": "カードの写真をアップロードするとAIが識別してデータベースと照合します",
+        "upload": "写真をアップロード",
+        "camera": "撮影",
+        "analyzing": "画像を分析中...",
+        "identifying": "カードを識別中...",
+        "matching": "データベースと照合中...",
+        "results": "識別結果",
+        "confidence": "信頼度",
+        "selectMatch": "このカードを選択",
+        "noMatch": "識別できませんでした。手動で検索してください",
+        "retry": "再試行"
       }
     }
   },

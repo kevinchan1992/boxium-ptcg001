@@ -9314,3 +9314,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 14 vitest tests pass (server/delete-account.test.ts)
 - [x] Fix image not displaying: CSP img-src added https://*.cloudfront.net (marketplace images and game logos were blocked by CSP)
 - [x] Optimize SNKRDUNK batch update speed: v10.0 restored adaptive parallelism (P=2-3), reduced DELAY_BETWEEN_BATCHES 500ms→150ms, expected 3-4x speedup
+
+## My Collection Feature (2026-05-23)
+- [x] DB schema: add userCollections table + migrate
+- [x] Backend: profile.collection.* CRUD API (add/update/remove/getAll/getStats)
+- [x] Backend: PDF export API (pdfkit + S3 upload)
+- [x] i18n translation keys (zh-TW / en / ja)
+- [x] Profile navItems: add "My Collection" entry
+- [x] Collection Dashboard stats (4 cards) + Top 3 gainers
+- [x] Collection list (desktop Table + mobile Card list)
+- [x] Add collection BottomSheet (text search flow)
+- [x] Photo scan integration (AI + candidate list)
+- [x] Edit / Delete functionality
+- [x] Filter / Sort functionality
+- [x] Market price mode toggle (PSA 10 / grade-based)
+- [x] Public share toggle (isPublic field + UI indicator)
+- [x] PDF export frontend (loading + auto download)
+- [x] Vitest tests (collection.test.ts) — 23 tests pass

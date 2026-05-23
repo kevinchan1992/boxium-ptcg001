@@ -4850,14 +4850,84 @@ UNBREAKABLE RULES:
       }),
 
     // Get watchlist statistics
-    getWatchlistStats: protectedProcedure
+        getWatchlistStats: protectedProcedure
       .query(async ({ ctx }) => {
         const { getUserWatchlistStats } = await import("./profile");
         const stats = await getUserWatchlistStats(ctx.user.id);
         return stats;
       }),
+    // ─── Collection procedures ────────────────────────────────────────────────
+    getCollection: protectedProcedure
+      .input(z.object({
+        sortBy: z.enum(["marketValue", "gain", "purchasedAt", "createdAt"]).optional(),
+        sortOrder: z.enum(["asc", "desc"]).optional(),
+        grader: z.string().optional(),
+        series: z.string().optional(),
+        priceMode: z.enum(["psa10", "grade"]).optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getUserCollection } = await import("./collection");
+        return getUserCollection(ctx.user.id, input ?? {});
+      }),
+    getCollectionStats: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserCollectionStats } = await import("./collection");
+        return getUserCollectionStats(ctx.user.id);
+      }),
+    addToCollection: protectedProcedure
+      .input(z.object({
+        cardId: z.number(),
+        grader: z.string(),
+        grade: z.string().nullable().optional(),
+        quantity: z.number().min(1).max(999).optional(),
+        purchasePrice: z.number().nullable().optional(),
+        purchasedAt: z.date().nullable().optional(),
+        notes: z.string().max(500).nullable().optional(),
+        isPublic: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { addToCollection } = await import("./collection");
+        return addToCollection(ctx.user.id, input);
+      }),
+    updateCollectionItem: protectedProcedure
+      .input(z.object({
+        itemId: z.number(),
+        grader: z.string().optional(),
+        grade: z.string().nullable().optional(),
+        quantity: z.number().min(1).max(999).optional(),
+        purchasePrice: z.number().nullable().optional(),
+        purchasedAt: z.date().nullable().optional(),
+        notes: z.string().max(500).nullable().optional(),
+        isPublic: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { updateCollectionItem } = await import("./collection");
+        const { itemId, ...data } = input;
+        return updateCollectionItem(ctx.user.id, itemId, data);
+      }),
+    removeFromCollection: protectedProcedure
+      .input(z.object({ itemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { removeFromCollection } = await import("./collection");
+        return removeFromCollection(ctx.user.id, input.itemId);
+      }),
+    exportCollectionPdf: protectedProcedure
+      .input(z.object({
+        publicOnly: z.boolean().optional(),
+      }).optional())
+      .mutation(async ({ ctx, input }) => {
+        const { getUserCollection, getUserCollectionStats } = await import("./collection");
+        const { generateCollectionPdf } = await import("./collectionPdf");
+        let items = await getUserCollection(ctx.user.id, { priceMode: "psa10" });
+        if (input?.publicOnly) {
+          items = items.filter((i) => i.isPublic);
+        }
+        const stats = await getUserCollectionStats(ctx.user.id);
+        const userName = ctx.user.name ?? ctx.user.email ?? "Collector";
+        const pdfUrl = await generateCollectionPdf(userName, items, stats);
+        return { url: pdfUrl };
+      }),
   }),
-
   marketplace: marketplaceRouter,
   contact: contactRouter,
   notifications: notificationsRouter,

@@ -38,6 +38,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
+import { CollectionSection } from "@/components/CollectionSection";
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -121,6 +122,7 @@ export default function Profile() {
     { id: "offers", icon: <Tag className="w-4 h-4" />, label: t("profile.nav.offers") },
     { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: t("profile.nav.auctions"), badge: activeBidsCount > 0 ? activeBidsCount : undefined },
     { id: "notifications", icon: <Bell className="w-4 h-4" />, label: t("profile.nav.notifications"), badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
+    { id: "collection", icon: <Package className="w-4 h-4" />, label: t("profile.tabs.collection") },
   ];
 
   if (userLoading) {
@@ -332,6 +334,7 @@ export default function Profile() {
                 {activeSection === "offers" && <EmbeddedOffersSection userId={user.id} />}
                 {activeSection === "auctions" && <MyAuctionsSection bids={myBidsData ?? []} />}
                 {activeSection === "notifications" && <EmbeddedNotificationsSection />}
+                {activeSection === "collection" && <CollectionSection />}
               </div>
             </div>
           </div>

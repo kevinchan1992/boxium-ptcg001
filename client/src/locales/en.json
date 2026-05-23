@@ -1519,7 +1519,9 @@
       "stats": "Statistics",
       "statsShort": "Stats",
       "watchlist": "Watchlist",
-      "watchlistShort": "Watch"
+      "watchlistShort": "Watch",
+      "collection": "My Collection",
+      "collectionShort": "Collection"
     },
     "user": "User",
     "watchlist": {
@@ -1563,6 +1565,109 @@
         "item": "Item",
         "price": "Price",
         "status": "Status"
+      }
+    },
+    "collection": {
+      "title": "My Collection",
+      "shortTitle": "Collection",
+      "addCard": "Add to Collection",
+      "editItem": "Edit Entry",
+      "deleteItem": "Delete Entry",
+      "confirmDelete": "Are you sure you want to delete this collection entry?",
+      "deleteSuccess": "Entry deleted",
+      "deleteFailed": "Delete failed: {{error}}",
+      "addSuccess": "Added to collection",
+      "addFailed": "Failed to add: {{error}}",
+      "updateSuccess": "Collection updated",
+      "updateFailed": "Update failed: {{error}}",
+      "empty": "Your collection is empty",
+      "emptyHint": "Search by name or scan a card photo to start your collection",
+      "stats": {
+        "totalMarketValue": "Total Market Value",
+        "totalCost": "Total Cost",
+        "unrealizedGain": "Unrealized P&L",
+        "holdings": "Holdings",
+        "cards": "cards",
+        "entries": "entries",
+        "top3Gainers": "Top 3 Gainers"
+      },
+      "table": {
+        "card": "Card",
+        "grade": "Grade",
+        "qty": "Qty",
+        "purchasePrice": "Purchase",
+        "marketPrice": "Market Price",
+        "pnl": "P&L",
+        "purchasedAt": "Purchase Date",
+        "actions": "Actions",
+        "noPrice": "No price data",
+        "fallbackNote": "Ref. PSA 10"
+      },
+      "priceMode": {
+        "label": "Price Mode",
+        "psa10": "PSA 10 Reference",
+        "grade": "Grade-matched"
+      },
+      "filter": {
+        "allGraders": "All Graders",
+        "allSeries": "All Series",
+        "sortBy": "Sort by",
+        "sortByCreatedAt": "Date Added",
+        "sortByPurchasedAt": "Purchase Date",
+        "sortByMarketValue": "Market Value",
+        "sortByGain": "P&L %"
+      },
+      "form": {
+        "searchCard": "Search Card",
+        "searchPlaceholder": "Type card name to search...",
+        "photoSearch": "Photo Search",
+        "photoHint": "Upload a card photo for AI identification",
+        "selectedCard": "Selected Card",
+        "grader": "Grading Company",
+        "grade": "Grade",
+        "quantity": "Quantity",
+        "purchasePrice": "Purchase Price (HKD)",
+        "purchasedAt": "Purchase Date",
+        "notes": "Notes",
+        "notesPlaceholder": "e.g. purchase location, condition notes...",
+        "isPublic": "Make Public",
+        "isPublicHint": "Allow others to view this entry",
+        "save": "Save",
+        "cancel": "Cancel",
+        "step1": "Select Card",
+        "step2": "Fill Details",
+        "selectGrader": "Select Grader",
+        "selectGrade": "Select Grade",
+        "gradeOptional": "Grade (optional)"
+      },
+      "graders": {
+        "PSA": "PSA",
+        "BGS": "BGS",
+        "TAG": "TAG",
+        "RAW": "RAW",
+        "UNGRADED": "Ungraded"
+      },
+      "pdf": {
+        "export": "Export PDF",
+        "exportAll": "Export All",
+        "exportPublic": "Export Public Only",
+        "generating": "Generating PDF...",
+        "success": "PDF ready, downloading...",
+        "failed": "PDF generation failed: {{error}}"
+      },
+      "imageSearch": {
+        "title": "Photo Card Search",
+        "hint": "Upload a card photo and AI will identify and match it from the database",
+        "upload": "Upload Photo",
+        "camera": "Take Photo",
+        "analyzing": "Analyzing image...",
+        "identifying": "Identifying card...",
+        "matching": "Matching database...",
+        "results": "Results",
+        "confidence": "Confidence",
+        "selectMatch": "Select This Card",
+        "noMatch": "Could not identify, please search manually",
+        "retry": "Try Again"
       }
     }
   },

@@ -1519,7 +1519,9 @@
       "stats": "收藏統計",
       "statsShort": "統計",
       "watchlist": "關注清單",
-      "watchlistShort": "關注"
+      "watchlistShort": "關注",
+      "collection": "個人收藏",
+      "collectionShort": "收藏"
     },
     "user": "用戶",
     "watchlist": {
@@ -1563,6 +1565,109 @@
         "item": "商品",
         "price": "價格",
         "status": "狀態"
+      }
+    },
+    "collection": {
+      "title": "我的收藏",
+      "shortTitle": "收藏",
+      "addCard": "新增收藏",
+      "editItem": "編輯收藏",
+      "deleteItem": "刪除收藏",
+      "confirmDelete": "確定要刪除這筆收藏記錄嗎？",
+      "deleteSuccess": "已刪除收藏",
+      "deleteFailed": "刪除失敗：{{error}}",
+      "addSuccess": "已新增至收藏",
+      "addFailed": "新增失敗：{{error}}",
+      "updateSuccess": "收藏已更新",
+      "updateFailed": "更新失敗：{{error}}",
+      "empty": "您的收藏還是空的",
+      "emptyHint": "透過文字搜尋或拍照識別，將您的卡牌加入收藏",
+      "stats": {
+        "totalMarketValue": "總市值",
+        "totalCost": "購入成本",
+        "unrealizedGain": "未實現盈虧",
+        "holdings": "持有",
+        "cards": "張",
+        "entries": "筆",
+        "top3Gainers": "升值 Top 3"
+      },
+      "table": {
+        "card": "卡牌",
+        "grade": "等級",
+        "qty": "數量",
+        "purchasePrice": "購入價",
+        "marketPrice": "市場參考價",
+        "pnl": "盈虧",
+        "purchasedAt": "購入日期",
+        "actions": "操作",
+        "noPrice": "暫無價格",
+        "fallbackNote": "參考 PSA 10"
+      },
+      "priceMode": {
+        "label": "市場價模式",
+        "psa10": "統一 PSA 10",
+        "grade": "對應等級"
+      },
+      "filter": {
+        "allGraders": "全部評級",
+        "allSeries": "全部系列",
+        "sortBy": "排序",
+        "sortByCreatedAt": "新增時間",
+        "sortByPurchasedAt": "購入日期",
+        "sortByMarketValue": "市場價值",
+        "sortByGain": "盈虧比例"
+      },
+      "form": {
+        "searchCard": "搜尋卡牌",
+        "searchPlaceholder": "輸入卡牌名稱搜尋...",
+        "photoSearch": "拍照識別",
+        "photoHint": "上傳卡牌照片，AI 自動識別",
+        "selectedCard": "已選卡牌",
+        "grader": "評級公司",
+        "grade": "等級",
+        "quantity": "數量",
+        "purchasePrice": "購入價（HKD）",
+        "purchasedAt": "購入日期",
+        "notes": "備註",
+        "notesPlaceholder": "例如：購入地點、狀態備注...",
+        "isPublic": "公開此收藏",
+        "isPublicHint": "公開後可分享給其他用戶查看",
+        "save": "儲存",
+        "cancel": "取消",
+        "step1": "選擇卡牌",
+        "step2": "填寫詳情",
+        "selectGrader": "選擇評級公司",
+        "selectGrade": "選擇等級",
+        "gradeOptional": "等級（選填）"
+      },
+      "graders": {
+        "PSA": "PSA",
+        "BGS": "BGS",
+        "TAG": "TAG",
+        "RAW": "RAW",
+        "UNGRADED": "未評級"
+      },
+      "pdf": {
+        "export": "匯出 PDF",
+        "exportAll": "匯出全部",
+        "exportPublic": "僅匯出公開項目",
+        "generating": "正在生成 PDF...",
+        "success": "PDF 已生成，正在下載...",
+        "failed": "PDF 生成失敗：{{error}}"
+      },
+      "imageSearch": {
+        "title": "拍照識別卡牌",
+        "hint": "上傳卡牌照片，AI 將自動識別並匹配資料庫中的卡牌",
+        "upload": "上傳照片",
+        "camera": "拍照",
+        "analyzing": "正在分析圖片...",
+        "identifying": "正在識別卡牌...",
+        "matching": "正在匹配資料庫...",
+        "results": "識別結果",
+        "confidence": "信心度",
+        "selectMatch": "選擇此卡牌",
+        "noMatch": "未能識別，請嘗試手動搜尋",
+        "retry": "重新識別"
       }
     }
   },
