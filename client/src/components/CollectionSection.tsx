@@ -49,6 +49,7 @@ import {
   ChevronDown, ChevronUp, Eye, EyeOff, Loader2,
   BarChart3, Star, ArrowUpRight, ArrowDownRight, Minus,
   SlidersHorizontal, RefreshCw, X, AlertTriangle,
+  CheckSquare2, Square, CalendarDays, Trash,
 } from "lucide-react";
 import ReactCrop, { type Crop as CropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -771,6 +772,12 @@ export function CollectionSection() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [showPdfMenu, setShowPdfMenu] = useState(false);
 
+  // Bulk selection state
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
   const { data: collectionData, isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
@@ -807,6 +814,50 @@ export function CollectionSection() {
   const handleExportPdf = (publicOnly: boolean) => {
     setExportingPdf(true);
     exportPdfMutation.mutate({ publicOnly });
+  };
+
+  // ── Bulk operations ──
+  const toggleBulkMode = () => {
+    setBulkMode(v => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelectItem = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const isAllSelected = items.length > 0 && items.every((it: any) => selectedIds.has(it.id));
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((it: any) => it.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        await removeMutation.mutateAsync({ itemId: id });
+        successCount++;
+      } catch {}
+    }
+    setBulkDeleting(false);
+    setShowBulkDeleteConfirm(false);
+    setBulkMode(false);
+    setSelectedIds(new Set());
+    toast.success(`已刪除 ${successCount} 筆收藏`);
+    utils.profile.getCollection.invalidate();
+    utils.profile.getCollectionStats.invalidate();
   };
 
   const isLoading = statsLoading || itemsLoading;
@@ -849,6 +900,16 @@ export function CollectionSection() {
               </div>
             )}
           </div>
+          {/* Bulk mode toggle */}
+          {totalItems > 0 && (
+            <Button variant="outline" size="sm"
+              onClick={toggleBulkMode}
+              className="gap-1.5 text-xs font-bold h-8 px-3 rounded-lg border-gray-200"
+              style={bulkMode ? { background: BRAND_BLUE, color: 'white', borderColor: BRAND_BLUE } : {}}>
+              {bulkMode ? <X className="w-3.5 h-3.5" /> : <CheckSquare2 className="w-3.5 h-3.5" />}
+              {bulkMode ? '取消' : '批量'}
+            </Button>
+          )}
           {/* Add button */}
           <Button size="sm" onClick={() => { setEditItem(null); setShowAddSheet(true); }}
             className="gap-1.5 text-xs font-bold h-8 px-3 rounded-lg"
@@ -938,6 +999,43 @@ export function CollectionSection() {
           )}
         </div>
       ) : null}
+
+      {/* ── Bulk action toolbar ── */}
+      {bulkMode && items.length > 0 && (
+        <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+          style={{ background: `${BRAND_BLUE}08`, border: `1px solid ${BRAND_BLUE}20` }}>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-1.5 text-xs font-bold transition-all"
+              style={{ color: BRAND_BLUE }}
+            >
+              {isAllSelected
+                ? <CheckSquare2 className="w-4 h-4" />
+                : <Square className="w-4 h-4" />}
+              {isAllSelected ? '取消全選' : '全選本頁'}
+            </button>
+            {selectedIds.size > 0 && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: BRAND_BLUE, color: 'white' }}>
+                已選 {selectedIds.size} 筆
+              </span>
+            )}
+          </div>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold transition-all"
+                style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }}
+              >
+                <Trash className="w-3.5 h-3.5" />
+                刪除 {selectedIds.size} 筆
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Filter bar ── */}
       {items.length > 0 && (
@@ -1081,19 +1179,31 @@ export function CollectionSection() {
             const hasPrice = item.marketPrice != null;
             const isFallback = item.priceIsFallback;
 
+            const isSelected = selectedIds.has(item.id);
             return (
               <div
                 key={item.id}
+                onClick={bulkMode ? () => toggleSelectItem(item.id) : undefined}
                 className="relative bg-white rounded-2xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5"
                 style={{
-                  border: "1px solid #e5e7eb",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  border: isSelected ? `2px solid ${BRAND_BLUE}` : "1px solid #e5e7eb",
+                  boxShadow: isSelected ? `0 0 0 3px ${BRAND_BLUE}20` : "0 1px 4px rgba(0,0,0,0.05)",
+                  cursor: bulkMode ? 'pointer' : 'default',
                 }}
               >
                 {/* Left accent bar */}
                 <div className="absolute left-0 top-0 bottom-0 w-[3px]"
                   style={{ background: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : BRAND_BLUE }} />
                 <div className="flex items-stretch">
+                  {/* Bulk checkbox */}
+                  {bulkMode && (
+                    <div className="flex items-center justify-center w-10 flex-shrink-0"
+                      style={{ background: isSelected ? `${BRAND_BLUE}10` : 'transparent' }}>
+                      {isSelected
+                        ? <CheckSquare2 className="w-5 h-5" style={{ color: BRAND_BLUE }} />
+                        : <Square className="w-5 h-5 text-gray-300" />}
+                    </div>
+                  )}
                   {/* Card image column */}
                   <div
                     className="w-20 flex-shrink-0 flex items-center justify-center p-3 ml-[3px]"
@@ -1132,9 +1242,19 @@ export function CollectionSection() {
                             </span>
                           )}
                         </div>
+                        {/* Purchase date */}
+                        {item.purchasedAt && (
+                          <div className="flex items-center gap-1 mt-1.5">
+                            <CalendarDays className="w-3 h-3 text-gray-300" />
+                            <span className="text-[10px] font-medium text-gray-400">
+                              {new Date(item.purchasedAt).toLocaleDateString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit' })} 購入
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      {/* Actions */}
+                      {/* Actions — hidden in bulk mode */}
                       <div className="flex items-center gap-1 flex-shrink-0">
+                        {!bulkMode && <>
                         <button
                           onClick={() => { setEditItem(item); setShowAddSheet(true); }}
                           className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-gray-100"
@@ -1149,6 +1269,7 @@ export function CollectionSection() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        </>}
                       </div>
                     </div>
                     {/* Price row — 購入價 vs 市場價 */}
@@ -1289,6 +1410,40 @@ export function CollectionSection() {
               className="border-0 text-white font-bold"
               style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a18b0 100%)` }}>
               {t("profile.collection.deleteItem")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Bulk delete confirm ── */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={(v) => { if (!v) setShowBulkDeleteConfirm(false); }}>
+        <AlertDialogContent className="!bg-white border-0 shadow-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: `${BRAND_YELLOW}22` }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: BRAND_YELLOW }} />
+              </div>
+              <AlertDialogTitle className="text-gray-900 font-black">批量刪除確認</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-gray-500 pl-13">
+              確定要刪除已選的 <span className="font-black text-gray-900">{selectedIds.size} 筆</span> 收藏記錄？此操作無法復原。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={bulkDeleting}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50">
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="border-0 text-white font-bold"
+              style={{ background: `linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)` }}>
+              {bulkDeleting
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />刪除中...</>
+                : `確定刪除 ${selectedIds.size} 筆`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
