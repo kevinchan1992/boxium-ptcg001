@@ -279,7 +279,8 @@ export default function Login() {
 
           <Button
             type="button"
-            className="w-full h-11 font-medium text-sm bg-black text-white border border-white/20 hover:bg-gray-900"
+            className="w-full h-11 font-medium text-sm"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white" }}
             onClick={handleAppleLogin}
             disabled={isLoading}
           >

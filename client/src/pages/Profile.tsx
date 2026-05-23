@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   User, Heart, Trash2, Package, ShoppingBag, Crown, Calendar, Mail,
   Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock,
@@ -81,21 +81,25 @@ export default function Profile() {
   const { data: orders } = trpc.marketplace.getMyOrders.useQuery();
   const [location] = useLocation();
   // 讀取 URL ?tab= 參數以支援從 /orders 重定向過來
+  // On mobile, default to 'menu' grid if no tab param; on desktop default to 'info'
+  const isMobileDevice = typeof window !== "undefined" && window.innerWidth < 768;
   const urlTab = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("tab") ?? "info"
+    ? new URLSearchParams(window.location.search).get("tab") ?? (isMobileDevice ? "menu" : "info")
     : "info";
   const [activeSection, setActiveSection] = useState(urlTab);
 
   // 當 URL ?tab 參數變化時同步更新 activeSection
   useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab") ?? "info";
+    const isMobile = window.innerWidth < 768;
+    const tab = new URLSearchParams(window.location.search).get("tab") ?? (isMobile ? "menu" : "info");
     setActiveSection(tab);
   }, [location]);
 
   // 監聽瀏覽器返回鍵（popstate），同步標籤狀態
   useEffect(() => {
     const handlePopState = () => {
-      const tab = new URLSearchParams(window.location.search).get("tab") ?? "info";
+      const isMobile = window.innerWidth < 768;
+      const tab = new URLSearchParams(window.location.search).get("tab") ?? (isMobile ? "menu" : "info");
       setActiveSection(tab);
     };
     window.addEventListener("popstate", handlePopState);
@@ -228,48 +232,59 @@ export default function Profile() {
 
       {/* ── Two-column layout ── */}
       <div className="max-w-6xl mx-auto px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-16 md:px-4 md:py-6">
-        {/* Mobile: compact icon tabs */}
-        <div className="md:hidden mb-3">
-          <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {navItems.map((item, idx) => (
+        {/* Mobile: large button grid navigation */}
+        <div className="md:hidden mb-4">
+          {/* Active section header */}
+          {activeSection !== 'menu' && (
+            <div className="flex items-center gap-2 mb-3">
               <button
-                key={item.id}
-                onClick={() => {
-                  setActiveSection(item.id);
-                  const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
-                  window.history.pushState({ tab: item.id }, '', url);
-                }}
-                className={`flex-1 flex flex-col items-center justify-center py-2.5 px-1 relative transition-all ${
-                  idx !== 0 ? "border-l border-gray-100" : ""
-                } ${
-                  activeSection === item.id ? "" : "hover:bg-gray-50"
-                }`}
-                style={activeSection === item.id ? { background: `${BRAND_BLUE}0d` } : {}}
+                onClick={() => setActiveSection('menu')}
+                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm active:scale-95 transition-transform"
+                style={{ color: BRAND_BLUE }}
               >
-                {/* Active indicator */}
-                {activeSection === item.id && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-b-full" style={{ background: BRAND_BLUE }} />
-                )}
-                {/* Icon with badge */}
-                <div className="relative">
-                  <span style={{ color: activeSection === item.id ? BRAND_BLUE : "#9ca3af" }}>
-                    {item.icon}
-                  </span>
-                  {item.badge && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 px-0.5 text-[9px] font-bold rounded-full flex items-center justify-center" style={{ background: "#ef4444", color: "white" }}>
-                      {item.badge > 9 ? "9+" : item.badge}
-                    </span>
-                  )}
-                </div>
-                {/* Label */}
-                <span className={`text-[10px] mt-0.5 font-medium leading-tight text-center ${
-                  activeSection === item.id ? "" : "text-gray-400"
-                }`} style={activeSection === item.id ? { color: BRAND_BLUE } : {}}>
-                  {item.label.length > 4 ? item.label.slice(0, 4) : item.label}
-                </span>
+                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                返回
               </button>
-            ))}
-          </div>
+              <span className="text-sm font-semibold text-gray-800">
+                {navItems.find(n => n.id === activeSection)?.label}
+              </span>
+            </div>
+          )}
+
+          {/* Menu grid — shown when no section selected */}
+          {activeSection === 'menu' && (
+            <div className="grid grid-cols-2 gap-2.5">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
+                    window.history.pushState({ tab: item.id }, '', url);
+                  }}
+                  className="flex items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform text-left"
+                >
+                  {/* Icon circle */}
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${BRAND_BLUE}12` }}>
+                    <span style={{ color: BRAND_BLUE }}>
+                      {React.cloneElement(item.icon as React.ReactElement, { className: 'w-5 h-5' })}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-gray-800 truncate">{item.label}</span>
+                      {item.badge && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: '#ef4444', color: 'white' }}>
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-6">
