@@ -122,49 +122,38 @@ function StatCard({ label, value, sub, icon, accent, glow }: {
 }) {
   const isGain = accent === GAIN_GREEN;
   const isLoss = accent === LOSS_RED;
-  const isNeutral = !isGain && !isLoss;
   return (
     <div
-      className="relative overflow-hidden rounded-2xl p-4 flex flex-col gap-1"
-      style={{
-        background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
-        boxShadow: isGain
-          ? `0 4px 20px ${BRAND_YELLOW}50, 0 2px 8px ${BRAND_BLUE}40`
-          : isLoss
-          ? `0 4px 20px ${LOSS_RED}30, 0 2px 8px ${BRAND_BLUE}40`
-          : `0 4px 16px ${BRAND_BLUE}40`,
-      }}
+      className="relative bg-white rounded-2xl p-4 flex flex-col gap-1 overflow-hidden"
+      style={{ border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
     >
-      {/* Background shimmer */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: isGain
-          ? `radial-gradient(ellipse at top right, ${BRAND_YELLOW}20 0%, transparent 60%)`
-          : `radial-gradient(ellipse at top right, rgba(255,255,255,0.06) 0%, transparent 60%)`,
-      }} />
+      {/* Left accent bar */}
+      <div className="absolute left-0 top-4 bottom-4 w-[3px] rounded-full"
+        style={{ background: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : BRAND_BLUE }} />
       {/* Top row: label + icon */}
-      <div className="flex items-center justify-between mb-1 relative">
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: `${BRAND_YELLOW}cc` }}>
+      <div className="flex items-center justify-between mb-1 pl-1">
+        <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
           {label}
         </span>
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ background: isGain ? `${BRAND_YELLOW}25` : "rgba(255,255,255,0.12)" }}
+          className="w-7 h-7 rounded-full flex items-center justify-center"
+          style={{ background: isGain ? "#dcfce7" : isLoss ? "#fee2e2" : `${BRAND_BLUE}12` }}
         >
           {icon}
         </div>
       </div>
       {/* Main value */}
       <span
-        className="text-2xl font-black tabular-nums tracking-tight leading-none relative"
-        style={{ color: isGain ? BRAND_YELLOW : isLoss ? "#fca5a5" : "white" }}
+        className="text-xl font-black tabular-nums tracking-tight leading-none pl-1"
+        style={{ color: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : "#111827" }}
       >
         {value}
       </span>
       {/* Sub text */}
       {sub && (
         <span
-          className="text-xs font-bold tabular-nums relative"
-          style={{ color: isGain ? `${BRAND_YELLOW}cc` : isLoss ? "#fca5a5" : "rgba(255,255,255,0.6)" }}
+          className="text-xs font-semibold tabular-nums pl-1"
+          style={{ color: isGain ? GAIN_GREEN : isLoss ? LOSS_RED : "#9ca3af" }}
         >
           {sub}
         </span>
@@ -807,10 +796,10 @@ export function CollectionSection() {
   return (
     <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
         <div>
-          <h2 className="text-lg font-black text-gray-900">{t("profile.collection.title")}</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h2 className="text-xl font-black tracking-tight" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
+          <p className="text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
             {items.length > 0
               ? `${items.length} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
               : t("profile.collection.empty")}
@@ -859,74 +848,64 @@ export function CollectionSection() {
             <StatCard
               label={t("profile.collection.stats.totalMarketValue")}
               value={formatCurrency(stats.totalMarketValue)}
-              icon={<BarChart3 className="w-4 h-4" style={{ color: BRAND_YELLOW }} />}
+              icon={<BarChart3 className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
             />
             <StatCard
               label={t("profile.collection.stats.totalCost")}
               value={formatCurrency(stats.totalCost)}
-              icon={<DollarSign className="w-4 h-4 text-white/80" />}
+              icon={<DollarSign className="w-4 h-4 text-gray-400" />}
             />
             <StatCard
               label={t("profile.collection.stats.unrealizedGain")}
               value={`${gainPositive ? "+" : ""}${formatCurrency(stats.totalGain)}`}
               sub={`${gainPositive ? "+" : ""}${gainPct.toFixed(1)}%`}
               icon={gainPositive
-                ? <TrendingUp className="w-4 h-4" style={{ color: BRAND_YELLOW }} />
-                : <TrendingDown className="w-4 h-4 text-red-300" />}
+                ? <TrendingUp className="w-4 h-4" style={{ color: GAIN_GREEN }} />
+                : <TrendingDown className="w-4 h-4" style={{ color: LOSS_RED }} />}
               accent={gainPositive ? GAIN_GREEN : LOSS_RED}
             />
             <StatCard
               label={t("profile.collection.stats.holdings")}
               value={`${stats.totalQuantity}`}
               sub={`${stats.totalItems} ${t("profile.collection.stats.entries")}`}
-              icon={<Package className="w-4 h-4 text-white/80" />}
+              icon={<Package className="w-4 h-4 text-gray-400" />}
             />
           </div>
 
           {/* Top 3 Gainers */}
           {stats.top3Gainers.length > 0 && (
             <div
-              className="relative rounded-2xl p-4 space-y-2 overflow-hidden"
-              style={{
-                background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
-                boxShadow: `0 4px 20px ${BRAND_YELLOW}35, 0 2px 8px ${BRAND_BLUE}40`,
-              }}
+              className="bg-white rounded-2xl p-4 space-y-3"
+              style={{ border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
             >
-              {/* Yellow glow top-right */}
-              <div className="absolute inset-0 pointer-events-none" style={{
-                background: `radial-gradient(ellipse at top right, ${BRAND_YELLOW}25 0%, transparent 55%)`,
-              }} />
-              <div className="flex items-center gap-2 mb-3 relative">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${BRAND_YELLOW}25` }}>
-                  <Star className="w-3.5 h-3.5" style={{ color: BRAND_YELLOW }} />
-                </div>
-                <span className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_YELLOW }}>
+              <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
+                <Star className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>
                   {t("profile.collection.stats.top3Gainers")}
                 </span>
               </div>
               {stats.top3Gainers.map((item: any, idx: number) => (
-                <div key={item.id} className="flex items-center gap-3 relative">
+                <div key={item.id} className="flex items-center gap-3">
                   <div
                     className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
                     style={idx === 0
-                      ? { background: BRAND_YELLOW, color: BRAND_BLUE }
-                      : { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}
+                      ? { background: BRAND_BLUE, color: "white" }
+                      : { background: "#f3f4f6", color: "#6b7280" }}
                   >
                     {idx + 1}
                   </div>
                   {item.card?.imageUrl && (
                     <img src={item.card.imageUrl} alt={item.card?.name}
-                      className="w-8 h-10 object-contain rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.1)" }}
+                      className="w-8 h-10 object-contain rounded-lg bg-gray-50"
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{item.card?.name}</p>
+                    <p className="text-xs font-bold text-gray-900 truncate">{item.card?.name}</p>
                     <GradeBadge grader={item.grader} grade={item.grade} />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black tabular-nums" style={{ color: BRAND_YELLOW }}>+{(item.unrealizedGainPct ?? 0).toFixed(1)}%</p>
-                    <p className="text-xs font-semibold tabular-nums" style={{ color: "rgba(255,255,255,0.6)" }}>{formatCurrency(item.unrealizedGain)}</p>
+                    <p className="text-sm font-black tabular-nums" style={{ color: GAIN_GREEN }}>+{(item.unrealizedGainPct ?? 0).toFixed(1)}%</p>
+                    <p className="text-xs font-semibold tabular-nums text-gray-400">{formatCurrency(item.unrealizedGain)}</p>
                   </div>
                 </div>
               ))}
@@ -941,12 +920,15 @@ export function CollectionSection() {
           {/* Controls row */}
           <div className="flex items-center gap-2 flex-wrap">
             {/* Price mode toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-lg border border-gray-200 bg-white">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100">
               {(["psa10", "grade"] as const).map(mode => (
                 <button key={mode}
                   onClick={() => setPriceMode(mode)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${priceMode === mode ? "text-white" : "text-gray-500 hover:text-gray-700"}`}
-                  style={priceMode === mode ? { background: BRAND_BLUE } : {}}>
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    priceMode === mode
+                      ? "bg-white shadow-sm text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}>
                   {t(`profile.collection.priceMode.${mode}`)}
                 </button>
               ))}
@@ -954,7 +936,11 @@ export function CollectionSection() {
 
             {/* Filter toggle */}
             <button onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${showFilters ? "text-white border-transparent" : "border-gray-200 text-gray-600 bg-white"}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                showFilters
+                  ? "border-transparent text-white"
+                  : "border-gray-200 text-gray-500 bg-white hover:bg-gray-50"
+              }`}
               style={showFilters ? { background: BRAND_BLUE } : {}}>
               <SlidersHorizontal className="w-3.5 h-3.5" />
               {t("profile.collection.filter.sortBy")}
@@ -963,10 +949,10 @@ export function CollectionSection() {
 
           {/* Expanded filters */}
           {showFilters && (
-            <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50">
+            <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-gray-50" style={{ border: "1px solid #e5e7eb" }}>
               {/* Grader filter */}
               <Select value={filterGrader} onValueChange={setFilterGrader}>
-                <SelectTrigger className="h-8 text-xs w-32 bg-white border-gray-200">
+                <SelectTrigger className="h-8 text-xs w-32 bg-white border-gray-200 text-gray-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -977,7 +963,7 @@ export function CollectionSection() {
 
               {/* Sort by */}
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                <SelectTrigger className="h-8 text-xs w-36 bg-white border-gray-200">
+                <SelectTrigger className="h-8 text-xs w-36 bg-white border-gray-200 text-gray-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1027,40 +1013,33 @@ export function CollectionSection() {
             const isFallback = item.priceIsFallback;
 
             return (
-                            <div
+              <div
                 key={item.id}
-                className="relative rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-0.5"
+                className="relative bg-white rounded-2xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5"
                 style={{
-                  background: `linear-gradient(145deg, ${BRAND_BLUE} 0%, #1a18b0 100%)`,
-                  boxShadow: gainPct != null && gainPct > 0
-                    ? `0 4px 20px ${BRAND_YELLOW}30, 0 2px 8px ${BRAND_BLUE}40`
-                    : gainPct != null && gainPct < 0
-                    ? `0 4px 16px ${LOSS_RED}20, 0 2px 8px ${BRAND_BLUE}40`
-                    : `0 4px 16px ${BRAND_BLUE}30`,
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                 }}
               >
-                {/* Shimmer overlay */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  background: gainPct != null && gainPct > 0
-                    ? `radial-gradient(ellipse at top right, ${BRAND_YELLOW}18 0%, transparent 55%)`
-                    : `radial-gradient(ellipse at top right, rgba(255,255,255,0.05) 0%, transparent 55%)`,
-                }} />
-                <div className="flex items-stretch relative">
+                {/* Left accent bar */}
+                <div className="absolute left-0 top-0 bottom-0 w-[3px]"
+                  style={{ background: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : BRAND_BLUE }} />
+                <div className="flex items-stretch">
                   {/* Card image column */}
                   <div
-                    className="w-20 flex-shrink-0 flex items-center justify-center p-3"
-                    style={{ background: "rgba(0,0,0,0.25)" }}
+                    className="w-20 flex-shrink-0 flex items-center justify-center p-3 ml-[3px]"
+                    style={{ background: "#f9fafb" }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={item.card.imageUrl}
                         alt={item.card?.name}
-                        className="w-14 h-18 object-contain rounded-lg drop-shadow-lg"
-                        style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }}
+                        className="w-14 h-18 object-contain rounded-lg"
+                        style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}
                       />
                     ) : (
-                      <div className="w-14 h-18 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
-                        <Package className="w-6 h-6" style={{ color: "rgba(255,255,255,0.3)" }} />
+                      <div className="w-14 h-18 rounded-lg flex items-center justify-center bg-gray-100">
+                        <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}
                   </div>
@@ -1069,17 +1048,17 @@ export function CollectionSection() {
                     {/* Top row: name + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-black text-sm text-white truncate leading-tight">{item.card?.name}</p>
+                        <p className="font-black text-sm text-gray-900 truncate leading-tight">{item.card?.name}</p>
                         {item.card?.series && (
-                          <p className="text-xs truncate mt-0.5" style={{ color: `${BRAND_YELLOW}99` }}>{item.card.series}</p>
+                          <p className="text-xs truncate mt-0.5 text-gray-400">{item.card.series}</p>
                         )}
                         <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                           <GradeBadge grader={item.grader} grade={item.grade} />
                           {item.quantity > 1 && (
-                            <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)" }}>×{item.quantity}</span>
+                            <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">×{item.quantity}</span>
                           )}
                           {item.isPublic && (
-                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold" style={{ color: BRAND_YELLOW }}>
+                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400">
                               <Eye className="w-3 h-3" />公開
                             </span>
                           )}
@@ -1089,15 +1068,15 @@ export function CollectionSection() {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                           onClick={() => { setEditItem(item); setShowAddSheet(true); }}
-                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                          style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-gray-100"
+                          style={{ color: "#9ca3af" }}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setDeleteItem(item)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                          style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-red-50"
+                          style={{ color: "#d1d5db" }}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1106,27 +1085,27 @@ export function CollectionSection() {
                     {/* Price row */}
                     <div
                       className="flex items-center justify-between mt-2 pt-2"
-                      style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+                      style={{ borderTop: "1px solid #f3f4f6" }}
                     >
                       <div>
-                        <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{t("profile.collection.table.purchasePrice")}</p>
-                        <p className="text-sm font-bold tabular-nums text-white">
+                        <p className="text-xs text-gray-400">{t("profile.collection.table.purchasePrice")}</p>
+                        <p className="text-sm font-bold tabular-nums text-gray-700">
                           {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs" style={{ color: `${BRAND_YELLOW}99` }}>{t("profile.collection.table.marketPrice") ?? "市場價"}</p>
+                        <p className="text-xs text-gray-400">{t("profile.collection.table.marketPrice") ?? "市場價"}</p>
                         {hasPrice ? (
                           <div>
-                            <p className="text-sm font-black tabular-nums" style={{ color: BRAND_YELLOW }}>
+                            <p className="text-sm font-black tabular-nums" style={{ color: BRAND_BLUE }}>
                               {formatCurrency(item.marketPrice)}
                             </p>
                             {isFallback && (
-                              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{t("profile.collection.table.fallbackNote")}</p>
+                              <p className="text-xs text-gray-300">{t("profile.collection.table.fallbackNote")}</p>
                             )}
                           </div>
                         ) : (
-                          <p className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>—</p>
+                          <p className="text-sm font-bold text-gray-300">—</p>
                         )}
                       </div>
                     </div>
@@ -1136,26 +1115,26 @@ export function CollectionSection() {
                         className="flex items-center justify-end gap-1.5 mt-2 px-3 py-1.5 rounded-xl"
                         style={{
                           background: gainPct != null && gainPct > 0
-                            ? `${BRAND_YELLOW}20`
+                            ? "#dcfce7"
                             : gainPct != null && gainPct < 0
-                            ? "rgba(220,38,38,0.2)"
-                            : "rgba(255,255,255,0.08)",
+                            ? "#fee2e2"
+                            : "#f9fafb",
                         }}
                       >
                         {gainPct != null && gainPct > 0
-                          ? <ArrowUpRight className="w-4 h-4" style={{ color: BRAND_YELLOW }} />
+                          ? <ArrowUpRight className="w-4 h-4" style={{ color: GAIN_GREEN }} />
                           : gainPct != null && gainPct < 0
-                            ? <ArrowDownRight className="w-4 h-4 text-red-400" />
-                            : <Minus className="w-4 h-4" style={{ color: "rgba(255,255,255,0.4)" }} />}
+                            ? <ArrowDownRight className="w-4 h-4" style={{ color: LOSS_RED }} />
+                            : <Minus className="w-4 h-4 text-gray-300" />}
                         <span
                           className="text-base font-black tabular-nums"
-                          style={{ color: gainPct != null && gainPct > 0 ? BRAND_YELLOW : gainPct != null && gainPct < 0 ? "#fca5a5" : "rgba(255,255,255,0.5)" }}
+                          style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
                         >
                           {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
                         </span>
                         <span
                           className="text-xs font-semibold tabular-nums"
-                          style={{ color: gainPct != null && gainPct > 0 ? `${BRAND_YELLOW}cc` : gainPct != null && gainPct < 0 ? "#fca5a5" : "rgba(255,255,255,0.4)" }}
+                          style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
                         >
                           ({gain >= 0 ? "+" : ""}{formatCurrency(gain)})
                         </span>
