@@ -144,7 +144,7 @@ export default function Login() {
               left: `${(i % 6) * 18 - 2}%`,
               top: `${Math.floor(i / 6) * 14 - 2}%`,
               transform: `rotate(-15deg)`,
-              filter: "brightness(10)",
+              mixBlendMode: "screen" as const,
             }}
           />
         ))}
