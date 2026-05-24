@@ -1306,7 +1306,7 @@ export function CollectionSection() {
                     {/* P&L bar */}
                     {gain != null && item.purchasePrice != null && (
                       <div
-                        className="flex items-center justify-end gap-1.5 mt-2 px-3 py-1.5 rounded-xl"
+                        className="flex items-center justify-end gap-1.5 mt-2 px-3 py-1.5 rounded-xl flex-nowrap overflow-hidden"
                         style={{
                           background: gainPct != null && gainPct > 0
                             ? "#dcfce7"
@@ -1327,7 +1327,7 @@ export function CollectionSection() {
                           {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
                         </span>
                         <span
-                          className="text-xs font-semibold tabular-nums"
+                          className="text-xs font-semibold tabular-nums whitespace-nowrap"
                           style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
                         >
                           ({gain >= 0 ? "+" : ""}{formatCurrency(gain)})

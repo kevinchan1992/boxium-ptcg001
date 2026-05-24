@@ -251,39 +251,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Welcome card — shown above menu grid */}
-          {activeSection === 'menu' && user && (() => {
-            const h = new Date().getHours();
-            const greeting = h >= 5 && h < 12 ? '☀️ 早上好' : h >= 12 && h < 18 ? '🌤 下午好' : h >= 18 && h < 22 ? '🌆 晚上好' : '🌙 夜深了';
-            const displayName = (user as any).name || (user as any).email?.split('@')[0] || '用戶';
-            return (
-              <div className="relative overflow-hidden flex items-center gap-3.5 px-4 py-4 mb-3 rounded-2xl shadow-md"
-                style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a2a8a 100%)` }}
-              >
-                {/* Decorative circles */}
-                <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full" style={{ background: `${BRAND_YELLOW}20` }} />
-                <div className="absolute right-2 -bottom-3 w-14 h-14 rounded-full" style={{ background: `${BRAND_YELLOW}15` }} />
-                {/* Avatar */}
-                <div className="relative z-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 shadow-md"
-                  style={{ background: BRAND_YELLOW, borderColor: 'rgba(255,255,255,0.4)', width: 52, height: 52 }}
-                >
-                  <User className="w-6 h-6" style={{ color: BRAND_BLUE }} />
-                </div>
-                {/* Text */}
-                <div className="flex-1 min-w-0 relative z-10">
-                  <p className="text-white/60 text-xs mb-0.5">{greeting}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-bold text-white">
-                      {displayName} 👋
-                    </span>
-                    {(user as any).role === 'admin' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>管理員</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+          {/* Welcome card removed */}
 
           {/* Menu grid — shown when no section selected */}
           {activeSection === 'menu' && (
@@ -296,7 +264,7 @@ export default function Profile() {
                     const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
                     window.history.pushState({ tab: item.id }, '', url);
                   }}
-                  className="flex items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform text-left"
+                  className="flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform text-left h-[68px]"
                 >
                   {/* Icon circle */}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${BRAND_BLUE}12` }}>
@@ -321,7 +289,7 @@ export default function Profile() {
           )}
         </div>
 
-        <div className="flex gap-6">
+        <div className={`flex gap-6 ${activeSection === 'menu' ? 'hidden md:flex' : 'flex'}`}>
           {/* ── Left sidebar nav (desktop) ── */}
           <aside className="hidden md:flex flex-col w-52 flex-shrink-0">
             <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-4">
