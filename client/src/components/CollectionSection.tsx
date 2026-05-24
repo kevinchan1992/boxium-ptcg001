@@ -1283,7 +1283,7 @@ export function CollectionSection() {
                           </p>
                         </div>
                         <div
-                          className="flex-1 rounded-lg px-2 py-1.5 text-right"
+                          className="flex-1 rounded-lg px-2 py-1.5"
                           style={{
                             background: hasPrice ? `${BRAND_YELLOW}20` : '#f8f9fa',
                             border: hasPrice ? `1px solid ${BRAND_YELLOW}80` : '1px solid #e5e7eb',
@@ -1306,7 +1306,7 @@ export function CollectionSection() {
                     {/* P&L bar */}
                     {gain != null && item.purchasePrice != null && (
                       <div
-                        className="flex items-center justify-end gap-1.5 mt-2 px-3 py-1.5 rounded-xl flex-nowrap overflow-hidden"
+                        className="flex items-center justify-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl flex-nowrap overflow-hidden"
                         style={{
                           background: gainPct != null && gainPct > 0
                             ? "#dcfce7"
