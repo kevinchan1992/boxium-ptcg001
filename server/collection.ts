@@ -13,7 +13,7 @@
  *   UNGRADED → fallback to PSA 10
  */
 
-import { getDb, getCardPriceByGrade, resetDb } from "./db";
+import { getDb, batchGetCardPricesByGrades, resetDb } from "./db";
 import { userCollections, cards } from "../drizzle/schema_new";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -232,13 +232,10 @@ export async function getUserCollection(
     }
   }
 
-  const priceCache = new Map<string, number | null>();
-  await Promise.all(
-    Array.from(uniqueCardGrades.entries()).map(async ([key, { cardId, grade }]) => {
-      const result = await getCardPriceByGrade(cardId, grade);
-      priceCache.set(key, result.avgPrice);
-    })
-  );
+  // Single batch SQL query — replaces N parallel getCardPriceByGrade() calls
+  // This prevents DB connection pool exhaustion under concurrent user load
+  const requests = Array.from(uniqueCardGrades.values());
+  const priceCache = await batchGetCardPricesByGrades(requests);
 
   let items = rows.map((row) => {
     const lookupGrade = priceMode === "grade" ? getMarketGrade(row.grade) : "PSA 10";

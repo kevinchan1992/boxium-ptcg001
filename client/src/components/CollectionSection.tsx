@@ -1210,18 +1210,17 @@ export function CollectionSection() {
                   )}
                   {/* Card image column */}
                   <div
-                    className="w-20 flex-shrink-0 overflow-hidden ml-[3px] self-stretch"
-                    style={{ background: "#f9fafb" }}
+                    className="relative w-20 flex-shrink-0 overflow-hidden ml-[3px]"
+                    style={{ background: "#f9fafb", minHeight: 110 }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
-                        className="w-full h-full object-cover"
-                        style={{ minHeight: 100, filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100" style={{ minHeight: 100 }}>
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                         <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}

@@ -9349,3 +9349,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] db.ts: 加入每 4 分鐘心跳查詢 (SELECT 1)，失敗時自動呼叫 resetDb()
 - [x] collection.ts: getUserCollection 加入 try-catch，連線中斷時自動重連並重試一次
 - [x] TypeScript 建置通過 (pnpm build ✓)
+
+## 穩定性修復 (2026-05-24)
+- [x] 修復 DB 連線中斷自動重連機制（db.ts 心跳查詢 + pool 重建）
+- [x] 修復 getUserCollection N+1 問題：用 batchGetCardPricesByGrades 批次查詢取代 80 個並行查詢
+- [x] 修復 getUserWatchlist N+1 問題：用 inArray 批次查詢取代逐一查詢

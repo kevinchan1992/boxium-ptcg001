@@ -819,6 +819,106 @@ export async function getCardPriceByGrade(cardId: number, grade: string): Promis
   }
 }
 
+/**
+ * Batch fetch market prices for multiple (cardId, grade) pairs in a SINGLE SQL query.
+ * This replaces the N+1 pattern of calling getCardPriceByGrade() in a Promise.all loop,
+ * which exhausts the DB connection pool under concurrent user load.
+ *
+ * Returns a Map keyed by "cardId:grade" → avgPrice (null if no records).
+ */
+export async function batchGetCardPricesByGrades(
+  requests: Array<{ cardId: number; grade: string }>
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>();
+  if (requests.length === 0) return result;
+
+  // Initialise all keys to null so callers always get a value
+  for (const { cardId, grade } of requests) {
+    result.set(`${cardId}:${grade}`, null);
+  }
+
+  const db = await getDb();
+  if (!db) return result;
+
+  const CONN_ERR_CODES = ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
+
+  async function runBatchQuery(dbInst: ReturnType<typeof drizzle>) {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const cardIds = Array.from(new Set(requests.map(r => r.cardId)));
+
+    // Fetch all recent price records for all requested cardIds in ONE query
+    const rows = await dbInst
+      .select({
+        cardId: priceHistory.cardId,
+        grade: priceHistory.grade,
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(
+        and(
+          inArray(priceHistory.cardId, cardIds),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.isSuspectedBulk, false)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
+
+    // Group rows by "cardId:grade"
+    const grouped = new Map<string, { price: number; soldAt: Date | null }[]>();
+    for (const row of rows) {
+      if (!row.grade) continue;
+      const key = `${row.cardId}:${row.grade}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push({ price: Number(row.price), soldAt: row.soldAt });
+    }
+
+    // For each requested (cardId, grade), compute avgPrice using the same logic as getCardPriceByGrade
+    for (const { cardId, grade } of requests) {
+      const key = `${cardId}:${grade}`;
+      const all = grouped.get(key) ?? [];
+
+      // Try recent 6 months first (up to 10 records)
+      const recent = all
+        .filter(r => r.soldAt && r.soldAt >= sixMonthsAgo)
+        .slice(0, 10);
+
+      const records = recent.length > 0 ? recent : all.slice(0, 10);
+
+      if (records.length === 0) {
+        result.set(key, null);
+      } else {
+        const sum = records.reduce((acc, r) => acc + r.price, 0);
+        result.set(key, Math.round(sum / records.length));
+      }
+    }
+  }
+
+  try {
+    await runBatchQuery(db);
+  } catch (err: any) {
+    const errCode = err?.code || err?.cause?.code;
+    const isConnErr = CONN_ERR_CODES.includes(errCode);
+    if (isConnErr) {
+      console.warn('[batchGetCardPricesByGrades] DB connection lost, resetting and retrying...', errCode);
+      resetDb();
+      const db2 = await getDb();
+      if (!db2) return result;
+      try {
+        await runBatchQuery(db2);
+      } catch (retryErr: any) {
+        console.error('[batchGetCardPricesByGrades] Retry failed:', retryErr?.message);
+      }
+    } else {
+      console.error('[batchGetCardPricesByGrades] Query error:', err?.message);
+    }
+  }
+
+  return result;
+}
+
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];

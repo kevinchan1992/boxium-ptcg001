@@ -1,6 +1,6 @@
 import { getDb } from "./db";
 import { watchlist, viewHistory, cards, priceHistory } from "../drizzle/schema_new";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 
 /**
  * Type Definitions
@@ -82,41 +82,50 @@ export async function getUserWatchlist(userId: number) {
     .where(eq(watchlist.userId, userId))
     .orderBy(desc(watchlist.createdAt));
 
-  // Fetch latest prices for each card and restructure data
-  const watchlistWithPrices = await Promise.all(
-    result.map(async (item) => {
-      const latestPrice = await db
-        .select({
-          price: priceHistory.price,
-          currency: priceHistory.currency,
-          source: priceHistory.source,
-          soldAt: priceHistory.soldAt,
-        })
-        .from(priceHistory)
-        .where(eq(priceHistory.cardId, item.cardId!))
-        .orderBy(desc(priceHistory.soldAt))
-        .limit(1);
+    // Batch fetch latest prices for all watchlist cards in ONE query (prevents N+1)
+  const cardIds = result.map(r => r.cardId).filter((id): id is number => id != null);
+  const latestPriceMap = new Map<number, { price: string; currency: string }>();
 
-      // Restructure to match frontend expectations
-      return {
-        id: item.id,
-        notes: item.notes,
-        createdAt: item.createdAt,
-        card: {
-          id: item.cardId,
-          name: item.cardName,
-          cardNumber: item.cardNumber,
-          series: item.series,
-          setName: item.setName,
-          rarity: item.rarity,
-          imageUrl: item.imageUrl,
-        },
-        latestPrice: latestPrice[0]?.price || null,
-        currency: latestPrice[0]?.currency || 'HKD',
-      };
-    })
-  );
+  if (cardIds.length > 0) {
+    // Use a subquery to get the latest soldAt per cardId, then join back
+    const latestPrices = await db
+      .select({
+        cardId: priceHistory.cardId,
+        price: priceHistory.price,
+        currency: priceHistory.currency,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(inArray(priceHistory.cardId, cardIds))
+      .orderBy(desc(priceHistory.soldAt));
 
+    // Keep only the latest record per cardId
+    for (const row of latestPrices) {
+      if (!latestPriceMap.has(row.cardId)) {
+        latestPriceMap.set(row.cardId, { price: row.price, currency: row.currency ?? 'HKD' });
+      }
+    }
+  }
+
+  const watchlistWithPrices = result.map((item) => {
+    const priceRow = item.cardId != null ? latestPriceMap.get(item.cardId) : undefined;
+    return {
+      id: item.id,
+      notes: item.notes,
+      createdAt: item.createdAt,
+      card: {
+        id: item.cardId,
+        name: item.cardName,
+        cardNumber: item.cardNumber,
+        series: item.series,
+        setName: item.setName,
+        rarity: item.rarity,
+        imageUrl: item.imageUrl,
+      },
+      latestPrice: priceRow?.price || null,
+      currency: priceRow?.currency || 'HKD',
+    };
+  });
   return watchlistWithPrices;
 }
 
