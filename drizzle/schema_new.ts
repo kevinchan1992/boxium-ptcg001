@@ -1894,3 +1894,51 @@ export const userCollections = mysqlTable("userCollections", {
 }));
 export type UserCollection = typeof userCollections.$inferSelect;
 export type InsertUserCollection = typeof userCollections.$inferInsert;
+
+/**
+ * Card Trades table - records card-for-card trade history in user's collection
+ * One trade record = N cards given out → M cards received
+ */
+export const cardTrades = mysqlTable("cardTrades", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),                              // FK to users.id (trade owner)
+  tradedAt: timestamp("tradedAt").notNull(),                    // date of trade
+  tradePartner: varchar("tradePartner", { length: 128 }),       // optional: name of trade partner
+  cashAdjustment: decimal("cashAdjustment", { precision: 10, scale: 2 }).default("0"), // +ve = received cash top-up, -ve = paid cash top-up
+  notes: text("notes"),                                         // optional notes
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("ct_userId_idx").on(table.userId),
+  tradedAtIdx: index("ct_tradedAt_idx").on(table.tradedAt),
+}));
+export type CardTrade = typeof cardTrades.$inferSelect;
+export type InsertCardTrade = typeof cardTrades.$inferInsert;
+
+/**
+ * Card Trade Items table - individual cards in a trade (given out or received)
+ * direction: 'out' = cards given away, 'in' = cards received (added to collection)
+ */
+export const cardTradeItems = mysqlTable("cardTradeItems", {
+  id: int("id").autoincrement().primaryKey(),
+  tradeId: int("tradeId").notNull(),                            // FK to cardTrades.id
+  direction: mysqlEnum("direction", ["in", "out"]).notNull(),   // 'in' = received, 'out' = given
+  // If linked to existing collection entry (for 'out' cards from collection)
+  collectionId: int("collectionId"),                            // FK to userCollections.id (nullable)
+  // Card info (always stored for history, even if collection entry is deleted)
+  cardId: int("cardId").notNull(),                              // FK to cards.id
+  cardName: varchar("cardName", { length: 256 }).notNull(),     // snapshot of card name at trade time
+  grader: varchar("grader", { length: 16 }).notNull().default("RAW"),
+  grade: varchar("grade", { length: 32 }),
+  quantity: int("quantity").notNull().default(1),
+  estimatedValue: decimal("estimatedValue", { precision: 10, scale: 2 }), // estimated market value at trade time
+  // For 'in' cards: link to the new collection entry created
+  newCollectionId: int("newCollectionId"),                      // FK to userCollections.id (nullable)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  tradeIdIdx: index("cti_tradeId_idx").on(table.tradeId),
+  collectionIdIdx: index("cti_collectionId_idx").on(table.collectionId),
+  newCollectionIdIdx: index("cti_newCollectionId_idx").on(table.newCollectionId),
+}));
+export type CardTradeItem = typeof cardTradeItems.$inferSelect;
+export type InsertCardTradeItem = typeof cardTradeItems.$inferInsert;

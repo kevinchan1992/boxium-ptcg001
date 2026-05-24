@@ -5053,6 +5053,51 @@ UNBREAKABLE RULES:
         const pdfUrl = await generateCollectionPdf(userName, items, stats);
         return { url: pdfUrl };
       }),
+    // ─── Trade (Card-for-Card) procedures ────────────────────────────────────
+    createTrade: protectedProcedure
+      .input(z.object({
+        tradedAt: z.date(),
+        tradePartner: z.string().max(128).nullable().optional(),
+        cashAdjustment: z.number().nullable().optional(),
+        notes: z.string().max(500).nullable().optional(),
+        items: z.array(z.object({
+          direction: z.enum(["in", "out"]),
+          cardId: z.number(),
+          cardName: z.string(),
+          grader: z.string(),
+          grade: z.string().nullable().optional(),
+          quantity: z.number().min(1).max(999).optional(),
+          estimatedValue: z.number().nullable().optional(),
+          collectionId: z.number().nullable().optional(),
+        })).min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createCardTrade } = await import("./cardTrades");
+        return createCardTrade(ctx.user.id, input);
+      }),
+    getTrades: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserTrades } = await import("./cardTrades");
+        return getUserTrades(ctx.user.id);
+      }),
+    getTradeById: protectedProcedure
+      .input(z.object({ tradeId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getTradeById } = await import("./cardTrades");
+        return getTradeById(ctx.user.id, input.tradeId);
+      }),
+    deleteTrade: protectedProcedure
+      .input(z.object({ tradeId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteCardTrade } = await import("./cardTrades");
+        return deleteCardTrade(ctx.user.id, input.tradeId);
+      }),
+    getTradesForCollectionItem: protectedProcedure
+      .input(z.object({ collectionId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getTradesForCollectionItem } = await import("./cardTrades");
+        return getTradesForCollectionItem(ctx.user.id, input.collectionId);
+      }),
   }),
   marketplace: marketplaceRouter,
   contact: contactRouter,

@@ -49,8 +49,9 @@ import {
   ChevronDown, ChevronUp, Eye, EyeOff, Loader2,
   BarChart3, Star, ArrowUpRight, ArrowDownRight, Minus,
   SlidersHorizontal, RefreshCw, X, AlertTriangle,
-  CheckSquare2, Square, CalendarDays, Trash,
+  CheckSquare2, Square, CalendarDays, Trash, ArrowLeftRight,
 } from "lucide-react";
+import { TradeSheet } from "@/components/TradeSheet";
 import ReactCrop, { type Crop as CropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { getProxiedImageUrl } from "@/lib/utils";
@@ -784,6 +785,10 @@ export function CollectionSection() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
+  // Trade sheet state
+  const [showTradeSheet, setShowTradeSheet] = useState(false);
+  const [tradePreselectedItem, setTradePreselectedItem] = useState<any | null>(null);
+
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
   const { data: collectionData, isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
@@ -1251,6 +1256,14 @@ export function CollectionSection() {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {!bulkMode && <>
                         <button
+                          onClick={() => { setTradePreselectedItem(item); setShowTradeSheet(true); }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-blue-50"
+                          style={{ color: BRAND_BLUE }}
+                          title="以卡換卡"
+                        >
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => { setEditItem(item); setShowAddSheet(true); }}
                           className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-gray-100"
                           style={{ color: "#9ca3af" }}
@@ -1365,6 +1378,14 @@ export function CollectionSection() {
           )}
         </div>
       )}
+
+      {/* ── Trade Sheet ── */}
+      <TradeSheet
+        open={showTradeSheet}
+        onOpenChange={(v) => { setShowTradeSheet(v); if (!v) setTradePreselectedItem(null); }}
+        onSuccess={() => setTradePreselectedItem(null)}
+        preselectedOutItem={tradePreselectedItem}
+      />
 
       {/* ── Add / Edit Sheet ── */}
       <AddEditSheet
