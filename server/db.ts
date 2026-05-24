@@ -752,51 +752,71 @@ export async function computeMedianJpyPrice(cardId: number, grade: string): Prom
 }
 
 export async function getCardPriceByGrade(cardId: number, grade: string): Promise<{ avgPrice: number | null; recordCount: number; grade: string }> {
-  const db = await getDb();
-  if (!db) return { avgPrice: null, recordCount: 0, grade };
+  const CONN_ERR_CODES = ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
 
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-  // Get latest 10 records for this grade within 6 months (exclude suspected bulk transactions)
-  const records = await db
-    .select({ price: priceHistory.price, soldAt: priceHistory.soldAt })
-    .from(priceHistory)
-    .where(
-      and(
-        eq(priceHistory.cardId, cardId),
-        eq(priceHistory.source, 'snkrdunk'),
-        eq(priceHistory.grade, grade),
-        gte(priceHistory.soldAt, sixMonthsAgo),
-        eq(priceHistory.isSuspectedBulk, false)
-      )
-    )
-    .orderBy(desc(priceHistory.soldAt))
-    .limit(10);
-
-  if (records.length === 0) {
-    // Try without time limit if no recent records
-    const allRecords = await db
-      .select({ price: priceHistory.price })
+  async function runQuery(dbInst: ReturnType<typeof drizzle>) {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const records = await dbInst
+      .select({ price: priceHistory.price, soldAt: priceHistory.soldAt })
       .from(priceHistory)
       .where(
         and(
           eq(priceHistory.cardId, cardId),
           eq(priceHistory.source, 'snkrdunk'),
           eq(priceHistory.grade, grade),
+          gte(priceHistory.soldAt, sixMonthsAgo),
           eq(priceHistory.isSuspectedBulk, false)
         )
       )
       .orderBy(desc(priceHistory.soldAt))
       .limit(10);
-
-    if (allRecords.length === 0) return { avgPrice: null, recordCount: 0, grade };
-    const sum = allRecords.reduce((acc, r) => acc + Number(r.price), 0);
-    return { avgPrice: Math.round(sum / allRecords.length), recordCount: allRecords.length, grade };
+    if (records.length === 0) {
+      const allRecords = await dbInst
+        .select({ price: priceHistory.price })
+        .from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.cardId, cardId),
+            eq(priceHistory.source, 'snkrdunk'),
+            eq(priceHistory.grade, grade),
+            eq(priceHistory.isSuspectedBulk, false)
+          )
+        )
+        .orderBy(desc(priceHistory.soldAt))
+        .limit(10);
+      if (allRecords.length === 0) return { avgPrice: null, recordCount: 0, grade };
+      const sum2 = allRecords.reduce((acc: number, r: any) => acc + Number(r.price), 0);
+      return { avgPrice: Math.round(sum2 / allRecords.length), recordCount: allRecords.length, grade };
+    }
+    const sum = records.reduce((acc: number, r: any) => acc + Number(r.price), 0);
+    return { avgPrice: Math.round(sum / records.length), recordCount: records.length, grade };
   }
 
-  const sum = records.reduce((acc, r) => acc + Number(r.price), 0);
-  return { avgPrice: Math.round(sum / records.length), recordCount: records.length, grade };
+  let db = await getDb();
+  if (!db) return { avgPrice: null, recordCount: 0, grade };
+  try {
+    return await runQuery(db);
+  } catch (err: any) {
+    // Extract error code from direct error or cause
+    const errCode = err?.code || err?.cause?.code;
+    const isConnErr = CONN_ERR_CODES.includes(errCode);
+    if (isConnErr) {
+      console.warn('[getCardPriceByGrade] DB connection lost, resetting and retrying...', errCode);
+      resetDb();
+      db = await getDb();
+      if (!db) return { avgPrice: null, recordCount: 0, grade };
+      try {
+        return await runQuery(db);
+      } catch (retryErr: any) {
+        console.error('[getCardPriceByGrade] Retry failed:', retryErr?.message);
+        return { avgPrice: null, recordCount: 0, grade };
+      }
+    }
+    // Non-connection errors: log and return null price (don't crash the whole collection query)
+    console.error('[getCardPriceByGrade] Query error (cardId=%d, grade=%s):', cardId, grade, err?.message);
+    return { avgPrice: null, recordCount: 0, grade };
+  }
 }
 
 export async function getAllCards() {
