@@ -108,7 +108,7 @@ router.get("/apple", async (req: Request, res: Response) => {
     return res.status(503).json({ error: "Sign in with Apple is not configured" });
   }
 
-  const origin = (req.query.origin as string) || `${req.protocol}://${req.get("host")}`;
+  const origin = (req.query.origin as string) || getPublicOrigin(req);
   const returnTo = (req.query.returnTo as string) || "/";
 
   const redirectUri = `${origin}/api/auth/apple/callback`;
@@ -129,12 +129,37 @@ router.get("/apple", async (req: Request, res: Response) => {
 });
 
 /**
+ * Build a safe public origin from the request.
+ * In production behind Cloud Run + Cloudflare, req.get('host') returns the
+ * internal Cloud Run hostname. We prefer (in order):
+ *   1. X-Forwarded-Host set by Cloudflare (the real public host)
+ *   2. The configured SITE_URL env var
+ *   3. Hardcoded production domain as last resort
+ */
+function getPublicOrigin(req: Request): string {
+  const forwardedHost = req.get("x-forwarded-host");
+  if (forwardedHost) {
+    const proto = req.get("x-forwarded-proto") || "https";
+    return `${proto}://${forwardedHost.split(",")[0].trim()}`;
+  }
+  const siteUrl = process.env.SITE_URL;
+  if (siteUrl) return siteUrl;
+  // Last resort: use req.protocol + host (works in dev; may be internal in prod)
+  const host = req.get("host") ?? "";
+  // If it looks like an internal Cloud Run URL, fall back to production domain
+  if (host.includes(".run.app") || host.includes("localhost")) {
+    return "https://boxium.asia";
+  }
+  return `${req.protocol}://${host}`;
+}
+
+/**
  * POST /api/auth/apple/callback
  * Apple POSTs here after user authorizes (response_mode: form_post)
  */
 router.post("/apple/callback", async (req: Request, res: Response) => {
   // Default origin — will be overridden from state if available
-  let origin = `${req.protocol}://${req.get("host")}`;
+  let origin = getPublicOrigin(req);
   let returnTo = "/";
 
   // Decode state FIRST (outside try-catch) so origin is available for error redirects
