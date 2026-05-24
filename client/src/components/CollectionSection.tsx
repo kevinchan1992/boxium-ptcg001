@@ -986,9 +986,11 @@ export function CollectionSection() {
                     {idx + 1}
                   </div>
                   {item.card?.imageUrl && (
-                    <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
-                      className="w-10 h-14 object-contain rounded-lg flex-shrink-0"
-                    />
+                    <div className="flex-shrink-0" style={{ width: 56, height: 78 }}>
+                      <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-gray-900 truncate">{item.card?.name}</p>
@@ -1196,18 +1198,18 @@ export function CollectionSection() {
                   )}
                   {/* Card image column */}
                   <div
-                    className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-1"
-                    style={{ width: 76 }}
+                    className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-2"
+                    style={{ width: 110 }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
                         className="w-full h-auto object-contain rounded-lg"
-                        style={{ maxHeight: 130 }}
+                        style={{ maxHeight: 160 }}
                       />
                     ) : (
-                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 100 }}>
+                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 130 }}>
                         <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}
