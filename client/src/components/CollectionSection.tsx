@@ -874,16 +874,17 @@ export function CollectionSection() {
   return (
     <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
-        <div>
-          <h2 className="text-xl font-black tracking-tight" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
-          <p className="text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
-            {totalItems > 0
-              ? `${totalItems} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
-              : t("profile.collection.empty")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-black tracking-tight" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
+            <p className="text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
+              {totalItems > 0
+                ? `${totalItems} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
+                : t("profile.collection.empty")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
           {/* PDF export */}
           <div className="relative">
             <Button variant="outline" size="sm" onClick={() => setShowPdfMenu(!showPdfMenu)}
@@ -922,6 +923,7 @@ export function CollectionSection() {
             <Plus className="w-3.5 h-3.5" />
             {t("profile.collection.addCard")}
           </Button>
+          </div>
         </div>
       </div>
 
@@ -986,7 +988,7 @@ export function CollectionSection() {
                     {idx + 1}
                   </div>
                   {item.card?.imageUrl && (
-                    <div className="flex-shrink-0" style={{ width: 112, height: 156 }}>
+                    <div className="flex-shrink-0" style={{ width: 64, height: 90 }}>
                       <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
                         className="w-full h-full object-contain rounded-lg"
                       />
@@ -1198,19 +1200,19 @@ export function CollectionSection() {
                   )}
                   {/* Card image column */}
                   <div
-                    className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-2"
-                    style={{ width: 220 }}
+                    className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-1.5"
+                    style={{ width: 90 }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
                         className="w-full h-auto object-contain rounded-lg"
-                        style={{ maxHeight: 320 }}
+                        style={{ maxHeight: 130 }}
                       />
                     ) : (
-                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 260 }}>
-                        <Package className="w-6 h-6 text-gray-300" />
+                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 110 }}>
+                        <Package className="w-5 h-5 text-gray-300" />
                       </div>
                     )}
                   </div>
@@ -1265,43 +1267,39 @@ export function CollectionSection() {
                       </div>
                     </div>
                     {/* Price row — 購入價 vs 市場價 */}
-                    <div className="flex items-stretch gap-2 mt-2">
-                      {/* 購入價 — 左側淡灰底 */}
-                      <div
-                        className="flex-1 rounded-xl px-3 py-2"
-                        style={{ background: '#f8f9fa', border: '1px solid #e5e7eb' }}
-                      >
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                          {t("profile.collection.table.purchasePrice")}
-                        </p>
-                        <p className="text-sm font-bold tabular-nums text-gray-700">
-                          {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
-                        </p>
-                      </div>
-                      {/* 市場價 — 右側黃色高亮 */}
-                      <div
-                        className="flex-1 rounded-xl px-3 py-2 text-right"
-                        style={{
-                          background: hasPrice ? `${BRAND_YELLOW}20` : '#f8f9fa',
-                          border: hasPrice ? `1px solid ${BRAND_YELLOW}80` : '1px solid #e5e7eb',
-                        }}
-                      >
-                        <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-                          style={{ color: hasPrice ? '#92700a' : '#9ca3af' }}>
-                          {t("profile.collection.table.marketPrice") ?? "市場價"}
-                        </p>
-                        {hasPrice ? (
-                          <div>
-                            <p className="text-sm font-black tabular-nums" style={{ color: BRAND_BLUE }}>
+                    <div className="flex flex-col gap-1.5 mt-2">
+                      {/* 購入價 + 市場價 並排 */}
+                      <div className="flex items-stretch gap-1.5">
+                        <div
+                          className="flex-1 rounded-lg px-2 py-1.5"
+                          style={{ background: '#f8f9fa', border: '1px solid #e5e7eb' }}
+                        >
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
+                            {t("profile.collection.table.purchasePrice")}
+                          </p>
+                          <p className="text-xs font-bold tabular-nums text-gray-700 leading-tight">
+                            {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
+                          </p>
+                        </div>
+                        <div
+                          className="flex-1 rounded-lg px-2 py-1.5 text-right"
+                          style={{
+                            background: hasPrice ? `${BRAND_YELLOW}20` : '#f8f9fa',
+                            border: hasPrice ? `1px solid ${BRAND_YELLOW}80` : '1px solid #e5e7eb',
+                          }}
+                        >
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5"
+                            style={{ color: hasPrice ? '#92700a' : '#9ca3af' }}>
+                            {t("profile.collection.table.marketPrice") ?? "市場參考價"}
+                          </p>
+                          {hasPrice ? (
+                            <p className="text-xs font-black tabular-nums leading-tight" style={{ color: BRAND_BLUE }}>
                               {formatCurrency(item.marketPrice)}
                             </p>
-                            {isFallback && (
-                              <p className="text-[10px] text-gray-400">{t("profile.collection.table.fallbackNote")}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm font-bold text-gray-300">—</p>
-                        )}
+                          ) : (
+                            <p className="text-xs font-bold text-gray-300">—</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {/* P&L bar */}
