@@ -162,11 +162,12 @@ function StatCard({ label, value, sub, icon, accent, glow, highlight }: {
       </div>
       {/* Main value */}
       <span
-        className="text-xl font-black tabular-nums tracking-tight leading-none pl-1"
+        className="text-base sm:text-xl font-black tabular-nums tracking-tight leading-none pl-1"
         style={{ color: valueColor }}
       >
         {value}
       </span>
+      {/* ↑ text-xl on desktop, text-base on mobile via parent class override */}
       {/* Sub text */}
       {sub && (
         <span
@@ -875,22 +876,22 @@ export function CollectionSection() {
     <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
       {/* ── Header ── */}
       <div className="pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-black tracking-tight" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
-            <p className="text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-xl font-black tracking-tight truncate" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
               {totalItems > 0
                 ? `${totalItems} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
                 : t("profile.collection.empty")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {/* PDF export */}
           <div className="relative">
             <Button variant="outline" size="sm" onClick={() => setShowPdfMenu(!showPdfMenu)}
               disabled={exportingPdf || totalItems === 0}
-              className="gap-1.5 text-xs border-gray-200 hover:border-gray-300">
-              {exportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              className="gap-1 text-[10px] sm:text-xs border-gray-200 hover:border-gray-300 h-7 sm:h-8 px-2 sm:px-3">
+              {exportingPdf ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
               PDF
             </Button>
             {showPdfMenu && (
@@ -910,17 +911,17 @@ export function CollectionSection() {
           {totalItems > 0 && (
             <Button variant="outline" size="sm"
               onClick={toggleBulkMode}
-              className="gap-1.5 text-xs font-bold h-8 px-3 rounded-lg border-gray-200"
+              className="gap-1 text-[10px] sm:text-xs font-bold h-7 sm:h-8 px-2 sm:px-3 rounded-lg border-gray-200"
               style={bulkMode ? { background: BRAND_BLUE, color: 'white', borderColor: BRAND_BLUE } : {}}>
-              {bulkMode ? <X className="w-3.5 h-3.5" /> : <CheckSquare2 className="w-3.5 h-3.5" />}
+              {bulkMode ? <X className="w-3 h-3" /> : <CheckSquare2 className="w-3 h-3" />}
               {bulkMode ? '取消' : '批量'}
             </Button>
           )}
           {/* Add button */}
           <Button size="sm" onClick={() => { setEditItem(null); setShowAddSheet(true); }}
-            className="gap-1.5 text-xs font-bold h-8 px-3 rounded-lg"
+            className="gap-1 text-[10px] sm:text-xs font-bold h-7 sm:h-8 px-2 sm:px-3 rounded-lg"
             style={{ background: BRAND_BLUE, color: "white" }}>
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3 h-3" />
             {t("profile.collection.addCard")}
           </Button>
           </div>
@@ -1201,17 +1202,17 @@ export function CollectionSection() {
                   {/* Card image column */}
                   <div
                     className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-1.5"
-                    style={{ width: 90 }}
+                    style={{ width: 'clamp(90px, 25vw, 180px)' }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
                         className="w-full h-auto object-contain rounded-lg"
-                        style={{ maxHeight: 130 }}
+                        style={{ maxHeight: 'clamp(130px, 35vw, 260px)' }}
                       />
                     ) : (
-                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 110 }}>
+                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 'clamp(110px, 30vw, 220px)' }}>
                         <Package className="w-5 h-5 text-gray-300" />
                       </div>
                     )}
