@@ -986,7 +986,7 @@ export function CollectionSection() {
                   </div>
                   {item.card?.imageUrl && (
                     <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
-                      className="w-8 h-10 object-contain rounded-lg bg-gray-50"
+                      className="w-12 h-16 object-cover rounded-lg"
                     />
                   )}
                   <div className="flex-1 min-w-0">
@@ -1210,18 +1210,18 @@ export function CollectionSection() {
                   )}
                   {/* Card image column */}
                   <div
-                    className="w-20 flex-shrink-0 flex items-center justify-center p-3 ml-[3px]"
+                    className="w-20 flex-shrink-0 overflow-hidden ml-[3px] self-stretch"
                     style={{ background: "#f9fafb" }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
-                        className="w-14 h-18 object-contain rounded-lg"
-                        style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}
+                        className="w-full h-full object-cover"
+                        style={{ minHeight: 100, filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}
                       />
                     ) : (
-                      <div className="w-14 h-18 rounded-lg flex items-center justify-center bg-gray-100">
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100" style={{ minHeight: 100 }}>
                         <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}
