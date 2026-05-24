@@ -84,6 +84,22 @@ async function verifyAppleToken(idToken: string, clientId: string): Promise<{
 }
 
 /**
+ * Safe redirect helper — never throws, falls back to plain 302
+ */
+function safeRedirect(res: Response, url: string) {
+  try {
+    if (!res.headersSent) {
+      res.redirect(url);
+    }
+  } catch (e) {
+    console.error("[Apple OAuth] safeRedirect failed:", e);
+    if (!res.headersSent) {
+      res.status(302).setHeader("Location", url).end();
+    }
+  }
+}
+
+/**
  * GET /api/auth/apple
  * Initiates the Sign in with Apple flow
  */
@@ -117,43 +133,51 @@ router.get("/apple", async (req: Request, res: Response) => {
  * Apple POSTs here after user authorizes (response_mode: form_post)
  */
 router.post("/apple/callback", async (req: Request, res: Response) => {
+  // Default origin — will be overridden from state if available
   let origin = `${req.protocol}://${req.get("host")}`;
   let returnTo = "/";
 
-  try {
-    // Decode state
-    const stateParam = req.body.state as string | undefined;
-    if (stateParam) {
-      try {
-        const decoded = JSON.parse(Buffer.from(stateParam, "base64url").toString("utf-8"));
-        origin = decoded.origin || origin;
-        returnTo = decoded.returnTo || returnTo;
-      } catch {
-        // ignore malformed state
-      }
+  // Decode state FIRST (outside try-catch) so origin is available for error redirects
+  const stateParam = req.body?.state as string | undefined;
+  if (stateParam) {
+    try {
+      const decoded = JSON.parse(Buffer.from(stateParam, "base64url").toString("utf-8"));
+      if (decoded.origin) origin = decoded.origin;
+      if (decoded.returnTo) returnTo = decoded.returnTo;
+    } catch {
+      // ignore malformed state
     }
+  }
 
-    const { code, id_token: idToken, error } = req.body;
+  console.log(`[Apple OAuth] Callback received — origin: ${origin}, returnTo: ${returnTo}`);
+  console.log(`[Apple OAuth] Body keys: ${Object.keys(req.body || {}).join(", ")}`);
+
+  try {
+    const { code, id_token: idToken, error } = req.body || {};
 
     if (error) {
-      console.error("[Apple OAuth] Authorization error:", error);
-      return res.redirect(`${origin}/login?error=apple_denied`);
+      console.error("[Apple OAuth] Authorization error from Apple:", error);
+      return safeRedirect(res, `${origin}/login?error=apple_denied`);
     }
 
     if (!code || !idToken) {
-      return res.redirect(`${origin}/login?error=apple_no_code`);
+      console.error("[Apple OAuth] Missing code or id_token — code:", !!code, "idToken:", !!idToken);
+      return safeRedirect(res, `${origin}/login?error=apple_no_code`);
     }
 
     if (!isConfigured()) {
-      return res.redirect(`${origin}/login?error=apple_not_configured`);
+      console.error("[Apple OAuth] Not configured");
+      return safeRedirect(res, `${origin}/login?error=apple_not_configured`);
     }
 
     // Verify the id_token
+    console.log("[Apple OAuth] Verifying id_token...");
     const payload = await verifyAppleToken(idToken, APPLE_CLIENT_ID!);
     const { sub: appleId, email } = payload;
+    console.log(`[Apple OAuth] Token verified — appleId: ${appleId?.slice(0, 8)}..., email: ${email ? email.replace(/(.{3}).*(@.*)/, '$1***$2') : 'none'}`);
 
     if (!appleId) {
-      return res.redirect(`${origin}/login?error=apple_invalid_token`);
+      return safeRedirect(res, `${origin}/login?error=apple_invalid_token`);
     }
 
     // Apple only sends user name on FIRST sign-in — extract from form_post body
@@ -164,28 +188,35 @@ router.post("/apple/callback", async (req: Request, res: Response) => {
         const firstName = userObj?.name?.firstName || "";
         const lastName = userObj?.name?.lastName || "";
         name = [firstName, lastName].filter(Boolean).join(" ") || undefined;
+        console.log(`[Apple OAuth] User name from body: ${name}`);
       } catch {
         // ignore
       }
     }
 
     // Find or create user
+    console.log("[Apple OAuth] Finding or creating user...");
     const result = await findOrCreateAppleUser(appleId, email, name);
+    console.log(`[Apple OAuth] findOrCreateAppleUser result: success=${result.success}, error=${result.error}`);
 
     if (!result.success || !result.user || !result.token) {
       if (result.error?.includes("封鎖")) {
         const encodedMsg = encodeURIComponent(result.error);
-        return res.redirect(`${origin}/login?error=blocked&message=${encodedMsg}`);
+        return safeRedirect(res, `${origin}/login?error=blocked&message=${encodedMsg}`);
       }
-      return res.redirect(`${origin}/login?error=apple_user_creation_failed`);
+      console.error("[Apple OAuth] User creation failed:", result.error);
+      return safeRedirect(res, `${origin}/login?error=apple_user_creation_failed`);
     }
 
-    // Set session cookie
+    // Set session cookie and redirect
+    console.log("[Apple OAuth] Login successful, setting cookie and redirecting...");
     res.cookie("session", result.token, getSessionCookieOptions(req));
-    res.redirect(`${origin}${returnTo}`);
+    safeRedirect(res, `${origin}${returnTo}`);
   } catch (err: any) {
-    console.error("[Apple OAuth] Callback error:", err);
-    res.redirect(`${origin}/login?error=apple_auth_failed`);
+    console.error("[Apple OAuth] Callback error:", err?.message || err);
+    console.error("[Apple OAuth] Error stack:", err?.stack);
+    // Use safeRedirect to avoid throwing if headers are already sent
+    safeRedirect(res, `${origin}/login?error=apple_auth_failed`);
   }
 });
 

@@ -65,6 +65,16 @@ export default function Login() {
       setErrorMessage("Google 登入失敗，請稍後再試");
     } else if (error === "no_email") {
       setErrorMessage("無法取得 Google 帳號 Email，請確認授權設定");
+    } else if (error === "apple_denied") {
+      setErrorMessage("Apple 登入已取消");
+    } else if (error === "apple_auth_failed") {
+      setErrorMessage("Apple 登入失敗，請稍後再試或使用其他登入方式");
+    } else if (error === "apple_user_creation_failed") {
+      setErrorMessage("Apple 帳號建立失敗，請稍後再試或聯絡客服");
+    } else if (error === "apple_no_code") {
+      setErrorMessage("Apple 登入驗證失敗，請重試");
+    } else if (error === "apple_invalid_token") {
+      setErrorMessage("Apple 登入 Token 無效，請重試");
     }
   }, []);
 
