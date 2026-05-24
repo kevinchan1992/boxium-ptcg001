@@ -986,7 +986,7 @@ export function CollectionSection() {
                     {idx + 1}
                   </div>
                   {item.card?.imageUrl && (
-                    <div className="flex-shrink-0" style={{ width: 56, height: 78 }}>
+                    <div className="flex-shrink-0" style={{ width: 112, height: 156 }}>
                       <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
                         className="w-full h-full object-contain rounded-lg"
                       />
@@ -1199,17 +1199,17 @@ export function CollectionSection() {
                   {/* Card image column */}
                   <div
                     className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-2"
-                    style={{ width: 110 }}
+                    style={{ width: 220 }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
                         className="w-full h-auto object-contain rounded-lg"
-                        style={{ maxHeight: 160 }}
+                        style={{ maxHeight: 320 }}
                       />
                     ) : (
-                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 130 }}>
+                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 260 }}>
                         <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}
