@@ -759,7 +759,8 @@ export function CollectionSection() {
   const utils = trpc.useUtils();
 
   // Filters & sort state
-  const [priceMode, setPriceMode] = useState<"psa10" | "grade">("psa10");
+  // priceMode is always "grade" — show grade-matched market price
+  const priceMode = "grade" as const;
   const [sortBy, setSortBy] = useState<"createdAt" | "marketValue" | "gain" | "purchasedAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterGrader, setFilterGrader] = useState<string>("all");
@@ -785,7 +786,7 @@ export function CollectionSection() {
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
   const { data: collectionData, isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
-    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode, page: currentPage, limit: PAGE_SIZE },
+    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE },
     { retry: 1 }
   );
   const items = collectionData?.items ?? [];
@@ -986,7 +987,7 @@ export function CollectionSection() {
                   </div>
                   {item.card?.imageUrl && (
                     <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
-                      className="w-12 h-16 object-cover rounded-lg"
+                      className="w-10 h-14 object-contain rounded-lg flex-shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">
@@ -1046,21 +1047,6 @@ export function CollectionSection() {
         <div className="space-y-2">
           {/* Controls row */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Price mode toggle */}
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100">
-              {(["psa10", "grade"] as const).map(mode => (
-                <button key={mode}
-                  onClick={() => setPriceMode(mode)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    priceMode === mode
-                      ? "bg-white shadow-sm text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}>
-                  {t(`profile.collection.priceMode.${mode}`)}
-                </button>
-              ))}
-            </div>
-
             {/* Filter toggle */}
             <button onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
@@ -1210,17 +1196,18 @@ export function CollectionSection() {
                   )}
                   {/* Card image column */}
                   <div
-                    className="relative w-20 flex-shrink-0 overflow-hidden ml-[3px]"
-                    style={{ background: "#f9fafb", minHeight: 110 }}
+                    className="flex-shrink-0 flex items-center justify-center ml-[3px] py-2 px-1"
+                    style={{ width: 76 }}
                   >
                     {item.card?.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                         alt={item.card?.name}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="w-full h-auto object-contain rounded-lg"
+                        style={{ maxHeight: 130 }}
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <div className="w-full flex items-center justify-center rounded-lg" style={{ height: 100 }}>
                         <Package className="w-6 h-6 text-gray-300" />
                       </div>
                     )}

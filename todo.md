@@ -9354,3 +9354,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 修復 DB 連線中斷自動重連機制（db.ts 心跳查詢 + pool 重建）
 - [x] 修復 getUserCollection N+1 問題：用 batchGetCardPricesByGrades 批次查詢取代 80 個並行查詢
 - [x] 修復 getUserWatchlist N+1 問題：用 inArray 批次查詢取代逐一查詢
+
+## 2026-05-24 個人收藏 UI 優化
+- [x] 刪除「統一 PSA 10」、「對應等級」、「排序」三個按鈕
+- [x] 收藏清單預設對應等級顯示市場參考價（priceMode 固定為 grade）
+- [x] Top 3 升值排行也改用對應等級價格
+- [x] 收藏列表卡牌圖片改為 object-contain，完整展示卡牌，移除灰色背景

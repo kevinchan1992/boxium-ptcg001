@@ -281,7 +281,7 @@ export async function getUserCollection(
  * Get collection statistics for a user
  */
 export async function getUserCollectionStats(userId: number): Promise<CollectionStats> {
-  const items = await getUserCollection(userId, { priceMode: "psa10" });
+  const items = await getUserCollection(userId, { priceMode: "grade" });
 
   const totalItems = items.length;
   const totalQuantity = items.reduce((s, i) => s + i.quantity, 0);
