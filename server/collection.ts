@@ -13,7 +13,7 @@
  *   UNGRADED → fallback to PSA 10
  */
 
-import { getDb, getCardPriceByGrade } from "./db";
+import { getDb, getCardPriceByGrade, resetDb } from "./db";
 import { userCollections, cards } from "../drizzle/schema_new";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -172,35 +172,54 @@ export async function getUserCollection(
     priceMode?: "psa10" | "grade"; // psa10 = always show PSA 10 price, grade = show grade-matched price
   }
 ): Promise<CollectionItem[]> {
-  const db = await getDb();
-  if (!db) return [];
+  // Helper to run the main SELECT (used for retry after reconnect)
+  async function fetchRows(dbInst: any) {
+    return dbInst
+      .select({
+        id: userCollections.id,
+        userId: userCollections.userId,
+        cardId: userCollections.cardId,
+        grader: userCollections.grader,
+        grade: userCollections.grade,
+        quantity: userCollections.quantity,
+        purchasePrice: userCollections.purchasePrice,
+        purchasedAt: userCollections.purchasedAt,
+        notes: userCollections.notes,
+        isPublic: userCollections.isPublic,
+        createdAt: userCollections.createdAt,
+        updatedAt: userCollections.updatedAt,
+        cardName: cards.name,
+        cardNameJa: cards.nameJa,
+        cardNumber: cards.cardNumber,
+        series: cards.series,
+        setName: cards.setName,
+        rarity: cards.rarity,
+        imageUrl: cards.imageUrl,
+      })
+      .from(userCollections)
+      .leftJoin(cards, eq(userCollections.cardId, cards.id))
+      .where(eq(userCollections.userId, userId))
+      .orderBy(desc(userCollections.createdAt));
+  }
 
-  const rows = await db
-    .select({
-      id: userCollections.id,
-      userId: userCollections.userId,
-      cardId: userCollections.cardId,
-      grader: userCollections.grader,
-      grade: userCollections.grade,
-      quantity: userCollections.quantity,
-      purchasePrice: userCollections.purchasePrice,
-      purchasedAt: userCollections.purchasedAt,
-      notes: userCollections.notes,
-      isPublic: userCollections.isPublic,
-      createdAt: userCollections.createdAt,
-      updatedAt: userCollections.updatedAt,
-      cardName: cards.name,
-      cardNameJa: cards.nameJa,
-      cardNumber: cards.cardNumber,
-      series: cards.series,
-      setName: cards.setName,
-      rarity: cards.rarity,
-      imageUrl: cards.imageUrl,
-    })
-    .from(userCollections)
-    .leftJoin(cards, eq(userCollections.cardId, cards.id))
-    .where(eq(userCollections.userId, userId))
-    .orderBy(desc(userCollections.createdAt));
+  let db = await getDb();
+  if (!db) throw new Error('Database unavailable');
+
+  let rows: any[];
+  try {
+    rows = await fetchRows(db);
+  } catch (err: any) {
+    const isConnErr = ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'].includes(err?.code);
+    if (isConnErr) {
+      console.warn('[Collection] DB connection lost, resetting and retrying once...', err.code);
+      resetDb();
+      db = await getDb();
+      if (!db) throw new Error('Database unavailable after reconnect');
+      rows = await fetchRows(db);
+    } else {
+      throw err;
+    }
+  }
 
   // Batch fetch market prices (avoid N+1)
   const priceMode = options?.priceMode ?? "psa10";

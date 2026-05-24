@@ -9,6 +9,30 @@ import { ENV } from './_core/env';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _db: any | null = null;
+let _pool: any | null = null;
+let _dbHealthy = true;
+let _lastHealthCheck = 0;
+
+// Reset DB instance so it will be recreated on next getDb() call
+export function resetDb() {
+  console.log('[Database] Resetting DB instance for reconnection...');
+  _db = null;
+  _pool = null;
+  _dbHealthy = false;
+}
+
+// Periodic health check: ping DB every 4 minutes to detect stale connections early
+setInterval(async () => {
+  if (!_pool) return;
+  try {
+    await _pool.promise().query('SELECT 1');
+    _dbHealthy = true;
+    _lastHealthCheck = Date.now();
+  } catch (err: any) {
+    console.warn('[Database] Health check failed, resetting pool:', err?.code || err?.message);
+    resetDb();
+  }
+}, 4 * 60 * 1000); // every 4 minutes
 
 // In-memory cache for trending cards (refreshed daily, TTL 30 minutes for safety)
 type TrendingCardResult = {
@@ -245,11 +269,22 @@ export async function getDb() {
           return next();
         },
       });
+
+      // Listen for connection errors on the pool to auto-reset on disconnect
+      pool.on('error', (err: any) => {
+        console.warn('[Database] Pool error, will reconnect on next request:', err?.code || err?.message);
+        resetDb();
+      });
+
+      _pool = pool;
       _db = drizzle(pool);
+      _dbHealthy = true;
+      _lastHealthCheck = Date.now();
       console.log(`[Database] Connected with timezone: ${HK_TIMEZONE} (Hong Kong), charset: utf8mb4`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
+      _pool = null;
     }
   }
   return _db;

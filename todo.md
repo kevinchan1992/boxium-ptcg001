@@ -9344,3 +9344,8 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] emailService: sendPasswordResetEmail function (HTML email with reset link)
 - [x] New page: /reset-password (ResetPassword.tsx) with token validation + new password form
 - [x] App.tsx: /reset-password route registered
+## DB Auto-Reconnect Fix (2026-05-24)
+- [x] db.ts: 加入 _pool 變數 + resetDb() 函數 + pool.on('error') 監聽器
+- [x] db.ts: 加入每 4 分鐘心跳查詢 (SELECT 1)，失敗時自動呼叫 resetDb()
+- [x] collection.ts: getUserCollection 加入 try-catch，連線中斷時自動重連並重試一次
+- [x] TypeScript 建置通過 (pnpm build ✓)
