@@ -1,13 +1,13 @@
 /**
  * TradeSheet — Card-for-Card Trade Recording UI
- * Light mode, Boxium blue (#06038D) + yellow (#FEDD00) brand style
+ * Design: Boxium brand style — deep blue header (#06038D), white body, yellow (#FEDD00) accents
+ * Reference: "新增收藏" dialog style
  */
 import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { getProxiedImageUrl } from "@/lib/utils";
 
-const BRAND_BLUE = "#06038D";
-const BRAND_YELLOW = "#FEDD00";
+const BLUE = "#06038D";
+const YELLOW = "#FEDD00";
 
 // ─── Types ────────────────────────────────────────────────────
 interface TradeCardItem {
@@ -41,7 +41,6 @@ interface TradeCardItem {
   quantity: number;
   estimatedValue: string;
   collectionId?: number | null;
-  collectionMarketPrice?: number | null;
 }
 
 interface TradeSheetProps {
@@ -64,73 +63,18 @@ interface TradeSheetProps {
 // ─── Grade Badge ──────────────────────────────────────────────
 function GradeBadge({ grader, grade }: { grader: string; grade?: string | null }) {
   const label = grader === "RAW" || grader === "UNGRADED" ? grader : `${grader} ${grade ?? ""}`.trim();
-  const color = grader === "PSA" ? "#e63946" : grader === "BGS" ? "#2563eb" : grader === "TAG" ? "#7c3aed" : "#6b7280";
+  const color = grader === "PSA" ? "#dc2626" : grader === "BGS" ? "#2563eb" : grader === "TAG" ? "#7c3aed" : "#6b7280";
   return (
     <span
       className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wide"
-      style={{ background: `${color}18`, color }}
+      style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
     >
       {label}
     </span>
   );
 }
 
-// ─── Section Header ───────────────────────────────────────────
-function SectionHeader({
-  icon,
-  label,
-  count,
-  isOut,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  count: number;
-  isOut: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ border: `2px solid ${isOut ? "#e5e7eb" : BRAND_BLUE}` }}
-    >
-      {/* Header bar */}
-      <div
-        className="flex items-center justify-between px-3 py-2.5"
-        style={{ background: isOut ? "#f9fafb" : BRAND_BLUE }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center"
-            style={{ background: isOut ? "#e5e7eb" : `${BRAND_YELLOW}30` }}
-          >
-            {icon}
-          </div>
-          <span
-            className="text-sm font-black"
-            style={{ color: isOut ? "#111827" : "white" }}
-          >
-            {label}
-          </span>
-          {count > 0 && (
-            <span
-              className="text-xs font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
-              style={{
-                background: isOut ? "#e5e7eb" : BRAND_YELLOW,
-                color: isOut ? "#374151" : BRAND_BLUE,
-              }}
-            >
-              {count}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Trade Card Row ───────────────────────────────────────────
+// ─── Card Row in trade list ───────────────────────────────────
 function TradeCardRow({
   item,
   onRemove,
@@ -138,100 +82,156 @@ function TradeCardRow({
 }: {
   item: TradeCardItem;
   onRemove: () => void;
-  onUpdate: (updates: Partial<TradeCardItem>) => void;
+  onUpdate: (u: Partial<TradeCardItem>) => void;
 }) {
   const isOut = item.direction === "out";
-
   return (
-    <div
-      className="flex items-start gap-3 p-3 bg-white"
-      style={{ borderTop: "1px solid #f3f4f6" }}
-    >
+    <div className="flex items-start gap-3 px-4 py-3 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
       {/* Card image */}
-      <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+      <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
         {item.cardImageUrl ? (
-          <img
-            src={getProxiedImageUrl(item.cardImageUrl) ?? ""}
-            alt={item.cardName}
-            className="w-full h-full object-contain"
-          />
+          <img src={getProxiedImageUrl(item.cardImageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-contain" />
         ) : (
           <Package className="w-4 h-4 text-gray-300" />
         )}
       </div>
-
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-black text-gray-900 leading-tight line-clamp-2">{item.cardName}</p>
-        {item.cardSeries && (
-          <p className="text-[10px] text-gray-400 truncate mt-0.5">{item.cardSeries}</p>
-        )}
+        <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{item.cardName}</p>
+        {item.cardSeries && <p className="text-[10px] text-gray-400 truncate mt-0.5">{item.cardSeries}</p>}
         <div className="flex items-center gap-1 mt-1">
           <GradeBadge grader={item.grader} grade={item.grade} />
           {item.quantity > 1 && (
-            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-gray-100 text-gray-500">
-              ×{item.quantity}
-            </span>
+            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-gray-100 text-gray-500">×{item.quantity}</span>
           )}
         </div>
-        {/* Estimated value */}
+        {/* Estimated value inline */}
         <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="text-[10px] text-gray-400 whitespace-nowrap">估值 HKD</span>
+          <span className="text-[10px] text-gray-400">估值 HKD</span>
           <input
-            type="number"
-            min="0"
-            step="0.01"
+            type="number" min="0" step="0.01"
             value={item.estimatedValue}
             onChange={(e) => onUpdate({ estimatedValue: e.target.value })}
-            className="w-20 h-6 text-xs px-1.5 rounded-lg font-bold tabular-nums outline-none"
+            className="w-20 h-6 text-xs px-2 rounded-md font-bold tabular-nums outline-none"
             style={{
-              border: `1.5px solid ${isOut ? "#e5e7eb" : `${BRAND_BLUE}40`}`,
-              color: isOut ? "#dc2626" : BRAND_BLUE,
-              background: "white",
+              border: `1.5px solid ${isOut ? "#fca5a5" : `${BLUE}35`}`,
+              color: isOut ? "#dc2626" : BLUE,
+              background: isOut ? "#fff5f5" : `${BLUE}05`,
             }}
             placeholder="0.00"
           />
         </div>
       </div>
-
-      {/* Remove button */}
+      {/* Remove */}
       <button
         onClick={onRemove}
-        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors hover:bg-red-50"
-        style={{ color: "#d1d5db" }}
+        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-red-50 transition-colors"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-3.5 h-3.5 text-gray-300 hover:text-red-400" />
       </button>
     </div>
   );
 }
 
-// ─── Action Button (in section header) ───────────────────────
-function ActionBtn({
-  onClick,
-  icon,
-  label,
-  variant = "outline",
+// ─── Section block ────────────────────────────────────────────
+function SectionBlock({
+  isOut,
+  count,
+  totalValue,
+  children,
+  onFromCollection,
+  onSearch,
 }: {
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  variant?: "outline" | "yellow" | "white";
+  isOut: boolean;
+  count: number;
+  totalValue: number;
+  children: React.ReactNode;
+  onFromCollection?: () => void;
+  onSearch: () => void;
 }) {
-  const styles: Record<string, React.CSSProperties> = {
-    outline: { background: "white", color: BRAND_BLUE, border: `1.5px solid ${BRAND_BLUE}40` },
-    yellow: { background: BRAND_YELLOW, color: BRAND_BLUE, border: "none" },
-    white: { background: "rgba(255,255,255,0.15)", color: "white", border: "1.5px solid rgba(255,255,255,0.3)" },
-  };
   return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-black transition-all active:scale-95"
-      style={styles[variant]}
-    >
-      {icon}
-      {label}
-    </button>
+    <div className="rounded-2xl overflow-hidden" style={{ border: `2px solid ${isOut ? "#e5e7eb" : BLUE}` }}>
+      {/* Header */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ background: isOut ? "white" : BLUE }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ background: isOut ? "#fee2e2" : `${YELLOW}25` }}
+          >
+            {isOut
+              ? <ArrowRight className="w-3.5 h-3.5 text-red-500" />
+              : <ArrowLeft className="w-3.5 h-3.5" style={{ color: YELLOW }} />
+            }
+          </div>
+          <span className="text-sm font-black" style={{ color: isOut ? "#111827" : "white" }}>
+            {isOut ? "換出卡牌" : "換入卡牌"}
+          </span>
+          {count > 0 && (
+            <span
+              className="text-xs font-black w-5 h-5 rounded-full flex items-center justify-center"
+              style={{
+                background: isOut ? "#fee2e2" : YELLOW,
+                color: isOut ? "#dc2626" : BLUE,
+              }}
+            >
+              {count}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {isOut && onFromCollection && (
+            <button
+              onClick={onFromCollection}
+              className="flex items-center gap-1 h-8 px-3 rounded-xl text-xs font-black transition-all active:scale-95"
+              style={{ background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }}
+            >
+              <Package className="w-3 h-3" />從收藏選
+            </button>
+          )}
+          <button
+            onClick={onSearch}
+            className="flex items-center gap-1 h-8 px-3 rounded-xl text-xs font-black transition-all active:scale-95"
+            style={isOut
+              ? { background: "#fee2e2", color: "#dc2626", border: "1.5px solid #fca5a5" }
+              : { background: YELLOW, color: BLUE, border: "none" }
+            }
+          >
+            <Search className="w-3 h-3" />
+            {isOut ? "搜尋" : "搜尋換入卡"}
+          </button>
+        </div>
+      </div>
+
+      {/* Content area */}
+      <div style={{ background: isOut ? "#fafafa" : `${BLUE}04` }}>
+        {count === 0 ? (
+          <div className="flex items-center justify-center gap-2 py-6 px-4">
+            <Package className="w-4 h-4 text-gray-300" />
+            <span className="text-xs text-gray-400">
+              {isOut ? "點擊「從收藏選」或「搜尋」加入換出卡牌" : "搜尋並加入換入的新卡牌（將自動加入收藏）"}
+            </span>
+          </div>
+        ) : (
+          <>
+            {children}
+            <div
+              className="flex justify-end px-4 py-2"
+              style={{ borderTop: "1px solid #f0f0f0" }}
+            >
+              <span
+                className="text-xs font-black"
+                style={{ color: isOut ? "#dc2626" : BLUE }}
+              >
+                {isOut ? "換出" : "換入"}總估值：{formatCurrency(totalValue)}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -240,7 +240,6 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
   const utils = trpc.useUtils();
 
   const [tradedAt, setTradedAt] = useState(() => new Date().toISOString().split("T")[0]);
-  const [tradePartner, setTradePartner] = useState("");
   const [cashAdjustment, setCashAdjustment] = useState("");
   const [notes, setNotes] = useState("");
   const [tradeCards, setTradeCards] = useState<TradeCardItem[]>([]);
@@ -277,7 +276,6 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
 
   const resetForm = useCallback(() => {
     setTradedAt(new Date().toISOString().split("T")[0]);
-    setTradePartner("");
     setCashAdjustment("");
     setNotes("");
     setTradeCards([]);
@@ -298,7 +296,6 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
         quantity: preselectedOutItem.quantity,
         estimatedValue: preselectedOutItem.marketPrice != null ? String(preselectedOutItem.marketPrice) : "",
         collectionId: preselectedOutItem.id,
-        collectionMarketPrice: preselectedOutItem.marketPrice,
       }]);
     }
   }, [preselectedOutItem]);
@@ -353,7 +350,6 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       quantity: colItem.quantity,
       estimatedValue: colItem.marketPrice != null ? String(colItem.marketPrice) : "",
       collectionId: colItem.id,
-      collectionMarketPrice: colItem.marketPrice,
     }]);
     setShowCollectionPicker(false);
   };
@@ -374,7 +370,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     if (!canSubmit) return;
     createTradeMutation.mutate({
       tradedAt: new Date(tradedAt),
-      tradePartner: tradePartner || null,
+      tradePartner: null,
       cashAdjustment: cashAdj || null,
       notes: notes || null,
       items: tradeCards.map((c) => ({
@@ -390,256 +386,140 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     });
   };
 
+  // ── Render ──────────────────────────────────────────────────
   return (
     <>
       <BottomSheet
         open={open}
         onOpenChange={handleOpenChange}
         title={
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: BRAND_YELLOW }}
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: YELLOW }}
             >
-              <ArrowLeftRight className="w-4 h-4" style={{ color: BRAND_BLUE }} />
+              <ArrowLeftRight className="w-4.5 h-4.5" style={{ color: BLUE }} />
             </div>
-            <span className="font-black text-gray-900 text-base">以卡換卡記錄</span>
+            <span className="font-black text-white text-base tracking-wide">以卡換卡記錄</span>
           </div>
         }
+        headerStyle={{ background: BLUE }}
         showCloseButton
       >
-        <div className="px-4 pb-8 space-y-4" style={{ background: "#f8f9ff" }}>
+        <div className="pb-8" style={{ background: "#f5f6fa" }}>
 
-          {/* ── Date & Partner ── */}
-          <div
-            className="rounded-2xl p-4 space-y-3"
-            style={{ background: "white", border: `1.5px solid ${BRAND_BLUE}15` }}
-          >
-            <div>
-              <Label
-                className="text-[11px] font-black uppercase tracking-widest mb-1.5 block"
-                style={{ color: BRAND_BLUE }}
-              >
+          {/* ── Date ── */}
+          <div className="px-4 pt-4 pb-3">
+            <div className="bg-white rounded-2xl px-4 py-3" style={{ border: "1.5px solid #e8eaf0" }}>
+              <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
                 交換日期
               </Label>
               <Input
                 type="date"
                 value={tradedAt}
                 onChange={(e) => setTradedAt(e.target.value)}
-                className="h-10 text-sm font-bold border-gray-200 rounded-xl bg-gray-50"
-              />
-            </div>
-            <div>
-              <Label
-                className="text-[11px] font-black uppercase tracking-widest mb-1.5 block"
-                style={{ color: BRAND_BLUE }}
-              >
-                交換對象（選填）
-              </Label>
-              <Input
-                value={tradePartner}
-                onChange={(e) => setTradePartner(e.target.value)}
-                placeholder="對方名稱或 ID"
-                className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
+                className="h-11 text-sm font-bold border-gray-200 rounded-xl bg-gray-50 focus:ring-2"
+                style={{ "--tw-ring-color": `${BLUE}40` } as any}
               />
             </div>
           </div>
 
-          {/* ── OUT cards section ── */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ border: "1.5px solid #e5e7eb", background: "white" }}
-          >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}
+          {/* ── OUT section ── */}
+          <div className="px-4 pb-3">
+            <SectionBlock
+              isOut
+              count={outCards.length}
+              totalValue={totalOutValue}
+              onFromCollection={() => setShowCollectionPicker(true)}
+              onSearch={() => { setPickerDirection("out"); setShowCardPicker(true); }}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                  <ArrowRight className="w-3.5 h-3.5 text-red-500" />
-                </div>
-                <span className="text-sm font-black text-gray-900">換出卡牌</span>
-                {outCards.length > 0 && (
-                  <span className="text-xs font-black px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 min-w-[20px] text-center">
-                    {outCards.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setShowCollectionPicker(true)}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-black transition-all active:scale-95"
-                  style={{ background: `${BRAND_BLUE}10`, color: BRAND_BLUE, border: `1.5px solid ${BRAND_BLUE}25` }}
-                >
-                  <Package className="w-3 h-3" />從收藏選
-                </button>
-                <button
-                  onClick={() => { setPickerDirection("out"); setShowCardPicker(true); }}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-black transition-all active:scale-95"
-                  style={{ background: "#fee2e2", color: "#dc2626", border: "1.5px solid #fca5a5" }}
-                >
-                  <Search className="w-3 h-3" />搜尋
-                </button>
-              </div>
-            </div>
-            {/* Content */}
-            {outCards.length === 0 ? (
-              <div className="flex items-center justify-center gap-2 py-6 px-4">
-                <Package className="w-4 h-4 text-gray-300" />
-                <span className="text-xs text-gray-400">點擊「從收藏選」或「搜尋」加入換出卡牌</span>
-              </div>
-            ) : (
-              <>
-                {outCards.map((c) => (
-                  <TradeCardRow key={c.id} item={c}
-                    onRemove={() => removeCard(c.id)}
-                    onUpdate={(u) => updateCard(c.id, u)} />
-                ))}
-                <div
-                  className="flex justify-end px-3 py-2"
-                  style={{ borderTop: "1px solid #f3f4f6" }}
-                >
-                  <span className="text-xs font-black text-red-500">
-                    換出總估值：{formatCurrency(totalOutValue)}
-                  </span>
-                </div>
-              </>
-            )}
+              {outCards.map((c) => (
+                <TradeCardRow key={c.id} item={c}
+                  onRemove={() => removeCard(c.id)}
+                  onUpdate={(u) => updateCard(c.id, u)} />
+              ))}
+            </SectionBlock>
           </div>
 
-          {/* ── Value Summary ── */}
+          {/* ── Value summary (shown when both sides have cards) ── */}
           {(outCards.length > 0 || inCards.length > 0) && (
-            <div
-              className="flex items-center justify-between px-4 py-3 rounded-2xl"
-              style={{ background: BRAND_BLUE }}
-            >
-              <div className="flex items-center gap-2 text-xs font-bold">
-                <span className="text-red-300">{formatCurrency(totalOutValue)}</span>
-                <ArrowLeftRight className="w-3.5 h-3.5 text-white opacity-60" />
-                <span className="text-green-300">{formatCurrency(totalInValue)}</span>
-                {cashAdj !== 0 && (
-                  <span className="text-yellow-200 text-[10px]">
-                    {cashAdj > 0 ? `+${formatCurrency(cashAdj)}` : formatCurrency(cashAdj)} 補差
-                  </span>
-                )}
-              </div>
-              <span
-                className="text-sm font-black px-2.5 py-1 rounded-lg"
-                style={{
-                  background: BRAND_YELLOW,
-                  color: BRAND_BLUE,
-                }}
+            <div className="px-4 pb-3">
+              <div
+                className="flex items-center justify-between px-4 py-3 rounded-2xl"
+                style={{ background: BLUE }}
               >
-                {netDiff >= 0 ? "+" : ""}{formatCurrency(netDiff)}
-              </span>
+                <div className="flex items-center gap-3 text-xs font-bold">
+                  <span className="text-red-300">{formatCurrency(totalOutValue)}</span>
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-white opacity-50" />
+                  <span className="text-green-300">{formatCurrency(totalInValue)}</span>
+                  {cashAdj !== 0 && (
+                    <span className="text-[10px] font-bold" style={{ color: YELLOW }}>
+                      {cashAdj > 0 ? "+" : ""}{formatCurrency(cashAdj)} 補差
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="px-3 py-1.5 rounded-xl text-sm font-black"
+                  style={{ background: YELLOW, color: BLUE }}
+                >
+                  {netDiff >= 0 ? "+" : ""}{formatCurrency(netDiff)}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* ── IN cards section ── */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ border: `2px solid ${BRAND_BLUE}`, background: "white" }}
-          >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ background: BRAND_BLUE }}
+          {/* ── IN section ── */}
+          <div className="px-4 pb-3">
+            <SectionBlock
+              isOut={false}
+              count={inCards.length}
+              totalValue={totalInValue}
+              onSearch={() => { setPickerDirection("in"); setShowCardPicker(true); }}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{ background: `${BRAND_YELLOW}30` }}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" style={{ color: BRAND_YELLOW }} />
-                </div>
-                <span className="text-sm font-black text-white">換入卡牌</span>
-                {inCards.length > 0 && (
-                  <span
-                    className="text-xs font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
-                    style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
-                  >
-                    {inCards.length}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => { setPickerDirection("in"); setShowCardPicker(true); }}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-black transition-all active:scale-95"
-                style={{ background: BRAND_YELLOW, color: BRAND_BLUE, border: "none" }}
-              >
-                <Search className="w-3 h-3" />搜尋換入卡
-              </button>
-            </div>
-            {/* Content */}
-            {inCards.length === 0 ? (
-              <div className="flex items-center justify-center gap-2 py-6 px-4">
-                <Package className="w-4 h-4 text-gray-300" />
-                <span className="text-xs text-gray-400">搜尋並加入換入的新卡牌（將自動加入收藏）</span>
-              </div>
-            ) : (
-              <>
-                {inCards.map((c) => (
-                  <TradeCardRow key={c.id} item={c}
-                    onRemove={() => removeCard(c.id)}
-                    onUpdate={(u) => updateCard(c.id, u)} />
-                ))}
-                <div
-                  className="flex justify-end px-3 py-2"
-                  style={{ borderTop: "1px solid #f3f4f6" }}
-                >
-                  <span className="text-xs font-black" style={{ color: BRAND_BLUE }}>
-                    換入總估值：{formatCurrency(totalInValue)}
-                  </span>
-                </div>
-              </>
-            )}
+              {inCards.map((c) => (
+                <TradeCardRow key={c.id} item={c}
+                  onRemove={() => removeCard(c.id)}
+                  onUpdate={(u) => updateCard(c.id, u)} />
+              ))}
+            </SectionBlock>
           </div>
 
           {/* ── Cash & Notes ── */}
-          <div
-            className="rounded-2xl p-4 space-y-3"
-            style={{ background: "white", border: `1.5px solid ${BRAND_BLUE}15` }}
-          >
-            <div>
-              <Label
-                className="text-[11px] font-black uppercase tracking-widest mb-1.5 block"
-                style={{ color: BRAND_BLUE }}
-              >
-                補差金額（選填）
-              </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">HKD</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={cashAdjustment}
-                  onChange={(e) => setCashAdjustment(e.target.value)}
-                  placeholder="正數=收到 負數=付出"
-                  className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50 pl-12"
+          <div className="px-4 pb-3">
+            <div className="bg-white rounded-2xl px-4 py-3 space-y-3" style={{ border: "1.5px solid #e8eaf0" }}>
+              <div>
+                <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
+                  補差金額（選填）
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold pointer-events-none">HKD</span>
+                  <Input
+                    type="number" step="0.01"
+                    value={cashAdjustment}
+                    onChange={(e) => setCashAdjustment(e.target.value)}
+                    placeholder="正數=收到 負數=付出"
+                    className="h-11 text-sm border-gray-200 rounded-xl bg-gray-50 pl-12"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">正數 = 對方補差給你，負數 = 你補差給對方</p>
+              </div>
+              <div>
+                <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
+                  備註（選填）
+                </Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="交換地點、備忘..."
+                  className="text-sm border-gray-200 rounded-xl bg-gray-50 resize-none"
+                  rows={2}
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">正數 = 對方補差給你，負數 = 你補差給對方</p>
-            </div>
-            <div>
-              <Label
-                className="text-[11px] font-black uppercase tracking-widest mb-1.5 block"
-                style={{ color: BRAND_BLUE }}
-              >
-                備註（選填）
-              </Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="交換地點、備忘..."
-                className="text-sm border-gray-200 rounded-xl bg-gray-50 resize-none"
-                rows={2}
-              />
             </div>
           </div>
 
           {/* ── Submit ── */}
-          <div className="pt-1">
+          <div className="px-4 pt-1">
             {!canSubmit && (outCards.length === 0 || inCards.length === 0) && (
               <p className="text-xs text-center text-gray-400 mb-3">
                 請加入至少一張換出卡牌和一張換入卡牌
@@ -648,11 +528,11 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full h-13 rounded-2xl flex items-center justify-center gap-2 text-sm font-black transition-all active:scale-[0.98]"
+              className="w-full rounded-2xl flex items-center justify-center gap-2.5 text-sm font-black transition-all active:scale-[0.98]"
               style={{
-                background: canSubmit ? BRAND_BLUE : "#e5e7eb",
-                color: canSubmit ? "white" : "#9ca3af",
                 height: "52px",
+                background: canSubmit ? BLUE : "#e5e7eb",
+                color: canSubmit ? "white" : "#9ca3af",
                 border: "none",
               }}
             >
@@ -661,10 +541,10 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               ) : (
                 <>
                   <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: canSubmit ? BRAND_YELLOW : "#d1d5db" }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ background: canSubmit ? YELLOW : "#d1d5db" }}
                   >
-                    <CheckCircle2 className="w-3 h-3" style={{ color: canSubmit ? BRAND_BLUE : "#9ca3af" }} />
+                    <CheckCircle2 className="w-3.5 h-3.5" style={{ color: canSubmit ? BLUE : "#9ca3af" }} />
                   </div>
                   確認記錄交換
                 </>
@@ -674,7 +554,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
         </div>
       </BottomSheet>
 
-      {/* ── Card Picker ── */}
+      {/* ── Card Picker Dialog ── */}
       <CardPickerDialog
         open={showCardPicker}
         onOpenChange={setShowCardPicker}
@@ -690,25 +570,26 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             <div className="flex items-center gap-2.5">
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: pendingDirection === "out" ? "#fee2e2" : `${BRAND_BLUE}15` }}
+                style={{ background: pendingDirection === "out" ? "#fee2e2" : `${YELLOW}30` }}
               >
                 {pendingDirection === "out"
                   ? <ArrowRight className="w-3.5 h-3.5 text-red-500" />
-                  : <ArrowLeft className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+                  : <ArrowLeft className="w-3.5 h-3.5" style={{ color: pendingDirection === "in" ? YELLOW : BLUE }} />
                 }
               </div>
-              <span className="font-black text-gray-900">
+              <span className="font-black text-white text-sm">
                 {pendingDirection === "out" ? "設定換出卡牌資料" : "設定換入卡牌資料"}
               </span>
             </div>
           }
+          headerStyle={{ background: BLUE }}
           showCloseButton
         >
-          <div className="px-4 pb-8 space-y-4">
+          <div className="px-4 pb-8 pt-4 space-y-4" style={{ background: "#f5f6fa" }}>
             {/* Card preview */}
             <div
-              className="flex items-center gap-3 p-3 rounded-2xl"
-              style={{ background: `${BRAND_BLUE}06`, border: `1.5px solid ${BRAND_BLUE}15` }}
+              className="flex items-center gap-3 p-3 rounded-2xl bg-white"
+              style={{ border: `1.5px solid ${BLUE}20` }}
             >
               {pendingCard.imageUrl && (
                 <img
@@ -725,74 +606,75 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BRAND_BLUE }}>
-                  評級機構
-                </Label>
-                <Select value={pendingGrader} onValueChange={setPendingGrader}>
-                  <SelectTrigger className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PSA">PSA</SelectItem>
-                    <SelectItem value="BGS">BGS</SelectItem>
-                    <SelectItem value="TAG">TAG</SelectItem>
-                    <SelectItem value="RAW">RAW（未評級）</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {pendingGrader !== "RAW" && (
+            <div className="bg-white rounded-2xl p-4 space-y-3" style={{ border: "1.5px solid #e8eaf0" }}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BRAND_BLUE }}>
-                    評級
+                  <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
+                    評級機構
+                  </Label>
+                  <Select value={pendingGrader} onValueChange={setPendingGrader}>
+                    <SelectTrigger className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PSA">PSA</SelectItem>
+                      <SelectItem value="BGS">BGS</SelectItem>
+                      <SelectItem value="TAG">TAG</SelectItem>
+                      <SelectItem value="RAW">RAW（未評級）</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {pendingGrader !== "RAW" && (
+                  <div>
+                    <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
+                      評級
+                    </Label>
+                    <Input
+                      value={pendingGrade}
+                      onChange={(e) => setPendingGrade(e.target.value)}
+                      placeholder="10"
+                      className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
+                    數量
                   </Label>
                   <Input
-                    value={pendingGrade}
-                    onChange={(e) => setPendingGrade(e.target.value)}
-                    placeholder="10"
+                    type="number" min="1" max="999"
+                    value={pendingQty}
+                    onChange={(e) => setPendingQty(e.target.value)}
                     className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
                   />
                 </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BRAND_BLUE }}>
-                  數量
-                </Label>
-                <Input
-                  type="number" min="1" max="999"
-                  value={pendingQty}
-                  onChange={(e) => setPendingQty(e.target.value)}
-                  className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
-                />
-              </div>
-              <div>
-                <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BRAND_BLUE }}>
-                  估值 HKD
-                </Label>
-                <Input
-                  type="number" min="0" step="0.01"
-                  value={pendingValue}
-                  onChange={(e) => setPendingValue(e.target.value)}
-                  placeholder="0.00"
-                  className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
-                />
+                <div>
+                  <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
+                    估值 HKD
+                  </Label>
+                  <Input
+                    type="number" min="0" step="0.01"
+                    value={pendingValue}
+                    onChange={(e) => setPendingValue(e.target.value)}
+                    placeholder="0.00"
+                    className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
+                  />
+                </div>
               </div>
             </div>
 
             <button
               onClick={confirmPendingCard}
               className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-black transition-all active:scale-[0.98]"
-              style={{ background: BRAND_BLUE, color: "white", border: "none" }}
+              style={{ background: BLUE, color: "white", border: "none" }}
             >
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: BRAND_YELLOW }}
+                style={{ background: YELLOW }}
               >
-                <Plus className="w-3 h-3" style={{ color: BRAND_BLUE }} />
+                <Plus className="w-3 h-3" style={{ color: BLUE }} />
               </div>
               加入{pendingDirection === "out" ? "換出" : "換入"}清單
             </button>
@@ -807,15 +689,16 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
           onOpenChange={setShowCollectionPicker}
           title={
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
-                <Package className="w-3.5 h-3.5 text-red-500" />
+              <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${YELLOW}30` }}>
+                <Package className="w-3.5 h-3.5" style={{ color: YELLOW }} />
               </div>
-              <span className="font-black text-gray-900">從收藏選擇換出卡牌</span>
+              <span className="font-black text-white text-sm">從收藏選擇換出卡牌</span>
             </div>
           }
+          headerStyle={{ background: BLUE }}
           showCloseButton
         >
-          <div className="px-4 pb-8">
+          <div className="px-4 pb-8 pt-4" style={{ background: "#f5f6fa" }}>
             {collectionItems.length === 0 ? (
               <div className="text-center py-10 text-gray-400 text-sm">收藏清單為空</div>
             ) : (
@@ -827,10 +710,9 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                       key={colItem.id}
                       onClick={() => !alreadyAdded && handleAddFromCollection(colItem)}
                       disabled={alreadyAdded}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.99]"
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.99] bg-white"
                       style={{
-                        background: alreadyAdded ? "#f9fafb" : "white",
-                        border: alreadyAdded ? "1.5px solid #e5e7eb" : `1.5px solid ${BRAND_BLUE}20`,
+                        border: alreadyAdded ? "1.5px solid #e5e7eb" : `1.5px solid ${BLUE}20`,
                         opacity: alreadyAdded ? 0.5 : 1,
                       }}
                     >
@@ -846,14 +728,14 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-gray-900 line-clamp-2">{colItem.card?.name}</p>
+                        <p className="text-xs font-bold text-gray-900 line-clamp-2">{colItem.card?.name}</p>
                         {colItem.card?.series && (
                           <p className="text-[10px] text-gray-400 truncate mt-0.5">{colItem.card.series}</p>
                         )}
                         <div className="flex items-center gap-1.5 mt-1">
                           <GradeBadge grader={colItem.grader} grade={colItem.grade} />
                           {colItem.marketPrice && (
-                            <span className="text-[10px] font-bold text-gray-500">
+                            <span className="text-[10px] font-bold" style={{ color: BLUE }}>
                               {formatCurrency(colItem.marketPrice)}
                             </span>
                           )}
@@ -863,10 +745,10 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                       ) : (
                         <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${BRAND_BLUE}10` }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: YELLOW }}
                         >
-                          <Plus className="w-3 h-3" style={{ color: BRAND_BLUE }} />
+                          <Plus className="w-3.5 h-3.5" style={{ color: BLUE }} />
                         </div>
                       )}
                     </button>
