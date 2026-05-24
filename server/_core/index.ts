@@ -16,7 +16,7 @@ process.on('uncaughtException', (error: Error) => {
 });
 
 import "dotenv/config";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
@@ -94,21 +94,33 @@ async function startServer() {
     "https://boxiumptcg-mua4eq38.manus.space",
     "https://boxium.asia",
     "https://www.boxium.asia",
+    // Apple Sign In with Apple uses form_post — browser sends Origin: appleid.apple.com
+    "https://appleid.apple.com",
     /\.manus\.computer$/,
     /\.manus\.space$/,
     /localhost/,
     /127\.0\.0\.1/,
   ];
-  app.use(cors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin) return callback(null, true);
-      const allowed = ALLOWED_ORIGINS.some((o) =>
-        typeof o === "string" ? o === origin : o.test(origin)
-      );
-      callback(allowed ? null : new Error("CORS: origin not allowed"), allowed);
-    },
-    credentials: true,
-  }));
+  // OAuth callback paths must bypass CORS errors entirely (form_post from external origins)
+  const OAUTH_CALLBACK_PATHS = ["/api/auth/apple/callback"];
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (OAUTH_CALLBACK_PATHS.includes(req.path) && req.method === "POST") {
+      // Allow Apple's form_post without CORS restrictions
+      res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+      res.header("Access-Control-Allow-Credentials", "true");
+      return next();
+    }
+    cors({
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin) return callback(null, true);
+        const allowed = ALLOWED_ORIGINS.some((o) =>
+          typeof o === "string" ? o === origin : o.test(origin)
+        );
+        callback(allowed ? null : new Error("CORS: origin not allowed"), allowed);
+      },
+      credentials: true,
+    })(req, res, next);
+  });
   
   // Add cookie parser middleware
   app.use(cookieParser());
