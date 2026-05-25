@@ -271,8 +271,12 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
     onError: (e) => toast.error(t("profile.collection.updateFailed", { error: e.message })),
   });
 
-  // Populate form when editing or prefilling from card detail page
+  // Track previous open state to only reset form when sheet opens (false→true)
+  const prevOpenRef = useRef(false);
   useEffect(() => {
+    const justOpened = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (!justOpened) return; // Skip if sheet is closing or staying open
     if (editItem) {
       setForm({
         cardId: editItem.cardId,
@@ -308,7 +312,8 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
   };
 
   const handleSubmit = () => {
-    if (!form.cardId) { toast.error("請先選擇卡牌"); return; }
+    // In edit mode, cardId is already set from editItem; skip card selection check
+    if (!editItem && !form.cardId) { toast.error("請先選擇卡牌"); return; }
     if (!form.grader) { toast.error("請選擇評級公司"); return; }
     const payload = {
       cardId: form.cardId,

@@ -87,33 +87,38 @@ function TradeCardRow({
 }) {
   const isOut = item.direction === "out";
   return (
-    <div className="flex items-start gap-3 px-4 py-3 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
+    <div className="flex items-start gap-3 sm:gap-4 px-3 sm:px-4 py-3 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
       {/* Card image */}
-      <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
+      <div className="w-12 h-[68px] sm:w-14 sm:h-20 md:w-16 md:h-[90px] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
         {item.cardImageUrl ? (
-          <img src={getProxiedImageUrl(item.cardImageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-contain" />
+          <img
+            src={getProxiedImageUrl(item.cardImageUrl) ?? ""}
+            alt={item.cardName}
+            className="w-full h-full object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
         ) : (
-          <Package className="w-4 h-4 text-gray-300" />
+          <Package className="w-5 h-5 text-gray-300" />
         )}
       </div>
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{item.cardName}</p>
-        {item.cardSeries && <p className="text-[10px] text-gray-400 truncate mt-0.5">{item.cardSeries}</p>}
-        <div className="flex items-center gap-1 mt-1">
+        <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight line-clamp-2">{item.cardName}</p>
+        {item.cardSeries && <p className="text-[10px] sm:text-xs text-gray-400 truncate mt-0.5">{item.cardSeries}</p>}
+        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
           <GradeBadge grader={item.grader} grade={item.grade} />
           {item.quantity > 1 && (
-            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-gray-100 text-gray-500">×{item.quantity}</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">×{item.quantity}</span>
           )}
         </div>
         {/* Estimated value inline */}
         <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="text-[10px] text-gray-400">估值 HKD</span>
+          <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">估値 HKD</span>
           <input
             type="number" min="0" step="0.01"
             value={item.estimatedValue}
             onChange={(e) => onUpdate({ estimatedValue: e.target.value })}
-            className="w-20 h-6 text-xs px-2 rounded-md font-bold tabular-nums outline-none"
+            className="w-24 sm:w-28 h-6 sm:h-7 text-xs sm:text-sm px-2 rounded-md font-bold tabular-nums outline-none"
             style={{
               border: `1.5px solid ${isOut ? "#fca5a5" : `${BLUE}35`}`,
               color: isOut ? "#dc2626" : BLUE,
@@ -126,9 +131,9 @@ function TradeCardRow({
       {/* Remove */}
       <button
         onClick={onRemove}
-        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-red-50 transition-colors"
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-red-50 transition-colors"
       >
-        <X className="w-3.5 h-3.5 text-gray-300 hover:text-red-400" />
+        <X className="w-4 h-4 text-gray-300 hover:text-red-400" />
       </button>
     </div>
   );
@@ -445,6 +450,8 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       <BottomSheet
         open={open}
         onOpenChange={handleOpenChange}
+        className="!bg-[#f5f6fa]"
+        bodyClassName=""
         title={
           <div className="flex items-center gap-3">
             <div
