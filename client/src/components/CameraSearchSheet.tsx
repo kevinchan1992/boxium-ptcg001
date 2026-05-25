@@ -1,11 +1,23 @@
-import { useState, useRef, useCallback } from "react";
+/**
+ * CameraSearchSheet — AI Card Recognition with Live Camera Stream
+ * - Requests camera permission on open
+ * - Shows live camera feed in viewfinder
+ * - Capture button takes photo → AI recognition → auto-navigate or show candidates
+ * - Upload fallback for gallery images
+ * - Picker mode: onCardSelect callback instead of navigation
+ * - All colors forced to light mode (no dark mode overrides)
+ */
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { LazyImage } from "@/components/LazyImage";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
-import { Camera, Upload, X, RotateCcw, CheckCircle2, Search, ChevronRight, Scan } from "lucide-react";
+import { Camera, Upload, X, RotateCcw, CheckCircle2, Search, ChevronRight, Zap, AlertCircle } from "lucide-react";
+
+const BLUE = "#06038D";
+const YELLOW = "#FEDD00";
 
 interface MatchedCard {
   id: number;
@@ -28,52 +40,110 @@ interface CameraSearchSheetProps {
   onCardSelect?: (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => void;
 }
 
-type Stage = "capture" | "analyzing" | "results" | "no_match";
+type Stage = "camera" | "analyzing" | "results" | "no_match" | "permission_denied";
 
 export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSearchSheetProps) {
   const [, setLocation] = useLocation();
-  const [stage, setStage] = useState<Stage>("capture");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("camera");
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [matchResults, setMatchResults] = useState<MatchedCard[]>([]);
   const [identificationInfo, setIdentificationInfo] = useState<any>(null);
   const [analyzeProgress, setAnalyzeProgress] = useState(0);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [isFrontCamera, setIsFrontCamera] = useState(false);
 
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const imageSearchMutation = trpc.cards.searchByImage.useMutation();
 
+  // ── Stop camera stream ──────────────────────────────────────
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraReady(false);
+  }, []);
+
+  // ── Start camera stream ─────────────────────────────────────
+  const startCamera = useCallback(async (front = false) => {
+    stopCamera();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: front ? "user" : { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setCameraReady(true);
+      }
+    } catch (err: any) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setStage("permission_denied");
+      } else {
+        toast.error("無法啟動相機，請使用上傳功能");
+      }
+    }
+  }, [stopCamera]);
+
+  // ── Open/close lifecycle ────────────────────────────────────
+  useEffect(() => {
+    if (open && stage === "camera") {
+      startCamera(isFrontCamera);
+    }
+    if (!open) {
+      stopCamera();
+    }
+    return () => {
+      if (!open) stopCamera();
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleClose = useCallback(() => {
+    stopCamera();
     onOpenChange(false);
-    // Reset after animation
     setTimeout(() => {
-      setStage("capture");
-      setImagePreview(null);
+      setStage("camera");
+      setCapturedImage(null);
       setMatchResults([]);
       setIdentificationInfo(null);
       setAnalyzeProgress(0);
+      setCameraReady(false);
     }, 300);
-  }, [onOpenChange]);
+  }, [onOpenChange, stopCamera]);
 
-  const processImage = useCallback(async (file: File) => {
-    // Read file as base64
-    const reader = new FileReader();
-    const base64 = await new Promise<string>((resolve) => {
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(file);
-    });
+  // ── Capture frame from video ────────────────────────────────
+  const captureFrame = useCallback((): string | null => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return null;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }, []);
 
-    setImagePreview(base64);
+  // ── Process base64 image through AI ────────────────────────
+  const processBase64 = useCallback(async (base64: string) => {
+    stopCamera();
+    setCapturedImage(base64);
     setStage("analyzing");
     setAnalyzeProgress(0);
 
-    // Animate progress bar
     const progressInterval = setInterval(() => {
       setAnalyzeProgress((prev) => {
-        if (prev >= 85) {
-          clearInterval(progressInterval);
-          return 85;
-        }
+        if (prev >= 85) { clearInterval(progressInterval); return 85; }
         return prev + Math.random() * 12;
       });
     }, 300);
@@ -82,23 +152,19 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       const result = await imageSearchMutation.mutateAsync({ image: base64 });
       clearInterval(progressInterval);
       setAnalyzeProgress(100);
-
-      await new Promise((r) => setTimeout(r, 400)); // brief pause at 100%
+      await new Promise((r) => setTimeout(r, 400));
 
       if (result.success && result.matches && result.matches.length > 0) {
         setMatchResults(result.matches as MatchedCard[]);
         setIdentificationInfo(result.identification);
 
-        // If best match has very high confidence (score >= 70), auto-select
         const best = result.matches[0] as MatchedCard;
         if (best.matchScore >= 70) {
           if (onCardSelect) {
-            // Picker mode: return card to caller
             handleClose();
             onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series });
             toast.success(`已識別：${best.nameJa || best.name}`);
           } else {
-            // Navigation mode: go to card page
             handleClose();
             setLocation(`/card/${best.id}`);
             toast.success(`已識別：${best.nameJa || best.name}`);
@@ -107,7 +173,6 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
           setStage("results");
         }
       } else if (result.success && result.identification) {
-        // Identified but no DB match
         setIdentificationInfo(result.identification);
         setStage("no_match");
       } else {
@@ -116,28 +181,37 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       }
     } catch {
       clearInterval(progressInterval);
-      setStage("capture");
-      setImagePreview(null);
+      // Go back to camera
+      setStage("camera");
+      setCapturedImage(null);
       toast.error("識別失敗，請重試");
+      startCamera(isFrontCamera);
     }
-  }, [imageSearchMutation, handleClose, setLocation, onCardSelect]);
+  }, [imageSearchMutation, handleClose, setLocation, onCardSelect, stopCamera, startCamera, isFrontCamera]);
 
+  // ── Shutter button ──────────────────────────────────────────
+  const handleCapture = useCallback(() => {
+    const base64 = captureFrame();
+    if (!base64) { toast.error("無法擷取畫面"); return; }
+    processBase64(base64);
+  }, [captureFrame, processBase64]);
+
+  // ── File upload fallback ────────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      processImage(file);
-      // Reset input so same file can be selected again
-      e.target.value = "";
-    }
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onloadend = () => processBase64(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
+  // ── Select a card from results ──────────────────────────────
   const handleSelectCard = (card: MatchedCard) => {
     if (onCardSelect) {
-      // Picker mode: return card to caller
       handleClose();
       onCardSelect({ id: card.id, name: card.nameJa || card.name, imageUrl: card.imageUrl, series: card.series });
     } else {
-      // Navigation mode: go to card page
       handleClose();
       setLocation(`/card/${card.id}`);
     }
@@ -145,28 +219,30 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
 
   const handleTextSearch = () => {
     const name = identificationInfo?.cardNameJa || identificationInfo?.cardName;
-    if (name) {
-      handleClose();
-      setLocation(`/search?q=${encodeURIComponent(name)}`);
-    }
+    if (name) { handleClose(); setLocation(`/search?q=${encodeURIComponent(name)}`); }
   };
 
   const handleRetry = () => {
-    setStage("capture");
-    setImagePreview(null);
+    setStage("camera");
+    setCapturedImage(null);
     setMatchResults([]);
     setIdentificationInfo(null);
     setAnalyzeProgress(0);
+    startCamera(isFrontCamera);
   };
 
   const getStageTitle = () => {
     switch (stage) {
-      case "capture": return onCardSelect ? "拍照選卡" : "拍照識別";
+      case "camera": return onCardSelect ? "拍照選卡" : "拍照識別";
       case "analyzing": return "AI 分析中...";
       case "results": return "識別結果";
       case "no_match": return "識別完成";
+      case "permission_denied": return "相機權限";
     }
   };
+
+  // ── Shared wrapper style (always light mode) ────────────────
+  const lightBg: React.CSSProperties = { background: "white", color: "#111827" };
 
   return (
     <BottomSheet
@@ -174,280 +250,304 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       onOpenChange={(o) => { if (!o) handleClose(); }}
       title={getStageTitle()}
     >
-      {/* ── STAGE: CAPTURE ── */}
-      {stage === "capture" && (
-        <div className="flex flex-col gap-4">
-          {/* Viewfinder area */}
-          <div className="relative rounded-2xl overflow-hidden bg-[#06038D]/5 border-2 border-dashed border-[#06038D]/30 flex flex-col items-center justify-center min-h-[220px] py-8 px-4">
-            {/* Corner brackets */}
-            <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-[#06038D] rounded-tl-lg" />
-            <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#06038D] rounded-tr-lg" />
-            <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-[#06038D] rounded-bl-lg" />
-            <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-[#06038D] rounded-br-lg" />
+      <div style={lightBg}>
 
-            <div className="w-16 h-16 rounded-full bg-[#06038D]/10 flex items-center justify-center mb-4">
-              <Scan className="w-8 h-8 text-[#06038D]" />
-            </div>
-            <p className="text-sm font-semibold text-[#06038D] mb-1">
-              {onCardSelect ? "拍攝卡牌以選取" : "對準卡牌拍攝"}
-            </p>
-            <p className="text-xs text-gray-500 text-center">確保卡牌名稱及卡號清晰可見<br />避免反光及陰影</p>
-          </div>
-
-          {/* Action buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Camera button */}
-            <button
-              onClick={() => cameraInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 h-20 rounded-2xl border-2 border-[#06038D] bg-white hover:bg-[#06038D]/5 active:scale-95 transition-all"
+        {/* ── STAGE: CAMERA (live viewfinder) ── */}
+        {stage === "camera" && (
+          <div className="flex flex-col gap-3 pb-2">
+            {/* Live viewfinder */}
+            <div
+              className="relative rounded-2xl overflow-hidden"
+              style={{ background: "#000", aspectRatio: "3/4", maxHeight: "55vh" }}
             >
-              <div className="w-10 h-10 rounded-full bg-[#06038D] flex items-center justify-center">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xs font-semibold text-[#06038D]">拍攝照片</span>
-            </button>
-
-            {/* Upload button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 h-20 rounded-2xl border-2 border-[#FEDD00] bg-[#FEDD00]/10 hover:bg-[#FEDD00]/20 active:scale-95 transition-all"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#FEDD00] flex items-center justify-center">
-                <Upload className="w-5 h-5 text-[#06038D]" />
-              </div>
-              <span className="text-xs font-semibold text-[#06038D]">上傳圖片</span>
-            </button>
-          </div>
-
-          {/* Tips */}
-          <div className="rounded-xl bg-[#06038D]/5 border border-[#06038D]/10 px-4 py-3">
-            <p className="text-xs font-semibold text-[#06038D] mb-1.5">💡 拍攝技巧</p>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li>• 確保卡牌名稱及卡號清晰可見</li>
-              <li>• 避免反光，在自然光下拍攝效果最佳</li>
-              <li>• 將卡牌放在對比色背景上</li>
-            </ul>
-          </div>
-
-          {/* Hidden inputs */}
-          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-        </div>
-      )}
-
-      {/* ── STAGE: ANALYZING ── */}
-      {stage === "analyzing" && (
-        <div className="flex flex-col items-center gap-5 py-4">
-          {/* Card preview */}
-          {imagePreview && (
-            <div className="relative w-36 h-48 rounded-xl overflow-hidden shadow-lg border-2 border-[#06038D]/20">
-              <img src={imagePreview} alt="分析中" className="w-full h-full object-cover" />
-              {/* Scanning animation overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06038D]/20 to-transparent animate-scan-line" />
-              <div className="absolute inset-0 border-2 border-[#FEDD00] rounded-xl animate-pulse" />
-            </div>
-          )}
-
-          {/* Progress */}
-          <div className="w-full max-w-xs">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold text-[#06038D]">AI 識別中</span>
-              <span className="text-sm font-bold text-[#06038D]">{Math.round(analyzeProgress)}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#06038D] to-[#FEDD00] transition-all duration-300"
-                style={{ width: `${analyzeProgress}%` }}
+              {/* Video element */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ transform: isFrontCamera ? "scaleX(-1)" : "none" }}
               />
-            </div>
-          </div>
 
-          {/* Status messages */}
-          <div className="text-center space-y-1">
-            <p className="text-sm font-medium text-gray-700">
-              {analyzeProgress < 40 ? "正在讀取卡牌資訊..." :
-               analyzeProgress < 70 ? "比對卡牌資料庫..." :
-               analyzeProgress < 90 ? "精準匹配中..." :
-               "即將完成..."}
-            </p>
-            <p className="text-xs text-gray-400">由 Gemini AI 驅動</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── STAGE: RESULTS ── */}
-      {stage === "results" && matchResults.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {/* Identification summary */}
-          {identificationInfo && (
-            <div className="rounded-xl bg-[#06038D] px-4 py-3 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#FEDD00] flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[#FEDD00] mb-1">AI 識別結果</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {identificationInfo.cardNameJa && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">
-                      {identificationInfo.cardNameJa}
-                    </span>
-                  )}
-                  {identificationInfo.cardName && identificationInfo.cardName !== identificationInfo.cardNameJa && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white">
-                      {identificationInfo.cardName}
-                    </span>
-                  )}
-                  {identificationInfo.cardNumber && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#FEDD00]/30 text-[#FEDD00] font-mono">
-                      #{identificationInfo.cardNumber}
-                    </span>
-                  )}
-                  {identificationInfo.rarity && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/80">
-                      {identificationInfo.rarity}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Match list */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              找到 {matchResults.length} 個匹配結果，{onCardSelect ? "請選擇要加入的卡牌" : "請選擇正確的卡牌"}
-            </p>
-            {matchResults.map((card, index) => (
-              <button
-                key={card.id}
-                onClick={() => handleSelectCard(card)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all active:scale-[0.98] hover:shadow-md text-left ${
-                  index === 0
-                    ? "border-[#06038D] bg-[#06038D]/5"
-                    : "border-gray-200 bg-white hover:border-[#06038D]/40"
-                }`}
-              >
-                {/* Card image */}
-                <div className="w-11 h-[60px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                  {card.imageUrl ? (
-                    <LazyImage
-                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={card.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <Search className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Card info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    {index === 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold flex-shrink-0">
-                        最佳
-                      </span>
-                    )}
-                    <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
-                      {card.nameJa || card.name}
+              {/* Corner brackets overlay */}
+              {cameraReady && (
+                <>
+                  <div className="absolute top-4 left-4 w-10 h-10 border-t-[3px] border-l-[3px] border-[#FEDD00] rounded-tl-lg pointer-events-none" />
+                  <div className="absolute top-4 right-4 w-10 h-10 border-t-[3px] border-r-[3px] border-[#FEDD00] rounded-tr-lg pointer-events-none" />
+                  <div className="absolute bottom-4 left-4 w-10 h-10 border-b-[3px] border-l-[3px] border-[#FEDD00] rounded-bl-lg pointer-events-none" />
+                  <div className="absolute bottom-4 right-4 w-10 h-10 border-b-[3px] border-r-[3px] border-[#FEDD00] rounded-br-lg pointer-events-none" />
+                  {/* Center guide */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <p className="text-white/70 text-xs font-medium bg-black/30 px-3 py-1 rounded-full">
+                      將卡牌對準框內
                     </p>
                   </div>
-                  {card.nameJa && card.name !== card.nameJa && (
-                    <p className="text-xs text-gray-400 truncate">{card.name}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {card.cardNumber && (
-                      <span className="text-xs text-gray-400 font-mono">#{card.cardNumber}</span>
+                </>
+              )}
+
+              {/* Loading state */}
+              {!cameraReady && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <p className="text-white/70 text-xs">啟動相機中...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Hidden canvas for capture */}
+            <canvas ref={canvasRef} className="hidden" />
+
+            {/* Controls row */}
+            <div className="flex items-center justify-between px-2 py-1">
+              {/* Upload fallback */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center gap-1 w-14"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "#f3f4f6", border: "1.5px solid #e5e7eb" }}
+                >
+                  <Upload className="w-4.5 h-4.5" style={{ color: BLUE }} />
+                </div>
+                <span className="text-[10px] font-semibold" style={{ color: "#374151" }}>相簿</span>
+              </button>
+
+              {/* Shutter button */}
+              <button
+                onClick={handleCapture}
+                disabled={!cameraReady}
+                className="flex items-center justify-center rounded-full transition-all active:scale-95 disabled:opacity-40"
+                style={{
+                  width: 72, height: 72,
+                  background: cameraReady ? BLUE : "#9ca3af",
+                  border: `4px solid ${YELLOW}`,
+                  boxShadow: cameraReady ? `0 0 0 3px ${BLUE}30` : "none",
+                }}
+              >
+                <Camera className="w-7 h-7 text-white" />
+              </button>
+
+              {/* Flip camera */}
+              <button
+                onClick={() => { setIsFrontCamera((f) => !f); startCamera(!isFrontCamera); }}
+                className="flex flex-col items-center gap-1 w-14"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "#f3f4f6", border: "1.5px solid #e5e7eb" }}
+                >
+                  <RotateCcw className="w-4.5 h-4.5" style={{ color: BLUE }} />
+                </div>
+                <span className="text-[10px] font-semibold" style={{ color: "#374151" }}>翻轉</span>
+              </button>
+            </div>
+
+            {/* Tip */}
+            <div
+              className="mx-1 rounded-xl px-3 py-2.5"
+              style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}15` }}
+            >
+              <p className="text-xs font-semibold mb-1" style={{ color: BLUE }}>💡 拍攝技巧</p>
+              <p className="text-xs" style={{ color: "#4b5563" }}>確保卡牌名稱及卡號清晰可見，避免反光及陰影</p>
+            </div>
+
+            {/* Hidden file input */}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          </div>
+        )}
+
+        {/* ── STAGE: PERMISSION DENIED ── */}
+        {stage === "permission_denied" && (
+          <div className="flex flex-col items-center gap-4 py-6 px-4">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: "#fee2e2" }}
+            >
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-bold" style={{ color: "#111827" }}>相機權限被拒絕</p>
+              <p className="text-sm mt-1" style={{ color: "#6b7280" }}>
+                請在瀏覽器設定中允許相機存取，或使用上傳圖片功能
+              </p>
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold"
+              style={{ background: BLUE, color: "white" }}
+            >
+              <Upload className="w-4 h-4" />
+              改用上傳圖片
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          </div>
+        )}
+
+        {/* ── STAGE: ANALYZING ── */}
+        {stage === "analyzing" && (
+          <div className="flex flex-col items-center gap-5 py-4 px-4">
+            {capturedImage && (
+              <div
+                className="relative rounded-xl overflow-hidden shadow-lg"
+                style={{ width: 144, height: 192, border: `2px solid ${BLUE}20` }}
+              >
+                <img src={capturedImage} alt="分析中" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06038D]/20 to-transparent animate-scan-line" />
+                <div className="absolute inset-0 rounded-xl animate-pulse" style={{ border: `2px solid ${YELLOW}` }} />
+              </div>
+            )}
+            <div className="w-full max-w-xs">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold" style={{ color: BLUE }}>AI 識別中</span>
+                <span className="text-sm font-bold" style={{ color: BLUE }}>{Math.round(analyzeProgress)}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "#e5e7eb" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${analyzeProgress}%`, background: `linear-gradient(to right, ${BLUE}, ${YELLOW})` }}
+                />
+              </div>
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-sm font-medium" style={{ color: "#374151" }}>
+                {analyzeProgress < 40 ? "正在讀取卡牌資訊..." :
+                 analyzeProgress < 70 ? "比對卡牌資料庫..." :
+                 analyzeProgress < 90 ? "精準匹配中..." : "即將完成..."}
+              </p>
+              <p className="text-xs" style={{ color: "#9ca3af" }}>由 Gemini AI 驅動</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── STAGE: RESULTS ── */}
+        {stage === "results" && matchResults.length > 0 && (
+          <div className="flex flex-col gap-4 px-1 pb-2">
+            {identificationInfo && (
+              <div className="rounded-xl px-4 py-3 flex items-start gap-3" style={{ background: BLUE }}>
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: YELLOW }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold mb-1" style={{ color: YELLOW }}>AI 識別結果</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {identificationInfo.cardNameJa && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(255,255,255,0.2)", color: "white" }}>
+                        {identificationInfo.cardNameJa}
+                      </span>
                     )}
-                    {card.rarity && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{card.rarity}</span>
-                    )}
-                    {card.latestPrice && (
-                      <span className="text-xs font-bold text-green-600">
-                        HK${card.latestPrice.toLocaleString()}
+                    {identificationInfo.cardNumber && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: `${YELLOW}30`, color: YELLOW }}>
+                        #{identificationInfo.cardNumber}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {/* Score + arrow */}
-                <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                  <span className={`text-sm font-bold ${
-                    card.matchScore >= 60 ? "text-green-500" :
-                    card.matchScore >= 40 ? "text-yellow-500" : "text-orange-400"
-                  }`}>
-                    {card.matchScore}分
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Retry button */}
-          <button
-            onClick={handleRetry}
-            className="w-full h-11 rounded-xl border-2 border-gray-200 bg-white text-sm font-semibold text-gray-600 flex items-center justify-center gap-2 hover:border-[#06038D]/40 transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            重新拍攝
-          </button>
-        </div>
-      )}
-
-      {/* ── STAGE: NO MATCH ── */}
-      {stage === "no_match" && (
-        <div className="flex flex-col items-center gap-5 py-4">
-          {/* Preview */}
-          {imagePreview && (
-            <div className="w-28 h-36 rounded-xl overflow-hidden shadow border-2 border-gray-200">
-              <img src={imagePreview} alt="識別圖片" className="w-full h-full object-cover" />
-            </div>
-          )}
-
-          {/* Identification info if available */}
-          {identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) ? (
-            <div className="w-full rounded-xl bg-[#06038D]/5 border border-[#06038D]/20 px-4 py-3 text-center">
-              <p className="text-xs text-gray-500 mb-1">AI 識別到的卡牌</p>
-              <p className="text-base font-bold text-[#06038D]">
-                {identificationInfo.cardNameJa || identificationInfo.cardName}
-              </p>
-              {identificationInfo.cardNumber && (
-                <p className="text-xs text-gray-400 mt-0.5">#{identificationInfo.cardNumber}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-2">資料庫中未找到完全匹配的卡牌</p>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                <X className="w-7 h-7 text-gray-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">無法識別卡牌</p>
-              <p className="text-xs text-gray-400 mt-1">請確保圖片清晰且包含完整卡牌</p>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="w-full space-y-3">
-            {!onCardSelect && identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) && (
-              <button
-                onClick={handleTextSearch}
-                className="w-full h-12 rounded-xl bg-[#06038D] text-white text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                <Search className="w-4 h-4" />
-                搜尋「{identificationInfo.cardNameJa || identificationInfo.cardName}」
-              </button>
             )}
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6b7280" }}>
+                找到 {matchResults.length} 個匹配結果，{onCardSelect ? "請選擇要加入的卡牌" : "請選擇正確的卡牌"}
+              </p>
+              {matchResults.map((card, index) => (
+                <button
+                  key={card.id}
+                  onClick={() => handleSelectCard(card)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.98]"
+                  style={{
+                    border: `2px solid ${index === 0 ? BLUE : "#e5e7eb"}`,
+                    background: index === 0 ? `${BLUE}08` : "white",
+                  }}
+                >
+                  <div className="w-11 flex-shrink-0 rounded-lg overflow-hidden" style={{ height: 60, background: "#f3f4f6", border: "1px solid #e5e7eb" }}>
+                    {card.imageUrl ? (
+                      <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Search className="w-4 h-4" style={{ color: "#d1d5db" }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      {index === 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0" style={{ background: YELLOW, color: BLUE }}>最佳</span>
+                      )}
+                      <p className="text-sm font-semibold truncate" style={{ color: "#111827" }}>{card.nameJa || card.name}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {card.cardNumber && <span className="text-xs font-mono" style={{ color: "#9ca3af" }}>#{card.cardNumber}</span>}
+                      {card.rarity && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "#f3f4f6", color: "#6b7280" }}>{card.rarity}</span>}
+                      {card.latestPrice && <span className="text-xs font-bold" style={{ color: "#16a34a" }}>HK${card.latestPrice.toLocaleString()}</span>}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                    <span className={`text-sm font-bold ${card.matchScore >= 60 ? "text-green-500" : card.matchScore >= 40 ? "text-yellow-500" : "text-orange-400"}`}>
+                      {card.matchScore}分
+                    </span>
+                    <ChevronRight className="w-4 h-4" style={{ color: "#d1d5db" }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+
             <button
               onClick={handleRetry}
-              className="w-full h-11 rounded-xl border-2 border-gray-200 bg-white text-sm font-semibold text-gray-600 flex items-center justify-center gap-2 hover:border-[#06038D]/40 transition-colors"
+              className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
+              style={{ border: "2px solid #e5e7eb", background: "white", color: "#374151" }}
             >
-              <RotateCcw className="w-4 h-4" />
-              重新拍攝
+              <RotateCcw className="w-4 h-4" />重新拍攝
             </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ── STAGE: NO MATCH ── */}
+        {stage === "no_match" && (
+          <div className="flex flex-col items-center gap-5 py-4 px-4">
+            {capturedImage && (
+              <div className="w-28 h-36 rounded-xl overflow-hidden shadow" style={{ border: "2px solid #e5e7eb" }}>
+                <img src={capturedImage} alt="識別圖片" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) ? (
+              <div className="w-full rounded-xl px-4 py-3 text-center" style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}20` }}>
+                <p className="text-xs mb-1" style={{ color: "#6b7280" }}>AI 識別到的卡牌</p>
+                <p className="text-base font-bold" style={{ color: BLUE }}>{identificationInfo.cardNameJa || identificationInfo.cardName}</p>
+                {identificationInfo.cardNumber && <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>#{identificationInfo.cardNumber}</p>}
+                <p className="text-xs mt-2" style={{ color: "#6b7280" }}>資料庫中未找到完全匹配的卡牌</p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "#f3f4f6" }}>
+                  <X className="w-7 h-7" style={{ color: "#9ca3af" }} />
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "#374151" }}>無法識別卡牌</p>
+                <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>請確保圖片清晰且包含完整卡牌</p>
+              </div>
+            )}
+            <div className="w-full space-y-3">
+              {!onCardSelect && identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) && (
+                <button
+                  onClick={handleTextSearch}
+                  className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold"
+                  style={{ background: BLUE, color: "white" }}
+                >
+                  <Search className="w-4 h-4" />
+                  搜尋「{identificationInfo.cardNameJa || identificationInfo.cardName}」
+                </button>
+              )}
+              <button
+                onClick={handleRetry}
+                className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"
+                style={{ border: "2px solid #e5e7eb", background: "white", color: "#374151" }}
+              >
+                <RotateCcw className="w-4 h-4" />重新拍攝
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
     </BottomSheet>
   );
 }
