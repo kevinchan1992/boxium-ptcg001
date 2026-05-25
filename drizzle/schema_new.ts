@@ -1884,6 +1884,7 @@ export const userCollections = mysqlTable("userCollections", {
   purchasedAt: timestamp("purchasedAt"),                     // purchase date (nullable)
   notes: text("notes"),                                      // user notes (nullable)
   isPublic: boolean("isPublic").notNull().default(false),    // whether this entry is publicly visible
+  tradedAt: timestamp("tradedAt"),                           // set when card is traded away (null = still in collection)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -1891,6 +1892,7 @@ export const userCollections = mysqlTable("userCollections", {
   cardIdIdx: index("uc_cardId_idx").on(table.cardId),
   isPublicIdx: index("uc_isPublic_idx").on(table.isPublic),
   userCardIdx: index("uc_userId_cardId_idx").on(table.userId, table.cardId),
+  tradedAtIdx: index("uc_tradedAt_idx").on(table.tradedAt),
 }));
 export type UserCollection = typeof userCollections.$inferSelect;
 export type InsertUserCollection = typeof userCollections.$inferInsert;

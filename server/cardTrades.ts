@@ -74,11 +74,16 @@ export async function createCardTrade(userId: number, input: CreateTradeInput) {
         quantity: item.quantity ?? 1,
         purchasePrice: thisCost > 0 ? String(Math.round(thisCost * 100) / 100) : null,
         purchasedAt: input.tradedAt,
-        notes: item.direction === "in" ? tradeNote : null,
+        notes: tradeNote,
         isPublic: false,
       });
       newCollectionId = Number((colResult as any).insertId);
       createdCollectionIds.push(newCollectionId);
+    } else if (item.direction === "out" && item.collectionId) {
+      // Mark the traded-out collection entry with tradedAt timestamp
+      await db.update(userCollections)
+        .set({ tradedAt: input.tradedAt })
+        .where(and(eq(userCollections.id, item.collectionId), eq(userCollections.userId, userId)));
     }
 
     // Insert trade item record
@@ -205,7 +210,8 @@ export async function getTradesForCollectionItem(userId: number, collectionId: n
 
   if (tradeItemRows.length === 0) return [];
 
-  const tradeIds = Array.from(new Set(tradeItemRows.map((i) => i.tradeId)));
+  const tradeIds = Array.from(new Set(tradeItemRows.map((i) => i.tradeId))) as number[];
+  if (tradeIds.length === 0) return [];
   const trades = await db
     .select()
     .from(cardTrades)

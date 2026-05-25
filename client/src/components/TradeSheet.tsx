@@ -85,7 +85,8 @@ function TradeCardRow({
   onRemove: () => void;
   onUpdate: (u: Partial<TradeCardItem>) => void;
 }) {
-  const isOut = item.direction === "out";
+  // isOut is kept for potential future use but no longer affects value input style
+  const _isOut = item.direction === "out";
   return (
     <div className="flex items-start gap-3 sm:gap-4 px-3 sm:px-4 py-3 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
       {/* Card image */}
@@ -296,12 +297,23 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     { enabled: pendingCardIdForPrice != null }
   );
 
-  // When market price is fetched, auto-fill pendingValue if still empty
+  // When market price is fetched, auto-fill pendingValue (for out cards) or update last in-card's estimatedValue
   useEffect(() => {
     if (pendingCardPrice?.avgPrice != null && pendingCardIdForPrice != null) {
-      setPendingValue((prev) => prev === "" ? String(pendingCardPrice.avgPrice) : prev);
+      if (pendingDirection === "in") {
+        // Update the last added 'in' card with this card's market price
+        setTradeCards((prev) => {
+          const lastInIdx = [...prev].reverse().findIndex((c) => c.direction === "in" && c.cardId === pendingCardIdForPrice && c.estimatedValue === "");
+          if (lastInIdx === -1) return prev;
+          const realIdx = prev.length - 1 - lastInIdx;
+          return prev.map((c, i) => i === realIdx ? { ...c, estimatedValue: String(pendingCardPrice.avgPrice) } : c);
+        });
+      } else {
+        // For 'out' cards: fill pendingValue in the form
+        setPendingValue((prev) => prev === "" ? String(pendingCardPrice.avgPrice) : prev);
+      }
     }
-  }, [pendingCardPrice, pendingCardIdForPrice]);
+  }, [pendingCardPrice, pendingCardIdForPrice, pendingDirection]);
 
   const { data: collectionData, isLoading: collectionLoading } = trpc.profile.getCollection.useQuery(
     { limit: 200, page: 1 },
@@ -371,25 +383,67 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
   };
 
   const handleCardPicked = (card: SelectedCard) => {
-    setPendingCard(card);
-    setPendingDirection(pickerDirection);
-    setPendingGrader("PSA");
-    setPendingGrade("10");
-    setPendingQty("1");
-    setPendingValue(""); // will be auto-filled by useEffect when market price arrives
-    setPendingCardIdForPrice(card.id);
     setShowCardPicker(false);
+    if (pickerDirection === "in") {
+      // For 'in' cards: directly add to list, allow multiple
+      setTradeCards((prev) => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        direction: "in",
+        cardId: card.id,
+        cardName: card.name,
+        cardImageUrl: card.imageUrl,
+        cardSeries: card.series,
+        grader: "PSA",
+        grade: "10",
+        quantity: 1,
+        estimatedValue: "",
+        collectionId: null,
+      }]);
+      // Trigger market price fetch for the newly added card
+      setPendingCardIdForPrice(card.id);
+      setPendingDirection("in");
+      setPendingCard(null); // no pending form for 'in' cards
+    } else {
+      // For 'out' cards: show the grade form
+      setPendingCard(card);
+      setPendingDirection(pickerDirection);
+      setPendingGrader("PSA");
+      setPendingGrade("10");
+      setPendingQty("1");
+      setPendingValue(""); // will be auto-filled by useEffect when market price arrives
+      setPendingCardIdForPrice(card.id);
+    }
   };
 
   const handleCameraCardSelected = (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => {
-    setPendingCard({ id: card.id, name: card.name, imageUrl: card.imageUrl, series: card.series, productType: "single_card" });
-    setPendingDirection(cameraDirection);
-    setPendingGrader("PSA");
-    setPendingGrade("10");
-    setPendingQty("1");
-    setPendingValue(""); // will be auto-filled by useEffect when market price arrives
-    setPendingCardIdForPrice(card.id);
     setShowCameraSheet(false);
+    if (cameraDirection === "in") {
+      // For 'in' cards: directly add to list
+      setTradeCards((prev) => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        direction: "in",
+        cardId: card.id,
+        cardName: card.name,
+        cardImageUrl: card.imageUrl,
+        cardSeries: card.series,
+        grader: "PSA",
+        grade: "10",
+        quantity: 1,
+        estimatedValue: "",
+        collectionId: null,
+      }]);
+      setPendingCardIdForPrice(card.id);
+      setPendingDirection("in");
+      setPendingCard(null);
+    } else {
+      setPendingCard({ id: card.id, name: card.name, imageUrl: card.imageUrl, series: card.series, productType: "single_card" });
+      setPendingDirection(cameraDirection);
+      setPendingGrader("PSA");
+      setPendingGrade("10");
+      setPendingQty("1");
+      setPendingValue(""); // will be auto-filled by useEffect when market price arrives
+      setPendingCardIdForPrice(card.id);
+    }
   };
 
   const confirmPendingCard = () => {

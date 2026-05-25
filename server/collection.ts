@@ -15,7 +15,7 @@
 
 import { getDb, batchGetCardPricesByGrades, resetDb } from "./db";
 import { userCollections, cards } from "../drizzle/schema_new";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull } from "drizzle-orm";
 
 // ─── Grade to priceHistory.grade mapping ───────────────────────────────────────
 const GRADE_TO_PRICE_GRADE: Record<string, string> = {
@@ -198,7 +198,7 @@ export async function getUserCollection(
       })
       .from(userCollections)
       .leftJoin(cards, eq(userCollections.cardId, cards.id))
-      .where(eq(userCollections.userId, userId))
+      .where(and(eq(userCollections.userId, userId), isNull(userCollections.tradedAt)))
       .orderBy(desc(userCollections.createdAt));
   }
 

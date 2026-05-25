@@ -136,7 +136,7 @@
     "add": "^2.0.6",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.10",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.44.0",
     "esbuild": "^0.25.0",
     "pg": "^8.18.0",
     "pnpm": "^10.15.1",
