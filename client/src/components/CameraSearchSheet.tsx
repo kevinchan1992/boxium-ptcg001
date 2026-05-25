@@ -23,9 +23,11 @@ const BLUE = "#06038D";
 const YELLOW = "#FEDD00";
 
 // How often (ms) to attempt auto-scan while camera is live
-const AUTO_SCAN_INTERVAL = 2500;
+const AUTO_SCAN_INTERVAL = 800;
 // Minimum confidence to auto-navigate
 const AUTO_NAV_THRESHOLD = 70;
+// Cooldown after a failed auto-scan (ms) before trying again
+const AUTO_SCAN_COOLDOWN = 1500;
 
 interface MatchedCard {
   id: number;
@@ -69,6 +71,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
   const autoScanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isAnalyzingRef = useRef(false);
   const stageRef = useRef<Stage>("camera");
+  const lastScanEndRef = useRef<number>(0);
 
   // Keep stageRef in sync
   useEffect(() => { stageRef.current = stage; }, [stage]);
@@ -90,16 +93,57 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
   }, []);
 
   // ── Capture frame from video ────────────────────────────────
-  const captureFrame = useCallback((): string | null => {
+  const captureFrame = useCallback((quality = 0.75): string | null => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.videoWidth === 0) return null;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Downscale to max 960px wide for faster upload while keeping enough detail
+    const maxW = 960;
+    const scale = Math.min(1, maxW / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.85);
+    return canvas.toDataURL("image/jpeg", quality);
+  }, []);
+
+  // ── Detect if viewfinder corners are covered by a bright object ──
+  // Samples pixel brightness at the four corner-bracket positions.
+  // Returns true when all four corners appear to have content (non-black).
+  const cornersAreCovered = useCallback((): boolean => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.videoWidth === 0) return false;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    // Use a tiny offscreen canvas for speed
+    const off = document.createElement("canvas");
+    off.width = w; off.height = h;
+    const ctx = off.getContext("2d");
+    if (!ctx) return false;
+    ctx.drawImage(video, 0, 0, w, h);
+    // Sample 5×5 patches at each corner-bracket position (inset ~8% from edges)
+    const insetX = Math.round(w * 0.08);
+    const insetY = Math.round(h * 0.08);
+    const patchSize = 5;
+    const samplePoints = [
+      [insetX, insetY],
+      [w - insetX, insetY],
+      [insetX, h - insetY],
+      [w - insetX, h - insetY],
+    ];
+    const BRIGHTNESS_THRESHOLD = 30; // 0–255; below this = too dark / no card
+    for (const [sx, sy] of samplePoints) {
+      const data = ctx.getImageData(Math.max(0, sx - 2), Math.max(0, sy - 2), patchSize, patchSize).data;
+      let sum = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      }
+      const avg = sum / (data.length / 4);
+      if (avg < BRIGHTNESS_THRESHOLD) return false;
+    }
+    return true;
   }, []);
 
   // ── Process base64 image through AI ────────────────────────
@@ -169,6 +213,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       }
     } finally {
       isAnalyzingRef.current = false;
+      lastScanEndRef.current = Date.now();
     }
   }, [imageSearchMutation, onCardSelect, onOpenChange, setLocation, stopCamera]);
 
@@ -196,7 +241,11 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
         autoScanTimerRef.current = setInterval(() => {
           if (stageRef.current !== "camera") return;
           if (isAnalyzingRef.current) return;
-          const frame = captureFrame();
+          // Respect cooldown after a previous scan
+          if (Date.now() - lastScanEndRef.current < AUTO_SCAN_COOLDOWN) return;
+          // Only fire if all four corners have content (card is in frame)
+          if (!cornersAreCovered()) return;
+          const frame = captureFrame(0.75);
           if (frame) processBase64(frame, true);
         }, AUTO_SCAN_INTERVAL);
       }
@@ -207,7 +256,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
         toast.error("無法啟動相機，請使用上傳功能");
       }
     }
-  }, [stopCamera, captureFrame, processBase64]);
+  }, [stopCamera, captureFrame, processBase64, cornersAreCovered]);
 
   // ── Open/close lifecycle ────────────────────────────────────
   useEffect(() => {
