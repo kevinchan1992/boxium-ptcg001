@@ -63,6 +63,8 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
   const [isFrontCamera, setIsFrontCamera] = useState(false);
   const [autoScanActive, setAutoScanActive] = useState(false);
   const [scanPulse, setScanPulse] = useState(false);
+  const [lowLightMode, setLowLightMode] = useState(false);
+  const [successFlash, setSuccessFlash] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -144,7 +146,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       if (avg < BRIGHTNESS_THRESHOLD) return false;
     }
     return true;
-  }, []);
+  }, [lowLightMode]);
 
   // ── Process base64 image through AI ────────────────────────
   const processBase64 = useCallback(async (base64: string, isAutoScan = false) => {
@@ -178,8 +180,11 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
         const best = result.matches[0] as MatchedCard;
 
         if (best.matchScore >= AUTO_NAV_THRESHOLD) {
-          // High confidence → auto-navigate
+          // High confidence → green flash animation then navigate
           stopCamera();
+          setSuccessFlash(true);
+          await new Promise((r) => setTimeout(r, 350));
+          setSuccessFlash(false);
           if (onCardSelect) {
             onOpenChange(false);
             onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series });
@@ -281,9 +286,9 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
     }, 300);
   }, [onOpenChange, stopCamera]);
 
-  // ── Manual shutter ──────────────────────────────────────────
+  // ── Manual shutter (high quality 0.92 for better accuracy) ──
   const handleCapture = useCallback(() => {
-    const base64 = captureFrame();
+    const base64 = captureFrame(0.92);
     if (!base64) { toast.error("無法擷取畫面"); return; }
     processBase64(base64, false);
   }, [captureFrame, processBase64]);
@@ -401,6 +406,30 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
                 </>
               )}
 
+              {/* Success flash overlay */}
+              {successFlash && (
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none"
+                  style={{ background: "rgba(22,163,74,0.45)", animation: "successFlashAnim 0.35s ease-out" }}
+                >
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.9)", boxShadow: "0 0 24px rgba(22,163,74,0.6)" }}>
+                    <CheckCircle2 className="w-9 h-9" style={{ color: "#16a34a" }} />
+                  </div>
+                  <p className="text-white font-bold text-sm"
+                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>識別成功！</p>
+                  {/* Green corner brackets */}
+                  <div className="absolute top-4 left-4 w-10 h-10"
+                    style={{ borderTop: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "4px 0 0 0" }} />
+                  <div className="absolute top-4 right-4 w-10 h-10"
+                    style={{ borderTop: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 4px 0 0" }} />
+                  <div className="absolute bottom-4 left-4 w-10 h-10"
+                    style={{ borderBottom: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "0 0 0 4px" }} />
+                  <div className="absolute bottom-4 right-4 w-10 h-10"
+                    style={{ borderBottom: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 0 4px 0" }} />
+                </div>
+              )}
+
               {/* Loading state */}
               {!cameraReady && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
@@ -452,11 +481,40 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
               </button>
             </div>
 
-            {/* Tip */}
-            <div className="mx-4 mb-4 rounded-xl px-3 py-2.5"
-              style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}15` }}>
-              <p className="text-xs font-semibold mb-0.5" style={{ color: BLUE }}>💡 拍攝技巧</p>
-              <p className="text-xs" style={{ color: "#4b5563" }}>確保卡牌名稱及卡號清晰可見，避免反光及陰影。系統每 2.5 秒自動分析一次。</p>
+            {/* Tip + Low-light toggle */}
+            <div className="mx-4 mb-4 space-y-2">
+              <div className="rounded-xl px-3 py-2.5"
+                style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}15` }}>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: BLUE }}>💡 拍攝技巧</p>
+                <p className="text-xs" style={{ color: "#4b5563" }}>確保卡牌名稱及卡號清晰可見，避免反光及陰影。卡牌充滿取景框時系統將自動識別。</p>
+              </div>
+              {/* Low-light mode toggle */}
+              <button
+                onClick={() => setLowLightMode((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
+                style={{
+                  background: lowLightMode ? `${BLUE}12` : "#f9fafb",
+                  border: `1.5px solid ${lowLightMode ? BLUE : "#e5e7eb"}`,
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🌙</span>
+                  <div className="text-left">
+                    <p className="text-xs font-semibold" style={{ color: lowLightMode ? BLUE : "#374151" }}>低光模式</p>
+                    <p className="text-[10px]" style={{ color: "#9ca3af" }}>降低亮度偵測門值至 15，適用於光線不足環境</p>
+                  </div>
+                </div>
+                <div
+                  className="w-10 h-5.5 rounded-full flex items-center transition-all"
+                  style={{
+                    background: lowLightMode ? BLUE : "#d1d5db",
+                    padding: "2px",
+                    justifyContent: lowLightMode ? "flex-end" : "flex-start",
+                  }}
+                >
+                  <div className="w-4 h-4 rounded-full bg-white shadow-sm" />
+                </div>
+              </button>
             </div>
 
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
