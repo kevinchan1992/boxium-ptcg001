@@ -214,6 +214,15 @@
     display: none;
   }
 
+/* ── Camera Scan Line Animation ── */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+.animate-scan-line {
+  animation: scan-line 1.5s linear infinite;
+}
+
 /* ── Banner Carousel Slide Animations ── */
 @keyframes slide-in-from-right {
   from { transform: translateX(100%); opacity: 0.6; }
