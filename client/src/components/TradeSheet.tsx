@@ -406,7 +406,11 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       grader: colItem.grader,
       grade: colItem.grade ?? "",
       quantity: colItem.quantity,
-      estimatedValue: colItem.marketPrice != null ? String(colItem.marketPrice) : "",
+      estimatedValue: colItem.marketPrice != null
+        ? String(colItem.marketPrice)
+        : colItem.purchasePrice != null
+          ? String(parseFloat(colItem.purchasePrice))
+          : "",
       collectionId: colItem.id,
     }]);
     setShowCollectionPicker(false);
