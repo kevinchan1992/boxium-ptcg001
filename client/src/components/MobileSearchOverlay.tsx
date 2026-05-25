@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Search, X, Clock, TrendingUp, ArrowRight, Loader2, Camera } from "lucide-react";
+import { Search, X, TrendingUp, ArrowRight, Loader2, Camera } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
@@ -142,7 +142,7 @@ export function MobileSearchOverlay({
   }, [closeOverlay]);
 
   const showSuggestions = debouncedQuery.trim().length >= 2;
-  const showHistory = !showSuggestions && history.length > 0;
+  const showHistory = false; // 已移除最近搜尋記錄功能
 
   return (
     <>

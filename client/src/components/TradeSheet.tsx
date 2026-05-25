@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeftRight, Plus, Search, Package,
-  ArrowRight, ArrowLeft, CheckCircle2, X, Loader2,
+  ArrowRight, ArrowLeft, CheckCircle2, X, Loader2, Camera,
 } from "lucide-react";
 import { getProxiedImageUrl } from "@/lib/utils";
 
@@ -141,6 +142,7 @@ function SectionBlock({
   children,
   onFromCollection,
   onSearch,
+  onCamera,
 }: {
   isOut: boolean;
   count: number;
@@ -148,6 +150,7 @@ function SectionBlock({
   children: React.ReactNode;
   onFromCollection?: () => void;
   onSearch: () => void;
+  onCamera?: () => void;
 }) {
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: `2px solid ${isOut ? "#e5e7eb" : BLUE}` }}>
@@ -189,6 +192,19 @@ function SectionBlock({
               style={{ background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }}
             >
               <Package className="w-3 h-3" />從收藏選
+            </button>
+          )}
+          {onCamera && (
+            <button
+              onClick={onCamera}
+              className="flex items-center justify-center w-8 h-8 rounded-xl transition-all active:scale-95"
+              style={isOut
+                ? { background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }
+                : { background: `${YELLOW}30`, color: BLUE, border: `1.5px solid ${YELLOW}80` }
+              }
+              title="拍照識別"
+            >
+              <Camera className="w-3.5 h-3.5" />
             </button>
           )}
           <button
@@ -247,6 +263,8 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
   const [showCardPicker, setShowCardPicker] = useState(false);
   const [pickerDirection, setPickerDirection] = useState<"in" | "out">("out");
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
+  const [showCameraSheet, setShowCameraSheet] = useState(false);
+  const [cameraDirection, setCameraDirection] = useState<"in" | "out">("out");
 
   const [pendingCard, setPendingCard] = useState<SelectedCard | null>(null);
   const [pendingDirection, setPendingDirection] = useState<"in" | "out">("out");
@@ -313,6 +331,16 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     setPendingQty("1");
     setPendingValue("");
     setShowCardPicker(false);
+  };
+
+  const handleCameraCardSelected = (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => {
+    setPendingCard({ id: card.id, name: card.name, imageUrl: card.imageUrl, series: card.series, productType: "single_card" });
+    setPendingDirection(cameraDirection);
+    setPendingGrader("PSA");
+    setPendingGrade("10");
+    setPendingQty("1");
+    setPendingValue("");
+    setShowCameraSheet(false);
   };
 
   const confirmPendingCard = () => {
@@ -432,6 +460,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               totalValue={totalOutValue}
               onFromCollection={() => setShowCollectionPicker(true)}
               onSearch={() => { setPickerDirection("out"); setShowCardPicker(true); }}
+              onCamera={() => { setCameraDirection("out"); setShowCameraSheet(true); }}
             >
               {outCards.map((c) => (
                 <TradeCardRow key={c.id} item={c}
@@ -475,6 +504,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               count={inCards.length}
               totalValue={totalInValue}
               onSearch={() => { setPickerDirection("in"); setShowCardPicker(true); }}
+              onCamera={() => { setCameraDirection("in"); setShowCameraSheet(true); }}
             >
               {inCards.map((c) => (
                 <TradeCardRow key={c.id} item={c}
@@ -559,6 +589,13 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
         open={showCardPicker}
         onOpenChange={setShowCardPicker}
         onSelect={handleCardPicked}
+      />
+
+      {/* ── Camera Search Sheet (picker mode) ── */}
+      <CameraSearchSheet
+        open={showCameraSheet}
+        onOpenChange={setShowCameraSheet}
+        onCardSelect={handleCameraCardSelected}
       />
 
       {/* ── Grade form for pending card ── */}

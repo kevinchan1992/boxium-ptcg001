@@ -24,11 +24,13 @@ interface MatchedCard {
 interface CameraSearchSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Picker mode: when provided, selecting a card calls this instead of navigating */
+  onCardSelect?: (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => void;
 }
 
 type Stage = "capture" | "analyzing" | "results" | "no_match";
 
-export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps) {
+export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSearchSheetProps) {
   const [, setLocation] = useLocation();
   const [stage, setStage] = useState<Stage>("capture");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -87,13 +89,20 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
         setMatchResults(result.matches as MatchedCard[]);
         setIdentificationInfo(result.identification);
 
-        // If best match has very high confidence (score >= 60), auto-navigate
+        // If best match has very high confidence (score >= 70), auto-select
         const best = result.matches[0] as MatchedCard;
         if (best.matchScore >= 70) {
-          // Auto-select best match
-          handleClose();
-          setLocation(`/card/${best.id}`);
-          toast.success(`已識別：${best.nameJa || best.name}`);
+          if (onCardSelect) {
+            // Picker mode: return card to caller
+            handleClose();
+            onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series });
+            toast.success(`已識別：${best.nameJa || best.name}`);
+          } else {
+            // Navigation mode: go to card page
+            handleClose();
+            setLocation(`/card/${best.id}`);
+            toast.success(`已識別：${best.nameJa || best.name}`);
+          }
         } else {
           setStage("results");
         }
@@ -111,7 +120,7 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
       setImagePreview(null);
       toast.error("識別失敗，請重試");
     }
-  }, [imageSearchMutation, handleClose, setLocation]);
+  }, [imageSearchMutation, handleClose, setLocation, onCardSelect]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,8 +132,15 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
   };
 
   const handleSelectCard = (card: MatchedCard) => {
-    handleClose();
-    setLocation(`/card/${card.id}`);
+    if (onCardSelect) {
+      // Picker mode: return card to caller
+      handleClose();
+      onCardSelect({ id: card.id, name: card.nameJa || card.name, imageUrl: card.imageUrl, series: card.series });
+    } else {
+      // Navigation mode: go to card page
+      handleClose();
+      setLocation(`/card/${card.id}`);
+    }
   };
 
   const handleTextSearch = () => {
@@ -145,7 +161,7 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
 
   const getStageTitle = () => {
     switch (stage) {
-      case "capture": return "拍照識別";
+      case "capture": return onCardSelect ? "拍照選卡" : "拍照識別";
       case "analyzing": return "AI 分析中...";
       case "results": return "識別結果";
       case "no_match": return "識別完成";
@@ -172,7 +188,9 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
             <div className="w-16 h-16 rounded-full bg-[#06038D]/10 flex items-center justify-center mb-4">
               <Scan className="w-8 h-8 text-[#06038D]" />
             </div>
-            <p className="text-sm font-semibold text-[#06038D] mb-1">對準卡牌拍攝</p>
+            <p className="text-sm font-semibold text-[#06038D] mb-1">
+              {onCardSelect ? "拍攝卡牌以選取" : "對準卡牌拍攝"}
+            </p>
             <p className="text-xs text-gray-500 text-center">確保卡牌名稱及卡號清晰可見<br />避免反光及陰影</p>
           </div>
 
@@ -295,7 +313,7 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
           {/* Match list */}
           <div className="space-y-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              找到 {matchResults.length} 個匹配結果，請選擇正確的卡牌
+              找到 {matchResults.length} 個匹配結果，{onCardSelect ? "請選擇要加入的卡牌" : "請選擇正確的卡牌"}
             </p>
             {matchResults.map((card, index) => (
               <button
@@ -411,7 +429,7 @@ export function CameraSearchSheet({ open, onOpenChange }: CameraSearchSheetProps
 
           {/* Action buttons */}
           <div className="w-full space-y-3">
-            {identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) && (
+            {!onCardSelect && identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) && (
               <button
                 onClick={handleTextSearch}
                 className="w-full h-12 rounded-xl bg-[#06038D] text-white text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
