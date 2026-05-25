@@ -117,6 +117,23 @@ export default function Pricing() {
           </button>
         </div>
 
+        {/* Scan Button — full-width, prominent camera CTA (both mobile & desktop) */}
+        <div className="w-full max-w-2xl mx-auto">
+          <button
+            type="button"
+            onClick={handleCameraClick}
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98] hover:opacity-90"
+            style={{
+              background: 'white',
+              color: '#111',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+            }}
+          >
+            <Camera className="w-5 h-5" />
+            <span>掃描卡牌識別</span>
+          </button>
+        </div>
+
         {/* Top Gainers - Daily Price Increase Top 5 */}
         <div className="flex justify-center gap-4 mt-12 flex-wrap">
           {isLoading ? (
