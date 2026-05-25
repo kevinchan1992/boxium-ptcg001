@@ -234,7 +234,10 @@ export function BottomSheet({
         {/* Content panel */}
         <DialogPrimitive.Content
           ref={panelRef}
-          style={panelStyle}
+          style={{
+            ...panelStyle,
+            ...(handleStyle?.background ? { borderTopColor: handleStyle.background as string } : {}),
+          }}
           className={cn(
             // ── Mobile & Tablet (< lg): bottom sheet — full width, anchored to bottom ──
             "fixed bottom-0 left-0 right-0 z-50",

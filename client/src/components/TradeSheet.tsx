@@ -94,7 +94,7 @@ function TradeCardRow({
           <img
             src={getProxiedImageUrl(item.cardImageUrl) ?? ""}
             alt={item.cardName}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
@@ -120,9 +120,9 @@ function TradeCardRow({
             onChange={(e) => onUpdate({ estimatedValue: e.target.value })}
             className="w-24 sm:w-28 h-6 sm:h-7 text-xs sm:text-sm px-2 rounded-md font-bold tabular-nums outline-none"
             style={{
-              border: `1.5px solid ${isOut ? "#fca5a5" : `${BLUE}35`}`,
-              color: isOut ? "#dc2626" : BLUE,
-              background: isOut ? "#fff5f5" : `${BLUE}05`,
+              border: `1.5px solid ${BLUE}35`,
+              color: BLUE,
+              background: `${BLUE}05`,
             }}
             placeholder="0.00"
           />
@@ -202,14 +202,15 @@ function SectionBlock({
           {onCamera && (
             <button
               onClick={onCamera}
-              className="flex items-center justify-center w-8 h-8 rounded-xl transition-all active:scale-95"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-black transition-all active:scale-95"
               style={isOut
                 ? { background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }
-                : { background: `${YELLOW}30`, color: BLUE, border: `1.5px solid ${YELLOW}80` }
+                : { background: `${YELLOW}`, color: BLUE, border: `none` }
               }
               title="拍照識別"
             >
-              <Camera className="w-3.5 h-3.5" />
+              <Camera className="w-4 h-4" />
+              {!isOut && <span>拍照</span>}
             </button>
           )}
           <button
@@ -302,9 +303,9 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     }
   }, [pendingCardPrice, pendingCardIdForPrice]);
 
-  const { data: collectionData } = trpc.profile.getCollection.useQuery(
+  const { data: collectionData, isLoading: collectionLoading } = trpc.profile.getCollection.useQuery(
     { limit: 200, page: 1 },
-    { enabled: open }
+    { enabled: open, staleTime: 30_000 }
   );
   const collectionItems = collectionData?.items ?? [];
   const tradedOutIdsInSheet = new Set<number>(collectionData?.tradedOutIds ?? []);
@@ -802,7 +803,12 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
           showCloseButton
         >
           <div className="px-4 pb-8 pt-4" style={{ background: "#f5f6fa" }}>
-            {collectionItems.length === 0 ? (
+            {collectionLoading ? (
+              <div className="flex items-center justify-center gap-2 py-10">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: BLUE }} />
+                <span className="text-sm text-gray-400">載入收藏中...</span>
+              </div>
+            ) : collectionItems.length === 0 ? (
               <div className="text-center py-10 text-gray-400 text-sm">收藏清單為空</div>
             ) : (
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
