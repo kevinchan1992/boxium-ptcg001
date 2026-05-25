@@ -998,10 +998,9 @@ export function CollectionSection() {
             />
             <StatCard
               label={t("profile.collection.stats.holdings")}
-              value={`${stats.totalQuantity}`}
-              sub={`${stats.totalItems} ${t("profile.collection.stats.entries")}`}
-              icon={<Package className="w-4 h-4" style={{ color: '#92700a' }} />}
-              highlight="yellow"
+              value={`${stats.totalQuantity} ${t("profile.collection.stats.cards")}`}
+              icon={<Package className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
+              highlight="blue"
             />
           </div>
 
