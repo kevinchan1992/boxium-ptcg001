@@ -356,9 +356,10 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
             <div
               className="relative w-full overflow-hidden"
               style={{
-                // Responsive height: taller on phones, shorter on tablets
-                height: "min(62vw * 4/3, 55dvh, 480px)",
-                minHeight: 240,
+                // Responsive height: use dvh-based calculation to avoid overflow on tablets
+                // On phones (~390px wide): ~55dvh
+                // On tablets (~768px wide): cap at 50dvh to prevent corner clipping
+                height: "clamp(240px, 50dvh, 520px)",
                 background: "#000",
               }}
             >
@@ -371,21 +372,21 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
                 style={{ transform: isFrontCamera ? "scaleX(-1)" : "none" }}
               />
 
-              {/* Corner brackets */}
+              {/* Corner brackets — use inset % so they always stay inside the viewfinder */}
               {cameraReady && (
                 <>
                   {/* TL */}
-                  <div className="absolute top-4 left-4 w-10 h-10 pointer-events-none"
-                    style={{ borderTop: `3px solid ${scanPulse ? "white" : YELLOW}`, borderLeft: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "4px 0 0 0", transition: "border-color 0.3s" }} />
+                  <div className="absolute pointer-events-none"
+                    style={{ top: 16, left: 16, width: 40, height: 40, borderTop: `3px solid ${scanPulse ? "white" : YELLOW}`, borderLeft: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "4px 0 0 0", transition: "border-color 0.3s" }} />
                   {/* TR */}
-                  <div className="absolute top-4 right-4 w-10 h-10 pointer-events-none"
-                    style={{ borderTop: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRight: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 4px 0 0", transition: "border-color 0.3s" }} />
+                  <div className="absolute pointer-events-none"
+                    style={{ top: 16, right: 16, width: 40, height: 40, borderTop: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRight: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 4px 0 0", transition: "border-color 0.3s" }} />
                   {/* BL */}
-                  <div className="absolute bottom-4 left-4 w-10 h-10 pointer-events-none"
-                    style={{ borderBottom: `3px solid ${scanPulse ? "white" : YELLOW}`, borderLeft: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 0 0 4px", transition: "border-color 0.3s" }} />
+                  <div className="absolute pointer-events-none"
+                    style={{ bottom: 32, left: 16, width: 40, height: 40, borderBottom: `3px solid ${scanPulse ? "white" : YELLOW}`, borderLeft: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 0 0 4px", transition: "border-color 0.3s" }} />
                   {/* BR */}
-                  <div className="absolute bottom-4 right-4 w-10 h-10 pointer-events-none"
-                    style={{ borderBottom: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRight: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 0 4px 0", transition: "border-color 0.3s" }} />
+                  <div className="absolute pointer-events-none"
+                    style={{ bottom: 32, right: 16, width: 40, height: 40, borderBottom: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRight: `3px solid ${scanPulse ? "white" : YELLOW}`, borderRadius: "0 0 4px 0", transition: "border-color 0.3s" }} />
 
                   {/* Auto-scan indicator */}
                   {autoScanActive && (
@@ -419,14 +420,14 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
                   <p className="text-white font-bold text-sm"
                     style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>識別成功！</p>
                   {/* Green corner brackets */}
-                  <div className="absolute top-4 left-4 w-10 h-10"
-                    style={{ borderTop: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "4px 0 0 0" }} />
-                  <div className="absolute top-4 right-4 w-10 h-10"
-                    style={{ borderTop: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 4px 0 0" }} />
-                  <div className="absolute bottom-4 left-4 w-10 h-10"
-                    style={{ borderBottom: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "0 0 0 4px" }} />
-                  <div className="absolute bottom-4 right-4 w-10 h-10"
-                    style={{ borderBottom: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 0 4px 0" }} />
+                  <div className="absolute"
+                    style={{ top: 16, left: 16, width: 40, height: 40, borderTop: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "4px 0 0 0" }} />
+                  <div className="absolute"
+                    style={{ top: 16, right: 16, width: 40, height: 40, borderTop: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 4px 0 0" }} />
+                  <div className="absolute"
+                    style={{ bottom: 32, left: 16, width: 40, height: 40, borderBottom: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "0 0 0 4px" }} />
+                  <div className="absolute"
+                    style={{ bottom: 32, right: 16, width: 40, height: 40, borderBottom: "3px solid #22c55e", borderRight: "3px solid #22c55e", borderRadius: "0 0 4px 0" }} />
                 </div>
               )}
 

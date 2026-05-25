@@ -3,7 +3,7 @@
  * Design: Boxium brand style — deep blue header (#06038D), white body, yellow (#FEDD00) accents
  * Reference: "新增收藏" dialog style
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -234,7 +234,7 @@ function SectionBlock({
           <>
             {children}
             <div
-              className="flex justify-end px-4 py-2"
+              className="flex items-center justify-between px-4 py-2"
               style={{ borderTop: "1px solid #f0f0f0" }}
             >
               <span
@@ -243,6 +243,16 @@ function SectionBlock({
               >
                 {isOut ? "換出" : "換入"}總估值：{formatCurrency(totalValue)}
               </span>
+              {!isOut && (
+                <button
+                  onClick={onSearch}
+                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[10px] font-black transition-all active:scale-95"
+                  style={{ background: `${YELLOW}30`, color: BLUE, border: `1px solid ${YELLOW}80` }}
+                >
+                  <Plus className="w-2.5 h-2.5" />
+                  再加一張
+                </button>
+              )}
             </div>
           </>
         )}
@@ -300,26 +310,40 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     setPendingCard(null);
   }, []);
 
+  // Use ref to avoid unstable reference causing useEffect re-runs
+  const preselectedRef = useRef(preselectedOutItem);
+  useEffect(() => { preselectedRef.current = preselectedOutItem; }, [preselectedOutItem]);
+
   const initFromPreselected = useCallback(() => {
-    if (preselectedOutItem) {
+    const item = preselectedRef.current;
+    if (item) {
       setTradeCards([{
-        id: `pre-${preselectedOutItem.id}`,
+        id: `pre-${item.id}`,
         direction: "out",
-        cardId: preselectedOutItem.cardId,
-        cardName: preselectedOutItem.cardName,
-        cardImageUrl: preselectedOutItem.cardImageUrl,
-        cardSeries: preselectedOutItem.cardSeries,
-        grader: preselectedOutItem.grader,
-        grade: preselectedOutItem.grade ?? "",
-        quantity: preselectedOutItem.quantity,
-        estimatedValue: preselectedOutItem.marketPrice != null ? String(preselectedOutItem.marketPrice) : "",
-        collectionId: preselectedOutItem.id,
+        cardId: item.cardId,
+        cardName: item.cardName,
+        cardImageUrl: item.cardImageUrl,
+        cardSeries: item.cardSeries,
+        grader: item.grader,
+        grade: item.grade ?? "",
+        quantity: item.quantity,
+        estimatedValue: item.marketPrice != null ? String(item.marketPrice) : "",
+        collectionId: item.id,
       }]);
     }
-  }, [preselectedOutItem]);
+  }, []); // stable — reads from ref
+
+  // Reset form when sheet opens (use effect to avoid re-triggering on re-renders)
+  const prevOpenRef = useRef(false);
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      resetForm();
+      initFromPreselected();
+    }
+    prevOpenRef.current = open;
+  }, [open, resetForm, initFromPreselected]);
 
   const handleOpenChange = (v: boolean) => {
-    if (v) { resetForm(); initFromPreselected(); }
     onOpenChange(v);
   };
 
