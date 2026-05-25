@@ -468,6 +468,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
           </div>
         }
         headerStyle={{ background: BLUE }}
+        handleStyle={{ background: BLUE }}
         showCloseButton
       >
         <div className="pb-8" style={{ background: "#f5f6fa" }}>
@@ -482,8 +483,8 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                 type="date"
                 value={tradedAt}
                 onChange={(e) => setTradedAt(e.target.value)}
-                className="h-11 text-sm font-bold border-gray-200 rounded-xl bg-gray-50 focus:ring-2"
-                style={{ "--tw-ring-color": `${BLUE}40` } as any}
+                className="h-11 w-full max-w-full text-sm font-bold border-gray-200 rounded-xl bg-gray-50 focus:ring-2"
+                style={{ "--tw-ring-color": `${BLUE}40`, boxSizing: "border-box" } as any}
               />
             </div>
           </div>

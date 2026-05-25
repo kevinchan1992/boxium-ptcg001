@@ -405,7 +405,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
           </span>
         }
         showCloseButton
-        handleStyle={{ background: `rgba(255,255,255,0.3)` }}
+        handleStyle={{ background: BRAND_BLUE }}
         headerStyle={{ background: BRAND_BLUE, borderBottom: `1px solid ${BRAND_YELLOW}40`, color: "white" }}
         className="!bg-white !text-gray-900"
       >
