@@ -794,10 +794,13 @@ export function CollectionSection() {
   const [showTradeSheet, setShowTradeSheet] = useState(false);
   const [tradePreselectedItem, setTradePreselectedItem] = useState<any | null>(null);
 
+  // View mode: "active" = current holdings, "traded" = traded-away cards
+  const [viewMode, setViewMode] = useState<"active" | "traded">("active");
+
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
   const { data: collectionData, isLoading: itemsLoading } = trpc.profile.getCollection.useQuery(
-    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE },
+    { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE, showTraded: viewMode === "traded" },
     { retry: 1 }
   );
   const items = collectionData?.items ?? [];
@@ -887,13 +890,38 @@ export function CollectionSection() {
     <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
       {/* ── Header ── */}
       <div className="pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
+        {/* View mode tabs */}
+        <div className="flex gap-1 mb-3 p-1 rounded-xl bg-gray-100">
+          <button
+            onClick={() => { setViewMode("active"); setCurrentPage(1); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              viewMode === "active" ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            style={viewMode === "active" ? { background: BRAND_BLUE } : {}}
+          >
+            <Package className="w-3.5 h-3.5" />
+            現有收藏
+          </button>
+          <button
+            onClick={() => { setViewMode("traded"); setCurrentPage(1); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              viewMode === "traded" ? "text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
+            style={viewMode === "traded" ? { background: BRAND_BLUE } : {}}
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" />
+            已換走
+          </button>
+        </div>
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h2 className="text-base sm:text-xl font-black tracking-tight truncate" style={{ color: BRAND_BLUE }}>{t("profile.collection.title")}</h2>
+            <h2 className="text-base sm:text-xl font-black tracking-tight truncate" style={{ color: BRAND_BLUE }}>
+              {viewMode === "active" ? t("profile.collection.title") : "已換走的卡牌"}
+            </h2>
             <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 font-medium tracking-wide">
               {totalItems > 0
                 ? `${totalItems} ${t("profile.collection.stats.entries")} · ${stats?.totalQuantity ?? 0} ${t("profile.collection.stats.cards")}`
-                : t("profile.collection.empty")}
+                : viewMode === "traded" ? "尚無已換走的卡牌" : t("profile.collection.empty")}
             </p>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
@@ -1123,15 +1151,26 @@ export function CollectionSection() {
         <div className="py-16 text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{ background: `${BRAND_BLUE}08` }}>
-            <Package className="w-10 h-10" style={{ color: BRAND_BLUE }} />
+            {viewMode === "traded"
+              ? <ArrowLeftRight className="w-10 h-10" style={{ color: BRAND_BLUE }} />
+              : <Package className="w-10 h-10" style={{ color: BRAND_BLUE }} />}
           </div>
-          <p className="text-gray-600 font-semibold mb-2">{t("profile.collection.empty")}</p>
-          <p className="text-sm text-gray-400 mb-6 max-w-xs mx-auto">{t("profile.collection.emptyHint")}</p>
-          <Button onClick={() => { setEditItem(null); setShowAddSheet(true); }}
-            className="font-bold gap-2" style={{ background: BRAND_BLUE, color: "white" }}>
-            <Plus className="w-4 h-4" />
-            {t("profile.collection.addCard")}
-          </Button>
+          {viewMode === "traded" ? (
+            <>
+              <p className="text-gray-600 font-semibold mb-2">尚無已換走的卡牌</p>
+              <p className="text-sm text-gray-400 max-w-xs mx-auto">在收藏清單中點擊 ⇄ 按鈕開始記錄以卡換卡</p>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-600 font-semibold mb-2">{t("profile.collection.empty")}</p>
+              <p className="text-sm text-gray-400 mb-6 max-w-xs mx-auto">{t("profile.collection.emptyHint")}</p>
+              <Button onClick={() => { setEditItem(null); setShowAddSheet(true); }}
+                className="font-bold gap-2" style={{ background: BRAND_BLUE, color: "white" }}>
+                <Plus className="w-4 h-4" />
+                {t("profile.collection.addCard")}
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -1247,7 +1286,12 @@ export function CollectionSection() {
                               <Eye className="w-3 h-3" />公開
                             </span>
                           )}
-                          {tradedOutIds.has(item.id) && (
+                          {viewMode === "traded" && item.tradedAt && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
+                              ↔ 已換走 {new Date(item.tradedAt).toLocaleDateString('zh-HK', { month: '2-digit', day: '2-digit' })}
+                            </span>
+                          )}
+                          {viewMode === "active" && tradedOutIds.has(item.id) && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
                               ↔ 已換出
                             </span>
@@ -1263,9 +1307,9 @@ export function CollectionSection() {
                           </div>
                         )}
                       </div>
-                      {/* Actions — hidden in bulk mode */}
+                      {/* Actions — hidden in bulk mode and traded view */}
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        {!bulkMode && <>
+                        {!bulkMode && viewMode === "active" && <>
                         <button
                           onClick={() => { setTradePreselectedItem({
                             id: item.id,

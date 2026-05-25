@@ -61,6 +61,7 @@ export interface CollectionItemRaw {
   purchasedAt: Date | null;
   notes: string | null;
   isPublic: boolean;
+  tradedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   // Card info
@@ -78,6 +79,7 @@ export interface CollectionItem {
   grader: string;
   grade: string | null;
   quantity: number;
+  tradedAt: Date | null;
   purchasePrice: number | null;
   purchasedAt: Date | null;
   notes: string | null;
@@ -137,6 +139,7 @@ function enrichItem(raw: CollectionItemRaw, marketPrice: number | null): Collect
     purchasedAt: raw.purchasedAt,
     notes: raw.notes,
     isPublic: raw.isPublic,
+    tradedAt: raw.tradedAt,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     card: {
@@ -170,6 +173,7 @@ export async function getUserCollection(
     grader?: string;
     series?: string;
     priceMode?: "psa10" | "grade"; // psa10 = always show PSA 10 price, grade = show grade-matched price
+    showTraded?: boolean; // if true, return only traded-away items; if false/undefined, return active items
   }
 ): Promise<CollectionItem[]> {
   // Helper to run the main SELECT (used for retry after reconnect)
@@ -186,6 +190,7 @@ export async function getUserCollection(
         purchasedAt: userCollections.purchasedAt,
         notes: userCollections.notes,
         isPublic: userCollections.isPublic,
+        tradedAt: userCollections.tradedAt,
         createdAt: userCollections.createdAt,
         updatedAt: userCollections.updatedAt,
         cardName: cards.name,
@@ -198,7 +203,11 @@ export async function getUserCollection(
       })
       .from(userCollections)
       .leftJoin(cards, eq(userCollections.cardId, cards.id))
-      .where(and(eq(userCollections.userId, userId), isNull(userCollections.tradedAt)))
+      .where(
+        options?.showTraded
+          ? and(eq(userCollections.userId, userId), sql`${userCollections.tradedAt} IS NOT NULL`)
+          : and(eq(userCollections.userId, userId), isNull(userCollections.tradedAt))
+      )
       .orderBy(desc(userCollections.createdAt));
   }
 

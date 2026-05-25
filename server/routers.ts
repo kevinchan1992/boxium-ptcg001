@@ -4977,6 +4977,7 @@ UNBREAKABLE RULES:
         grader: z.string().optional(),
         series: z.string().optional(),
         priceMode: z.enum(["psa10", "grade"]).optional(),
+        showTraded: z.boolean().optional(),
         page: z.number().min(1).optional().default(1),
         limit: z.number().min(1).max(100).optional().default(30),
       }).optional())

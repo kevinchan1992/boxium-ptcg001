@@ -33,12 +33,13 @@ import {
   Shield, MapPin, Plus, Edit2, Star, Check, Phone, Save, X, Lock,
   Search, Tag, CreditCard, Loader2, CheckCircle, Truck, Clock,
   XCircle, AlertCircle, ChevronDown, ChevronUp, Flag, MessageSquare,
-  ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter, ShoppingCart
+  ChevronRight, Bell, CheckCheck, DollarSign, Info, AlertTriangle, Filter, ShoppingCart, ArrowLeftRight
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 import { CollectionSection } from "@/components/CollectionSection";
+import { TradeHistorySection } from "@/components/TradeHistorySection";
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -127,6 +128,7 @@ export default function Profile() {
     { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: t("profile.nav.auctions"), badge: activeBidsCount > 0 ? activeBidsCount : undefined },
     { id: "notifications", icon: <Bell className="w-4 h-4" />, label: t("profile.nav.notifications"), badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
     { id: "collection", icon: <Package className="w-4 h-4" />, label: t("profile.tabs.collection") },
+    { id: "trades", icon: <ArrowLeftRight className="w-4 h-4" />, label: "交換記錄" },
   ];
 
   if (userLoading) {
@@ -352,6 +354,7 @@ export default function Profile() {
                 {activeSection === "auctions" && <MyAuctionsSection bids={myBidsData ?? []} />}
                 {activeSection === "notifications" && <EmbeddedNotificationsSection />}
                 {activeSection === "collection" && <CollectionSection />}
+                {activeSection === "trades" && <TradeHistorySection />}
               </div>
             </div>
           </div>

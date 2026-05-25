@@ -3,7 +3,7 @@
  * One trade = N cards given out + M cards received
  */
 import { getDb } from "./db";
-import { cardTrades, cardTradeItems, userCollections } from "../drizzle/schema_new";
+import { cardTrades, cardTradeItems, userCollections, cards } from "../drizzle/schema_new";
 import { eq, and, desc, inArray } from "drizzle-orm";
 
 export interface TradeItemInput {
@@ -105,7 +105,7 @@ export async function createCardTrade(userId: number, input: CreateTradeInput) {
 }
 
 /**
- * Get all trade records for a user (with items)
+ * Get all trade records for a user (with items + card image info)
  */
 export async function getUserTrades(userId: number) {
   const db = await getDb();
@@ -120,14 +120,31 @@ export async function getUserTrades(userId: number) {
   if (trades.length === 0) return [];
 
   const tradeIds = trades.map((t) => t.id);
-  const items = await db
-    .select()
+  // Join with cards table to get imageUrl for each trade item
+  const itemsWithCard = await db
+    .select({
+      id: cardTradeItems.id,
+      tradeId: cardTradeItems.tradeId,
+      direction: cardTradeItems.direction,
+      collectionId: cardTradeItems.collectionId,
+      cardId: cardTradeItems.cardId,
+      cardName: cardTradeItems.cardName,
+      grader: cardTradeItems.grader,
+      grade: cardTradeItems.grade,
+      quantity: cardTradeItems.quantity,
+      estimatedValue: cardTradeItems.estimatedValue,
+      newCollectionId: cardTradeItems.newCollectionId,
+      createdAt: cardTradeItems.createdAt,
+      cardImageUrl: cards.imageUrl,
+      cardSeries: cards.series,
+    })
     .from(cardTradeItems)
+    .leftJoin(cards, eq(cardTradeItems.cardId, cards.id))
     .where(inArray(cardTradeItems.tradeId, tradeIds));
 
   return trades.map((trade) => ({
     ...trade,
-    items: items.filter((i) => i.tradeId === trade.id),
+    items: itemsWithCard.filter((i) => i.tradeId === trade.id),
   }));
 }
 
