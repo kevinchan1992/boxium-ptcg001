@@ -32,6 +32,8 @@ interface BottomSheetProps {
   children: React.ReactNode;
   /** Extra classes applied to the content panel */
   className?: string;
+  /** Extra classes applied to the scrollable body (overrides default px-4 pt-4) */
+  bodyClassName?: string;
   /** Whether to show the close button (default: true) */
   showCloseButton?: boolean;
   /** Extra inline styles applied to the header bar */
@@ -75,6 +77,7 @@ export function BottomSheet({
   headerStyle,
   headerClassName,
   handleStyle,
+  bodyClassName,
 }: BottomSheetProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const isDesktop = useIsDesktop();
@@ -319,7 +322,7 @@ export function BottomSheet({
 
           {/* Scrollable body */}
           <div
-            className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 min-w-0 lg:pb-4"
+            className={cn("flex-1 overflow-y-auto overflow-x-hidden min-w-0 lg:pb-4", bodyClassName ?? "px-4 pt-4")}
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))', overscrollBehavior: 'contain' }}
           >
             {children}
