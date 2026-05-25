@@ -1,8 +1,10 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Search, ShoppingBag, Award, User, ShoppingCart } from "lucide-react";
+import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 
 interface TabItem {
   path: string;
@@ -62,6 +64,7 @@ export function BottomTabBar() {
   const [location, setLocation] = useLocation();
   const { data: user } = trpc.auth.me.useQuery();
   const { t } = useTranslation();
+  const [showCameraSheet, setShowCameraSheet] = useState(false);
 
   // Cart count badge
   const { data: cartCount } = trpc.marketplace.getCartCount.useQuery(undefined, {
@@ -74,78 +77,115 @@ export function BottomTabBar() {
   const shouldHide = hiddenPaths.some((p) => location.startsWith(p));
   if (shouldHide) return null;
 
+  // Show scan button on search-related pages (mobile only)
+  const scanPages = ["/research", "/pricing", "/search"];
+  const showScanButton = scanPages.some(
+    (p) => location === p || location.startsWith(p + "/") || location.startsWith(p + "?")
+  );
+
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
-    >
-      {/* Backdrop blur bar */}
-      <div className="bg-black/90 backdrop-blur-md border-t border-white/10" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div className="flex items-stretch h-14">
-          {TABS.map((tab) => {
-            const active = isTabActive(tab, location);
-            const Icon = tab.icon;
-            const label = t(tab.labelKey, tab.labelFallback);
-            const isMarket = tab.path === "/marketplace";
-            const showCartBadge = isMarket && !!user && !!cartCount && cartCount > 0;
+    <>
+      {/* Scan Button — shown above nav bar on search/pricing pages (mobile only) */}
+      {showScanButton && (
+        <div
+          className="fixed left-0 right-0 z-40 md:hidden px-4 pb-2"
+          style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <button
+            type="button"
+            onClick={() => setShowCameraSheet(true)}
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98]"
+            style={{
+              background: "white",
+              color: "#111",
+              boxShadow: "0 2px 16px rgba(0,0,0,0.35)",
+            }}
+          >
+            <Camera className="w-5 h-5" />
+            <span>掃描卡牌識別</span>
+          </button>
+        </div>
+      )}
 
-            return (
-              <button
-                key={tab.path}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-highlight-transparent"
-                onClick={() => setLocation(tab.path)}
-                aria-label={label}
-                aria-current={active ? "page" : undefined}
-              >
-                {/* Active indicator dot */}
-                <AnimatePresence>
-                  {active && (
-                    <motion.div
-                      layoutId="tab-indicator"
-                      className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[#FEDD00]"
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      animate={{ opacity: 1, scaleX: 1 }}
-                      exit={{ opacity: 0, scaleX: 0 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </AnimatePresence>
+      {/* Camera Search Sheet */}
+      <CameraSearchSheet
+        open={showCameraSheet}
+        onOpenChange={setShowCameraSheet}
+      />
 
-                {/* Icon with cart badge */}
-                <div className="relative">
-                  <motion.div
-                    animate={{ scale: active ? 1.1 : 1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    {isMarket && !!user ? (
-                      <ShoppingCart
-                        className={`w-5 h-5 transition-colors ${active ? "text-[#FEDD00]" : "text-white/60"}`}
-                      />
-                    ) : (
-                      <Icon
-                        className={`w-5 h-5 transition-colors ${active ? "text-[#FEDD00]" : "text-white/60"}`}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      >
+        {/* Backdrop blur bar */}
+        <div className="bg-black/90 backdrop-blur-md border-t border-white/10" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-stretch h-14">
+            {TABS.map((tab) => {
+              const active = isTabActive(tab, location);
+              const Icon = tab.icon;
+              const label = t(tab.labelKey, tab.labelFallback);
+              const isMarket = tab.path === "/marketplace";
+              const cartCountNum = typeof cartCount === 'number' ? cartCount : (cartCount as any)?.count ?? 0;
+              const showCartBadge = isMarket && !!user && cartCountNum > 0;
+
+              return (
+                <button
+                  key={tab.path}
+                  className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-highlight-transparent"
+                  onClick={() => setLocation(tab.path)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {/* Active indicator dot */}
+                  <AnimatePresence>
+                    {active && (
+                      <motion.div
+                        layoutId="tab-indicator"
+                        className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[#FEDD00]"
+                        initial={{ opacity: 0, scaleX: 0 }}
+                        animate={{ opacity: 1, scaleX: 1 }}
+                        exit={{ opacity: 0, scaleX: 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
                     )}
-                  </motion.div>
-                  {showCartBadge && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                      {cartCount > 99 ? "99+" : cartCount}
-                    </span>
-                  )}
-                </div>
+                  </AnimatePresence>
 
-                {/* Label */}
-                <span
-                  className={`text-[10px] font-medium leading-none transition-colors ${
-                    active ? "text-[#FEDD00]" : "text-white/50"
-                  }`}
-                >
-                  {label}
-                </span>
-              </button>
-            );
-          })}
+                  {/* Icon with cart badge */}
+                  <div className="relative">
+                    <motion.div
+                      animate={{ scale: active ? 1.1 : 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    >
+                      {isMarket && !!user ? (
+                        <ShoppingCart
+                          className={`w-5 h-5 transition-colors ${active ? "text-[#FEDD00]" : "text-white/60"}`}
+                        />
+                      ) : (
+                        <Icon
+                          className={`w-5 h-5 transition-colors ${active ? "text-[#FEDD00]" : "text-white/60"}`}
+                        />
+                      )}
+                    </motion.div>
+                    {showCartBadge && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {cartCountNum > 99 ? "99+" : cartCountNum}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <span
+                    className={`text-[10px] font-medium leading-none transition-colors ${
+                      active ? "text-[#FEDD00]" : "text-white/50"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }

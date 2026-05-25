@@ -3,10 +3,8 @@ import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
-import { Camera } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
-import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
 
@@ -16,8 +14,6 @@ export default function Home() {
   const initialQuery = new URLSearchParams(searchParams).get('q') || '';
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [, setLocation] = useLocation();
-  const [showCameraSheet, setShowCameraSheet] = useState(false);
-
   // Sync search query when URL param changes
   useEffect(() => {
     const q = new URLSearchParams(searchParams).get('q') || '';
@@ -100,7 +96,6 @@ export default function Home() {
                 setLocation(`/search?q=${encodeURIComponent(q)}`);
               }}
               cardLinkPrefix="card"
-              onCameraClick={() => setShowCameraSheet(true)}
             />
           </div>
           {/* Desktop dropdown */}
@@ -126,32 +121,7 @@ export default function Home() {
                 />
               </div>
             )}
-            {/* Camera Button */}
-            <button
-              type="button"
-              onClick={() => setShowCameraSheet(true)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
-              title="拍照識別"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-          </div>
 
-          {/* Scan Button — full-width, prominent camera CTA (both mobile & desktop) */}
-          <div className="w-full max-w-2xl mx-auto">
-            <button
-              type="button"
-              onClick={() => setShowCameraSheet(true)}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98] hover:opacity-90"
-              style={{
-                background: 'white',
-                color: '#111',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
-              }}
-            >
-              <Camera className="w-5 h-5" />
-              <span>掃描卡牌識別</span>
-            </button>
           </div>
 
           {/* Top Gainers - Daily Price Increase Top 5 */}
@@ -189,11 +159,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Camera Search Sheet */}
-      <CameraSearchSheet
-        open={showCameraSheet}
-        onOpenChange={setShowCameraSheet}
-      />
     </>
   );
 }
