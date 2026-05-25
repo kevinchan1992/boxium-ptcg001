@@ -1,36 +1,19 @@
-import { useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Search, Loader2, Camera, Upload, X, Crop } from "lucide-react";
+import { useState } from "react";
+import { Search, Camera, Loader2 } from "lucide-react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import ReactCrop, { type Crop as CropType } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 import { getProxiedImageUrl } from "@/lib/utils";
 
 export default function Pricing() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
-  const [showImageDialog, setShowImageDialog] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showCropView, setShowCropView] = useState(false);
-  const [crop, setCrop] = useState<CropType>();
-  const [completedCrop, setCompletedCrop] = useState<CropType>();
-  const [isDragging, setIsDragging] = useState(false);
-  // Progressive step feedback: null = idle, 'compress' | 'identify' | 'search' | 'done'
-  const [searchStep, setSearchStep] = useState<null | 'compress' | 'identify' | 'search' | 'done'>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraSheet, setShowCameraSheet] = useState(false);
 
   // Fetch trending cards (top 5 based on PSA10 price increase)
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
@@ -62,199 +45,7 @@ export default function Pricing() {
     setLocation(`/pricing/${cardId}`);
   };
 
-  const handleCameraClick = () => {
-    setShowImageDialog(true);
-  };
-
-  // Compress image before sending to API: resize to max 800px, JPEG quality 0.85
-  const compressImage = (dataUrl: string, maxDimension = 800, quality = 0.85): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const { naturalWidth: w, naturalHeight: h } = img;
-        let targetW = w;
-        let targetH = h;
-        if (w > maxDimension || h > maxDimension) {
-          if (w >= h) {
-            targetW = maxDimension;
-            targetH = Math.round(h * (maxDimension / w));
-          } else {
-            targetH = maxDimension;
-            targetW = Math.round(w * (maxDimension / h));
-          }
-        }
-        // If already small enough and already JPEG, return as-is
-        if (targetW === w && targetH === h && dataUrl.startsWith('data:image/jpeg')) {
-          resolve(dataUrl);
-          return;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, targetW, targetH);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = dataUrl;
-    });
-  };
-
-  const processImageFile = (file: File) => {
-    setSelectedImage(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-      setShowCropView(false);
-      setCrop(undefined);
-      setCompletedCrop(undefined);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      processImageFile(file);
-    }
-  };
-
-  const imageSearchMutation = trpc.cards.searchByImage.useMutation();
-
-  // 裁剪圖片並轉換為 base64
-  const getCroppedImg = async (image: HTMLImageElement, crop: CropType): Promise<string> => {
-    const canvas = document.createElement('canvas');
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    canvas.width = crop.width!;
-    canvas.height = crop.height!;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      throw new Error('No 2d context');
-    }
-
-    ctx.drawImage(
-      image,
-      crop.x! * scaleX,
-      crop.y! * scaleY,
-      crop.width! * scaleX,
-      crop.height! * scaleY,
-      0,
-      0,
-      crop.width!,
-      crop.height!
-    );
-
-    return canvas.toDataURL('image/jpeg', 0.9);
-  };
-
-  const handleImageSearch = async (useCrop: boolean = false) => {
-    if (!selectedImage) {
-      toast.error(t('pricing.pleaseSelectImage') || '請選擇圖片');
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchStep('compress');
-    try {
-      let base64Image: string;
-
-      // 如果用戶選擇裁剪且有完成的裁剪區域
-      if (useCrop && completedCrop && imgRef.current) {
-        const cropped = await getCroppedImg(imgRef.current, completedCrop);
-        base64Image = await compressImage(cropped, 800, 0.85);
-      } else {
-        // 使用原圖，先讀取再壓縮
-        const reader = new FileReader();
-        const rawDataUrl = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(selectedImage);
-        });
-        base64Image = await compressImage(rawDataUrl, 800, 0.85);
-      }
-
-      setSearchStep('identify');
-      // Call image search API (LLM identification + DB search happen server-side)
-      // We switch to 'search' step after a short delay to simulate the two-phase progress
-      const searchStepTimer = setTimeout(() => setSearchStep('search'), 3000);
-      const result = await imageSearchMutation.mutateAsync({ image: base64Image });
-      clearTimeout(searchStepTimer);
-      setSearchStep('done');
-      
-      if (result.success && result.bestMatch) {
-        const cardName = result.bestMatch.name;
-        toast.success(`找到卡牌：${cardName}`);
-        setShowImageDialog(false);
-        setSearchQuery(cardName);
-        setLocation(`/pricing/${result.bestMatch.id}`);
-      } else if (result.success && result.identification) {
-        const cardName = result.identification.cardName || result.identification.cardNameJa;
-        if (cardName) {
-          toast.info(`識別到「${cardName}」，正在進行文字搜尋...`);
-          setShowImageDialog(false);
-          setSearchQuery(cardName);
-          setLocation(`/pricing/search?q=${encodeURIComponent(cardName)}`);
-        } else {
-          toast.error(result.error || '無法識別卡牌，請嘗試其他圖片');
-        }
-      } else {
-        toast.error(result.error || t('pricing.imageSearchFailed') || '無法識別卡牌，請嘗試其他圖片');
-      }
-    } catch (error) {
-      console.error('Image search error:', error);
-      toast.error(t('pricing.imageSearchError') || '圖片搜尋失敗，請稍後再試');
-    } finally {
-      setIsSearching(false);
-      setSearchStep(null);
-    }
-  };
-
-  const handleCloseDialog = () => {
-    setShowImageDialog(false);
-    setSelectedImage(null);
-    setImagePreview(null);
-    setShowCropView(false);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-  };
-
-  const handleStartCrop = () => {
-    setShowCropView(true);
-    // 設定預設裁剪區域（居中 80% 大小）
-    setCrop({
-      unit: '%',
-      x: 10,
-      y: 10,
-      width: 80,
-      height: 80,
-    });
-  };
-
-  const handleCancelCrop = () => {
-    setShowCropView(false);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      processImageFile(file);
-    } else {
-      toast.error('請上傳圖片檔案');
-    }
-  };
+  const handleCameraClick = () => setShowCameraSheet(true);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8">
@@ -282,7 +73,8 @@ export default function Pricing() {
         <div className="md:hidden">
           <MobileSearchOverlay
             initialQuery={searchQuery}
-            placeholder={randomCardNames[0] || t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
+            cardNames={randomCardNames}
+            placeholder={t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
             onSearch={(q) => {
               setSearchQuery(q);
               setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
@@ -358,210 +150,14 @@ export default function Pricing() {
         </p>
       </div>
 
-      {/* Image Upload Bottom Sheet */}
-      <BottomSheet
-        open={showImageDialog}
-        onOpenChange={setShowImageDialog}
-        title={t('pricing.imageSearchTitle') || '卡牌圖片分析功能'}
-      >
-          <div className="space-y-6">
-            {/* Image Preview or Upload Area */}
-            {imagePreview ? (
-              <div className="relative">
-                <div className="relative rounded-lg overflow-hidden bg-muted border-2 border-border">
-                  {showCropView ? (
-                    <ReactCrop
-                      crop={crop}
-                      onChange={(c) => setCrop(c)}
-                      onComplete={(c) => setCompletedCrop(c)}
-                      aspect={undefined}
-                    >
-                      <img
-                        ref={imgRef}
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-w-full h-auto"
-                      />
-                    </ReactCrop>
-                  ) : (
-                    <img
-                      ref={imgRef}
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-auto max-h-96 object-contain"
-                    />
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setImagePreview(null);
-                    setSelectedImage(null);
-                    setShowCropView(false);
-                    setCrop(undefined);
-                    setCompletedCrop(undefined);
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-background/80 rounded-full hover:bg-background transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                  isDragging ? 'border-primary bg-primary/5' : 'border-border'
-                }`}
-              >
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  {t('pricing.dragDropImage') || '拖放圖片到此處'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t('pricing.orSelectFile') || '或選擇檔案'}
-                </p>
-              </div>
-            )}
-
-            {/* Progressive search step indicator */}
-            {isSearching && searchStep && (
-              <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 space-y-3">
-                {/* Step list */}
-                {([
-                  { key: 'compress', label: '正在處理圖片...' },
-                  { key: 'identify', label: 'AI 正在辨識卡牌...' },
-                  { key: 'search',   label: '正在搜尋資料庫...' },
-                  { key: 'done',     label: '處理完成！' },
-                ] as const).map(({ key, label }, idx) => {
-                  const stepOrder = ['compress', 'identify', 'search', 'done'] as const;
-                  const currentIdx = stepOrder.indexOf(searchStep);
-                  const thisIdx = stepOrder.indexOf(key);
-                  const isDone = thisIdx < currentIdx;
-                  const isActive = thisIdx === currentIdx;
-                  return (
-                    <div key={key} className={`flex items-center gap-3 transition-opacity duration-300 ${
-                      thisIdx > currentIdx ? 'opacity-30' : 'opacity-100'
-                    }`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                        isDone ? 'bg-green-500' : isActive ? 'bg-primary' : 'bg-muted'
-                      }`}>
-                        {isDone ? (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : isActive ? (
-                          <Loader2 className="w-3 h-3 text-white animate-spin" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium ${
-                        isDone ? 'text-green-500' : isActive ? 'text-primary' : 'text-muted-foreground'
-                      }`}>{label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              {!imagePreview && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => cameraInputRef.current?.click()}
-                    className="w-full"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    {t('pricing.takePhoto') || '拍照'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {t('pricing.uploadFile') || '上傳檔案'}
-                  </Button>
-                </>
-              )}
-
-              {imagePreview && !showCropView && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleStartCrop}
-                    disabled={isSearching}
-                    className="w-full"
-                  >
-                    <Crop className="w-4 h-4 mr-2" />
-                    {t('pricing.cropImage') || '裁剪圖片'}
-                  </Button>
-                  <Button
-                    onClick={() => handleImageSearch(false)}
-                    disabled={isSearching}
-                    className="w-full"
-                  >
-                    {isSearching ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        處理中...
-                      </>
-                    ) : (
-                      t('pricing.searchNow') || '立即搜尋'
-                    )}
-                  </Button>
-                </>
-              )}
-
-              {showCropView && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelCrop}
-                    disabled={isSearching}
-                    className="w-full"
-                  >
-                    {t('pricing.cancel') || '取消'}
-                  </Button>
-                  <Button
-                    onClick={() => handleImageSearch(true)}
-                    disabled={isSearching || !completedCrop}
-                    className="w-full"
-                  >
-                    {isSearching ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        處理中...
-                      </>
-                    ) : (
-                      t('pricing.searchCropped') || '搜尋裁剪區域'
-                    )}
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {/* Hidden File Inputs */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-      </BottomSheet>
+      {/* Camera Search Sheet — unified with Research page */}
+      <CameraSearchSheet
+        open={showCameraSheet}
+        onOpenChange={setShowCameraSheet}
+        onCardSelect={(card) => {
+          setLocation(`/pricing/${card.id}`);
+        }}
+      />
     </div>
   );
 }

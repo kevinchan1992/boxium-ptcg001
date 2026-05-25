@@ -93,7 +93,8 @@ export default function Home() {
           <div className="md:hidden">
             <MobileSearchOverlay
               initialQuery={searchQuery}
-              placeholder={randomCardNames[0] || t("research.searchPlaceholder")}
+              cardNames={randomCardNames}
+              placeholder={t("research.searchPlaceholder")}
               onSearch={(q) => {
                 setSearchQuery(q);
                 setLocation(`/search?q=${encodeURIComponent(q)}`);
