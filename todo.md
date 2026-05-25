@@ -9360,3 +9360,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 收藏清單預設對應等級顯示市場參考價（priceMode 固定為 grade）
 - [x] Top 3 升值排行也改用對應等級價格
 - [x] 收藏列表卡牌圖片改為 object-contain，完整展示卡牌，移除灰色背景
+
+## ✅ TradeSheet 三個 bug 修復（2026-05-25）
+- [x] 圖一：換出卡牌圖片不顯示 — CollectionSection 傳入 preselectedOutItem 時加入正確的 cardImageUrl 欄位映射（item.card?.imageUrl）
+- [x] 圖二：「設定換入卡牌資料」面板黑色邊框 — 加入 handleStyle={{ background: BLUE }}
+- [x] 圖二：估值欄位顯示 0.00 且不可輸入 — 選卡後自動查詢 cards.getPriceByCondition(psa10) 市場價並填入，保持可編輯
+- [x] 圖二：「加入換入清單」操作反饋 — 加入 toast 提示確認卡牌已加入清單

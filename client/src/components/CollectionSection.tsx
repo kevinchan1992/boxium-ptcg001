@@ -1267,7 +1267,17 @@ export function CollectionSection() {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {!bulkMode && <>
                         <button
-                          onClick={() => { setTradePreselectedItem(item); setShowTradeSheet(true); }}
+                          onClick={() => { setTradePreselectedItem({
+                            id: item.id,
+                            cardId: item.card?.id ?? item.cardId,
+                            cardName: item.card?.name ?? "",
+                            cardImageUrl: item.card?.imageUrl ?? null,
+                            cardSeries: item.card?.series ?? null,
+                            grader: item.grader,
+                            grade: item.grade,
+                            quantity: item.quantity,
+                            marketPrice: item.marketPrice ?? null,
+                          }); setShowTradeSheet(true); }}
                           className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-blue-50"
                           style={{ color: BRAND_BLUE }}
                           title="以卡換卡"

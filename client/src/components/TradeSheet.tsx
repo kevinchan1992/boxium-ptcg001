@@ -287,6 +287,20 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
   const [pendingGrade, setPendingGrade] = useState("10");
   const [pendingQty, setPendingQty] = useState("1");
   const [pendingValue, setPendingValue] = useState("");
+  const [pendingCardIdForPrice, setPendingCardIdForPrice] = useState<number | null>(null);
+
+  // Auto-fetch market price when a card is selected for pending form
+  const { data: pendingCardPrice } = trpc.cards.getPriceByCondition.useQuery(
+    { cardId: pendingCardIdForPrice!, condition: "psa10" },
+    { enabled: pendingCardIdForPrice != null }
+  );
+
+  // When market price is fetched, auto-fill pendingValue if still empty
+  useEffect(() => {
+    if (pendingCardPrice?.avgPrice != null && pendingCardIdForPrice != null) {
+      setPendingValue((prev) => prev === "" ? String(pendingCardPrice.avgPrice) : prev);
+    }
+  }, [pendingCardPrice, pendingCardIdForPrice]);
 
   const { data: collectionData } = trpc.profile.getCollection.useQuery(
     { limit: 200, page: 1 },
@@ -314,6 +328,8 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     setNotes("");
     setTradeCards([]);
     setPendingCard(null);
+    setPendingCardIdForPrice(null);
+    setPendingValue("");
   }, []);
 
   // Use ref to avoid unstable reference causing useEffect re-runs
@@ -359,7 +375,8 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     setPendingGrader("PSA");
     setPendingGrade("10");
     setPendingQty("1");
-    setPendingValue("");
+    setPendingValue(""); // will be auto-filled by useEffect when market price arrives
+    setPendingCardIdForPrice(card.id);
     setShowCardPicker(false);
   };
 
@@ -369,12 +386,14 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     setPendingGrader("PSA");
     setPendingGrade("10");
     setPendingQty("1");
-    setPendingValue("");
+    setPendingValue(""); // will be auto-filled by useEffect when market price arrives
+    setPendingCardIdForPrice(card.id);
     setShowCameraSheet(false);
   };
 
   const confirmPendingCard = () => {
     if (!pendingCard) return;
+    const qty = parseInt(pendingQty) || 1;
     setTradeCards((prev) => [...prev, {
       id: `${Date.now()}-${Math.random()}`,
       direction: pendingDirection,
@@ -384,11 +403,13 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       cardSeries: pendingCard.series,
       grader: pendingGrader,
       grade: pendingGrade,
-      quantity: parseInt(pendingQty) || 1,
+      quantity: qty,
       estimatedValue: pendingValue,
       collectionId: null,
     }]);
+    toast.success(`已加入${pendingDirection === 'out' ? '換出' : '換入'}清單：${pendingCard.name}`);
     setPendingCard(null);
+    setPendingCardIdForPrice(null);
   };
 
   const handleAddFromCollection = (colItem: any) => {
@@ -657,6 +678,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             </div>
           }
           headerStyle={{ background: BLUE }}
+          handleStyle={{ background: BLUE }}
           showCloseButton
         >
           <div className="px-4 pb-8 pt-4 space-y-4" style={{ background: "#f5f6fa" }}>
@@ -727,13 +749,20 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                 <div>
                   <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
                     估值 HKD
+                    {pendingCardIdForPrice != null && pendingValue === "" && (
+                      <span className="ml-1 text-[9px] font-normal text-gray-400 normal-case tracking-normal">查詢市場價中...</span>
+                    )}
+                    {pendingCardPrice?.avgPrice != null && (
+                      <span className="ml-1 text-[9px] font-normal normal-case tracking-normal" style={{ color: BLUE }}>市場參考價</span>
+                    )}
                   </Label>
                   <Input
                     type="number" min="0" step="0.01"
                     value={pendingValue}
                     onChange={(e) => setPendingValue(e.target.value)}
-                    placeholder="0.00"
-                    className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50"
+                    placeholder="輸入估值"
+                    className="h-10 text-sm rounded-xl"
+                    style={{ border: `1.5px solid ${BLUE}40`, background: `${BLUE}05`, color: BLUE }}
                   />
                 </div>
               </div>
