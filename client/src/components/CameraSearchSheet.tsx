@@ -48,11 +48,13 @@ interface CameraSearchSheetProps {
   onOpenChange: (open: boolean) => void;
   /** Picker mode: when provided, selecting a card calls this instead of navigating */
   onCardSelect?: (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => void;
+  /** Link prefix for card navigation: "card" (default) or "pricing" */
+  cardLinkPrefix?: string;
 }
 
 type Stage = "camera" | "analyzing" | "results" | "no_match" | "permission_denied";
 
-export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSearchSheetProps) {
+export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPrefix = "card" }: CameraSearchSheetProps) {
   const [, setLocation] = useLocation();
   const [stage, setStage] = useState<Stage>("camera");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -190,7 +192,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
             onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series });
           } else {
             onOpenChange(false);
-            setLocation(`/card/${best.id}`);
+            setLocation(`/${cardLinkPrefix}/${best.id}`);
           }
           toast.success(`已識別：${best.nameJa || best.name}`);
         } else if (!isAutoScan) {
@@ -310,7 +312,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect }: CameraSe
       onCardSelect({ id: card.id, name: card.nameJa || card.name, imageUrl: card.imageUrl, series: card.series });
     } else {
       handleClose();
-      setLocation(`/card/${card.id}`);
+      setLocation(`/${cardLinkPrefix}/${card.id}`);
     }
   };
 

@@ -83,6 +83,10 @@ export function BottomTabBar() {
     (p) => location === p || location.startsWith(p + "/") || location.startsWith(p + "?")
   );
 
+  // Determine camera scan destination based on current page
+  const isPricingPage = location === "/pricing" || location.startsWith("/pricing/") || location.startsWith("/pricing?");
+  const cameraCardLinkPrefix = isPricingPage ? "pricing" : "card";
+
   return (
     <>
       {/* Scan Button — shown above nav bar on search/pricing pages (mobile only) */}
@@ -111,6 +115,7 @@ export function BottomTabBar() {
       <CameraSearchSheet
         open={showCameraSheet}
         onOpenChange={setShowCameraSheet}
+        cardLinkPrefix={cameraCardLinkPrefix}
       />
 
       <nav
