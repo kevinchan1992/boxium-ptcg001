@@ -4987,12 +4987,40 @@ UNBREAKABLE RULES:
         const limit = input?.limit ?? 30;
         const offset = (page - 1) * limit;
         const paginatedItems = allItems.slice(offset, offset + limit);
+
+        // Fetch traded-out collectionIds so the UI can show "已換出" badge
+        let tradedOutIds: number[] = [];
+        try {
+          const { getDb } = await import("./db");
+          const { cardTradeItems } = await import("../drizzle/schema_new");
+          const { eq, and, isNotNull } = await import("drizzle-orm");
+          const db = await getDb();
+          if (db) {
+            const rows = await db
+              .select({ collectionId: cardTradeItems.collectionId })
+              .from(cardTradeItems)
+              .innerJoin(
+                (await import("../drizzle/schema_new")).cardTrades,
+                eq(cardTradeItems.tradeId, (await import("../drizzle/schema_new")).cardTrades.id)
+              )
+              .where(
+                and(
+                  eq((await import("../drizzle/schema_new")).cardTrades.userId, ctx.user.id),
+                  eq(cardTradeItems.direction, "out"),
+                  isNotNull(cardTradeItems.collectionId)
+                )
+              );
+            tradedOutIds = rows.map((r) => r.collectionId!).filter(Boolean);
+          }
+        } catch (_) { /* non-critical */ }
+
         return {
           items: paginatedItems,
           total: allItems.length,
           page,
           limit,
           totalPages: Math.ceil(allItems.length / limit),
+          tradedOutIds,
         };
       }),
     getCollectionStats: protectedProcedure

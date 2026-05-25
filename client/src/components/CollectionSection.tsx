@@ -798,6 +798,7 @@ export function CollectionSection() {
   const items = collectionData?.items ?? [];
   const totalItems = collectionData?.total ?? 0;
   const totalPages = collectionData?.totalPages ?? 1;
+  const tradedOutIds = new Set<number>(collectionData?.tradedOutIds ?? []);
 
   const removeMutation = trpc.profile.removeFromCollection.useMutation({
     onSuccess: () => {
@@ -1239,6 +1240,11 @@ export function CollectionSection() {
                           {item.isPublic && (
                             <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400">
                               <Eye className="w-3 h-3" />公開
+                            </span>
+                          )}
+                          {tradedOutIds.has(item.id) && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
+                              ↔ 已換出
                             </span>
                           )}
                         </div>

@@ -288,6 +288,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
     { enabled: open }
   );
   const collectionItems = collectionData?.items ?? [];
+  const tradedOutIdsInSheet = new Set<number>(collectionData?.tradedOutIds ?? []);
 
   const createTradeMutation = trpc.profile.createTrade.useMutation({
     onSuccess: () => {
@@ -766,6 +767,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                 {collectionItems.map((colItem: any) => {
                   const alreadyAdded = tradeCards.some((c) => c.collectionId === colItem.id);
+                  const isTradedOut = tradedOutIdsInSheet.has(colItem.id);
                   return (
                     <button
                       key={colItem.id}
@@ -773,7 +775,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                       disabled={alreadyAdded}
                       className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.99] bg-white"
                       style={{
-                        border: alreadyAdded ? "1.5px solid #e5e7eb" : `1.5px solid ${BLUE}20`,
+                        border: alreadyAdded ? "1.5px solid #e5e7eb" : isTradedOut ? "1.5px solid #fde68a" : `1.5px solid ${BLUE}20`,
                         opacity: alreadyAdded ? 0.5 : 1,
                       }}
                     >
@@ -793,11 +795,16 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                         {colItem.card?.series && (
                           <p className="text-[10px] text-gray-400 truncate mt-0.5">{colItem.card.series}</p>
                         )}
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <GradeBadge grader={colItem.grader} grade={colItem.grade} />
                           {colItem.marketPrice && (
                             <span className="text-[10px] font-bold" style={{ color: BLUE }}>
                               {formatCurrency(colItem.marketPrice)}
+                            </span>
+                          )}
+                          {isTradedOut && (
+                            <span className="text-[9px] font-black px-1 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
+                              ↔ 已換出
                             </span>
                           )}
                         </div>
