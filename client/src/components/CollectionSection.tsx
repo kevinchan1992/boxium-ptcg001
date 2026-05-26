@@ -1366,70 +1366,65 @@ export function CollectionSection() {
                         </>}
                       </div>
                     </div>
-                    {/* Price row — 購入價 vs 市場價 */}
-                    <div className="flex flex-col gap-1.5 mt-2">
-                      {/* 購入價 + 市場價 並排 */}
-                      <div className="flex items-stretch gap-1.5">
-                        <div
-                          className="flex-1 rounded-lg px-2 py-1.5"
-                          style={{ background: '#f8f9fa', border: '1px solid #e5e7eb' }}
-                        >
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                            {t("profile.collection.table.purchasePrice")}
-                          </p>
-                          <p className="text-xs font-bold tabular-nums text-gray-700 leading-tight">
-                            {item.purchasePrice != null ? formatCurrency(item.purchasePrice) : "—"}
-                          </p>
-                        </div>
-                        <div
-                          className="flex-1 rounded-lg px-2 py-1.5"
-                          style={{
-                            background: hasPrice ? `${BRAND_YELLOW}20` : '#f8f9fa',
-                            border: hasPrice ? `1px solid ${BRAND_YELLOW}80` : '1px solid #e5e7eb',
-                          }}
-                        >
-                          <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5"
-                            style={{ color: hasPrice ? '#92700a' : '#9ca3af' }}>
-                            {t("profile.collection.table.marketPrice") ?? "市場參考價"}
-                          </p>
-                          {hasPrice ? (
-                            <p className="text-xs font-black tabular-nums leading-tight" style={{ color: BRAND_BLUE }}>
-                              {formatCurrency(item.marketPrice)}
-                            </p>
-                          ) : (
-                            <p className="text-xs font-bold text-gray-300">—</p>
-                          )}
-                        </div>
+                    {/* Price row — 購入價 vs 市場價（只在有數據時顯示）*/}
+                    {(item.purchasePrice != null || hasPrice) && (
+                    <div className="flex items-stretch gap-1.5 mt-2">
+                      {item.purchasePrice != null && (
+                      <div className="flex-1 rounded-lg px-2 py-1 bg-secondary border border-border">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">
+                          {t("profile.collection.table.purchasePrice")}
+                        </p>
+                        <p className="text-xs font-bold tabular-nums text-foreground leading-tight">
+                          {formatCurrency(item.purchasePrice)}
+                        </p>
                       </div>
+                      )}
+                      {hasPrice && (
+                      <div
+                        className="flex-1 rounded-lg px-2 py-1"
+                        style={{ background: `${BRAND_YELLOW}18`, border: `1px solid ${BRAND_YELLOW}60` }}
+                      >
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5"
+                          style={{ color: '#92700a' }}>
+                          {t("profile.collection.table.marketPrice") ?? "市場參考價"}
+                        </p>
+                        <p className="text-xs font-black tabular-nums leading-tight" style={{ color: BRAND_BLUE }}>
+                          {formatCurrency(item.marketPrice)}
+                        </p>
+                      </div>
+                      )}
                     </div>
-                    {/* P&L bar */}
+                    )}
+                    {/* P&L bar — 緊湊版，只在有完整數據時顯示 */}
                     {gain != null && item.purchasePrice != null && (
                       <div
-                        className="flex items-center justify-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl flex-nowrap overflow-hidden"
+                        className="flex items-center justify-between gap-1 mt-1.5 px-2.5 py-1 rounded-lg"
                         style={{
                           background: gainPct != null && gainPct > 0
-                            ? "#dcfce7"
+                            ? "oklch(0.18 0.05 150)"
                             : gainPct != null && gainPct < 0
-                            ? "#fee2e2"
-                            : "#f9fafb",
+                            ? "oklch(0.18 0.05 25)"
+                            : "var(--secondary)",
                         }}
                       >
-                        {gainPct != null && gainPct > 0
-                          ? <ArrowUpRight className="w-4 h-4" style={{ color: GAIN_GREEN }} />
-                          : gainPct != null && gainPct < 0
-                            ? <ArrowDownRight className="w-4 h-4" style={{ color: LOSS_RED }} />
-                            : <Minus className="w-4 h-4 text-gray-300" />}
+                        <div className="flex items-center gap-1">
+                          {gainPct != null && gainPct > 0
+                            ? <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GAIN_GREEN }} />
+                            : gainPct != null && gainPct < 0
+                              ? <ArrowDownRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: LOSS_RED }} />
+                              : <Minus className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />}
+                          <span
+                            className="text-sm font-black tabular-nums"
+                            style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "var(--muted-foreground)" }}
+                          >
+                            {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
+                          </span>
+                        </div>
                         <span
-                          className="text-base font-black tabular-nums"
-                          style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
+                          className="text-[10px] font-semibold tabular-nums"
+                          style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "var(--muted-foreground)" }}
                         >
-                          {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
-                        </span>
-                        <span
-                          className="text-xs font-semibold tabular-nums whitespace-nowrap"
-                          style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
-                        >
-                          ({gain >= 0 ? "+" : ""}{formatCurrency(gain)})
+                          {gain >= 0 ? "+" : ""}{formatCurrency(gain)}
                         </span>
                       </div>
                     )}
