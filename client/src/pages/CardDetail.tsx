@@ -172,6 +172,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   const activeRecentPrices = isSealedProduct ? sealedRecentPrices : psa10PriceHistory;
 
+  // Marketplace lowest listing price for JSON-LD offers
+  const { data: lowestListingData } = trpc.marketplace.getListings.useQuery(
+    { cardIds: [cardId!], pageSize: 1, sortBy: 'price_asc' },
+    { enabled: !!cardId && !isSealedProduct, staleTime: 5 * 60 * 1000, retry: 1 }
+  );
+  const lowestMarketplacePrice = lowestListingData?.listings?.[0]?.priceHkd ?? null;
+
   // eBay listings for sealed products
   const { data: ebayData, isLoading: ebayLoading, refetch: refetchEbay } = trpc.pricing.getListings.useQuery(
     { sealedProductId: cardId! },
@@ -432,18 +439,44 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           ...(!isSealedProduct && 'cardNumber' in product && product.cardNumber
             ? { sku: product.cardNumber }
             : {}),
-          ...(minPrice !== null && maxPrice !== null
-            ? {
-                offers: {
+          // additionalProperty: card number and series for rich snippet context
+          additionalProperty: [
+            ...(!isSealedProduct && 'cardNumber' in product && product.cardNumber
+              ? [{ "@type": "PropertyValue", name: "cardNumber", value: product.cardNumber }]
+              : []),
+            ...(product.series
+              ? [{ "@type": "PropertyValue", name: "series", value: product.series }]
+              : []),
+            ...(!isSealedProduct
+              ? [{ "@type": "PropertyValue", name: "grade", value: "PSA 10" }]
+              : []),
+          ],
+          // Offer: marketplace lowest listing price (real-time) + aggregate historical price
+          offers: [
+            ...(lowestMarketplacePrice !== null
+              ? [{
+                  "@type": "Offer",
+                  priceCurrency: "HKD",
+                  price: lowestMarketplacePrice.toFixed(2),
+                  availability: "https://schema.org/InStock",
+                  url: `${typeof window !== 'undefined' ? window.location.origin : ''}/market`,
+                  seller: { "@type": "Organization", name: "BOXIUM PTCG" },
+                  itemCondition: "https://schema.org/UsedCondition",
+                  description: "BOXIUM PTCG 市集最低上架價格",
+                }]
+              : []),
+            ...(minPrice !== null && maxPrice !== null
+              ? [{
                   "@type": "AggregateOffer",
                   priceCurrency: "HKD",
                   lowPrice: minPrice.toFixed(2),
                   highPrice: maxPrice.toFixed(2),
                   offerCount: psa10Prices.length,
                   availability: "https://schema.org/InStock",
-                },
-              }
-            : {}),
+                  description: "PSA 10 近期成交價格區間",
+                }]
+              : []),
+          ],
           url: `${typeof window !== 'undefined' ? window.location.origin : ''}/card/${cardId}`,
         }),
       }}

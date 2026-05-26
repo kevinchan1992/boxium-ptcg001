@@ -995,7 +995,7 @@ export default function Marketplace() {
           {/* ── Left Sidebar (tablet+) - only show for shop tab ── */}
           {marketTab === 'shop' && (
           <div className="hidden md:block" style={{ width: '220px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-4" style={{ width: '220px', boxSizing: 'border-box', overflow: 'hidden' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '220px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
@@ -1135,7 +1135,7 @@ export default function Marketplace() {
 
             {/* Mobile filter panel (< 768px only) */}
             {showMobileFilter && (
-              <div className="md:hidden bg-card rounded-2xl border border-border shadow-sm p-5 mb-4">
+              <div className="md:hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
                 <SidebarFilter {...sidebarProps} />
               </div>
             )}

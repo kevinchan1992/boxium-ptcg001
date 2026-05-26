@@ -9414,3 +9414,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Marketplace 篩選按鈕和手機版篩選面板改為 md:hidden（< 768px 才顯示）
 - [x] CollectionSection 手機版收藏卡片購入日期改為 hidden sm:flex（手機隱藏）
 - [x] CollectionSection P&L 數字在手機版縮小（text-sm sm:text-base）
+
+## JSON-LD 結構化資料強化 (2026-05-26)
+
+- [x] CardDetail.tsx 加入 marketplace.getListings 查詢（按 cardIds 篩選，price_asc 排序）
+- [x] JSON-LD offers 加入 marketplace 最低上架價格（Offer type，含 seller、itemCondition）
+- [x] JSON-LD offers 保留 AggregateOffer（PSA 10 近期成交價格區間）
+- [x] JSON-LD 加入 additionalProperty（cardNumber、series、grade）
+- [x] Marketplace 側邊欄背景改回 bg-white（白色底）
