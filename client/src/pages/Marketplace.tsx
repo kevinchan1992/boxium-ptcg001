@@ -19,6 +19,7 @@ import {
 } from "@/lib/conditions";
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
+import PageHead from "@/components/PageHead";
 
 // ─── TCG Series Config (只保留 3 種 + 全部) ──────────────────────────────────
 
@@ -706,6 +707,12 @@ export default function Marketplace() {
   }
 
   return (
+    <>
+    <PageHead
+      title="卡牧市集 - BOXIUM PTCG | 買賣 TCG 卡牧"
+      description="BOXIUM PTCG 卡牧市集，提供 Pokémon、One Piece、遙戲王等 TCG 卡牧的買賣平台，安全、便捷、價格透明。"
+      keywords="TCG 市集, Pokémon 卡牧買賣, PSA 卡牗市集, BOXIUM"
+    />
     <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
 
       {/* ── Hero Section ── */}
@@ -1267,5 +1274,6 @@ export default function Marketplace() {
         </button>
       )}
     </div>
+    </>
   );
 }

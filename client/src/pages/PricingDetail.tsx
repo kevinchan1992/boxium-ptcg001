@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { toast } from "sonner";
 import { getProxiedImageUrl } from "@/lib/utils";
+import PageHead from "@/components/PageHead";
 
 interface PricingItem {
   id: string;
@@ -279,6 +280,12 @@ export default function PricingDetail() {
   }
 
   return (
+    <>
+    <PageHead
+      title={`${card.name} PSA 10 市場格價 - BOXIUM PTCG`}
+      description={`查看 ${card.name} 的 PSA 10 市場列價，整合 SNKRDUNK 及 eBay 即時成交資料。`}
+      ogImage={card.imageUrl ? getProxiedImageUrl(card.imageUrl) ?? undefined : undefined}
+    />
     <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
       {/* Breadcrumb */}
       <Breadcrumb 
@@ -533,5 +540,6 @@ export default function PricingDetail() {
         </div>
       )}
     </div>
+    </>
   );
 }

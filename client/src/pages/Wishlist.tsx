@@ -17,12 +17,39 @@ export default function Wishlist() {
   const { data: wishlistItems = [], isLoading } = trpc.marketplace.getMyWishlist.useQuery(undefined, { enabled: !!me });
 
   const toggleMutation = trpc.marketplace.toggleWishlist.useMutation({
+    onMutate: async ({ listingId }) => {
+      // Cancel any outgoing refetches
+      await utils.marketplace.getMyWishlist.cancel();
+      await utils.marketplace.getWishlistIds.cancel();
+      // Snapshot the previous value
+      const previousWishlist = utils.marketplace.getMyWishlist.getData();
+      const previousIds = utils.marketplace.getWishlistIds.getData();
+      // Optimistically remove from wishlist
+      utils.marketplace.getMyWishlist.setData(undefined, (old: any) =>
+        old ? old.filter((item: any) => item.listing?.id !== listingId) : old
+      );
+      utils.marketplace.getWishlistIds.setData(undefined, (old: any) =>
+        old ? old.filter((id: number) => id !== listingId) : old
+      );
+      return { previousWishlist, previousIds };
+    },
     onSuccess: () => {
       toast.success(t("wishlist.removedFromWishlist"));
+    },
+    onError: (e, _vars, context) => {
+      // Rollback on error
+      if (context?.previousWishlist !== undefined) {
+        utils.marketplace.getMyWishlist.setData(undefined, context.previousWishlist);
+      }
+      if (context?.previousIds !== undefined) {
+        utils.marketplace.getWishlistIds.setData(undefined, context.previousIds);
+      }
+      toast.error(parseApiError(e));
+    },
+    onSettled: () => {
       utils.marketplace.getMyWishlist.invalidate();
       utils.marketplace.getWishlistIds.invalidate();
     },
-    onError: (e) => toast.error(parseApiError(e)),
   });
 
   if (authLoading) {

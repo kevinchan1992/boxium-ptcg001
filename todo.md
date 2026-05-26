@@ -9368,3 +9368,24 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 圖二：「加入換入清單」操作反饋 — 加入 toast 提示確認卡牌已加入清單
 - [x] 個人頁面新增「交換記錄」分頁（顯示所有歷史交換記錄、換出/換入卡牌圖片、日期、差價、查看詳情、刪除）
 - [x] 收藏清單加入「現有收藏 / 已換走」tab 切換，已換走的卡牌顯示換走日期標籤
+
+## Frontend 5 Optimizations (2026-05-26)
+- [ ] P0: Fix scan button occlusion (Research/Pricing bottom padding)
+- [ ] Skeleton loading: Pricing.tsx replace Loader2 with card skeleton
+- [ ] Skeleton loading: Home.tsx TrendingCardRow replace spinner with 5-card grid skeleton
+- [ ] Lazy image loading: Replace img tags in AdminMarketplace/SellerDashboard/GradingOrderDetail/Cart/Profile/OrderDetail/CollectionSection
+- [ ] SEO meta tags: Add PageHead to CardDetail/PricingDetail/Marketplace/Profile/Research/Pricing
+- [ ] Optimistic update: Wishlist toggleMutation (onMutate/onError/onSettled)
+- [ ] Optimistic update: CollectionSection removeMutation (onMutate/onError/onSettled)
+- [ ] Optimistic update: CardDetail watchlist toggle (onMutate/onError/onSettled)
+
+## Frontend 5 Optimizations (2026-05-26)
+- [x] P0: Fix scan button occlusion (Research/Pricing bottom padding)
+- [x] Skeleton loading: Pricing.tsx replace Loader2 with card skeleton
+- [x] Skeleton loading: Home.tsx TrendingCardRow replace spinner with 5-card grid skeleton
+- [x] Lazy image loading: Replace img tags in Profile/CollectionSection with LazyImage
+- [x] SEO meta tags: Add PageHead to CardDetail/PricingDetail/Marketplace/Profile/Research/Home
+- [x] Optimistic update: Wishlist toggleMutation (onMutate/onError/onSettled)
+- [x] Optimistic update: CollectionSection removeMutation (onMutate/onError/onSettled)
+- [x] Optimistic update: CardDetail watchlist toggle (onMutate/onError/onSettled)
+- [x] Optimistic update: MarketplaceListing toggleWishlist (onMutate/onError/onSettled)

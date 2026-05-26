@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/formatDate";
 import { ImageLightbox, ClickableCardImage } from "@/components/ImageLightbox";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { AddEditSheet } from "@/components/CollectionSection";
+import PageHead from "@/components/PageHead";
 
 const grades = ["PSA 10", "中古"];
 
@@ -76,16 +77,34 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   );
 
   const addToWatchlist = trpc.profile.addToWatchlist.useMutation({
-    onSuccess: () => { toast.success("已加入收藏"); refetchWatchlistStatus(); },
-    onError: (error) => {
-      if (error.message.includes("already in watchlist")) toast.error("此卡牌已在收藏列表中");
+    onMutate: async () => {
+      await utils.profile.isInWatchlist.cancel({ cardId: cardId! });
+      const prev = utils.profile.isInWatchlist.getData({ cardId: cardId! });
+      utils.profile.isInWatchlist.setData({ cardId: cardId! }, { isInWatchlist: true });
+      return { prev };
+    },
+    onSuccess: () => { toast.success("已加入收藏"); },
+    onError: (error, _vars, context) => {
+      if (context?.prev !== undefined) utils.profile.isInWatchlist.setData({ cardId: cardId! }, context.prev);
+      if (error.message.includes("already in watchlist")) toast.error("此卡牗已在收藏列表中");
       else toast.error("加入收藏失敗：" + error.message);
     },
+    onSettled: () => { refetchWatchlistStatus(); },
   });
 
   const removeFromWatchlist = trpc.profile.removeFromWatchlistByCardId.useMutation({
-    onSuccess: () => { toast.success("已從收藏中移除"); refetchWatchlistStatus(); },
-    onError: (error) => { toast.error("移除收藏失敗：" + error.message); },
+    onMutate: async () => {
+      await utils.profile.isInWatchlist.cancel({ cardId: cardId! });
+      const prev = utils.profile.isInWatchlist.getData({ cardId: cardId! });
+      utils.profile.isInWatchlist.setData({ cardId: cardId! }, { isInWatchlist: false });
+      return { prev };
+    },
+    onSuccess: () => { toast.success("已從收藏中移除"); },
+    onError: (error, _vars, context) => {
+      if (context?.prev !== undefined) utils.profile.isInWatchlist.setData({ cardId: cardId! }, context.prev);
+      toast.error("移除收藏失敗：" + error.message);
+    },
+    onSettled: () => { refetchWatchlistStatus(); },
   });
 
   const handleWatchlistToggle = () => {
@@ -390,6 +409,11 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   return (
     <>
+    <PageHead
+      title={`${product.name} 價格走勢 - BOXIUM PTCG`}
+      description={`查看 ${product.name} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
+      ogImage={product.imageUrl ? getProxiedImageUrl(product.imageUrl) ?? undefined : undefined}
+    />
     <div className="min-h-screen bg-background py-4 px-3 sm:py-6 sm:px-4 md:px-6">
       {/* Breadcrumb */}
       <Breadcrumb

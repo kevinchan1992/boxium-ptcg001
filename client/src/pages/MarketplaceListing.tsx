@@ -575,13 +575,31 @@ export default function MarketplaceListing() {
 
   const { data: wishlistIds = [] } = trpc.marketplace.getWishlistIds.useQuery(undefined, { enabled: !!me });
   const toggleWishlistMutation = trpc.marketplace.toggleWishlist.useMutation({
-    onSuccess: (res) => {
-      setIsWishlisted(res.wishlisted);
-      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
-      utils.marketplace.getWishlistIds.invalidate();
-      utils.marketplace.getMyWishlist.invalidate(); // sync Profile wishlist tab
+    onMutate: async ({ listingId }) => {
+      const prevWishlisted = isWishlisted;
+      const nextWishlisted = !isWishlisted;
+      setIsWishlisted(nextWishlisted);
+      await utils.marketplace.getWishlistIds.cancel();
+      const prevIds = utils.marketplace.getWishlistIds.getData();
+      utils.marketplace.getWishlistIds.setData(undefined, (old: any) =>
+        nextWishlisted
+          ? [...(old ?? []), listingId]
+          : (old ?? []).filter((id: number) => id !== listingId)
+      );
+      return { prevWishlisted, prevIds };
     },
-    onError: () => toast.error(t("marketplaceListing.wishlist.loginRequired")),
+    onSuccess: (res) => {
+      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
+    },
+    onError: (_e, _vars, context) => {
+      if (context?.prevWishlisted !== undefined) setIsWishlisted(context.prevWishlisted);
+      if (context?.prevIds !== undefined) utils.marketplace.getWishlistIds.setData(undefined, context.prevIds);
+      toast.error(t("marketplaceListing.wishlist.loginRequired"));
+    },
+    onSettled: () => {
+      utils.marketplace.getWishlistIds.invalidate();
+      utils.marketplace.getMyWishlist.invalidate();
+    },
   });
 
   useEffect(() => {

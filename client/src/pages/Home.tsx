@@ -10,6 +10,7 @@ import { MarketplaceMarquee } from "@/components/MarketplaceMarquee";
 import StructuredData from "@/components/StructuredData";
 import { formatCurrency, formatPriceChange } from "@/lib/formatCurrency";
 import { getProxiedImageUrl } from "@/lib/utils";
+import PageHead from "@/components/PageHead";
 
 
 
@@ -80,8 +81,18 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: accentColor }} />
+        // Skeleton: 5-column card grid matching actual card layout
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 lg:gap-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl overflow-hidden shadow border border-gray-100">
+              <div className="aspect-[2.5/3.5] bg-gray-200 animate-pulse" />
+              <div className="p-1 sm:p-1.5 md:p-2 space-y-1">
+                <div className="h-2.5 bg-gray-200 animate-pulse rounded w-full" />
+                <div className="h-2 bg-gray-200 animate-pulse rounded w-3/4" />
+                <div className="h-3 bg-gray-200 animate-pulse rounded w-1/2" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : trendingCards.length === 0 ? (
         <div className="text-center py-8">
@@ -716,6 +727,11 @@ export default function Home() {
   return (
     <>
       <StructuredData data={structuredData} />
+      <PageHead
+        title="BOXIUM PTCG | TCG 卡牗價格查詢與市集"
+        description="BOXIUM PTCG 提供 Pokémon、One Piece、遙戲王等 TCG 卡牗的即時價格查詢、PSA 10 成交記錄、價格走勢分析及市集交易平台。"
+        keywords="TCG 卡牗, Pokémon 卡牗價格, PSA 10, BOXIUM PTCG, 卡牗市集"
+      />
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
         {/* Hero Section */}
       <section className="pt-16 md:pt-20 pb-0 overflow-hidden" style={{ backgroundColor: "#06038d" }}>

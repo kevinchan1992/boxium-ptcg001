@@ -40,6 +40,8 @@ import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoi
 import { useTranslation } from "react-i18next";
 import { CollectionSection } from "@/components/CollectionSection";
 import { TradeHistorySection } from "@/components/TradeHistorySection";
+import { LazyImage } from "@/components/LazyImage";
+import PageHead from "@/components/PageHead";
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -169,6 +171,11 @@ export default function Profile() {
   const joinDate = new Date(user.createdAt).toLocaleDateString(locale);
 
   return (
+    <>
+    <PageHead
+      title={user?.name ? `${user.name} 的個人頁面 - BOXIUM PTCG` : '個人頁面 - BOXIUM PTCG'}
+      description="管理您的 BOXIUM PTCG 帳戶、查看收藏、關注清單及交易記錄。"
+    />
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* ── Hero Banner (Mobile-first compact design) ── */}
       <div className="relative" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #0a06b5 100%)` }}>
@@ -271,7 +278,7 @@ export default function Profile() {
                   {/* Icon circle */}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${BRAND_BLUE}12` }}>
                     <span style={{ color: BRAND_BLUE }}>
-                      {React.cloneElement(item.icon as React.ReactElement, { className: 'w-5 h-5' })}
+                      {React.cloneElement(item.icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -361,6 +368,7 @@ export default function Profile() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
@@ -889,7 +897,7 @@ function WatchlistSection() {
                   {/* Thumbnail */}
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     {imgUrl ? (
-                      <img src={imgUrl} alt={listing.title} className="w-full h-full object-cover" />
+                      <LazyImage src={imgUrl} alt={listing.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Package className="w-6 h-6 text-gray-300" />
@@ -1650,7 +1658,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
             <div key={order.id} className="flex items-center gap-3">
               {thumb ? (
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                  <img src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+                  <LazyImage src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
@@ -1851,7 +1859,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           const thumb = imgs[0];
           return thumb ? (
             <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-              <img src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+              <LazyImage src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
             </div>
           ) : (
             <div className="flex-shrink-0 w-14 h-14 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
@@ -2155,7 +2163,7 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
               const thumb = imgs[0];
               return thumb ? (
                 <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                  <img src={thumb} alt={offer.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+                  <LazyImage src={thumb} alt={offer.listingTitle ?? '商品'} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="flex-shrink-0 w-14 h-14 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">

@@ -1,20 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LazyImageProps {
   src: string;
   alt: string;
   className?: string;
   placeholder?: string;
+  style?: React.CSSProperties;
 }
 
-export function LazyImage({ src, alt, className = '', placeholder }: LazyImageProps) {
+export function LazyImage({ src, alt, className = '', placeholder, style }: LazyImageProps) {
   const [imageSrc, setImageSrc] = useState<string | undefined>(placeholder);
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let observer: IntersectionObserver;
-    
+
     if (imageRef && 'IntersectionObserver' in window) {
       observer = new IntersectionObserver(
         (entries) => {
@@ -51,6 +52,7 @@ export function LazyImage({ src, alt, className = '', placeholder }: LazyImagePr
       className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
       onLoad={() => setIsLoaded(true)}
       loading="lazy"
+      style={style}
     />
   );
 }

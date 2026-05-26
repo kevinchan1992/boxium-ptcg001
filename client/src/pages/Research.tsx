@@ -7,6 +7,7 @@ import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
 import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
+import PageHead from "@/components/PageHead";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -65,7 +66,12 @@ export default function Home() {
     <>
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateSearchActionData()} />
-      <div className="h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 overflow-hidden">
+      <PageHead
+        title="卡牗查詢 - BOXIUM PTCG | TCG 卡牗價格走勢查詢"
+        description="搜尋 Pokémon、One Piece、遙戲王等 TCG 卡牗，查看即時市場價格、PSA 10 成交記錄及價格走勢分析。"
+        keywords="TCG 卡牗查詢, Pokémon 卡牗價格, PSA 10 價格, BOXIUM PTCG"
+      />
+      <div className="h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 overflow-hidden pb-14 md:pb-0">
         {/* Hero Section */}
         <div className="text-center space-y-2 sm:space-y-5 max-w-3xl w-full">
           {/* Logo/Brand */}

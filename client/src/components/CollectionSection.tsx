@@ -55,6 +55,7 @@ import { TradeSheet } from "@/components/TradeSheet";
 import ReactCrop, { type Crop as CropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 // ─── Brand tokens ─────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -809,13 +810,34 @@ export function CollectionSection() {
   const tradedOutIds = new Set<number>(collectionData?.tradedOutIds ?? []);
 
   const removeMutation = trpc.profile.removeFromCollection.useMutation({
+    onMutate: async ({ itemId }) => {
+      await utils.profile.getCollection.cancel();
+      const prevCollection = utils.profile.getCollection.getData(
+        { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE, showTraded: viewMode === "traded" }
+      );
+      utils.profile.getCollection.setData(
+        { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE, showTraded: viewMode === "traded" },
+        (old: any) => old ? { ...old, items: old.items.filter((i: any) => i.id !== itemId), total: Math.max(0, (old.total ?? 1) - 1) } : old
+      );
+      setDeleteItem(null);
+      return { prevCollection };
+    },
     onSuccess: () => {
       toast.success(t("profile.collection.deleteSuccess"));
+    },
+    onError: (e, _vars, context) => {
+      if (context?.prevCollection !== undefined) {
+        utils.profile.getCollection.setData(
+          { sortBy, sortOrder, grader: filterGrader === "all" ? undefined : filterGrader, priceMode: "grade" as const, page: currentPage, limit: PAGE_SIZE, showTraded: viewMode === "traded" },
+          context.prevCollection
+        );
+      }
+      toast.error(t("profile.collection.deleteFailed", { error: e.message }));
+    },
+    onSettled: () => {
       utils.profile.getCollection.invalidate();
       utils.profile.getCollectionStats.invalidate();
-      setDeleteItem(null);
     },
-    onError: (e) => toast.error(t("profile.collection.deleteFailed", { error: e.message })),
   });
 
   const exportPdfMutation = trpc.profile.exportCollectionPdf.useMutation({
@@ -1028,7 +1050,7 @@ export function CollectionSection() {
                   </div>
                   {item.card?.imageUrl && (
                     <div className="flex-shrink-0" style={{ width: 64, height: 90 }}>
-                      <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name}
+                      <LazyImage src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card?.name ?? ""}
                         className="w-full h-full object-contain rounded-lg"
                       />
                     </div>
@@ -1254,9 +1276,9 @@ export function CollectionSection() {
                     style={{ width: 'clamp(90px, 25vw, 180px)' }}
                   >
                     {item.card?.imageUrl ? (
-                      <img
+                      <LazyImage
                         src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
-                        alt={item.card?.name}
+                        alt={item.card?.name ?? ""}
                         className="w-full h-auto object-contain rounded-lg"
                         style={{ maxHeight: 'clamp(130px, 35vw, 260px)' }}
                       />
