@@ -25,6 +25,7 @@ import {
   Wand2, Type, ImageIcon, Upload,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { LazyImage } from "@/components/LazyImage";
 
 /* ─── Article Type Definitions ──────────────────────────────────────── */
 type ArticleTypeId = "market-report" | "card-research" | "trend-analysis" | "beginner-guide" | "platform-news";
@@ -814,7 +815,7 @@ function CoverImageSection({
               </label>
               {referenceImageUrl ? (
                 <div className="relative rounded-lg overflow-hidden border border-[#e94560]/30 group">
-                  <img src={referenceImageUrl} alt="參考圖片" className="w-full h-24 object-cover" />
+                  <LazyImage src={referenceImageUrl} alt="參考圖片" className="w-full h-24 object-cover" />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
                       onClick={() => setReferenceImageUrl(null)}
@@ -879,7 +880,7 @@ function CoverImageSection({
       {/* Current Cover Preview */}
       {coverImageUrl && (
         <div className="relative rounded-lg overflow-hidden border border-zinc-700 group">
-          <img src={coverImageUrl} alt="封面圖" className="w-full h-44 object-cover" />
+          <LazyImage src={coverImageUrl} alt="封面圖" className="w-full h-44 object-cover" />
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button
               size="sm"
@@ -929,7 +930,7 @@ function CoverImageSection({
                     card.matchedFrom === 'article' ? 'border-[#FEDD00]/60' : 'border-zinc-600'
                   }`}>
                     {imgUrl ? (
-                      <img src={imgUrl} alt={card.name} className="w-14 aspect-[3/4] object-cover" />
+                      <LazyImage src={imgUrl} alt={card.name} className="w-14 aspect-[3/4] object-cover" />
                     ) : (
                       <div className="w-14 aspect-[3/4] bg-zinc-700 flex items-center justify-center">
                         <Image className="w-4 h-4 text-zinc-500" />

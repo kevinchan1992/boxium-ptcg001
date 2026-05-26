@@ -17,6 +17,7 @@ import { CONDITION_GROUPS } from "@/lib/conditions";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import AdminGrading from "@/components/AdminGrading";
+import { LazyImage } from "@/components/LazyImage";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, LineChart, Line, ComposedChart } from "recharts";
 // PDF export is now server-side via /api/admin/financial-report-pdf
 
@@ -108,7 +109,7 @@ function ImageUploader({ images, onChange, maxImages = 5 }: { images: string[]; 
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
             <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
-              <img src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
+              <LazyImage src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
               <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
                 className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X className="w-3 h-3" />
@@ -241,7 +242,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                   {selectedCard ? (
                     <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
                       {selectedCard.imageUrl ? (
-                        <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                        <LazyImage src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
                       ) : (
                         <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
                           <Layers className="w-4 h-4 text-gray-300" />
@@ -427,7 +428,7 @@ function CreateListingDialog({ open, onClose, onSuccess }: { open: boolean; onCl
                   {images.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                       {images.map((url, i) => (
-                        <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                        <LazyImage key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       ))}
                     </div>
                   )}
@@ -664,7 +665,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                   <div className="p-3">
                     <div className="relative">
                       <div className="aspect-video max-h-56 w-full rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <img src={images[imgIdx]} alt={listing.title} className="w-full h-full object-contain" />
+                        <LazyImage src={images[imgIdx]} alt={listing.title} className="w-full h-full object-contain" />
                       </div>
                       {images.length > 1 && (
                         <>
@@ -826,7 +827,7 @@ function ListingDetailDialog({ listingId, onClose, onUpdated, onViewOrders, onOp
                           <div className="space-y-3">
                             <div className="flex items-center gap-3">
                               {sellerProfile.avatarUrl
-                                ? <img src={sellerProfile.avatarUrl} className="w-10 h-10 rounded-full object-cover border-2 border-[#06038d]/20" alt="" />
+                                ? <LazyImage src={sellerProfile.avatarUrl} className="w-10 h-10 rounded-full object-cover border-2 border-[#06038d]/20" alt="" />
                                 : <div className="w-10 h-10 rounded-full bg-[#06038d]/10 flex items-center justify-center"><User2 className="w-5 h-5 text-[#06038d]" /></div>
                               }
                               <div>
@@ -1331,7 +1332,7 @@ function ListingsTab({ onViewOrders }: { onViewOrders?: (listingId: number) => v
               {/* Thumbnail */}
               <div className="flex items-center flex-shrink-0">
                 {thumbUrl ? (
-                  <img src={thumbUrl} alt="" className="w-9 h-11 object-cover rounded border border-gray-200" />
+                  <LazyImage src={thumbUrl} alt="" className="w-9 h-11 object-cover rounded border border-gray-200" />
                 ) : (
                   <div className="w-9 h-11 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
                     <Package className="w-4 h-4 text-gray-300" />
@@ -1953,7 +1954,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                           : order.listingImages;
                         const firstImg = Array.isArray(imgs) ? imgs[0] : null;
                         if (firstImg) return (
-                          <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                          <LazyImage src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />
                         );
                       } catch {}
                       return (
@@ -2098,7 +2099,7 @@ function OrdersTab({ listingFilter, onClearListingFilter, onViewOrders }: { list
                     try {
                       const imgs = typeof selectedOrder.listingImages === 'string' ? JSON.parse(selectedOrder.listingImages) : selectedOrder.listingImages;
                       const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                      if (firstImg) return <img src={firstImg} alt="商品" className="w-14 h-18 object-cover rounded-md border border-gray-200 flex-shrink-0" style={{height:'4.5rem'}} />;
+                      if (firstImg) return <LazyImage src={firstImg} alt="商品" className="w-14 h-18 object-cover rounded-md border border-gray-200 flex-shrink-0" style={{height:'4.5rem'}} />;
                     } catch {}
                     return <div className="w-14 h-18 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0" style={{height:'4.5rem'}}><Package className="w-5 h-5 text-gray-400" /></div>;
                   })()}
@@ -3652,7 +3653,7 @@ function SellerDetailDialog({ sellerId, onClose }: { sellerId: number | null; on
             {/* Seller Profile Header */}
             <div className="flex items-center gap-4">
               {sp.avatarUrl ? (
-                <img src={sp.avatarUrl} alt={sp.displayName} className="w-16 h-16 rounded-full object-cover border" />
+                <LazyImage src={sp.avatarUrl} alt={sp.displayName} className="w-16 h-16 rounded-full object-cover border" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                   <User2 className="w-8 h-8 text-muted-foreground" />
@@ -4286,7 +4287,7 @@ function DisputesTab() {
                       try {
                         const imgs = typeof order.listingImages === 'string' ? JSON.parse(order.listingImages) : order.listingImages;
                         const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                        if (firstImg) return <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
+                        if (firstImg) return <LazyImage src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
                       } catch {}
                       return <div className="w-14 h-16 bg-gray-100 rounded-md border border-gray-200 flex-shrink-0 flex items-center justify-center"><span className="text-gray-300 text-xs">無圖</span></div>;
                     })()}
@@ -4378,7 +4379,7 @@ function DisputesTab() {
                             </div>
                           ) : (
                             <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-md overflow-hidden border border-border hover:opacity-80 transition-opacity">
-                              <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                              <LazyImage src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
                             </a>
                           );
                         })}
@@ -6020,7 +6021,7 @@ function OffersTab() {
                     try {
                       const imgs = typeof o.listingImages === 'string' ? JSON.parse(o.listingImages) : o.listingImages;
                       const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                      if (firstImg) return <img src={firstImg} alt="" className="w-10 h-12 object-cover rounded border border-gray-200 flex-shrink-0" />;
+                      if (firstImg) return <LazyImage src={firstImg} alt="" className="w-10 h-12 object-cover rounded border border-gray-200 flex-shrink-0" />;
                     } catch {}
                     return null;
                   })()}
@@ -6256,7 +6257,7 @@ function PayoutOrderCard({ order: o, onRefresh }: { order: any; onRefresh: () =>
               try {
                 const imgs = typeof o.listingImages === 'string' ? JSON.parse(o.listingImages) : o.listingImages;
                 const firstImg = Array.isArray(imgs) ? imgs[0] : null;
-                if (firstImg) return <img src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
+                if (firstImg) return <LazyImage src={firstImg} alt="" className="w-14 h-16 object-cover rounded-md border border-gray-200 flex-shrink-0" />;
               } catch {}
               return <div className="w-14 h-16 bg-gray-100 rounded-md border border-gray-200 flex-shrink-0 flex items-center justify-center"><span className="text-gray-300 text-xs">無圖</span></div>;
             })()}
@@ -7401,7 +7402,7 @@ function AuctionsAdminTab() {
               {/* Thumbnail */}
               <div className="flex-shrink-0 w-11 h-14 rounded-lg overflow-hidden bg-[#06038D]/5 border border-[#06038D]/10 flex items-center justify-center">
                 {thumbUrl ? (
-                  <img src={thumbUrl} alt="拍賣品" className="w-full h-full object-cover" />
+                  <LazyImage src={thumbUrl} alt="拍賣品" className="w-full h-full object-cover" />
                 ) : (
                   <Package className="w-4 h-4 text-[#06038D]/20" />
                 )}
@@ -7946,7 +7947,7 @@ function AuctionOrdersAdminTab() {
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                          {thumb && <img src={thumb} alt="" className="w-8 h-8 object-cover rounded-md border border-gray-200 flex-shrink-0" />}
+                          {thumb && <LazyImage src={thumb} alt="" className="w-8 h-8 object-cover rounded-md border border-gray-200 flex-shrink-0" />}
                           <span className="text-xs text-gray-700 line-clamp-2" style={{maxWidth:'120px'}}>{order.listingTitle ?? '—'}</span>
                         </div>
                       </td>

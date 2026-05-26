@@ -9,6 +9,7 @@ import { Search, Loader2, TrendingUp, TrendingDown, Minus, BarChart3, Info } fro
 import { toast } from 'sonner';
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 interface CardSelectionDialogProps {
   open: boolean;
@@ -230,7 +231,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                     <div className="flex gap-3 p-3">
                       {card.imageUrl && (
                         <div className="w-16 h-22 flex-shrink-0 rounded overflow-hidden">
-                          <img src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
+                          <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -365,7 +366,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         />
                       </div>
                       <div className="aspect-[2.5/3.5] overflow-hidden rounded-t-lg">
-                        <img src={card.imageUrl || ''} alt={card.name} className="w-full h-full object-cover" />
+                        <LazyImage src={card.imageUrl || ''} alt={card.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="p-2 space-y-0.5">
                         <div className="text-xs font-medium text-white line-clamp-2 leading-tight">{card.name}</div>

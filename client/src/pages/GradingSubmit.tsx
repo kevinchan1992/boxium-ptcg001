@@ -32,6 +32,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 // ─── Types ─────────────────────────────────────────────────────────────────────────────
 interface GradingItem {
   id: string;
@@ -174,7 +175,7 @@ function ItemCard({
                 {item.card ? (
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     {item.card.imageUrl && (
-                      <img src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card.name} className="w-14 h-20 object-contain rounded flex-shrink-0" />
+                      <LazyImage src={getProxiedImageUrl(item.card.imageUrl) ?? ""} alt={item.card.name} className="w-14 h-20 object-contain rounded flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{item.card.name}</p>
@@ -826,7 +827,7 @@ export default function GradingSubmit() {
                               top: 0,
                             }}
                           >
-                            <img src={thumb.url} alt={thumb.name} className="w-full h-full object-contain" />
+                            <LazyImage src={thumb.url} alt={thumb.name} className="w-full h-full object-contain" />
                             {/* +N badge on last visible thumb */}
                             {idx === 2 && extraCardCount > 0 && (
                               <div className="absolute bottom-0 right-0 bg-[#06038d] text-white text-[9px] font-bold px-1 py-0.5 rounded-tl leading-none">

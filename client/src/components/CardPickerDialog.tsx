@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, CheckCircle2, X, Layers } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 export interface SelectedCard {
   id: number;
@@ -137,7 +138,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
                     {/* Card Image */}
                     <div className="w-12 h-16 rounded-md overflow-hidden bg-[#06038D]/5 flex-shrink-0 border border-[#06038D]/15">
                       {card.imageUrl ? (
-                        <img src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
+                        <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-[#06038D]/30">
                           <Layers className="w-5 h-5" />

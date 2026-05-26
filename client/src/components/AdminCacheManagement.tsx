@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "wouter";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 export function AdminCacheManagement() {
   const [cardIdInput, setCardIdInput] = useState("");
@@ -743,7 +744,7 @@ export function AdminCacheManagement() {
                         <TableRow key={cache.id} className="border-zinc-800 hover:bg-zinc-800/50">
                           <TableCell>
                             {cache.cardImageUrl ? (
-                              <img 
+                              <LazyImage 
                                 src={getProxiedImageUrl(cache.cardImageUrl) ?? ""} 
                                 alt={cache.cardName || "Card"} 
                                 className="w-12 h-16 object-cover rounded"

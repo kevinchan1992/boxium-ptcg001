@@ -64,6 +64,7 @@ import {
   Upload,
 } from "lucide-react";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
@@ -594,7 +595,7 @@ function SubmissionDetailDialog({
                   {detail.items.map((item: any, idx: number) => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-2.5">
                       {item.cardImageUrl ? (
-                        <img src={getProxiedImageUrl(item.cardImageUrl) ?? ""} alt={item.cardName} className="w-8 h-11 object-cover rounded shrink-0" />
+                        <LazyImage src={getProxiedImageUrl(item.cardImageUrl) ?? ""} alt={item.cardName} className="w-8 h-11 object-cover rounded shrink-0" />
                       ) : (
                         <div className="w-8 h-11 bg-gray-100/50 rounded shrink-0 flex items-center justify-center text-gray-600 text-xs">無</div>
                       )}

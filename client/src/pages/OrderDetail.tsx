@@ -19,6 +19,7 @@ import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 
 type VerifyResult = {
   verified: boolean;
@@ -1446,7 +1447,7 @@ export default function OrderDetail() {
                     : listing.images)
                   : null;
                 return imgs?.[0] ? (
-                  <img src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-gray-100 flex-shrink-0" />
+                  <LazyImage src={imgs[0]} alt={listing.title} className="w-16 h-20 object-contain rounded-lg border bg-gray-100 flex-shrink-0" />
                 ) : (
                   <div className="w-16 h-20 rounded-lg border border-gray-200 flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
                     <span className="text-white font-black text-xs tracking-tight text-center leading-tight">BOX<br/>IUM</span>
@@ -1912,7 +1913,7 @@ export default function OrderDetail() {
               <div className="flex flex-wrap gap-2">
                 {disputeEvidenceUrls.map((url, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border border-border">
-                    <img src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                    <LazyImage src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       onClick={() => setDisputeEvidenceUrls(prev => prev.filter((_, idx) => idx !== i))}
                       className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-700"
@@ -2066,7 +2067,7 @@ export default function OrderDetail() {
               <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ 必須上傳出貨憑證（如快遞單、收據截圖），否則無法提交</p>
               {adminShipForm.shippingImageUrl ? (
                 <div className="relative">
-                  <img src={adminShipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
+                  <LazyImage src={adminShipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
                   <button type="button" onClick={() => setAdminShipForm(f => ({ ...f, shippingImageUrl: '' }))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
                 </div>
               ) : (

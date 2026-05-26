@@ -26,6 +26,7 @@ import { CONDITION_BADGE, CONDITION_FULL, CONDITION_TOOLTIP, CONDITION_GROUP_COL
 import { searchSFPointsAsync, validateSFCode, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -107,7 +108,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
                   : "border-gray-200 hover:border-[#06038D]/50"
               }`}
             >
-              <img src={getProxiedImageUrl(url) ?? url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
+              <LazyImage src={getProxiedImageUrl(url) ?? url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -455,7 +456,7 @@ function SellerOtherListings({ sellerId, currentListingId }: { sellerId: number;
             >
               <div className="aspect-square bg-gray-50 overflow-hidden">
                 {cover
-                  ? <img src={getProxiedImageUrl(cover) ?? cover} alt={l.title} className="w-full h-full object-cover" />
+                  ? <LazyImage src={getProxiedImageUrl(cover) ?? cover} alt={l.title} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-gray-300" /></div>
                 }
               </div>
@@ -942,7 +943,7 @@ export default function MarketplaceListing() {
                   {/* Avatar */}
                   <div className="w-10 h-10 rounded-full bg-[#06038D]/10 flex items-center justify-center shrink-0 overflow-hidden">
                     {(sellerProfile as any).avatarUrl ? (
-                      <img src={(sellerProfile as any).avatarUrl} alt={sellerProfile.displayName} className="w-full h-full object-cover" />
+                      <LazyImage src={(sellerProfile as any).avatarUrl} alt={sellerProfile.displayName} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-[#06038D] font-bold text-sm">
                         {(sellerProfile.displayName || "?")[0].toUpperCase()}

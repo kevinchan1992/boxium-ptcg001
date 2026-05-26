@@ -23,6 +23,7 @@ import {
   Copy, Layers, MessageSquare, TrendingDown, CalendarDays,
 } from "lucide-react";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { LazyImage } from "@/components/LazyImage";
 
 /* ─── Constants ────────────────────────────────────────────────────── */
 const GRADE_OPTIONS = [
@@ -257,7 +258,7 @@ function CardSearchModal({
             >
               <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-muted shadow">
                 {card.imageUrl
-                  ? <img src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
+                  ? <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-gray-400" /></div>
                 }
               </div>
@@ -530,7 +531,7 @@ function BatchSellDialog({
                 >
                   <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
                     {item.imageUrl
-                      ? <img src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-cover" />
+                      ? <LazyImage src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
                     }
                   </div>
@@ -562,7 +563,7 @@ function BatchSellDialog({
                     <div className="flex items-center gap-1.5 min-w-0">
                       <div className="w-7 h-10 flex-shrink-0 rounded overflow-hidden bg-muted">
                         {row.imageUrl
-                          ? <img src={getProxiedImageUrl(row.imageUrl) ?? ""} alt={row.cardName} className="w-full h-full object-cover" />
+                          ? <LazyImage src={getProxiedImageUrl(row.imageUrl) ?? ""} alt={row.cardName} className="w-full h-full object-cover" />
                           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-3 h-3 text-muted-foreground" /></div>
                         }
                       </div>
@@ -878,7 +879,7 @@ function BatchBuyDialog({
               {/* Line 1: index + card search + action buttons */}
               <div className="flex items-center gap-1.5">
                 {row.imageUrl ? (
-                  <img src={getProxiedImageUrl(row.imageUrl) ?? ""} alt={row.cardName} className="w-7 h-10 object-cover rounded flex-shrink-0" />
+                  <LazyImage src={getProxiedImageUrl(row.imageUrl) ?? ""} alt={row.cardName} className="w-7 h-10 object-cover rounded flex-shrink-0" />
                 ) : (
                   <div className="w-7 h-10 bg-muted rounded flex-shrink-0 flex items-center justify-center">
                     <span className="text-xs text-muted-foreground font-bold">{idx + 1}</span>
@@ -1288,7 +1289,7 @@ function BuyFormDialog({
                 <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border">
                   <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-muted">
                     {selectedCard.imageUrl ? (
-                      <img src={getProxiedImageUrl(selectedCard.imageUrl) ?? ""} alt={selectedCard.name} className="w-full h-full object-cover" />
+                      <LazyImage src={getProxiedImageUrl(selectedCard.imageUrl) ?? ""} alt={selectedCard.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ImageOff className="w-4 h-4 text-muted-foreground" />
@@ -1515,7 +1516,7 @@ function SellDialog({
           {/* Item preview */}
           <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl">
             {item.imageUrl ? (
-              <img src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+              <LazyImage src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-10 h-14 object-cover rounded flex-shrink-0" />
             ) : (
               <div className="w-10 h-14 bg-muted rounded flex items-center justify-center flex-shrink-0">
                 <Package className="w-4 h-4 text-muted-foreground" />
@@ -1964,7 +1965,7 @@ export default function AdminCardInventory() {
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                         {item.imageUrl ? (
-                          <img src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                          <LazyImage src={getProxiedImageUrl(item.imageUrl) ?? ""} alt={item.cardName} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-4 h-4 text-muted-foreground/50" /></div>
                         )}

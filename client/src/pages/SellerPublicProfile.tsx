@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 
 /* ─── Star Rating ─────────────────────────────────────────── */
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
@@ -81,7 +82,7 @@ function ListingCard({ listing }: { listing: any }) {
         {/* Image */}
         <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
           {imgs[0] ? (
-            <img
+            <LazyImage
               src={imgs[0]}
               alt={listing.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -125,7 +126,7 @@ function AuctionCard({ auction }: { auction: any }) {
         {/* Image */}
         <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
           {imgs[0] ? (
-            <img
+            <LazyImage
               src={imgs[0]}
               alt={auction.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -241,7 +242,7 @@ export default function SellerPublicProfile() {
               <div className="relative flex-shrink-0">
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-[#06038D] to-[#3730a3] flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-md">
                   {seller.avatarUrl ? (
-                    <img src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full object-cover" />
+                    <LazyImage src={seller.avatarUrl} alt={seller.displayName} className="w-full h-full object-cover" />
                   ) : (
                     seller.displayName.charAt(0).toUpperCase()
                   )}

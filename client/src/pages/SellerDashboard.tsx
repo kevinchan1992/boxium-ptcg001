@@ -22,6 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Link } from "wouter";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 // ─── PayoutProofThumbnail ────────────────────────────────────────────────────
 function PayoutProofThumbnail({ url }: { url: string }) {
   const { t } = useTranslation();
@@ -122,7 +123,7 @@ function ImageUploader({
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
             <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
-              <img src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
+              <LazyImage src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
               <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
                 className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X className="w-3 h-3" />
@@ -205,7 +206,7 @@ function SellerShippingProof({ url }: { url: string }) {
           className="relative group w-24 h-16 rounded-lg overflow-hidden border border-indigo-200 hover:border-[#06038d] transition-colors block"
           title={t("seller.shippingProof.zoomAction")}
         >
-          <img src={url} alt="出貨憑證" className="w-full h-full object-cover" />
+          <LazyImage src={url} alt="出貨憑證" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
             <svg className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
@@ -521,7 +522,7 @@ function EarningsTab() {
                       if (Array.isArray(imgs) && imgs.length > 0) imgUrl = imgs[0];
                     } catch {}
                     return imgUrl ? (
-                      <img src={imgUrl} alt={order.title || '商品'} className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                      <LazyImage src={imgUrl} alt={order.title || '商品'} className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Package className="w-5 h-5 text-gray-400" />
@@ -1157,7 +1158,7 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
               )}
               {/* Thumbnail */}
               <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0" style={!coverImg ? { background: 'linear-gradient(135deg, #06038d 0%, #0a06b5 100%)' } : {}}>
-                {coverImg ? <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-[8px]">BOX</span></div>}
+                {coverImg ? <LazyImage src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-[8px]">BOX</span></div>}
               </div>
               {/* Title + meta */}
               <div className="flex-1 min-w-0">
@@ -2136,7 +2137,7 @@ export default function SellerDashboard() {
                             >
                               <div className="relative">
                                 <div className="aspect-square overflow-hidden" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                                  {coverImg ? <img src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span></div>}
+                                  {coverImg ? <LazyImage src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span></div>}
                                 </div>
                                 <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${isActive ? "bg-green-500 text-white" : isSold ? "bg-blue-500 text-white" : isRemoved ? "bg-red-500 text-white" : "bg-gray-500 text-white"}`}>
                                   {isActive ? "上架" : isSold ? "售出" : isRemoved ? "下架" : listing.status}
@@ -2293,7 +2294,7 @@ export default function SellerDashboard() {
                               const thumb = imgs[0];
                               return thumb ? (
                                 <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                                  <img src={thumb} alt={item.title ?? '商品'} className="w-full h-full object-cover" />
+                                  <LazyImage src={thumb} alt={item.title ?? '商品'} className="w-full h-full object-cover" />
                                 </div>
                               ) : (
                                 <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
@@ -2717,7 +2718,7 @@ export default function SellerDashboard() {
                           <td className="px-3 py-2 text-center">
                             {row.imageUrls.length > 0 ? (
                               <div className="flex items-center gap-1 justify-center">
-                                <img src={row.imageUrls[0]} alt="" className="w-8 h-8 object-cover rounded border border-gray-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                <LazyImage src={row.imageUrls[0]} alt="" className="w-8 h-8 object-cover rounded border border-gray-200" />
                                 {row.imageUrls.length > 1 && <span className="text-[10px] text-gray-400">+{row.imageUrls.length - 1}</span>}
                               </div>
                             ) : (
@@ -2946,7 +2947,7 @@ export default function SellerDashboard() {
                     coverImg = Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : null;
                   } catch {}
                   return coverImg ? (
-                    <img src={coverImg} alt={editingListing.title} className="w-12 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                    <LazyImage src={coverImg} alt={editingListing.title} className="w-12 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                   ) : (
                     <div className="w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #06038d 0%, #0a06b5 100%)' }}>
                       <span className="text-white font-black text-[8px] tracking-tight text-center leading-tight">BOX<br/>IUM</span>
@@ -3101,7 +3102,7 @@ export default function SellerDashboard() {
                   {selectedCard ? (
                     <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
                       {selectedCard.imageUrl ? (
-                        <img src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
+                        <LazyImage src={selectedCard.imageUrl} alt={selectedCard.name} className="w-10 h-14 object-cover rounded-md border border-gray-200 flex-shrink-0" />
                       ) : (
                         <div className="w-10 h-14 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
                           <Layers className="w-4 h-4 text-gray-300" />
@@ -3177,7 +3178,7 @@ export default function SellerDashboard() {
               <>
                 {/* Step 2 summary bar */}
                 <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 flex items-center gap-3">
-                  {listingImages[0] && <img src={listingImages[0]} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />}
+                  {listingImages[0] && <LazyImage src={listingImages[0]} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />}
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#06038D] truncate">{listingForm.title}</p>
                     <p className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} · 數量 {listingForm.quantity}</p>
@@ -3525,7 +3526,7 @@ export default function SellerDashboard() {
                   {listingImages.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                       {listingImages.map((url, i) => (
-                        <img key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                        <LazyImage key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       ))}
                     </div>
                   )}

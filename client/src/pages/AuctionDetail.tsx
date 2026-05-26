@@ -18,6 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
@@ -845,7 +846,7 @@ export default function AuctionDetail() {
                           : 'border-transparent opacity-50 hover:opacity-80'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <LazyImage src={img} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -982,7 +983,7 @@ export default function AuctionDetail() {
                   onClick={() => window.location.href = `/seller/${listing.sellerId}`}
                 >
                   {listing.sellerInfo.avatarUrl ? (
-                    <img src={listing.sellerInfo.avatarUrl} alt="seller" className="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />
+                    <LazyImage src={listing.sellerInfo.avatarUrl} alt="seller" className="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-[#06038D]/10 flex items-center justify-center">
                       <User className="w-6 h-6 text-[#06038D]" />

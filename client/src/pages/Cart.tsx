@@ -29,6 +29,7 @@ import {
 import { SF_STATIONS as sfStations, SFPoint } from "@/lib/sfStations";
 import { SF_LOCKERS } from "@/lib/sfLockers";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 
 const ALIPAY_QR_URL = "https://w.alipay.hk/s12/3RYKWzGXrQ";
 
@@ -434,7 +435,7 @@ export default function Cart() {
                       <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
                         <div className="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                           {imgs?.[0] ? (
-                            <img src={imgs[0]} alt={item.title} className="w-full h-full object-cover" />
+                            <LazyImage src={imgs[0]} alt={item.title} className="w-full h-full object-cover" />
                           ) : (
                             <Package className="w-8 h-8 text-gray-300" />
                           )}
@@ -725,7 +726,7 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
         <Link href={`/orders/${order.orderNo}`}>
           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-yellow-200">
             {imgs?.[0] ? (
-              <img src={imgs[0]} alt={order.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <LazyImage src={imgs[0]} alt={order.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-amber-400" />
@@ -868,7 +869,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
         <Link href={`/marketplace/${item.listingId}`}>
           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
             {item.images ? (
-              <img src={JSON.parse(item.images)[0] ?? ''} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <LazyImage src={JSON.parse(item.images)[0] ?? ''} alt={item.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Package className="w-6 h-6 text-gray-300" />

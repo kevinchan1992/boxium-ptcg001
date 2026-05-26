@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { LazyImage } from "@/components/LazyImage";
 import { trpc } from "@/lib/trpc";
 import { formatHKDate } from "@/lib/formatDate";
 import { Button } from "@/components/ui/button";
@@ -510,7 +511,7 @@ export function AdminBlogManagement() {
                       onClick={(e) => e.stopPropagation()} />
                   )}
                   {post.featuredImage && (
-                    <img src={post.featuredImage} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0 hidden sm:block" />
+                    <LazyImage src={post.featuredImage} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0 hidden sm:block" />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
@@ -875,7 +876,7 @@ function AIArticleGenerator({
                   <div className="grid grid-cols-4 gap-2">
                     {uploadedImageUrls.map((url, i) => (
                       <div key={i} className="relative group">
-                        <img src={url} alt="" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
+                        <LazyImage src={url} alt="" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
                         {i === 0 && <Badge className="absolute top-1 left-1 bg-purple-600 text-[10px]">主題圖</Badge>}
                         <Button size="sm" variant="destructive" onClick={() => removeImage(i)}
                           className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100">

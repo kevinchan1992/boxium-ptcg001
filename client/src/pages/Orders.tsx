@@ -17,6 +17,7 @@ import {
   Eye, ChevronRight
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LazyImage } from "@/components/LazyImage";
 
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; dot: string }> = {
   pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", dot: "bg-yellow-400" },
@@ -181,7 +182,7 @@ function OrderRowDetail({ order, onClose }: { order: any; onClose: () => void })
         {/* Product */}
         <div className="bg-white rounded-xl border border-gray-100 p-3 flex gap-3">
           {thumb ? (
-            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0"><img src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" /></div>
+            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0"><LazyImage src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" /></div>
           ) : (
             <div className="w-16 h-16 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0"><span className="text-2xl">🃏</span></div>
           )}
@@ -415,7 +416,7 @@ function OrderTableRow({ order, highlight }: { order: any; highlight?: boolean }
       >
         {/* Thumbnail */}
         <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
-          {thumb ? <img src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
+          {thumb ? <LazyImage src={thumb} alt={order.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
         </div>
         {/* Title + meta */}
         <div className="flex-1 min-w-0">
@@ -535,7 +536,7 @@ function MyOffersTab({ userId }: { userId: number }) {
           <div key={offer.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-[#f8f9ff] transition-colors">
             {/* Thumbnail */}
             <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
-              {thumb ? <img src={thumb} alt={offer.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
+              {thumb ? <LazyImage src={thumb} alt={offer.listingTitle} className="w-full h-full object-cover" /> : <span className="text-lg">🃏</span>}
             </div>
             {/* Title + meta */}
             <div className="flex-1 min-w-0">

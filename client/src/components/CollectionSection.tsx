@@ -481,7 +481,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
                 {/* Yellow accent bar */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: BRAND_YELLOW }} />
                 {form.cardImageUrl ? (
-                  <img src={getProxiedImageUrl(form.cardImageUrl) ?? ""} alt={form.cardName} className="w-12 h-16 object-contain rounded-xl bg-white/10 shadow-lg ml-1" />
+                  <LazyImage src={getProxiedImageUrl(form.cardImageUrl) ?? ""} alt={form.cardName} className="w-12 h-16 object-contain rounded-xl bg-white/10 shadow-lg ml-1" />
                 ) : (
                   <div className="w-12 h-16 rounded-xl bg-white/10 flex items-center justify-center ml-1">
                     <Package className="w-6 h-6 text-white/50" />
@@ -729,7 +729,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
               {matchResults.map((m: any) => (
                 <button key={m.id} onClick={() => handleSelectPhotoMatch(m)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all text-left">
-                  {m.imageUrl && <img src={getProxiedImageUrl(m.imageUrl) ?? ""} alt={m.name} className="w-12 h-16 object-contain rounded-lg bg-gray-50" />}
+                  {m.imageUrl && <LazyImage src={getProxiedImageUrl(m.imageUrl) ?? ""} alt={m.name} className="w-12 h-16 object-contain rounded-lg bg-gray-50" />}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-gray-900 truncate">{m.name}</p>
                     {m.series && <p className="text-xs text-gray-400">{m.series}</p>}
