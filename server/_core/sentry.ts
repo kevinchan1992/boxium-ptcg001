@@ -25,26 +25,29 @@ const noopSentry = {
 
 let Sentry: typeof import("@sentry/node") = noopSentry;
 
-if (environment === "production" && sentryDsn) {
-  try {
-    // Dynamic import so the module is only resolved at runtime in production
-    const SentryModule = await import("@sentry/node");
-    Sentry = SentryModule;
-    Sentry.init({
-      dsn: sentryDsn,
-      environment,
-      tracesSampleRate: 0.1,
-      profilesSampleRate: 0.1,
-    });
-    console.log(`[Sentry] Initialized for ${environment} environment`);
-  } catch (err: any) {
-    console.warn("[Sentry] Failed to initialize, using no-op stub:", err.message);
-    Sentry = noopSentry;
+// Use a self-executing async function to avoid top-level await (tsconfig target compatibility)
+(async () => {
+  if (environment === "production" && sentryDsn) {
+    try {
+      // Dynamic import so the module is only resolved at runtime in production
+      const SentryModule = await import("@sentry/node");
+      Sentry = SentryModule;
+      Sentry.init({
+        dsn: sentryDsn,
+        environment,
+        tracesSampleRate: 0.1,
+        profilesSampleRate: 0.1,
+      });
+      console.log(`[Sentry] Initialized for ${environment} environment`);
+    } catch (err: any) {
+      console.warn("[Sentry] Failed to initialize, using no-op stub:", err.message);
+      Sentry = noopSentry;
+    }
+  } else if (environment === "production") {
+    console.log("[Sentry] DSN not configured, error monitoring disabled");
+  } else {
+    console.log("[Sentry] Skipped in non-production environment");
   }
-} else if (environment === "production") {
-  console.log("[Sentry] DSN not configured, error monitoring disabled");
-} else {
-  console.log("[Sentry] Skipped in non-production environment");
-}
+})();
 
 export { Sentry };

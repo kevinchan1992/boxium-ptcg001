@@ -11,7 +11,7 @@ interface UsePullToRefreshResult {
   pullDistance: number;  // 0..maxPull
   isRefreshing: boolean;
   isPulling: boolean;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 /**

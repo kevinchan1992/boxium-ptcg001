@@ -1,7 +1,7 @@
 import React from "react";
 import { getProxiedImageUrl } from "@/lib/utils";
 
-interface CardImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface CardImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src: string | null | undefined;
   alt?: string;
 }

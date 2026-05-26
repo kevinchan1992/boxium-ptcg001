@@ -267,7 +267,7 @@ export async function searchCardIdsByTokens(
   let result = tokenSets[0];
   for (let i = 1; i < tokenSets.length; i++) {
     const next = tokenSets[i];
-    result = new Set([...result].filter(id => next.has(id)));
+    result = new Set(Array.from(result).filter(id => next.has(id)));
     // Early exit if intersection is empty
     if (result.size === 0) break;
   }

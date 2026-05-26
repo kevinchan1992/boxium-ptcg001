@@ -2,6 +2,16 @@
 // Must be set before any imports that use Date objects
 process.env.TZ = 'Asia/Hong_Kong';
 
+// Suppress verbose console.log/debug in production to reduce noise.
+// console.warn and console.error are always preserved for operational visibility.
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const noop = () => {};
+  console.log = noop;
+  console.debug = noop;
+  console.info = noop;
+}
+
 // v11.2: Prevent Cloud Run crashes from unhandled Promise rejections or uncaught exceptions.
 // Without these, Node.js 15+ exits the process on unhandledRejection → Cloud Run restarts → cold start.
 // Log the error and keep the server running (Sentry will capture it in production).

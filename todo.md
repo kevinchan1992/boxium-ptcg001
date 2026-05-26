@@ -9389,3 +9389,14 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Optimistic update: CollectionSection removeMutation (onMutate/onError/onSettled)
 - [x] Optimistic update: CardDetail watchlist toggle (onMutate/onError/onSettled)
 - [x] Optimistic update: MarketplaceListing toggleWishlist (onMutate/onError/onSettled)
+
+## Backend Cleanliness (2026-05-26)
+- [x] Split server/routers.ts (5140 lines) into feature modules: auth.ts, cards.ts, products.ts, admin.ts, marketInsights.ts, blog.ts, profile.ts, marketplace.ts, auction.ts, grading.ts, notifications.ts, pricing.ts, security.ts, templates.ts, cardInventory.ts, contact.ts, diagnostics.ts, email.ts
+- [x] Fix TypeScript errors: server/db.ts withDbTimeout generic types, routers.ts getDb import, searchTokenBuilder.ts Set iteration, sentry.ts top-level await, CardImage.tsx TS2430, usePullToRefresh.ts React 19 RefObject, input-otp.tsx slots type, chart.tsx recharts Tooltip
+- [x] Fix import paths in all new router modules (./db -> ../db, ../drizzle/schema_new -> ../../drizzle/schema_new, etc.)
+- [x] Fix auth.ts missing eq import for deleteAccount procedure
+- [x] Fix marketplace.ts TypeScript inference for acceptedOffers/pendingOrders typed arrays
+- [x] Fix N+1 query in getCartItems (batch IN query replacing per-item fetches)
+- [x] Suppress console.log in production (server/_core/index.ts interceptor)
+- [x] CardDetail.tsx JSON-LD Product structured data (SEO)
+- [x] Global LazyImage rollout across 16+ pages/components

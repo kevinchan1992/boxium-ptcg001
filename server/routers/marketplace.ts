@@ -4768,40 +4768,50 @@ All three checks must pass for verified to be true. Respond with JSON only match
         .leftJoin(sellerUserAlias, eq(sellerProfiles.userId, sellerUserAlias.id))
         .where(eq(cartItems.userId, ctx.user.id))
         .orderBy(desc(cartItems.addedAt));
-      // For each cart item, check if buyer has an accepted offer
-      const rowsWithOffers = await Promise.all(rows.map(async (row) => {
-        const acceptedOffer = await db
-          .select({ id: offers.id, offerPriceHkd: offers.offerPriceHkd, expiresAt: offers.expiresAt })
-          .from(offers)
-          .where(and(
-            eq(offers.listingId, row.listingId),
-            eq(offers.buyerId, ctx.user.id),
-            eq(offers.status, 'accepted')
-          ))
-          .limit(1);
-        const offerData = acceptedOffer[0];
-        // Check if accepted offer is still valid (not expired)
-        const isOfferValid = offerData && offerData.expiresAt && new Date() < new Date(offerData.expiresAt);
-        // Check if buyer has a pending_payment order for this listing
-        const pendingOrder = await db
-          .select({ id: marketplaceOrders.id, orderNo: marketplaceOrders.orderNo })
-          .from(marketplaceOrders)
-          .where(and(
-            eq(marketplaceOrders.listingId, row.listingId),
-            eq(marketplaceOrders.buyerId, ctx.user.id),
-            eq(marketplaceOrders.orderStatus, 'pending_payment')
-          ))
-          .limit(1);
+      // Batch fetch accepted offers and pending orders for all cart items in 2 queries (avoid N+1)
+      const listingIds = rows.map((r) => r.listingId);
+      type OfferRow = { id: number; listingId: number; offerPriceHkd: string; expiresAt: Date };
+      type OrderRow = { id: number; listingId: number; orderNo: string };
+      let acceptedOffers: OfferRow[] = [];
+      let pendingOrders: OrderRow[] = [];
+      if (listingIds.length > 0) {
+        [acceptedOffers, pendingOrders] = await Promise.all([
+          db.select({ id: offers.id, listingId: offers.listingId, offerPriceHkd: offers.offerPriceHkd, expiresAt: offers.expiresAt })
+            .from(offers)
+            .where(and(
+              inArray(offers.listingId, listingIds),
+              eq(offers.buyerId, ctx.user.id),
+              eq(offers.status, 'accepted')
+            )) as Promise<OfferRow[]>,
+          db.select({ id: marketplaceOrders.id, listingId: marketplaceOrders.listingId, orderNo: marketplaceOrders.orderNo })
+            .from(marketplaceOrders)
+            .where(and(
+              inArray(marketplaceOrders.listingId, listingIds),
+              eq(marketplaceOrders.buyerId, ctx.user.id),
+              eq(marketplaceOrders.orderStatus, 'pending_payment')
+            )) as Promise<OrderRow[]>,
+        ]);
+      }
+
+      // Build lookup maps for O(1) access
+      const offerByListing = new Map(acceptedOffers.map((o) => [o.listingId, o]));
+      const pendingOrderByListing = new Map(pendingOrders.map((o) => [o.listingId, o]));
+      const now = new Date();
+
+      const rowsWithOffers = rows.map((row) => {
+        const offerData = offerByListing.get(row.listingId);
+        const isOfferValid = offerData && offerData.expiresAt && now < new Date(offerData.expiresAt);
+        const pendingOrder = pendingOrderByListing.get(row.listingId);
         return {
           ...row,
           acceptedOfferId: isOfferValid ? (offerData?.id ?? null) : null,
           acceptedOfferPrice: isOfferValid ? (offerData?.offerPriceHkd ?? null) : null,
           acceptedOfferExpiresAt: offerData?.expiresAt ?? null,
           isOfferExpired: offerData && !isOfferValid ? true : false,
-          hasPendingOrder: pendingOrder.length > 0,
-          pendingOrderNo: pendingOrder[0]?.orderNo ?? null,
+          hasPendingOrder: !!pendingOrder,
+          pendingOrderNo: pendingOrder?.orderNo ?? null,
         };
-      }));
+      });
       return rowsWithOffers;
     }),
 

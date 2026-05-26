@@ -363,7 +363,7 @@ async function searchCardsByGrade(
   // Query the normalized index table directly using indexed grade column.
   // This replaces the full-table JSON scan (~10k rows × JSON.parse) with a
   // targeted SQL query that returns only matching cardIds.
-  const indexRows = await withDbTimeout(
+  const indexRows = await withDbTimeout<Array<{ cardId: number; minPrice: string }>>(
     db
       .select({
         cardId: snkrdunkGradeIndex.cardId,
@@ -371,7 +371,7 @@ async function searchCardsByGrade(
       })
       .from(snkrdunkGradeIndex)
       .where(inArray(snkrdunkGradeIndex.grade, gradeFilter))
-      .orderBy(asc(snkrdunkGradeIndex.minPrice)),
+      .orderBy(asc(snkrdunkGradeIndex.minPrice)) as unknown as Promise<Array<{ cardId: number; minPrice: string }>>,
     10000,
     `searchCardsByGrade-index(grade:${gradeFilter.join(',')})`
   );
@@ -393,10 +393,10 @@ async function searchCardsByGrade(
     let filteredCardIds = matchingCardIds;
     if (cleanQuery.trim()) {
       const lowerQuery = cleanQuery.toLowerCase();
-      const cardRows = await withDbTimeout(
+      const cardRows = await withDbTimeout<Array<{ id: number; name: string | null; nameJa: string | null; cardNumber: string | null }>>(
         db.select({ id: cards.id, name: cards.name, nameJa: cards.nameJa, cardNumber: cards.cardNumber })
           .from(cards)
-          .where(inArray(cards.id, matchingCardIds)),
+          .where(inArray(cards.id, matchingCardIds)) as unknown as Promise<Array<{ id: number; name: string | null; nameJa: string | null; cardNumber: string | null }>>,
         10000,
         'searchCardsByGrade-nameFilter'
       );
@@ -412,8 +412,8 @@ async function searchCardsByGrade(
     if (filteredCardIds.length === 0) return { cards: [], total: 0 };
 
     // Fetch full card data for matching IDs
-    const cardRows = await withDbTimeout(
-      db.select().from(cards).where(inArray(cards.id, filteredCardIds)),
+    const cardRows = await withDbTimeout<(typeof cards.$inferSelect)[]>(
+      db.select().from(cards).where(inArray(cards.id, filteredCardIds)) as unknown as Promise<(typeof cards.$inferSelect)[]>,
       10000,
       'searchCardsByGrade-cardFetch'
     );
@@ -441,7 +441,7 @@ async function searchCardsByGrade(
   // ── Legacy fallback: full-table JSON scan (used when index is empty) ─────────
   console.warn('[GradeIndex] Index table empty, falling back to JSON scan');
   // Fetch all cache rows with non-empty listings
-  const allCacheRows = await withDbTimeout(
+  const allCacheRows = await withDbTimeout<Array<{ cardId: number; listings: string | null }>>(
     db
       .select({
         cardId: snkrdunkListingsCache.cardId,
@@ -454,7 +454,7 @@ async function searchCardsByGrade(
           ne(snkrdunkListingsCache.listings, 'null'),
           ne(snkrdunkListingsCache.listings, '')
         )
-      ),
+      ) as unknown as Promise<Array<{ cardId: number; listings: string | null }>>,
     15000,
     `searchCardsByGrade-legacy(grade:${gradeFilter.join(',')})`
   );

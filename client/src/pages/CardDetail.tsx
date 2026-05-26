@@ -414,6 +414,40 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       description={`查看 ${product.name} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
       ogImage={product.imageUrl ? getProxiedImageUrl(product.imageUrl) ?? undefined : undefined}
     />
+    {/* JSON-LD structured data for Google rich results */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          ...(product.imageUrl ? { image: [getProxiedImageUrl(product.imageUrl) ?? product.imageUrl] } : {}),
+          description: `${product.name} 寶可夢卡牌 - 查看即時市場價格、PSA 10 成交記錄及價格走勢分析。`,
+          brand: {
+            "@type": "Brand",
+            name: "Pokémon TCG",
+          },
+          ...(product.series ? { category: product.series } : {}),
+          ...(!isSealedProduct && 'cardNumber' in product && product.cardNumber
+            ? { sku: product.cardNumber }
+            : {}),
+          ...(minPrice !== null && maxPrice !== null
+            ? {
+                offers: {
+                  "@type": "AggregateOffer",
+                  priceCurrency: "HKD",
+                  lowPrice: minPrice.toFixed(2),
+                  highPrice: maxPrice.toFixed(2),
+                  offerCount: psa10Prices.length,
+                  availability: "https://schema.org/InStock",
+                },
+              }
+            : {}),
+          url: `${typeof window !== 'undefined' ? window.location.origin : ''}/card/${cardId}`,
+        }),
+      }}
+    />
     <div className="min-h-screen bg-background py-4 px-3 sm:py-6 sm:px-4 md:px-6">
       {/* Breadcrumb */}
       <Breadcrumb
