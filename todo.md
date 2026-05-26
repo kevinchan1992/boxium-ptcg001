@@ -9400,3 +9400,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Suppress console.log in production (server/_core/index.ts interceptor)
 - [x] CardDetail.tsx JSON-LD Product structured data (SEO)
 - [x] Global LazyImage rollout across 16+ pages/components
+
+## Vitest Unit Tests & Console Suppression Validation (2026-05-26)
+- [x] auth.register-login.test.ts: 24 tests covering isValidEmail, isValidPassword, generateEmailVerificationToken, generateToken/verifyToken, registerUser (DB mock), loginUser (DB mock)
+- [x] marketplace.cart.test.ts: 11 tests covering mergeCartData batch-query merge logic (empty cart, no offers/orders, valid offer, expired offer, pending order, both, multi-item, 100-item perf, boundary conditions)
+- [x] console-suppression.test.ts: 16 tests covering production suppression (log/debug/info suppressed, warn/error preserved), development no-suppression, other NODE_ENV values, real console integration
+- [x] All 51 new tests pass (3 test files)
