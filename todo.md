@@ -9406,3 +9406,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] marketplace.cart.test.ts: 11 tests covering mergeCartData batch-query merge logic (empty cart, no offers/orders, valid offer, expired offer, pending order, both, multi-item, 100-item perf, boundary conditions)
 - [x] console-suppression.test.ts: 16 tests covering production suppression (log/debug/info suppressed, warn/error preserved), development no-suppression, other NODE_ENV values, real console integration
 - [x] All 51 new tests pass (3 test files)
+
+## UI 響應式設計改善 (2026-05-26)
+
+- [x] BottomSheet 平板斷點從 lg (1024px) 改為 md (768px)，平板顯示 Dialog
+- [x] Marketplace 側邊欄從 hidden lg:block 改為 hidden md:block，平板也顯示篩選側邊欄
+- [x] Marketplace 篩選按鈕和手機版篩選面板改為 md:hidden（< 768px 才顯示）
+- [x] CollectionSection 手機版收藏卡片購入日期改為 hidden sm:flex（手機隱藏）
+- [x] CollectionSection P&L 數字在手機版縮小（text-sm sm:text-base）

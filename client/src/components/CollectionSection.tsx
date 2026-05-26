@@ -1318,9 +1318,9 @@ export function CollectionSection() {
                             </span>
                           )}
                         </div>
-                        {/* Purchase date */}
+                        {/* Purchase date - hidden on mobile to reduce density */}
                         {item.purchasedAt && (
-                          <div className="flex items-center gap-1 mt-1.5">
+                          <div className="hidden sm:flex items-center gap-1 mt-1.5">
                             <CalendarDays className="w-3 h-3 text-gray-300" />
                             <span className="text-[10px] font-medium text-gray-400">
                               {new Date(item.purchasedAt).toLocaleDateString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit' })} 購入
@@ -1420,13 +1420,13 @@ export function CollectionSection() {
                             ? <ArrowDownRight className="w-4 h-4" style={{ color: LOSS_RED }} />
                             : <Minus className="w-4 h-4 text-gray-300" />}
                         <span
-                          className="text-base font-black tabular-nums"
+                          className="text-sm sm:text-base font-black tabular-nums"
                           style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
                         >
                           {gainPct != null ? `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}%` : "—"}
                         </span>
                         <span
-                          className="text-xs font-semibold tabular-nums whitespace-nowrap"
+                          className="text-[10px] sm:text-xs font-semibold tabular-nums whitespace-nowrap"
                           style={{ color: gainPct != null && gainPct > 0 ? GAIN_GREEN : gainPct != null && gainPct < 0 ? LOSS_RED : "#9ca3af" }}
                         >
                           ({gain >= 0 ? "+" : ""}{formatCurrency(gain)})

@@ -1,12 +1,12 @@
 /**
  * BottomSheet component
- * - Mobile & Tablet (< 1024px / lg): slides up from the bottom (native sheet UX) with swipe-to-dismiss gesture
- * - Desktop (lg+, ≥ 1024px): renders as a centered Dialog
+ * - Mobile (< 768px / md): slides up from the bottom (native sheet UX) with swipe-to-dismiss gesture
+ * - Tablet & Desktop (md+, ≥ 768px): renders as a centered Dialog
  *
  * Breakpoint rationale:
  *   - iPhone: ~375-430px viewport → bottom sheet
- *   - iPad (portrait): ~768px viewport → bottom sheet
- *   - iPad (landscape): ~1024px viewport → bottom sheet
+ *   - iPad (portrait, ≥ 768px): centered dialog
+ *   - iPad (landscape, ≥ 1024px): centered dialog
  *   - Desktop: ≥ 1024px → centered dialog
  *
  * Swipe-to-dismiss:
@@ -52,11 +52,11 @@ const DISMISS_VELOCITY = 0.5;
 /** Hook to detect if we're in desktop mode (≥ 1024px) */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = React.useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1024
+    () => typeof window !== "undefined" && window.innerWidth >= 768
   );
 
   React.useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
+    const mq = window.matchMedia("(min-width: 768px)");
     const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mq.addEventListener("change", handler);
     setIsDesktop(mq.matches);
@@ -239,7 +239,7 @@ export function BottomSheet({
             ...(handleStyle?.background ? { borderTopColor: handleStyle.background as string } : {}),
           }}
           className={cn(
-            // ── Mobile & Tablet (< lg): bottom sheet — full width, anchored to bottom ──
+            // ── Mobile (< md): bottom sheet — full width, anchored to bottom ──
             "fixed bottom-0 left-0 right-0 z-50",
             "w-full",
             "overflow-hidden",
@@ -250,20 +250,20 @@ export function BottomSheet({
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             isDragging ? "duration-0" : "duration-300 ease-out",
-            // ── Desktop (lg+, ≥ 1024px): centered dialog ──
-            "lg:bottom-auto lg:left-1/2 lg:right-auto lg:top-1/2",
-            "lg:w-full lg:max-w-lg",
-            "lg:rounded-xl lg:border lg:border-border",
-            "lg:-translate-x-1/2 lg:-translate-y-1/2",
-            "lg:data-[state=closed]:zoom-out-95 lg:data-[state=open]:zoom-in-95",
-            "lg:data-[state=closed]:fade-out-0 lg:data-[state=open]:fade-in-0",
-            "lg:data-[state=closed]:slide-out-to-bottom-0 lg:data-[state=open]:slide-in-from-bottom-0",
+            // ── Tablet & Desktop (md+, ≥ 768px): centered dialog ──
+            "md:bottom-auto md:left-1/2 md:right-auto md:top-1/2",
+            "md:w-full md:max-w-lg",
+            "md:rounded-xl md:border md:border-border",
+            "md:-translate-x-1/2 md:-translate-y-1/2",
+            "md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95",
+            "md:data-[state=closed]:fade-out-0 md:data-[state=open]:fade-in-0",
+            "md:data-[state=closed]:slide-out-to-bottom-0 md:data-[state=open]:slide-in-from-bottom-0",
             className
           )}
         >
           {/* ── Drag handle (mobile/tablet only) — touch/mouse target for swipe ── */}
           <div
-            className="flex justify-center pt-3 pb-1 lg:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+            className="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
             style={handleStyle}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
@@ -285,7 +285,7 @@ export function BottomSheet({
             <div
               className={cn(
                 "flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-border/50 min-w-0",
-                "lg:cursor-default cursor-grab active:cursor-grabbing touch-none select-none lg:select-auto lg:touch-auto",
+                "md:cursor-default cursor-grab active:cursor-grabbing touch-none select-none md:select-auto md:touch-auto",
                 headerClassName
               )}
               style={headerStyle}
@@ -325,7 +325,7 @@ export function BottomSheet({
 
           {/* Scrollable body */}
           <div
-            className={cn("flex-1 overflow-y-auto overflow-x-hidden min-w-0 lg:pb-4", bodyClassName ?? "px-4 pt-4")}
+            className={cn("flex-1 overflow-y-auto overflow-x-hidden min-w-0 md:pb-4", bodyClassName ?? "px-4 pt-4")}
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))', overscrollBehavior: 'contain' }}
           >
             {children}

@@ -992,10 +992,10 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto py-5" style={{ paddingLeft: '1rem', paddingRight: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', overflow: 'hidden' }}>
 
-          {/* ── Left Sidebar (desktop) - only show for shop tab ── */}
+          {/* ── Left Sidebar (tablet+) - only show for shop tab ── */}
           {marketTab === 'shop' && (
-          <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '240px', boxSizing: 'border-box', overflow: 'hidden' }}>
+          <div className="hidden md:block" style={{ width: '220px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4" style={{ width: '220px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
@@ -1098,7 +1098,7 @@ export default function Marketplace() {
                 {/* Mobile filter toggle */}
                 <button
                   onClick={() => setShowMobileFilter(o => !o)}
-                  className={`lg:hidden flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-all ${
+                  className={`md:hidden flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-all ${
                     showMobileFilter || hasActiveFilters
                       ? "bg-[#06038D] text-white border-[#06038D]"
                       : "bg-white text-gray-600 border-gray-200"
@@ -1133,9 +1133,9 @@ export default function Marketplace() {
               </Select>
             </div>
 
-            {/* Mobile filter panel */}
+            {/* Mobile filter panel (< 768px only) */}
             {showMobileFilter && (
-              <div className="lg:hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+              <div className="md:hidden bg-card rounded-2xl border border-border shadow-sm p-5 mb-4">
                 <SidebarFilter {...sidebarProps} />
               </div>
             )}
