@@ -2047,7 +2047,6 @@ async function startServer() {
         schedulerModule.startGradingOverdueReminderScheduler();
         schedulerModule.startGradingAwaitingPaymentCleanupScheduler();
         schedulerModule.startGradingUpgradeOverdueReminderScheduler();
-        schedulerModule.startWatchlistPriceAlertScheduler();
         console.log('[Server] All cron schedulers initialized.');
       } catch (err) {
         console.error('[Server] Failed to initialize schedulers:', err);

@@ -87,12 +87,12 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
   };
 
   return (
-      <div
-      className="group cursor-pointer bg-card rounded-xl overflow-hidden border border-border hover:border-[#FEDD00] hover:shadow-lg transition-all duration-300 flex flex-col relative"
+    <div
+      className="group cursor-pointer bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-[#FEDD00] hover:shadow-lg transition-all duration-300 flex flex-col relative"
       onClick={() => setLocation(`/marketplace/${listing.id}`)}
     >
       {/* Image */}
-        <div className="relative aspect-square bg-secondary overflow-hidden">
+      <div className="relative aspect-square bg-gray-50 overflow-hidden">
         {coverImage ? (
           <img
             src={coverImage ?? undefined}
@@ -209,7 +209,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
 function ProductCardSkeleton() {
   const { t } = useTranslation();
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
       <Skeleton className="aspect-square w-full" />
       <div className="p-3 space-y-2">
         <Skeleton className="h-4 w-full" />
@@ -994,8 +994,8 @@ export default function Marketplace() {
 
           {/* ── Left Sidebar (desktop) - only show for shop tab ── */}
           {marketTab === 'shop' && (
-          <div className="hidden md:block" style={{ width: '220px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-4" style={{ width: '220px', boxSizing: 'border-box', overflow: 'hidden' }}>
+          <div className="hidden lg:block" style={{ width: '240px', flexShrink: 0, position: 'sticky', top: '4.5rem', alignSelf: 'flex-start', overflow: 'hidden' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" style={{ width: '240px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <SidebarFilter {...sidebarProps} />
             </div>
           </div>
@@ -1047,7 +1047,7 @@ export default function Marketplace() {
                     {Array.from({ length: 8 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
                   </div>
                 ) : !auctionData || auctionData.listings.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-2xl border border-border">
+                  <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100">
                     <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
                       <Gavel className="w-10 h-10 text-[#06038D]/30" />
                     </div>
@@ -1098,10 +1098,10 @@ export default function Marketplace() {
                 {/* Mobile filter toggle */}
                 <button
                   onClick={() => setShowMobileFilter(o => !o)}
-                  className={`md:hidden flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-all ${
+                  className={`lg:hidden flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-all ${
                     showMobileFilter || hasActiveFilters
                       ? "bg-[#06038D] text-white border-[#06038D]"
-                      : "bg-card text-muted-foreground border-border"
+                      : "bg-white text-gray-600 border-gray-200"
                   }`}
                 >
                   <Filter className="w-3.5 h-3.5" />
@@ -1135,7 +1135,7 @@ export default function Marketplace() {
 
             {/* Mobile filter panel */}
             {showMobileFilter && (
-              <div className="md:hidden bg-card rounded-2xl border border-border shadow-sm p-5 mb-4">
+              <div className="lg:hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
                 <SidebarFilter {...sidebarProps} />
               </div>
             )}
@@ -1185,7 +1185,7 @@ export default function Marketplace() {
                 {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : allListings.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-2xl border border-border">
+              <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100">
                 <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
                   <ShoppingBag className="w-10 h-10 text-[#06038D]/30" />
                 </div>
