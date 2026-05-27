@@ -1453,6 +1453,88 @@ async function startServer() {
         const distTemplate = path.resolve(import.meta.dirname, "public", "index.html");
         template = await fs.promises.readFile(distTemplate, "utf-8");
       }
+      // Fetch PSA 10 price for JSON-LD Product schema (non-critical, skip on error)
+      let psa10Price: number | null = null;
+      try {
+        const { getCardPriceByGrade } = await import('../db');
+        const priceResult = await getCardPriceByGrade(id, 'PSA 10');
+        if (priceResult.avgPrice && priceResult.avgPrice > 0) {
+          psa10Price = Math.round(priceResult.avgPrice);
+        }
+      } catch (_e) { /* non-critical */ }
+
+      // Fetch lowest marketplace listing price for JSON-LD Offer (non-critical, skip on error)
+      let lowestListingPrice: number | null = null;
+      try {
+        const { getSnkrdunkListingsCache } = await import('../db');
+        const cache = await getSnkrdunkListingsCache(id);
+        if (cache?.listings) {
+          const items: Array<{ price: number; status?: string }> =
+            typeof cache.listings === 'string' ? JSON.parse(cache.listings as string) : (cache.listings as any);
+          const onSale = items.filter((i) => !i.status || i.status === 'on-sale');
+          if (onSale.length > 0) {
+            const min = Math.min(...onSale.map((i) => i.price));
+            if (isFinite(min) && min > 0) lowestListingPrice = Math.round(min);
+          }
+        }
+      } catch (_e) { /* non-critical */ }
+
+      // Build Product JSON-LD
+      const productJsonLd: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: cardName,
+        description: ogDescription,
+        url: pageUrl,
+        image: cardImageUrl || imageUrl,
+        brand: { '@type': 'Brand', name: 'BOXIUM PTCG' },
+      };
+      const offers: Record<string, unknown>[] = [];
+      if (lowestListingPrice !== null) {
+        offers.push({
+          '@type': 'Offer',
+          price: lowestListingPrice,
+          priceCurrency: 'HKD',
+          availability: 'https://schema.org/InStock',
+          url: pageUrl,
+          seller: { '@type': 'Organization', name: 'BOXIUM PTCG' },
+        });
+      }
+      if (psa10Price !== null) {
+        offers.push({
+          '@type': 'Offer',
+          name: 'PSA 10 近期成交均價',
+          price: psa10Price,
+          priceCurrency: 'HKD',
+          availability: 'https://schema.org/InStock',
+          url: pageUrl,
+          itemCondition: 'https://schema.org/NewCondition',
+        });
+      }
+      if (offers.length === 1) productJsonLd.offers = offers[0];
+      else if (offers.length > 1) productJsonLd.offers = offers;
+      if (card?.setName) {
+        productJsonLd.additionalProperty = [
+          { '@type': 'PropertyValue', name: 'series', value: card.setName },
+        ];
+      }
+
+      // Build BreadcrumbList JSON-LD
+      const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '主頁', item: 'https://boxium.asia/' },
+          { '@type': 'ListItem', position: 2, name: '卡牌搜尋', item: 'https://boxium.asia/research' },
+          { '@type': 'ListItem', position: 3, name: cardName },
+        ],
+      };
+
+      const jsonLdScripts = [
+        `<script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`,
+        `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd)}</script>`,
+      ].join('\n    ');
+
       const ogTags = [
         `<meta property="og:type" content="website" />`,
         `<meta property="og:url" content="${pageUrl}" />`,
@@ -1467,6 +1549,7 @@ async function startServer() {
         `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
         `<meta name="twitter:image" content="${imageUrl}" />`,
         `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
+        jsonLdScripts,
       ].join("\n    ");
       const injected = template
         .replace(/<title>[^<]*<\/title>/, '') // remove existing title

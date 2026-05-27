@@ -9429,3 +9429,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Breadcrumb.tsx 加入 generateBreadcrumbJsonLd 工具函數
 - [x] CardDetail.tsx 加入 BreadcrumbList JSON-LD script
 - [x] CardDetail.tsx import generateBreadcrumbJsonLd
+
+## SSR JSON-LD 注入修復 (2026-05-27)
+
+- [x] 分析 Express server 的 HTML 注入架構（/card/:id 路由已有 SSR OG meta 注入）
+- [x] 在 /card/:id SSR 路由加入 Product JSON-LD（name、image、offers、additionalProperty）
+- [x] 在 /card/:id SSR 路由加入 BreadcrumbList JSON-LD（主頁→卡牌搜尋→卡牌名稱）
+- [x] 加入 PSA 10 成交均價查詢（getCardPriceByGrade）作為 Offer price
+- [x] 加入最低上架價格查詢（getSnkrdunkListingsCache）作為 Offer price
+- [x] TypeScript 驗證通過（0 個非 recharts 錯誤）
+- [x] 51 個 Vitest 測試全數通過
