@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
-import { Breadcrumb } from "@/components/Breadcrumb";
+import { Breadcrumb, generateBreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { BrandButton } from "@/components/ui/brand-button";
 import { Loader2, AlertCircle, Heart, Package, RefreshCw, TrendingUp, TrendingDown, Minus, ExternalLink, ShoppingCart, Tag, BookmarkPlus } from "lucide-react";
@@ -479,6 +479,22 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           ],
           url: `${typeof window !== 'undefined' ? window.location.origin : ''}/card/${cardId}`,
         }),
+      }}
+    />
+    {/* BreadcrumbList JSON-LD for Google rich results */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(
+          generateBreadcrumbJsonLd(
+            [
+              { label: t("common.home"), href: "/" },
+              { label: t("common.research"), href: "/research" },
+              { label: product.name },
+            ],
+            typeof window !== 'undefined' ? window.location.origin : ''
+          )
+        ),
       }}
     />
     <div className="min-h-screen bg-background py-4 px-3 sm:py-6 sm:px-4 md:px-6">

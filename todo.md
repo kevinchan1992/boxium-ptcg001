@@ -9422,3 +9422,10 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] JSON-LD offers 保留 AggregateOffer（PSA 10 近期成交價格區間）
 - [x] JSON-LD 加入 additionalProperty（cardNumber、series、grade）
 - [x] Marketplace 側邊欄背景改回 bg-white（白色底）
+
+## BreadcrumbList JSON-LD 和麵包屑單行顯示 (2026-05-27)
+
+- [x] Breadcrumb.tsx 加入 flex-nowrap overflow-hidden，末端項目加 truncate 防止換行
+- [x] Breadcrumb.tsx 加入 generateBreadcrumbJsonLd 工具函數
+- [x] CardDetail.tsx 加入 BreadcrumbList JSON-LD script
+- [x] CardDetail.tsx import generateBreadcrumbJsonLd
