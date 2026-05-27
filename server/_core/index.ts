@@ -1411,9 +1411,6 @@ async function startServer() {
 
   // ─── OG SSR: Card detail page for social crawlers ─────────────────────────
   app.get("/card/:id", async (req, res, next) => {
-    const ua = (req.headers["user-agent"] || "").toLowerCase();
-    const isCrawler = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/.test(ua);
-    if (!isCrawler) return next();
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return next();
