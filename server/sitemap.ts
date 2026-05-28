@@ -236,7 +236,7 @@ export async function generateStaticSitemapFiles(): Promise<void> {
       }
     }
     const seriesSitemapNames: string[] = [];
-    for (const [setName, cardIds] of cardsBySet.entries()) {
+    for (const [setName, cardIds] of Array.from(cardsBySet.entries())) {
       // Create a URL-safe filename from the set name
       const safeSetName = setName.replace(/[^a-zA-Z0-9-]/g, '_').toLowerCase().slice(0, 50);
       const seriesFilename = `sitemap-series-${safeSetName}.xml`;
