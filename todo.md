@@ -9561,3 +9561,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 本地驗證：無重複條目、有效 XML
 - [ ] 部署並驗證生產環境
 - [ ] 提供 Cloudflare Cache Rule 設定指引（解決 cf-cache-status: DYNAMIC）
+- [x] Fix CORS Vary: Origin header blocking Cloudflare cache for sitemaps

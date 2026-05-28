@@ -120,6 +120,11 @@ async function startServer() {
       res.header("Access-Control-Allow-Credentials", "true");
       return next();
     }
+    // Skip CORS for sitemap and robots.txt — these are public, cacheable resources
+    // CORS adds Vary: Origin which prevents Cloudflare from caching
+    if (req.path === "/robots.txt" || req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-")) {
+      return next();
+    }
     cors({
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         if (!origin) return callback(null, true);
