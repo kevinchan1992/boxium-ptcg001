@@ -442,6 +442,12 @@ export function botDetection(req: Request, res: Response, next: NextFunction) {
   // Recording these as security events causes false-positive alerts.
   if (req.path === "/api/health") return next();
 
+  // ── SEO crawl bypass ─────────────────────────────────────────────────────────
+  // robots.txt and sitemap files must be accessible to ALL crawlers (including
+  // Googlebot, Bingbot, etc.) without any bot detection interference.
+  // These are public, read-only resources with no security risk.
+  if (req.path === "/robots.txt" || req.path.endsWith(".xml") && (req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-"))) return next();
+
   // Allow known good crawlers
   if (ALLOWED_CRAWLERS.some((p) => p.test(ua))) return next();
 

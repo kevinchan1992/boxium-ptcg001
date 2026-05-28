@@ -1,60 +1,92 @@
 # robots.txt for BOXIUM PTCG
-# Last updated: 2026-04-10
+# Last updated: 2026-05-28
 
 # ── Googlebot ─────────────────────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
+Allow: /card/
+Allow: /card/*
 Allow: /blog
 Allow: /blog/*
 Allow: /research
 Allow: /trending
 Allow: /pricing
-Allow: /about
-Allow: /marketplace
-Allow: /auctions
-Disallow: /api/
-Disallow: /admin
-Disallow: /seller-dashboard
-Disallow: /profile
-Disallow: /cart
-Disallow: /orders
-Disallow: /wishlist
-Disallow: /notifications
-Disallow: /messages
-
-# ── Bingbot ───────────────────────────────────────────────────────────────────
-User-agent: Bingbot
-Allow: /
-Allow: /blog
-Allow: /blog/*
-Allow: /research
-Allow: /trending
-Allow: /pricing
-Allow: /about
-Allow: /marketplace
-Allow: /auctions
-Disallow: /api/
-Disallow: /admin
-Disallow: /seller-dashboard
-Disallow: /profile
-Disallow: /cart
-Disallow: /orders
-Disallow: /wishlist
-Disallow: /notifications
-Disallow: /messages
-
-# ── All other bots ────────────────────────────────────────────────────────────
-User-agent: *
-Allow: /
-Allow: /blog
-Allow: /blog/*
-Allow: /research
-Allow: /trending
-Allow: /pricing
+Allow: /pricing/*
 Allow: /about
 Allow: /marketplace
 Allow: /auctions
 Allow: /sitemap.xml
+Allow: /sitemap-static.xml
+Allow: /sitemap-blog.xml
+Allow: /sitemap-cards-*.xml
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /seller-dashboard
+Disallow: /seller-dashboard/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /cart
+Disallow: /orders
+Disallow: /orders/*
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /messages
+Disallow: /checkout
+Disallow: /payment
+
+# ── Bingbot ───────────────────────────────────────────────────────────────────
+User-agent: Bingbot
+Allow: /
+Allow: /card/
+Allow: /card/*
+Allow: /blog
+Allow: /blog/*
+Allow: /research
+Allow: /trending
+Allow: /pricing
+Allow: /pricing/*
+Allow: /about
+Allow: /marketplace
+Allow: /auctions
+Allow: /sitemap.xml
+Allow: /sitemap-static.xml
+Allow: /sitemap-blog.xml
+Allow: /sitemap-cards-*.xml
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /seller-dashboard
+Disallow: /seller-dashboard/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /cart
+Disallow: /orders
+Disallow: /orders/*
+Disallow: /wishlist
+Disallow: /notifications
+Disallow: /messages
+Disallow: /checkout
+Disallow: /payment
+
+# ── All other bots ────────────────────────────────────────────────────────────
+User-agent: *
+Allow: /
+Allow: /card/
+Allow: /card/*
+Allow: /blog
+Allow: /blog/*
+Allow: /research
+Allow: /trending
+Allow: /pricing
+Allow: /pricing/*
+Allow: /about
+Allow: /marketplace
+Allow: /auctions
+Allow: /sitemap.xml
+Allow: /sitemap-static.xml
+Allow: /sitemap-blog.xml
+Allow: /sitemap-cards-*.xml
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/*

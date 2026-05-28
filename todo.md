@@ -9457,3 +9457,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] index.ts：新增 /sitemap-static.xml 路由
 - [x] index.ts：新增 /sitemap-blog.xml 路由
 - [x] index.ts：新增 /sitemap-cards-:page.xml 路由（支援分頁）
+## robots.txt 更新 (2026-05-28)
+- [x] robots.txt 加入 /card/ 和 /card/* 明確 Allow 規則（Googlebot、Bingbot、所有 bot）
+- [x] robots.txt 加入 /pricing/* Allow 規則
+- [x] robots.txt 加入 /sitemap-static.xml、/sitemap-blog.xml、/sitemap-cards-*.xml Allow 規則
+- [x] 刪除 client/public/sitemap.xml（舊的靜態文件，由動態路由取代）
+- [x] security.ts botDetection 中間件加入 /robots.txt 和 /sitemap*.xml 路徑豁免
+- [x] 驗證：robots.txt 可正常訪問（HTTP 200）
+- [x] 驗證：sitemap.xml 回傳 sitemap index（2 個 card sitemaps：45,000 + 10,753 URLs）
+- [x] 驗證：sitemap-cards-3.xml 回傳 404（正確）
