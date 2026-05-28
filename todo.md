@@ -9552,3 +9552,4 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] sitemap.xml index 包含所有 457 個子 sitemap
 - [ ] 部署後到 Google Search Console 重新提交 sitemap.xml
 - [ ] 在 Cloudflare 設定 Cache Rule：sitemap*.xml → Cache Everything (24h)
+- [x] 在 vite.ts serveStatic() 中加入 sitemap 排除邏輯

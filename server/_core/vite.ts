@@ -60,7 +60,15 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Skip sitemap files from static serving — they must be handled by Express dynamic routes
+  // which set proper Cache-Control, CDN-Cache-Control, and Content-Type headers.
+  const staticHandler = express.static(distPath);
+  app.use((req, res, next) => {
+    if (req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-")) {
+      return next();
+    }
+    return staticHandler(req, res, next);
+  });
 
   // fall through to index.html if the file doesn't exist
   // BUT if the request is from a social crawler, pass to OG SSR routes instead
