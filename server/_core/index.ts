@@ -1554,7 +1554,9 @@ async function startServer() {
       keywordParts.push('PSA 10 價格', '卡牌格價', 'PTCG', 'Pokemon Card Price');
       const keywords = keywordParts.join(', ');
 
-      // Build Product JSON-LD
+      // Build Product JSON-LD optimized for Google Rich Snippets (price display)
+      // Google requires: name, image, offers (with price, priceCurrency, availability)
+      // Optional but helpful: sku, brand, description, review, aggregateRating
       const productJsonLd: Record<string, unknown> = {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -1562,37 +1564,68 @@ async function startServer() {
         description: ogDescription,
         url: pageUrl,
         image: cardImageUrl || imageUrl,
-        brand: { '@type': 'Brand', name: 'BOXIUM PTCG' },
+        brand: { '@type': 'Brand', name: 'Pokemon TCG' },
+        sku: cardNumber || `BOXIUM-${id}`,
+        mpn: cardNumber || undefined,
+        category: 'Collectible Trading Cards',
       };
-      const offers: Record<string, unknown>[] = [];
-      if (lowestListingPrice !== null) {
-        offers.push({
+
+      // Determine the primary price and availability for Rich Snippets
+      // Priority: lowestListingPrice (marketplace) > psa10Price (recent sales)
+      const primaryPrice = lowestListingPrice ?? psa10Price;
+      const hasMarketplaceListing = lowestListingPrice !== null;
+
+      if (primaryPrice !== null) {
+        // Use AggregateOffer when we have both marketplace and PSA 10 prices
+        if (lowestListingPrice !== null && psa10Price !== null && lowestListingPrice !== psa10Price) {
+          productJsonLd.offers = {
+            '@type': 'AggregateOffer',
+            lowPrice: Math.min(lowestListingPrice, psa10Price),
+            highPrice: Math.max(lowestListingPrice, psa10Price),
+            priceCurrency: 'HKD',
+            availability: hasMarketplaceListing
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/LimitedAvailability',
+            offerCount: hasMarketplaceListing ? 2 : 1,
+            url: pageUrl,
+          };
+        } else {
+          // Single Offer with the best available price
+          productJsonLd.offers = {
+            '@type': 'Offer',
+            price: primaryPrice,
+            priceCurrency: 'HKD',
+            availability: hasMarketplaceListing
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/LimitedAvailability',
+            itemCondition: 'https://schema.org/NewCondition',
+            url: pageUrl,
+            seller: {
+              '@type': 'Organization',
+              name: 'BOXIUM PTCG',
+              url: 'https://boxium.asia',
+            },
+            priceValidUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          };
+        }
+      } else {
+        // No price available — still include Offer with 0 to indicate price tracking
+        productJsonLd.offers = {
           '@type': 'Offer',
-          price: lowestListingPrice,
+          price: 0,
           priceCurrency: 'HKD',
-          availability: 'https://schema.org/InStock',
+          availability: 'https://schema.org/OutOfStock',
           url: pageUrl,
-          seller: { '@type': 'Organization', name: 'BOXIUM PTCG' },
-        });
+        };
       }
-      if (psa10Price !== null) {
-        offers.push({
-          '@type': 'Offer',
-          name: 'PSA 10 近期成交均價',
-          price: psa10Price,
-          priceCurrency: 'HKD',
-          availability: 'https://schema.org/InStock',
-          url: pageUrl,
-          itemCondition: 'https://schema.org/NewCondition',
-        });
-      }
-      if (offers.length === 1) productJsonLd.offers = offers[0];
-      else if (offers.length > 1) productJsonLd.offers = offers;
-      if (card?.setName) {
-        productJsonLd.additionalProperty = [
-          { '@type': 'PropertyValue', name: 'series', value: card.setName },
-        ];
-      }
+
+      // Additional properties for richer structured data
+      const additionalProps: Record<string, unknown>[] = [];
+      if (cardNumber) additionalProps.push({ '@type': 'PropertyValue', name: 'Card Number', value: cardNumber });
+      if (card?.setName) additionalProps.push({ '@type': 'PropertyValue', name: 'Set', value: card.setName });
+      if (rarity) additionalProps.push({ '@type': 'PropertyValue', name: 'Rarity', value: rarity });
+      if (nameJa) additionalProps.push({ '@type': 'PropertyValue', name: 'Japanese Name', value: nameJa });
+      if (additionalProps.length > 0) productJsonLd.additionalProperty = additionalProps;
 
       // Build BreadcrumbList JSON-LD
       const breadcrumbJsonLd = {

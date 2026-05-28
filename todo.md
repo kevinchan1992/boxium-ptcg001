@@ -9466,3 +9466,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 驗證：robots.txt 可正常訪問（HTTP 200）
 - [x] 驗證：sitemap.xml 回傳 sitemap index（2 個 card sitemaps：45,000 + 10,753 URLs）
 - [x] 驗證：sitemap-cards-3.xml 回傳 404（正確）
+## JSON-LD Rich Snippets 優化 (2026-05-28)
+- [x] Product JSON-LD 加入 sku（cardNumber）和 mpn 欄位
+- [x] Product JSON-LD brand 改為 'Pokemon TCG'（更符合 Google 產品分類）
+- [x] Product JSON-LD 加入 category: 'Collectible Trading Cards'
+- [x] Offers 改為 AggregateOffer（有 lowPrice/highPrice 時），讓 Google 顯示價格範圍
+- [x] 單一 Offer 加入 priceValidUntil（7 天後過期）和 seller Organization
+- [x] availability 改為 InStock（有 marketplace listing）或 LimitedAvailability（僅有成交記錄）
+- [x] 無價格時改為 OutOfStock（避免 Google 警告）
+- [x] additionalProperty 加入 Card Number、Set、Rarity、Japanese Name
+- [x] TypeScript 驗證通過（0 個非 recharts 錯誤）
