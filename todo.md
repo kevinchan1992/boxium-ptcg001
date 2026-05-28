@@ -9523,3 +9523,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Add /api/scheduled/refresh-sitemaps endpoint for daily Heartbeat refresh
 - [x] Update Cloudflare Workers OG injector: BOXIUM PTCG → BOXIUM TCG
 - [ ] Update VITE_APP_TITLE to BOXIUM TCG (manual: Settings → General in Manus UI)
+
+## 🔧 Sitemap 靜態文件方案（2026-05-28）
+- [x] 建立 server/scripts/generate-sitemaps.ts 腳本（從資料庫生成靜態 XML 文件）
+- [x] 執行腳本生成初始靜態 sitemap 文件到 client/public/（9 個文件，含 55,753 張卡牌）
+- [x] 更新 server/sitemap.ts：加入 generateStaticSitemapFiles()，讀取靜態文件優先於記憶體快取
+- [x] 靜態 sitemap 文件加入 git（client/public/sitemap*.xml）
+- [ ] 設定 Heartbeat 每日呼叫 /api/scheduled/refresh-sitemaps 更新靜態文件
+- [ ] 驗證 Google Search Console 可讀取 sitemap.xml（cf-cache-status: HIT）
