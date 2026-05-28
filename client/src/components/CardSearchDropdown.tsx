@@ -14,7 +14,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -36,6 +36,10 @@ interface CardSearchDropdownProps {
   inputClassName?: string;
   /** Optional placeholder override */
   placeholder?: string;
+  /** Show camera button for AI card recognition */
+  showCameraButton?: boolean;
+  /** Callback when camera button is clicked */
+  onCameraClick?: () => void;
 }
 
 export function CardSearchDropdown({
@@ -46,6 +50,8 @@ export function CardSearchDropdown({
   className = "",
   inputClassName = "",
   placeholder,
+  showCameraButton = false,
+  onCameraClick,
 }: CardSearchDropdownProps) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -150,11 +156,21 @@ export function CardSearchDropdown({
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder={placeholder ?? t("research.searchPlaceholder")}
-            className={`pl-12 pr-4 ${inputClassName}`}
+            className={`pl-12 ${showCameraButton ? 'pr-12' : 'pr-4'} ${inputClassName}`}
             autoComplete="off"
           />
           {isFetching && isOpen && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+            <Loader2 className={`absolute ${showCameraButton ? 'right-12' : 'right-4'} top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground`} />
+          )}
+          {showCameraButton && onCameraClick && (
+            <button
+              type="button"
+              onClick={onCameraClick}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors z-10"
+              title="拍照識別卡牌"
+            >
+              <Camera className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+            </button>
           )}
         </div>
       </form>

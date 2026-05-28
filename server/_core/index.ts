@@ -1786,6 +1786,36 @@ async function startServer() {
         .replace(/<meta\s+name="keywords"[^>]*\/>/g, '') // remove existing keywords
         .replace(/<link\s+rel="canonical"[^>]*\/>/g, '') // remove existing canonical
         .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
+
+      // Inject same-set card links for crawler discovery (hidden nav before </body>)
+      let finalHtml = injected;
+      try {
+        if (setName) {
+          const { getDb } = await import('../db');
+          const { cards: cardsTable } = await import('../../drizzle/schema_new');
+          const { eq, ne, sql: sqlFn } = await import('drizzle-orm');
+          const dbInst2 = await getDb();
+          const sameSetCards = await dbInst2
+            .select({ id: cardsTable.id, name: cardsTable.name, cardNumber: cardsTable.cardNumber })
+            .from(cardsTable)
+            .where(eq(cardsTable.setName, setName))
+            .limit(30);
+          if (sameSetCards.length > 1) {
+            const links = sameSetCards
+              .filter(c => c.id !== id)
+              .slice(0, 24)
+              .map(c => {
+                const displayName = c.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim();
+                return `<a href="/card/${c.id}">${displayName}${c.cardNumber ? ` ${c.cardNumber}` : ''} 價格</a>`;
+              })
+              .join(' | ');
+            const setLink = `<a href="/set/${setName}">${setName} 系列全部卡牌</a>`;
+            const navHtml = `<nav aria-label="同系列卡牌" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">${setLink} | ${links}</nav>`;
+            finalHtml = finalHtml.replace('</body>', `${navHtml}\n</body>`);
+          }
+        }
+      } catch (_e) { /* non-critical */ }
+
       res.status(200).set({
         "Content-Type": "text/html",
         "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -1793,7 +1823,7 @@ async function startServer() {
         "Surrogate-Control": "no-store",
         "CDN-Cache-Control": "no-store",
         "Cloudflare-CDN-Cache-Control": "no-store",
-      }).end(injected);
+      }).end(finalHtml);
     } catch (err) {
       console.error("[OG SSR Card] Error:", err);
       next();

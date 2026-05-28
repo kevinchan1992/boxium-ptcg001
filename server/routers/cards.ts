@@ -774,6 +774,78 @@ export const cardsRouter = router({
         }
         return similar.slice(0, input.limit);
       }),
+
+    getBySetCode: publicProcedure
+      .input(z.object({
+        setCode: z.string(),
+        limit: z.number().optional().default(100),
+        offset: z.number().optional().default(0),
+      }))
+      .query(async ({ input }) => {
+        const { getDb } = await import('../db');
+        const dbConn = await getDb();
+        if (!dbConn) return { cards: [], total: 0, setInfo: null };
+        const { cards: cardsTable } = await import('../../drizzle/schema_new');
+        const { eq, sql, desc, count } = await import('drizzle-orm');
+
+        // Get total count
+        const [countResult] = await dbConn
+          .select({ count: count() })
+          .from(cardsTable)
+          .where(eq(cardsTable.setName, input.setCode));
+        const total = countResult?.count ?? 0;
+
+        // Get cards
+        const cards = await dbConn
+          .select({
+            id: cardsTable.id,
+            name: cardsTable.name,
+            nameJa: cardsTable.nameJa,
+            cardNumber: cardsTable.cardNumber,
+            rarity: cardsTable.rarity,
+            imageUrl: cardsTable.imageUrl,
+            setName: cardsTable.setName,
+            series: cardsTable.series,
+          })
+          .from(cardsTable)
+          .where(eq(cardsTable.setName, input.setCode))
+          .orderBy(desc(cardsTable.id))
+          .limit(input.limit)
+          .offset(input.offset);
+
+        // Get series name from first card
+        const setInfo = cards.length > 0 ? {
+          setCode: input.setCode,
+          series: cards[0].series,
+          totalCards: total,
+        } : null;
+
+        return { cards, total, setInfo };
+      }),
+
+    getAllSetCodes: publicProcedure
+      .query(async () => {
+        const { getDb } = await import('../db');
+        const dbConn = await getDb();
+        if (!dbConn) return [];
+        const { cards: cardsTable } = await import('../../drizzle/schema_new');
+        const { sql, desc } = await import('drizzle-orm');
+
+        const sets = await dbConn.execute(sql`
+          SELECT setName, series, COUNT(*) as cardCount
+          FROM cards
+          WHERE setName IS NOT NULL AND setName != ''
+          GROUP BY setName, series
+          ORDER BY cardCount DESC
+          LIMIT 200
+        `);
+
+        return (sets[0] as any[]).map((s: any) => ({
+          setCode: s.setName,
+          series: s.series,
+          cardCount: Number(s.cardCount),
+        }));
+      }),
 });
 
 export const pricesRouter = router({

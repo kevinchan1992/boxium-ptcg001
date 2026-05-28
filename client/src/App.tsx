@@ -55,6 +55,8 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const SellerPublicProfile = lazy(() => import("./pages/SellerPublicProfile"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const SetBrowse = lazy(() => import("./pages/SetBrowse"));
+const SetList = lazy(() => import("./pages/SetList"));
 
 // Lazily loaded guard components
 const GradingMaintenanceGuard = lazy(() => import("./components/GradingMaintenanceGuard"));
@@ -107,6 +109,8 @@ function Router() {
             <Route path="/pricing" component={Pricing} />
             <Route path="/pricing/search" component={PricingSearch} />
             <Route path="/pricing/:id" component={PricingDetail} />
+            <Route path="/sets" component={SetList} />
+            <Route path="/set/:setCode" component={SetBrowse} />
             <Route path="/blog" component={Blog} />
             <Route path="/blog/:slug" component={BlogPost} />
             <Route path="/login" component={Login} />

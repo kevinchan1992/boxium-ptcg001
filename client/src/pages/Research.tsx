@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
 import PageHead from "@/components/PageHead";
@@ -15,6 +16,7 @@ export default function Home() {
   const initialQuery = new URLSearchParams(searchParams).get('q') || '';
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [, setLocation] = useLocation();
+  const [showCameraSheet, setShowCameraSheet] = useState(false);
   // Sync search query when URL param changes
   useEffect(() => {
     const q = new URLSearchParams(searchParams).get('q') || '';
@@ -115,8 +117,10 @@ export default function Home() {
                 if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
               }}
               cardLinkPrefix="card"
-              inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
+              inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
               placeholder=""
+              showCameraButton
+              onCameraClick={() => setShowCameraSheet(true)}
             />
             {/* Typing Animation Placeholder (only when input is empty) */}
             {!searchQuery && randomCardNames.length > 0 && (
@@ -167,6 +171,12 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Camera Search Sheet — desktop camera button triggers this */}
+      <CameraSearchSheet
+        open={showCameraSheet}
+        onOpenChange={setShowCameraSheet}
+        cardLinkPrefix="card"
+      />
     </>
   );
 }

@@ -6,6 +6,7 @@ import { AlertCircle, ShoppingBag, Tag, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { getProxiedImageUrl } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 40;
@@ -25,6 +26,7 @@ export default function PricingSearch() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showCameraSheet, setShowCameraSheet] = useState(false);
   const refreshTriggeredRef = useRef<string>(""); // track query+page to avoid duplicate triggers
 
   // Sync the visible input text when the user navigates back/forward (URL changes)
@@ -171,8 +173,17 @@ export default function PricingSearch() {
           cardLinkPrefix="pricing"
           inputClassName="py-6 text-lg bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
           placeholder={t("pricing.searchPlaceholder")}
+          showCameraButton
+          onCameraClick={() => setShowCameraSheet(true)}
         />
       </div>
+
+      {/* Camera Search Sheet */}
+      <CameraSearchSheet
+        open={showCameraSheet}
+        onOpenChange={setShowCameraSheet}
+        cardLinkPrefix="pricing"
+      />
 
       {/* Results Header */}
       <div className="mb-6">

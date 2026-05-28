@@ -9502,3 +9502,14 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 前端 button 改為 a 標籤，讓 Google 爬蟲可以跟隨連結
 - [x] 加入 title 屬性和 aria-label，增加 SEO 語義
 - [x] 數量從 6 張增加到 12 張，增加內部連結密度
+
+# 批量填充 setName/series + 系列頁面 + SSR 內部連結 + 桌面相機入口
+- [ ] 批量填充 setName/series 欄位（從卡名提取 set code）
+- [ ] 建立 /set/:setCode 系列瀏覽頁面（後端 + 前端 + SSR）
+- [ ] SSR 預渲染同系列卡牌連結（爬蟲可見）
+- [ ] 桌面版搜尋框加入相機入口按鈕
+- [x] 批量填充 setName/series 欄位（從卡名提取 set code）— 32,111 cards setName filled, 55,681 series filled
+- [x] 建立 /set/:setCode 系列瀏覽頁面（後端 getBySetCode/getAllSetCodes + 前端 SetBrowse/SetList + 路由）
+- [x] SSR 預渲染同系列卡牌連結（爬蟲可見）— hidden nav with 24 same-set links injected before </body>
+- [x] 桌面版搜尋框加入相機入口按鈕 — CardSearchDropdown 加入 showCameraButton prop, Research + PricingSearch 頁面啟用
+- [x] 修復 SetBrowse/SetList 的 react-helmet-async 依賴問題（改用 PageHead 組件）
