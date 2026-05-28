@@ -9439,3 +9439,21 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 加入最低上架價格查詢（getSnkrdunkListingsCache）作為 Offer price
 - [x] TypeScript 驗證通過（0 個非 recharts 錯誤）
 - [x] 51 個 Vitest 測試全數通過
+## SEO 優化 - Title、Meta Description、Keywords、Sitemap (2026-05-28)
+- [x] /card/:id SSR 路由：Title 格式改為「卡牌名稱 卡號 PSA 10 價格 HKD XXX | BOXIUM PTCG」
+- [x] /card/:id SSR 路由：無價格時 Title 改為「卡牌名稱 卡號 | PSA 10 價格查詢 | BOXIUM PTCG」
+- [x] /card/:id SSR 路由：Meta Description 加入 nameJa、cardNumber、setName、psa10Price
+- [x] /card/:id SSR 路由：Meta Description 截斷至 160 字元
+- [x] /card/:id SSR 路由：加入 keywords meta tag（卡牌名、日文名、卡號、系列、稀有度等）
+- [x] /card/:id SSR 路由：加入 canonical URL（<link rel="canonical">）
+- [x] /card/:id SSR 路由：加入 og:locale（zh_HK）
+- [x] /card/:id SSR 路由：移除舊 description/keywords/canonical 避免重複
+- [x] sitemap.ts：baseUrl 改為 boxium.asia
+- [x] sitemap.ts：加入 generateSitemapIndex 函數（sitemap index）
+- [x] sitemap.ts：加入 generateStaticSitemap 函數（靜態頁面 sitemap）
+- [x] sitemap.ts：加入 generateBlogSitemap 函數（部落格 sitemap）
+- [x] sitemap.ts：加入 generateCardSitemap(page) 函數（分頁卡牌 sitemap，每頁 45,000 URLs）
+- [x] index.ts：/sitemap.xml 路由改為回傳 sitemap index
+- [x] index.ts：新增 /sitemap-static.xml 路由
+- [x] index.ts：新增 /sitemap-blog.xml 路由
+- [x] index.ts：新增 /sitemap-cards-:page.xml 路由（支援分頁）

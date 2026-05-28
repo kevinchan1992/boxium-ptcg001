@@ -43,7 +43,7 @@ import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
 // v10.1: Scheduler imports moved to dynamic imports inside deferred setTimeout
 // to reduce startup memory footprint and prevent OOM on Cloud Run (512MB limit)
-import { generateSitemap } from "../sitemap";
+import { generateSitemap, generateSitemapIndex, generateStaticSitemap, generateBlogSitemap, generateCardSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import {
   botDetection,
@@ -993,14 +993,57 @@ async function startServer() {
     });
   });
 
-  // Sitemap.xml route
+  // Sitemap index route (points to individual sitemaps)
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const sitemap = await generateSitemap();
+      const sitemap = await generateSitemapIndex();
       res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=3600"); // Cache 1 hour
       res.send(sitemap);
     } catch (error) {
-      console.error("[Sitemap] Error generating sitemap:", error);
+      console.error("[Sitemap] Error generating sitemap index:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Static pages sitemap
+  app.get("/sitemap-static.xml", async (req, res) => {
+    try {
+      const sitemap = await generateStaticSitemap();
+      res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=86400"); // Cache 24 hours
+      res.send(sitemap);
+    } catch (error) {
+      console.error("[Sitemap] Error generating static sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Blog posts sitemap
+  app.get("/sitemap-blog.xml", async (req, res) => {
+    try {
+      const sitemap = await generateBlogSitemap();
+      res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=3600"); // Cache 1 hour
+      res.send(sitemap);
+    } catch (error) {
+      console.error("[Sitemap] Error generating blog sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Paginated card sitemaps: /sitemap-cards-1.xml, /sitemap-cards-2.xml, etc.
+  app.get("/sitemap-cards-:page.xml", async (req, res) => {
+    try {
+      const page = parseInt(req.params.page, 10);
+      if (isNaN(page) || page < 1) return res.status(404).send("Not found");
+      const sitemap = await generateCardSitemap(page);
+      if (!sitemap) return res.status(404).send("Not found");
+      res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=3600"); // Cache 1 hour
+      res.send(sitemap);
+    } catch (error) {
+      console.error("[Sitemap] Error generating card sitemap:", error);
       res.status(500).send("Error generating sitemap");
     }
   });
@@ -1439,8 +1482,6 @@ async function startServer() {
         const s3Url = await composeAndCacheOgImage(id, cardImageUrl);
         if (s3Url) imageUrl = s3Url;
       }
-      const ogTitle = `${cardName} - BOXIUM PTCG`;
-      const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
       const pageUrl = `https://boxium.asia/card/${id}`;
       let template: string;
       if (process.env.NODE_ENV === "development") {
@@ -1475,6 +1516,43 @@ async function startServer() {
           }
         }
       } catch (_e) { /* non-critical */ }
+
+      // --- SEO-optimized title, description, and keywords ---
+      const cardNumber = card?.cardNumber || null;
+      const nameJa = card?.nameJa || null;
+      const setName = card?.setName || null;
+      const rarity = card?.rarity || null;
+
+      // Title: 卡牌名稱 卡號 PSA 10 價格 HKD XXX | BOXIUM PTCG
+      const titleCardNum = cardNumber ? ` ${cardNumber}` : '';
+      let ogTitle: string;
+      if (psa10Price !== null) {
+        ogTitle = `${cardName}${titleCardNum} PSA 10 價格 HKD ${psa10Price} | BOXIUM PTCG`;
+      } else {
+        ogTitle = `${cardName}${titleCardNum} | PSA 10 價格查詢 | BOXIUM PTCG`;
+      }
+
+      // Meta description: ~150 chars, include name, nameJa, cardNumber, setName, price
+      const descJa = nameJa ? `（${nameJa}）` : '';
+      const descNum = cardNumber ? ` ${cardNumber}` : '';
+      const descSet = setName ? `查看${setName}完整價格趨勢、歷史成交記錄及市場分析。` : '查看完整價格趨勢、歷史成交記錄及市場分析。';
+      let ogDescription: string;
+      if (psa10Price !== null) {
+        ogDescription = `${cardName}${descJa}${descNum} PSA 10 最新成交價 HKD ${psa10Price}。${descSet}BOXIUM PTCG 香港最全面卡牌格價平台。`;
+      } else {
+        ogDescription = `${cardName}${descJa}${descNum} PSA 10 價格查詢。${descSet}BOXIUM PTCG 香港最全面卡牌格價平台。`;
+      }
+      // Truncate to 160 chars for Google snippet
+      if (ogDescription.length > 160) ogDescription = ogDescription.slice(0, 157) + '...';
+
+      // Keywords meta tag
+      const keywordParts: string[] = [cardName];
+      if (nameJa) keywordParts.push(nameJa);
+      if (cardNumber) keywordParts.push(cardNumber);
+      if (setName) keywordParts.push(setName);
+      if (rarity) keywordParts.push(rarity);
+      keywordParts.push('PSA 10 價格', '卡牌格價', 'PTCG', 'Pokemon Card Price');
+      const keywords = keywordParts.join(', ');
 
       // Build Product JSON-LD
       const productJsonLd: Record<string, unknown> = {
@@ -1533,6 +1611,9 @@ async function startServer() {
       ].join('\n    ');
 
       const ogTags = [
+        `<meta name="description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta name="keywords" content="${keywords.replace(/"/g, '&quot;')}" />`,
+        `<link rel="canonical" href="${pageUrl}" />`,
         `<meta property="og:type" content="website" />`,
         `<meta property="og:url" content="${pageUrl}" />`,
         `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
@@ -1541,6 +1622,7 @@ async function startServer() {
         `<meta property="og:image:width" content="1200" />`,
         `<meta property="og:image:height" content="630" />`,
         `<meta property="og:site_name" content="BOXIUM PTCG" />`,
+        `<meta property="og:locale" content="zh_HK" />`,
         `<meta name="twitter:card" content="summary_large_image" />`,
         `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
         `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
@@ -1552,6 +1634,9 @@ async function startServer() {
         .replace(/<title>[^<]*<\/title>/, '') // remove existing title
         .replace(/<meta\s+property="og:[^"]*"[^>]*\/>/g, '') // remove all og: meta tags
         .replace(/<meta\s+name="twitter:[^"]*"[^>]*\/>/g, '') // remove all twitter: meta tags
+        .replace(/<meta\s+name="description"[^>]*\/>/g, '') // remove existing description
+        .replace(/<meta\s+name="keywords"[^>]*\/>/g, '') // remove existing keywords
+        .replace(/<link\s+rel="canonical"[^>]*\/>/g, '') // remove existing canonical
         .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
       res.status(200).set({
         "Content-Type": "text/html",
