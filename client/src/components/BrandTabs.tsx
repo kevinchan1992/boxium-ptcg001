@@ -1,5 +1,5 @@
 /**
- * BrandTabs – Unified tab bar component for BOXIUM PTCG
+ * BrandTabs – Unified tab bar component for BOXIUM TCG
  *
  * Responsive behaviour:
  *  - xs (<480px): icon + short mobileLabel stacked vertically (grid mode)

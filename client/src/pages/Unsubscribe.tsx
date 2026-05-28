@@ -102,13 +102,13 @@ export default function Unsubscribe() {
           </h2>
           <p className="text-gray-400 text-sm">
             {isUnsubscribe
-              ? `您已退訂來自 BOXIUM PTCG 的「${emailTypeLabel}」。`
-              : `您已重新訂閱來自 BOXIUM PTCG 的「${emailTypeLabel}」。`}
+              ? `您已退訂來自 BOXIUM TCG 的「${emailTypeLabel}」。`
+              : `您已重新訂閱來自 BOXIUM TCG 的「${emailTypeLabel}」。`}
           </p>
           <p className="text-gray-500 text-xs mt-2">
             {isUnsubscribe
               ? "您仍會收到重要的訂單確認和安全通知。"
-              : "感謝您繼續訂閱 BOXIUM PTCG 的電郵通知。"}
+              : "感謝您繼續訂閱 BOXIUM TCG 的電郵通知。"}
           </p>
           <a href="/" className="inline-flex items-center gap-1.5 mt-6 text-sm text-blue-400 hover:text-blue-300 transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -191,7 +191,7 @@ function UnsubscribePage({ children }: { children: React.ReactNode }) {
           <a href="/">
             <img
               src={BOXIUM_LOGO}
-              alt="BOXIUM PTCG"
+              alt="BOXIUM TCG"
               className="h-10 mx-auto"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";

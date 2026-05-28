@@ -212,7 +212,7 @@ export default function Login() {
             <div className="h-px w-10" style={{ background: "linear-gradient(90deg, #c9a84c, transparent)" }} />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide mt-2">{t("login.title")}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>輸入您的帳號密碼以登入 BOXIUM PTCG</p>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>輸入您的帳號密碼以登入 BOXIUM TCG</p>
         </div>
 
         {/* Error / Verification alerts */}

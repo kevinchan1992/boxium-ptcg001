@@ -53,7 +53,7 @@ export default function Home() {
     return {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "BOXIUM PTCG",
+      "name": "BOXIUM TCG",
       "url": "https://boxiumptcg.manus.space/",
       "potentialAction": {
         "@type": "SearchAction",
@@ -71,9 +71,9 @@ export default function Home() {
       {/* JSON-LD Structured Data for SEO */}
       <StructuredData data={generateSearchActionData()} />
       <PageHead
-        title="卡牗查詢 - BOXIUM PTCG | TCG 卡牗價格走勢查詢"
-        description="搜尋 Pokémon、One Piece、遙戲王等 TCG 卡牗，查看即時市場價格、PSA 10 成交記錄及價格走勢分析。"
-        keywords="TCG 卡牗查詢, Pokémon 卡牗價格, PSA 10 價格, BOXIUM PTCG"
+        title="卡牌查詢 - BOXIUM TCG | TCG 卡牌價格走勢查詢"
+        description="搜尋 Pokémon、One Piece、遊戲王等 TCG 卡牌，查看即時市場價格、PSA 10 成交記錄及價格走勢分析。"
+        keywords="TCG 卡牌查詢, Pokémon 卡牌價格, PSA 10 價格, BOXIUM TCG"
       />
       <div className="h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 overflow-hidden pb-14 md:pb-0">
         {/* Hero Section */}

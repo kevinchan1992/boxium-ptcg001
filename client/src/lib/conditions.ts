@@ -1,4 +1,4 @@
-// Shared condition system for BOXIUM PTCG marketplace
+// Shared condition system for BOXIUM TCG marketplace
 // Groups: PSA, BGS, TAG, Raw
 
 export type ConditionValue =

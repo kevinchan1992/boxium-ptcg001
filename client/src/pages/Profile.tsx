@@ -173,8 +173,8 @@ export default function Profile() {
   return (
     <>
     <PageHead
-      title={user?.name ? `${user.name} 的個人頁面 - BOXIUM PTCG` : '個人頁面 - BOXIUM PTCG'}
-      description="管理您的 BOXIUM PTCG 帳戶、查看收藏、關注清單及交易記錄。"
+      title={user?.name ? `${user.name} 的個人頁面 - BOXIUM TCG` : '個人頁面 - BOXIUM TCG'}
+      description="管理您的 BOXIUM TCG 帳戶、查看收藏、關注清單及交易記錄。"
     />
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* ── Hero Banner (Mobile-first compact design) ── */}

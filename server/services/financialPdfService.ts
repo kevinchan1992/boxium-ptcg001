@@ -125,7 +125,7 @@ function drawPageHeader(
 
   // Date / classification — right-aligned
   pdfText(doc, generatedAt, W - 165, 18, { size: 8, color: C.textSecondary, width: 140, align: "right" });
-  pdfText(doc, "BOXIUM PTCG · 財務審核用途", W - 165, 34, { size: 7.5, color: C.textMuted, width: 140, align: "right" });
+  pdfText(doc, "BOXIUM TCG · 財務審核用途", W - 165, 34, { size: 7.5, color: C.textMuted, width: 140, align: "right" });
 }
 
 /**
@@ -284,7 +284,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
     }
 
     // Title block
-    pdfText(doc, "BOXIUM PTCG", W / 2 - 160, 340, { bold: true, size: 34, color: C.gold, width: 320, align: "center" });
+    pdfText(doc, "BOXIUM TCG", W / 2 - 160, 340, { bold: true, size: 34, color: C.gold, width: 320, align: "center" });
     pdfText(doc, "財務報告", W / 2 - 160, 386, { bold: true, size: 26, color: C.white, width: 320, align: "center" });
 
     // Gold underline beneath title
@@ -303,7 +303,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
 
     // Bottom classification bar
     fillRect(doc, 0, H - 40, W, 40, C.headerBg);
-    pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 26, {
+    pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 26, {
       size: 8, color: C.gold, width: W - 60, align: "center",
     });
 
@@ -361,7 +361,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
 
     // Bottom classification bar
     fillRect(doc, 0, H - 30, W, 30, C.headerBg);
-    pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
+    pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
       size: 7.5, color: C.gold, width: W - 60, align: "center",
     });
 
@@ -439,7 +439,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
 
     // Bottom classification bar
     fillRect(doc, 0, H - 30, W, 30, C.headerBg);
-    pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
+    pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
       size: 7.5, color: C.gold, width: W - 60, align: "center",
     });
 
@@ -468,7 +468,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
       if (y > 770) {
         // Bottom bar before page break
         fillRect(doc, 0, H - 30, W, 30, C.headerBg);
-        pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
+        pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
           size: 7.5, color: C.gold, width: W - 60, align: "center",
         });
         doc.addPage();
@@ -491,7 +491,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
     // Monthly total row
     if (y > 770) {
       fillRect(doc, 0, H - 30, W, 30, C.headerBg);
-      pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
+      pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
         size: 7.5, color: C.gold, width: W - 60, align: "center",
       });
       doc.addPage();
@@ -517,7 +517,7 @@ export async function generateFinancialReportPdf(report: SalesReport, months: nu
 
     // Bottom classification bar (last page)
     fillRect(doc, 0, H - 30, W, 30, C.headerBg);
-    pdfText(doc, "BOXIUM PTCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
+    pdfText(doc, "BOXIUM TCG  ·  財務審核用途  ·  機密文件", 30, H - 18, {
       size: 7.5, color: C.gold, width: W - 60, align: "center",
     });
 

@@ -1,5 +1,5 @@
 /**
- * Email Service for BOXIUM PTCG
+ * Email Service for BOXIUM TCG
  * Sends transactional emails for order status changes using SMTP settings stored in DB.
  */
 
@@ -98,7 +98,7 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="padding:8px 0;">
-                    <img src="${BRAND_LOGO_URL}" alt="BOXIUM PTCG" width="180"
+                    <img src="${BRAND_LOGO_URL}" alt="BOXIUM TCG" width="180"
                       style="display:block;max-width:180px;height:auto;border:0;outline:none;text-decoration:none;"
                       border="0" />
                   </td>
@@ -129,7 +129,7 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
           <tr>
             <td class="email-footer-bg" bgcolor="#06038d" style="background-color:#06038d !important;padding:20px 32px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#b3b0ff;">
-                此郵件由 BOXIUM PTCG 系統自動發送，請勿直接回覆。<br/>
+                此郵件由 BOXIUM TCG 系統自動發送，請勿直接回覆。<br/>
                 如有問題請聯絡客服：<a href="mailto:boxium.asia@gmail.com" style="color:#FFD700;text-decoration:none;">boxium.asia@gmail.com</a>
               </p>
               ${unsubscribeToken ? `
@@ -145,7 +145,7 @@ function wrapHtml(title: string, body: string, unsubscribeToken?: string, emailT
 
         <!-- Below-card copyright -->
         <p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
-          &copy; 2025 BOXIUM PTCG. All rights reserved.
+          &copy; 2025 BOXIUM TCG. All rights reserved.
         </p>
       </td>
     </tr>
@@ -410,12 +410,12 @@ export interface SellerApplicationEmailData {
 /** Seller application approved — to seller */
 export function buildSellerApprovedEmail(data: SellerApplicationEmailData): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
-  const subject = `✅ 賣家申請已批准 — BOXIUM PTCG`;
+  const subject = `✅ 賣家申請已批准 — BOXIUM TCG`;
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">賣家申請已批准 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.displayName}</strong>，<br/>
-      恭喜！你的 BOXIUM PTCG 賣家申請已獲批准，現在可以開始在平台上架商品了。
+      恭喜！你的 BOXIUM TCG 賣家申請已獲批准，現在可以開始在平台上架商品了。
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">
       <tr>
@@ -438,7 +438,7 @@ export function buildSellerApprovedEmail(data: SellerApplicationEmailData): { su
 /** Seller application rejected — to seller */
 export function buildSellerRejectedEmail(data: SellerApplicationEmailData): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
-  const subject = `❌ 賣家申請未獲批准 — BOXIUM PTCG`;
+  const subject = `❌ 賣家申請未獲批准 — BOXIUM TCG`;
   const reasonBlock = data.rejectReason
     ? `<p style="background:#fff3f3;border-left:4px solid #ef4444;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;color:#333;"><strong>未批准原因：</strong>${data.rejectReason}</p>`
     : "";
@@ -446,11 +446,11 @@ export function buildSellerRejectedEmail(data: SellerApplicationEmailData): { su
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">賣家申請未獲批准 ❌</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.displayName}</strong>，<br/>
-      很遺憾，你的 BOXIUM PTCG 賣家申請目前未獲批准。
+      很遺憾，你的 BOXIUM TCG 賣家申請目前未獲批准。
     </p>
     ${reasonBlock}
     <p style="color:#555;font-size:14px;">如你認為此決定有誤，或希望了解更多詳情，請聯絡我們的客服團隊，我們將盡快為你跟進。</p>
-    <p style="color:#555;font-size:14px;">你仍然可以繼續使用 BOXIUM PTCG 平台進行購買。</p>
+    <p style="color:#555;font-size:14px;">你仍然可以繼續使用 BOXIUM TCG 平台進行購買。</p>
     ${ctaButton("聯絡客服", `mailto:boxium.asia@gmail.com`)}
   `);
   return { subject, html };
@@ -564,7 +564,7 @@ export async function sendEmail({
     const fromEmail = process.env.GMAIL_APP_PASSWORD
       ? "boxium.asia@gmail.com"
       : (await getSystemSetting("smtp_user"))?.settingValue || "noreply@boxium.asia";
-    const fromName = "BOXIUM PTCG";
+    const fromName = "BOXIUM TCG";
 
     await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
@@ -883,9 +883,9 @@ export function buildWelcomeEmail(data: {
   siteUrl?: string;
 }): { subject: string; html: string } {
   const siteUrl = data.siteUrl || "https://boxium.asia";
-  const subject = `🎉 歡迎加入 BOXIUM PTCG！`;
+  const subject = `🎉 歡迎加入 BOXIUM TCG！`;
   const html = wrapHtml(subject, `
-    <h2 style="margin:0 0 8px;color:#06038d;font-size:24px;">歡迎加入 BOXIUM PTCG！🎉</h2>
+    <h2 style="margin:0 0 8px;color:#06038d;font-size:24px;">歡迎加入 BOXIUM TCG！🎉</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.userName}</strong>，<br/>
       感謝您加入 BOXIUM — 遊戲迷的專屬樂園！我們整合全球 TCG 市場數據，為喜愛集換式卡牌的你提供即時、準確的價格資訊。
@@ -1165,14 +1165,14 @@ export interface SellerSuspensionEmailData {
  * Email sent to seller when their account is suspended by admin.
  */
 export function buildSellerSuspendedEmail(data: SellerSuspensionEmailData): { subject: string; html: string } {
-  const subject = '【BOXIUM PTCG】您的賣家帳號已被暫停';
+  const subject = '【BOXIUM TCG】您的賣家帳號已被暫停';
   const siteUrl = data.siteUrl ?? 'https://boxium.asia';
   const appealEmail = data.appealEmail ?? 'boxium.asia@gmail.com';
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#ef4444;font-size:22px;">賣家帳號暫停通知 🚫</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.sellerName}</strong>，<br/>
-      您的 BOXIUM PTCG 賣家帳號因違反平台規定，已被管理員暫停。在帳號恢復前，您的所有商品將被下架，且無法接受新訂單。
+      您的 BOXIUM TCG 賣家帳號因違反平台規定，已被管理員暫停。在帳號恢復前，您的所有商品將被下架，且無法接受新訂單。
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin:20px 0;">
       <tr>
@@ -1187,7 +1187,7 @@ export function buildSellerSuspendedEmail(data: SellerSuspensionEmailData): { su
       <a href="mailto:${appealEmail}" style="color:#06038d;font-weight:bold;">${appealEmail}</a>
     </p>
     <p style="color:#888;font-size:13px;">請在申訴郵件中提供您的帳號資料及申訴理由，我們將在 3 個工作日內回覆。</p>
-    ${ctaButton('前往 BOXIUM PTCG', siteUrl)}
+    ${ctaButton('前往 BOXIUM TCG', siteUrl)}
   `);
   return { subject, html };
 }
@@ -1196,13 +1196,13 @@ export function buildSellerSuspendedEmail(data: SellerSuspensionEmailData): { su
  * Email sent to seller when their account suspension is lifted by admin.
  */
 export function buildSellerUnsuspendedEmail(data: SellerSuspensionEmailData): { subject: string; html: string } {
-  const subject = '【BOXIUM PTCG】您的賣家帳號已恢復';
+  const subject = '【BOXIUM TCG】您的賣家帳號已恢復';
   const siteUrl = data.siteUrl ?? 'https://boxium.asia';
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:#16a34a;font-size:22px;">賣家帳號已恢復 ✅</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${data.sellerName}</strong>，<br/>
-      您的 BOXIUM PTCG 賣家帳號已由管理員解除暫停，您現在可以重新上架商品並接受訂單。
+      您的 BOXIUM TCG 賣家帳號已由管理員解除暫停，您現在可以重新上架商品並接受訂單。
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin:20px 0;">
       <tr>
@@ -1233,7 +1233,7 @@ export function buildNewOrderMessageEmail(data: {
   messagePreview: string;
   ordersUrl: string;
 }): { subject: string; html: string } {
-  const subject = `【BOXIUM PTCG】訂單 #${data.orderNo} 有新訊息`;
+  const subject = `【BOXIUM TCG】訂單 #${data.orderNo} 有新訊息`;
   const html = wrapHtml(subject, `
     <h2 style="margin:0 0 8px;color:${BRAND_BLUE};font-size:22px;">您有一條新訊息 💬</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
@@ -1254,7 +1254,7 @@ export function buildNewOrderMessageEmail(data: {
         </td>
       </tr>
     </table>
-    <p style="color:#555;font-size:14px;">請登入 BOXIUM PTCG 查看完整訊息並回覆。</p>
+    <p style="color:#555;font-size:14px;">請登入 BOXIUM TCG 查看完整訊息並回覆。</p>
     ${ctaButton('查看訊息', data.ordersUrl)}
   `);
   return { subject, html };
@@ -1734,7 +1734,7 @@ export async function sendEmailVerificationEmail({
     <h2 style="margin:0 0 8px;color:#06038d;font-size:22px;">請驗證您的電郵地址 ✉️</h2>
     <p style="margin:0 0 16px;color:#555;font-size:15px;">
       親愛的 <strong>${userName}</strong>，<br/>
-      感謝您註冊 BOXIUM PTCG！請點擊以下按鈕驗證您的電郵地址，完成帳號啟用。
+      感謝您註冊 BOXIUM TCG！請點擊以下按鈕驗證您的電郵地址，完成帳號啟用。
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f1ff;border:1px solid #c8cbf0;border-radius:8px;margin:20px 0;">

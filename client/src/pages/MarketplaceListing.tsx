@@ -629,10 +629,10 @@ export default function MarketplaceListing() {
     const seriesPrefix = (listing as any).tcgSeries && tcgSeriesLabel[(listing as any).tcgSeries as string]
       ? `[${tcgSeriesLabel[(listing as any).tcgSeries as string]}] `
       : '';
-    const title = `${seriesPrefix}${listing.title} - HKD ${price.toFixed(2)} | BOXIUM PTCG`;
+    const title = `${seriesPrefix}${listing.title} - HKD ${price.toFixed(2)} | BOXIUM TCG`;
     const description = listing.description
       ? `${listing.description.slice(0, 120)}${listing.description.length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
-      : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM PTCG 卡牌商城`;
+      : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM TCG 卡牌商城`;
     document.title = title;
     const setMeta = (property: string, content: string, useProperty = true) => {
       const attr = useProperty ? "property" : "name";
@@ -642,13 +642,13 @@ export default function MarketplaceListing() {
     };
     const pageUrl = window.location.href;
     setMeta("og:title", title); setMeta("og:description", description); setMeta("og:url", pageUrl);
-    setMeta("og:type", "product"); setMeta("og:site_name", "BOXIUM PTCG");
+    setMeta("og:type", "product"); setMeta("og:site_name", "BOXIUM TCG");
     if (imageUrl) setMeta("og:image", imageUrl);
     setMeta("og:price:amount", price.toFixed(2)); setMeta("og:price:currency", "HKD");
     setMeta("twitter:card", imageUrl ? "summary_large_image" : "summary", false);
     setMeta("twitter:title", title, false); setMeta("twitter:description", description, false);
     if (imageUrl) setMeta("twitter:image", imageUrl, false);
-    return () => { document.title = "BOXIUM PTCG"; };
+    return () => { document.title = "BOXIUM TCG"; };
   }, [listing]);
 
   const createStripeOrderMutation = trpc.marketplace.createStripeOrder.useMutation({

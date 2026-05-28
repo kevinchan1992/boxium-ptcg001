@@ -178,7 +178,7 @@ export default function Register() {
             <div className="h-px w-10" style={{ background: "linear-gradient(90deg, #c9a84c, transparent)" }} />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide mt-2">{t("register.title")}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>創建您的 BOXIUM PTCG 帳號</p>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>創建您的 BOXIUM TCG 帳號</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">

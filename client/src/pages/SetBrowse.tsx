@@ -27,8 +27,8 @@ export default function SetBrowse() {
   const hasPrev = offset > 0;
 
   const pageTitle = setInfo
-    ? `${setInfo.setCode} - ${setInfo.series || "系列瀏覽"} | BOXIUM PTCG`
-    : `${setCode} 系列卡牌 | BOXIUM PTCG`;
+    ? `${setInfo.setCode} - ${setInfo.series || "系列瀏覽"} | BOXIUM TCG`
+    : `${setCode} 系列卡牌 | BOXIUM TCG`;
   const pageDescription = setInfo
     ? `瀏覽 ${setInfo.series || setCode} 系列全部 ${setInfo.totalCards} 張卡牌的即時價格、圖鑑和市場行情。${setCode} 擴充包完整卡牌列表。`
     : `瀏覽 ${setCode} 系列的所有卡牌價格和圖鑑資訊。`;

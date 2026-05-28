@@ -9,7 +9,7 @@
  *   - Product image (centred, rounded)
  *   - Product title (white, bold, wrapped)
  *   - Price badge (yellow on dark)
- *   - Footer: "BOXIUM PTCG • boxium.asia"
+ *   - Footer: "BOXIUM TCG • boxium.asia"
  */
 
 export interface ShareImageOptions {
@@ -254,7 +254,7 @@ export async function generateShareImage(options: ShareImageOptions): Promise<st
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   ctx.font = "28px Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("BOXIUM PTCG  •  boxium.asia", W / 2, H - 28);
+  ctx.fillText("BOXIUM TCG  •  boxium.asia", W / 2, H - 28);
 
   return canvas.toDataURL("image/png");
 }

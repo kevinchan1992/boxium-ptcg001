@@ -41,7 +41,7 @@ export async function generateCollectionPdf(
       size: "A4",
       margin: 40,
       info: {
-        Title: "BOXIUM PTCG - My Collection Report",
+        Title: "BOXIUM TCG - My Collection Report",
         Author: userName,
         Subject: "Personal Card Collection",
       },
@@ -69,7 +69,7 @@ export async function generateCollectionPdf(
     // Blue header bar
     doc.rect(0, 0, doc.page.width, 80).fill(BRAND_BLUE);
     doc.fillColor("#FFFFFF").fontSize(22).font("Helvetica-Bold")
-      .text("BOXIUM PTCG", leftMargin, 20);
+      .text("BOXIUM TCG", leftMargin, 20);
     doc.fillColor(BRAND_YELLOW).fontSize(11).font("Helvetica")
       .text("My Collection Report", leftMargin, 48);
 
@@ -206,7 +206,7 @@ export async function generateCollectionPdf(
     const footerY = doc.page.height - 30;
     doc.rect(0, footerY - 5, doc.page.width, 35).fill(BRAND_BLUE);
     doc.fillColor("#FFFFFF").fontSize(8).font("Helvetica")
-      .text("BOXIUM PTCG  |  boxiumptcg.com  |  Market prices are for reference only", leftMargin, footerY, {
+      .text("BOXIUM TCG  |  boxiumptcg.com  |  Market prices are for reference only", leftMargin, footerY, {
         align: "center",
         width: pageWidth,
       });

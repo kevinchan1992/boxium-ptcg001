@@ -666,7 +666,7 @@ const settings = {
           smtpPort: settings.smtpPort?.settingValue || "587",
           smtpUser: settings.smtpUser?.settingValue || "",
           fromEmail: settings.fromEmail?.settingValue || "",
-          fromName: settings.fromName?.settingValue || "BOXIUM PTCG",
+          fromName: settings.fromName?.settingValue || "BOXIUM TCG",
         };
       }),
 

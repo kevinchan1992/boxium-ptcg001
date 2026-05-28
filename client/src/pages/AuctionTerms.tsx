@@ -170,7 +170,7 @@ export default function AuctionTerms() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4"
             style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
             <Shield className="w-3 h-3" />
-            BOXIUM PTCG 官方條款
+            BOXIUM TCG 官方條款
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
             買賣條款及細則
@@ -594,7 +594,7 @@ export default function AuctionTerms() {
         {/* Footer CTA */}
         <div className="rounded-2xl overflow-hidden border-2 border-[#FEDD00]" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a0a9e 100%)` }}>
           <div className="px-6 py-8 text-center">
-            <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-2">BOXIUM PTCG</p>
+            <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-2">BOXIUM TCG</p>
             <h3 className="text-white font-black text-xl mb-2">準備好開始交易了嗎？</h3>
             <p className="text-white/60 text-sm mb-6">閱讀並同意以上條款後，即可開始在 Boxium PTCG 買賣卡牌。</p>
             <div className="flex flex-row flex-wrap gap-3 justify-center">

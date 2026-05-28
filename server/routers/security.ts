@@ -1,5 +1,5 @@
 /**
- * BOXIUM PTCG — Security Admin Router (v3)
+ * BOXIUM TCG — Security Admin Router (v3)
  *
  * Provides tRPC procedures for the Admin Anti-Scraping Monitoring Panel.
  * All procedures are admin-only.

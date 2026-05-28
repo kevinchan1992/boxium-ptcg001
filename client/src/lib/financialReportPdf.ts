@@ -124,7 +124,7 @@ export async function exportFinancialReportPDF(
 
   // Company info on right
   setFont(doc, 8, "normal", [200, 200, 230]);
-  doc.text("BOXIUM PTCG", W - MARGIN, 18, { align: "right" });
+  doc.text("BOXIUM TCG", W - MARGIN, 18, { align: "right" });
   doc.text("www.boxium.asia", W - MARGIN, 24, { align: "right" });
   doc.text("香港卡片交易平台", W - MARGIN, 30, { align: "right" });
 
@@ -213,7 +213,7 @@ export async function exportFinancialReportPDF(
   const p1EndY = (doc as any).lastAutoTable.finalY + 8;
   drawLine(doc, MARGIN, 283, W - MARGIN, 283, [200, 200, 215], 0.3);
   setFont(doc, 7, "normal", TEXT_LIGHT);
-  doc.text("BOXIUM PTCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
+  doc.text("BOXIUM TCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
   doc.text("第 1 頁 / 3 頁", W - MARGIN, 288, { align: "right" });
 
   // ═══════════════════════════════════════════════════════
@@ -226,7 +226,7 @@ export async function exportFinancialReportPDF(
   doc.setFillColor(...BRAND_YELLOW);
   doc.rect(0, 16, W, 3, "F");
   setFont(doc, 9, "bold", [255, 255, 255]);
-  doc.text("BOXIUM PTCG · 財務報告", MARGIN, 11);
+  doc.text("BOXIUM TCG · 財務報告", MARGIN, 11);
   setFont(doc, 8, "normal", [180, 185, 230]);
   doc.text(reportDate, W - MARGIN, 11, { align: "right" });
 
@@ -377,7 +377,7 @@ export async function exportFinancialReportPDF(
   // Footer page 2
   drawLine(doc, MARGIN, 283, W - MARGIN, 283, [200, 200, 215], 0.3);
   setFont(doc, 7, "normal", TEXT_LIGHT);
-  doc.text("BOXIUM PTCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
+  doc.text("BOXIUM TCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
   doc.text("第 2 頁 / 3 頁", W - MARGIN, 288, { align: "right" });
 
   // ═══════════════════════════════════════════════════════
@@ -390,7 +390,7 @@ export async function exportFinancialReportPDF(
   doc.setFillColor(...BRAND_YELLOW);
   doc.rect(0, 16, W, 3, "F");
   setFont(doc, 9, "bold", [255, 255, 255]);
-  doc.text("BOXIUM PTCG · 財務報告", MARGIN, 11);
+  doc.text("BOXIUM TCG · 財務報告", MARGIN, 11);
   setFont(doc, 8, "normal", [180, 185, 230]);
   doc.text(reportDate, W - MARGIN, 11, { align: "right" });
 
@@ -456,13 +456,13 @@ export async function exportFinancialReportPDF(
   setFont(doc, 7.5, "bold", WARNING);
   doc.text("⚠  免責聲明  Disclaimer", MARGIN + 5, y + 7);
   setFont(doc, 7, "normal", TEXT_MID);
-  doc.text("本報告由 BOXIUM PTCG 系統自動生成，所有數據僅供內部財務核對參考。如有疑問，請以系統資料庫記錄為準。", MARGIN + 5, y + 13);
+  doc.text("本報告由 BOXIUM TCG 系統自動生成，所有數據僅供內部財務核對參考。如有疑問，請以系統資料庫記錄為準。", MARGIN + 5, y + 13);
   doc.text("This report is auto-generated for internal use only. All figures are in Hong Kong Dollars (HKD).", MARGIN + 5, y + 19);
 
   // Footer page 3
   drawLine(doc, MARGIN, 283, W - MARGIN, 283, [200, 200, 215], 0.3);
   setFont(doc, 7, "normal", TEXT_LIGHT);
-  doc.text("BOXIUM PTCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
+  doc.text("BOXIUM TCG · www.boxium.asia · 本報告由系統自動生成，僅供內部財務核對使用", MARGIN, 288);
   doc.text("第 3 頁 / 3 頁", W - MARGIN, 288, { align: "right" });
 
   // Save

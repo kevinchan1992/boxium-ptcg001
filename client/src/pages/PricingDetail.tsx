@@ -282,7 +282,7 @@ export default function PricingDetail() {
   return (
     <>
     <PageHead
-      title={`${card.name} PSA 10 市場格價 - BOXIUM PTCG`}
+      title={`${card.name} PSA 10 市場格價 - BOXIUM TCG`}
       description={`查看 ${card.name} 的 PSA 10 市場列價，整合 SNKRDUNK 及 eBay 即時成交資料。`}
       ogImage={card.imageUrl ? getProxiedImageUrl(card.imageUrl) ?? undefined : undefined}
     />

@@ -697,7 +697,7 @@ export default function Home() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "BOXIUM PTCG",
+    "name": "BOXIUM TCG",
     "description": "整合全球 TCG 市場數據，為集換式卡牌愛好者提供即時、準確的價格資訊與市場分析",
     "url": "https://boxiumptcg.manus.space",
     "potentialAction": {
@@ -728,9 +728,9 @@ export default function Home() {
     <>
       <StructuredData data={structuredData} />
       <PageHead
-        title="BOXIUM PTCG | TCG 卡牗價格查詢與市集"
-        description="BOXIUM PTCG 提供 Pokémon、One Piece、遙戲王等 TCG 卡牗的即時價格查詢、PSA 10 成交記錄、價格走勢分析及市集交易平台。"
-        keywords="TCG 卡牗, Pokémon 卡牗價格, PSA 10, BOXIUM PTCG, 卡牗市集"
+        title="BOXIUM TCG | 卡牌價格查詢與市集"
+        description="BOXIUM TCG 提供 Pokémon、One Piece、遊戲王等 TCG 卡牌的即時價格查詢、PSA 10 成交記錄、價格走勢分析及市集交易平台。"
+        keywords="TCG 卡牌, Pokémon 卡牌價格, PSA 10, BOXIUM TCG, 卡牌市集"
       />
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
         {/* Hero Section */}

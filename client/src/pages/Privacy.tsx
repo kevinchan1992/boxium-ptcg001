@@ -10,12 +10,12 @@ export default function Privacy() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "隱私權政策 - BOXIUM PTCG",
-    "description": "BOXIUM PTCG 平台隱私權政策，說明如何收集、使用和保護用戶個人數據",
+    "name": "隱私權政策 - BOXIUM TCG",
+    "description": "BOXIUM TCG 平台隱私權政策，說明如何收集、使用和保護用戶個人數據",
     "url": "https://boxiumptcg.manus.space/privacy",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "BOXIUM PTCG",
+      "name": "BOXIUM TCG",
       "url": "https://boxiumptcg.manus.space"
     }
   };
@@ -35,8 +35,8 @@ export default function Privacy() {
     <>
       <StructuredData data={structuredData} />
       <PageHead 
-        title={`${content.title} - BOXIUM PTCG`}
-        description="BOXIUM PTCG Privacy Policy"
+        title={`${content.title} - BOXIUM TCG`}
+        description="BOXIUM TCG Privacy Policy"
         keywords="Privacy Policy, BOXIUM, PTCG, Pokemon Cards, Data Protection"
       />
       <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>

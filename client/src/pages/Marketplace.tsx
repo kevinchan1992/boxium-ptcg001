@@ -709,9 +709,9 @@ export default function Marketplace() {
   return (
     <>
     <PageHead
-      title="卡牧市集 - BOXIUM PTCG | 買賣 TCG 卡牧"
-      description="BOXIUM PTCG 卡牧市集，提供 Pokémon、One Piece、遙戲王等 TCG 卡牧的買賣平台，安全、便捷、價格透明。"
-      keywords="TCG 市集, Pokémon 卡牧買賣, PSA 卡牗市集, BOXIUM"
+      title="卡牌市集 - BOXIUM TCG | 買賣 TCG 卡牌"
+      description="BOXIUM TCG 卡牌市集，提供 Pokémon、One Piece、遊戲王等 TCG 卡牌的買賣平台，安全、便捷、價格透明。"
+      keywords="TCG 市集, Pokémon 卡牌買賣, PSA 卡牌市集, BOXIUM TCG"
     />
     <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
 

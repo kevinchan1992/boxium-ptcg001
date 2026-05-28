@@ -92,7 +92,7 @@ export default function VerifyEmail() {
               <div>
                 <h2 className="text-xl font-bold text-white mb-2">電郵驗證成功！🎉</h2>
                 <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  您的帳號已成功啟用，歡迎加入 BOXIUM PTCG！<br />
+                  您的帳號已成功啟用，歡迎加入 BOXIUM TCG！<br />
                   正在為您跳轉至主頁...
                 </p>
               </div>

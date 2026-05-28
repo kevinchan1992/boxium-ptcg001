@@ -347,7 +347,7 @@ export async function composeMarketplaceOgImage(
   <text x="${rightX + Math.round(rightW / 2)}" y="${OG_HEIGHT / 2 + 87}" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dominant-baseline="middle">${conditionLabel.replace(/&/g, "&amp;")}</text>
   <!-- Bottom brand bar -->
   <rect x="0" y="${OG_HEIGHT - 44}" width="${OG_WIDTH}" height="44" fill="#06038D"/>
-  <text x="${OG_WIDTH / 2}" y="${OG_HEIGHT - 16}" font-family="Arial, sans-serif" font-size="15" fill="white" text-anchor="middle" dominant-baseline="middle">BOXIUM PTCG • boxium.asia</text>
+  <text x="${OG_WIDTH / 2}" y="${OG_HEIGHT - 16}" font-family="Arial, sans-serif" font-size="15" fill="white" text-anchor="middle" dominant-baseline="middle">BOXIUM TCG • boxium.asia</text>
 </svg>`;
 
     const svgBuffer = Buffer.from(svgOverlay);

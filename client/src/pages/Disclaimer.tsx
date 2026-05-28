@@ -62,12 +62,12 @@ export default function Disclaimer() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": `${t('disclaimerPage.title')} - BOXIUM PTCG`,
+    "name": `${t('disclaimerPage.title')} - BOXIUM TCG`,
     "description": t('disclaimerPage.subtitle'),
     "url": "https://boxiumptcg.manus.space/disclaimer",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "BOXIUM PTCG",
+      "name": "BOXIUM TCG",
       "url": "https://boxiumptcg.manus.space"
     }
   };
@@ -130,7 +130,7 @@ export default function Disclaimer() {
       <StructuredData data={faqStructuredData} />
       <StructuredData data={structuredData} />
       <PageHead 
-        title={`${t('disclaimerPage.title')} - BOXIUM PTCG`}
+        title={`${t('disclaimerPage.title')} - BOXIUM TCG`}
         description={t('disclaimerPage.subtitle')}
         keywords="disclaimer,terms,BOXIUM,PTCG,legal,user guidelines,免責聲明,服務條款,法律聲明,用戶規範,免責事項"
       />

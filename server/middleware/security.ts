@@ -1,5 +1,5 @@
 /**
- * BOXIUM PTCG — Multi-Layer Security Middleware (v2)
+ * BOXIUM TCG — Multi-Layer Security Middleware (v2)
  *
  * Layers:
  *  1. Rate Limiting  — per-IP limits on sensitive endpoints

@@ -284,7 +284,7 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       doc.moveTo(margin, footerY - 5).lineTo(pageW - margin, footerY - 5).stroke("#e5e7eb");
       doc.fillColor("#9ca3af").font("NotoTC-Regular").fontSize(8)
         .text(
-          "BOXIUM PTCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用",
+          "BOXIUM TCG  ·  www.boxium.asia  ·  此報告由系統自動生成，僅供內部財務記錄使用",
           margin, footerY, { width: contentW - 90, align: "center", lineBreak: false }
         );
       doc.y = footerY; // Reset after footer text to prevent auto page-break
@@ -398,7 +398,7 @@ export async function generateCardInventoryExcel(year: number, month: number, on
   const imageBuffers = await fetchImageBuffersBatched(rows.map((r) => r.s3ImageUrl || r.imageUrl || ""));
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "BOXIUM PTCG";
+  workbook.creator = "BOXIUM TCG";
   workbook.created = new Date();
 
   // ── Sheet 1: Detail Records ──
@@ -421,7 +421,7 @@ export async function generateCardInventoryExcel(year: number, month: number, on
     logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
     sheet.addImage(logoImageId, "A1:C3");
   } else {
-    logoCell.value = "BOXIUM PTCG";
+    logoCell.value = "BOXIUM TCG";
     logoCell.font = { name: "Arial", bold: true, size: 18, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
     logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
     logoCell.alignment = { vertical: "middle", horizontal: "center" };
@@ -592,7 +592,7 @@ export async function generateCardInventoryExcel(year: number, month: number, on
 
   summarySheet.mergeCells("A1:G1");
   const sumTitle = summarySheet.getCell("A1");
-  sumTitle.value = `BOXIUM PTCG — 月度買賣總表 (${label})`;
+  sumTitle.value = `BOXIUM TCG — 月度買賣總表 (${label})`;
   sumTitle.font = { name: "Arial", bold: true, size: 14, color: { argb: "FF" + BRAND_BLUE.slice(1) } };
   sumTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND_YELLOW.slice(1) } };
   sumTitle.alignment = { vertical: "middle", horizontal: "center" };

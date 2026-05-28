@@ -21,7 +21,7 @@ export function ShareButton({ cardName, cardId }: ShareButtonProps) {
   // Crawlers (WhatsApp, Facebook, Telegram) see dynamic OG tags with card image
   // Users are immediately redirected to the real card page /card/:id
   const shareUrl = `https://boxium.asia/api/card-preview/${cardId}`;
-  const shareText = `${cardName} - BOXIUM PTCG`;
+  const shareText = `${cardName} - BOXIUM TCG`;
 
   const handleShareFacebook = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;

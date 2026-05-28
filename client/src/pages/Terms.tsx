@@ -11,12 +11,12 @@ export default function Terms() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "服務條款 - BOXIUM PTCG",
-    "description": "BOXIUM PTCG 平台服務條款，說明用戶使用平台服務的權利與義務",
+    "name": "服務條款 - BOXIUM TCG",
+    "description": "BOXIUM TCG 平台服務條款，說明用戶使用平台服務的權利與義務",
     "url": "https://boxiumptcg.manus.space/terms",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "BOXIUM PTCG",
+      "name": "BOXIUM TCG",
       "url": "https://boxiumptcg.manus.space"
     }
   };
@@ -36,8 +36,8 @@ export default function Terms() {
     <>
       <StructuredData data={structuredData} />
       <PageHead 
-        title={`${content.title} - BOXIUM PTCG`}
-        description="BOXIUM PTCG Terms of Service"
+        title={`${content.title} - BOXIUM TCG`}
+        description="BOXIUM TCG Terms of Service"
         keywords="Terms of Service, BOXIUM, PTCG, Pokemon Cards"
       />
       <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: "#f8f9fa" }}>

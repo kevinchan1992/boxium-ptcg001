@@ -86,7 +86,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     onSuccess: () => { toast.success("已加入收藏"); },
     onError: (error, _vars, context) => {
       if (context?.prev !== undefined) utils.profile.isInWatchlist.setData({ cardId: cardId! }, context.prev);
-      if (error.message.includes("already in watchlist")) toast.error("此卡牗已在收藏列表中");
+      if (error.message.includes("already in watchlist")) toast.error("此卡牌已在收藏列表中");
       else toast.error("加入收藏失敗：" + error.message);
     },
     onSettled: () => { refetchWatchlistStatus(); },
@@ -417,7 +417,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   return (
     <>
     <PageHead
-      title={`${product.name} 價格走勢 - BOXIUM PTCG`}
+      title={`${product.name} 價格走勢 - BOXIUM TCG`}
       description={`查看 ${product.name} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
       ogImage={product.imageUrl ? getProxiedImageUrl(product.imageUrl) ?? undefined : undefined}
     />
@@ -460,9 +460,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   price: lowestMarketplacePrice.toFixed(2),
                   availability: "https://schema.org/InStock",
                   url: `${typeof window !== 'undefined' ? window.location.origin : ''}/market`,
-                  seller: { "@type": "Organization", name: "BOXIUM PTCG" },
+                  seller: { "@type": "Organization", name: "BOXIUM TCG" },
                   itemCondition: "https://schema.org/UsedCondition",
-                  description: "BOXIUM PTCG 市集最低上架價格",
+                  description: "BOXIUM TCG 市集最低上架價格",
                 }]
               : []),
             ...(minPrice !== null && maxPrice !== null

@@ -19,7 +19,7 @@ export default function About() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": currentLang === 'ja' ? 'BOXIUM PTCGとは何ですか？' : currentLang === 'en' ? 'What is BOXIUM PTCG?' : 'BOXIUM PTCG 是什麼？',
+        "name": currentLang === 'ja' ? 'BOXIUM TCGとは何ですか？' : currentLang === 'en' ? 'What is BOXIUM TCG?' : 'BOXIUM TCG 是什麼？',
         "acceptedAnswer": {
           "@type": "Answer",
           "text": currentLang === 'ja' ? 'BOXIUMは、Pokémon、One Pieceなど複数のTCGの価格照会と市場分析に特化した総合プラットフォームです。世界市場のデータを統合し、TCGファンとコレクターに正確でリアルタイムなカード価格情報を提供し、カードの価格トレンドを追跡し、賢明な投資決定を下すのを支援します。' : currentLang === 'en' ? 'BOXIUM is a comprehensive platform focused on TCG (Trading Card Game) price inquiry and market analysis, covering Pokémon, One Piece and more. We integrate global market data to provide TCG enthusiasts and collectors with accurate and real-time card price information, helping you track card price trends and make informed investment decisions.' : 'BOXIUM 是一個專注於 TCG 集換式卡牌價格查詢與市場分析的綜合平台，涵蓋 Pokémon、One Piece 等多款遊戲。我們整合全球市場數據，為 TCG 愛好者和收藏家提供準確、即時的卡牌價格資訊，幫助您追蹤卡牌的價格趨勢，做出明智的投資決策。'
@@ -64,7 +64,7 @@ export default function About() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "name": `${t('aboutPage.title')} - BOXIUM PTCG`,
+    "name": `${t('aboutPage.title')} - BOXIUM TCG`,
     "description": t('aboutPage.subtitle'),
     "url": "https://boxiumptcg.manus.space/about",
     "mainEntity": {
@@ -128,7 +128,7 @@ export default function About() {
       <StructuredData data={faqStructuredData} />
       <StructuredData data={structuredData} />
       <PageHead 
-        title={`${t('aboutPage.title')} - BOXIUM PTCG`}
+        title={`${t('aboutPage.title')} - BOXIUM TCG`}
         description={t('aboutPage.subtitle')}
         keywords="BOXIUM,TCG,集換式卡牌,PTCG,One Piece,PSA 10,卡牌價格,市場數據,SNKRDUNK,關於我們,about,trading card game,card prices,market data"
       />

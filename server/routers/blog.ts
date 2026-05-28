@@ -1255,7 +1255,7 @@ UNBREAKABLE RULES:
 1. The Pokémon card artwork from the provided reference images MUST be the hero elements — clearly visible, recognizable, and faithful to the original artwork.
 2. Card proportions must be maintained — no stretching, squishing, or distorting the cards.
 3. The LEFT 40–45% of the image MUST remain as clean, dark negative space — no cards, no major decorative elements. This zone is reserved for text overlay in post-production.
-4. NO text of any kind except the BOXIUM PTCG brand watermark.
+4. NO text of any kind except the BOXIUM TCG brand watermark.
 5. The final image must look like it belongs on a premium TCG media platform — not a generic stock photo.
 6. Overall dimensions and aspect ratio: 16:9 widescreen.`;
 

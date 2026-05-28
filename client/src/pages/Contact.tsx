@@ -55,7 +55,7 @@ export default function Contact() {
     {
       icon: Facebook,
       title: "Facebook",
-      value: "BOXIUM PTCG",
+      value: "BOXIUM TCG",
       desc: "追蹤最新消息與活動",
       href: "https://www.facebook.com/share/18ENwGABRe/?mibextid=wwXIfr",
       color: "#1877F2",

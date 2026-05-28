@@ -40,7 +40,7 @@ export default function Pricing() {
   return (
     <>
       <PageHead
-        title="市場格價 - BOXIUM PTCG | PSA 10 卡牌市場價格查詢"
+        title="市場格價 - BOXIUM TCG | PSA 10 卡牌市場價格查詢"
         description="查詢 Pokémon、One Piece、遊戲王等 TCG 卡牌的 PSA 10 市場格價，整合 SNKRDUNK 及 eBay 真實交易數據，掌握最新市場行情。"
         keywords="PSA 10 格價, 卡牌市場價格, Pokémon TCG 格價, SNKRDUNK, eBay 卡牌"
       />

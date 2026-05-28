@@ -1292,7 +1292,7 @@ async function startServer() {
         "Cache-Control": "public, max-age=3600",
         "Access-Control-Allow-Origin": "*",
       }).json({
-        title: `${name} - BOXIUM PTCG`,
+        title: `${name} - BOXIUM TCG`,
         description: description || `查看 ${name} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`,
         image: ogImageUrl,
         url: `https://boxium.asia/card/${id}`,
@@ -1339,7 +1339,7 @@ async function startServer() {
         if (s3Url) ogImageUrl = s3Url;
       }
 
-      const ogTitle = `${cardName} - BOXIUM PTCG`;
+      const ogTitle = `${cardName} - BOXIUM TCG`;
       const ogDescription = cardDesc || `查看 ${cardName} 的最新 PSA 10 成交價格、價格趨勢與市場分析。`;
       const cardUrl = `https://boxium.asia/card/${id}`;
       const previewUrl = `https://boxium.asia/api/card-preview/${id}`;
@@ -1360,7 +1360,7 @@ async function startServer() {
   <meta property="og:image" content="${ogImageUrl}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="BOXIUM PTCG" />
+  <meta property="og:site_name" content="BOXIUM TCG" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
   <meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
@@ -1420,10 +1420,10 @@ async function startServer() {
         if (composedUrl) ogImage = composedUrl;
       }
 
-      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM PTCG`;
+      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM TCG`;
       const ogDescription = listing.description
         ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(0)}`
-        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM PTCG 卡牌商城`;
+        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM TCG 卡牌商城`;
       const listingUrl = `https://boxium.asia/marketplace/${id}`;
       const previewUrl = `https://boxium.asia/api/marketplace-preview/${id}`;
 
@@ -1440,7 +1440,7 @@ async function startServer() {
   <meta property="og:image" content="${ogImage}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="BOXIUM PTCG" />
+  <meta property="og:site_name" content="BOXIUM TCG" />
   <meta property="og:price:amount" content="${price.toFixed(2)}" />
   <meta property="og:price:currency" content="HKD" />
   <meta name="twitter:card" content="summary" />
@@ -1662,7 +1662,7 @@ async function startServer() {
             url: pageUrl,
             seller: {
               '@type': 'Organization',
-              name: 'BOXIUM PTCG',
+              name: 'BOXIUM TCG',
               url: 'https://boxium.asia',
             },
             priceValidUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -1782,7 +1782,7 @@ async function startServer() {
         `<meta property="og:image:alt" content="${imageAltText.replace(/"/g, '&quot;')}" />`,
         `<meta property="og:image:width" content="1200" />`,
         `<meta property="og:image:height" content="630" />`,
-        `<meta property="og:site_name" content="BOXIUM PTCG" />`,
+        `<meta property="og:site_name" content="BOXIUM TCG" />`,
         `<meta property="og:locale" content="zh_HK" />`,
         `<meta name="twitter:card" content="summary_large_image" />`,
         `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
@@ -1879,10 +1879,10 @@ async function startServer() {
         );
         if (composedUrl) ogImageUrl = composedUrl;
       }
-      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM PTCG`;
+      const ogTitle = `${listing.title} - HKD ${price.toFixed(0)} | BOXIUM TCG`;
       const ogDescription = listing.description
         ? `${(listing.description as string).slice(0, 120)}${(listing.description as string).length > 120 ? "..." : ""} | HKD ${price.toFixed(0)}`
-        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM PTCG 卡牌商城`;
+        : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(0)} | BOXIUM TCG 卡牌商城`;
       const pageUrl = `https://boxium.asia/marketplace/${id}`;
 
       // Read the base HTML template
@@ -1904,7 +1904,7 @@ async function startServer() {
         `<meta property="og:image" content="${ogImageUrl}" />`,
         `<meta property="og:image:width" content="1200" />`,
         `<meta property="og:image:height" content="630" />`,
-        `<meta property="og:site_name" content="BOXIUM PTCG" />`,
+        `<meta property="og:site_name" content="BOXIUM TCG" />`,
         `<meta property="og:price:amount" content="${price.toFixed(2)}" />`,
         `<meta property="og:price:currency" content="HKD" />`,
         `<meta name="twitter:card" content="summary_large_image" />`,
