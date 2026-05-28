@@ -9553,3 +9553,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] 部署後到 Google Search Console 重新提交 sitemap.xml
 - [ ] 在 Cloudflare 設定 Cache Rule：sitemap*.xml → Cache Everything (24h)
 - [x] 在 vite.ts serveStatic() 中加入 sitemap 排除邏輯
+
+## Sitemap 根本修復：移除重複條目 + 簡化結構 (2026-05-28)
+- [x] 移除 448 個 series sitemaps（所有卡牌已在 sitemap-cards-*.xml 中，完全冗餘）
+- [x] 修復 sitemap.xml 中 31 個重複的 <sitemap> 條目
+- [x] sitemap.xml 從 48KB 縮小到 ~1KB（僅 9 個子 sitemap）
+- [x] 本地驗證：無重複條目、有效 XML
+- [ ] 部署並驗證生產環境
+- [ ] 提供 Cloudflare Cache Rule 設定指引（解決 cf-cache-status: DYNAMIC）
