@@ -523,14 +523,14 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <>
                   <ClickableCardImage
                     src={getProxiedImageUrl(product.imageUrl) ?? ""}
-                    alt={product.name}
+                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} 卡牌圖像${product.series ? ` - ${product.series}` : ''}`}
                     className="w-full rounded-xl shadow-2xl"
                     style={{ height: "auto" }}
                     onClick={() => setLightboxOpen(true)}
                   />
                   <ImageLightbox
                     src={getProxiedImageUrl(product.imageUrl) ?? ""}
-                    alt={product.name}
+                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} 卡牌圖像${product.series ? ` - ${product.series}` : ''}`}
                     isOpen={lightboxOpen}
                     onClose={() => setLightboxOpen(false)}
                   />
@@ -1152,7 +1152,7 @@ function SimilarCardsSection({ cardId, series, cardName }: { cardId: number; ser
               {card.imageUrl ? (
                 <img
                   src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                  alt={card.name}
+                  alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像`}
                   className="w-full h-full object-cover group-hover:brightness-110 transition-all duration-200"
                 />
               ) : (

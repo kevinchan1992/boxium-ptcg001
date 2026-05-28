@@ -331,7 +331,7 @@ export default function PricingSearch() {
                     {card.imageUrl ? (
                       <img
                         src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                        alt={card.name}
+                        alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像`}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />

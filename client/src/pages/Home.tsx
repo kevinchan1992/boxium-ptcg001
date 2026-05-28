@@ -117,7 +117,7 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
                   {card.imageUrl ? (
                     <img
                       src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={card.name}
+                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />

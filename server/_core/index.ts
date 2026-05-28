@@ -1554,6 +1554,15 @@ async function startServer() {
       keywordParts.push('PSA 10 價格', '卡牌格價', 'PTCG', 'Pokemon Card Price');
       const keywords = keywordParts.join(', ');
 
+      // Build semantic image alt text for Image SEO
+      // Format: "CardName CardNumber 卡牌圖像 - SetName Rarity"
+      const imgAltParts: string[] = [cardName];
+      if (cardNumber) imgAltParts.push(cardNumber);
+      imgAltParts.push('卡牌圖像');
+      if (setName) imgAltParts.push(`- ${setName}`);
+      if (rarity) imgAltParts.push(rarity);
+      const imageAltText = imgAltParts.join(' ');
+
       // Build Product JSON-LD optimized for Google Rich Snippets (price display)
       // Google requires: name, image, offers (with price, priceCurrency, availability)
       // Optional but helpful: sku, brand, description, review, aggregateRating
@@ -1563,7 +1572,14 @@ async function startServer() {
         name: cardName,
         description: ogDescription,
         url: pageUrl,
-        image: cardImageUrl || imageUrl,
+        // Use ImageObject for richer image SEO (Google Images indexing)
+        image: {
+          '@type': 'ImageObject',
+          url: cardImageUrl || imageUrl,
+          name: imageAltText,
+          caption: `${cardName}${cardNumber ? ` ${cardNumber}` : ''} Pokemon TCG 卡牌`,
+          contentUrl: cardImageUrl || imageUrl,
+        },
         brand: { '@type': 'Brand', name: 'Pokemon TCG' },
         sku: cardNumber || `BOXIUM-${id}`,
         mpn: cardNumber || undefined,
@@ -1652,6 +1668,7 @@ async function startServer() {
         `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
         `<meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
         `<meta property="og:image" content="${imageUrl}" />`,
+        `<meta property="og:image:alt" content="${imageAltText.replace(/"/g, '&quot;')}" />`,
         `<meta property="og:image:width" content="1200" />`,
         `<meta property="og:image:height" content="630" />`,
         `<meta property="og:site_name" content="BOXIUM PTCG" />`,

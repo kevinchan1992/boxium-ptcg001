@@ -38,6 +38,8 @@ export default function Home() {
     id: card.id,
     name: card.name,
     imageUrl: card.imageUrl,
+    cardNumber: card.cardNumber || null,
+    series: card.series || null,
   }));
 
   const handleCardClick = (cardId: number) => {
@@ -149,7 +151,7 @@ export default function Home() {
                   <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
                     <img
                       src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/128x176?text=No+Image"}
-                      alt={card.name}
+                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
                       className="w-full h-full object-cover transition-transform group-hover:scale-110"
                       loading="lazy"
                     />

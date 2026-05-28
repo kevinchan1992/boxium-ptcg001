@@ -29,6 +29,8 @@ export default function Pricing() {
     id: card.id,
     name: card.name,
     imageUrl: card.imageUrl,
+    cardNumber: card.cardNumber || null,
+    series: card.series || null,
   }));
 
   const handleCardClick = (cardId: number) => {
@@ -120,7 +122,7 @@ export default function Pricing() {
                   <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
                     <img
                       src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={card.name}
+                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
                       className="w-full h-full object-cover transition-transform group-hover:scale-110"
                       loading="lazy"
                     />

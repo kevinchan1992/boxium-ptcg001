@@ -321,7 +321,7 @@ export default function PricingDetail() {
           <div className="w-full md:w-64 flex-shrink-0">
             <img
               src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/256x352?text=No+Image"}
-              alt={card.name}
+              alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
               className="w-full rounded-lg shadow-lg"
             />
           </div>

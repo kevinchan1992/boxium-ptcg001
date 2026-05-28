@@ -9476,3 +9476,15 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 無價格時改為 OutOfStock（避免 Google 警告）
 - [x] additionalProperty 加入 Card Number、Set、Rarity、Japanese Name
 - [x] TypeScript 驗證通過（0 個非 recharts 錯誤）
+
+# Image SEO 優化（2026-05-28）
+- [x] SSR og:image:alt 加入語義化描述（卡名 + 卡號 + 系列）
+- [x] JSON-LD Product.image 改為 ImageObject 格式（含 name、caption、contentUrl）
+- [x] CardDetail.tsx 主圖片 alt 優化
+- [x] CardDetail.tsx 相似卡牌圖片 alt 優化
+- [x] Home.tsx trending 卡牌圖片 alt 優化
+- [x] Research.tsx 熱門卡牌圖片 alt 優化
+- [x] Pricing.tsx 熱門卡牌圖片 alt 優化
+- [x] PricingDetail.tsx 卡牌圖片 alt 優化
+- [x] PricingSearch.tsx 搜尋結果圖片 alt 優化
+- [x] SearchResults.tsx 搜尋結果圖片 alt 優化
