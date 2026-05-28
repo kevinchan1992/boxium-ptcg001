@@ -17,8 +17,11 @@ Allow: /marketplace
 Allow: /auctions
 Allow: /sitemap.xml
 Allow: /sitemap-static.xml
+Allow: /sitemap-sets.xml
 Allow: /sitemap-blog.xml
 Allow: /sitemap-cards-*.xml
+Allow: /sets
+Allow: /set/*
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/*
@@ -51,8 +54,11 @@ Allow: /marketplace
 Allow: /auctions
 Allow: /sitemap.xml
 Allow: /sitemap-static.xml
+Allow: /sitemap-sets.xml
 Allow: /sitemap-blog.xml
 Allow: /sitemap-cards-*.xml
+Allow: /sets
+Allow: /set/*
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/*
@@ -85,8 +91,11 @@ Allow: /marketplace
 Allow: /auctions
 Allow: /sitemap.xml
 Allow: /sitemap-static.xml
+Allow: /sitemap-sets.xml
 Allow: /sitemap-blog.xml
 Allow: /sitemap-cards-*.xml
+Allow: /sets
+Allow: /set/*
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/*

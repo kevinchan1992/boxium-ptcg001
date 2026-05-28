@@ -9513,3 +9513,6 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] SSR 預渲染同系列卡牌連結（爬蟲可見）— hidden nav with 24 same-set links injected before </body>
 - [x] 桌面版搜尋框加入相機入口按鈕 — CardSearchDropdown 加入 showCameraButton prop, Research + PricingSearch 頁面啟用
 - [x] 修復 SetBrowse/SetList 的 react-helmet-async 依賴問題（改用 PageHead 組件）
+- [x] New sitemap-sets.xml (418 URLs) added to sitemap index
+- [x] Updated robots.txt with /sets and /set/* Allow rules + sitemap-sets.xml
+- [x] Google Rich Results Test verified: Product snippets + Breadcrumbs + FAQ all valid

@@ -43,7 +43,7 @@ import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
 // v10.1: Scheduler imports moved to dynamic imports inside deferred setTimeout
 // to reduce startup memory footprint and prevent OOM on Cloud Run (512MB limit)
-import { generateSitemap, generateSitemapIndex, generateStaticSitemap, generateBlogSitemap, generateCardSitemap } from "../sitemap";
+import { generateSitemap, generateSitemapIndex, generateStaticSitemap, generateBlogSitemap, generateCardSitemap, generateSetsSitemap } from "../sitemap";
 import { Sentry } from "./sentry";
 import {
   botDetection,
@@ -1015,6 +1015,19 @@ async function startServer() {
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating static sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Sets sitemap
+  app.get("/sitemap-sets.xml", async (req, res) => {
+    try {
+      const sitemap = await generateSetsSitemap();
+      res.header("Content-Type", "application/xml");
+      res.header("Cache-Control", "public, max-age=86400"); // Cache 24 hours
+      res.send(sitemap);
+    } catch (error) {
+      console.error("[Sitemap] Error generating sets sitemap:", error);
       res.status(500).send("Error generating sitemap");
     }
   });

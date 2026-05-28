@@ -1,5 +1,6 @@
-import { getAllCardIds } from "./db";
+import { getAllCardIds, getDb } from "./db";
 import { getPosts } from "./blogDb";
+import { sql } from "drizzle-orm";
 
 const BASE_URL = "https://boxium.asia";
 const CARDS_PER_SITEMAP = 45000; // Google limit is 50,000 URLs per sitemap file
@@ -22,6 +23,12 @@ export async function generateSitemapIndex(): Promise<string> {
   // Static pages sitemap
   xml += '  <sitemap>\n';
   xml += `    <loc>${BASE_URL}/sitemap-static.xml</loc>\n`;
+  xml += `    <lastmod>${currentDate}</lastmod>\n`;
+  xml += '  </sitemap>\n';
+
+  // Sets sitemap
+  xml += '  <sitemap>\n';
+  xml += `    <loc>${BASE_URL}/sitemap-sets.xml</loc>\n`;
   xml += `    <lastmod>${currentDate}</lastmod>\n`;
   xml += '  </sitemap>\n';
 
@@ -127,6 +134,53 @@ export async function generateCardSitemap(page: number): Promise<string | null> 
     xml += `    <changefreq>daily</changefreq>\n`;
     xml += `    <priority>0.8</priority>\n`;
     xml += '  </url>\n';
+  }
+
+  xml += '</urlset>';
+  return xml;
+}
+
+/**
+ * Generate sets sitemap — includes /sets index page and all /set/:setCode pages
+ */
+export async function generateSetsSitemap(): Promise<string> {
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+  // /sets index page
+  xml += '  <url>\n';
+  xml += `    <loc>${BASE_URL}/sets</loc>\n`;
+  xml += `    <lastmod>${currentDate}</lastmod>\n`;
+  xml += '    <changefreq>weekly</changefreq>\n';
+  xml += '    <priority>0.7</priority>\n';
+  xml += '  </url>\n';
+
+  // Individual set pages
+  try {
+    const dbConn = await getDb();
+    if (dbConn) {
+      const sets = await dbConn.execute(sql`
+        SELECT DISTINCT setName
+        FROM cards
+        WHERE setName IS NOT NULL AND setName != ''
+        ORDER BY setName
+      `);
+      const setRows = (sets[0] as any[]) || [];
+      for (const row of setRows) {
+        if (row.setName) {
+          xml += '  <url>\n';
+          xml += `    <loc>${BASE_URL}/set/${encodeURIComponent(row.setName)}</loc>\n`;
+          xml += `    <lastmod>${currentDate}</lastmod>\n`;
+          xml += '    <changefreq>weekly</changefreq>\n';
+          xml += '    <priority>0.6</priority>\n';
+          xml += '  </url>\n';
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[Sitemap] Error generating sets sitemap:', e);
   }
 
   xml += '</urlset>';
