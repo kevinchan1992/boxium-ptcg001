@@ -1,5 +1,5 @@
 /**
- * BOXIUM PTCG - Cloudflare Workers OG Tag Injector
+ * BOXIUM TCG - Cloudflare Workers OG Tag Injector
  *
  * 這個 Worker 在 Cloudflare 邊緣層攔截社交媒體爬蟲請求，
  * 動態注入卡牌專屬的 Open Graph meta tags，

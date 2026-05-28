@@ -3,17 +3,56 @@ import { getPosts } from "./blogDb";
 import { sql } from "drizzle-orm";
 
 const BASE_URL = "https://boxium.asia";
-const CARDS_PER_SITEMAP = 45000; // Google limit is 50,000 URLs per sitemap file
+const CARDS_PER_SITEMAP = 10000; // Reduced from 45000 to speed up response time
+
+// ─── In-memory cache to avoid repeated DB queries ────────────────────────────
+interface CacheEntry {
+  data: string;
+  timestamp: number;
+}
+
+const sitemapCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
+
+function getCached(key: string): string | null {
+  const entry = sitemapCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    sitemapCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key: string, data: string): void {
+  sitemapCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ─── Card IDs cache (shared across sitemap generation) ───────────────────────
+let cardIdsCache: { ids: { id: number }[]; timestamp: number } | null = null;
+const CARD_IDS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function getCachedCardIds(): Promise<{ id: number }[]> {
+  if (cardIdsCache && Date.now() - cardIdsCache.timestamp < CARD_IDS_CACHE_TTL) {
+    return cardIdsCache.ids;
+  }
+  const ids = await getAllCardIds();
+  cardIdsCache = { ids, timestamp: Date.now() };
+  return ids;
+}
 
 /**
  * Generate sitemap index XML content
- * Points to individual sitemap files for static pages, cards, and blog posts
+ * Uses cached card count to avoid slow DB query on every request
  */
 export async function generateSitemapIndex(): Promise<string> {
+  const cached = getCached("sitemap-index");
+  if (cached) return cached;
+
   const currentDate = new Date().toISOString().split('T')[0];
 
-  // Count cards to determine how many card sitemaps we need
-  const cards = await getAllCardIds();
+  // Get card count for pagination
+  const cards = await getCachedCardIds();
   const totalCards = cards.length;
   const cardSitemapCount = Math.ceil(totalCards / CARDS_PER_SITEMAP);
 
@@ -47,6 +86,7 @@ export async function generateSitemapIndex(): Promise<string> {
   }
 
   xml += '</sitemapindex>';
+  setCache("sitemap-index", xml);
   return xml;
 }
 
@@ -54,13 +94,19 @@ export async function generateSitemapIndex(): Promise<string> {
  * Generate static pages sitemap
  */
 export async function generateStaticSitemap(): Promise<string> {
+  const cached = getCached("sitemap-static");
+  if (cached) return cached;
+
   const currentDate = new Date().toISOString().split('T')[0];
 
   const staticPages = [
     { url: "/", priority: "1.0", changefreq: "daily" },
     { url: "/research", priority: "0.9", changefreq: "daily" },
     { url: "/trending", priority: "0.9", changefreq: "hourly" },
+    { url: "/pricing", priority: "0.9", changefreq: "daily" },
+    { url: "/sets", priority: "0.8", changefreq: "weekly" },
     { url: "/blog", priority: "0.9", changefreq: "daily" },
+    { url: "/marketplace", priority: "0.8", changefreq: "daily" },
     { url: "/about", priority: "0.7", changefreq: "monthly" },
     { url: "/disclaimer", priority: "0.6", changefreq: "monthly" },
     { url: "/terms", priority: "0.6", changefreq: "monthly" },
@@ -80,6 +126,7 @@ export async function generateStaticSitemap(): Promise<string> {
   }
 
   xml += '</urlset>';
+  setCache("sitemap-static", xml);
   return xml;
 }
 
@@ -87,6 +134,9 @@ export async function generateStaticSitemap(): Promise<string> {
  * Generate blog posts sitemap
  */
 export async function generateBlogSitemap(): Promise<string> {
+  const cached = getCached("sitemap-blog");
+  if (cached) return cached;
+
   const currentDate = new Date().toISOString().split('T')[0];
 
   const postsResult = await getPosts({ status: 'published' });
@@ -106,6 +156,7 @@ export async function generateBlogSitemap(): Promise<string> {
   }
 
   xml += '</urlset>';
+  setCache("sitemap-blog", xml);
   return xml;
 }
 
@@ -114,9 +165,13 @@ export async function generateBlogSitemap(): Promise<string> {
  * Returns null if the page doesn't exist
  */
 export async function generateCardSitemap(page: number): Promise<string | null> {
+  const cacheKey = `sitemap-cards-${page}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   const currentDate = new Date().toISOString().split('T')[0];
 
-  const allCards = await getAllCardIds();
+  const allCards = await getCachedCardIds();
   const start = (page - 1) * CARDS_PER_SITEMAP;
   const end = start + CARDS_PER_SITEMAP;
 
@@ -137,6 +192,7 @@ export async function generateCardSitemap(page: number): Promise<string | null> 
   }
 
   xml += '</urlset>';
+  setCache(cacheKey, xml);
   return xml;
 }
 
@@ -144,6 +200,9 @@ export async function generateCardSitemap(page: number): Promise<string | null> 
  * Generate sets sitemap — includes /sets index page and all /set/:setCode pages
  */
 export async function generateSetsSitemap(): Promise<string> {
+  const cached = getCached("sitemap-sets");
+  if (cached) return cached;
+
   const currentDate = new Date().toISOString().split('T')[0];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -184,6 +243,7 @@ export async function generateSetsSitemap(): Promise<string> {
   }
 
   xml += '</urlset>';
+  setCache("sitemap-sets", xml);
   return xml;
 }
 
