@@ -43,7 +43,7 @@ import { serveStatic, setupVite } from "./vite";
 // import { startScheduler } from "../scheduler"; // Disabled: use priceUpdateScheduler instead
 // v10.1: Scheduler imports moved to dynamic imports inside deferred setTimeout
 // to reduce startup memory footprint and prevent OOM on Cloud Run (512MB limit)
-import { generateSitemap, generateSitemapIndex, generateStaticSitemap, generateBlogSitemap, generateCardSitemap, generateSetsSitemap } from "../sitemap";
+import { generateSitemap, generateSitemapIndex, generateStaticSitemap, generateBlogSitemap, generateCardSitemap, generateSetsSitemap, pregenerateSitemaps, getPregenSitemap, getPregenCardSitemap, isSitemapReady } from "../sitemap";
 import { Sentry } from "./sentry";
 import {
   botDetection,
@@ -996,6 +996,14 @@ async function startServer() {
   // Sitemap index route (points to individual sitemaps)
   app.get("/sitemap.xml", async (req, res) => {
     try {
+      // Serve pre-generated sitemap if available (fast path, < 1ms)
+      const pregen = getPregenSitemap("index");
+      if (pregen) {
+        res.header("Content-Type", "application/xml");
+        res.header("Cache-Control", "public, max-age=3600");
+        return res.send(pregen);
+      }
+      // Fallback: generate on-demand (slow path, first request after cold start)
       const sitemap = await generateSitemapIndex();
       res.header("Content-Type", "application/xml");
       res.header("Cache-Control", "public, max-age=3600"); // Cache 1 hour
@@ -1009,6 +1017,12 @@ async function startServer() {
   // Static pages sitemap
   app.get("/sitemap-static.xml", async (req, res) => {
     try {
+      const pregen = getPregenSitemap("static");
+      if (pregen) {
+        res.header("Content-Type", "application/xml");
+        res.header("Cache-Control", "public, max-age=86400");
+        return res.send(pregen);
+      }
       const sitemap = await generateStaticSitemap();
       res.header("Content-Type", "application/xml");
       res.header("Cache-Control", "public, max-age=86400"); // Cache 24 hours
@@ -1022,6 +1036,12 @@ async function startServer() {
   // Sets sitemap
   app.get("/sitemap-sets.xml", async (req, res) => {
     try {
+      const pregen = getPregenSitemap("sets");
+      if (pregen) {
+        res.header("Content-Type", "application/xml");
+        res.header("Cache-Control", "public, max-age=86400");
+        return res.send(pregen);
+      }
       const sitemap = await generateSetsSitemap();
       res.header("Content-Type", "application/xml");
       res.header("Cache-Control", "public, max-age=86400"); // Cache 24 hours
@@ -1035,6 +1055,12 @@ async function startServer() {
   // Blog posts sitemap
   app.get("/sitemap-blog.xml", async (req, res) => {
     try {
+      const pregen = getPregenSitemap("blog");
+      if (pregen) {
+        res.header("Content-Type", "application/xml");
+        res.header("Cache-Control", "public, max-age=3600");
+        return res.send(pregen);
+      }
       const sitemap = await generateBlogSitemap();
       res.header("Content-Type", "application/xml");
       res.header("Cache-Control", "public, max-age=3600"); // Cache 1 hour
@@ -1050,6 +1076,13 @@ async function startServer() {
     try {
       const page = parseInt(req.params.page, 10);
       if (isNaN(page) || page < 1) return res.status(404).send("Not found");
+      // Serve pre-generated card sitemap if available
+      const pregen = getPregenCardSitemap(page);
+      if (pregen) {
+        res.header("Content-Type", "application/xml");
+        res.header("Cache-Control", "public, max-age=3600");
+        return res.send(pregen);
+      }
       const sitemap = await generateCardSitemap(page);
       if (!sitemap) return res.status(404).send("Not found");
       res.header("Content-Type", "application/xml");
@@ -2252,6 +2285,28 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: Refresh Pre-generated Sitemaps (Heartbeat) ────
+  // Called by Manus Heartbeat daily at HKT 04:00 (UTC 20:00 previous day)
+  // Regenerates all sitemaps in memory so Google always gets fast responses.
+  app.post("/api/scheduled/refresh-sitemaps", async (req, res) => {
+    try {
+      console.log('[ScheduledTask] refresh-sitemaps: starting...');
+      const startTime = Date.now();
+      await pregenerateSitemaps();
+      const durationMs = Date.now() - startTime;
+      console.log(`[ScheduledTask] refresh-sitemaps: completed in ${durationMs}ms`);
+      return res.json({ ok: true, durationMs });
+    } catch (err: any) {
+      console.error('[ScheduledTask] refresh-sitemaps failed:', err?.message);
+      return res.status(500).json({
+        error: err?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined,
+        context: { url: req.url },
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   // ── Image proxy (bypass CDN hotlink protection) ──
@@ -2346,6 +2401,12 @@ async function startServer() {
     // Without this, the first search request after cold start waits ~1s for the DB query.
     // With this, the price map is ready before any user request arrives.
     preloadGlobalPriceMap().catch(err => console.error('[Server] preloadGlobalPriceMap failed:', err));
+    // v12.0: Pre-generate all sitemaps at startup so Google gets sub-100ms responses.
+    // Without this, Cloud Run cold starts cause 15-21s sitemap responses → Google "cannot read sitemap".
+    // Runs in background (non-blocking), completes in ~10-15s after startup.
+    setTimeout(() => {
+      pregenerateSitemaps().catch(err => console.error('[Sitemap] Startup pre-generation failed:', err));
+    }, 5_000); // 5s delay: let DB connections stabilize first
     // v10.0: DISABLED autoResumeOnStartup completely.
     // Root cause: batch update uses ~200MB+ RAM. Combined with base server (~150MB) + schedulers (~50MB),
     // total exceeds Cloud Run's 512MB limit → OOM kill → 503 Service Unavailable.

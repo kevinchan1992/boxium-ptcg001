@@ -9519,5 +9519,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Fix typos: BOXIUM PTCG → BOXIUM TCG across all source files (title, meta, emails, PDFs, OG tags)
 - [x] Fix typos: 卡牗/卡牧 → 卡牌, 遙戲王 → 遊戲王 in all page meta tags
 - [x] Fix: Sitemap response time optimized (10k URLs/file + in-memory cache, from 21s to <1s)
+- [x] Fix: Sitemap pre-generation at server startup (avoids Cloud Run cold start 15-21s delays)
+- [x] Add /api/scheduled/refresh-sitemaps endpoint for daily Heartbeat refresh
 - [x] Update Cloudflare Workers OG injector: BOXIUM PTCG → BOXIUM TCG
 - [ ] Update VITE_APP_TITLE to BOXIUM TCG (manual: Settings → General in Manus UI)
