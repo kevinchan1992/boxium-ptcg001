@@ -8,15 +8,15 @@ const BASE_URL = "https://boxium.asia";
 const CARDS_PER_SITEMAP = 10000; // 10k per file keeps each response < 2MB
 
 // ─── Static file paths ────────────────────────────────────────────────────────
-// In production, static files are in dist/public/ (same dir as compiled index.js).
-// In development, static files are in client/public/ (two levels up from server/).
+// IMPORTANT: Sitemap files are stored in /tmp/sitemaps/ (NOT in dist/public/).
+// This prevents express.static() from intercepting sitemap requests and serving
+// them without proper Cache-Control/CDN headers.
+// In development, we use a local .sitemaps/ directory.
 function getStaticPublicDir(): string {
   if (process.env.NODE_ENV === "production") {
-    // In production, __dirname is dist/ (where index.js lives), static files are in dist/public/
-    return path.resolve(import.meta.dirname, "public");
+    return "/tmp/sitemaps";
   } else {
-    // In development, __dirname is server/ (tsx watch), static files are in client/public/
-    return path.resolve(import.meta.dirname, "../client/public");
+    return path.resolve(import.meta.dirname, "../.sitemaps");
   }
 }
 
@@ -217,7 +217,9 @@ export async function generateStaticSitemapFiles(): Promise<void> {
     setsXml += "</urlset>";
     fs.writeFileSync(path.join(publicDir, "sitemap-sets.xml"), setsXml, "utf-8");
 
-    // ── 6. Write sitemap index ─────────────────────────────────────────────────
+    // ── 6. Build sitemap index (in-memory only, NOT written to disk) ──────────
+    // IMPORTANT: Do NOT write sitemap.xml to dist/public/ because express.static()
+    // would serve it without proper Cache-Control/CDN headers, bypassing our Express route.
     let indexXml = '<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     indexXml += `  <sitemap><loc>${BASE_URL}/sitemap-static.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
     indexXml += `  <sitemap><loc>${BASE_URL}/sitemap-sets.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
@@ -226,7 +228,7 @@ export async function generateStaticSitemapFiles(): Promise<void> {
       indexXml += `  <sitemap><loc>${BASE_URL}/sitemap-cards-${i + 1}.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
     }
     indexXml += "</sitemapindex>";
-    fs.writeFileSync(path.join(publicDir, "sitemap.xml"), indexXml, "utf-8");
+    // NOTE: sitemap.xml is served ONLY via Express dynamic route (with proper CDN headers)
 
     // ── 7. Also update in-memory store ────────────────────────────────────────
     sitemapStore = {
@@ -258,7 +260,7 @@ export async function pregenerateSitemaps(): Promise<void> {
 // ─── Legacy API (kept for backward compatibility) ─────────────────────────────
 
 export async function generateSitemapIndex(): Promise<string> {
-  return getPregenSitemap("index") ?? await _buildIndexFallback();
+  return getPregenSitemap("index") ?? _buildIndexFallback();
 }
 
 export async function generateStaticSitemap(): Promise<string> {
@@ -281,15 +283,20 @@ export async function generateSitemap(): Promise<string> {
   return generateSitemapIndex();
 }
 
-async function _buildIndexFallback(): Promise<string> {
+/**
+ * Fallback sitemap index when no pre-generated content is available (cold start).
+ * Uses a hardcoded card sitemap count (6) to avoid slow DB queries during cold start.
+ * This ensures Google gets a valid response even during cold start.
+ * The actual count will be corrected once pregenerateSitemaps() completes (~20s after startup).
+ */
+function _buildIndexFallback(): string {
   const currentDate = new Date().toISOString().split('T')[0];
-  const allCards = await getAllCardIds();
-  const cardSitemapCount = Math.ceil(allCards.length / CARDS_PER_SITEMAP);
+  const HARDCODED_CARD_SITEMAP_COUNT = 6; // ~55k cards / 10k per file = 6 files
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
   xml += `  <sitemap><loc>${BASE_URL}/sitemap-static.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
   xml += `  <sitemap><loc>${BASE_URL}/sitemap-sets.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
   xml += `  <sitemap><loc>${BASE_URL}/sitemap-blog.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
-  for (let i = 0; i < cardSitemapCount; i++) {
+  for (let i = 0; i < HARDCODED_CARD_SITEMAP_COUNT; i++) {
     xml += `  <sitemap><loc>${BASE_URL}/sitemap-cards-${i + 1}.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
   }
   xml += '</sitemapindex>';

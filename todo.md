@@ -9531,3 +9531,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 靜態 sitemap 文件加入 git（client/public/sitemap*.xml）
 - [ ] 設定 Heartbeat 每日呼叫 /api/scheduled/refresh-sitemaps 更新靜態文件
 - [ ] 驗證 Google Search Console 可讀取 sitemap.xml（cf-cache-status: HIT）
+
+## Sitemap Fix: express.static interception + CDN headers (2026-05-28)
+- [x] Diagnosed: dist/public/sitemap.xml was being served by express.static() without proper headers
+- [x] Moved sitemap cache to /tmp/sitemaps/ (prod) and .sitemaps/ (dev) to avoid express.static interception
+- [x] Added CDN-Cache-Control + Cloudflare-CDN-Cache-Control + s-maxage=86400 to all sitemap routes
+- [x] Made _buildIndexFallback() synchronous with hardcoded count (no DB query during cold start)
+- [x] Removed all static sitemap files from client/public/ (no longer needed there)
+- [ ] Deploy and verify Google Search Console can read sitemap.xml
