@@ -3174,6 +3174,7 @@ export async function getAllCardIds() {
   const result = await db
     .select({
       id: cards.id,
+      setName: cards.setName,
     })
     .from(cards)
     .orderBy(asc(cards.id));

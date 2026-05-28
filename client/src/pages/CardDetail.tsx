@@ -417,8 +417,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   return (
     <>
     <PageHead
-      title={`${product.name} 價格走勢 - BOXIUM TCG`}
-      description={`查看 ${product.name} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
+      title={!isSealedProduct && 'cardNumber' in product && product.cardNumber
+        ? `${product.cardNumber} | ${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} PSA 10 價格 - BOXIUM`
+        : `${product.name} 價格走勢 - BOXIUM TCG`}
+      description={`查看 ${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? `${product.cardNumber} ` : ''}${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
       ogImage={product.imageUrl ? getProxiedImageUrl(product.imageUrl) ?? undefined : undefined}
     />
     {/* JSON-LD structured data for Google rich results */}
@@ -428,7 +430,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Product",
-          name: product.name,
+          name: !isSealedProduct && 'cardNumber' in product && product.cardNumber
+            ? `${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} ${product.cardNumber}`
+            : product.name,
           ...(product.imageUrl ? { image: [getProxiedImageUrl(product.imageUrl) ?? product.imageUrl] } : {}),
           description: `${product.name} 寶可夢卡牌 - 查看即時市場價格、PSA 10 成交記錄及價格走勢分析。`,
           brand: {
@@ -548,7 +552,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             {/* Title */}
             <div>
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight mb-1">
-                {product.name}
+                {!isSealedProduct && 'cardNumber' in product && product.cardNumber
+                  ? `[${product.cardNumber}] ${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()}`
+                  : product.name}
               </h1>
               {product.nameJa && (
                 <p className="text-sm text-zinc-400">{product.nameJa}</p>

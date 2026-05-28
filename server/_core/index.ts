@@ -1114,6 +1114,25 @@ async function startServer() {
     }
   });
   
+  // Per-series card sitemaps: /sitemap-series-xyp.xml, etc.
+  app.get("/sitemap-series-:name.xml", async (req, res) => {
+    try {
+      const name = req.params.name;
+      if (!name) return res.status(404).send("Not found");
+      const { getPregenSeriesSitemap } = await import("../sitemap");
+      const content = getPregenSeriesSitemap(name);
+      if (!content) return res.status(404).send("Not found");
+      res.header("Content-Type", "application/xml; charset=utf-8");
+      res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
+      res.header("CDN-Cache-Control", "max-age=86400");
+      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
+      res.send(content);
+    } catch (error) {
+      console.error("[Sitemap] Error serving series sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   // Development environment scraper API (only available in development)
   if (process.env.NODE_ENV === "development") {
     const { verifyDevScraperAuth } = await import("../middleware/devScraperAuth");
@@ -1608,23 +1627,36 @@ async function startServer() {
       const setName = card?.setName || null;
       const rarity = card?.rarity || null;
 
-      // Dynamic SEO Title: simplified card name + card number + price + Japanese name
-      // Format: Gengar V SGG 001/019 價格 HKD 1,018 (PSA 10) | ゲンガーV 查價 - BOXIUM
-      const titleCardNum = cardNumber ? ` ${cardNumber}` : '';
-      const titleJa = nameJa ? ` | ${nameJa} 查價` : '';
+      // Dynamic SEO Title: card number FIRST + simplified name + price
+      // Format: XY-P 207/XY-P | Pikachu wearing a poncho PSA 10 HKD 191,400 - BOXIUM
+      // Rationale: Google gives highest weight to the first 3-5 words in <title>.
+      // Users search by card number (e.g., "XY-P 207"), so it MUST be first.
       // Simplify card name for title: remove brackets content like [SGG 001/019] and (High Class Deck...)
       const simplifiedName = cardName.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim();
       let ogTitle: string;
-      if (psa10Price !== null) {
-        ogTitle = `${simplifiedName}${titleCardNum} 價格 HKD ${psa10Price.toLocaleString()} (PSA 10)${titleJa} - BOXIUM`;
+      if (cardNumber && psa10Price !== null) {
+        // Best case: number + name + price → "XY-P 207/XY-P | Pikachu poncho PSA 10 HKD 191,400 - BOXIUM"
+        ogTitle = `${cardNumber} | ${simplifiedName} PSA 10 價格 HKD ${psa10Price.toLocaleString()} - BOXIUM`;
+      } else if (cardNumber) {
+        ogTitle = `${cardNumber} | ${simplifiedName} PSA 10 價格查詢 - BOXIUM`;
+      } else if (psa10Price !== null) {
+        ogTitle = `${simplifiedName} PSA 10 價格 HKD ${psa10Price.toLocaleString()} - BOXIUM`;
       } else {
-        ogTitle = `${simplifiedName}${titleCardNum} PSA 10 價格查詢${titleJa} - BOXIUM`;
+        ogTitle = `${simplifiedName} PSA 10 價格查詢 - BOXIUM`;
       }
       // Ensure title doesn't exceed ~60 chars for Google display
       if (ogTitle.length > 65) {
-        ogTitle = psa10Price !== null
-          ? `${simplifiedName}${titleCardNum} HKD ${psa10Price.toLocaleString()} (PSA 10) - BOXIUM`
-          : `${simplifiedName}${titleCardNum} PSA 10 查價 - BOXIUM`;
+        if (cardNumber && psa10Price !== null) {
+          ogTitle = `${cardNumber} | ${simplifiedName} HKD ${psa10Price.toLocaleString()} - BOXIUM`;
+        } else if (cardNumber) {
+          ogTitle = `${cardNumber} | ${simplifiedName} - BOXIUM`;
+        } else {
+          ogTitle = `${simplifiedName} PSA 10 查價 - BOXIUM`;
+        }
+      }
+      // Final truncation safety
+      if (ogTitle.length > 70) {
+        ogTitle = ogTitle.slice(0, 67) + '...';
       }
 
       // Dynamic Meta Description with real-time price, 7-day trend, and long-tail keywords
@@ -1663,10 +1695,14 @@ async function startServer() {
       // Build Product JSON-LD optimized for Google Rich Snippets (price display)
       // Google requires: name, image, offers (with price, priceCurrency, availability)
       // Optional but helpful: sku, brand, description, review, aggregateRating
+      // Product name for JSON-LD: "CardName CardNumber" format for SKU matching
+      const productName = cardNumber
+        ? `${simplifiedName} ${cardNumber}`
+        : simplifiedName;
       const productJsonLd: Record<string, unknown> = {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: cardName,
+        name: productName,
         description: ogDescription,
         url: pageUrl,
         // Use ImageObject for richer image SEO (Google Images indexing)
@@ -1674,13 +1710,15 @@ async function startServer() {
           '@type': 'ImageObject',
           url: cardImageUrl || imageUrl,
           name: imageAltText,
-          caption: `${cardName}${cardNumber ? ` ${cardNumber}` : ''} Pokemon TCG 卡牌`,
+          caption: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} Pokemon TCG 卡牌`,
           contentUrl: cardImageUrl || imageUrl,
         },
         brand: { '@type': 'Brand', name: 'Pokemon TCG' },
         sku: cardNumber || `BOXIUM-${id}`,
-        mpn: cardNumber || undefined,
+        mpn: cardNumber ? cardNumber.replace(/\//g, '-') : undefined,
         category: 'Collectible Trading Cards',
+        // Additional identifiers for search matching
+        productID: cardNumber || `BOXIUM-${id}`,
       };
 
       // Determine the primary price and availability for Rich Snippets

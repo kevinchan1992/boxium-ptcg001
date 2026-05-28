@@ -82,6 +82,13 @@ export function getPregenCardSitemap(page: number): string | null {
   return sitemapStore.cards[page - 1] ?? null;
 }
 
+export function getPregenSeriesSitemap(name: string): string | null {
+  // Try static file first
+  const staticContent = readStaticSitemap(`sitemap-series-${name}.xml`);
+  if (staticContent) return staticContent;
+  return null;
+}
+
 export function getSitemapCardCount(): number {
   // Count static card sitemap files
   const publicDir = getStaticPublicDir();
@@ -217,6 +224,34 @@ export async function generateStaticSitemapFiles(): Promise<void> {
     setsXml += "</urlset>";
     fs.writeFileSync(path.join(publicDir, "sitemap-sets.xml"), setsXml, "utf-8");
 
+    // ── 5b. Write per-series card sitemaps (e.g., sitemap-series-xyp.xml) ────────
+    // Group cards by setName and create individual series sitemaps.
+    // This helps Google discover all cards in a specific series at once.
+    const cardsBySet = new Map<string, number[]>();
+    for (const card of allCards) {
+      if (card.setName) {
+        const existing = cardsBySet.get(card.setName) || [];
+        existing.push(card.id);
+        cardsBySet.set(card.setName, existing);
+      }
+    }
+    const seriesSitemapNames: string[] = [];
+    for (const [setName, cardIds] of cardsBySet.entries()) {
+      // Create a URL-safe filename from the set name
+      const safeSetName = setName.replace(/[^a-zA-Z0-9-]/g, '_').toLowerCase().slice(0, 50);
+      const seriesFilename = `sitemap-series-${safeSetName}.xml`;
+      let seriesXml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+      // Add the set page itself
+      seriesXml += `  <url><loc>${BASE_URL}/set/${encodeURIComponent(setName)}</loc><lastmod>${currentDate}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>\n`;
+      for (const cardId of cardIds) {
+        seriesXml += `  <url><loc>${BASE_URL}/card/${cardId}</loc><lastmod>${currentDate}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>\n`;
+      }
+      seriesXml += "</urlset>";
+      fs.writeFileSync(path.join(publicDir, seriesFilename), seriesXml, "utf-8");
+      seriesSitemapNames.push(seriesFilename);
+    }
+    console.log(`[Sitemap] Wrote ${seriesSitemapNames.length} per-series sitemap files`);
+
     // ── 6. Build sitemap index (in-memory only, NOT written to disk) ──────────
     // IMPORTANT: Do NOT write sitemap.xml to dist/public/ because express.static()
     // would serve it without proper Cache-Control/CDN headers, bypassing our Express route.
@@ -226,6 +261,10 @@ export async function generateStaticSitemapFiles(): Promise<void> {
     indexXml += `  <sitemap><loc>${BASE_URL}/sitemap-blog.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
     for (let i = 0; i < cardSitemapCount; i++) {
       indexXml += `  <sitemap><loc>${BASE_URL}/sitemap-cards-${i + 1}.xml</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
+    }
+    // Add per-series sitemaps to the index
+    for (const seriesFilename of seriesSitemapNames) {
+      indexXml += `  <sitemap><loc>${BASE_URL}/${seriesFilename}</loc><lastmod>${currentDate}</lastmod></sitemap>\n`;
     }
     indexXml += "</sitemapindex>";
     // NOTE: sitemap.xml is served ONLY via Express dynamic route (with proper CDN headers)

@@ -9539,3 +9539,16 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Made _buildIndexFallback() synchronous with hardcoded count (no DB query during cold start)
 - [x] Removed all static sitemap files from client/public/ (no longer needed there)
 - [ ] Deploy and verify Google Search Console can read sitemap.xml
+
+## SEO 優化：卡牌編號搜尋精準命中 (2026-05-28)
+- [x] 修改 SSR Title 結構：將卡牌編號放在最前面（如 `XY-P 207/XY-P | Pikachu... PSA 10 價格 HKD 188,320 - BOXIUM`）
+- [x] 修改 og:title 同步更新
+- [x] 修改前端 H1 標籤：編號放在最前面
+- [x] 修改前端 PageHead title：編號放在最前面
+- [x] 修改 Product JSON-LD name：編號放在最前面
+- [x] 修改 mpn 使用 `-` 替代 `/`（避免 URL 混淆）
+- [x] 建立按系列分類的 Sitemap（448 個系列 sitemap，如 sitemap-series-xy-p.xml）
+- [x] 加入 sitemap-series-:name.xml Express 路由（含 CDN cache headers）
+- [x] sitemap.xml index 包含所有 457 個子 sitemap
+- [ ] 部署後到 Google Search Console 重新提交 sitemap.xml
+- [ ] 在 Cloudflare 設定 Cache Rule：sitemap*.xml → Cache Everything (24h)
