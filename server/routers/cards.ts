@@ -675,7 +675,8 @@ export const cardsRouter = router({
       .input(z.object({
         cardId: z.number(),
         series: z.string().optional(),
-        limit: z.number().optional().default(6),
+        setName: z.string().optional(),
+        limit: z.number().optional().default(12),
       }))
       .query(async ({ input }) => {
         const card = await db.getCardById(input.cardId);
@@ -683,23 +684,50 @@ export const cardsRouter = router({
         const dbConn = await (await import('../db')).getDb();
         if (!dbConn) return [];
         const { cards: cardsTable } = await import('../../drizzle/schema_new');
-        const { and, ne, like, eq } = await import('drizzle-orm');
+        const { and, ne, like, eq, desc, sql } = await import('drizzle-orm');
         let similar: any[] = [];
-        // Priority 1: Use series field if provided (most accurate)
-        if (input.series) {
+
+        // Priority 1: Same setName (same expansion pack) - best for internal linking
+        const targetSetName = input.setName || card.setName;
+        if (targetSetName) {
           similar = await dbConn
             .select()
             .from(cardsTable)
             .where(
               and(
                 ne(cardsTable.id, input.cardId),
-                eq(cardsTable.series, input.series)
+                eq(cardsTable.setName, targetSetName)
               )
             )
+            .orderBy(desc(cardsTable.id))
             .limit(input.limit);
         }
-        // Fallback: Extract set code from name e.g. [SM11b] -> SM11b
-        if (similar.length < 3) {
+
+        // Fallback 1: Same series (broader category)
+        if (similar.length < 6) {
+          const targetSeries = input.series || card.series;
+          if (targetSeries) {
+            const extra = await dbConn
+              .select()
+              .from(cardsTable)
+              .where(
+                and(
+                  ne(cardsTable.id, input.cardId),
+                  eq(cardsTable.series, targetSeries)
+                )
+              )
+              .orderBy(desc(cardsTable.id))
+              .limit(input.limit * 2);
+            const existingIds = new Set(similar.map((c: any) => c.id));
+            for (const c of extra) {
+              if (!existingIds.has(c.id)) similar.push(c);
+              if (similar.length >= input.limit) break;
+            }
+          }
+        }
+
+        // Fallback 2: Extract set code from name e.g. [SM11b] -> SM11b
+        if (similar.length < 6) {
           const setCodeMatch = card.name.match(/\[([A-Za-z0-9]+)/);
           const setCode = setCodeMatch ? setCodeMatch[1] : null;
           if (setCode) {
@@ -712,6 +740,7 @@ export const cardsRouter = router({
                   like(cardsTable.name, `%${setCode}%`)
                 )
               )
+              .orderBy(desc(cardsTable.id))
               .limit(input.limit * 2);
             const existingIds = new Set(similar.map((c: any) => c.id));
             for (const c of extra) {
@@ -720,8 +749,9 @@ export const cardsRouter = router({
             }
           }
         }
+
         // Final fallback: same character name (first word)
-        if (similar.length < 3) {
+        if (similar.length < 6) {
           const characterName = card.name.split(/[\s\[\(]/)[0] || '';
           if (characterName) {
             const extra = await dbConn
@@ -733,6 +763,7 @@ export const cardsRouter = router({
                   like(cardsTable.name, `%${characterName}%`)
                 )
               )
+              .orderBy(desc(cardsTable.id))
               .limit(input.limit * 2);
             const existingIds = new Set(similar.map((c: any) => c.id));
             for (const c of extra) {

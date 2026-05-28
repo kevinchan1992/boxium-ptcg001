@@ -9498,3 +9498,7 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Description with real-time price, 7-day trend, long-tail keywords
 - [x] Confirm frontend h1 tag contains full card name and number
 - [x] Add FAQ JSON-LD structured data (auto-generated Q&A)
+- [x] 內部連結網絡：將「相似卡牌」改為「同系列卡牌」（優先 setName → series → set code → character name）
+- [x] 前端 button 改為 a 標籤，讓 Google 爬蟲可以跟隨連結
+- [x] 加入 title 屬性和 aria-label，增加 SEO 語義
+- [x] 數量從 6 張增加到 12 張，增加內部連結密度
