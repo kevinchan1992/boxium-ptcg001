@@ -1517,30 +1517,61 @@ async function startServer() {
         }
       } catch (_e) { /* non-critical */ }
 
+      // Fetch 7-day price change percentage from trendingCardsCache (non-critical)
+      let priceChange7d: number | null = null;
+      let latestSinglePrice: number | null = null;
+      try {
+        const { getDb } = await import('../db');
+        const { trendingCardsCache } = await import('../../drizzle/schema_new');
+        const { eq } = await import('drizzle-orm');
+        const dbInst = await getDb();
+        const trendRow = await dbInst
+          .select({ priceChange7d: trendingCardsCache.priceChange7d, currentPrice: trendingCardsCache.currentPrice })
+          .from(trendingCardsCache)
+          .where(eq(trendingCardsCache.cardId, id))
+          .limit(1);
+        if (trendRow && trendRow.length > 0) {
+          priceChange7d = parseFloat(trendRow[0].priceChange7d);
+          latestSinglePrice = parseFloat(trendRow[0].currentPrice);
+        }
+      } catch (_e) { /* non-critical */ }
+
       // --- SEO-optimized title, description, and keywords ---
       const cardNumber = card?.cardNumber || null;
       const nameJa = card?.nameJa || null;
       const setName = card?.setName || null;
       const rarity = card?.rarity || null;
 
-      // Title: 卡牌名稱 卡號 PSA 10 價格 HKD XXX | BOXIUM PTCG
+      // Dynamic SEO Title: simplified card name + card number + price + Japanese name
+      // Format: Gengar V SGG 001/019 價格 HKD 1,018 (PSA 10) | ゲンガーV 查價 - BOXIUM
       const titleCardNum = cardNumber ? ` ${cardNumber}` : '';
+      const titleJa = nameJa ? ` | ${nameJa} 查價` : '';
+      // Simplify card name for title: remove brackets content like [SGG 001/019] and (High Class Deck...)
+      const simplifiedName = cardName.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim();
       let ogTitle: string;
       if (psa10Price !== null) {
-        ogTitle = `${cardName}${titleCardNum} PSA 10 價格 HKD ${psa10Price} | BOXIUM PTCG`;
+        ogTitle = `${simplifiedName}${titleCardNum} 價格 HKD ${psa10Price.toLocaleString()} (PSA 10)${titleJa} - BOXIUM`;
       } else {
-        ogTitle = `${cardName}${titleCardNum} | PSA 10 價格查詢 | BOXIUM PTCG`;
+        ogTitle = `${simplifiedName}${titleCardNum} PSA 10 價格查詢${titleJa} - BOXIUM`;
+      }
+      // Ensure title doesn't exceed ~60 chars for Google display
+      if (ogTitle.length > 65) {
+        ogTitle = psa10Price !== null
+          ? `${simplifiedName}${titleCardNum} HKD ${psa10Price.toLocaleString()} (PSA 10) - BOXIUM`
+          : `${simplifiedName}${titleCardNum} PSA 10 查價 - BOXIUM`;
       }
 
-      // Meta description: ~150 chars, include name, nameJa, cardNumber, setName, price
+      // Dynamic Meta Description with real-time price, 7-day trend, and long-tail keywords
       const descJa = nameJa ? `（${nameJa}）` : '';
       const descNum = cardNumber ? ` ${cardNumber}` : '';
-      const descSet = setName ? `查看${setName}完整價格趨勢、歷史成交記錄及市場分析。` : '查看完整價格趨勢、歷史成交記錄及市場分析。';
+      const trendText = priceChange7d !== null && priceChange7d !== 0
+        ? `近 7 天價格趨勢${priceChange7d > 0 ? '上漲' : '下跌'} ${Math.abs(priceChange7d).toFixed(1)}%。`
+        : '';
       let ogDescription: string;
       if (psa10Price !== null) {
-        ogDescription = `${cardName}${descJa}${descNum} PSA 10 最新成交價 HKD ${psa10Price}。${descSet}BOXIUM PTCG 香港最全面卡牌格價平台。`;
+        ogDescription = `提供最新寶可夢卡牌 ${simplifiedName}${descJa}${descNum} 的市場格價與 PSA 10 成交紀錄。目前最近成交價為 HKD ${psa10Price.toLocaleString()}。${trendText}想買賣 TCG 卡牌、查詢最新 PTCG 歷史價格走勢，就上 BOXIUM！`;
       } else {
-        ogDescription = `${cardName}${descJa}${descNum} PSA 10 價格查詢。${descSet}BOXIUM PTCG 香港最全面卡牌格價平台。`;
+        ogDescription = `提供最新寶可夢卡牌 ${simplifiedName}${descJa}${descNum} 的市場格價與 PSA 10 成交紀錄查詢。${trendText}想買賣 TCG 卡牌、查詢最新 PTCG 歷史價格走勢，就上 BOXIUM！`;
       }
       // Truncate to 160 chars for Google snippet
       if (ogDescription.length > 160) ogDescription = ogDescription.slice(0, 157) + '...';
@@ -1654,9 +1685,76 @@ async function startServer() {
         ],
       };
 
+      // Build FAQ JSON-LD for Google FAQ Rich Snippets
+      // Auto-generate Q&A based on available card data
+      const faqItems: Array<{ question: string; answer: string }> = [];
+
+      // Q1: Current PSA 10 price
+      if (psa10Price !== null) {
+        faqItems.push({
+          question: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} 目前的 PSA 10 價格是多少？`,
+          answer: `根據 BOXIUM 最新數據，${simplifiedName}${cardNumber ? `（${cardNumber}）` : ''} 的 PSA 10 最近成交價為 HKD ${psa10Price.toLocaleString()}。${priceChange7d !== null && priceChange7d !== 0 ? `近 7 天價格${priceChange7d > 0 ? '上漲' : '下跌'}了 ${Math.abs(priceChange7d).toFixed(1)}%。` : ''}價格每日更新，請以網站顯示為準。`,
+        });
+      } else {
+        faqItems.push({
+          question: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} 目前的 PSA 10 價格是多少？`,
+          answer: `${simplifiedName}${cardNumber ? `（${cardNumber}）` : ''} 目前暫無足夠的 PSA 10 成交記錄來計算參考價格。請在 BOXIUM 追蹤此卡片以獲取最新價格更新。`,
+        });
+      }
+
+      // Q2: Where to buy
+      if (lowestListingPrice !== null) {
+        faqItems.push({
+          question: `哪裡可以買到 ${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''}？`,
+          answer: `您可以在 BOXIUM 市集查看 ${simplifiedName} 的在售商品，目前最低售價為 HKD ${lowestListingPrice.toLocaleString()}。您也可以在 SNKRDUNK 等平台購買。`,
+        });
+      } else {
+        faqItems.push({
+          question: `哪裡可以買到 ${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''}？`,
+          answer: `您可以在 BOXIUM 市集查看 ${simplifiedName} 的在售商品，或在 SNKRDUNK、Yahoo 拍賣等平台搜尋。請在 BOXIUM 設定價格提醒以獲取最新上架通知。`,
+        });
+      }
+
+      // Q3: Price trend
+      if (priceChange7d !== null && priceChange7d !== 0) {
+        faqItems.push({
+          question: `${simplifiedName} 的價格走勢如何？`,
+          answer: `${simplifiedName} 近 7 天價格${priceChange7d > 0 ? '上漲' : '下跌'}了 ${Math.abs(priceChange7d).toFixed(1)}%。${psa10Price ? `目前 PSA 10 參考價為 HKD ${psa10Price.toLocaleString()}。` : ''}您可以在 BOXIUM 查看完整的歷史價格走勢圖表。`,
+        });
+      }
+
+      // Q4: Card info (set, rarity)
+      if (setName || rarity) {
+        const infoAnswer = [
+          `${simplifiedName}`,
+          cardNumber ? `編號為 ${cardNumber}` : '',
+          setName ? `屬於「${setName}」系列` : '',
+          rarity ? `稀有度為 ${rarity}` : '',
+          nameJa ? `日文名為「${nameJa}」` : '',
+        ].filter(Boolean).join('，') + '。';
+        faqItems.push({
+          question: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} 是什麼卡片？`,
+          answer: infoAnswer,
+        });
+      }
+
+      const faqJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      };
+
       const jsonLdScripts = [
         `<script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`,
         `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd)}</script>`,
+        `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>`,
       ].join('\n    ');
 
       const ogTags = [

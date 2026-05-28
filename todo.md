@@ -9488,3 +9488,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] PricingDetail.tsx 卡牌圖片 alt 優化
 - [x] PricingSearch.tsx 搜尋結果圖片 alt 優化
 - [x] SearchResults.tsx 搜尋結果圖片 alt 優化
+
+# Dynamic SEO Title/Description + FAQ Schema (2026-05-28)
+- [ ] Title format: CardName CardNumber Price HKD X,XXX (PSA 10) | JapaneseName - BOXIUM
+- [ ] Description with real-time price, 7-day trend, long-tail keywords
+- [ ] Confirm frontend h1 tag contains full card name and number
+- [ ] Add FAQ JSON-LD structured data (auto-generated Q&A)
+- [x] Title format: CardName CardNumber Price HKD X,XXX (PSA 10) | JapaneseName - BOXIUM
+- [x] Description with real-time price, 7-day trend, long-tail keywords
+- [x] Confirm frontend h1 tag contains full card name and number
+- [x] Add FAQ JSON-LD structured data (auto-generated Q&A)
