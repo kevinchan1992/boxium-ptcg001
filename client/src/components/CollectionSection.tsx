@@ -52,7 +52,9 @@ import {
   CheckSquare2, Square, CalendarDays, Trash, ArrowLeftRight,
 } from "lucide-react";
 import { TradeSheet } from "@/components/TradeSheet";
-import ReactCrop, { type Crop as CropType } from "react-image-crop";
+import ReactCropBase, { type Crop as CropType, type ReactCropProps } from "react-image-crop";
+// Type cast to fix React 19 PureComponent incompatibility
+const ReactCrop = ReactCropBase as unknown as React.FC<ReactCropProps>;
 import "react-image-crop/dist/ReactCrop.css";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { LazyImage } from "@/components/LazyImage";

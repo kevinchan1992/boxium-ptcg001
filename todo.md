@@ -9562,3 +9562,13 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] 部署並驗證生產環境
 - [ ] 提供 Cloudflare Cache Rule 設定指引（解決 cf-cache-status: DYNAMIC）
 - [x] Fix CORS Vary: Origin header blocking Cloudflare cache for sitemaps
+
+## TypeScript 錯誤修復：recharts v2→v3 升級 + ReactCrop React 19 相容性 (2026-05-29)
+- [x] 升級 recharts 從 2.15.4 到 3.8.1（正式支援 React 19，100 個 TS 錯誤降至 5 個）
+- [x] 修復 SellerDashboard.tsx Tooltip formatter 類型錯誤（value: number → value: ValueType）
+- [x] 修復 MarketplaceListing.tsx Tooltip formatter 類型錯誤
+- [x] 修復 AdminGrading.tsx Tooltip formatter 類型錯誤
+- [x] 修復 CollectionSection.tsx ReactCrop React 19 PureComponent 不相容問題（類型斷言）
+- [x] 建立 client/src/types/react-image-crop.d.ts 類型聲明覆蓋文件（備用方案）
+- [x] 驗證：npx tsc --noEmit 退出碼 0，0 個錯誤
+- [x] 儲存 checkpoint 並部署

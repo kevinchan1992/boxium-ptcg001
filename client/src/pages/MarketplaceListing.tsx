@@ -363,7 +363,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} />
                 <RechartsTooltip
-                  formatter={(value: number) => [`HKD ${value.toLocaleString()}`, "均價"]}
+                  formatter={(value) => [`HKD ${Number(value ?? 0).toLocaleString()}`, "均價"] as [string, string]}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
                 />
                 <ReferenceLine y={listingPriceHkd} stroke="#FEDD00" strokeDasharray="4 2" strokeWidth={2} label={{ value: "此商品", fontSize: 10, fill: "#06038D" }} />

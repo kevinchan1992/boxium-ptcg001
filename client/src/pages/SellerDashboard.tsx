@@ -478,7 +478,7 @@ function EarningsTab() {
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v: number) => `$${v}`} width={48} />
               <Tooltip
-                formatter={(value: number) => [`HKD ${value.toFixed(0)}`, '淨收入']}
+                formatter={(value) => [`HKD ${Number(value ?? 0).toFixed(0)}`, '淨收入'] as [string, string]}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
               />
               <Bar dataKey="revenue" fill="#06038d" radius={[4, 4, 0, 0]} name={t("seller.completedOrders.netIncome")} />

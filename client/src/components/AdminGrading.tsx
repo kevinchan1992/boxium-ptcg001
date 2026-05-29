@@ -2209,10 +2209,10 @@ function GradingMonthlyRevenueChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)}
             />
             <Tooltip
-              formatter={(value: number, name: string) => [
-                `HKD ${value.toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`,
-                name,
-              ]}
+              formatter={(value, name) => [
+                `HKD ${Number(value ?? 0).toLocaleString('zh-HK', { minimumFractionDigits: 2 })}`,
+                String(name ?? ''),
+              ] as [string, string]}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
