@@ -156,10 +156,10 @@ export default function Blog() {
                           {featuredPost.dataSource === 'ai-generated' && (
                             <Badge variant="outline" className="border-purple-500 text-purple-600 bg-purple-50">
                               <Sparkles className="w-3 h-3 mr-1" />
-                              AI 生成
+                              {t("blog.aiGenerated")}
                             </Badge>
                           )}
-                          <Badge className="bg-[#FEDD00] text-[#0033CC] hover:bg-[#FEDD00]/90">精選文章</Badge>
+                          <Badge className="bg-[#FEDD00] text-[#0033CC] hover:bg-[#FEDD00]/90">{t("blog.featured")}</Badge>
                         </div>
                         <h3 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-[#0033CC] transition-colors">
                           {getLocalizedContent(featuredPost, 'title')}

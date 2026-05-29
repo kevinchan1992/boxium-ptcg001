@@ -118,7 +118,7 @@ export default function Cart() {
     onSuccess: (data) => {
       utils.marketplace.getMyCart.invalidate();
       utils.marketplace.getCartCount.invalidate();
-      toast.success(`已移除 ${data.removed} 件無效商品`);
+      toast.success(t("cart.removedUnavailable", { count: data.removed }));
     },
     onError: () => toast.error(t("cart.removalFailed")),
   });
@@ -255,7 +255,7 @@ export default function Cart() {
               </Link>
               <button onClick={() => window.history.back()} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
                 <ArrowLeft className="w-4 h-4" />
-                返回
+                {t("common.back")}
               </button>
             </div>
             <div className="flex items-center gap-3">
@@ -278,7 +278,7 @@ export default function Cart() {
                 style={{ background: "#FEDD00", color: "#06038D" }}
                 onClick={() => window.location.href = '/login'}
               >
-                立即登入
+                {t("common.loginNow")}
               </Button>
               <Link href="/marketplace">
                 <p className="text-white/50 text-sm mt-4 hover:text-white/80 cursor-pointer transition-colors">{t("cart.loginPrompt.browseMarketplace")}</p>
@@ -293,7 +293,7 @@ export default function Cart() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-gray-500">載入中...</div>
+        <div className="text-center text-gray-500">{t("common.loading")}</div>
       </div>
     );
   }
@@ -320,27 +320,27 @@ export default function Cart() {
               <div className="w-16 h-16 bg-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">付款成功！</h2>
-              <p className="text-white/80 text-sm">Stripe 信用卡付款已確認</p>
+              <h2 className="text-2xl font-bold text-white mb-2">{t("cart.paymentSuccess")}</h2>
+              <p className="text-white/80 text-sm">{t("cart.stripePaymentConfirmed")}</p>
             </div>
             {/* Order numbers */}
             <div className="p-6">
               {stripeOrderNos.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-gray-700 mb-3">已建立 {stripeOrderNos.length} 個訂單：</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">{t("cart.ordersCreated", { count: stripeOrderNos.length })}</p>
                   {stripeOrderNos.map((orderNo) => (
                     <div key={orderNo} className="rounded-xl border border-gray-100 overflow-hidden">
                       <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
                         <div>
-                          <p className="text-xs text-gray-500">訂單編號</p>
+                          <p className="text-xs text-gray-500">{t("cart.orderNo")}</p>
                           <p className="font-mono font-semibold text-gray-800 text-sm">#{orderNo}</p>
                         </div>
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">等待出貨</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">{t("cart.waitingShipment")}</span>
                       </div>
                       <Link href={`/orders/${orderNo}`}>
                         <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-[#06038D]/5 transition-colors cursor-pointer border-t border-gray-100">
                           <Package className="w-3.5 h-3.5 text-[#06038D]" />
-                          <span className="text-xs font-semibold text-[#06038D]">查看訂單狀態</span>
+                          <span className="text-xs font-semibold text-[#06038D]">{t("cart.viewOrderStatus")}</span>
                           <ChevronRight className="w-3.5 h-3.5 text-[#06038D]" />
                         </div>
                       </Link>
@@ -349,12 +349,12 @@ export default function Cart() {
                   {/* Shipping progress hint */}
                   <div className="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-2">
                     <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700 leading-relaxed">賣家將於確認後安排出貨，你可在訂單詳情頁查看物流追蹤號碼。</p>
+                    <p className="text-xs text-amber-700 leading-relaxed">{t("cart.sellerWillShip")}</p>
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">訂單已建立，請前往「我的訂單」查看詳情</p>
+                  <p className="text-sm text-gray-500">{t("cart.orderCreatedGoToOrders")}</p>
                 </div>
               )}
               <div className="mt-6 space-y-3">
@@ -364,13 +364,13 @@ export default function Cart() {
                   style={{ backgroundColor: '#06038D' }}
                 >
                   <Package className="w-4 h-4" />
-                  {stripeOrderNos.length === 1 ? '查看訂單狀態' : '前往我的訂單'}
+                  {stripeOrderNos.length === 1 ? t("cart.viewOrderStatus") : t("cart.goToOrders")}
                 </button>
                 <button
                   onClick={() => setLocation('/marketplace')}
                   className="w-full py-3 rounded-xl text-gray-700 font-semibold text-sm border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
-                  繼續購物
+                  {t("cart.continueShopping")}
                 </button>
               </div>
             </div>
@@ -393,7 +393,7 @@ export default function Cart() {
             </Link>
             <button onClick={() => setLocation("/marketplace")} className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
               <ArrowLeft className="w-4 h-4" />
-              返回市集
+              {t("cart.backToMarketplace")}
             </button>
           </div>
           {/* Title row */}
@@ -401,7 +401,7 @@ export default function Cart() {
             <ShoppingCart className="w-7 h-7 text-white" />
             <h1 className="text-2xl font-bold text-white">{t("cart.title")}</h1>
             {!isEmpty && (
-              <span className="text-sm text-white/60">（{(cartItems?.length ?? 0) + (pendingAuctionOrders?.length ?? 0)} 件商品）</span>
+              <span className="text-sm text-white/60">（{(cartItems?.length ?? 0) + (pendingAuctionOrders?.length ?? 0)} {t("cart.itemCount")}）</span>
             )}
           </div>
         </div>
@@ -411,11 +411,11 @@ export default function Cart() {
         {isEmpty ? (
           <div className="flex flex-col items-center py-10 gap-4">
             <ShoppingCart className="w-16 h-16 text-gray-200" />
-            <h2 className="text-xl font-semibold text-gray-500">購物車是空的</h2>
-            <p className="text-gray-400 text-sm">去市集逛逛，找到喜歡的卡牌加入購物車吧！</p>
+            <h2 className="text-xl font-semibold text-gray-500">{t("cart.empty.title")}</h2>
+            <p className="text-gray-400 text-sm">{t("cart.empty.message")}</p>
             <Link href="/marketplace">
               <Button className="bg-[#06038D] text-white hover:bg-[#06038D]/90">
-                前往市集
+                {t("cart.empty.goToMarketplace")}
               </Button>
             </Link>
             {/* Recommended listings */}
@@ -424,7 +424,7 @@ export default function Cart() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-bold text-gray-700">{recommendedListings.label}</h3>
                   <Link href="/marketplace">
-                    <span className="text-sm text-[#06038D] hover:underline cursor-pointer">查看全部 →</span>
+                    <span className="text-sm text-[#06038D] hover:underline cursor-pointer">{t("common.viewAll")} →</span>
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -460,7 +460,7 @@ export default function Cart() {
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
                   <span className="text-sm font-semibold text-orange-700">
-                    {unavailableItems.length} 件商品已下架或售出，請移除後再結帳
+                    {t("cart.unavailableWarning", { count: unavailableItems.length })}
                   </span>
                 </div>
                 <button
@@ -469,7 +469,7 @@ export default function Cart() {
                   className="text-xs text-orange-600 hover:text-orange-800 font-medium whitespace-nowrap flex items-center gap-1 border border-orange-300 rounded-lg px-2.5 py-1.5 bg-white hover:bg-orange-50 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  一鍵清理
+                  {t("cart.clearUnavailable")}
                 </button>
               </div>
             )}
@@ -479,13 +479,13 @@ export default function Cart() {
               {activeItems.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                    <span className="font-semibold text-gray-700 text-sm">可購買商品（{activeItems.length}）</span>
+                    <span className="font-semibold text-gray-700 text-sm">{t("cart.availableItems", { count: activeItems.length })}</span>
                     <button
                       onClick={() => clearCartMutation.mutate()}
                       className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      清空購物車
+                      {t("cart.clearCart")}
                     </button>
                   </div>
                   <div className="divide-y divide-gray-50 overscroll-contain">
@@ -506,10 +506,10 @@ export default function Cart() {
                 <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-amber-700">
-                    <span className="font-semibold">{soonExpiringItems.length} 件商品即將到期：</span>
+                    <span className="font-semibold">{t("cart.soonExpiring", { count: soonExpiringItems.length })}</span>
                     {soonExpiringItems.map(item => {
                       const daysLeft = Math.ceil((new Date(item.expiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                      return <span key={item.cartItemId} className="block text-xs mt-0.5">{item.title.slice(0, 30)}... 剩餘 {daysLeft} 天</span>;
+                      return <span key={item.cartItemId} className="block text-xs mt-0.5">{item.title.slice(0, 30)}... {t("cart.daysLeft", { count: daysLeft })}</span>;
                     })}
                   </div>
                 </div>
@@ -520,8 +520,8 @@ export default function Cart() {
                 <div className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
                   <div className="flex items-center gap-2 px-5 py-3 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-amber-50">
                     <Trophy className="w-4 h-4 text-amber-500" />
-                    <span className="font-semibold text-amber-800 text-sm">拍賣得標待付款（{pendingAuctionOrders.length}）</span>
-                    <span className="text-xs text-amber-600 ml-1">— 請在時限內完成付款</span>
+                    <span className="font-semibold text-amber-800 text-sm">{t("cart.auctionWon", { count: pendingAuctionOrders.length })}</span>
+                    <span className="text-xs text-amber-600 ml-1">— {t("cart.payInTime")}</span>
                   </div>
                   <div className="divide-y divide-yellow-50 overscroll-contain">
                     {pendingAuctionOrders.map((order: PendingAuctionOrder) => (
@@ -544,7 +544,7 @@ export default function Cart() {
                   <div className="flex items-center justify-between px-5 py-3 border-b border-red-50 bg-red-50/50">
                     <div className="flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 text-red-400" />
-                      <span className="font-semibold text-red-600 text-sm">已下架商品（{unavailableItems.length}）</span>
+                      <span className="font-semibold text-red-600 text-sm">{t("cart.unavailableItems", { count: unavailableItems.length })}</span>
                     </div>
                     <button
                       onClick={() => clearUnavailableMutation.mutate()}
@@ -552,8 +552,8 @@ export default function Cart() {
                       className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      一鍵清理
-                    </button>
+                      {t("cart.clearUnavailable")}
+                </button>
                   </div>
                   <div className="divide-y divide-gray-50 overscroll-contain">
                     {unavailableItems.map((item) => (
@@ -573,17 +573,17 @@ export default function Cart() {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 lg:sticky lg:top-20">
-                <h2 className="font-bold text-gray-800 mb-4">訂單資訊</h2>
+                <h2 className="font-bold text-gray-800 mb-4">{t("cart.orderInfo")}</h2>
                 <div className="space-y-2 text-sm">
                   {activeItems.length > 0 && (
                     <div className="flex justify-between text-gray-600">
-                      <span>市集商品（{activeItems.length} 件）</span>
+                      <span>{t("cart.marketplaceItems", { count: activeItems.length })}</span>
                       <span>HK${activeSubtotal.toFixed(0)}</span>
                     </div>
                   )}
                   {pendingAuctionOrders && pendingAuctionOrders.length > 0 && (
                     <div className="flex justify-between text-amber-700">
-                      <span>🏆 拍賣得標（{pendingAuctionOrders.length} 件）</span>
+                      <span>🏆 {t("cart.auctionWonItems", { count: pendingAuctionOrders.length })}</span>
                       <span>HK${pendingAuctionOrders.reduce((s: number, o: { subtotalHkd: string | number }) => s + parseFloat(String(o.subtotalHkd)), 0).toFixed(0)}</span>
                     </div>
                   )}
@@ -606,20 +606,20 @@ export default function Cart() {
                     disabled={activeItems.length === 0 && (!pendingAuctionOrders || pendingAuctionOrders.length === 0)}
                     onClick={() => setShowCheckout(true)}
                   >
-                    前往結帳
+                    {t("cart.checkout")}
                   </button>
                   <button
                     className="w-full h-9 rounded-md text-sm font-semibold bg-white text-[#06038D] hover:bg-[#06038D]/5 cursor-pointer transition-all"
                     style={{ border: 'none', outline: 'none', boxShadow: 'inset 0 0 0 1px #06038D' }}
                     onClick={() => setLocation("/marketplace")}
                   >
-                    繼續購物
+                    {t("cart.continueShopping")}
                   </button>
                 </div>
 
                 {unavailableItems.length > 0 && (
                   <p className="text-xs text-red-400 mt-2 text-center">
-                    已下架商品不會納入結帳
+                    {t("cart.unavailableExcluded")}
                   </p>
                 )}
               </div>
@@ -671,6 +671,7 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
   paymentTimeoutMinutes: number;
   onPaymentSuccess: () => void;
 }) {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = React.useState<{ hours: number; minutes: number; seconds: number; expired: boolean } | null>(null);
   const [showAlipayQR, setShowAlipayQR] = React.useState(false);
   const utils = trpc.useUtils();
@@ -711,14 +712,14 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
         <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
           <Clock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           <span className="text-xs text-amber-700 font-mono font-semibold">
-            付款時限剩餘：{String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+            {t('cart.paymentTimeLeft', { hours: String(timeLeft.hours).padStart(2, '0'), minutes: String(timeLeft.minutes).padStart(2, '0'), seconds: String(timeLeft.seconds).padStart(2, '0') })}
           </span>
         </div>
       )}
       {timeLeft?.expired && (
         <div className="mx-4 mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
           <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-          <span className="text-xs text-red-700 font-semibold">付款時限已到，訂單即將自動取消</span>
+          <span className="text-xs text-red-700 font-semibold">{t('cart.paymentExpired')}</span>
         </div>
       )}
       <div className="flex items-center gap-4 px-5 py-4">
@@ -741,13 +742,13 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
           </Link>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-300">
-              <Trophy className="w-2.5 h-2.5 mr-1" />拍賣得標
+              <Trophy className="w-2.5 h-2.5 mr-1" />{t('cart.auctionWon')}
             </Badge>
             {order.condition && (
               <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 text-gray-700 border-gray-300">{order.condition}</Badge>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1">訂單 #{order.orderNo}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('cart.orderNo', { no: order.orderNo })}</p>
         </div>
         {/* Price */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -760,7 +761,7 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
               disabled={switchToAlipayMutation.isPending || !!timeLeft?.expired}
               onClick={() => switchToAlipayMutation.mutate({ orderId: order.orderId })}
             >
-              <Smartphone className="w-3 h-3 mr-1" />支付寶 HK
+              <Smartphone className="w-3 h-3 mr-1" />{t('cart.alipayHk')}
             </Button>
           )}
         </div>
@@ -771,21 +772,21 @@ function AuctionOrderRow({ order, paymentTimeoutMinutes, onPaymentSuccess }: {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-semibold text-blue-800">支付寶 HK 付款</span>
+              <span className="text-sm font-semibold text-blue-800">{t('cart.alipayPayment')}</span>
             </div>
             <button onClick={() => setShowAlipayQR(false)} className="text-blue-400 hover:text-blue-600">
               <X className="w-4 h-4" />
             </button>
           </div>
           <div className="flex flex-col items-center gap-3">
-            <img src={ALIPAY_QR_URL} alt="支付寶 HK QR Code" className="w-32 h-32 rounded-lg border border-blue-200" />
+            <img src={ALIPAY_QR_URL} alt={t('cart.alipayQrAlt')} className="w-32 h-32 rounded-lg border border-blue-200" />
             <div className="text-center">
               <p className="text-sm font-bold text-blue-800">HK${Number(order.subtotalHkd).toFixed(2)}</p>
-              <p className="text-xs text-blue-600 mt-1">掃描 QR code 付款，付款後請截圖上傳付款證明</p>
+              <p className="text-xs text-blue-600 mt-1">{t('cart.alipayQrInstruction')}</p>
             </div>
             <Link href={`/orders/${order.orderNo}`}>
               <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100">
-                前往訂單上傳付款證明
+                {t('cart.goToOrderUploadProof')}
               </Button>
             </Link>
           </div>
@@ -833,7 +834,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
       if (diff <= 0) { setTimeLeft(null); return; }
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft(`${hours} 小時 ${minutes} 分鐘`);
+      setTimeLeft(t('cart.timeLeftFormat', { hours, minutes }));
     };
     update();
     const timer = setInterval(update, 60000);
@@ -851,7 +852,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
         <div className="mx-4 mt-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
           <Clock className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
           <span className="text-xs text-green-700">
-            賣家已接受你的出價！請在 <span className="font-bold">{timeLeft}</span> 內完成付款
+            {t('cart.offerAccepted', { timeLeft })}
           </span>
         </div>
       )}
@@ -860,7 +861,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
         <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
           <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
           <span className="text-xs text-amber-700">
-            出價已過期，將以原價 <span className="font-bold">HK${Number(item.priceHkd).toFixed(0)}</span> 購買
+            {t('cart.offerExpired', { price: Number(item.priceHkd).toFixed(0) })}
           </span>
         </div>
       )}
@@ -900,7 +901,7 @@ function CartItemRow({ item, onRemove, removing, unavailable }: CartItemRowProps
             {item.hasPendingOrder && !unavailable && (
               <Link href={item.pendingOrderNo ? `/orders?highlight=${item.pendingOrderNo}` : '/orders'}>
                 <Badge className="text-xs px-1.5 py-0 h-5 bg-amber-100 text-amber-700 border-amber-200 cursor-pointer hover:bg-amber-200 transition-colors">
-                  待付款 →
+                  {t('cart.pendingPayment')}
                 </Badge>
               </Link>
             )}
@@ -1036,11 +1037,11 @@ function CheckoutDialog({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("請上傳圖片格式的截圖（JPG、PNG 等）");
+      toast.error(t('cart.uploadImageOnly'));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("截圖大小不能超過 10MB");
+      toast.error(t('cart.uploadSizeLimit'));
       return;
     }
     setProofFile(file);
@@ -1165,7 +1166,7 @@ function CheckoutDialog({
       const nowUnavailable = activeItems.filter((i) => !freshActiveIds.has(i.listingId));
       if (nowUnavailable.length > 0) {
         const names = nowUnavailable.map((i) => i.title).join("、");
-        toast.error(`以下商品已下架或售出，已自動從購物車移除：${names}`);
+        toast.error(t('cart.itemsRemoved', { names }));
         utils.marketplace.getMyCart.invalidate();
         utils.marketplace.getCartCount.invalidate();
         setIsValidatingStock(false);
@@ -1205,7 +1206,7 @@ function CheckoutDialog({
         utils.marketplace.getCartCount.invalidate();
         setBatchProgress(null);
         onClose();
-        toast.success(`已建立 ${result.orderNos.length} 個訂單，正在跳轉至 Stripe 付款頁面...`);
+        toast.success(t('cart.ordersCreatedStripe', { count: result.orderNos.length }));
         window.location.href = result.checkoutUrl;
       } catch {
         setBatchProgress(null);
@@ -1307,7 +1308,7 @@ function CheckoutDialog({
           {checkoutStep === 1 && (
             <>
               <div>
-                <p className="text-xs text-gray-500 mb-3">請選擇送貨方式，然後在下一步填寫送貨地址。</p>
+                <p className="text-xs text-gray-500 mb-3">{t('cart.selectShippingMethod')}</p>
                 <RadioGroup
                   value={form.shippingMethod}
                   onValueChange={(v) => setForm((f) => ({ ...f, shippingMethod: v as ShippingMethod, sfDistrict: "", sfStationCode: null }))}
@@ -1321,10 +1322,10 @@ function CheckoutDialog({
                     <Label htmlFor="sf_cod_step1" className="cursor-pointer flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Truck className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                        <span className="font-bold text-sm text-gray-800">順豐速運</span>
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">運費到付</span>
+                        <span className="font-bold text-sm text-gray-800">{t('cart.sfExpress')}</span>
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">{t('cart.freightExtra')}</span>
                       </div>
-                      <p className="text-xs text-gray-500 ml-6">運費由順豐速運收取，取件時支付，金額視重量及地址而定</p>
+                      <p className="text-xs text-gray-500 ml-6">{t('cart.sfFeeNote')}</p>
                     </Label>
                   </div>
 
@@ -1336,10 +1337,10 @@ function CheckoutDialog({
                     <Label htmlFor="hk_post_step1" className="cursor-pointer flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Mail className="w-4 h-4 text-[#06038D] flex-shrink-0" />
-                        <span className="font-bold text-sm text-gray-800">香港郵政（平郵）</span>
+                        <span className="font-bold text-sm text-gray-800">{t('cart.hkPost')}</span>
                         <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">+HK$10</span>
                       </div>
-                      <p className="text-xs text-gray-500 ml-6">本地平郵寄送，運費 HK$10 將自動計入訂單總額</p>
+                      <p className="text-xs text-gray-500 ml-6">{t('cart.hkPostFeeNote')}</p>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -1375,7 +1376,7 @@ function CheckoutDialog({
                               {addr.isDefault && (
                                 <span className="text-[10px] bg-[#06038D] text-white px-1.5 py-0.5 rounded font-medium">{t("cart.address.defaultBadge")}</span>
                               )}
-                              {addr.label && addr.label !== "預設地址" && (
+                              {addr.label && addr.label !== t('cart.defaultAddress') && (
                                 <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{addr.label}</span>
                               )}
                             </div>
@@ -1384,11 +1385,11 @@ function CheckoutDialog({
                             </p>
                             {addr.addressType === "sf_station" ? (
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                <Truck className="w-3 h-3" />順豐自提：{addr.sfStationName || addr.sfStationCode}
+                                <Truck className="w-3 h-3" />{t('cart.sfPickup', { name: addr.sfStationName || addr.sfStationCode })}
                               </p>
                             ) : (
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                <MapPin className="w-3 h-3" />{addr.address || "地址"}
+                                <MapPin className="w-3 h-3" />{addr.address || t('cart.address')}
                               </p>
                             )}
                           </div>
@@ -1406,7 +1407,7 @@ function CheckoutDialog({
                     onClick={() => setSelectedAddressId(null)}
                     className="mt-2 text-xs text-[#06038D] underline"
                   >
-                    手動填寫其他地址
+                    {t('cart.manualAddress')}
                   </button>
                 </div>
               )}
@@ -1426,7 +1427,7 @@ function CheckoutDialog({
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-[#06038D] underline whitespace-nowrap"
                   >
-                    前往個人中心新增地址
+                    {t('cart.goToProfileAddAddress')}
                   </a>
                 </div>
               )}
@@ -1438,24 +1439,24 @@ function CheckoutDialog({
                   <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
                     {/* SF Notice */}
                     <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
-                      <p className="font-semibold text-[#06038D] mb-1">📦 順豐速運條款</p>
-                      <p className="leading-relaxed">【如寄順豐自提網點可享運費優惠】請於下單時提供收件人名、電話，並選擇你的順豐網點。運費金額將自動根據貨件重量、材積、收件地址計算。運費由順豐速運收取，於取件時支付。運費詳情可參考<a href="https://htm.sf-express.com/hk/tc/" target="_blank" rel="noopener noreferrer" className="text-[#06038D] underline">順豐速運香港官方網站</a>。</p>
-                      <p className="mt-1 leading-relaxed">【客戶須知】由於順豐已暫停經SMS短訊方式發送取件訊息，所有取件訊息已改為透過順豐香港官方手機應用程式「SFHK APP」推送，客戶請提前下載「SFHK APP」，並開啟手機推送通知，以免錯過貨件運送提醒，同時客戶可透過「SFHK APP」隨時查看快件的最新狀態。</p>
+                      <p className="font-semibold text-[#06038D] mb-1">{t('cart.sfTermsTitle')}</p>
+                      <p className="leading-relaxed">{t('cart.sfTerms1')}</p>
+                      <p className="mt-1 leading-relaxed">{t('cart.sfTerms2')}</p>
                     </div>
 
                     {/* Recipient Info */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
+                        <Label className="text-xs text-gray-600 mb-1 block">{t('cart.recipientName')}</Label>
                         <Input
-                          placeholder="收件人全名"
+                          placeholder={t('cart.recipientNamePlaceholder')}
                           value={form.recipientName}
                           onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
                           className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
+                        <Label className="text-xs text-gray-600 mb-1 block">{t('cart.contactPhone')}</Label>
                         <Input
                           placeholder="+852 XXXX XXXX"
                           value={form.recipientPhone}
@@ -1467,7 +1468,7 @@ function CheckoutDialog({
 
                     {/* SF Address Mode Toggle */}
                     <div>
-                      <Label className="text-xs text-gray-600 mb-2 block">收件地址方式</Label>
+                      <Label className="text-xs text-gray-600 mb-2 block">{t('cart.addressMethod')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
@@ -1479,7 +1480,7 @@ function CheckoutDialog({
                           }`}
                         >
                           <Truck className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span>順豐點 / 智能櫃</span>
+                          <span>{t('cart.sfStation')}</span>
                         </button>
                         <button
                           type="button"
@@ -1491,7 +1492,7 @@ function CheckoutDialog({
                           }`}
                         >
                           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span>手動輸入地址</span>
+                          <span>{t('cart.manualInput')}</span>
                         </button>
                       </div>
                     </div>
@@ -1500,13 +1501,13 @@ function CheckoutDialog({
                     {sfAddressMode === "sf_station" && (
                       <>
                         <div>
-                          <Label className="text-xs text-gray-600 mb-1 block">順豐地區 *</Label>
+                          <Label className="text-xs text-gray-600 mb-1 block">{t('cart.sfRegion')}</Label>
                           <Select
                             value={form.sfDistrict}
                             onValueChange={(v) => setForm((f) => ({ ...f, sfDistrict: v, sfStationCode: null }))}
                           >
                             <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
-                              <SelectValue placeholder="選擇地區" />
+                              <SelectValue placeholder={t('cart.selectDistrict')} />
                             </SelectTrigger>
                             <SelectContent>
                               {sfDistricts.map((d) => (
@@ -1518,9 +1519,9 @@ function CheckoutDialog({
                         {form.sfDistrict && (
                           <div>
                             <Label className="text-xs text-gray-600 mb-1 block">
-                              順豐點 / 智能櫃 *
-                              {form.sfDistrict && (
-                                <span className="ml-1 text-gray-400">（{filteredStations.length} 個）</span>
+              {t('cart.sfStationLabel')}
+              {form.sfDistrict && (
+                <span className="ml-1 text-gray-400">（{filteredStations.length} 個）</span>
                               )}
                             </Label>
                             <Select
@@ -1528,7 +1529,7 @@ function CheckoutDialog({
                               onValueChange={(v) => setForm((f) => ({ ...f, sfStationCode: v }))}
                           >
                             <SelectTrigger className="text-sm h-9 border-[#06038D]/30 text-gray-900">
-                              <SelectValue placeholder="選擇順豐點 / 智能櫃" />
+                              <SelectValue placeholder={t('cart.selectSfStation')} />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
                               {filteredStations.map((s) => (
@@ -1555,14 +1556,14 @@ function CheckoutDialog({
                   {/* Manual Address Input */}
                   {sfAddressMode === "manual" && (
                     <div>
-                      <Label className="text-xs text-gray-600 mb-1 block">詳細地址 *</Label>
+                      <Label className="text-xs text-gray-600 mb-1 block">{t('cart.detailedAddress')}</Label>
                       <Input
-                        placeholder="例：新界東涌達東路1號東薈城2樓201室"
+                        placeholder={t('cart.addressPlaceholder')}
                         value={form.manualAddress}
                         onChange={(e) => setForm((f) => ({ ...f, manualAddress: e.target.value }))}
                         className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                       />
-                      <p className="text-xs text-gray-400 mt-1">順豐上門派送，請填寫完整地址（包括大廈名稱、樓層及室號）</p>
+                      <p className="text-xs text-gray-400 mt-1">{t('cart.sfDeliveryAddressNote')}</p>
                     </div>
                   )}
                 </div>
@@ -1572,21 +1573,21 @@ function CheckoutDialog({
                 {form.shippingMethod === "hk_post" && (
                   <div className="space-y-3 p-4 bg-[#06038D]/5 rounded-xl border border-[#06038D]/20">
                     <div className="text-xs text-gray-600 bg-white rounded-lg p-3 border border-[#06038D]/10">
-                      <p className="font-semibold text-[#06038D] mb-1">📮 香港郵政 - 平郵</p>
-                      <p className="leading-relaxed">運費 <span className="font-bold text-[#06038D]">HK$10</span> 將自動加入訂單總額，以平郵方式寄出。</p>
+                      <p className="font-semibold text-[#06038D] mb-1">{t('cart.hkPostTitle')}</p>
+                      <p className="leading-relaxed">{t('cart.hkPostFeeNote')}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs text-gray-600 mb-1 block">收件人姓名 *</Label>
+                        <Label className="text-xs text-gray-600 mb-1 block">{t('cart.recipientName')}</Label>
                         <Input
-                          placeholder="收件人全名"
+                          placeholder={t('cart.recipientNamePlaceholder')}
                           value={form.hkPostRecipientName}
                           onChange={(e) => setForm((f) => ({ ...f, hkPostRecipientName: e.target.value }))}
                           className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs text-gray-600 mb-1 block">聯絡電話 *</Label>
+                        <Label className="text-xs text-gray-600 mb-1 block">{t('cart.contactPhone')}</Label>
                         <Input
                           placeholder="+852 XXXX XXXX"
                           value={form.hkPostRecipientPhone}
@@ -1596,14 +1597,14 @@ function CheckoutDialog({
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-600 mb-1 block">送貨地址 *</Label>
+                      <Label className="text-xs text-gray-600 mb-1 block">{t('cart.deliveryAddress')}</Label>
                       <Input
-                        placeholder="例：新界東涌達東路1號東薈城2樓201室"
+                        placeholder={t('cart.addressPlaceholder')}
                         value={form.hkPostAddress}
                         onChange={(e) => setForm((f) => ({ ...f, hkPostAddress: e.target.value }))}
                         className="text-sm h-9 border-[#06038D]/30 focus:border-[#06038D] text-gray-900 placeholder:text-gray-400"
                       />
-                      <p className="text-xs text-gray-400 mt-1">請填寫完整地址（包括大廈名稱、樓層及室號）</p>
+                      <p className="text-xs text-gray-400 mt-1">{t('cart.fullAddressNote')}</p>
                     </div>
                   </div>
                 )}
@@ -1623,7 +1624,7 @@ function CheckoutDialog({
                     <span className="truncate flex-1 mr-2">
                       {item.title}
                       {item.acceptedOfferId && (
-                        <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium">出價價</span>
+                        <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium">{t('cart.offerPrice')}</span>
                       )}
                     </span>
                     <span className="flex-shrink-0 font-medium">
@@ -1642,7 +1643,7 @@ function CheckoutDialog({
                   <>
                     {pendingAuctionOrders.map((o) => (
                       <div key={o.orderId} className="flex justify-between text-sm text-amber-700">
-                        <span className="truncate flex-1 mr-2">🏆 拍賣得標 #{o.orderNo}</span>
+                        <span className="truncate flex-1 mr-2">🏆 {t('cart.auctionWon')} #{o.orderNo}</span>
                         <span className="flex-shrink-0 font-medium">HK${parseFloat(String(o.subtotalHkd)).toFixed(0)}</span>
                       </div>
                     ))}
@@ -1650,12 +1651,12 @@ function CheckoutDialog({
                 )}
                 {form.shippingMethod === "hk_post" && (
                   <div className="flex justify-between text-sm text-amber-700">
-                    <span>📮 香港郵政運費</span>
+                    <span>📮 {t('cart.hkPostShipping')}</span>
                     <span className="font-medium">+HK${HK_POST_FEE}</span>
                   </div>
                 )}
                 <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
-                  <span>合計{form.shippingMethod === "hk_post" ? "（含運費）" : "（不含運費）"}</span>
+                  <span>{form.shippingMethod === "hk_post" ? t('cart.totalWithShipping') : t('cart.totalExcludeShipping')}</span>
                   <span>HK${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s: number, o: { subtotalHkd: string | number }) => s + parseFloat(String(o.subtotalHkd)), 0) + (form.shippingMethod === "hk_post" ? HK_POST_FEE : 0)).toFixed(0)}</span>
                 </div>
               </div>
@@ -1685,12 +1686,12 @@ function CheckoutDialog({
                       return (
                         <>
                           <p className="text-xs font-semibold text-gray-700">
-                            {isSfStation ? "順豐速運（運費到付）" : "香港郵政（平郵）"}
+                            {isSfStation ? t('cart.sfCodLabel') : t('cart.hkPostLabel')}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {selAddr?.recipientName} · {selAddr?.phone}
                             {isSfStation
-                              ? ` · 順豐點：${selAddr?.sfStationName || selAddr?.sfStationCode}`
+                              ? ` · ${t('cart.sfStationShort')}：${selAddr?.sfStationName || selAddr?.sfStationCode}`
                               : selAddr?.address ? ` · ${selAddr.address}` : ""}
                           </p>
                         </>
@@ -1699,7 +1700,7 @@ function CheckoutDialog({
                   ) : (
                   <>
                   <p className="text-xs font-semibold text-gray-700">
-                    {form.shippingMethod === "sf_cod" ? "順豐速運（運費到付）" : "香港郵政（平郵，+HK$10）"}
+                    {form.shippingMethod === "sf_cod" ? t('cart.sfCodLabel') : t('cart.hkPostPlusLabel')}
                   </p>
                   {form.shippingMethod === "sf_cod" && selectedStation && (
                     <p className="text-xs text-gray-500 mt-0.5">{form.recipientName} · {form.recipientPhone} · {selectedStation.name}</p>
@@ -1718,13 +1719,13 @@ function CheckoutDialog({
 
               {/* Payment Method */}
               <div>
-                <Label className="text-xs font-semibold text-[#06038D] mb-2 block">付款方式</Label>
+                <Label className="text-xs font-semibold text-[#06038D] mb-2 block">{t('cart.paymentMethod')}</Label>
                 {/* P0: Show restriction notice if cart has seller items */}
                 {hasSellerItems && (
                   <div className="flex items-start gap-2 p-3 mb-2 bg-amber-50 rounded-xl border border-amber-200">
                     <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700">
-                      購物車包含個人賣家商品，僅支援信用卡付款。支付寶 HK 僅適用於全部為本公司自營商品的訂單。
+                      {t('cart.sellerItemsPaymentNotice')}
                     </p>
                   </div>
                 )}
@@ -1750,17 +1751,17 @@ function CheckoutDialog({
                       <div className="flex flex-col items-center gap-1.5">
                         <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/alipay-hk-logo_7e21b75c.png" alt="AlipayHK" className="h-6 w-auto object-contain" style={{maxWidth:'80px'}} />
                         <div className="text-center">
-                          <div className="font-semibold text-sm text-gray-700">支付寶 HK</div>
+                          <div className="font-semibold text-sm text-gray-700">{t('cart.alipayHkLabel')}</div>
                           <div className="text-xs text-gray-400">AlipayHK</div>
                         </div>
                         {hasSellerItems && (
-                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap">不可用</span>
+                          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap">{t('cart.unavailable')}</span>
                         )}
                       </div>
                       {hasSellerItems ? (
-                        <p className="text-xs text-amber-600 mt-1.5 text-center">包含個人賣家商品，不可使用此付款方式</p>
+                        <p className="text-xs text-amber-600 mt-1.5 text-center">{t('cart.alipaySellerItemsDisabled')}</p>
                       ) : (
-                        <p className="text-xs text-gray-500 mt-1.5 text-center">揃描二維碼完成付款</p>
+                        <p className="text-xs text-gray-500 mt-1.5 text-center">{t('cart.scanQrToPay')}</p>
                       )}
                     </Label>
                   </div>
@@ -1773,14 +1774,14 @@ function CheckoutDialog({
                       <div className="flex flex-col items-center gap-1.5">
                         <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/visa-mastercard-logo_9a6481e0.png" alt="Visa Mastercard" className="h-6 w-auto object-contain" style={{maxWidth:'80px'}} />
                         <div className="text-center">
-                          <div className="font-semibold text-sm text-gray-800">信用卡</div>
+                          <div className="font-semibold text-sm text-gray-800">{t('cart.creditCard')}</div>
                           <div className="text-xs text-gray-400">Stripe</div>
                         </div>
                         {hasSellerItems && (
-                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full whitespace-nowrap">推薦</span>
+                          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full whitespace-nowrap">{t('cart.recommended')}</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1.5 text-center">支援 Visa、Mastercard 等主要信用卡</p>
+                      <p className="text-xs text-gray-500 mt-1.5 text-center">{t('cart.creditCardNote')}</p>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -1790,10 +1791,10 @@ function CheckoutDialog({
                 <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
                   <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700">
-                    {activeItems.length > 0 && `將為 ${activeItems.length} 件市集商品`}
-                    {activeItems.length > 0 && pendingAuctionOrders && pendingAuctionOrders.length > 0 && `及 `}
-                    {pendingAuctionOrders && pendingAuctionOrders.length > 0 && `${pendingAuctionOrders.length} 件拍賣得標`}
-                    {`建立訂單，並合並為一筆 HK$${(activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0)} 的 Stripe 付款，一次完成所有訂單的支付。`}
+                    {activeItems.length > 0 && t('cart.marketplaceItemsCount', { count: activeItems.length })}
+                    {activeItems.length > 0 && pendingAuctionOrders && pendingAuctionOrders.length > 0 && t('cart.and')}
+                    {pendingAuctionOrders && pendingAuctionOrders.length > 0 && t('cart.auctionItemsCount', { count: pendingAuctionOrders.length })}
+                    {t('cart.createOrdersStripe', { total: (activeSubtotal + (pendingAuctionOrders ?? []).reduce((s, o) => s + parseFloat(String(o.subtotalHkd)), 0)).toFixed(0) })}
                   </p>
                 </div>
               )}
@@ -1801,7 +1802,7 @@ function CheckoutDialog({
                 <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200">
                   <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-700">
-                    將為 {activeItems.length} 件商品建立 {activeItems.length} 個訂單，確認後顯示支付寶 HK 收款 QR 碼，掃碼支付合計 HK${activeSubtotal.toFixed(0)}，完成後上傳截圖確認。
+                    {t('cart.createOrdersAlipay', { count: activeItems.length, total: activeSubtotal.toFixed(0) })}
                   </p>
                 </div>
               )}
@@ -1824,11 +1825,11 @@ function CheckoutDialog({
                 </div>
                 <div className="flex-1 flex items-start gap-2">
                   <label htmlFor="agree-terms" className="text-xs text-gray-700 cursor-pointer leading-relaxed select-none flex-1">
-                    我已閱讀並同意平台的{" "}
+                    {t('cart.agreeTermsPrefix')}{" "}
                     <Link href="/auction/terms" target="_blank" className="text-[#06038D] underline hover:text-[#06038D]/80 font-medium">
-                      買賣條款
+                      {t('cart.termsLink')}
                     </Link>
-                    ，包括退款政策（收貨後 48 小時內申請）及平台規則。
+                    {t('cart.agreeTermsSuffix')}
                   </label>
                   {/* Animated check icon on agree */}
                   <div
@@ -1844,7 +1845,7 @@ function CheckoutDialog({
               {batchProgress && (
                 <div className="bg-[#06038D]/5 rounded-xl border border-[#06038D]/20 p-3">
                   <div className="flex justify-between text-sm text-[#06038D] font-medium mb-2">
-                    <span>正在建立訂單...</span>
+                    <span>{t('cart.creatingOrders')}</span>
                     <span>{batchProgress.done} / {batchProgress.total}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -1863,7 +1864,7 @@ function CheckoutDialog({
             <div className="space-y-4">
               {/* Amount summary */}
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
-                <p className="text-xs font-semibold text-[#06038D] mb-2">訂單已建立，請完成支付寶 HK 付款</p>
+                <p className="text-xs font-semibold text-[#06038D] mb-2">{t('cart.orderCreatedAlipay')}</p>
                 {activeItems.map((item) => (
                   <div key={item.listingId} className="flex justify-between text-sm text-gray-700 mb-1">
                     <span className="truncate flex-1 mr-2">{item.title}</span>
@@ -1873,47 +1874,47 @@ function CheckoutDialog({
                   </div>
                 ))}
                 <div className="border-t border-[#06038D]/20 pt-2 mt-2 flex justify-between font-bold text-[#06038D]">
-                  <span>合計付款金額</span>
+                  <span>{t('cart.totalPayment')}</span>
                   <span className="text-lg">HK${activeSubtotal.toFixed(0)}</span>
                 </div>
               </div>
 
               {/* QR Code */}
               <div className="text-center space-y-3">
-                <p className="text-sm font-medium text-gray-700">請用 AlipayHK App 掃描以下 QR 碼付款</p>
+                <p className="text-sm font-medium text-gray-700">{t('cart.scanAlipayQr')}</p>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
-                  alt="支付寶 HK QR Code"
+                  alt={t('cart.alipayQrAlt')}
                   className="w-52 h-52 mx-auto rounded-xl border-4 border-white shadow-lg"
                 />
                 <a href={ALIPAY_QR_URL} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-[#06038D] hover:underline text-sm">
-                  <Smartphone className="w-4 h-4" />在手機上開啟支付寶 HK
+                  <Smartphone className="w-4 h-4" />{t('cart.openAlipayMobile')}
                 </a>
               </div>
 
               {/* Reference note */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                <p className="font-medium">付款備注請填寫訂單編號：</p>
+                <p className="font-medium">{t('cart.paymentRemarkInstruction')}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="font-mono text-sm font-bold tracking-wide flex-1">
-                    {alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : `#${alipayOrderNos[0]} 等 ${alipayOrderNos.length} 個訂單`}
+                    {alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : t('cart.multipleOrders', { first: alipayOrderNos[0], count: alipayOrderNos.length })}
                   </p>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(alipayOrderNos.map(no => `#${no}`).join(" "));
-                      toast.success("訂單編號已複製！請貼上到支付寶備注欄位");
+                      toast.success(t('cart.orderNoCopied'));
                     }}
                     className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
                   >
-                    <Copy className="w-3 h-3" />複製
+                    <Copy className="w-3 h-3" />{t('cart.copy')}
                   </button>
                 </div>
-                <p className="text-amber-600 mt-1">⚠️ 請務必在支付寶備注欄填寫以上編號，方便核對付款</p>
+                <p className="text-amber-600 mt-1">{t('cart.alipayRemarkWarning')}</p>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <p>ℹ️ 完成支付寶 HK 付款後，請點擊下方按鈕進入下一步上傳截圖。管理員審核後訂單即生效。</p>
+                <p>{t('cart.alipayCompleteInstruction')}</p>
               </div>
             </div>
           )}
@@ -1926,28 +1927,28 @@ function CheckoutDialog({
                     <CheckCircle className="w-9 h-9 text-[#FEDD00]" />
                   </div>
                   <div className="text-center">
-                    <h3 className="text-lg font-bold text-gray-800 mb-1">截圖已成功上傳！</h3>
-                    <p className="text-sm text-gray-500">管理員將在 1 個工作天內審核你的付款截圖，審核通過後訂單即生效。</p>
+                    <h3 className="text-lg font-bold text-gray-800 mb-1">{t('cart.screenshotUploaded')}</h3>
+                    <p className="text-sm text-gray-500">{t('cart.screenshotReviewNote')}</p>
                   </div>
                   <div className="w-full bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700">
-                    <p className="font-medium mb-1">✅ 訂單已建立，截圖待審核</p>
-                    <p>訂單編號：{alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : alipayOrderNos.map(no => `#${no}`).join("、")}</p>
-                    <p className="mt-1">你可以在「我的訂單」頁面查看訂單狀態。</p>
+                    <p className="font-medium mb-1">{t('cart.orderCreatedPendingReview')}</p>
+                    <p>{t('cart.orderNo')}：{alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : alipayOrderNos.map(no => `#${no}`).join("、")}</p>
+                    <p className="mt-1">{t('cart.checkOrderStatus')}</p>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-[#06038D] mb-2">上傳支付寶 HK 付款截圖</p>
-                    <p className="text-xs text-gray-600 leading-relaxed">請上傳支付寶 HK 付款成功的截圖，截圖需清晰顯示：</p>
+                    <p className="text-xs font-semibold text-[#06038D] mb-2">{t('cart.uploadAlipayScreenshot')}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{t('cart.uploadScreenshotInstruction')}</p>
                     <ul className="mt-2 space-y-1">
-                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />收款方：零度有限公司</li>
-                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />付款金額：HKD {activeSubtotal.toFixed(0)}</li>
-                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />付款狀態：成功</li>
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />{t('cart.payee')}：{t('cart.companyName')}</li>
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />{t('cart.paymentAmount')}：HKD {activeSubtotal.toFixed(0)}</li>
+                      <li className="text-xs text-gray-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06038D] flex-shrink-0" />{t('cart.paymentStatus')}：{t('cart.paymentSuccess')}</li>
                     </ul>
                   </div>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-xs font-medium text-amber-800 mb-1">訂單編號（請確認已在備注填寫）：</p>
+                    <p className="text-xs font-medium text-amber-800 mb-1">{t('cart.orderNoConfirm')}</p>
                     <p className="text-sm font-mono font-bold text-amber-900">
                       {alipayOrderNos.length === 1 ? `#${alipayOrderNos[0]}` : alipayOrderNos.map(no => `#${no}`).join(" · ")}
                     </p>
@@ -1963,23 +1964,23 @@ function CheckoutDialog({
                     >
                       {proofPreview ? (
                         <div className="relative w-full">
-                          <img src={proofPreview} alt="付款截圖預覽" className="w-full max-h-64 object-contain rounded-lg" />
-                          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg">點擊更換截圖</div>
+                          <img src={proofPreview} alt={t('cart.paymentScreenshotPreview')} className="w-full max-h-64 object-contain rounded-lg" />
+                          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg">{t('cart.clickToChangeScreenshot')}</div>
                         </div>
                       ) : (
                         <>
                           <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-3">
                             <Upload className="w-6 h-6 text-gray-400" />
                           </div>
-                          <p className="text-sm font-medium text-gray-600">點擊上傳付款截圖</p>
-                          <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 10MB</p>
+                          <p className="text-sm font-medium text-gray-600">{t('cart.clickToUploadScreenshot')}</p>
+                          <p className="text-xs text-gray-400 mt-1">{t('cart.uploadFileTypes')}</p>
                         </>
                       )}
                     </label>
                     <input id="proof-upload" type="file" accept="image/*" className="hidden" onChange={handleProofFileChange} />
                   </div>
                   {proofFile && (
-                    <p className="text-xs text-gray-500 text-center">已選擇：{proofFile.name}（{(proofFile.size / 1024).toFixed(0)} KB）</p>
+                    <p className="text-xs text-gray-500 text-center">{t('cart.selectedFile', { name: proofFile.name, size: (proofFile.size / 1024).toFixed(0) })}</p>
                   )}
                 </>
               )}
@@ -1994,7 +1995,7 @@ function CheckoutDialog({
               variant="outline"
               className="flex-1 border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white"
               onClick={onClose}
-            >取消</Button>
+            >{t('common.cancel')}</Button>
           )}
           {(checkoutStep === 2 || checkoutStep === 3) && (
             <Button
@@ -2012,17 +2013,17 @@ function CheckoutDialog({
                 }
               }}
               disabled={isProcessing}
-            >上一步</Button>
+            >{t('common.back')}</Button>
           )}
           {/* Back confirmation dialog */}
           {showBackConfirm && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40" onClick={() => setShowBackConfirm(false)}>
               <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                <h3 className="text-base font-bold text-gray-900 mb-2">返回上一步？</h3>
-                <p className="text-sm text-gray-600 mb-5">已填寫的送貨資料將不會保留，確定要返回送貨方式選擇頁面嗎？</p>
+                <h3 className="text-base font-bold text-gray-900 mb-2">{t('cart.goBackTitle')}</h3>
+                <p className="text-sm text-gray-600 mb-5">{t('cart.goBackConfirm')}</p>
                 <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1 border-gray-200 text-gray-700 bg-white" onClick={() => setShowBackConfirm(false)}>繼續填寫</Button>
-                  <Button className="flex-1 font-bold" style={{background:'#06038D',color:'#fff'}} onClick={() => { setShowBackConfirm(false); setCheckoutStep(1); }}>確定返回</Button>
+                  <Button variant="outline" className="flex-1 border-gray-200 text-gray-700 bg-white" onClick={() => setShowBackConfirm(false)}>{t('cart.continueFilling')}</Button>
+                  <Button className="flex-1 font-bold" style={{background:'#06038D',color:'#fff'}} onClick={() => { setShowBackConfirm(false); setCheckoutStep(1); }}>{t('cart.confirmGoBack')}</Button>
                 </div>
               </div>
             </div>
@@ -2033,7 +2034,7 @@ function CheckoutDialog({
               style={{ background: '#FEDD00', color: '#06038D' }}
               disabled={!canProceedStep1}
               onClick={() => setCheckoutStep(2)}
-            >下一步：填寫地址</Button>
+            >{t('cart.nextFillAddress')}</Button>
           )}
           {checkoutStep === 2 && (
             <Button
@@ -2041,7 +2042,7 @@ function CheckoutDialog({
               style={{ background: '#FEDD00', color: '#06038D' }}
               disabled={!canProceedStep2}
               onClick={() => setCheckoutStep(3)}
-            >下一步：確認付款</Button>
+            >{t('cart.nextConfirmPayment')}</Button>
           )}
           {checkoutStep === 3 && (
             <Button
@@ -2051,14 +2052,14 @@ function CheckoutDialog({
               disabled={isProcessing || !!batchProgress || isValidatingStock || !agreeTerms}
             >
               {isValidatingStock
-                ? "驗證庫存中..."
+                ? t('cart.verifyingInventory')
                 : batchProgress
-                ? `建立中 ${batchProgress.done}/${batchProgress.total}...`
+                ? t('cart.creatingProgress', { done: batchProgress.done, total: batchProgress.total })
                 : isProcessing
-                ? "處理中..."
+                ? t('cart.processing')
                 : activeItems.length > 1
-                ? `確認結帳（${activeItems.length} 件）`
-                : "確認結帳"}
+                ? t('cart.confirmCheckout', { count: activeItems.length })
+                : t('cart.confirmCheckoutSimple')}
             </Button>
           )}
           {checkoutStep === 4 && (
@@ -2067,7 +2068,7 @@ function CheckoutDialog({
               style={{ background: '#FEDD00', color: '#06038D' }}
               onClick={handleAlipayDone}
             >
-              我已完成付款 → 上傳截圖
+              {t('cart.paymentDoneUpload')}
             </Button>
           )}
           {checkoutStep === 5 && !proofSubmitted && (
@@ -2086,8 +2087,8 @@ function CheckoutDialog({
               disabled={!proofFile || isSubmittingProof}
             >
               {isSubmittingProof ? (
-                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />上傳中...</span>
-              ) : "提交付款截圖"}
+                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />{t('cart.uploading')}</span>
+              ) : t('cart.submitPaymentScreenshot')}
             </Button>
           )}
           {checkoutStep === 5 && proofSubmitted && (
@@ -2095,7 +2096,7 @@ function CheckoutDialog({
               className="flex-1 font-bold"
               style={{ background: '#FEDD00', color: '#06038D' }}
               onClick={handleFinishAndGoToOrders}
-            >前往我的訂單</Button>
+            >{t('cart.goToMyOrders')}</Button>
           )}
         </div>
       </DialogContent>

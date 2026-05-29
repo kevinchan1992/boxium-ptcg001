@@ -14,6 +14,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { LazyImage } from "@/components/LazyImage";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Camera, Upload, X, RotateCcw, CheckCircle2,
   Search, ChevronRight, AlertCircle, Zap,
@@ -56,6 +57,7 @@ type Stage = "camera" | "analyzing" | "results" | "no_match" | "permission_denie
 
 export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPrefix = "card" }: CameraSearchSheetProps) {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
   const [stage, setStage] = useState<Stage>("camera");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [matchResults, setMatchResults] = useState<MatchedCard[]>([]);
@@ -194,7 +196,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             onOpenChange(false);
             setLocation(`/${cardLinkPrefix}/${best.id}`);
           }
-          toast.success(`已識別：${best.nameJa || best.name}`);
+          toast.success(t("camera.identified", { name: best.nameJa || best.name }));
         } else if (!isAutoScan) {
           // Manual capture, lower confidence → show results
           setMatchResults(result.matches as MatchedCard[]);
@@ -216,7 +218,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
       if (!isAutoScan) {
         setStage("camera");
         setCapturedImage(null);
-        toast.error("識別失敗，請重試");
+        toast.error(t("camera.identifyFailed"));
       }
     } finally {
       isAnalyzingRef.current = false;
@@ -260,7 +262,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setStage("permission_denied");
       } else {
-        toast.error("無法啟動相機，請使用上傳功能");
+        toast.error(t("camera.cameraStartFailed"));
       }
     }
   }, [stopCamera, captureFrame, processBase64, cornersAreCovered]);
@@ -291,7 +293,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
   // ── Manual shutter (high quality 0.92 for better accuracy) ──
   const handleCapture = useCallback(() => {
     const base64 = captureFrame(0.92);
-    if (!base64) { toast.error("無法擷取畫面"); return; }
+    if (!base64) { toast.error(t("camera.captureFailed")); return; }
     processBase64(base64, false);
   }, [captureFrame, processBase64]);
 
@@ -333,11 +335,11 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
 
   const getStageTitle = () => {
     switch (stage) {
-      case "camera": return onCardSelect ? "拍照選卡" : "拍照識別";
-      case "analyzing": return "AI 分析中...";
-      case "results": return "識別結果";
-      case "no_match": return "識別完成";
-      case "permission_denied": return "相機權限";
+      case "camera": return onCardSelect ? t("camera.title.selectCard") : t("camera.title.identify");
+      case "analyzing": return t("camera.title.analyzing");
+      case "results": return t("camera.title.results");
+      case "no_match": return t("camera.title.noMatch");
+      case "permission_denied": return t("camera.title.permission");
     }
   };
 
@@ -395,7 +397,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                     <div className="absolute top-3 right-14 flex items-center gap-1 px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(0,0,0,0.55)" }}>
                       <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: YELLOW }} />
-                      <span className="text-[10px] font-semibold text-white">自動識別</span>
+                      <span className="text-[10px] font-semibold text-white">{t("camera.autoScan")}</span>
                     </div>
                   )}
 
@@ -403,7 +405,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
                     <p className="text-white/80 text-xs font-medium px-3 py-1 rounded-full"
                       style={{ background: "rgba(0,0,0,0.45)" }}>
-                      將卡牌對準框內，系統將自動識別
+                      {t("camera.guideText")}
                     </p>
                   </div>
                 </>
@@ -420,7 +422,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                     <CheckCircle2 className="w-9 h-9" style={{ color: "#16a34a" }} />
                   </div>
                   <p className="text-white font-bold text-sm"
-                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>識別成功！</p>
+                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>{t("camera.identifySuccess")}</p>
                   {/* Green corner brackets */}
                   <div className="absolute"
                     style={{ top: 16, left: 16, width: 40, height: 40, borderTop: "3px solid #22c55e", borderLeft: "3px solid #22c55e", borderRadius: "4px 0 0 0" }} />
@@ -437,7 +439,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
               {!cameraReady && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                   <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <p className="text-white/70 text-xs">啟動相機中...</p>
+                  <p className="text-white/70 text-xs">{t("camera.starting")}</p>
                 </div>
               )}
             </div>
@@ -454,7 +456,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   style={{ background: "#f3f4f6", border: "1.5px solid #e5e7eb" }}>
                   <Upload className="w-5 h-5" style={{ color: BLUE }} />
                 </div>
-                <span className="text-[11px] font-semibold" style={{ color: "#374151" }}>相簿</span>
+                <span className="text-[11px] font-semibold" style={{ color: "#374151" }}>{t("camera.album")}</span>
               </button>
 
               {/* Shutter */}
@@ -480,7 +482,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   style={{ background: "#f3f4f6", border: "1.5px solid #e5e7eb" }}>
                   <RotateCcw className="w-5 h-5" style={{ color: BLUE }} />
                 </div>
-                <span className="text-[11px] font-semibold" style={{ color: "#374151" }}>翻轉</span>
+                <span className="text-[11px] font-semibold" style={{ color: "#374151" }}>{t("camera.flip")}</span>
               </button>
             </div>
 
@@ -488,8 +490,8 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             <div className="mx-4 mb-4 space-y-2">
               <div className="rounded-xl px-3 py-2.5"
                 style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}15` }}>
-                <p className="text-xs font-semibold mb-0.5" style={{ color: BLUE }}>💡 拍攝技巧</p>
-                <p className="text-xs" style={{ color: "#4b5563" }}>確保卡牌名稱及卡號清晰可見，避免反光及陰影。卡牌充滿取景框時系統將自動識別。</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: BLUE }}>💡 {t("camera.tip.title")}</p>
+                <p className="text-xs" style={{ color: "#4b5563" }}>{t("camera.tip.desc")}</p>
               </div>
               {/* Low-light mode toggle */}
               <button
@@ -503,8 +505,8 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                 <div className="flex items-center gap-2">
                   <span className="text-base">🌙</span>
                   <div className="text-left">
-                    <p className="text-xs font-semibold" style={{ color: lowLightMode ? BLUE : "#374151" }}>低光模式</p>
-                    <p className="text-[10px]" style={{ color: "#9ca3af" }}>降低亮度偵測門值至 15，適用於光線不足環境</p>
+                    <p className="text-xs font-semibold" style={{ color: lowLightMode ? BLUE : "#374151" }}>{t("camera.lowLight.title")}</p>
+                    <p className="text-[10px]" style={{ color: "#9ca3af" }}>{t("camera.lowLight.desc")}</p>
                   </div>
                 </div>
                 <div
@@ -531,13 +533,13 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
               <AlertCircle className="w-8 h-8 text-red-500" />
             </div>
             <div className="text-center">
-              <p className="text-base font-bold" style={{ color: "#111827" }}>相機權限被拒絕</p>
-              <p className="text-sm mt-1" style={{ color: "#6b7280" }}>請在瀏覽器設定中允許相機存取，或使用上傳圖片功能</p>
+              <p className="text-base font-bold" style={{ color: "#111827" }}>{t("camera.permission.denied")}</p>
+              <p className="text-sm mt-1" style={{ color: "#6b7280" }}>{t("camera.permission.desc")}</p>
             </div>
             <button onClick={() => fileInputRef.current?.click()}
               className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold"
               style={{ background: BLUE, color: "white" }}>
-              <Upload className="w-4 h-4" />改用上傳圖片
+              <Upload className="w-4 h-4" />{t("camera.permission.useUpload")}
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
           </div>
@@ -556,7 +558,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             )}
             <div className="w-full max-w-xs">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-semibold" style={{ color: BLUE }}>AI 識別中</span>
+                <span className="text-sm font-semibold" style={{ color: BLUE }}>{t("camera.analyzing")}</span>
                 <span className="text-sm font-bold" style={{ color: BLUE }}>{Math.round(analyzeProgress)}%</span>
               </div>
               <div className="h-2 rounded-full overflow-hidden" style={{ background: "#e5e7eb" }}>
@@ -566,12 +568,12 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             </div>
             <div className="text-center space-y-1">
               <p className="text-sm font-medium" style={{ color: "#374151" }}>
-                {analyzeProgress < 40 ? "正在讀取卡牌資訊..." :
-                 analyzeProgress < 70 ? "比對卡牌資料庫..." :
-                 analyzeProgress < 90 ? "精準匹配中..." : "即將完成..."}
+                {analyzeProgress < 40 ? t("camera.progress.reading") :
+                 analyzeProgress < 70 ? t("camera.progress.matching") :
+                 analyzeProgress < 90 ? t("camera.progress.precise") : t("camera.progress.finishing")}
               </p>
               <p className="text-xs flex items-center justify-center gap-1" style={{ color: "#9ca3af" }}>
-                <Zap className="w-3 h-3" />由 Gemini AI 驅動
+                <Zap className="w-3 h-3" />{t("camera.poweredBy")}
               </p>
             </div>
           </div>
@@ -584,7 +586,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
               <div className="rounded-xl px-4 py-3 flex items-start gap-3" style={{ background: BLUE }}>
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: YELLOW }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold mb-1" style={{ color: YELLOW }}>AI 識別結果</p>
+                  <p className="text-xs font-semibold mb-1" style={{ color: YELLOW }}>{t("camera.results.aiResult")}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {identificationInfo.cardNameJa && (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -605,7 +607,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
 
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6b7280" }}>
-                找到 {matchResults.length} 個匹配結果，{onCardSelect ? "請選擇要加入的卡牌" : "請選擇正確的卡牌"}
+                {t("camera.results.found", { count: matchResults.length, action: onCardSelect ? t("camera.results.selectToAdd") : t("camera.results.selectCorrect") })}
               </p>
               {matchResults.map((card, index) => (
                 <button key={card.id} onClick={() => handleSelectCard(card)}
@@ -625,7 +627,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {index === 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
-                          style={{ background: YELLOW, color: BLUE }}>最佳</span>
+                          style={{ background: YELLOW, color: BLUE }}>{t("camera.results.best")}</span>
                       )}
                       <p className="text-sm font-semibold truncate" style={{ color: "#111827" }}>
                         {card.nameJa || card.name}
@@ -639,7 +641,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   </div>
                   <div className="flex-shrink-0 flex flex-col items-end gap-1">
                     <span className={`text-sm font-bold ${card.matchScore >= 60 ? "text-green-500" : card.matchScore >= 40 ? "text-yellow-500" : "text-orange-400"}`}>
-                      {card.matchScore}分
+                      {t("camera.results.score", { score: card.matchScore })}
                     </span>
                     <ChevronRight className="w-4 h-4" style={{ color: "#d1d5db" }} />
                   </div>
@@ -650,7 +652,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             <button onClick={handleRetry}
               className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"
               style={{ border: "2px solid #e5e7eb", background: "white", color: "#374151" }}>
-              <RotateCcw className="w-4 h-4" />重新拍攝
+              <RotateCcw className="w-4 h-4" />{t("camera.retake")}
             </button>
           </div>
         )}
@@ -666,14 +668,14 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             {identificationInfo && (identificationInfo.cardNameJa || identificationInfo.cardName) ? (
               <div className="w-full rounded-xl px-4 py-3 text-center"
                 style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}20` }}>
-                <p className="text-xs mb-1" style={{ color: "#6b7280" }}>AI 識別到的卡牌</p>
+                <p className="text-xs mb-1" style={{ color: "#6b7280" }}>{t("camera.noMatch.aiIdentified")}</p>
                 <p className="text-base font-bold" style={{ color: BLUE }}>
                   {identificationInfo.cardNameJa || identificationInfo.cardName}
                 </p>
                 {identificationInfo.cardNumber && (
                   <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>#{identificationInfo.cardNumber}</p>
                 )}
-                <p className="text-xs mt-2" style={{ color: "#6b7280" }}>資料庫中未找到完全匹配的卡牌</p>
+                <p className="text-xs mt-2" style={{ color: "#6b7280" }}>{t("camera.noMatch.notInDb")}</p>
               </div>
             ) : (
               <div className="text-center">
@@ -681,8 +683,8 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   style={{ background: "#f3f4f6" }}>
                   <X className="w-7 h-7" style={{ color: "#9ca3af" }} />
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "#374151" }}>無法識別卡牌</p>
-                <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>請確保圖片清晰且包含完整卡牌</p>
+                <p className="text-sm font-semibold" style={{ color: "#374151" }}>{t("camera.noMatch.cannotIdentify")}</p>
+                <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>{t("camera.noMatch.ensureClear")}</p>
               </div>
             )}
             <div className="w-full space-y-3">
@@ -691,13 +693,13 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
                   className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold"
                   style={{ background: BLUE, color: "white" }}>
                   <Search className="w-4 h-4" />
-                  搜尋「{identificationInfo.cardNameJa || identificationInfo.cardName}」
+                  {t("camera.noMatch.search", { name: identificationInfo.cardNameJa || identificationInfo.cardName })}
                 </button>
               )}
               <button onClick={handleRetry}
                 className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"
                 style={{ border: "2px solid #e5e7eb", background: "white", color: "#374151" }}>
-                <RotateCcw className="w-4 h-4" />重新拍攝
+                <RotateCcw className="w-4 h-4" />{t("camera.retake")}
               </button>
             </div>
           </div>

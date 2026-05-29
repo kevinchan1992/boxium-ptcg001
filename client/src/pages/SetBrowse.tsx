@@ -1,5 +1,6 @@
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import PageHead from "@/components/PageHead";
 
@@ -9,6 +10,7 @@ function getProxiedImageUrl(url: string | null) {
 }
 
 export default function SetBrowse() {
+  const { t } = useTranslation();
   const params = useParams<{ setCode: string }>();
   const setCode = params.setCode || "";
   const [, setLocation] = useLocation();
@@ -30,7 +32,7 @@ export default function SetBrowse() {
     ? `${setInfo.setCode} - ${setInfo.series || "系列瀏覽"} | BOXIUM TCG`
     : `${setCode} 系列卡牌 | BOXIUM TCG`;
   const pageDescription = setInfo
-    ? `瀏覽 ${setInfo.series || setCode} 系列全部 ${setInfo.totalCards} 張卡牌的即時價格、圖鑑和市場行情。${setCode} 擴充包完整卡牌列表。`
+    ? `瀏覽 ${setInfo.series || setCode} 系列全部 ${setInfo.totalCards} {t("setBrowse.cards")}的即時價格、圖鑑和市場行情。${setCode} 擴充包完整卡牌列表。`
     : `瀏覽 ${setCode} 系列的所有卡牌價格和圖鑑資訊。`;
 
   return (
@@ -62,7 +64,7 @@ export default function SetBrowse() {
           </h1>
           {setInfo && (
             <p className="text-zinc-400">
-              共 {setInfo.totalCards} 張卡牌
+              共 {setInfo.totalCards} {t("setBrowse.cards")}
             </p>
           )}
         </div>
@@ -120,7 +122,7 @@ export default function SetBrowse() {
               onClick={() => setLocation("/sets")}
               className="mt-4 text-yellow-400 hover:text-yellow-300 text-sm"
             >
-              返回系列一覽
+              {t("common.back")}系列一覽
             </button>
           </div>
         )}

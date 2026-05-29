@@ -4,6 +4,7 @@
  * Reference: "新增收藏" dialog style
  */
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -85,6 +86,7 @@ function TradeCardRow({
   onRemove: () => void;
   onUpdate: (u: Partial<TradeCardItem>) => void;
 }) {
+  const { t } = useTranslation();
   // isOut is kept for potential future use but no longer affects value input style
   const _isOut = item.direction === "out";
   return (
@@ -114,7 +116,7 @@ function TradeCardRow({
         </div>
         {/* Estimated value inline */}
         <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">估値 HKD</span>
+          <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">{t("trade.estimateHKD")}</span>
           <input
             type="number" min="0" step="0.01"
             value={item.estimatedValue}
@@ -158,6 +160,7 @@ function SectionBlock({
   onSearch: () => void;
   onCamera?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: `2px solid ${isOut ? "#e5e7eb" : BLUE}` }}>
       {/* Header */}
@@ -176,7 +179,7 @@ function SectionBlock({
             }
           </div>
           <span className="text-sm font-black" style={{ color: isOut ? "#111827" : "white" }}>
-            {isOut ? "換出卡牌" : "換入卡牌"}
+            {isOut ? t("trade.outCards") : t("trade.inCards")}
           </span>
           {count > 0 && (
             <span
@@ -197,7 +200,7 @@ function SectionBlock({
               className="flex items-center gap-1 h-8 px-3 rounded-xl text-xs font-black transition-all active:scale-95"
               style={{ background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }}
             >
-              <Package className="w-3 h-3" />從收藏選
+              <Package className="w-3 h-3" />{t("trade.fromCollection")}
             </button>
           )}
           {onCamera && (
@@ -208,10 +211,10 @@ function SectionBlock({
                 ? { background: `${BLUE}10`, color: BLUE, border: `1.5px solid ${BLUE}25` }
                 : { background: `${YELLOW}`, color: BLUE, border: `none` }
               }
-              title="拍照識別"
+              title={t("trade.cameraIdentify")}
             >
               <Camera className="w-4 h-4" />
-              {!isOut && <span>拍照</span>}
+              {!isOut && <span>{t("trade.photo")}</span>}
             </button>
           )}
           <button
@@ -223,7 +226,7 @@ function SectionBlock({
             }
           >
             <Search className="w-3 h-3" />
-            {isOut ? "搜尋" : "搜尋換入卡"}
+            {isOut ? t("trade.search") : t("trade.searchIn")}
           </button>
         </div>
       </div>
@@ -234,7 +237,7 @@ function SectionBlock({
           <div className="flex items-center justify-center gap-2 py-6 px-4">
             <Package className="w-4 h-4 text-gray-300" />
             <span className="text-xs text-gray-400">
-              {isOut ? "點擊「從收藏選」或「搜尋」加入換出卡牌" : "搜尋並加入換入的新卡牌（將自動加入收藏）"}
+              {isOut ? t("trade.addOutHint") : t("trade.addInHint")}
             </span>
           </div>
         ) : (
@@ -248,7 +251,7 @@ function SectionBlock({
                 className="text-xs font-black"
                 style={{ color: isOut ? "#dc2626" : BLUE }}
               >
-                {isOut ? "換出" : "換入"}總估值：{formatCurrency(totalValue)}
+                {isOut ? t("trade.out") : t("trade.in")}{t("trade.totalValue")}：{formatCurrency(totalValue)}
               </span>
               {!isOut && (
                 <button
@@ -257,7 +260,7 @@ function SectionBlock({
                   style={{ background: `${YELLOW}30`, color: BLUE, border: `1px solid ${YELLOW}80` }}
                 >
                   <Plus className="w-2.5 h-2.5" />
-                  再加一張
+                  {t("trade.addMore")}
                 </button>
               )}
             </div>
@@ -270,6 +273,7 @@ function SectionBlock({
 
 // ─── Main Component ───────────────────────────────────────────
 export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }: TradeSheetProps) {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
 
   const [tradedAt, setTradedAt] = useState(() => new Date().toISOString().split("T")[0]);
@@ -324,7 +328,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
 
   const createTradeMutation = trpc.profile.createTrade.useMutation({
     onSuccess: () => {
-      toast.success("交換記錄已儲存，換入卡牌已加入收藏！");
+      toast.success(t("trade.savedSuccess"));
       utils.profile.getCollection.invalidate();
       utils.profile.getCollectionStats.invalidate();
       utils.profile.getTrades.invalidate();
@@ -332,7 +336,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       onOpenChange(false);
       onSuccess();
     },
-    onError: (e) => toast.error(`儲存失敗：${e.message}`),
+    onError: (e) => toast.error(t("trade.saveFailed", { msg: e.message })),
   });
 
   const resetForm = useCallback(() => {
@@ -462,14 +466,14 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
       estimatedValue: pendingValue,
       collectionId: null,
     }]);
-    toast.success(`已加入${pendingDirection === 'out' ? '換出' : '換入'}清單：${pendingCard.name}`);
+    toast.success(t("trade.addedToList", { dir: pendingDirection === "out" ? t("trade.out") : t("trade.in"), name: pendingCard.name }));
     setPendingCard(null);
     setPendingCardIdForPrice(null);
   };
 
   const handleAddFromCollection = (colItem: any) => {
     if (tradeCards.some((c) => c.collectionId === colItem.id)) {
-      toast.error("此卡牌已加入換出清單");
+      toast.error(t("trade.alreadyInOutList"));
       return;
     }
     setTradeCards((prev) => [...prev, {
@@ -540,7 +544,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             >
               <ArrowLeftRight className="w-4.5 h-4.5" style={{ color: BLUE }} />
             </div>
-            <span className="font-black text-white text-base tracking-wide">以卡換卡記錄</span>
+            <span className="font-black text-white text-base tracking-wide">{t("trade.historyTitle")}</span>
           </div>
         }
         headerStyle={{ background: BLUE }}
@@ -553,7 +557,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
           <div className="px-4 pt-4 pb-3">
             <div className="bg-white rounded-2xl px-4 py-3" style={{ border: "1.5px solid #e8eaf0" }}>
               <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
-                交換日期
+                {t("trade.date")}
               </Label>
               <Input
                 type="date"
@@ -596,7 +600,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                   <span className="text-green-300">{formatCurrency(totalInValue)}</span>
                   {cashAdj !== 0 && (
                     <span className="text-[10px] font-bold" style={{ color: YELLOW }}>
-                      {cashAdj > 0 ? "+" : ""}{formatCurrency(cashAdj)} 補差
+                      {cashAdj > 0 ? "+" : ""}{formatCurrency(cashAdj)} {t("trade.cashDiff")}
                     </span>
                   )}
                 </div>
@@ -632,7 +636,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             <div className="bg-white rounded-2xl px-4 py-3 space-y-3" style={{ border: "1.5px solid #e8eaf0" }}>
               <div>
                 <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
-                  補差金額（選填）
+                  {t("trade.cashAdj")}
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold pointer-events-none">HKD</span>
@@ -640,20 +644,20 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                     type="number" step="0.01"
                     value={cashAdjustment}
                     onChange={(e) => setCashAdjustment(e.target.value)}
-                    placeholder="正數=收到 負數=付出"
+                    placeholder={t("trade.cashAdjPlaceholder")}
                     className="h-11 text-sm border-gray-200 rounded-xl bg-gray-50 pl-12"
                   />
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">正數 = 對方補差給你，負數 = 你補差給對方</p>
+                <p className="text-[10px] text-gray-400 mt-1">{t("trade.cashAdjHint")}</p>
               </div>
               <div>
                 <Label className="text-[11px] font-black uppercase tracking-widest mb-2 block" style={{ color: BLUE }}>
-                  備註（選填）
+                  {t("trade.notes")}
                 </Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="交換地點、備忘..."
+                  placeholder={t("trade.notesPlaceholder")}
                   className="text-sm border-gray-200 rounded-xl bg-gray-50 resize-none"
                   rows={2}
                 />
@@ -665,7 +669,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
           <div className="px-4 pt-1">
             {!canSubmit && (outCards.length === 0 || inCards.length === 0) && (
               <p className="text-xs text-center text-gray-400 mb-3">
-                請加入至少一張換出卡牌和一張換入卡牌
+                {t("trade.validationError")}
               </p>
             )}
             <button
@@ -680,7 +684,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               }}
             >
               {createTradeMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />儲存中...</>
+                <><Loader2 className="w-4 h-4 animate-spin" />{t("trade.saving")}</>
               ) : (
                 <>
                   <div
@@ -689,7 +693,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" style={{ color: canSubmit ? BLUE : "#9ca3af" }} />
                   </div>
-                  確認記錄交換
+                  {t("trade.confirm")}
                 </>
               )}
             </button>
@@ -728,7 +732,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                 }
               </div>
               <span className="font-black text-white text-sm">
-                {pendingDirection === "out" ? "設定換出卡牌資料" : "設定換入卡牌資料"}
+                {pendingDirection === "out" ? t("trade.setOutCardData") : t("trade.setInCardData")}
               </span>
             </div>
           }
@@ -761,7 +765,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
-                    評級機構
+                    {t("trade.grader")}
                   </Label>
                   <Select value={pendingGrader} onValueChange={setPendingGrader}>
                     <SelectTrigger className="h-10 text-sm border-gray-200 rounded-xl bg-gray-50">
@@ -771,14 +775,14 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                       <SelectItem value="PSA">PSA</SelectItem>
                       <SelectItem value="BGS">BGS</SelectItem>
                       <SelectItem value="TAG">TAG</SelectItem>
-                      <SelectItem value="RAW">RAW（未評級）</SelectItem>
+                      <SelectItem value="RAW">{t("trade.raw")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {pendingGrader !== "RAW" && (
                   <div>
                     <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
-                      評級
+                      {t("trade.grade")}
                     </Label>
                     <Input
                       value={pendingGrade}
@@ -792,7 +796,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
-                    數量
+                    {t("trade.quantity")}
                   </Label>
                   <Input
                     type="number" min="1" max="999"
@@ -803,19 +807,19 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                 </div>
                 <div>
                   <Label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: BLUE }}>
-                    估值 HKD
+                    {t("trade.valuation")}
                     {pendingCardIdForPrice != null && pendingValue === "" && (
-                      <span className="ml-1 text-[9px] font-normal text-gray-400 normal-case tracking-normal">查詢市場價中...</span>
+                      <span className="ml-1 text-[9px] font-normal text-gray-400 normal-case tracking-normal">{t("trade.fetchingPrice")}</span>
                     )}
                     {pendingCardPrice?.avgPrice != null && (
-                      <span className="ml-1 text-[9px] font-normal normal-case tracking-normal" style={{ color: BLUE }}>市場參考價</span>
+                      <span className="ml-1 text-[9px] font-normal normal-case tracking-normal" style={{ color: BLUE }}>{t("trade.marketRef")}</span>
                     )}
                   </Label>
                   <Input
                     type="number" min="0" step="0.01"
                     value={pendingValue}
                     onChange={(e) => setPendingValue(e.target.value)}
-                    placeholder="輸入估值"
+                    placeholder={t("trade.valuationPlaceholder")}
                     className="h-10 text-sm rounded-xl"
                     style={{ border: `1.5px solid ${BLUE}40`, background: `${BLUE}05`, color: BLUE }}
                   />
@@ -834,7 +838,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               >
                 <Plus className="w-3 h-3" style={{ color: BLUE }} />
               </div>
-              加入{pendingDirection === "out" ? "換出" : "換入"}清單
+              {t("trade.addToList", { dir: pendingDirection === "out" ? t("trade.out") : t("trade.in") })}
             </button>
           </div>
         </BottomSheet>
@@ -850,7 +854,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
               <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${YELLOW}30` }}>
                 <Package className="w-3.5 h-3.5" style={{ color: YELLOW }} />
               </div>
-              <span className="font-black text-white text-sm">從收藏選擇換出卡牌</span>
+              <span className="font-black text-white text-sm">{t("trade.pickFromCollection")}</span>
             </div>
           }
           headerStyle={{ background: BLUE }}
@@ -860,10 +864,10 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
             {collectionLoading ? (
               <div className="flex items-center justify-center gap-2 py-10">
                 <Loader2 className="w-5 h-5 animate-spin" style={{ color: BLUE }} />
-                <span className="text-sm text-gray-400">載入收藏中...</span>
+                <span className="text-sm text-gray-400">{t("trade.loadingCollection")}</span>
               </div>
             ) : collectionItems.length === 0 ? (
-              <div className="text-center py-10 text-gray-400 text-sm">收藏清單為空</div>
+              <div className="text-center py-10 text-gray-400 text-sm">{t("trade.emptyCollection")}</div>
             ) : (
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                 {collectionItems.map((colItem: any) => {
@@ -905,7 +909,7 @@ export function TradeSheet({ open, onOpenChange, onSuccess, preselectedOutItem }
                           )}
                           {isTradedOut && (
                             <span className="text-[9px] font-black px-1 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
-                              ↔ 已換出
+                              {t("trade.alreadyTraded")}
                             </span>
                           )}
                         </div>

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Mail, CheckCircle, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Watermark grid (same as Login/Register)
 const WatermarkGrid = () => (
@@ -27,6 +28,7 @@ const WatermarkGrid = () => (
 );
 
 export default function ResendVerification() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -54,7 +56,7 @@ export default function ResendVerification() {
       startCooldown();
     },
     onError: (error) => {
-      toast.error(error.message || "發送失敗，請稍後再試");
+      toast.error(error.message || t("login.sendFailed"));
       if (error.data?.code === 'TOO_MANY_REQUESTS') {
         startCooldown();
       }
@@ -64,7 +66,7 @@ export default function ResendVerification() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error("請輸入電郵地址");
+      toast.error(t("resendVerification.enterEmail"));
       return;
     }
     resendMutation.mutate({ email });
@@ -94,16 +96,16 @@ export default function ResendVerification() {
           {!sent ? (
             <>
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">重新發送驗證電郵</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">{t("resendVerification.title")}</h2>
                 <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  輸入您的電郵地址，我們將重新發送驗證連結
+                  {t("resendVerification.subtitle")}
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
                   <label className="block text-center text-xs font-semibold tracking-widest" style={{ color: "#c9a227" }}>
-                    電郵地址
+                    {t("login.emailAddress")}
                   </label>
                   <input
                     type="email"
@@ -129,10 +131,10 @@ export default function ResendVerification() {
                 >
                   <Mail className="h-4 w-4" />
                   {resendMutation.isPending
-                    ? "發送中..."
+                    ? t("login.sending")
                     : cooldown > 0
-                    ? `發送驗證電郵（${cooldown} 秒後）`
-                    : "發送驗證電郵"}
+                    ? t("resendVerification.sendCooldown", { seconds: cooldown })
+                    : t("resendVerification.sendButton")}
                 </button>
 
                 <button
@@ -142,20 +144,20 @@ export default function ResendVerification() {
                   style={{ color: "rgba(255,255,255,0.5)" }}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  返回登入
+                  {t("resendVerification.backToLogin")}
                 </button>
               </form>
             </>
           ) : (
             <div className="text-center space-y-4">
               <CheckCircle className="h-16 w-16 mx-auto text-green-400" />
-              <h2 className="text-2xl font-bold text-white">電郵已發送！</h2>
+              <h2 className="text-2xl font-bold text-white">{t("resendVerification.emailSent")}</h2>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                驗證電郵已發送至 <strong className="text-white">{email}</strong>。<br />
-                請查看您的收件箱（包括垃圾郵件），點擊驗證連結完成帳號啟用。
+                {t("resendVerification.sentTo")} <strong className="text-white">{email}</strong>.<br />
+                {t("resendVerification.checkInbox")}
               </p>
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                驗證連結將於 24 小時後過期。
+                {t("resendVerification.linkExpiry")}
               </p>
               <button
                 disabled={cooldown > 0}
@@ -163,14 +165,14 @@ export default function ResendVerification() {
                 className="w-full py-3 rounded-xl text-sm transition-all disabled:opacity-60"
                 style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}
               >
-                {cooldown > 0 ? `重新發送（${cooldown} 秒後）` : "重新發送"}
+                {cooldown > 0 ? t("resendVerification.resendCooldown", { seconds: cooldown }) : t("resendVerification.resend")}
               </button>
               <button
                 onClick={() => setLocation("/login")}
                 className="w-full py-3 rounded-xl text-sm transition-all"
                 style={{ color: "rgba(255,255,255,0.5)" }}
               >
-                返回登入
+                {t("resendVerification.backToLogin")}
               </button>
             </div>
           )}

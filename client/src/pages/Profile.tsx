@@ -48,19 +48,23 @@ const BRAND_BLUE = "#06038d";
 const BRAND_YELLOW = "#FEDD00";
 
 // ─── Order status helpers (mirrored from Orders.tsx) ──────────
-const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-3.5 h-3.5" /> },
-  paid_held: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
-  payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-3.5 h-3.5" /> },
-  processing: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
-  shipped: { label: "已出貨", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-3.5 h-3.5" /> },
-  delivered: { label: "已送達", color: "bg-teal-100 text-teal-800 border-teal-200", icon: <Truck className="w-3.5 h-3.5" /> },
-  completed: { label: "已完成", color: "bg-green-100 text-green-800 border-green-200", icon: <CheckCircle className="w-3.5 h-3.5" /> },
-  cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600 border-gray-200", icon: <XCircle className="w-3.5 h-3.5" /> },
-  disputed: { label: "爭議中", color: "bg-red-100 text-red-800 border-red-200", icon: <AlertCircle className="w-3.5 h-3.5" /> },
-};
+function getOrderStatusLabel(t: (key: string) => string): Record<string, { label: string; color: string; icon: React.ReactNode }> {
+  return {
+    pending_payment: { label: t("orders.status.pending_payment"), color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-3.5 h-3.5" /> },
+    paid_held: { label: t("orders.status.paid_held"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
+    payment_received: { label: t("orders.status.payment_received"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-3.5 h-3.5" /> },
+    processing: { label: t("orders.status.paid_held"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-3.5 h-3.5" /> },
+    shipped: { label: t("orders.status.shipped"), color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-3.5 h-3.5" /> },
+    delivered: { label: t("orders.status.delivered"), color: "bg-teal-100 text-teal-800 border-teal-200", icon: <Truck className="w-3.5 h-3.5" /> },
+    completed: { label: t("orders.status.completed"), color: "bg-green-100 text-green-800 border-green-200", icon: <CheckCircle className="w-3.5 h-3.5" /> },
+    cancelled: { label: t("orders.status.cancelled"), color: "bg-gray-100 text-gray-600 border-gray-200", icon: <XCircle className="w-3.5 h-3.5" /> },
+    disputed: { label: t("orders.status.disputed"), color: "bg-red-100 text-red-800 border-red-200", icon: <AlertCircle className="w-3.5 h-3.5" /> },
+  };
+}
 
 function OrderStatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const ORDER_STATUS_LABEL = getOrderStatusLabel(t);
   const s = ORDER_STATUS_LABEL[status] ?? { label: status, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${s.color}`}>
@@ -130,7 +134,7 @@ export default function Profile() {
     { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: t("profile.nav.auctions"), badge: activeBidsCount > 0 ? activeBidsCount : undefined },
     { id: "notifications", icon: <Bell className="w-4 h-4" />, label: t("profile.nav.notifications"), badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
     { id: "collection", icon: <Package className="w-4 h-4" />, label: t("profile.tabs.collection") },
-    { id: "trades", icon: <ArrowLeftRight className="w-4 h-4" />, label: "交換記錄" },
+    { id: "trades", icon: <ArrowLeftRight className="w-4 h-4" />, label: t("profile.tradesTab") },
   ];
 
   if (userLoading) {
@@ -173,8 +177,8 @@ export default function Profile() {
   return (
     <>
     <PageHead
-      title={user?.name ? `${user.name} 的個人頁面 - BOXIUM TCG` : '個人頁面 - BOXIUM TCG'}
-      description="管理您的 BOXIUM TCG 帳戶、查看收藏、關注清單及交易記錄。"
+      title={user?.name ? `${user.name} ${t("profile.seoTitle")}` : t("profile.seoTitleDefault")}
+      description={t("profile.seoDescription")}
     />
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* ── Hero Banner (Mobile-first compact design) ── */}
@@ -252,7 +256,7 @@ export default function Profile() {
                 style={{ color: BRAND_BLUE }}
               >
                 <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                返回
+                {t("common.back")}
               </button>
               <span className="text-sm font-semibold text-gray-800">
                 {navItems.find(n => n.id === activeSection)?.label}
@@ -374,6 +378,7 @@ export default function Profile() {
 
 // ─── Delete Account Dialog ───────────────────────────────────
 function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const [, navigate] = useLocation();
@@ -381,17 +386,17 @@ function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
 
   const deleteAccount = trpc.auth.deleteAccount.useMutation({
     onSuccess: () => {
-      toast.success("帳號已成功刪除");
+      toast.success(t("profile.accountDeletedSuccess"));
       utils.auth.me.invalidate();
       setOpen(false);
       navigate("/");
     },
-    onError: (err) => toast.error(`刪除失敗：${err.message}`),
+    onError: (err) => toast.error(`${t("profile.deleteFailed")}：${err.message}`),
   });
 
   const handleDelete = () => {
     if (!confirmEmail.trim()) {
-      toast.error("請輸入您的電子郵件地址以確認");
+      toast.error(t("profile.enterEmailToConfirm"));
       return;
     }
     deleteAccount.mutate({ confirmEmail: confirmEmail.trim() });
@@ -405,27 +410,27 @@ function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
           className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
           style={{ borderColor: "#ef4444", color: "#ef4444" }}
         >
-          <Trash2 className="w-4 h-4 mr-1.5" /> 刪除帳號
+          <Trash2 className="w-4 h-4 mr-1.5" /> {t("profile.deleteAccount")}
         </Button>
       </DialogTrigger>
       <DialogContent bottomSheet style={{ background: "#ffffff", color: "#111827" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "#ef4444" }}>
-            <AlertTriangle className="w-5 h-5" /> 刪除帳號
+            <AlertTriangle className="w-5 h-5" /> {t("profile.deleteAccount")}
           </DialogTitle>
           <DialogDescription style={{ color: "#6b7280" }}>
-            此操作無法復原。刪除後，您的所有個人資料、觀察清單、通知及相關記錄將被永久移除。
+            {t("profile.deleteWarning")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" }}>
-            <p className="font-semibold mb-1">請注意：</p>
+            <p className="font-semibold mb-1">{t("profile.pleaseNote")}</p>
             <ul className="space-y-0.5 list-disc list-inside">
-              <li>觀察清單與瀏覽記錄將被刪除</li>
-              <li>通知記錄將被刪除</li>
-              <li>出價與出價記錄將被刪除</li>
-              <li>購物車與收藏清單將被清空</li>
-              <li>您的帳號將無法恢復</li>
+              <li>{t("profile.deleteNote1")}</li>
+              <li>{t("profile.deleteNote2")}</li>
+              <li>{t("profile.deleteNote3")}</li>
+              <li>{t("profile.deleteNote4")}</li>
+              <li>{t("profile.deleteNote5")}</li>
             </ul>
           </div>
           <div className="space-y-1.5">
@@ -467,17 +472,17 @@ function ChangePasswordDialog() {
 
   const changePassword = trpc.auth.changePassword.useMutation({
     onSuccess: () => {
-      toast.success("密碼已成功修改");
+      toast.success(t("profile.passwordChangedSuccess"));
       setOpen(false);
       setCurrentPw(""); setNewPw(""); setConfirmPw("");
     },
-    onError: (err) => toast.error(`修改失敗：${err.message}`),
+    onError: (err) => toast.error(`${t("profile.changeFailed")}：${err.message}`),
   });
 
   const handleSubmit = () => {
-    if (!currentPw || !newPw || !confirmPw) { toast.error("請填寫所有欄位"); return; }
-    if (newPw.length < 8) { toast.error("新密碼至少需要 8 個字元"); return; }
-    if (newPw !== confirmPw) { toast.error("新密碼與確認密碼不一致"); return; }
+    if (!currentPw || !newPw || !confirmPw) { toast.error(t("common.fillAllFields")); return; }
+    if (newPw.length < 8) { toast.error(t("profile.passwordMinLength")); return; }
+    if (newPw !== confirmPw) { toast.error(t("profile.passwordMismatch")); return; }
     changePassword.mutate({ currentPassword: currentPw, newPassword: newPw });
   };
 
@@ -489,32 +494,32 @@ function ChangePasswordDialog() {
           className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
           style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
         >
-          <Lock className="w-4 h-4 mr-1.5" /> 修改密碼
+          <Lock className="w-4 h-4 mr-1.5" /> {t("profile.changePassword")}
         </Button>
       </DialogTrigger>
       <DialogContent bottomSheet style={{ background: "#ffffff", color: "#111827" }}>
         <DialogHeader>
-          <DialogTitle style={{ color: "#111827" }}>修改密碼</DialogTitle>
-          <DialogDescription style={{ color: "#6b7280" }}>請輸入現有密碼及新密碼以完成修改</DialogDescription>
+          <DialogTitle style={{ color: "#111827" }}>{t("profile.changePassword")}</DialogTitle>
+          <DialogDescription style={{ color: "#6b7280" }}>{t("profile.changePasswordDesc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label style={{ color: "#374151" }}>現有密碼</Label>
-            <Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="請輸入現有密碼" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
+            <Label style={{ color: "#374151" }}>{t("profile.currentPassword")}</Label>
+            <Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder={t("profile.currentPasswordPlaceholder")} style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
           <div className="space-y-1.5">
             <Label style={{ color: "#374151" }}>{t("profile.security.newPassword")}</Label>
-            <Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="至少 8 個字元" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
+            <Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder={t("profile.newPasswordPlaceholder")} style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
           <div className="space-y-1.5">
             <Label style={{ color: "#374151" }}>{t("profile.security.confirmNewPassword")}</Label>
-            <Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="再次輸入新密碼" style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
+            <Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder={t("profile.confirmPasswordPlaceholder")} style={{ background: "#f9fafb", color: "#111827", borderColor: "#d1d5db" }} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} style={{ borderColor: "#d1d5db", color: "#374151", background: "#ffffff" }}>{t("profile.addresses.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={changePassword.isPending} style={{ background: BRAND_BLUE, color: "white" }}>
-            {changePassword.isPending ? "修改中..." : "確認修改"}
+            {changePassword.isPending ? t("common.saving") : t("profile.confirmChange")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -531,11 +536,11 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
   const [editPhone, setEditPhone] = useState(user.phone || "");
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
-      toast.success("個人資料已更新");
+      toast.success(t("profile.profileUpdated"));
       setIsEditing(false);
       utils.auth.me.invalidate();
     },
-    onError: (err) => toast.error(`更新失敗：${err.message}`),
+    onError: (err) => toast.error(`${t("profile.updateFailed")}：${err.message}`),
   });
   const readonlyFields = [
     { icon: Mail, label: t("profile.infoSection.email"), value: user.email || t("profile.infoSection.notSet") },
@@ -557,7 +562,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
               <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
             </div>
-            <span className="text-sm font-bold text-gray-900">個人資料</span>
+            <span className="text-sm font-bold text-gray-900">{t("profile.profileInfo")}</span>
           </div>
           {!isEditing ? (
             <button
@@ -565,7 +570,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
               className="flex items-center gap-1 text-sm font-semibold transition-colors"
               style={{ color: BRAND_BLUE }}
             >
-              <Edit2 className="w-3.5 h-3.5" />編輯
+              <Edit2 className="w-3.5 h-3.5" />{t("common.edit")}
             </button>
           ) : (
             <div className="flex gap-2">
@@ -575,7 +580,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
                 className="flex items-center gap-1 text-sm font-semibold"
                 style={{ color: BRAND_BLUE }}
               >
-                <Save className="w-3.5 h-3.5" />{updateProfile.isPending ? "儲存中..." : "儲存"}
+                <Save className="w-3.5 h-3.5" />{updateProfile.isPending ? t("common.saving") : t("common.save")}
               </button>
               <span className="text-gray-300">|</span>
               <button onClick={() => setIsEditing(false)} className="text-sm font-medium text-gray-500">{t("profile.addresses.cancel")}</button>
@@ -592,7 +597,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
             <Input
               value={editName}
               onChange={e => setEditName(e.target.value)}
-              placeholder="輸入姓名"
+              placeholder={t("profile.namePlaceholder")}
               className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
             />
           ) : (
@@ -605,7 +610,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
         <div className="flex items-center px-4 py-3.5">
           <div className="flex items-center gap-2 w-24 flex-shrink-0">
             <Phone className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-sm text-gray-500">電話</span>
+            <span className="text-sm text-gray-500">{t("profile.phone")}</span>
           </div>
           {isEditing ? (
             <Input
@@ -616,7 +621,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
             />
           ) : (
             <span className="flex-1 text-sm text-right text-gray-700">
-              {user.phone || <span className="text-gray-400 text-xs">未設定</span>}
+              {user.phone || <span className="text-gray-400 text-xs">{t("profile.notSet")}</span>}
             </span>
           )}
         </div>
@@ -660,12 +665,12 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#fee2e2" }}>
             <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />
           </div>
-          <span className="text-sm font-bold" style={{ color: "#ef4444" }}>危險區域</span>
+          <span className="text-sm font-bold" style={{ color: "#ef4444" }}>{t("profile.dangerZone")}</span>
         </div>
         <div className="px-4 py-3 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-800">刪除帳號</p>
-            <p className="text-xs text-gray-500 mt-0.5">此操作無法復原，所有資料將被永久刪除</p>
+            <p className="text-sm font-medium text-gray-800">{t("profile.deleteAccount")}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t("profile.deleteAccountDesc")}</p>
           </div>
           <DeleteAccountDialog userEmail={user.email || ""} />
         </div>
@@ -693,7 +698,7 @@ function WatchlistSection() {
     onSuccess: (res) => {
       utils.marketplace.getMyWishlist.invalidate();
       utils.marketplace.getWishlistIds.invalidate();
-      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
+      toast.success(res.wishlisted ? t("common.addedToWishlist") : t("common.removedFromWishlist"));
     },
   });
   const addToCart = trpc.marketplace.addToCart.useMutation({
@@ -738,7 +743,7 @@ function WatchlistSection() {
           style={activeTab === "cards" ? { background: BRAND_BLUE, color: "white" } : { color: BRAND_BLUE }}
         >
           <Heart className="w-4 h-4" />
-          卡牌追蹤
+          {t("profile.cardTracking")}
           {cardCount > 0 && (
             <span className="text-xs rounded-full px-1.5 py-0.5" style={activeTab === "cards" ? { background: "rgba(255,255,255,0.25)" } : { background: `${BRAND_BLUE}20` }}>
               {cardCount}
@@ -751,7 +756,7 @@ function WatchlistSection() {
           style={activeTab === "listings" ? { background: BRAND_BLUE, color: "white" } : { color: BRAND_BLUE }}
         >
           <ShoppingBag className="w-4 h-4" />
-          收藏商品
+          {t("profile.wishlistTab")}
           {listingCount > 0 && (
             <span className="text-xs rounded-full px-1.5 py-0.5" style={activeTab === "listings" ? { background: "rgba(255,255,255,0.25)" } : { background: `${BRAND_BLUE}20` }}>
               {listingCount}
@@ -854,9 +859,9 @@ function WatchlistSection() {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: `${BRAND_BLUE}10` }}>
               <ShoppingBag className="w-8 h-8" style={{ color: BRAND_BLUE }} />
             </div>
-            <p className="text-gray-500 mb-5 text-base">尚未收藏任何商品</p>
+            <p className="text-gray-500 mb-5 text-base">{t("profile.noWishlist")}</p>
             <Button asChild className="font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
-              <a href="/marketplace">前往市集瀏覽</a>
+              <a href="/marketplace">{t("profile.goToMarketplace")}</a>
             </Button>
           </div>
         ) : (
@@ -866,8 +871,8 @@ function WatchlistSection() {
               <span className="text-xs text-gray-500 font-medium">{t("profile.watchlist.sort.label")}</span>
               <div className="flex gap-1 flex-wrap">
                 {([
-                  { value: "time_desc" as const, label: "最新收藏" },
-                  { value: "time_asc" as const, label: "最早收藏" },
+                  { value: "time_desc" as const, label: t("profile.sortNewest") },
+                  { value: "time_asc" as const, label: t("profile.sortOldest") },
                   { value: "price_asc" as const, label: t("profile.watchlist.sort.priceAsc") },
                   { value: "price_desc" as const, label: t("profile.watchlist.sort.priceDesc") },
                 ]).map((opt) => (
@@ -907,9 +912,9 @@ function WatchlistSection() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      {isActive && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">在售</span>}
-                      {isSold && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">已售出</span>}
-                      {isRemoved && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-500">已下架</span>}
+                      {isActive && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">{t("profile.statusActive")}</span>}
+                      {isSold && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("profile.statusSold")}</span>}
+                      {isRemoved && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-500">{t("profile.statusRemoved")}</span>}
                     </div>
                     <a href={`/marketplace/${listing.id}`} className="font-semibold text-sm line-clamp-1 hover:underline" style={{ color: BRAND_BLUE }}>
                       {listing.title}
@@ -989,7 +994,7 @@ function ShippingAddressSection() {
       }
     });
   }, [addresses]);
-  const [form, setForm] = useState({ label: "預設地址", addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false });
+  const [form, setForm] = useState({ label: t("profile.defaultAddressLabel"), addressType: "normal" as "normal" | "sf_station", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false });
   const [sfSearchQuery, setSfSearchQuery] = useState("");
   const [sfSearchRegion, setSfSearchRegion] = useState("");
   const [sfPointType, setSfPointType] = useState<'all' | 'station' | 'locker'>('all');
@@ -1008,28 +1013,28 @@ function ShippingAddressSection() {
     onError: (e) => toast.error(parseApiError(e)),
   });
   const deleteMutation = trpc.marketplace.deleteShippingAddress.useMutation({
-    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("地址已刪除"); },
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success(t("profile.addressDeleted")); },
     onError: (e) => toast.error(parseApiError(e)),
   });
   const setDefaultMutation = trpc.marketplace.setDefaultShippingAddress.useMutation({
-    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success("預設地址已更新"); },
+    onSuccess: () => { utils.marketplace.getMyShippingAddresses.invalidate(); toast.success(t("profile.defaultAddressUpdated")); },
     onError: (e) => toast.error(parseApiError(e)),
   });
-  const resetForm = () => { setForm({ label: "預設地址", addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
+  const resetForm = () => { setForm({ label: t("profile.defaultAddressLabel"), addressType: "normal", recipientName: "", phone: "", address: "", district: "", region: "香港", sfStationCode: "", sfStationName: "", sfStationAddress: "", isDefault: false }); setSfSearchQuery(""); setSfSearchRegion(""); setSfPointType('all'); setShowSfDropdown(false); setSfResults([]); };
   const handleEdit = (addr: any) => {
     setEditingId(addr.id);
     setForm({ label: addr.label, addressType: addr.addressType || "normal", recipientName: addr.recipientName, phone: addr.phone, address: addr.address || "", district: addr.district || "", region: addr.region || "香港", sfStationCode: addr.sfStationCode || "", sfStationName: addr.sfStationName || "", sfStationAddress: "", isDefault: addr.isDefault });
     setShowForm(true);
   };
   const handleSubmit = () => {
-    if (!form.recipientName.trim()) { toast.error("請輸入收件人姓名"); return; }
-    if (!form.phone.trim()) { toast.error("請輸入聯繫電話"); return; }
+    if (!form.recipientName.trim()) { toast.error(t("profile.enterRecipientName")); return; }
+    if (!form.phone.trim()) { toast.error(t("profile.enterPhone")); return; }
     if (form.addressType === "sf_station") {
-      if (!form.sfStationCode.trim()) { toast.error("請選擇順豐自提站"); return; }
+      if (!form.sfStationCode.trim()) { toast.error(t("profile.selectSFStation")); return; }
       const sfValidation = validateSFCode(form.sfStationCode);
-      if (!sfValidation.valid) { toast.error(sfValidation.message || "順豐站點編號格式不正確"); return; }
+      if (!sfValidation.valid) { toast.error(sfValidation.message || t("profile.sfStationInvalid")); return; }
     } else {
-      if (!form.address.trim()) { toast.error("請輸入地址"); return; }
+      if (!form.address.trim()) { toast.error(t("profile.enterAddress")); return; }
     }
     const payload = { label: form.label, addressType: form.addressType, recipientName: form.recipientName, phone: form.phone, address: form.addressType === "normal" ? form.address : "", district: form.district, region: form.region, sfStationCode: form.addressType === "sf_station" ? form.sfStationCode : undefined, sfStationName: form.addressType === "sf_station" ? form.sfStationName : undefined, isDefault: form.isDefault };
     if (editingId) { updateMutation.mutate({ id: editingId, ...payload }); }
@@ -1038,10 +1043,10 @@ function ShippingAddressSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">管理您的收貨地址，付款時可快速帶入</p>
+        <p className="text-sm text-gray-500">{t("profile.manageAddresses")}</p>
         {!showForm && (
           <Button size="sm" onClick={() => { resetForm(); setEditingId(null); setShowForm(true); }} className="gap-1.5 font-semibold" style={{ background: BRAND_BLUE, color: "white" }}>
-            <Plus className="w-3.5 h-3.5" /> 新增地址
+            <Plus className="w-3.5 h-3.5" /> {t("profile.addAddress")}
           </Button>
         )}
       </div>
@@ -1060,7 +1065,7 @@ function ShippingAddressSection() {
                     <button key={type} onClick={() => setForm(f => ({ ...f, addressType: type }))}
                       className={`flex-1 py-2 rounded-lg text-xs font-medium border-2 transition-all ${form.addressType === type ? "text-white border-transparent" : "border-gray-300 text-gray-700 bg-gray-50 hover:border-gray-400"}`}
                       style={form.addressType === type ? { background: BRAND_BLUE } : {}}>
-                      {type === "normal" ? "普通地址" : "順豐自提"}
+                      {type === "normal" ? t("profile.normalAddress") : t("profile.sfPickup")}
                     </button>
                   ))}
                 </div>
@@ -1072,7 +1077,7 @@ function ShippingAddressSection() {
                 <Input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} placeholder="收件人全名" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700">聯繫電話</Label>
+                <Label className="text-xs font-semibold text-gray-700">{t("profile.contactPhone")}</Label>
                 <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+852 XXXX XXXX" className="text-sm bg-white text-gray-900 border-gray-300" />
               </div>
             </div>
@@ -1080,7 +1085,7 @@ function ShippingAddressSection() {
               <div className="space-y-3">
                 {/* Type filter */}
                 <div className="flex gap-1.5">
-                  {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                  {([['all', t("common.all")], ['station', t("profile.sfStation")], ['locker', t("profile.sfLocker")]] as const).map(([val, label]) => (
                     <button key={val} onClick={() => { setSfPointType(val); setShowSfDropdown(true); }}
                       className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${sfPointType === val ? 'text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
                       style={sfPointType === val ? { background: BRAND_BLUE } : {}}>{label}</button>
@@ -1088,16 +1093,16 @@ function ShippingAddressSection() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">搜尋站點 / 智能櫃</Label>
+                    <Label className="text-xs font-semibold text-gray-700">{t("profile.searchStation")}</Label>
                     <div className="relative">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                       <Input value={sfSearchQuery} onChange={e => { setSfSearchQuery(e.target.value); setShowSfDropdown(true); }} placeholder="輸入名稱、地址或編號" className="pl-8 text-sm bg-white text-gray-900 border-gray-300" onFocus={() => setShowSfDropdown(true)} />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">地區篩選</Label>
+                    <Label className="text-xs font-semibold text-gray-700">{t("profile.regionFilter")}</Label>
                     <select value={sfSearchRegion} onChange={e => { setSfSearchRegion(e.target.value); setShowSfDropdown(true); }} className="w-full h-9 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
-                      <option value="">全部地區</option>
+                      <option value="">{t("profile.allRegions")}</option>
                       {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
@@ -1129,7 +1134,7 @@ function ShippingAddressSection() {
                 )}
                 {!form.sfStationCode && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">或直接輸入站點編號</Label>
+                    <Label className="text-xs font-semibold text-gray-700">{t("profile.orEnterStationCode")}</Label>
                     <Input
                       placeholder="例：852Z351 或 H852001P"
                       className={`text-sm font-mono ${form.sfStationCode && !validateSFCode(form.sfStationCode).valid ? "border-red-400 bg-red-50" : ""}`}
@@ -1166,7 +1171,7 @@ function ShippingAddressSection() {
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSubmit} disabled={addMutation.isPending || updateMutation.isPending}
                 className="font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] disabled:scale-100 disabled:shadow-none" style={{ background: BRAND_BLUE, color: "white" }}>
-                {editingId ? "儲存更改" : "新增地址"}
+                {editingId ? t("profile.saveChanges") : t("profile.addAddress")}
               </Button>
               <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); resetForm(); }} className="transition-all duration-200 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98] border-gray-400 text-gray-700 bg-white hover:bg-gray-50">{t("profile.addresses.cancel")}</Button>
             </div>
@@ -1256,9 +1261,9 @@ function EmbeddedOrdersSection() {
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
           <ShoppingBag className="w-8 h-8" style={{ color: BRAND_BLUE, opacity: 0.4 }} />
         </div>
-        <p className="font-medium text-gray-500">暫無訂單記錄</p>
+        <p className="font-medium text-gray-500">{t("profile.noOrders")}</p>
         <Link href="/marketplace">
-          <Button style={{ backgroundColor: BRAND_BLUE }} className="text-white font-bold">前往商城購物</Button>
+          <Button style={{ backgroundColor: BRAND_BLUE }} className="text-white font-bold">{t("profile.goShopping")}</Button>
         </Link>
       </div>
     );
@@ -1308,7 +1313,7 @@ function EmbeddedOrdersSection() {
   const filterTabs = [
     { id: "all", label: t("profile.orders.all"), count: countByBatch(allOrders) },
     { id: "pending", label: t("profile.orderStatus.pending_payment"), count: countByBatch(allOrders.filter(o => STATUS_GROUPS.pending.includes(o.orderStatus))) },
-    { id: "active", label: "進行中", count: countByBatch(allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus))) },
+    { id: "active", label: t("profile.activeOrders"), count: countByBatch(allOrders.filter(o => STATUS_GROUPS.active.includes(o.orderStatus))) },
     { id: "done", label: t("profile.orderStatus.completed"), count: countByBatch(allOrders.filter(o => STATUS_GROUPS.done.includes(o.orderStatus))) },
   ];
 
@@ -1319,7 +1324,7 @@ function EmbeddedOrdersSection() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="搜尋訂單號或商品名稱..."
+          placeholder={t("profile.searchOrderPlaceholder")}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#06038d]/30 bg-gray-50"
@@ -1359,7 +1364,7 @@ function EmbeddedOrdersSection() {
         <div className="py-12 text-center">
           <Filter className="w-8 h-8 mx-auto mb-2 text-gray-300" />
           <p className="text-sm text-gray-400">
-            {searchQuery ? `找不到「${searchQuery}」的訂單` : "此狀態暫無訂單"}
+            {searchQuery ? `${t("profile.noOrdersFound")}「${searchQuery}」` : t("profile.noOrdersInStatus")}
           </p>
         </div>
       ) : (
@@ -1381,7 +1386,7 @@ function EmbeddedOrdersSection() {
             }
             return rendered;
           })()}
-          <p className="text-xs text-gray-400 text-center pt-1">共 {filtered.length} 筆訂單</p>
+          <p className="text-xs text-gray-400 text-center pt-1">{t("profile.totalOrders", { count: filtered.length })}</p>
         </div>
       )}
     </div>
@@ -1416,7 +1421,7 @@ function EmbeddedNotificationsSection() {
   });
   const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
     onSuccess: () => {
-      toast.success("已標記所有通知為已讀");
+      toast.success(t("profile.allNotificationsRead"));
       utils.notifications.getMyNotifications.invalidate();
       utils.notifications.getUnreadCount.invalidate();
     },
@@ -1437,7 +1442,7 @@ function EmbeddedNotificationsSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">{unreadCount} 則未讀</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white">{t("profile.unreadCount", { count: unreadCount })}</span>
           )}
         </div>
         {unreadCount > 0 && (
@@ -1449,7 +1454,7 @@ function EmbeddedNotificationsSection() {
             onClick={() => markAllAsReadMutation.mutate()}
             disabled={markAllAsReadMutation.isPending}
           >
-            <CheckCheck className="w-3.5 h-3.5 mr-1" />全部已讀
+            <CheckCheck className="w-3.5 h-3.5 mr-1" />{t("profile.markAllRead")}
           </Button>
         )}
       </div>
@@ -1458,7 +1463,7 @@ function EmbeddedNotificationsSection() {
       <div className="flex gap-2">
         {[
           { value: false, label: t("profile.orders.all") },
-          { value: true, label: "未讀" },
+          { value: true, label: t("profile.unread") },
         ].map(opt => (
           <button
             key={String(opt.value)}
@@ -1478,13 +1483,13 @@ function EmbeddedNotificationsSection() {
       {/* 類型篩選 */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { value: undefined, label: "所有類型" },
-          { value: "trade", label: "交易" },
+          { value: undefined, label: t("profile.allTypes") },
+          { value: "trade", label: t("profile.notifTrade") },
           { value: "payment", label: t("profile.orders.payNow") },
-          { value: "offer", label: "出價" },
-          { value: "shipping", label: "物流" },
-          { value: "dispute", label: "爭議" },
-          { value: "system", label: "系統" },
+          { value: "offer", label: t("profile.notifOffer") },
+          { value: "shipping", label: t("profile.notifShipping") },
+          { value: "dispute", label: t("profile.notifDispute") },
+          { value: "system", label: t("profile.notifSystem") },
         ].map(({ value, label }) => (
           <button
             key={label}
@@ -1511,7 +1516,7 @@ function EmbeddedNotificationsSection() {
           <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "#f0f4ff" }}>
             <Bell className="w-7 h-7" style={{ color: BRAND_BLUE, opacity: 0.3 }} />
           </div>
-          <p className="text-gray-400">{unreadOnly ? "沒有未讀通知" : "暫無通知"}</p>
+          <p className="text-gray-400">{unreadOnly ? t("profile.noUnreadNotifs") : t("profile.noNotifs")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1618,6 +1623,7 @@ function useBatchPaymentCountdown(createdAt: Date | string | null | undefined, t
 
 // ─── Batch Order Card (multiple orders with same batchRef) ───
 function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paymentTimeoutMinutes?: number }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const utils = trpc.useUtils();
   if (!orders.length) return null;
@@ -1646,7 +1652,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
       {/* Brand Header Bar */}
       <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-        <span className="text-xs text-white/80 font-mono tracking-wide">訂單批次 · {orders.length} 件商品</span>
+        <span className="text-xs text-white/80 font-mono tracking-wide">{t("profile.batchOrders", { count: orders.length })}</span>
         <OrderStatusBadge status={batchStatus} />
       </div>
       {/* Products list */}
@@ -1658,7 +1664,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
             <div key={order.id} className="flex items-center gap-3">
               {thumb ? (
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                  <LazyImage src={thumb} alt={order.listingTitle ?? '商品'} className="w-full h-full object-cover" />
+                  <LazyImage src={thumb} alt={order.listingTitle ?? t("common.product")} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
@@ -1675,7 +1681,7 @@ function BatchOrderCard({ orders, paymentTimeoutMinutes }: { orders: any[]; paym
         })}
         {/* Total */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-sm font-semibold text-gray-700">合計（不含運費）</span>
+          <span className="text-sm font-semibold text-gray-700">{t("cart.subtotalExclShipping")}</span>
           <span className="text-base font-bold" style={{ color: BRAND_BLUE }}>HKD {totalAmount.toFixed(2)}</span>
         </div>
         {/* Payment method */}
@@ -1951,11 +1957,11 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       {/* Dispute info banner */}
       {isDisputed && order.disputeReason && (
         <div className="mx-4 mb-3 bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
-          <div className="font-medium mb-1">爭議原因：</div>
+          <div className="font-medium mb-1">{t("profile.disputeReason")}：</div>
           <div>{order.disputeReason}</div>
           {order.disputeResolution && (
             <div className="mt-2 pt-2 border-t border-red-200">
-              <div className="font-medium mb-1 text-green-700">處理結果：</div>
+              <div className="font-medium mb-1 text-green-700">{t("profile.resolutionResult")}：</div>
               <div className="text-green-700">{order.disputeResolution}</div>
             </div>
           )}
@@ -1967,9 +1973,9 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           <div className="flex items-center gap-2 text-indigo-800">
             <Truck className="w-4 h-4 flex-shrink-0" />
             <div className="text-xs">
-              <span className="font-medium">{order.shippingMethod ?? "快遞"}</span>
+              <span className="font-medium">{order.shippingMethod ?? t("profile.courier")}</span>
               <span className="mx-1">·</span>
-              追蹤號：<span className="font-mono font-medium">{order.trackingNumber}</span>
+              {t("profile.trackingNo")}：<span className="font-mono font-medium">{order.trackingNumber}</span>
             </div>
           </div>
         </div>
@@ -1977,7 +1983,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       {/* Auto-complete notice */}
       {order.orderStatus === "shipped" && order.autoCompleteAt && (
         <div className="mx-4 mb-3 text-xs text-muted-foreground bg-gray-50 border rounded-lg px-3 py-2">
-          如未確認收貨，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
+          {t("profile.autoCompleteNote", { date: new Date(order.autoCompleteAt).toLocaleDateString() })}
         </div>
       )}
       {/* Expand toggle */}
@@ -1985,14 +1991,14 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
         className="w-full px-4 py-2.5 border-t text-xs text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
         onClick={() => setExpanded(e => !e)}
       >
-        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />收起詳情</> : <><ChevronDown className="w-3.5 h-3.5" />{t("profile.orders.table.viewDetails")}</>}
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" />{t("profile.collapseDetails")}</> : <><ChevronDown className="w-3.5 h-3.5" />{t("profile.orders.table.viewDetails")}</>}
       </button>
       {/* Expanded details */}
       {expanded && (
         <div className="border-t p-4 space-y-3" style={{ backgroundColor: "#f8f9fa" }}>
           {shippingAddr && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>收貨資料</p>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>{t("profile.shippingInfo")}</p>
               <div className="text-sm space-y-1 text-gray-800">
                 <div className="flex items-center gap-2"><User className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.name}</div>
                 <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-500" />{shippingAddr.phone}</div>
@@ -2004,10 +2010,10 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           )}
           <div className="border-t border-gray-200" />
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>付款資料</p>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>{t("profile.paymentInfo")}</p>
             <div className="text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-500">商品金額</span><span className="text-gray-800">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
-              <div className="flex justify-between font-semibold"><span className="text-gray-800">總計</span><span style={{ color: BRAND_BLUE }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">{t("cart.itemTotal")}</span><span className="text-gray-800">HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
+              <div className="flex justify-between font-semibold"><span className="text-gray-800">{t("cart.total")}</span><span style={{ color: BRAND_BLUE }}>HKD {parseFloat(order.subtotalHkd ?? "0").toFixed(2)}</span></div>
             </div>
           </div>
           {order.listingId && (
@@ -2021,14 +2027,14 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900">確認收貨</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-gray-900">{t("profile.confirmReceipt")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-600 py-2">確認已收到商品並且狀態良好？確認後款項將轉帳給賣家，此操作無法撤銷。</p>
+          <p className="text-sm text-gray-600 py-2">{t("profile.confirmReceiptDesc")}</p>
           <DialogFooter className="gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowConfirmDialog(false)}>{t("profile.addresses.cancel")}</Button>
             <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" disabled={confirmReceiptMutation.isPending}
               onClick={() => confirmReceiptMutation.mutate({ orderId: order.id })}>
-              {confirmReceiptMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />確認中...</> : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
+              {confirmReceiptMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.confirming")}...</> : <><CheckCircle className="w-4 h-4 mr-2" />確認收貨</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2041,12 +2047,12 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           </DialogHeader>
           <div className="py-2 space-y-3">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">爭議原因（至少 10 個字）</Label>
+              <Label className="text-sm font-medium">{t("profile.disputeReasonLabel")}</Label>
               <Textarea placeholder="請詳細描述問題，例如：商品與描述不符、未收到商品等..." value={disputeReason} onChange={e => setDisputeReason(e.target.value)} rows={4} className="text-sm" />
               <div className="text-xs text-muted-foreground text-right">{disputeReason.length} 字</div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium">上傳佐證（選填，最多 3 個）</Label>
+              <Label className="text-sm font-medium">{t("profile.uploadEvidence")}</Label>
               <div className="flex flex-wrap gap-2">
                 {disputeEvidenceUrls.map((url, i) => {
                   const isVideo = disputeEvidenceMimeTypes[i]?.startsWith("video/");
@@ -2076,7 +2082,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
             <Button variant="outline" onClick={() => { setShowDisputeDialog(false); setDisputeReason(""); setDisputeEvidenceUrls([]); setDisputeEvidenceMimeTypes([]); }}>{t("profile.addresses.cancel")}</Button>
             <Button className="bg-red-600 hover:bg-red-700 text-white" disabled={openDisputeMutation.isPending || disputeReason.trim().length < 10 || isUploadingEvidence}
               onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim(), evidenceUrls: disputeEvidenceUrls.length > 0 ? disputeEvidenceUrls : undefined })}>
-              {openDisputeMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
+              {openDisputeMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.submitting")}...</> : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2089,14 +2095,14 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
           </DialogHeader>
           <div className="py-2 space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">評分</p>
+              <p className="text-sm font-medium">{t("profile.rating")}</p>
               <StarRating value={reviewRating} onChange={setReviewRating} />
               <p className="text-xs text-muted-foreground">
-                {reviewRating === 1 && "非常不滿意"}{reviewRating === 2 && "不滿意"}{reviewRating === 3 && "一般"}{reviewRating === 4 && "滿意"}{reviewRating === 5 && "非常滿意"}
+                {reviewRating === 1 && t("profile.ratingVeryBad")}{reviewRating === 2 && t("profile.ratingBad")}{reviewRating === 3 && t("profile.ratingOk")}{reviewRating === 4 && "滿意"}{reviewRating === 5 && "非常滿意"}
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium">評語（選填）</p>
+              <p className="text-sm font-medium">{t("profile.reviewComment")}</p>
               <Textarea placeholder="分享你的購物體驗..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} rows={3} className="text-sm" maxLength={500} />
               <div className="text-xs text-muted-foreground text-right">{reviewComment.length}/500</div>
             </div>
@@ -2105,7 +2111,7 @@ function EmbeddedOrderCard({ order, paymentTimeoutMinutes }: { order: any; payme
             <Button variant="outline" onClick={() => setShowReviewDialog(false)}>{t("profile.addresses.cancel")}</Button>
             <Button className="bg-yellow-500 hover:bg-yellow-600 text-white" disabled={submitReviewMutation.isPending || reviewRating === 0}
               onClick={() => submitReviewMutation.mutate({ orderId: order.id, rating: reviewRating, comment: reviewComment.trim() || undefined })}>
-              {submitReviewMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
+              {submitReviewMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.submitting")}...</> : <><MessageSquare className="w-4 h-4 mr-2" />提交評價</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2120,11 +2126,11 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
   const utils = trpc.useUtils();
   const { data: offers, isLoading } = trpc.marketplace.getMyOffers.useQuery();
   const cancelOfferMutation = trpc.marketplace.cancelOffer.useMutation({
-    onSuccess: () => { toast.success("出價已取消"); utils.marketplace.getMyOffers.invalidate(); },
+    onSuccess: () => { toast.success(t("profile.offerCancelled")); utils.marketplace.getMyOffers.invalidate(); },
     onError: (e: any) => toast.error(parseApiError(e)),
   });
   const offerStatusLabel: Record<string, { label: string; color: string }> = {
-    pending: { label: "待回覆", color: "bg-yellow-100 text-yellow-800" },
+    pending: { label: t("profile.offerPending"), color: "bg-yellow-100 text-yellow-800" },
     accepted: { label: t("profile.offers.status.accepted"), color: "bg-green-100 text-green-800" },
     rejected: { label: t("profile.offers.status.rejected"), color: "bg-red-100 text-red-800" },
     expired: { label: t("profile.offers.status.expired"), color: "bg-gray-100 text-gray-600" },
@@ -2137,7 +2143,7 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
           <Tag className="w-8 h-8" style={{ color: BRAND_BLUE, opacity: 0.3 }} />
         </div>
-        <p className="font-medium text-gray-500">暫無出價記錄</p>
+        <p className="font-medium text-gray-500">{t("profile.noOffers")}</p>
         <Link href="/marketplace">
           <Button style={{ backgroundColor: BRAND_BLUE }} className="text-white font-bold">{t("profile.offers.goToMarketplace")}</Button>
         </Link>
@@ -2174,10 +2180,10 @@ function EmbeddedOffersSection({ userId }: { userId: number }) {
             <div className="flex-1 min-w-0">
               {offer.listingTitle && <p className="font-semibold text-sm text-gray-900 truncate mb-0.5">{offer.listingTitle}</p>}
               <p className="font-medium text-gray-800">{t("profile.offers.offerPrice")}<span style={{ color: BRAND_BLUE }}>HKD {parseFloat(offer.offerPriceHkd).toFixed(2)}</span></p>
-              {offer.message && <p className="text-sm text-gray-500 mt-1">留言: {offer.message}</p>}
-              {offer.rejectionReason && <p className="text-sm text-red-500 mt-1">拒絕原因: {offer.rejectionReason}</p>}
+              {offer.message && <p className="text-sm text-gray-500 mt-1">{t("profile.offerMessage")}: {offer.message}</p>}
+              {offer.rejectionReason && <p className="text-sm text-red-500 mt-1">{t("profile.rejectionReason")}: {offer.rejectionReason}</p>}
               <p className="text-xs text-gray-400 mt-1">{new Date(offer.createdAt).toLocaleDateString("zh-HK")}</p>
-              {offer.status === "pending" && <p className="text-xs text-amber-600 mt-1">到期: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>}
+              {offer.status === "pending" && <p className="text-xs text-amber-600 mt-1">{t("profile.expires")}: {new Date(offer.expiresAt).toLocaleString("zh-HK")}</p>}
               {offer.status === "accepted" && <p className="text-xs text-green-600 mt-1 font-medium">{t("profile.offers.acceptedMessage")}</p>}
             </div>
             <div className="flex flex-col gap-2 flex-shrink-0">
@@ -2235,7 +2241,7 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
       if (!endAt) { setTimeLeft("—"); return; }
       const update = () => {
         const diff = new Date(endAt).getTime() - Date.now();
-        if (diff <= 0) { setTimeLeft("已結標"); return; }
+        if (diff <= 0) { setTimeLeft(t("profile.auctionEnded")); return; }
         const d = Math.floor(diff / 86400000);
         const h = Math.floor((diff % 86400000) / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
@@ -2243,8 +2249,8 @@ function MyAuctionsSection({ bids }: { bids: any[] }) {
         setTimeLeft(d > 0 ? `${d}天 ${h}時` : h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
       };
       update();
-      const t = setInterval(update, 1000);
-      return () => clearInterval(t);
+      const timer = setInterval(update, 1000);
+      return () => clearInterval(timer);
     }, [endAt]);
     const isUrgent = endAt && new Date(endAt).getTime() - Date.now() < 3600000;
     return (

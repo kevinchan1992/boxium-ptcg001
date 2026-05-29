@@ -1,5 +1,6 @@
 import React from "react";
 import { Loader2, ArrowDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PullToRefreshIndicatorProps {
   pullDistance: number;
@@ -16,6 +17,7 @@ export function PullToRefreshIndicator({
   isRefreshing,
   threshold = 70,
 }: PullToRefreshIndicatorProps) {
+  const { t } = useTranslation();
   const progress = Math.min(pullDistance / threshold, 1);
   const isTriggered = pullDistance >= threshold;
   const isVisible = pullDistance > 4 || isRefreshing;
@@ -43,7 +45,7 @@ export function PullToRefreshIndicator({
         {isRefreshing ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>更新中…</span>
+            <span>{t("common.refreshing")}</span>
           </>
         ) : (
           <>
@@ -53,7 +55,7 @@ export function PullToRefreshIndicator({
                 transform: isTriggered ? "rotate(180deg)" : "rotate(0deg)",
               }}
             />
-            <span>{isTriggered ? "放開以更新" : "下拉更新"}</span>
+            <span>{isTriggered ? t("common.releaseToRefresh") : t("common.pullToRefresh")}</span>
           </>
         )}
       </div>

@@ -11,8 +11,8 @@ export default function Terms() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "服務條款 - BOXIUM TCG",
-    "description": "BOXIUM TCG 平台服務條款，說明用戶使用平台服務的權利與義務",
+    "name": "Terms of Service - BOXIUM TCG",
+    "description": "BOXIUM TCG Platform Terms of Service",
     "url": "https://boxiumptcg.manus.space/terms",
     "isPartOf": {
       "@type": "WebSite",

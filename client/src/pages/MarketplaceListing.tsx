@@ -66,12 +66,12 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
       >
         <img
           src={imgs[activeIdx]}
-          alt={`${title} - 圖片 ${activeIdx + 1}`}
+          alt={`${title} - ${t("marketplaceListing.image")} ${activeIdx + 1}`}
           className="w-full h-full object-contain p-4"
         />
         {/* Zoom hint */}
         <div className="absolute bottom-3 right-3 bg-black/40 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ZoomIn className="w-3 h-3" />點擊放大
+          <ZoomIn className="w-3 h-3" />{t("marketplaceListing.clickToZoom")}
         </div>
         {imgs.length > 1 && (
           <>
@@ -108,7 +108,7 @@ function ListingImageGallery({ images, title }: { images: string[] | null; title
                   : "border-gray-200 hover:border-[#06038D]/50"
               }`}
             >
-              <LazyImage src={getProxiedImageUrl(url) ?? url} alt={`縮圖 ${i + 1}`} className="w-full h-full object-cover" />
+              <LazyImage src={getProxiedImageUrl(url) ?? url} alt={`${t("marketplaceListing.thumbnail")} ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -306,7 +306,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
             <p className="text-xs text-amber-700 leading-relaxed">
-              暫無 <span className="font-semibold">{conditionLabel}</span> 品相的交易數據，以下為所有品相的市場參考價
+              {t("marketplaceListing.noConditionData")} <span className="font-semibold">{conditionLabel}</span> {t("marketplaceListing.showingAllConditions")}
             </p>
           </div>
         )}
@@ -328,13 +328,13 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-1.5 text-sm font-medium ${trendColor}`}>
             <TrendIcon className="w-4 h-4" />
-            <span>7天趨勢：{stats.trend === "flat" ? "持平" : `${stats.trendPct > 0 ? "+" : ""}${stats.trendPct.toFixed(1)}%`}</span>
+            <span>7天趨勢：{stats.trend === "flat" ? t("marketplaceListing.trendFlat") : `${stats.trendPct > 0 ? "+" : ""}${stats.trendPct.toFixed(1)}%`}</span>
           </div>
           {Math.abs(vsListing) > 1 && (
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               vsListing > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
             }`}>
-              比市場均價{vsListing > 0 ? "低" : "高"} {Math.abs(vsListing).toFixed(1)}%
+              {t("marketplaceListing.vsMarket")} {vsListing > 0 ? t("marketplaceListing.below") : t("marketplaceListing.above")} {Math.abs(vsListing).toFixed(1)}%
             </span>
           )}
         </div>
@@ -351,7 +351,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
                     days === d ? "bg-[#06038D] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                   }`}
                 >
-                  {d}天
+                  {d}{t("common.days")}
                 </button>
               ))}
             </div>
@@ -363,7 +363,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} />
                 <RechartsTooltip
-                  formatter={(value) => [`HKD ${Number(value ?? 0).toLocaleString()}`, "均價"] as [string, string]}
+                  formatter={(value) => [`HKD ${Number(value ?? 0).toLocaleString()}`, t("marketplaceListing.avgPrice")] as [string, string]}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
                 />
                 <ReferenceLine y={listingPriceHkd} stroke="#FEDD00" strokeDasharray="4 2" strokeWidth={2} label={{ value: "此商品", fontSize: 10, fill: "#06038D" }} />
@@ -375,7 +375,7 @@ function SnkrdunkPriceBlock({ cardId, listingPriceHkd, condition }: { cardId: nu
           )}
         </div>
 
-        <p className="text-xs text-gray-400">數據來源：BOXIUM{isGradeFallback ? ' · 所有品相（參考）' : condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · 圖表顯示近 {days} 天（共 {filteredHistory.length} 筆記錄）</p>
+        <p className="text-xs text-gray-400">{t("marketplaceListing.dataSource")}{isGradeFallback ? t("marketplaceListing.allConditionsRef") : condition && CONDITION_FULL[condition as ConditionValue] ? ` · ${CONDITION_FULL[condition as ConditionValue]}` : ''} · {t("marketplaceListing.chartDays", { days, count: filteredHistory.length })}</p>
       </div>
     </div>
   );
@@ -416,7 +416,7 @@ function SellerReviewsSection({ sellerId }: { sellerId: number }) {
           className="text-xs text-[#06038D] hover:underline font-medium"
           onClick={() => setExpanded(e => !e)}
         >
-          {expanded ? "收起" : `查看全部 ${total} 則評價`}
+          {expanded ? t("common.collapse") : t("marketplaceListing.viewAllReviews", { count: total })}
         </button>
       )}
     </div>
@@ -426,6 +426,7 @@ function SellerReviewsSection({ sellerId }: { sellerId: number }) {
 // ─── Seller Other Listings ──────────────────────────────────────────────────────
 
 function SellerOtherListings({ sellerId, currentListingId }: { sellerId: number; currentListingId: number }) {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { data } = trpc.marketplace.getListings.useQuery({
     page: 1,
@@ -442,7 +443,7 @@ function SellerOtherListings({ sellerId, currentListingId }: { sellerId: number;
     <div>
       <h3 className="font-bold text-[#06038D] mb-3 flex items-center gap-2">
         <Store className="w-4 h-4" />
-        同一賣家的其他商品
+        {t("marketplaceListing.otherSellerItems")}
       </h3>
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
         {others.map((l: any) => {
@@ -496,7 +497,7 @@ function OfferPayButton({ orderId }: { orderId: number }) {
       toast.success(t("marketplaceListing.payment.redirecting"));
       window.location.href = data.checkoutUrl;
     },
-    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+    onError: (e: any) => toast.error(e.message || t("marketplaceListing.cannotGetPaymentLink")),
   });
   return (
     <Button
@@ -506,7 +507,7 @@ function OfferPayButton({ orderId }: { orderId: number }) {
       onClick={() => getCheckoutMutation.mutate({ orderId })}
     >
       {getCheckoutMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
-      前往付款
+      {t("marketplaceListing.goToPay")}
     </Button>
   );
 }
@@ -521,7 +522,7 @@ export default function MarketplaceListing() {
   const [completedOrderNo, setCompletedOrderNo] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [alipayStep, setAlipayStep] = useState<"qr" | "shipping" | "upload" | "done">("qr");
-  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
+  const [alipayShippingForm, setAlipayShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: t("marketplaceListing.hongkong"), addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
   const [alipaySfSearch, setAlipaySfSearch] = useState("");
   const [alipaySfRegion, setAlipaySfRegion] = useState("");
   const [alipaySfType, setAlipaySfType] = useState<'all' | 'station' | 'locker'>('all');
@@ -531,7 +532,7 @@ export default function MarketplaceListing() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
-  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
+  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: t("marketplaceListing.hongkong"), addressType: "normal" as "normal" | "sf_station", sfStationCode: "", sfStationName: "", sfStationAddress: "" });
   const [stripeSfSearch, setStripeSfSearch] = useState("");
   const [stripeSfRegion, setStripeSfRegion] = useState("");
   const [stripeSfType, setStripeSfType] = useState<'all' | 'station' | 'locker'>('all');
@@ -590,7 +591,7 @@ export default function MarketplaceListing() {
       return { prevWishlisted, prevIds };
     },
     onSuccess: (res) => {
-      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
+      toast.success(res.wishlisted ? t("common.addedToWishlist") : t("common.removedFromWishlist"));
     },
     onError: (_e, _vars, context) => {
       if (context?.prevWishlisted !== undefined) setIsWishlisted(context.prevWishlisted);
@@ -632,7 +633,7 @@ export default function MarketplaceListing() {
     const title = `${seriesPrefix}${listing.title} - HKD ${price.toFixed(2)} | BOXIUM TCG`;
     const description = listing.description
       ? `${listing.description.slice(0, 120)}${listing.description.length > 120 ? "..." : ""} | HKD ${price.toFixed(2)}`
-      : `商品狀況：${listing.condition} | 價格：HKD ${price.toFixed(2)} | BOXIUM TCG 卡牌商城`;
+      : `${t("marketplaceListing.seoCondition")}：${listing.condition} | ${t("marketplaceListing.seoPrice")}：HKD ${price.toFixed(2)} | BOXIUM TCG`;
     document.title = title;
     const setMeta = (property: string, content: string, useProperty = true) => {
       const attr = useProperty ? "property" : "name";
@@ -691,7 +692,7 @@ export default function MarketplaceListing() {
       if (data.verified) toast.success(t("marketplaceListing.payment.verification.success"));
       else toast.error(t("marketplaceListing.payment.verification.failed"));
     },
-    onError: (e) => { setIsVerifying(false); toast.error("驗證失敗：" + e.message); },
+    onError: (e) => { setIsVerifying(false); toast.error(t("marketplaceListing.verifyFailed") + "：" + e.message); },
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -703,7 +704,7 @@ export default function MarketplaceListing() {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload-payment-proof", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("上傳失敗");
+      if (!res.ok) throw new Error(t("marketplaceListing.uploadFailed"));
       const { url } = await res.json();
       setProofUrl(url);
       toast.success(t("marketplaceListing.upload.verifying"));
@@ -849,7 +850,7 @@ export default function MarketplaceListing() {
                   : "bg-orange-50 text-orange-700 border-orange-200"
                 }
               >
-                {listing.sellerType === "platform" ? "🏻 BOXIUM 官方" : "👤 個人賣家"}
+                {listing.sellerType === "platform" ? t("marketplaceListing.officialSeller") : t("marketplaceListing.privateSeller")}
               </Badge>
               {listing.tcgSeries && (
                 <Badge variant="outline" className={
@@ -864,7 +865,7 @@ export default function MarketplaceListing() {
                    listing.tcgSeries === "onepiece" ? "One Piece" :
                    listing.tcgSeries === "yugioh" ? "Yu-Gi-Oh!" :
                    listing.tcgSeries === "dragonball" ? "Dragon Ball" :
-                   listing.tcgSeries === "mtg" ? "MTG" : "其他 TCG"}
+                   listing.tcgSeries === "mtg" ? "MTG" : t("marketplaceListing.otherTCG")}
                 </Badge>
               )}
               {listing.status === 'reserved' && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">⚠️ 爭議處理中</Badge>}
@@ -920,7 +921,7 @@ export default function MarketplaceListing() {
                     HKD {price.toLocaleString("zh-HK", { minimumFractionDigits: 2 })}
                   </span>
                 )}
-                <p className="text-white/60 text-xs mt-1">庫存：{listing.quantity} 件</p>
+                <p className="text-white/60 text-xs mt-1">{t("marketplaceListing.stock")}：{listing.quantity} {t("marketplaceListing.pieces")}</p>
               </div>
 
               <button
@@ -953,7 +954,7 @@ export default function MarketplaceListing() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900 text-sm">{sellerProfile.displayName || "個人賣家"}</p>
+                      <p className="font-semibold text-gray-900 text-sm">{sellerProfile.displayName || t("marketplaceListing.privateSeller")}</p>
                       {sellerProfile.ratingCount > 0 && (
                         <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -971,7 +972,7 @@ export default function MarketplaceListing() {
                         </div>
                       ) : <span className="text-gray-400">{t("marketplaceListing.seller.profile.new")}</span>}
                       <span>·</span>
-                      <span>已售 {sellerProfile.totalSales} 件</span>
+                      <span>{t("marketplaceListing.totalSold", { count: sellerProfile.totalSales })}</span>
                     </div>
                   </div>
                   {/* Link to seller profile */}
@@ -980,7 +981,7 @@ export default function MarketplaceListing() {
                       href={`/seller/${(sellerProfile as any).id}`}
                       className="text-xs text-[#06038D] hover:underline shrink-0 font-medium"
                     >
-                      查看主頁
+                      {t("marketplaceListing.viewProfile")}
                     </Link>
                   )}
                 </div>
@@ -992,20 +993,20 @@ export default function MarketplaceListing() {
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
                 <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                 <p className="text-green-800 font-semibold">{t("marketplaceListing.order.submitted")}</p>
-                <p className="text-sm text-green-700 mt-1">訂單號：{completedOrderNo}</p>
+                <p className="text-sm text-green-700 mt-1">{t("marketplaceListing.orderNo")}：{completedOrderNo}</p>
               </div>
             ) : listing.status === 'reserved' ? (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
                 <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                <p className="text-amber-800 font-semibold">此商品正在爭議處理中</p>
-                <p className="text-sm text-amber-700 mt-1">管理員正在處理相關爭議，商品暫時無法購買</p>
+                <p className="text-amber-800 font-semibold">{t("marketplaceListing.disputeInProgress")}</p>
+                <p className="text-sm text-amber-700 mt-1">{t("marketplaceListing.disputeDesc")}</p>
               </div>
             ) : isAvailable ? (
               <div className="space-y-2.5">
                 {!me && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>請先<Link href="/login" className="font-semibold underline mx-1">登入</Link>才能購買</span>
+                    <span>{t("marketplaceListing.loginToBuy1")}<Link href="/login" className="font-semibold underline mx-1">{t("common.login")}</Link>{t("marketplaceListing.loginToBuy2")}</span>
                   </div>
                 )}
 
@@ -1018,7 +1019,7 @@ export default function MarketplaceListing() {
                       </div>
                       <div>
                         <p className="text-xs text-green-700 font-semibold leading-none">{t("marketplaceListing.offer.accepted.banner")}</p>
-                        <p className="font-bold text-green-800 text-base leading-tight">出價金額：HKD {effectivePrice.toFixed(2)}</p>
+                        <p className="font-bold text-green-800 text-base leading-tight">{t("marketplaceListing.offerAmount")}：HKD {effectivePrice.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
@@ -1053,7 +1054,7 @@ export default function MarketplaceListing() {
                         </div>
                         <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">{t("marketplaceListing.offer.status.pending")}</span>
                       </div>
-                      <p className="text-xs text-gray-500">出價將於 {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 到期</p>
+                      <p className="text-xs text-gray-500">{t("marketplaceListing.offerExpires")} {new Date(myPendingOffer.expiresAt).toLocaleString("zh-HK", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} {t("marketplaceListing.expires")}</p>
                     </div>
                     )
                   ) : (
@@ -1067,12 +1068,12 @@ export default function MarketplaceListing() {
                                 className="w-full h-11 text-sm border-[#06038D]/40 text-[#06038D]/50 rounded-xl font-semibold bg-white cursor-not-allowed"
                                 disabled
                               >
-                                <Tag className="w-4 h-4 mr-2" />出價洽議
+                                <Tag className="w-4 h-4 mr-2" />{t("marketplaceListing.makeOffer")}
                               </Button>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="bottom" className="bg-[#06038D] text-white text-xs px-3 py-2 rounded-lg">
-                            請先登入才能出價
+                            {t("marketplaceListing.loginToOffer")}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1082,7 +1083,7 @@ export default function MarketplaceListing() {
                       className="w-full h-11 text-sm border-[#06038D] text-[#06038D] hover:bg-[#06038D]/5 rounded-xl font-semibold bg-white"
                       onClick={() => setShowOfferDialog(true)}
                     >
-                      <Tag className="w-4 h-4 mr-2" />出價洽議
+                      <Tag className="w-4 h-4 mr-2" />{t("marketplaceListing.makeOffer")}
                     </Button>
                     )
                   )
@@ -1117,7 +1118,7 @@ export default function MarketplaceListing() {
                 className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-[#25D366] hover:bg-[#1da851] text-white text-sm font-semibold transition-colors"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                WhatsApp 分享
+                {t("marketplaceListing.share.whatsapp")}
               </a>
               <button
                 onClick={() => {
@@ -1130,7 +1131,7 @@ export default function MarketplaceListing() {
                 className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
               >
                 {copiedLink ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                {copiedLink ? '已複製！' : '複製連結'}
+                {copiedLink ? t("common.copied") : t("marketplaceListing.copyLink")}
               </button>
             </div>
 
@@ -1140,7 +1141,7 @@ export default function MarketplaceListing() {
                 onClick={() => setShowReportDialog(true)}
                 className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 transition-colors"
               >
-                <Flag className="w-3.5 h-3.5" />舉報此商品
+                <Flag className="w-3.5 h-3.5" />{t("marketplaceListing.reportItem")}
               </button>
             )}
           </div>
@@ -1218,12 +1219,12 @@ export default function MarketplaceListing() {
           {completedOrderNo ? (
             <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
               <CheckCircle className="w-5 h-5" />
-              <span>訂單已提交 #{completedOrderNo}</span>
+              <span>{t("marketplaceListing.orderSubmitted")} #{completedOrderNo}</span>
             </div>
           ) : listing.status === 'reserved' ? (
             <div className="flex items-center justify-center gap-2 text-amber-700 font-semibold">
               <AlertCircle className="w-5 h-5" />
-              <span>爭議處理中，暫時無法購買</span>
+              <span>{t("marketplaceListing.disputeNoBuy")}</span>
             </div>
           ) : isAvailable ? (
             <div className="flex gap-2">
@@ -1236,7 +1237,7 @@ export default function MarketplaceListing() {
                   onClick={() => setShowOfferDialog(true)}
                 >
                   <Tag className="w-4 h-4" />
-                  出價
+                  {t("marketplaceListing.makeOffer")}
                 </button>
               )}
             </div>
@@ -1269,7 +1270,7 @@ export default function MarketplaceListing() {
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4 text-sm">
                 <p className="font-bold text-[#06038D]">
-                  付款金額：<span className="text-lg">HKD {effectivePrice.toFixed(2)}</span>
+                  {t("marketplaceListing.paymentAmount")}：<span className="text-lg">HKD {effectivePrice.toFixed(2)}</span>
                   {acceptedOffer && <span className="text-xs text-green-600 ml-2">{t("marketplaceListing.alipay.offerPriceLabel")}</span>}
                 </p>
                 <p className="text-gray-600 mt-1">{listing.title}</p>
@@ -1278,12 +1279,12 @@ export default function MarketplaceListing() {
                 <p className="text-sm text-gray-500">{t("marketplaceListing.alipay.scanPrompt")}</p>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ALIPAY_QR_URL)}`}
-                  alt="支付寶 HK QR Code"
+                  alt={t("marketplaceListing.alipayQR")}
                   className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-lg"
                 />
                 <a href={ALIPAY_QR_URL} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-[#06038D] hover:underline text-sm">
-                  <Smartphone className="w-4 h-4" />在手機上開啟支付寶 HK
+                  <Smartphone className="w-4 h-4" />{t("marketplaceListing.openAlipayMobile")}
                 </a>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
@@ -1298,15 +1299,15 @@ export default function MarketplaceListing() {
                     className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
                   >
                     <Copy className="w-3 h-3" />
-                    複製編號
+                    {t("marketplaceListing.copyId")}
                   </button>
                 </div>
                 <p className="text-amber-600 mt-1">{t("marketplaceListing.alipay.memoWarning")}</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white"
                 onClick={() => setAlipayStep("shipping")}>
-                我已完成付款，填寫收貨地址
-              </Button>
+                  {t("marketplaceListing.alipay.donePayFillAddress")}
+                </Button>
             </div>
           )}
 
@@ -1327,7 +1328,7 @@ export default function MarketplaceListing() {
                         className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
                         onClick={() => { setAlipayShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setAlipaySfSearch(""); setAlipaySfRegion(""); setAlipaySfType('all'); setAlipaySfResults([]); setAlipaySfDropdown(false); }}
                       >
-                        <X className="w-3 h-3" /> 清除已選地址
+                        <X className="w-3 h-3" /> {t("common.clearAddress")}
                       </button>
                     )}
                   </div>
@@ -1344,7 +1345,7 @@ export default function MarketplaceListing() {
                         onClick={() => setAlipayShippingForm({
                           name: addr.recipientName,
                           phone: addr.phone,
-                          address: addr.addressType === "sf_station" ? `順豐自提站 ${addr.sfStationCode}` : (addr.address || ""),
+                          address: addr.addressType === "sf_station" ? `${t("profile.sfPickup")} ${addr.sfStationCode}` : (addr.address || ""),
                           district: addr.addressType === "sf_station" ? (addr.sfStationName || "") : (addr.district || ""),
                           sfStationAddress: addr.sfStationCode ? (addr.sfStationName || "") : "",
                           region: addr.region || "香港",
@@ -1358,7 +1359,7 @@ export default function MarketplaceListing() {
                         <br />
                         <span className="text-gray-400 text-xs">
                           {addr.addressType === "sf_station"
-                            ? <>📦 順豐自提站 {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
+                            ? <>📦 {t("marketplaceListing.sfStation")} {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
                             : <>{addr.district ? `${addr.district}，` : ""}{addr.address}</>}
                         </span>
                       </button>
@@ -1373,7 +1374,7 @@ export default function MarketplaceListing() {
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder={t("marketplaceListing.alipay.address.recipientName.placeholder")} value={alipayShippingForm.name} onChange={e => setAlipayShippingForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>聯絡電話 *</Label>
+                  <Label>{t("profile.contactPhone")} *</Label>
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：9123 4567" value={alipayShippingForm.phone} onChange={e => setAlipayShippingForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
               </div>
@@ -1381,7 +1382,7 @@ export default function MarketplaceListing() {
                 <div className="space-y-2">
                   {/* SF search */}
                   <div className="flex gap-1.5 flex-wrap">
-                    {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                    {([['all', t("common.all")], ['station', t("profile.sfStation")], ['locker', t("profile.sfLocker")]] as const).map(([val, label]) => (
                       <button key={val} onClick={() => { setAlipaySfType(val); setAlipaySfDropdown(true); }}
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all ${alipaySfType === val ? 'bg-[#06038D] text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{label}</button>
                     ))}
@@ -1392,8 +1393,8 @@ export default function MarketplaceListing() {
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
                     </div>
                     <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={alipaySfRegion} onChange={e => { setAlipaySfRegion(e.target.value); setAlipaySfDropdown(true); }}>
-                      <option value="">全部地區</option>
-                      {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
+                      <option value="">{t("profile.allRegions")}</option>
+                      {[t("marketplaceListing.hkIsland"), t("marketplaceListing.kowloon"), t("marketplaceListing.newTerritories")].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   {alipaySfDropdown && alipaySfResults.length > 0 && (
@@ -1414,7 +1415,7 @@ export default function MarketplaceListing() {
                     <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
                       <span className="text-[#06038D] text-lg">📦</span>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || "順豐自提站"}</p>
+                        <p className="text-sm font-semibold text-[#06038D]">{alipayShippingForm.sfStationName || t("profile.sfPickup")}</p>
                         <p className="text-xs text-gray-500 font-mono">{alipayShippingForm.sfStationCode}</p>
                         {alipayShippingForm.sfStationAddress && <p className="text-xs text-gray-400 mt-0.5">{alipayShippingForm.sfStationAddress}</p>}
                       </div>
@@ -1423,14 +1424,14 @@ export default function MarketplaceListing() {
                   )}
                   {!alipayShippingForm.sfStationCode && (
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
+                      <Label className="text-xs text-gray-500">{t("profile.orEnterStationCode")}</Label>
                       <input
                         className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] ${
                           alipayShippingForm.sfStationCode && !validateSFCode(alipayShippingForm.sfStationCode).valid
                             ? "border-red-400 bg-red-50"
                             : "border-gray-200"
                         }`}
-                        placeholder="例：852Z351 或 H852001P"
+                        placeholder={t("marketplaceListing.sfStationPlaceholder")}
                         value={alipayShippingForm.sfStationCode}
                         onChange={e => setAlipayShippingForm(f => ({ ...f, sfStationCode: e.target.value }))}
                       />
@@ -1443,7 +1444,7 @@ export default function MarketplaceListing() {
                       {alipayShippingForm.sfStationCode && validateSFCode(alipayShippingForm.sfStationCode).valid && (
                         <p className="text-xs text-green-600 flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
-                          {validateSFCode(alipayShippingForm.sfStationCode).type === 'locker' ? '✓ 有效智能櫃編號' : '✓ 有效順豐站編號'}
+                          {validateSFCode(alipayShippingForm.sfStationCode).type === 'locker' ? t("marketplaceListing.validLocker") : t("marketplaceListing.validStation")}
                         </p>
                       )}
                     </div>
@@ -1452,35 +1453,35 @@ export default function MarketplaceListing() {
               ) : (
                 <>
                   <div className="space-y-1.5">
-                    <Label>詳細地址 *</Label>
+                    <Label>{t("marketplaceListing.detailedAddress")} *</Label>
                     <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={alipayShippingForm.address} onChange={e => setAlipayShippingForm(f => ({ ...f, address: e.target.value }))} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label>地區</Label>
+                      <Label>{t("marketplaceListing.district")}</Label>
                       <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={alipayShippingForm.district} onChange={e => setAlipayShippingForm(f => ({ ...f, district: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>區域</Label>
+                      <Label>{t("marketplaceListing.region")}</Label>
                       <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={alipayShippingForm.region} onChange={e => setAlipayShippingForm(f => ({ ...f, region: e.target.value }))}>
-                        <option value="香港島">香港島</option>
-                        <option value="九龍">九龍</option>
-                        <option value="新界">新界</option>
-                        <option value={t("marketplaceListing.address.region.hongkong")}>香港（不指定）</option>
+                        <option value={t("marketplaceListing.hkIsland")}>{t("marketplaceListing.hkIsland")}</option>
+                        <option value={t("marketplaceListing.kowloon")}>{t("marketplaceListing.kowloon")}</option>
+                        <option value={t("marketplaceListing.newTerritories")}>{t("marketplaceListing.newTerritories")}</option>
+                        <option value={t("marketplaceListing.address.region.hongkong")}>{t("marketplaceListing.address.region.hongkong")}</option>
                       </select>
                     </div>
                   </div>
                 </>
               )}
-              <p className="text-xs text-gray-400">* 必填欄位。如不需要寄送可跳過。</p>
+              <p className="text-xs text-gray-400">{t("marketplaceListing.requiredFields")}</p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>{t("common.back")}</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white"
                   disabled={!alipayShippingForm.name.trim() || !alipayShippingForm.phone.trim() || (alipayShippingForm.addressType !== "sf_station" && !alipayShippingForm.address.trim()) || (alipayShippingForm.addressType === "sf_station" && alipayShippingForm.sfStationCode.trim() !== "" && !validateSFCode(alipayShippingForm.sfStationCode).valid)}
                   onClick={() => setAlipayStep("upload")}
                 >
-                  下一步：上傳截圖
+                  {t("marketplaceListing.alipay.nextUploadScreenshot")}
                 </Button>
               </div>
             </div>
@@ -1489,38 +1490,38 @@ export default function MarketplaceListing() {
           {alipayStep === "upload" && (
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
-                <p className="font-bold text-[#06038D]">付款金額：HKD {price.toFixed(2)}</p>
-                <p className="text-gray-500 mt-1">請上傳支付寶 HK 的付款成功截圖，系統將自動驗證金額是否一致。</p>
+                <p className="font-bold text-[#06038D]">{t("marketplaceListing.paymentAmount")}：HKD {price.toFixed(2)}</p>
+                <p className="text-gray-500 mt-1">{t("marketplaceListing.uploadAlipayScreenshotDesc")}</p>
               </div>
               <div>
-                <Label>付款截圖 *</Label>
+                <Label>{t("marketplaceListing.paymentScreenshot")} *</Label>
                 <div className="mt-2 border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center">
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-2 text-gray-400">
                       <Loader2 className="w-8 h-8 animate-spin" />
-                      <p className="text-sm">上傳中...</p>
+                      <p className="text-sm">{t("common.uploading")}...</p>
                     </div>
                   ) : proofUrl ? (
                     <div className="space-y-3">
-                      <img src={proofUrl} alt="付款截圖" className="max-h-40 mx-auto rounded object-contain" />
+                      <img src={proofUrl} alt={t("marketplaceListing.paymentScreenshot")} className="max-h-40 mx-auto rounded object-contain" />
                       {isVerifying ? (
                         <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>AI 正在驗證付款金額...</span>
+                          <span>{t("marketplaceListing.aiVerifying")}</span>
                         </div>
                       ) : verifyResult ? (
                         <div className={`rounded-xl p-3 text-sm space-y-2 ${verifyResult.verified ? "bg-green-50 border border-green-200" : "bg-orange-50 border border-orange-200"}`}>
                           <div className="flex items-center gap-2 font-medium mb-2">
                             {verifyResult.verified
-                              ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">三項驗證全部通過</span></>
-                              : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">驗證未完全通過</span></>
+                              ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">{t("marketplaceListing.allVerified")}證全部通過</span></>
+                              : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">{t("marketplaceListing.verifyIncomplete")}通過</span></>
                             }
                           </div>
                           <div className="space-y-1.5">
                             {[
-                              { ok: verifyResult.payeeVerified, label: `收款方：${verifyResult.detectedPayee ?? "未識別"}${!verifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
-                              { ok: verifyResult.amountVerified, label: `金額：${verifyResult.currency ?? "HKD"} ${verifyResult.detectedAmount ?? "未識別"}${!verifyResult.amountVerified ? ` （需為 HKD ${price.toFixed(2)}）` : ""}` },
-                              { ok: verifyResult.statusVerified, label: `狀態：${verifyResult.detectedStatus ?? "未識別"}${!verifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                              { ok: verifyResult.payeeVerified, label: `${t("marketplaceListing.payee")}：${verifyResult.detectedPayee ?? t("marketplaceListing.unrecognized")}${!verifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
+                              { ok: verifyResult.amountVerified, label: `${t("marketplaceListing.amount")}：${verifyResult.currency ?? "HKD"} ${verifyResult.detectedAmount ?? "未識別"}${!verifyResult.amountVerified ? ` （需為 HKD ${price.toFixed(2)}）` : ""}` },
+                              { ok: verifyResult.statusVerified, label: `${t("marketplaceListing.status")}：${verifyResult.detectedStatus ?? t("marketplaceListing.unrecognized")}${!verifyResult.statusVerified ? " （需為「成功」）" : ""}` },
                             ].map((item, i) => (
                               <div key={i} className="flex items-center gap-2 text-xs">
                                 {item.ok ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
@@ -1529,10 +1530,10 @@ export default function MarketplaceListing() {
                             ))}
                           </div>
                           <p className={`text-xs mt-1 ${verifyResult.verified ? "text-green-700" : "text-orange-700"}`}>{verifyResult.reason}</p>
-                          <p className="text-xs text-gray-400">AI 信心度：{verifyResult.confidence === "high" ? "高" : verifyResult.confidence === "medium" ? "中" : "低"}</p>
+                          <p className="text-xs text-gray-400">{t("marketplaceListing.aiConfidence")}：{verifyResult.confidence === "high" ? t("marketplaceListing.high") : verifyResult.confidence === "medium" ? t("marketplaceListing.medium") : t("marketplaceListing.low")}</p>
                           {!verifyResult.verified && (
                             <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setProofUrl(""); setVerifyResult(null); }}>
-                              重新上傳截圖
+                              {t("marketplaceListing.reuploadScreenshot")}
                             </button>
                           )}
                         </div>
@@ -1543,8 +1544,8 @@ export default function MarketplaceListing() {
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" id="proof-upload" />
                       <label htmlFor="proof-upload" className="cursor-pointer">
                         <div className="text-3xl mb-2">📷</div>
-                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
-                        <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                        <p className="text-sm text-gray-500">{t("marketplaceListing.clickToUpload")}</p>
+                        <p className="text-xs text-gray-400 mt-1">{t("marketplaceListing.supportedFormats")}</p>
                       </label>
                     </div>
                   )}
@@ -1552,12 +1553,12 @@ export default function MarketplaceListing() {
               </div>
               {verifyResult && !verifyResult.verified && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                  <p className="font-medium">⚠️ 如確認已付款，可繼續提交</p>
-                  <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
+                  <p className="font-medium">{t("marketplaceListing.confirmPaidWarning")}</p>
+                  <p className="mt-1">{t("marketplaceListing.manualReviewNote")}</p>
                 </div>
               )}
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>{t("common.back")}</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
                   disabled={!proofUrl || isVerifying || isUploading || createAlipayOrderMutation.isPending}
@@ -1569,7 +1570,7 @@ export default function MarketplaceListing() {
                       alipayShippingForm.addressType === "sf_station" ? {
                         name: alipayShippingForm.name.trim(),
                         phone: alipayShippingForm.phone.trim(),
-                        address: `順豐自提站 ${alipayShippingForm.sfStationCode}`,
+                        address: `${t("profile.sfPickup")} ${alipayShippingForm.sfStationCode}`,
                         district: alipayShippingForm.sfStationName || undefined,
                         region: "香港",
                         sfStationCode: alipayShippingForm.sfStationCode,
@@ -1584,7 +1585,7 @@ export default function MarketplaceListing() {
                     ) : undefined,
                   })}
                 >
-                  {createAlipayOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitAlipay ? "✅ 提交訂單" : "提交訂單（待核對）"}
+                  {createAlipayOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.processing")}...</> : canSubmitAlipay ? t("marketplaceListing.submitOrder") : t("marketplaceListing.submitOrderPending")}
                 </Button>
               </div>
             </div>
@@ -1596,8 +1597,8 @@ export default function MarketplaceListing() {
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
               <p className="font-bold text-lg text-[#06038D]">{t("marketplaceListing.order.submitted")}</p>
-              <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。</p>
-              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setShowAlipay(false)}>關閉</Button>
+              <p className="text-sm text-gray-500">{t("marketplaceListing.orderConfirmNote")}</p>
+              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setShowAlipay(false)}>{t("common.close")}</Button>
             </div>
           )}
           </div>
@@ -1607,14 +1608,14 @@ export default function MarketplaceListing() {
       {/* ── Shipping Dialog ── */}
       <Dialog open={showShippingDialog} onOpenChange={(open) => { setShowShippingDialog(open); if (!open) { setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setSelectedSavedAddressId(null); } }}>
         <DialogContent bottomSheet showCloseButton={false} className="sm:max-w-md p-0 overflow-hidden border-2 border-[#FEDD00] gap-0">
-          <VisuallyHidden><DialogTitle>填寫收貨地址</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("marketplaceListing.fillShippingAddress")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#FEDD00]/20 flex items-center justify-center">
                 <Truck className="w-4 h-4 text-[#FEDD00]" />
               </div>
-              <h2 className="text-white font-bold text-lg">填寫收貨地址</h2>
+              <h2 className="text-white font-bold text-lg">{t("marketplaceListing.fillShippingAddress")}</h2>
             </div>
             <button onClick={() => setShowShippingDialog(false)} className="text-white/60 hover:text-white transition-colors">
               <X className="w-5 h-5" />
@@ -1631,7 +1632,7 @@ export default function MarketplaceListing() {
                       className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
                       onClick={() => { setSelectedSavedAddressId(null); setShippingForm({ name: "", phone: "", address: "", district: "", region: "香港", addressType: "normal", sfStationCode: "", sfStationName: "", sfStationAddress: "" }); setStripeSfSearch(""); setStripeSfRegion(""); setStripeSfType('all'); setStripeSfResults([]); setStripeSfDropdown(false); }}
                     >
-                      <X className="w-3 h-3" /> 清除已選地址
+                      <X className="w-3 h-3" /> {t("marketplaceListing.clearSelectedAddress")}
                     </button>
                   )}
                 </div>
@@ -1647,7 +1648,7 @@ export default function MarketplaceListing() {
                       <br />
                       <span className="text-gray-400 text-xs">
                         {addr.addressType === "sf_station"
-                          ? <>📦 順豐自提站 {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
+                          ? <>📦 {t("marketplaceListing.sfStation")} {addr.sfStationName ? `${addr.sfStationName} ` : ""}<span className="font-mono">{addr.sfStationCode}</span></>
                           : <>{addr.district ? `${addr.district}，` : ""}{addr.address}</>}
                       </span>
                     </button>
@@ -1662,28 +1663,28 @@ export default function MarketplaceListing() {
                 <input id="ship-name" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder={t("marketplaceListing.alipay.address.recipientName.placeholder")} value={shippingForm.name} onChange={e => setShippingForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ship-phone">聯絡電話 *</Label>
+                <Label htmlFor="ship-phone">{t("marketplaceListing.contactPhone")}</Label>
                 <input id="ship-phone" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：9123 4567" value={shippingForm.phone} onChange={e => setShippingForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
             </div>
             {shippingForm.addressType === "normal" && (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ship-address">詳細地址 *</Label>
+                  <Label htmlFor="ship-address">{t("marketplaceListing.detailedAddress")}</Label>
                   <input id="ship-address" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={shippingForm.address} onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="ship-district">地區</Label>
+                    <Label htmlFor="ship-district">{t("marketplaceListing.district")}</Label>
                     <input id="ship-district" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={shippingForm.district} onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="ship-region">區域</Label>
+                    <Label htmlFor="ship-region">{t("marketplaceListing.region")}</Label>
                     <select id="ship-region" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={shippingForm.region} onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}>
-                      <option value="香港島">香港島</option>
-                      <option value="九龍">九龍</option>
-                      <option value="新界">新界</option>
-                      <option value={t("marketplaceListing.address.region.hongkong")}>香港（不指定）</option>
+                      <option value={t("marketplaceListing.hkIsland")}>{t("marketplaceListing.hkIsland")}</option>
+                      <option value={t("marketplaceListing.kowloon")}>{t("marketplaceListing.kowloon")}</option>
+                      <option value={t("marketplaceListing.newTerritories")}>{t("marketplaceListing.newTerritories")}</option>
+                      <option value={t("marketplaceListing.address.region.hongkong")}>{t("marketplaceListing.address.region.hongkong")}</option>
                     </select>
                   </div>
                 </div>
@@ -1693,7 +1694,7 @@ export default function MarketplaceListing() {
               <div className="space-y-2">
                 {/* SF search */}
                 <div className="flex gap-1.5 flex-wrap">
-                  {([['all', '全部'], ['station', '順豐站'], ['locker', '智能櫃']] as const).map(([val, label]) => (
+                  {([['all', t('marketplaceListing.all')], ['station', t('marketplaceListing.sfStation')], ['locker', t('marketplaceListing.locker')]] as const).map(([val, label]) => (
                     <button key={val} onClick={() => { setStripeSfType(val); setStripeSfDropdown(true); }}
                       className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all ${stripeSfType === val ? 'bg-[#06038D] text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{label}</button>
                   ))}
@@ -1704,8 +1705,8 @@ export default function MarketplaceListing() {
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
                   </div>
                   <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={stripeSfRegion} onChange={e => { setStripeSfRegion(e.target.value); setStripeSfDropdown(true); }}>
-                    <option value="">全部地區</option>
-                    {["香港島", "九龍", "新界"].map(r => <option key={r} value={r}>{r}</option>)}
+                    <option value="">{t("marketplaceListing.allRegions")}</option>
+                    {[t("marketplaceListing.hkIsland"), t("marketplaceListing.kowloon"), t("marketplaceListing.newTerritories")].map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 {stripeSfDropdown && stripeSfResults.length > 0 && (
@@ -1726,7 +1727,7 @@ export default function MarketplaceListing() {
                   <div className="flex items-start gap-2 p-3 bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl">
                     <span className="text-[#06038D] text-lg">📦</span>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || "順豐自提站"}</p>
+                      <p className="text-sm font-semibold text-[#06038D]">{shippingForm.sfStationName || t("profile.sfPickup")}</p>
                       <p className="text-xs text-gray-500 font-mono">{shippingForm.sfStationCode}</p>
                       {shippingForm.sfStationAddress && <p className="text-xs text-gray-400 mt-0.5">{shippingForm.sfStationAddress}</p>}
                     </div>
@@ -1735,7 +1736,7 @@ export default function MarketplaceListing() {
                 )}
                 {!shippingForm.sfStationCode && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-gray-500">或手動輸入順豐站/智能櫃編號</Label>
+                    <Label className="text-xs text-gray-500">{t("marketplaceListing.orManualSfCode")}</Label>
                     <input
                       className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] ${
                         shippingForm.sfStationCode && !validateSFCode(shippingForm.sfStationCode).valid
@@ -1755,17 +1756,17 @@ export default function MarketplaceListing() {
                     {shippingForm.sfStationCode && validateSFCode(shippingForm.sfStationCode).valid && (
                       <p className="text-xs text-green-600 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        {validateSFCode(shippingForm.sfStationCode).type === 'locker' ? '✓ 有效智能櫃編號' : '✓ 有效順豐站編號'}
+                        {validateSFCode(shippingForm.sfStationCode).type === 'locker' ? t("marketplaceListing.validLockerCode") : t("marketplaceListing.validStationCode")}
                       </p>
                     )}
                   </div>
                 )}
               </div>
             )}
-            <p className="text-xs text-gray-400">* 必填欄位。收貨地址將提供給賣家安排寄送。</p>
+            <p className="text-xs text-gray-400">{t("marketplaceListing.requiredFieldsSeller")}</p>
           </div>
           <div className="px-6 pb-6 flex gap-3 bg-white">
-            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowShippingDialog(false)}>取消</Button>
+            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowShippingDialog(false)}>{t("common.cancel")}</Button>
             <Button
               className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
               disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || (shippingForm.addressType === "normal" && !shippingForm.address.trim()) || (shippingForm.addressType === "sf_station" && (!shippingForm.sfStationCode.trim() || !validateSFCode(shippingForm.sfStationCode).valid)) || createStripeOrderMutation.isPending}
@@ -1777,7 +1778,7 @@ export default function MarketplaceListing() {
                   shippingAddress: shippingForm.addressType === "sf_station" ? {
                     name: shippingForm.name.trim(),
                     phone: shippingForm.phone.trim(),
-                    address: `順豐自提站 ${shippingForm.sfStationCode}`,
+                    address: `${t("profile.sfPickup")} ${shippingForm.sfStationCode}`,
                     district: shippingForm.sfStationName || undefined,
                     region: "香港",
                     sfStationCode: shippingForm.sfStationCode,
@@ -1792,7 +1793,7 @@ export default function MarketplaceListing() {
                 });
               }}
             >
-              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</> : <><CreditCard className="w-4 h-4 mr-2" />信用卡付款</>}
+              {createStripeOrderMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.processing")}...</> : <><CreditCard className="w-4 h-4 mr-2" />{t("marketplaceListing.creditCardPayment")}</>}
             </Button>
           </div>
         </DialogContent>
@@ -1820,17 +1821,17 @@ export default function MarketplaceListing() {
               const minOfferPrice = Math.ceil(listingPrice * 0.7 * 100) / 100;
               return (
                 <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
-                  <p className="text-gray-500">市價</p>
+                  <p className="text-gray-500">{t("marketplaceListing.marketPrice")}</p>
                   <p className="font-bold text-[#06038D] text-lg">HKD {listingPrice.toFixed(2)}</p>
-                  <p className="text-xs text-gray-500 mt-1">最低可出價：<span className="font-semibold text-[#06038D]">HKD {minOfferPrice.toFixed(0)}</span>（定價 70%）</p>
+                  <p className="text-xs text-gray-500 mt-1">{t("marketplaceListing.minOffer")}：<span className="font-semibold text-[#06038D]">HKD {minOfferPrice.toFixed(0)}</span>（定價 70%）</p>
                 </div>
               );
             })()}
             <div>
-              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">出價金額（HKD） *</Label>
+              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">{t("marketplaceListing.offerAmountLabel")} *</Label>
               <Input
                 type="number"
-                placeholder="請輸入出價金額"
+                placeholder={t("marketplaceListing.offerAmountPlaceholder")}
                 value={offerAmount}
                 onChange={(e) => setOfferAmount(e.target.value)}
                 className={`border-gray-200 focus-visible:ring-[#06038D] ${
@@ -1848,7 +1849,7 @@ export default function MarketplaceListing() {
                   return (
                     <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      出價金額不能低於定價的 70%（最低 HKD {minOfferPrice.toFixed(0)}）
+                      {t("marketplaceListing.offerMinWarning", { min: minOfferPrice.toFixed(0) })}
                     </p>
                   );
                 }
@@ -1856,9 +1857,9 @@ export default function MarketplaceListing() {
               })()}
             </div>
             <div>
-              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">留言（可選）</Label>
+              <Label className="text-sm font-medium mb-1.5 block text-[#06038D]">{t("marketplaceListing.offerMessage")}</Label>
               <Textarea
-                placeholder="可以說明出價原因或其他要求..."
+                placeholder={t("marketplaceListing.offerMessagePlaceholder")}
                 value={offerMessage}
                 onChange={(e) => setOfferMessage(e.target.value)}
                 rows={3}
@@ -1867,7 +1868,7 @@ export default function MarketplaceListing() {
             </div>
           </div>
           <div className="px-6 pb-6 flex gap-3 bg-white">
-            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowOfferDialog(false)}>取消</Button>
+            <Button variant="outline" className="flex-1 border-gray-200 text-[#06038D]" onClick={() => setShowOfferDialog(false)}>{t("common.cancel")}</Button>
             <Button
               className="flex-1 bg-[#FEDD00] hover:bg-[#e8c800] text-[#06038D] font-bold"
               disabled={(() => {
@@ -1887,7 +1888,7 @@ export default function MarketplaceListing() {
                 });
               }}
             >
-              {makeOfferMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "送出出價"}
+              {makeOfferMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("marketplaceListing.submitOffer")}
             </Button>
           </div>
         </DialogContent>
@@ -1896,14 +1897,14 @@ export default function MarketplaceListing() {
       {/* ── Report Dialog ── */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
         <DialogContent bottomSheet className="sm:max-w-sm p-0 overflow-hidden border-2 border-red-400">
-          <VisuallyHidden><DialogTitle>舉報商品</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("marketplaceListing.reportListing")}</DialogTitle></VisuallyHidden>
           {/* 深藍色頭部 */}
           <div className="bg-[#06038D] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-red-400/20 flex items-center justify-center">
                 <Flag className="w-4 h-4 text-red-400" />
               </div>
-              <h2 className="text-white font-bold text-lg">舉報商品</h2>
+              <h2 className="text-white font-bold text-lg">{t("marketplaceListing.reportItem")}</h2>
             </div>
             <button onClick={() => setShowReportDialog(false)} className="text-white/60 hover:text-white transition-colors">
               <X className="w-5 h-5" />
@@ -1911,24 +1912,24 @@ export default function MarketplaceListing() {
           </div>
           <div className="p-6 space-y-4">
             <div>
-              <Label className="text-sm font-medium mb-1.5 block">舉報原因</Label>
+              <Label className="text-sm font-medium mb-1.5 block">{t("marketplaceListing.reportReason")}</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
                 <SelectTrigger className="border-gray-200 focus:ring-[#06038D]">
-                  <SelectValue placeholder="請選擇舉報原因" />
+                  <SelectValue placeholder={t("marketplaceListing.selectReportReason")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fake_item">假貨 / 詐騙</SelectItem>
-                  <SelectItem value="wrong_description">商品與描述不符</SelectItem>
-                  <SelectItem value="prohibited_item">禁售商品</SelectItem>
-                  <SelectItem value="scam">詐騙行為</SelectItem>
-                  <SelectItem value="other">其他</SelectItem>
+                  <SelectItem value="fake_item">{t("marketplaceListing.reportFake")}</SelectItem>
+                  <SelectItem value="wrong_description">{t("marketplaceListing.reportWrongDesc")}</SelectItem>
+                  <SelectItem value="prohibited_item">{t("marketplaceListing.reportProhibited")}</SelectItem>
+                  <SelectItem value="scam">{t("marketplaceListing.reportScam")}</SelectItem>
+                  <SelectItem value="other">{t("common.other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-sm font-medium mb-1.5 block">詳細說明（可選）</Label>
+              <Label className="text-sm font-medium mb-1.5 block">{t("marketplaceListing.reportDetails")}</Label>
               <Textarea
-                placeholder="請詳述舉報原因..."
+                placeholder={t("marketplaceListing.reportDetailsPlaceholder")}
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value)}
                 rows={3}
@@ -1937,7 +1938,7 @@ export default function MarketplaceListing() {
             </div>
           </div>
           <div className="px-6 pb-6 flex gap-3">
-            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowReportDialog(false)}>取消</Button>
+            <Button variant="outline" className="flex-1 border-gray-200" onClick={() => setShowReportDialog(false)}>{t("common.cancel")}</Button>
             <Button
               className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold"
               disabled={!reportReason || reportListingMutation.isPending}
@@ -1950,7 +1951,7 @@ export default function MarketplaceListing() {
                 });
               }}
             >
-              {reportListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "提交舉報"}
+              {reportListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("marketplaceListing.submitReport")}
             </Button>
           </div>
         </DialogContent>
@@ -1961,6 +1962,7 @@ export default function MarketplaceListing() {
 
 // ─── Add to Cart Button ────────────────────────────────────────────────────────────────────────────────────
 function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId: number; isLoggedIn: boolean; isAcceptedOffer?: boolean }) {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
   const [showSuccess, setShowSuccess] = useState(false);
@@ -1987,16 +1989,16 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
       // Trigger cart icon bounce animation
       triggerCartBounce();
       // Show toast with action button
-      toast.success("已加入購物車", {
+      toast.success(t("common.addedToCart"), {
         action: {
-          label: "查看購物車",
+          label: t("common.viewCart"),
           onClick: () => window.location.href = "/cart",
         },
         duration: 4000,
       });
     },
     onError: (err) => {
-      const msg = err.message || "加入購物車失敗";
+      const msg = err.message || t("marketplaceListing.addToCartFailed");
       // Show specific stock error message
       if (msg.includes("庫存不足") || msg.includes("已下架") || msg.includes("不存在")) {
         toast.error(msg, { duration: 5000 });
@@ -2013,7 +2015,7 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
         onClick={() => { window.location.href = "/login"; }}
       >
         <ShoppingCart className="w-5 h-5 mr-2" />
-        登入後加入購物車
+        {t("marketplaceListing.loginToAddCart")}
       </Button>
     );
   }
@@ -2028,14 +2030,14 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
           disabled
         >
           <Check className="w-5 h-5 mr-2" />
-          {isAcceptedOffer ? "已在購物車（待付款）" : "已在購物車"}
+          {isAcceptedOffer ? t("marketplaceListing.inCartPending") : t("marketplaceListing.inCart")}
         </Button>
         <button
           onClick={() => setLocation("/cart")}
           className="w-full text-sm text-[#06038D] hover:underline flex items-center justify-center gap-1"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
-          {isAcceptedOffer ? "前往購物車付款" : "前往購物車"}
+          {isAcceptedOffer ? t("marketplaceListing.goToCartPay") : t("common.viewCart")}
         </button>
       </div>
     );
@@ -2075,7 +2077,7 @@ function AddToCartButton({ listingId, isLoggedIn, isAcceptedOffer }: { listingId
         onClick={() => addToCartMutation.mutate({ listingId })}
       >
         <ShoppingCart className="w-5 h-5 mr-2" />
-        {addToCartMutation.isPending ? "加入中..." : showSuccess ? "已加入✓" : isAcceptedOffer ? "加入購物車付款" : "加入購物車"}
+        {addToCartMutation.isPending ? t("marketplaceListing.adding") : showSuccess ? t("marketplaceListing.added") : isAcceptedOffer ? t("marketplaceListing.addToCartPay") : t("common.addToCart")}
       </Button>
     </div>
   );

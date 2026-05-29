@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Gavel, Clock, TrendingUp, Eye, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 // ─── Countdown Hook ──────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
@@ -27,26 +28,27 @@ function useCountdown(endTime: Date | string | null) {
   return remaining;
 }
 
-function formatCountdown(ms: number): { text: string; urgent: boolean } {
-  if (ms <= 0) return { text: "已結標", urgent: false };
+function formatCountdown(ms: number, t: (key: string, opts?: any) => string): { text: string; urgent: boolean } {
+  if (ms <= 0) return { text: t("auctionCard.ended"), urgent: false };
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
   const h = Math.floor(m / 60);
   const d = Math.floor(h / 24);
 
-  if (d > 0) return { text: `${d}天 ${h % 24}時`, urgent: false };
-  if (h > 0) return { text: `${h}時 ${m % 60}分`, urgent: h < 2 };
-  if (m > 0) return { text: `${m}分 ${s % 60}秒`, urgent: true };
-  return { text: `${s}秒`, urgent: true };
+  if (d > 0) return { text: t("auctionCard.countdown.dh", { d, h: h % 24 }), urgent: false };
+  if (h > 0) return { text: t("auctionCard.countdown.hm", { h, m: m % 60 }), urgent: h < 2 };
+  if (m > 0) return { text: t("auctionCard.countdown.ms", { m, s: s % 60 }), urgent: true };
+  return { text: t("auctionCard.countdown.s", { s }), urgent: true };
 }
 
 // ─── AuctionCard ─────────────────────────────────────────────────────────────
 export function AuctionCard({ auction }: { auction: any }) {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
   const remaining = useCountdown(auction.auctionEndAt);
   // remaining is null when countdown hasn't been calculated yet (prevents false "ended" flash)
   const remainingMs = remaining ?? Infinity;
-  const { text: countdownText, urgent } = remaining !== null ? formatCountdown(remaining) : { text: '...', urgent: false };
+  const { text: countdownText, urgent } = remaining !== null ? formatCountdown(remaining, t) : { text: '...', urgent: false };
 
   const images: string[] | null = (() => {
     try { return auction.images ? JSON.parse(auction.images) : null; }
@@ -93,7 +95,7 @@ export function AuctionCard({ auction }: { auction: any }) {
         <div className="absolute top-2 left-2">
           <span className="flex items-center gap-1 bg-[#06038D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
             <Gavel className="w-2.5 h-2.5" />
-            拍賣
+            {t("auctionCard.auction")}
           </span>
         </div>
 
@@ -102,7 +104,7 @@ export function AuctionCard({ auction }: { auction: any }) {
           <div className="absolute top-2 right-2">
             <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
               <Zap className="w-2.5 h-2.5" />
-              即將結標
+              {t("auctionCard.endingSoon")}
             </span>
           </div>
         )}
@@ -111,7 +113,7 @@ export function AuctionCard({ auction }: { auction: any }) {
         {auction.buyNowPrice && !isEnded && (
           <div className="absolute bottom-2 right-2">
             <span className="bg-[#FEDD00] text-[#06038D] text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-              即買
+              {t("auctionCard.buyNow")}
             </span>
           </div>
         )}
@@ -120,7 +122,7 @@ export function AuctionCard({ auction }: { auction: any }) {
         {isEnded && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="bg-white/90 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">
-              {auction.auctionStatus === 'ended_sold' ? '已售出' : '已結標'}
+              {auction.auctionStatus === 'ended_sold' ? t("auctionCard.sold") : t("auctionCard.ended")}
             </span>
           </div>
         )}
@@ -143,13 +145,13 @@ export function AuctionCard({ auction }: { auction: any }) {
         {/* Current bid */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-gray-400">{hasBids ? '目前出價' : '起標價'}</p>
+            <p className="text-[10px] text-gray-400">{hasBids ? t("auctionCard.currentBid") : t("auctionCard.startingBid")}</p>
             <p className="text-sm font-bold text-[#06038D]">HK${currentPrice.toLocaleString()}</p>
           </div>
           {auction.bidCount > 0 && (
             <div className="flex items-center gap-1 text-gray-400">
               <TrendingUp className="w-3 h-3" />
-              <span className="text-[10px]">{auction.bidCount} 次</span>
+              <span className="text-[10px]">{t("auctionCard.bidCount", { count: auction.bidCount })}</span>
             </div>
           )}
         </div>
@@ -175,7 +177,7 @@ export function AuctionCard({ auction }: { auction: any }) {
         {/* Buy now price */}
         {auction.buyNowPrice && !isEnded && (
           <div className="flex items-center justify-between text-[10px]">
-            <span className="text-gray-400">即買價</span>
+            <span className="text-gray-400">{t("auctionCard.buyNowPrice")}</span>
             <span className="font-bold text-amber-600">HK${parseFloat(auction.buyNowPrice).toLocaleString()}</span>
           </div>
         )}

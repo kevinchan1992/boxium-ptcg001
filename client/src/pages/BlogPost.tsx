@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { ResponsiveBlogImage } from "@/components/ResponsiveBlogImage";
 
 export default function BlogPost() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const [, params] = useRoute("/blog/:slug");
   const slug = params?.slug || "";
@@ -78,7 +78,7 @@ export default function BlogPost() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success('連結已複製到剪貼簿');
+    toast.success(t("blogPost.linkCopied"));
     // Record share event
     recordShare.mutate({ slug, shareType: 'copy_link' });
   };
@@ -88,7 +88,7 @@ export default function BlogPost() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#0033CC]"></div>
-          <p className="text-gray-600 mt-6 text-lg">載入中...</p>
+          <p className="text-gray-600 mt-6 text-lg">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -98,12 +98,12 @@ export default function BlogPost() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">文章不存在</h1>
-          <p className="text-gray-600 mb-8 text-lg">找不到您要查看的文章</p>
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">{t("blogPost.notFound")}</h1>
+          <p className="text-gray-600 mb-8 text-lg">{t("blogPost.notFoundDesc")}</p>
           <Link href="/blog">
             <BrandButton>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              返回博客
+              {t("blogPost.backToBlog")}
             </BrandButton>
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function BlogPost() {
           <Link href="/blog">
             <Button variant="ghost" className="text-gray-600 hover:text-[#0033CC] hover:bg-blue-50 mb-6 md:mb-8">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              返回博客
+              {t("blogPost.backToBlog")}
             </Button>
           </Link>
 
@@ -129,7 +129,7 @@ export default function BlogPost() {
               <div className="mb-4">
                 <Badge variant="outline" className="border-purple-500 text-purple-600 bg-purple-50">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  AI 生成文章
+                  {t("blogPost.aiGenerated")}
                 </Badge>
               </div>
             )}
@@ -158,13 +158,13 @@ export default function BlogPost() {
               </span>
               <span className="flex items-center gap-2">
                 <Eye className="w-5 h-5 md:w-6 md:h-6 text-[#0033CC]" />
-                {post.viewCount} 次瀏覽
+                {t("blogPost.viewCount", { n: post.viewCount })}
               </span>
             </div>
 
             {/* Share Buttons - 專業設計 */}
             <div className="flex flex-row flex-wrap items-center gap-3">
-              <span className="text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap">分享文章：</span>
+              <span className="text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap">{t("blogPost.shareArticle")}</span>
                 <Button
                   size="lg"
                   variant="outline"
@@ -189,7 +189,7 @@ export default function BlogPost() {
                   onClick={handleCopyLink}
                   className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FEDD00] hover:text-gray-900 transition-all"
                 >
-                  複製連結
+                  {t("blogPost.copyLink")}
                 </Button>
             </div>
           </div>
@@ -296,8 +296,8 @@ export default function BlogPost() {
           <div className="mt-12 md:mt-16 p-6 md:p-8 bg-gradient-to-br from-blue-50 to-yellow-50 border-2 border-gray-200 rounded-2xl shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
-                <p className="text-gray-900 font-bold text-base md:text-lg mb-2">覺得這篇文章有幫助嗎？</p>
-                <p className="text-gray-600 text-sm md:text-base">分享給朋友，讓更多人受益！</p>
+                <p className="text-gray-900 font-bold text-base md:text-lg mb-2">{t("blogPost.helpfulQuestion")}</p>
+                <p className="text-gray-600 text-sm md:text-base">{t("blogPost.shareWithFriends")}</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
@@ -324,7 +324,7 @@ export default function BlogPost() {
                   onClick={handleCopyLink}
                   className="border-2 border-gray-300 text-gray-700 hover:bg-yellow-50 hover:border-[#FEDD00] hover:text-gray-900 transition-all"
                 >
-                  複製連結
+                  {t("blogPost.copyLink")}
                 </Button>
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function BlogPost() {
             <Link href="/blog">
               <BrandButton className="px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-shadow">
                 <ArrowLeft className="w-5 h-5 mr-2" />
-                返回博客
+                {t("blogPost.backToBlog")}
               </BrandButton>
             </Link>
           </div>

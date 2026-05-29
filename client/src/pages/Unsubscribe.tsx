@@ -8,16 +8,7 @@ import { useTranslation } from "react-i18next";
 
 const BOXIUM_LOGO = "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-white.png";
 
-const EMAIL_TYPE_LABELS: Record<string, string> = {
-  offer: "出價通知",
-  order: "訂單通知",
-  review: "評價通知",
-  seller: "賣家通知",
-  system: "系統通知",
-  welcome: "歡迎信",
-  general: "一般通知",
-  all: "所有電郵",
-};
+// EMAIL_TYPE_LABELS now uses i18n keys - see useEmailTypeLabel hook below
 
 export default function Unsubscribe() {
   const { t } = useTranslation();
@@ -45,7 +36,17 @@ export default function Unsubscribe() {
   });
 
   const isUnsubscribe = action !== "resubscribe";
-  const emailTypeLabel = info?.emailType ? (EMAIL_TYPE_LABELS[info.emailType] ?? info.emailType) : "所有電郵";
+  const emailTypeLabelMap: Record<string, string> = {
+    offer: t("unsubscribe.emailTypes.offer"),
+    order: t("unsubscribe.emailTypes.order"),
+    review: t("unsubscribe.emailTypes.review"),
+    seller: t("unsubscribe.emailTypes.seller"),
+    system: t("unsubscribe.emailTypes.system"),
+    welcome: t("unsubscribe.emailTypes.welcome"),
+    general: t("unsubscribe.emailTypes.general"),
+    all: t("unsubscribe.emailTypes.all"),
+  };
+  const emailTypeLabel = info?.emailType ? (emailTypeLabelMap[info.emailType] ?? info.emailType) : t("unsubscribe.emailTypes.all");
 
   const handleAction = () => {
     if (!token) return;
@@ -98,21 +99,21 @@ export default function Unsubscribe() {
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
           <h2 className="text-xl font-semibold text-white mb-2">
-            {isUnsubscribe ? "已成功退訂" : "已重新訂閱"}
+            {isUnsubscribe ? t("unsubscribe.done.unsubscribeTitle") : t("unsubscribe.done.resubscribeTitle")}
           </h2>
           <p className="text-gray-400 text-sm">
             {isUnsubscribe
-              ? `您已退訂來自 BOXIUM TCG 的「${emailTypeLabel}」。`
-              : `您已重新訂閱來自 BOXIUM TCG 的「${emailTypeLabel}」。`}
+              ? t("unsubscribe.done.unsubscribeDesc", { label: emailTypeLabel })
+              : t("unsubscribe.done.resubscribeDesc", { label: emailTypeLabel })}
           </p>
           <p className="text-gray-500 text-xs mt-2">
             {isUnsubscribe
-              ? "您仍會收到重要的訂單確認和安全通知。"
-              : "感謝您繼續訂閱 BOXIUM TCG 的電郵通知。"}
+              ? t("unsubscribe.done.unsubscribeNote")
+              : t("unsubscribe.done.resubscribeNote")}
           </p>
           <a href="/" className="inline-flex items-center gap-1.5 mt-6 text-sm text-blue-400 hover:text-blue-300 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            返回首頁
+            {t("common.backToHome")}
           </a>
         </div>
       </UnsubscribePage>
@@ -124,7 +125,7 @@ export default function Unsubscribe() {
       <div className="text-center py-6">
         <Mail className="w-12 h-12 text-blue-400 mx-auto mb-4" />
         <h2 className="text-xl font-semibold text-white mb-2">
-          {isUnsubscribe ? "確認退訂電郵通知" : "重新訂閱電郵通知"}
+          {isUnsubscribe ? t("unsubscribe.confirm.unsubscribeTitle") : t("unsubscribe.confirm.resubscribeTitle")}
         </h2>
 
         {info && (
@@ -142,8 +143,8 @@ export default function Unsubscribe() {
 
         <p className="text-gray-400 text-sm mb-6">
           {isUnsubscribe
-            ? `點擊下方按鈕後，您將不再收到「${emailTypeLabel}」。重要的訂單確認和安全通知仍會照常發送。`
-            : `點擊下方按鈕後，您將重新收到「${emailTypeLabel}」。`}
+            ? t("unsubscribe.confirm.unsubscribeDesc", { label: emailTypeLabel })
+            : t("unsubscribe.confirm.resubscribeDesc", { label: emailTypeLabel })}
         </p>
 
         {error && (
@@ -161,17 +162,17 @@ export default function Unsubscribe() {
             {(unsubscribeMutation.isPending || resubscribeMutation.isPending) ? (
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
             ) : null}
-            {isUnsubscribe ? "確認退訂" : "確認重新訂閱"}
+            {isUnsubscribe ? t("unsubscribe.confirm.confirmUnsubscribe") : t("unsubscribe.confirm.confirmResubscribe")}
           </Button>
           <a href="/">
             <Button variant="outline" className="min-w-[120px] whitespace-nowrap border-white/20 text-gray-300 hover:bg-white/10">
-              取消
+              {t("common.cancel")}
             </Button>
           </a>
         </div>
 
         <p className="text-gray-600 text-xs mt-6">
-          如有疑問，請聯絡客服：
+          {t("unsubscribe.contactHint")}
           <a href="mailto:boxium.asia@gmail.com" className="text-blue-500 hover:underline ml-1">
             boxium.asia@gmail.com
           </a>

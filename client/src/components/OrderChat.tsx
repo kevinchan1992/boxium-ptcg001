@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,14 @@ const ROLE_COLORS: Record<string, { badge: string; avatar: string; bubble: strin
   admin:  { badge: "bg-violet-100 text-violet-700 border-violet-200",  avatar: "bg-violet-100 text-violet-700",  bubble: "bg-violet-50 border border-violet-100" },
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  buyer: "買家",
-  seller: "賣家",
-  admin: "管理員",
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  buyer: "buyer",
+  seller: "seller",
+  admin: "admin",
 };
 
 export default function OrderChat({ orderNo, defaultExpanded = false }: { orderNo: string; defaultExpanded?: boolean }) {
+  const { t } = useTranslation();
   const { data: user } = trpcClient.auth.me.useQuery();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [message, setMessage] = useState("");
@@ -45,7 +47,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
       setImagePreview(null);
       refetch();
     },
-    onError: (e: any) => toast.error(e.message || "發送失敗"),
+    onError: (e: any) => toast.error(e.message || t("common.sendFailed")),
   });
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("圖片不能超過 5MB");
+      toast.error(t("common.imageTooLarge"));
       return;
     }
     setImageFile(file);
@@ -80,7 +82,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
     }
     sendMutation.mutate({
       orderNo,
-      content: message.trim() || (imageFile ? "[圖片]" : ""),
+      content: message.trim() || (imageFile ? "[image]" : ""),
       imageBase64,
       imageMimeType,
     });
@@ -99,7 +101,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
           <div className="w-7 h-7 rounded-lg bg-[#06038D]/10 flex items-center justify-center">
             <MessageCircle className="w-4 h-4 text-[#06038D]" />
           </div>
-          <span className="font-semibold text-sm text-gray-800">訂單訊息</span>
+          <span className="font-semibold text-sm text-gray-800">{t("orderChat.title")}</span>
           {unreadCount > 0 && (
             <Badge className="text-xs px-1.5 py-0 min-w-[20px] h-5 bg-red-500 hover:bg-red-500 text-white">
               {unreadCount}
@@ -107,7 +109,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
           )}
         </div>
         <div className="flex items-center gap-1 text-gray-400">
-          <span className="text-xs">{expanded ? "收起" : "展開"}</span>
+          <span className="text-xs">{expanded ? t("common.collapse") : t("common.expand")}</span>
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </button>
@@ -122,9 +124,9 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                   <MessageCircle className="w-6 h-6 text-gray-400" />
                 </div>
                 <p className="text-sm text-gray-500 text-center leading-relaxed">
-                  暫無訊息。你可以在此與{" "}
-                  <span className="text-emerald-600 font-semibold">賣家</span> 或{" "}
-                  <span className="text-violet-600 font-semibold">管理員</span> 溝通。
+                  {t("orderChat.noMessages")}{" "}
+                  <span className="text-emerald-600 font-semibold">{t("common.seller")}</span> {t("common.or")}{" "}
+                  <span className="text-violet-600 font-semibold">{t("common.admin")}</span> {t("orderChat.noMessagesSuffix")}
                 </p>
               </div>
             ) : (
@@ -141,7 +143,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-gray-800">{msg.senderName}</span>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${roleStyle.badge}`}>
-                          {ROLE_LABELS[msg.senderRole] ?? msg.senderRole}
+                          {String(t(`common.${ROLE_LABEL_KEYS[msg.senderRole] ?? msg.senderRole}`, msg.senderRole))}
                         </span>
                         <span className="text-[10px] text-gray-400">
                           {new Date(msg.createdAt).toLocaleString("zh-HK", {
@@ -161,7 +163,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                           <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer" className="block mt-2">
                             <img
                               src={msg.imageUrl}
-                              alt="附圖"
+                              alt={t("common.attachment")}
                               className="max-w-[200px] max-h-[150px] rounded-lg border border-gray-200 object-cover hover:opacity-90 transition-opacity"
                             />
                           </a>
@@ -190,7 +192,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                                   <CheckCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                                   {earliestReadAt && (
                                     <span className="text-[10px] text-blue-400 leading-none">
-                                      已讀 {new Date(earliestReadAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}
+                                      {t("orderChat.read")} {new Date(earliestReadAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   )}
                                 </>
@@ -213,7 +215,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
           <div className="border-t border-gray-100 p-3 bg-white space-y-2">
             {imagePreview && (
               <div className="relative inline-block">
-                <img src={imagePreview} alt="預覽" className="h-16 rounded-lg border border-gray-200 shadow-sm" />
+                <img src={imagePreview} alt={t("common.preview")} className="h-16 rounded-lg border border-gray-200 shadow-sm" />
                 <button
                   onClick={() => { setImageFile(null); setImagePreview(null); }}
                   className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
@@ -226,7 +228,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="輸入訊息..."
+                placeholder={t("orderChat.inputPlaceholder")}
                 className="min-h-[44px] max-h-[100px] text-sm resize-none bg-gray-50 border-gray-200 focus:border-[#06038D]/40 focus:ring-[#06038D]/10 rounded-xl placeholder:text-gray-400 text-gray-700"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -265,7 +267,7 @@ export default function OrderChat({ orderNo, defaultExpanded = false }: { orderN
                 onChange={handleImageSelect}
               />
             </div>
-            <p className="text-[10px] text-gray-400 text-center">按 Enter 發送 · Shift+Enter 換行</p>
+            <p className="text-[10px] text-gray-400 text-center">{t("orderChat.inputHint")}</p>
           </div>
         </div>
       )}

@@ -28,6 +28,7 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
 
 /* ─── Auction Countdown ───────────────────────────────────── */
 function AuctionCountdown({ endAt }: { endAt: Date | string | null }) {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   useEffect(() => {
@@ -35,26 +36,26 @@ function AuctionCountdown({ endAt }: { endAt: Date | string | null }) {
     const end = new Date(endAt).getTime();
     const update = () => {
       const diff = end - Date.now();
-      if (diff <= 0) { setTimeLeft("已結標"); return; }
+      if (diff <= 0) { setTimeLeft(t("sellerPublicProfile.auctionEnded")); return; }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      if (d > 0) setTimeLeft(`${d}天 ${h}時`);
-      else if (h > 0) setTimeLeft(`${h}時 ${m}分`);
-      else setTimeLeft(`${m}分 ${s}秒`);
+      if (d > 0) setTimeLeft(t("sellerPublicProfile.timeLeftDH", { d, h }));
+      else if (h > 0) setTimeLeft(t("sellerPublicProfile.timeLeftHM", { h, m }));
+      else setTimeLeft(t("sellerPublicProfile.timeLeftMS", { m, s }));
     };
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, [endAt]);
+  }, [endAt, t]);
 
   const isUrgent = endAt && (new Date(endAt).getTime() - Date.now()) < 3600000;
 
   return (
     <span className={`flex items-center gap-1 text-xs font-medium ${isUrgent ? "text-red-500" : "text-gray-500"}`}>
       <Clock className="w-3 h-3" />
-      {timeLeft || "計算中..."}
+      {timeLeft || t("sellerPublicProfile.calculating")}
     </span>
   );
 }
@@ -71,8 +72,9 @@ function StatPill({ icon, label }: { icon: React.ReactNode; label: string }) {
 
 /* ─── Listing Card ────────────────────────────────────────── */
 function ListingCard({ listing }: { listing: any }) {
+  const { t } = useTranslation();
   const conditionLabel: Record<string, string> = {
-    new: "全新", like_new: "近全新", good: "良好", fair: "一般"
+    new: t("marketplace.conditionNew"), like_new: t("marketplace.conditionLikeNew"), good: t("marketplace.conditionGood"), fair: t("marketplace.conditionFair")
   };
   // images is stored as JSON string in DB, parse it
   const imgs = (() => { try { return JSON.parse(listing.images ?? "[]"); } catch { return []; } })();
@@ -114,6 +116,7 @@ function ListingCard({ listing }: { listing: any }) {
 
 /* ─── Auction Card ────────────────────────────────────────── */
 function AuctionCard({ auction }: { auction: any }) {
+  const { t } = useTranslation();
   const imgs = (() => { try { return JSON.parse(auction.images ?? "[]"); } catch { return []; } })();
   const currentBid = auction.currentHighestBid
     ? parseFloat(auction.currentHighestBid)
@@ -139,7 +142,7 @@ function AuctionCard({ auction }: { auction: any }) {
           {/* Live badge */}
           <span className="absolute top-2 left-2 flex items-center gap-1 text-xs font-semibold bg-[#06038D] text-white px-2 py-0.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-[#FEDD00] animate-pulse" />
-            競標中
+            {t("sellerPublicProfile.bidding")}
           </span>
         </div>
         {/* Info */}
@@ -149,11 +152,11 @@ function AuctionCard({ auction }: { auction: any }) {
           </p>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs text-gray-400 mb-0.5">{isCurrentBid ? "當前出價" : "起拍價"}</p>
+              <p className="text-xs text-gray-400 mb-0.5">{isCurrentBid ? t("sellerPublicProfile.currentBid") : t("sellerPublicProfile.startingBid")}</p>
               <p className="text-[#06038D] font-bold text-base">HK${currentBid.toLocaleString()}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-400 mb-0.5">{auction.bidCount ?? 0} 次出價</p>
+              <p className="text-xs text-gray-400 mb-0.5">{t("sellerPublicProfile.nBids", { n: auction.bidCount ?? 0 })}</p>
               <AuctionCountdown endAt={auction.auctionEndAt} />
             </div>
           </div>
@@ -201,10 +204,10 @@ export default function SellerPublicProfile() {
             <Package className="w-10 h-10 text-gray-400" />
           </div>
           <p className="text-gray-700 text-lg font-semibold mb-1">{t("sellerPublicProfile.sellerNotFound")}</p>
-          <p className="text-gray-400 text-sm mb-6">找不到此賣家的資料</p>
+          <p className="text-gray-400 text-sm mb-6">{t("sellerPublicProfile.sellerNotFound")}</p>
           <Link href="/marketplace">
             <Button className="bg-[#06038D] hover:bg-[#06038D]/90 text-white rounded-xl px-6">
-              返回商城
+              {t("sellerPublicProfile.backToMarket")}
             </Button>
           </Link>
         </div>
@@ -227,7 +230,7 @@ export default function SellerPublicProfile() {
         <Link href="/marketplace">
           <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#06038D] transition-colors mb-5 group">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            返回商城
+            {t("sellerPublicProfile.backToMarket")}
           </button>
         </Link>
 
@@ -258,19 +261,19 @@ export default function SellerPublicProfile() {
                   {isTopSeller && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-[#FEDD00] text-[#06038D] px-2.5 py-1 rounded-full">
                       <Award className="w-3 h-3" />
-                      優質賣家
+                      {t("sellerPublicProfile.premiumSeller")}
                     </span>
                   )}
                   {isActiveSeller && !isTopSeller && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
                       <ShoppingBag className="w-3 h-3" />
-                      活躍賣家
+                      {t("sellerPublicProfile.activeSeller")}
                     </span>
                   )}
                   {auctionCount > 0 && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-[#06038D]/10 text-[#06038D] px-2.5 py-1 rounded-full">
                       <Gavel className="w-3 h-3" />
-                      拍賣中
+                      {t("sellerPublicProfile.auctioning")}
                     </span>
                   )}
                 </div>
@@ -285,12 +288,12 @@ export default function SellerPublicProfile() {
                   <div className="flex items-center gap-2">
                     <StarRating rating={avgRating} size="sm" />
                     <span className="text-[#06038D] font-bold text-sm">{avgRating.toFixed(1)}</span>
-                    <span className="text-gray-400 text-sm">({seller.ratingCount} 評價)</span>
+                    <span className="text-gray-400 text-sm">({t("sellerPublicProfile.nReviews", { n: seller.ratingCount })})</span>
                   </div>
-                  <StatPill icon={<ShoppingBag className="w-4 h-4 text-gray-400" />} label={`${seller.totalSales} 筆成交`} />
+                  <StatPill icon={<ShoppingBag className="w-4 h-4 text-gray-400" />} label={t("sellerPublicProfile.nSales", { n: seller.totalSales })} />
                   <StatPill
                     icon={<Calendar className="w-4 h-4 text-gray-400" />}
-                    label={`加入於 ${new Date(seller.memberSince).toLocaleDateString("zh-HK", { year: "numeric", month: "long" })}`}
+                    label={t("sellerPublicProfile.memberSince", { date: new Date(seller.memberSince).toLocaleDateString(undefined, { year: "numeric", month: "long" }) })}
                   />
                 </div>
               </div>
@@ -305,9 +308,9 @@ export default function SellerPublicProfile() {
           {/* Stats bar */}
           <div className="border-t border-gray-100 grid grid-cols-3 divide-x divide-gray-100">
             {[
-              { label: "在售商品", value: listings.length, icon: <Package className="w-4 h-4" /> },
-              { label: "進行中拍賣", value: auctionCount, icon: <Gavel className="w-4 h-4" /> },
-              { label: "買家評價", value: reviewTotal, icon: <MessageSquare className="w-4 h-4" /> },
+              { label: t("sellerPublicProfile.forSale"), value: listings.length, icon: <Package className="w-4 h-4" /> },
+              { label: t("sellerPublicProfile.activeAuctions"), value: auctionCount, icon: <Gavel className="w-4 h-4" /> },
+              { label: t("sellerPublicProfile.buyerReviews"), value: reviewTotal, icon: <MessageSquare className="w-4 h-4" /> },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center py-4 gap-1">
                 <div className="flex items-center gap-1.5 text-[#06038D]">
@@ -328,21 +331,21 @@ export default function SellerPublicProfile() {
               className="rounded-lg text-gray-500 data-[state=active]:bg-[#06038D] data-[state=active]:text-white data-[state=active]:shadow-sm font-medium transition-all"
             >
               <Package className="w-3.5 h-3.5 mr-1.5" />
-              在售商品 ({listings.length})
+              {t("sellerPublicProfile.forSale")} ({listings.length})
             </TabsTrigger>
             <TabsTrigger
               value="auctions"
               className="rounded-lg text-gray-500 data-[state=active]:bg-[#06038D] data-[state=active]:text-white data-[state=active]:shadow-sm font-medium transition-all"
             >
               <Gavel className="w-3.5 h-3.5 mr-1.5" />
-              進行中拍賣 ({auctionCount})
+              {t("sellerPublicProfile.activeAuctions")} ({auctionCount})
             </TabsTrigger>
             <TabsTrigger
               value="reviews"
               className="rounded-lg text-gray-500 data-[state=active]:bg-[#06038D] data-[state=active]:text-white data-[state=active]:shadow-sm font-medium transition-all"
             >
               <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-              買家評價 ({reviewTotal})
+              {t("sellerPublicProfile.buyerReviews")} ({reviewTotal})
             </TabsTrigger>
           </TabsList>
 
@@ -354,7 +357,7 @@ export default function SellerPublicProfile() {
                   <Package className="w-8 h-8 text-gray-300" />
                 </div>
                 <p className="text-gray-500 font-medium">{t("sellerPublicProfile.noListings")}</p>
-                <p className="text-gray-400 text-sm mt-1">此賣家暫無在售商品</p>
+                <p className="text-gray-400 text-sm mt-1">{t("sellerPublicProfile.noListings")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
@@ -372,8 +375,8 @@ export default function SellerPublicProfile() {
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                   <Gavel className="w-8 h-8 text-gray-300" />
                 </div>
-                <p className="text-gray-500 font-medium">暫無進行中拍賣</p>
-                <p className="text-gray-400 text-sm mt-1">此賣家目前沒有競標中的商品</p>
+                <p className="text-gray-500 font-medium">{t("sellerPublicProfile.noAuctions")}</p>
+                <p className="text-gray-400 text-sm mt-1">{t("sellerPublicProfile.noAuctionsDesc")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
@@ -392,7 +395,7 @@ export default function SellerPublicProfile() {
                   <MessageSquare className="w-8 h-8 text-gray-300" />
                 </div>
                 <p className="text-gray-500 font-medium">{t("sellerPublicProfile.noReviews")}</p>
-                <p className="text-gray-400 text-sm mt-1">此賣家暫無買家評價</p>
+                <p className="text-gray-400 text-sm mt-1">{t("sellerPublicProfile.noReviews")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -404,7 +407,7 @@ export default function SellerPublicProfile() {
                           {(r.buyerName ?? "?").charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-gray-800 text-sm font-semibold">{r.buyerName ?? "匿名買家"}</p>
+                          <p className="text-gray-800 text-sm font-semibold">{r.buyerName ?? t("sellerPublicProfile.anonymousBuyer")}</p>
                           <StarRating rating={r.review.rating} size="sm" />
                         </div>
                       </div>
@@ -421,7 +424,7 @@ export default function SellerPublicProfile() {
                 ))}
                 {reviewTotal > reviews.length && (
                   <p className="text-center text-gray-400 text-sm py-3">
-                    顯示最新 {reviews.length} 則，共 {reviewTotal} 則評價
+                    {t("sellerPublicProfile.showingReviews", { shown: reviews.length, total: reviewTotal })}
                   </p>
                 )}
               </div>

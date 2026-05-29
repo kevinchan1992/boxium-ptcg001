@@ -6,6 +6,7 @@
  * - Highlights SEO gaps (categories with few articles)
  * - Color-codes articles by health status (fresh / needs update / needs refresh)
  */
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -227,7 +228,10 @@ interface TopicClusterViewProps {
   onArticleClick: (id: number) => void;
 }
 
-export function TopicClusterView({ onArticleClick }: TopicClusterViewProps) {
+export function TopicClusterView({
+  onArticleClick
+}: TopicClusterViewProps) {
+  const { t } = useTranslation();
   const { data: postsData, isLoading: postsLoading } = trpc.blog.getPosts.useQuery({
     limit: 200,
     sortBy: 'newest',

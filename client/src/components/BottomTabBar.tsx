@@ -19,35 +19,35 @@ const TABS: TabItem[] = [
     path: "/",
     icon: Home,
     labelKey: "nav.home",
-    labelFallback: "首頁",
+    labelFallback: "Home",
     matchPaths: ["/"],
   },
   {
     path: "/research",
     icon: Search,
     labelKey: "nav.research",
-    labelFallback: "搜尋",
+    labelFallback: "Search",
     matchPaths: ["/research", "/search", "/card/", "/pricing"],
   },
   {
     path: "/marketplace",
     icon: ShoppingBag,
     labelKey: "nav.marketplace",
-    labelFallback: "市集",
+    labelFallback: "Market",
     matchPaths: ["/marketplace", "/auction", "/cart", "/seller"],
   },
   {
     path: "/grading",
     icon: Award,
     labelKey: "nav.grading",
-    labelFallback: "鑑定",
+    labelFallback: "Grading",
     matchPaths: ["/grading"],
   },
   {
     path: "/profile",
     icon: User,
     labelKey: "nav.profile",
-    labelFallback: "我的",
+    labelFallback: "Profile",
     matchPaths: ["/profile", "/orders", "/notifications", "/wishlist"],
   },
 ];
@@ -106,7 +106,7 @@ export function BottomTabBar() {
             }}
           >
             <Camera className="w-5 h-5" />
-            <span>掃描卡牌識別</span>
+            <span>{t("camera.scanTitle")}</span>
           </button>
         </div>
       )}

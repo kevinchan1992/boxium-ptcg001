@@ -173,7 +173,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="bg-[#FEDD00]/20 text-[#FEDD00] border-[#FEDD00]/30">
-                已選擇 {selectedCardIds.length} 張卡牌
+                {t("cardSelection.selected")} {selectedCardIds.length} 張卡牌
               </Badge>
               <span className="text-xs text-gray-400 flex items-center gap-1">
                 <Info className="w-3 h-3" />
@@ -196,7 +196,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                 onClick={() => setSelectedCardIds([])}
                 className="border-zinc-700 text-gray-400 hover:bg-zinc-800 flex-1"
               >
-                清除選擇
+                {t("common.clear")}選擇
               </Button>
             </div>
           </div>
@@ -397,7 +397,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
             }}
             className="border-zinc-700 text-white hover:bg-zinc-800 flex-1"
           >
-            取消
+            {t("common.cancel")}
           </Button>
           {showPreview ? (
             <Button

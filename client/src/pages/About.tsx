@@ -169,7 +169,7 @@ export default function About() {
             </div>
           )}
 
-          {/* 我們的使命 */}
+          {/* {t("about.mission.title")} */}
           <section className="mb-10 sm:mb-12">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6" style={{ color: "#06038d" }}>
               {t('aboutPage.ourMission')}

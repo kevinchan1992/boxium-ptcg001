@@ -10,8 +10,8 @@ export default function Privacy() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "隱私權政策 - BOXIUM TCG",
-    "description": "BOXIUM TCG 平台隱私權政策，說明如何收集、使用和保護用戶個人數據",
+    "name": "Privacy Policy - BOXIUM TCG",
+    "description": "BOXIUM TCG Platform Privacy Policy",
     "url": "https://boxiumptcg.manus.space/privacy",
     "isPartOf": {
       "@type": "WebSite",

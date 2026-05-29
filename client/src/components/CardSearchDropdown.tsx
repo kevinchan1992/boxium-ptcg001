@@ -167,7 +167,7 @@ export function CardSearchDropdown({
               type="button"
               onClick={onCameraClick}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors z-10"
-              title="拍照識別卡牌"
+              title={t("search.photoIdentify")}
             >
               <Camera className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
             </button>

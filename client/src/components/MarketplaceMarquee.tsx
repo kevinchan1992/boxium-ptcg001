@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { CONDITION_SHORT, CONDITION_BADGE, type ConditionValue } from "@/lib/conditions";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface ListingItem {
   id: number;
@@ -118,6 +119,7 @@ function MarqueeCard({ item }: { item: ListingItem }) {
 }
 
 export function MarketplaceMarquee() {
+  const { t } = useTranslation();
   const { data, isLoading } = trpc.marketplace.getListings.useQuery({
     page: 1,
     pageSize: 30,
@@ -181,7 +183,7 @@ export function MarketplaceMarquee() {
                 />
               </div>
               <h2 className="text-sm sm:text-base font-bold tracking-wide" style={{ color: "#1a1a2e" }}>
-                商城精選商品
+                {t("marquee.title")}
               </h2>
               <span
                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full ml-1"
@@ -191,7 +193,7 @@ export function MarketplaceMarquee() {
                   border: "1px solid rgba(6,3,141,0.15)",
                 }}
               >
-                {listings.length} 件在售
+                {t("marquee.itemsForSale", { count: listings.length })}
               </span>
             </div>
           </div>
@@ -200,7 +202,7 @@ export function MarketplaceMarquee() {
               className="flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer group"
               style={{ color: "#06038d" }}
             >
-              查看全部
+              {t("common.viewAll")}
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
             </div>
           </Link>

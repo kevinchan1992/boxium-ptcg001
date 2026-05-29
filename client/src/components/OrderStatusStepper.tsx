@@ -24,53 +24,55 @@ export interface OrderTimestamps {
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
-const SHIPPING_STEPS: StepDef[] = [
-  {
-    key: "pending_payment",
-    buyerLabel: "待付款",
-    sellerLabel: "待付款",
-    buyerDesc: "等待完成付款",
-    sellerDesc: "等待買家付款",
-    icon: <Clock className="w-4 h-4" />,
-    activeIcon: <Clock className="w-4 h-4" />,
-  },
-  {
-    key: "paid_held",
-    buyerLabel: "已付款",
-    sellerLabel: "待出貨",
-    buyerDesc: "付款已確認",
-    sellerDesc: "請盡快安排出貨",
-    icon: <CreditCard className="w-4 h-4" />,
-    activeIcon: <CreditCard className="w-4 h-4" />,
-  },
-  {
-    key: "shipped",
-    buyerLabel: "運送中",
-    sellerLabel: "已出貨",
-    buyerDesc: "商品正在運送",
-    sellerDesc: "等待買家確認收貨",
-    icon: <Truck className="w-4 h-4" />,
-    activeIcon: <Truck className="w-4 h-4" />,
-  },
-  {
-    key: "delivered",
-    buyerLabel: "待確認",
-    sellerLabel: "已送達",
-    buyerDesc: "請確認收貨",
-    sellerDesc: "等待買家確認",
-    icon: <Package className="w-4 h-4" />,
-    activeIcon: <Package className="w-4 h-4" />,
-  },
-  {
-    key: "completed",
-    buyerLabel: "已完成",
-    sellerLabel: "已完成",
-    buyerDesc: "訂單已完成",
-    sellerDesc: "交易完成",
-    icon: <CheckCircle2 className="w-4 h-4" />,
-    activeIcon: <CheckCircle2 className="w-4 h-4" />,
-  },
-];
+function getShippingSteps(t: (key: string) => string): StepDef[] {
+  return [
+    {
+      key: "pending_payment",
+      buyerLabel: t("orderStatus.pendingPayment.buyerLabel"),
+      sellerLabel: t("orderStatus.pendingPayment.sellerLabel"),
+      buyerDesc: t("orderStatus.pendingPayment.buyerDesc"),
+      sellerDesc: t("orderStatus.pendingPayment.sellerDesc"),
+      icon: <Clock className="w-4 h-4" />,
+      activeIcon: <Clock className="w-4 h-4" />,
+    },
+    {
+      key: "paid_held",
+      buyerLabel: t("orderStatus.paidHeld.buyerLabel"),
+      sellerLabel: t("orderStatus.paidHeld.sellerLabel"),
+      buyerDesc: t("orderStatus.paidHeld.buyerDesc"),
+      sellerDesc: t("orderStatus.paidHeld.sellerDesc"),
+      icon: <CreditCard className="w-4 h-4" />,
+      activeIcon: <CreditCard className="w-4 h-4" />,
+    },
+    {
+      key: "shipped",
+      buyerLabel: t("orderStatus.shipped.buyerLabel"),
+      sellerLabel: t("orderStatus.shipped.sellerLabel"),
+      buyerDesc: t("orderStatus.shipped.buyerDesc"),
+      sellerDesc: t("orderStatus.shipped.sellerDesc"),
+      icon: <Truck className="w-4 h-4" />,
+      activeIcon: <Truck className="w-4 h-4" />,
+    },
+    {
+      key: "delivered",
+      buyerLabel: t("orderStatus.delivered.buyerLabel"),
+      sellerLabel: t("orderStatus.delivered.sellerLabel"),
+      buyerDesc: t("orderStatus.delivered.buyerDesc"),
+      sellerDesc: t("orderStatus.delivered.sellerDesc"),
+      icon: <Package className="w-4 h-4" />,
+      activeIcon: <Package className="w-4 h-4" />,
+    },
+    {
+      key: "completed",
+      buyerLabel: t("orderStatus.completed.buyerLabel"),
+      sellerLabel: t("orderStatus.completed.sellerLabel"),
+      buyerDesc: t("orderStatus.completed.buyerDesc"),
+      sellerDesc: t("orderStatus.completed.sellerDesc"),
+      icon: <CheckCircle2 className="w-4 h-4" />,
+      activeIcon: <CheckCircle2 className="w-4 h-4" />,
+    },
+  ];
+}
 
 
 // Map raw orderStatus → canonical step key
@@ -121,6 +123,7 @@ export function OrderStatusStepper({
   timestamps,
 }: OrderStatusStepperProps) {
   const { t } = useTranslation();
+  const steps = getShippingSteps(t);
   const isCancelled = orderStatus === "cancelled";
   const isDisputed = orderStatus === "disputed";
   const isRefunded = orderStatus === "refunded";
@@ -170,7 +173,6 @@ export function OrderStatusStepper({
   }
 
   // ── Normal flow ────────────────────────────────────────────────────────────
-  const steps = SHIPPING_STEPS;
   const canonical = toCanonical(orderStatus);
   const activeIdx = steps.findIndex((s) => s.key === canonical);
   const safeActiveIdx = activeIdx === -1 ? 0 : activeIdx;

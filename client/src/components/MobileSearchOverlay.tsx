@@ -101,8 +101,8 @@ export function MobileSearchOverlay({
           type="button"
           onClick={(e) => { e.stopPropagation(); onCameraClick(); }}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
-          aria-label="圖片搜尋"
-          title="圖片搜尋"
+          aria-label={t("search.imageSearch")}
+          title={t("search.imageSearch")}
         >
           <Camera className="w-5 h-5" />
         </button>

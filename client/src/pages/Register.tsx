@@ -235,15 +235,15 @@ export default function Register() {
 
         <div className="space-y-2 text-center">
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-            已經有帳號？{" "}
+            {t("register.hasAccount")}{" "}
             <Link href="/login" className="font-semibold hover:underline" style={{ color: "#c9a84c" }}>
-              立即登入
+              {t("common.loginNow")}
             </Link>
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-            註冊即表示你同意我們的{" "}
+            {t("register.agreePrivacy")}{" "}
             <a href="https://boxium.asia/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">
-              隱私政策
+              {t("register.privacyPolicy")}
             </a>
           </p>
         </div>

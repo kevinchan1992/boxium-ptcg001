@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, ZoomIn } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ImageLightboxProps {
   src: string;
@@ -10,6 +11,7 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps) {
+  const { t } = useTranslation();
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
   }, [onClose]);
@@ -59,7 +61,7 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
           color: "white",
         }}
         onClick={(e) => { e.stopPropagation(); onClose(); }}
-        aria-label="關閉"
+        aria-label={t("common.close")}
       >
         <X size={20} />
       </button>
@@ -93,7 +95,7 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
           pointerEvents: "none",
         }}
       >
-        點擊任意位置或按 Esc 關閉
+        {t("imageLightbox.closeHint")}
       </p>
     </div>,
     document.body

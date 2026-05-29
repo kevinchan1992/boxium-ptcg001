@@ -17,7 +17,7 @@ import { getProxiedImageUrl } from "@/lib/utils";
 import { AddEditSheet } from "@/components/CollectionSection";
 import PageHead from "@/components/PageHead";
 
-const grades = ["PSA 10", "中古"];
+const GRADE_KEYS = ["PSA 10", "used"];
 
 interface CardDetailProps {
   sealedProductId?: number;
@@ -83,11 +83,11 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       utils.profile.isInWatchlist.setData({ cardId: cardId! }, { isInWatchlist: true });
       return { prev };
     },
-    onSuccess: () => { toast.success("已加入收藏"); },
+    onSuccess: () => { toast.success(t("cardDetail.addedToWatchlist")); },
     onError: (error, _vars, context) => {
       if (context?.prev !== undefined) utils.profile.isInWatchlist.setData({ cardId: cardId! }, context.prev);
-      if (error.message.includes("already in watchlist")) toast.error("此卡牌已在收藏列表中");
-      else toast.error("加入收藏失敗：" + error.message);
+      if (error.message.includes("already in watchlist")) toast.error(t("cardDetail.alreadyInWatchlist"));
+      else toast.error(t("cardDetail.addWatchlistFailed", { msg: error.message }));
     },
     onSettled: () => { refetchWatchlistStatus(); },
   });
@@ -99,16 +99,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       utils.profile.isInWatchlist.setData({ cardId: cardId! }, { isInWatchlist: false });
       return { prev };
     },
-    onSuccess: () => { toast.success("已從收藏中移除"); },
+    onSuccess: () => { toast.success(t("cardDetail.removedFromWatchlist")); },
     onError: (error, _vars, context) => {
       if (context?.prev !== undefined) utils.profile.isInWatchlist.setData({ cardId: cardId! }, context.prev);
-      toast.error("移除收藏失敗：" + error.message);
+      toast.error(t("cardDetail.removeWatchlistFailed", { msg: error.message }));
     },
     onSettled: () => { refetchWatchlistStatus(); },
   });
 
   const handleWatchlistToggle = () => {
-    if (!user) { toast.error("請先登入才能使用收藏功能"); setLocation("/login"); return; }
+    if (!user) { toast.error(t("cardDetail.loginToWatchlist")); setLocation("/login"); return; }
     if (watchlistStatus?.isInWatchlist) removeFromWatchlist.mutate({ cardId: cardId! });
     else addToWatchlist.mutate({ cardId: cardId! });
   };
@@ -281,7 +281,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const calculateRecentMedian = (): { price: number | null; source: string; recordCount: number } => {
     if (activeRecentPrices.length === 0) return { price: null, source: "N/A", recordCount: 0 };
     if (isSealedProduct) {
-      // 卡盒：用最近 10 筆的時間加權平均單盒價格（越近的交易權重越高）
+      // 卡盒：用最近 10 筆的時間加權平均{t("cardDetail.perBoxPrice")}格（越近的交易權重越高）
       const records = activeRecentPrices.slice(0, 10);
       if (records.length === 0) return { price: null, source: "N/A", recordCount: 0 };
       const now = new Date();
@@ -301,7 +301,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       }
       if (validCount === 0) return { price: null, source: "N/A", recordCount: 0 };
       const avgUnitPrice = totalWeight > 0 ? weightedSum / totalWeight : null;
-      const sourceLabel = validCount >= 10 ? "最近 10 筆" : validCount >= 5 ? `最近 ${validCount} 筆` : `${validCount} 筆`;
+      const sourceLabel = validCount >= 10 ? t("cardDetail.recentN", { n: 10 }) : validCount >= 5 ? t("cardDetail.recentN", { n: validCount }) : t("cardDetail.nRecords", { n: validCount });
       return { price: avgUnitPrice, source: sourceLabel, recordCount: validCount };
     }
 
@@ -310,7 +310,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       const latest5 = activeRecentPrices.slice(0, 5);
       const prices = latest5.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
       if (prices.length >= 5) {
-        return { price: simpleMedian(prices), source: "最近 5 筆", recordCount: 5 };
+        return { price: simpleMedian(prices), source: t("cardDetail.recentN", { n: 5 }), recordCount: 5 };
       }
     }
 
@@ -320,7 +320,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     const records14d = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= fourteenDaysAgo);
     if (records14d.length >= 3) {
       const prices = records14d.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
-      return { price: simpleMedian(prices), source: "14 天", recordCount: prices.length };
+      return { price: simpleMedian(prices), source: t("cardDetail.days14"), recordCount: prices.length };
     }
 
     // Step 3: Try 30-day window
@@ -328,12 +328,12 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     const records30d = activeRecentPrices.filter(p => p.soldAt && new Date(p.soldAt) >= thirtyDaysAgo);
     if (records30d.length >= 3) {
       const prices = records30d.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
-      return { price: simpleMedian(prices), source: "30 天", recordCount: prices.length };
+      return { price: simpleMedian(prices), source: t("cardDetail.days30"), recordCount: prices.length };
     }
 
     // Fallback: use all available records
     const allPrices = activeRecentPrices.map(p => parseFloat(p.price as any)).filter(p => !isNaN(p));
-    return { price: simpleMedian(allPrices), source: "全部記錄", recordCount: allPrices.length };
+    return { price: simpleMedian(allPrices), source: t("cardDetail.allRecords"), recordCount: allPrices.length };
   };
 
   const recentMedianResult = calculateRecentMedian();
@@ -418,9 +418,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     <>
     <PageHead
       title={!isSealedProduct && 'cardNumber' in product && product.cardNumber
-        ? `${product.cardNumber} | ${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} PSA 10 價格 - BOXIUM`
-        : `${product.name} 價格走勢 - BOXIUM TCG`}
-      description={`查看 ${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? `${product.cardNumber} ` : ''}${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} 的即時市場價格、PSA 10 成交記錄及價格走勢分析。`}
+        ? `${product.cardNumber} | ${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} ${t("cardDetail.psa10PriceTitle")} - BOXIUM`
+        : `${product.name} ${t("cardDetail.priceTrendTitle")} - BOXIUM TCG`}
+      description={t("cardDetail.pageDescription", { name: `${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? `${product.cardNumber} ` : ''}${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()}` })}
       ogImage={product.imageUrl ? getProxiedImageUrl(product.imageUrl) ?? undefined : undefined}
     />
     {/* JSON-LD structured data for Google rich results */}
@@ -434,7 +434,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             ? `${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()} ${product.cardNumber}`
             : product.name,
           ...(product.imageUrl ? { image: [getProxiedImageUrl(product.imageUrl) ?? product.imageUrl] } : {}),
-          description: `${product.name} 寶可夢卡牌 - 查看即時市場價格、PSA 10 成交記錄及價格走勢分析。`,
+          description: t("cardDetail.jsonLdDescription", { name: product.name }),
           brand: {
             "@type": "Brand",
             name: "Pokémon TCG",
@@ -466,7 +466,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   url: `${typeof window !== 'undefined' ? window.location.origin : ''}/market`,
                   seller: { "@type": "Organization", name: "BOXIUM TCG" },
                   itemCondition: "https://schema.org/UsedCondition",
-                  description: "BOXIUM TCG 市集最低上架價格",
+                  description: t("cardDetail.marketLowestPrice"),
                 }]
               : []),
             ...(minPrice !== null && maxPrice !== null
@@ -477,7 +477,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   highPrice: maxPrice.toFixed(2),
                   offerCount: psa10Prices.length,
                   availability: "https://schema.org/InStock",
-                  description: "PSA 10 近期成交價格區間",
+                  description: t("cardDetail.psa10PriceRange"),
                 }]
               : []),
           ],
@@ -527,14 +527,14 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <>
                   <ClickableCardImage
                     src={getProxiedImageUrl(product.imageUrl) ?? ""}
-                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} 卡牌圖像${product.series ? ` - ${product.series}` : ''}`}
+                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
                     className="w-full rounded-xl shadow-2xl"
                     style={{ height: "auto" }}
                     onClick={() => setLightboxOpen(true)}
                   />
                   <ImageLightbox
                     src={getProxiedImageUrl(product.imageUrl) ?? ""}
-                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} 卡牌圖像${product.series ? ` - ${product.series}` : ''}`}
+                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
                     isOpen={lightboxOpen}
                     onClose={() => setLightboxOpen(false)}
                   />
@@ -589,7 +589,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   }`}
               >
                 <Heart className={`w-3.5 h-3.5 mr-1.5 ${watchlistStatus?.isInWatchlist ? "fill-current" : ""}`} />
-                {watchlistStatus?.isInWatchlist ? "從追蹤中移除" : "追蹤"}
+                {watchlistStatus?.isInWatchlist ? t("cardDetail.removeFromTracking") : t("cardDetail.track")}
               </Button>
               {/* 加入個人收藏清單 — only for single cards */}
               {!isSealedProduct && (
@@ -597,13 +597,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    if (!user) { toast.error("請先登入才能使用收藏功能"); setLocation("/login"); return; }
+                    if (!user) { toast.error(t("cardDetail.loginToWatchlist")); setLocation("/login"); return; }
                     setShowCollectionSheet(true);
                   }}
                   className="border-zinc-600 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-700"
                 >
                   <BookmarkPlus className="w-3.5 h-3.5 mr-1.5" />
-                  加入收藏清單
+                  {t("cardDetail.addToCollection")}
                 </Button>
               )}
               <ShareButton cardName={product.name} cardId={cardId!} />
@@ -643,7 +643,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600] inline-block" />
                         <p className="text-[10px] sm:text-xs text-zinc-300 font-semibold tracking-wide">
-                          {isSealedProduct ? '參考均價' : '近期成交中位數'}
+                          {isSealedProduct ? t("cardDetail.referenceAvgPrice") : t("cardDetail.recentMedian")}
                         </p>
                         {!isSealedProduct && mainPriceSource !== "N/A" && (
                           <span className="text-[9px] text-zinc-500 bg-zinc-800/60 px-1.5 py-0.5 rounded-full">
@@ -664,8 +664,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       {mainPriceRecordCount > 0 && (
                         <p className="text-[9px] text-zinc-500 mt-0.5">
                           {isSealedProduct
-                            ? `基於最近 ${mainPriceRecordCount} 筆成交加權平均（單盒價）`
-                            : `基於 ${mainPriceRecordCount} 筆成交記錄`
+                            ? t("cardDetail.basedOnRecentWeightedAvg", { n: mainPriceRecordCount })
+                            : t("cardDetail.basedOnNRecords", { n: mainPriceRecordCount })
                           }
                         </p>
                       )}
@@ -676,7 +676,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           {priceTrend.isIncrease ? <TrendingUp className="w-4 h-4" /> : priceTrend.isDecrease ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                           <span>{Math.abs(priceTrend.change).toFixed(1)}%</span>
                         </div>
-                        <p className="text-[9px] text-zinc-500">7 天趨勢</p>
+                        <p className="text-[9px] text-zinc-500">{t("cardDetail.trend7days")}</p>
                       </div>
                     )}
                   </div>
@@ -688,7 +688,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   {/* 小欄 1: 短期加權均價 */}
                   <div className="px-3 py-3 text-center">
                     <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
-                      {isSealedProduct ? '最新成交' : '7天加權均價'}
+                      {isSealedProduct ? t("cardDetail.latestTrade") : t("cardDetail.weighted7dAvg")}
                     </p>
                     {!isSealedProduct ? (
                       auxPrice !== null ? (
@@ -697,7 +697,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           <p className="text-xs sm:text-sm font-semibold text-blue-300 leading-tight">
                             {auxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
-                          <p className="text-[8px] text-zinc-600 mt-0.5">{auxPriceRecordCount} 筆</p>
+                          <p className="text-[8px] text-zinc-600 mt-0.5">{t("cardDetail.nRecords", { n: auxPriceRecordCount })}</p>
                         </>
                       ) : (
                         <p className="text-xs font-semibold text-zinc-600">-</p>
@@ -722,7 +722,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   {/* 小欄 2: 最近單筆成交 */}
                   <div className="px-3 py-3 text-center">
                     <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
-                      {isSealedProduct ? '最近總金額' : '最近單筆'}
+                      {isSealedProduct ? t("cardDetail.recentTotalAmount") : t("cardDetail.recentSingle")}
                     </p>
                     {latestTrade !== null ? (
                       <>
@@ -737,7 +737,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                         </p>
                         {isSealedProduct && latestTrade.quantity && (
                           <p className="text-[8px] text-zinc-600 mt-0.5">
-                            {latestTrade.quantity}個盒
+                            {t("cardDetail.nBoxes", { n: latestTrade.quantity })}
                           </p>
                         )}
                         {latestTrade?.soldAt && (
@@ -755,7 +755,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   <div className="px-3 py-3 text-center">
                     {!isSealedProduct && p25 !== null && p75 !== null ? (
                       <>
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">30天價格帶</p>
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">{t("cardDetail.priceRange30d")}</p>
                         <p className="text-[9px] text-zinc-500">HKD</p>
                         <p className="text-[10px] sm:text-xs font-semibold text-green-400 leading-tight">
                           {p25.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -768,7 +768,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       </>
                     ) : (
                       <>
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">最高成交</p>
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">{t("cardDetail.highestTrade")}</p>
                         {maxPrice !== null ? (
                           <>
                             <p className="text-[9px] text-zinc-500">HKD</p>
@@ -787,8 +787,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <div className="px-4 py-2 border-t border-[#1565C0]/30">
                   <p className="text-[10px] text-zinc-500">
                     {isSealedProduct
-                      ? `參考均價基於最近 ${mainPriceRecordCount} 筆 SNKRDUNK 成交計算單盒價（加権平均）`
-                      : `中位數基於 ${mainPriceRecordCount} 筆 PSA 10 成交記錄（${mainPriceSource}）`
+                      ? t("cardDetail.sealedPriceNote", { n: mainPriceRecordCount })
+                      : t("cardDetail.medianNote", { n: mainPriceRecordCount, source: mainPriceSource })
                     }
                     {priceTrend && <span className="ml-1">· {t("cardDetail.priceTrend")}</span>}
                   </p>
@@ -813,23 +813,26 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 {priceLoading && activeGrade && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
                 )}
-                {grades.map((grade) => (
+                {GRADE_KEYS.map((gradeKey) => {
+                  const gradeLabel = gradeKey === "used" ? t("cardDetail.gradeUsed") : gradeKey;
+                  return (
                   <button
-                    key={grade}
-                    onClick={() => setActiveGrade(activeGrade === grade ? null : grade)}
+                    key={gradeKey}
+                    onClick={() => setActiveGrade(activeGrade === gradeKey ? null : gradeKey)}
                     disabled={priceLoading}
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border relative ${
-                      activeGrade === grade
+                      activeGrade === gradeKey
                         ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
                         : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
                     } ${priceLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
-                    {grade}
-                    {activeGrade === grade && priceLoading && (
+                    {gradeLabel}
+                    {activeGrade === gradeKey && priceLoading && (
                       <span className="absolute inset-0 rounded-lg bg-[#1565C0]/40 animate-pulse" />
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -838,7 +841,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               <Loader2 className="w-6 h-6 animate-spin text-[#FFD600]" />
               {activeGrade && (
                 <p className="text-xs text-zinc-500 animate-pulse">
-                  正在載入 {activeGrade} 成交記錄...
+                  {t("cardDetail.loadingGradeRecords", { grade: activeGrade })}
                 </p>
               )}
             </div>
@@ -858,7 +861,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     </th>
                     {isSealedProduct && (
                       <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide whitespace-nowrap">
-                        單盒價
+                        {t("cardDetail.perBoxPrice")}
                       </th>
                     )}
                   </tr>
@@ -998,10 +1001,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               <span className="w-1 h-4 rounded-full bg-blue-400 inline-block" />
               <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4 text-blue-400" />
-                eBay 在售商品
+                {t("cardDetail.ebayListings")}
               </h3>
               {!ebayLoading && (
-                <span className="text-xs text-zinc-500">（按價格排序）</span>
+                <span className="text-xs text-zinc-500">{t("cardDetail.sortedByPrice")}</span>
               )}
             </div>
             <button
@@ -1009,7 +1012,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              刷新
+              {t("common.refresh")}
             </button>
           </div>
 
@@ -1017,13 +1020,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           {ebayLoading ? (
             <div className="py-12 flex items-center justify-center bg-zinc-900/30">
               <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-              <span className="ml-2 text-sm text-zinc-400">正在搜尋 eBay 在售商品...</span>
+              <span className="ml-2 text-sm text-zinc-400">{t("cardDetail.searchingEbay")}</span>
             </div>
           ) : ebayListings.length === 0 ? (
             <div className="py-12 text-center bg-zinc-900/30">
               <ShoppingCart className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-500 text-sm">目前 eBay 沒有找到相關在售商品</p>
-              <p className="text-zinc-600 text-xs mt-1">可嘗試刷新或稍後再查看</p>
+              <p className="text-zinc-500 text-sm">{t("cardDetail.noEbayListings")}</p>
+              <p className="text-zinc-600 text-xs mt-1">{t("cardDetail.tryRefreshLater")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-4 bg-zinc-900/30">
@@ -1067,13 +1070,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     </p>
                     {item.seller && (
                       <p className="text-[10px] text-zinc-500 truncate">
-                        賣家: {item.seller}
+                        {t("cardDetail.seller")}: {item.seller}
                       </p>
                     )}
                     <div className="mt-auto pt-1.5">
                       <span className="inline-flex items-center gap-1 text-[10px] text-blue-400 font-medium group-hover:text-blue-300">
                         <ExternalLink className="w-2.5 h-2.5" />
-                        前往購買
+                        {t("cardDetail.goToBuy")}
                       </span>
                     </div>
                   </div>
@@ -1087,7 +1090,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             <div className="px-4 py-2.5 bg-zinc-900/50 border-t border-zinc-800 flex items-center gap-1.5">
               <Tag className="w-3 h-3 text-zinc-500" />
               <p className="text-[11px] text-zinc-500">
-                共 {ebayListings.length} 件在售商品・價格已換算為 HKD・點擊前往 eBay 購買
+                {t("cardDetail.ebayListingsSummary", { count: ebayListings.length })}
               </p>
             </div>
           )}
@@ -1121,6 +1124,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
 function SimilarCardsSection({ cardId, series, setName, cardName }: { cardId: number; series: string | null; setName: string | null; cardName: string }) {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
   // Display the set name or series as section subtitle
   const sectionLabel = setName || series || cardName.split(/[\s\[\(]/)[0];
   const { data: similarCards, isLoading } = trpc.cards.getSimilarCards.useQuery(
@@ -1136,36 +1140,36 @@ function SimilarCardsSection({ cardId, series, setName, cardName }: { cardId: nu
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full bg-yellow-400" />
-          <h3 className="text-base font-semibold text-white">同系列卡牌</h3>
+          <h3 className="text-base font-semibold text-white">{t("cardDetail.sameSeriesCards")}</h3>
           {sectionLabel && <span className="text-xs text-zinc-500 ml-1">{sectionLabel}</span>}
         </div>
         <button
           onClick={() => setLocation(`/search?q=${encodeURIComponent(sectionLabel)}`)}
           className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors flex items-center gap-1 font-medium"
         >
-          查看更多
+          {t("common.viewMore")}
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3" role="list" aria-label="同系列卡牌列表">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3" role="list" aria-label={t("cardDetail.sameSeriesCardsList")}>
         {similarCards.map((card: any) => (
           <a
             key={card.id}
             href={`/card/${card.id}`}
             onClick={(e) => { e.preventDefault(); setLocation(`/card/${card.id}`); }}
             className="group flex flex-col gap-2 text-left hover:scale-[1.03] transition-transform duration-200"
-            title={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 價格資訊`}
+            title={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("cardDetail.priceInfo")}`}
           >
             <div className="aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800">
               {card.imageUrl ? (
                 <img
                   src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                  alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像`}
+                  alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("cardDetail.cardImage")}`}
                   className="w-full h-full object-cover group-hover:brightness-110 transition-all duration-200"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-zinc-600 text-xs">無圖</span>
+                  <span className="text-zinc-600 text-xs">{t("common.noImage")}</span>
                 </div>
               )}
             </div>

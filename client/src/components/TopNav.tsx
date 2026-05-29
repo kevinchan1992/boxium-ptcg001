@@ -149,7 +149,7 @@ export function TopNav() {
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
     { href: "/marketplace", label: t("topnav.marketplace") },
-    { href: "/grading", label: "PSA 鑑定" },
+    { href: "/grading", label: t("common.grading") },
     { href: "/blog", label: t("common.blog") },
     { href: "/auction/terms", label: t("common.auctionTerms", "買賣條款") },
   ];
@@ -191,18 +191,18 @@ export function TopNav() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-[#FEDD00]" />
-              成為賣家，輕鬆出售卡牌
+              {t("topnav.becomeSellerTitle")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
             <p className="text-sm text-muted-foreground">
-              在 BOXIUM 平台上架你的 TCG 卡牌，觸及更多買家。
+              {t("topnav.becomeSellerDescription")}
             </p>
             <div className="space-y-2">
               {[
-                "免費上架，平台僅收取 5% 服務費",
-                "支援 Stripe 信用卡及支付寶 HK 收款",
-                "自動通知買家，輕鬆管理訂單",
+                t("topnav.featureFreeListing"),
+                t("topnav.featurePaymentMethods"),
+                t("topnav.featureOrderManagement"),
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <span className="text-[#FEDD00] font-bold mt-0.5">✓</span>
@@ -211,7 +211,7 @@ export function TopNav() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-              登入後即可立即上架商品，無需額外審核。
+              {t("topnav.loginToSell")}
             </p>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -220,14 +220,14 @@ export function TopNav() {
               className="flex-1"
               onClick={() => { setShowSellDialog(false); setLocation("/register"); }}
             >
-              免費註冊
+              {t("topnav.registerFree")}
             </Button>
             <Button
               className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 font-bold"
               onClick={() => { setShowSellDialog(false); setLocation("/login"); }}
             >
               <LogIn className="w-4 h-4 mr-2" />
-              登入並上架
+              {t("topnav.loginAndList")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -300,10 +300,10 @@ export function TopNav() {
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
             <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
               {[
-                { href: "/research", label: "卡牌搜尋", emoji: "🔍", tip: "搜尋 55,000+ 張卡牌的市場行情" },
-                { href: "/pricing", label: "市場格價", emoji: "📈", tip: "比較各平台即時卡牌成交價格" },
-                { href: "/grading", label: "PSA 鑑定", emoji: "🏅", tip: "PSA 代客鑑定，專業團隊負責寄送" },
-                { href: "/marketplace", label: "市集", emoji: "🛒", tip: "安全買賣 TCG 卡牌，支援拍賣" },
+                { href: "/research", label: t("common.research"), emoji: "🔍", tip: t("topnav.tipResearch") },
+                { href: "/pricing", label: t("common.priceComparison"), emoji: "📈", tip: t("topnav.tipPricing") },
+                { href: "/grading", label: t("common.grading"), emoji: "🏅", tip: t("topnav.tipGrading") },
+                { href: "/marketplace", label: t("topnav.marketplace"), emoji: "🛒", tip: t("topnav.tipMarketplace") },
               ].map((item) => (
                 <div key={item.href} className="relative group/nav">
                   <Link
@@ -385,7 +385,7 @@ export function TopNav() {
                       onClick={() => setNotifTab('notif')}
                     >
                       <Bell className="w-3.5 h-3.5" />
-                      通知
+                      {t("topnav.notifications")}
                       {(unreadData?.count ?? 0) > 0 && (
                         <span className="bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
                           {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
@@ -399,7 +399,7 @@ export function TopNav() {
                       onClick={() => setNotifTab('msg')}
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      訊息
+                      {t("topnav.messages")}
                       {(msgUnreadData?.count ?? 0) > 0 && (
                         <span className="bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
                           {(msgUnreadData?.count ?? 0) > 9 ? '9+' : msgUnreadData?.count}
@@ -409,7 +409,7 @@ export function TopNav() {
                     {notifTab === 'notif' && (unreadData?.count ?? 0) > 0 && (
                       <button
                         className="px-3 py-2.5 text-white/40 hover:text-white/70 transition-colors"
-                        title="全部已讀"
+                        title={t("notifications.markAllRead")}
                         onClick={() => markAllAsReadMutation.mutate()}
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
@@ -422,11 +422,11 @@ export function TopNav() {
                     <>
                       <ScrollArea className="max-h-[320px]">
                         {notifLoading ? (
-                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">載入中...</div>
+                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">{t("common.loading")}</div>
                         ) : !notifData || notifData.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
                             <Bell className="w-8 h-8 opacity-30" />
-                            <span className="text-sm">暫無通知</span>
+                            <span className="text-sm">{t("topnav.noNotificationsTitle")}</span>
                           </div>
                         ) : (
                           <div className="divide-y divide-white/5">
@@ -461,7 +461,7 @@ export function TopNav() {
                       <div className="border-t border-white/10 px-4 py-2">
                         <Link href="/profile?tab=notifications" onClick={() => setNotifOpen(false)}>
                           <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
-                            查看全部通知
+                            {t("topnav.viewAllNotifications")}
                           </Button>
                         </Link>
                       </div>
@@ -473,11 +473,11 @@ export function TopNav() {
                     <>
                       <ScrollArea className="max-h-[320px]">
                         {msgThreadsLoading ? (
-                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">載入中...</div>
+                          <div className="flex items-center justify-center py-8 text-white/40 text-sm">{t("common.loading")}</div>
                         ) : !msgThreads || msgThreads.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/40">
                             <MessageSquare className="w-8 h-8 opacity-30" />
-                            <span className="text-sm">暫無未讀訊息</span>
+                            <span className="text-sm">{t("topnav.noUnreadMessagesTitle")}</span>
                           </div>
                         ) : (
                           <div className="divide-y divide-white/5">
@@ -496,7 +496,7 @@ export function TopNav() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2">
                                     <p className="text-xs font-medium text-white leading-tight">
-                                      訂單 #{thread.orderNo}
+                                      {t("topnav.order")} #{thread.orderNo}
                                     </p>
                                     {thread.unreadCount > 0 && (
                                       <span className="flex-shrink-0 bg-red-500 text-white text-[9px] font-bold rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
@@ -505,7 +505,7 @@ export function TopNav() {
                                     )}
                                   </div>
                                   <p className="text-[11px] text-white/50 mt-0.5 leading-snug line-clamp-2">
-                                    {thread.latestContent || '[圖片訊息]'}
+                                    {thread.latestContent || `[${t("topnav.imageMessage")}]`}
                                   </p>
                                   <p className="text-[10px] text-white/30 mt-1">
                                     {thread.latestAt ? formatDistanceToNow(new Date(thread.latestAt), { addSuffix: true, locale: zhTW }) : ''}
@@ -519,7 +519,7 @@ export function TopNav() {
                       <div className="border-t border-white/10 px-4 py-2">
                         <Link href="/orders" onClick={() => setNotifOpen(false)}>
                           <Button variant="ghost" size="sm" className="w-full text-xs text-white/50 hover:text-white h-7">
-                            查看全部訂單
+                            {t("topnav.viewAllMessages")}
                           </Button>
                         </Link>
                       </div>
@@ -542,22 +542,22 @@ export function TopNav() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => { setLocation("/profile"); }}>
                     <User className="w-4 h-4 mr-2" />
-                    個人中心
+                    {t("topnav.profile")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setLocation("/seller"); }}>
                     <Tag className="w-4 h-4 mr-2" />
-                    賣家中心
+                    {t("topnav.sellerDashboard")}
                   </DropdownMenuItem>
                   {user.role === "admin" && (
                     <DropdownMenuItem onClick={() => { setLocation("/admin"); }}>
                       <span className="w-4 h-4 mr-2 text-red-400">⚙</span>
-                      管理後台
-                    </DropdownMenuItem>
+                    {t("common.admin")}
+                  </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
                     <LogOut className="w-4 h-4 mr-2" />
-                    登出
+                    {t("topnav.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -622,7 +622,7 @@ export function TopNav() {
                   onClick={() => { handleNavClick(); handleSellClick(); }}
                   className="w-full flex items-center text-sm font-medium text-[#FEDD00] hover:text-[#FEDD00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
                 >
-                  出售商品
+                  {t("topnav.sellItem")}
                 </button>
               </motion.div>
               )}
@@ -662,14 +662,14 @@ export function TopNav() {
                       className="flex-1 text-white border-white/30 hover:bg-white/10 bg-transparent text-xs"
                       onClick={() => { setLocation("/login"); handleNavClick(); }}
                     >
-                      登入
+                      {t("topnav.login")}
                     </Button>
                     <Button
                       size="sm"
                       className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 text-xs"
                       onClick={() => { setLocation("/register"); handleNavClick(); }}
                     >
-                      註冊
+                      {t("topnav.register")}
                     </Button>
                   </div>
                 )}

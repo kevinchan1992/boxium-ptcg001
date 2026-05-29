@@ -313,33 +313,33 @@ function ItemCard({
 }
 
 // ─── Terms content ────────────────────────────────────────────────────────────
-const TERMS = [
-  "本人確認所提交的卡牌為本人合法擁有，並非贓物或侵權物品。如日後發現卡牌來源有問題，本人須承擔一切法律責任。",
-  "本人明白 PSA 鑑定結果為最終結果，BOXIUM 無法干預評分，亦不保證任何特定評分。對評分結果有任何異議，須直接向 PSA 提出，BOXIUM 不負責跟進。",
-  "本人明白卡片一經提交 PSA 後，申請不可取消，費用亦不予退還。如需在 BOXIUM 收件後取消，須於 48 小時內書面通知並支付 HK$50 行政費。",
-  "本人明白客人自費寄件至 BOXIUM 的過程由客人自行承擔風險，BOXIUM 不負責寄件途中的遺失或損壞。強烈建議客人購買運輸保險。",
-  "本人明白鑑定完成後須於 30 天內完成付款。逾期未付款，BOXIUM 保留對相關卡片自行處理之權利，包括但不限於出售、捐贈或銷毀，客人將不獲任何賠償。",
-  "本人明白 BOXIUM 對 PSA 之任何服務中斷、政策變更、價格調整或其他不可抗力因素概不負責。",
-  "本人明白價格或會因應官方調整而更改，恕不另行通知。鑑定期以工作天計算，實際時間會根據官方實際情況而定，不包括運輸時間。",
-  "本人明白 BOXIUM 只作代理服務，卡牌鑑定期間由 PSA 負責保管，BOXIUM 不對 PSA 保管期間的任何損失負責。",
-  "本人明白提交申請即代表同意 BOXIUM 收集及使用本人的個人資料（包括姓名、聯絡方式及卡牌資料）用於處理本次申請。",
-  "本人確認所填寫的資料屬實，如有虛假陳述，BOXIUM 保留拒絕服務及追究責任的權利。",
+const TERMS_KEYS = [
+  "gradingSubmit.terms.0",
+  "gradingSubmit.terms.1",
+  "gradingSubmit.terms.2",
+  "gradingSubmit.terms.3",
+  "gradingSubmit.terms.4",
+  "gradingSubmit.terms.5",
+  "gradingSubmit.terms.6",
+  "gradingSubmit.terms.7",
+  "gradingSubmit.terms.8",
+  "gradingSubmit.terms.9",
 ];
 
 // ─── Draft helpers ───────────────────────────────────────────────────────────
 const DRAFT_KEY_PREFIX = "boxium_grading_draft_v2";
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-function formatDraftAge(savedAt: number): string {
+function formatDraftAge(savedAt: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const diffMs = Date.now() - savedAt;
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffMins < 1) return "剛才";
-  if (diffMins < 60) return `${diffMins} 分鐘前`;
-  if (diffHours < 24) return `${diffHours} 小時前`;
-  if (diffDays === 1) return "昨天";
-  return `${diffDays} 天前`;
+  if (diffMins < 1) return t("gradingSubmit.draft.justNow");
+  if (diffMins < 60) return t("gradingSubmit.draft.minutesAgo", { count: diffMins });
+  if (diffHours < 24) return t("gradingSubmit.draft.hoursAgo", { count: diffHours });
+  if (diffDays === 1) return t("gradingSubmit.draft.yesterday");
+  return t("gradingSubmit.draft.daysAgo", { count: diffDays });
 }
 
 function getDraftKey(userId?: number | string): string {
@@ -480,7 +480,7 @@ export default function GradingSubmit() {
     phone: '',
     address: '',
     district: '',
-    region: '香港',
+    region: t("gradingSubmit.address.regionDefault"),
   });
   // SF station mode for manual input
   const [manualInputType, setManualInputType] = useState<'normal' | 'sf_station'>('normal');
@@ -564,7 +564,7 @@ export default function GradingSubmit() {
       setStep(4);
     },
     onError: (err: any) => {
-      toast.error(`提交失敗：${err.message}`);
+      toast.error(t("gradingSubmit.toast.submitFailed", { msg: err.message }));
     },
   });
 
@@ -573,7 +573,7 @@ export default function GradingSubmit() {
   // ── Save address to profile ──
   const addShippingAddressMutation = trpc.marketplace.addShippingAddress.useMutation({
     onSuccess: () => {
-      toast.success("地址已儲存到個人中心");
+      toast.success(t("gradingSubmit.toast.addressSaved"));
     },
     onError: () => { /* silent fail */ },
   });
@@ -586,7 +586,7 @@ export default function GradingSubmit() {
   };
   const removeItem = (id: string) => {
     if (items.length === 1) {
-      toast.error("至少需要一張卡牌");
+      toast.error(t("gradingSubmit.toast.needOneCard"));
       return;
     }
     setItems((prev) => {
@@ -609,7 +609,7 @@ export default function GradingSubmit() {
   // ── Validation ──
   const validateStep1 = () => {
     if (!selectedTierId) {
-      toast.error("請選擇服務層級");
+      toast.error(t("gradingSubmit.toast.selectTier"));
       return false;
     }
     return true;
@@ -618,11 +618,11 @@ export default function GradingSubmit() {
   const validateStep2 = () => {
     for (const item of items) {
       if (!item.isManual && !item.card) {
-        toast.error("請為每張卡牌選擇卡牌資料");
+        toast.error(t("gradingSubmit.toast.selectCardData"));
         return false;
       }
       if (item.isManual && !item.manualCardName.trim()) {
-        toast.error("請填寫卡牌名稱");
+        toast.error(t("gradingSubmit.toast.fillCardName"));
         return false;
       }
     }
@@ -636,7 +636,7 @@ export default function GradingSubmit() {
 
   const handleSubmit = () => {
     if (!agreedTerms) {
-      toast.error("請先閱讀並同意服務條款");
+      toast.error(t("gradingSubmit.toast.agreeTerms"));
       return;
     }
     // Build returnAddress
@@ -649,7 +649,7 @@ export default function GradingSubmit() {
           phone: saved.phone || '',
           address: saved.address || '',
           district: saved.district || '',
-          region: saved.region || '香港',
+          region: saved.region || t("gradingSubmit.address.regionDefault"),
           ...(saved.addressType === 'sf_station' && saved.sfStationCode ? {
             sfStationCode: saved.sfStationCode,
             sfStationName: saved.sfStationName || '',
@@ -658,7 +658,7 @@ export default function GradingSubmit() {
       }
     } else if (returnAddressMode === 'manual') {
       if (!manualReturnAddress.recipientName.trim() || !manualReturnAddress.phone.trim()) {
-        toast.error("請填寫收件人姓名和電話");
+        toast.error(t("gradingSubmit.toast.fillNamePhone"));
         return;
       }
       if (manualInputType === 'sf_station') {
@@ -690,7 +690,7 @@ export default function GradingSubmit() {
         }
       } else {
         if (!manualReturnAddress.address.trim()) {
-          toast.error("請填寫詳細地址");
+          toast.error(t("gradingSubmit.toast.fillAddress"));
           return;
         }
         returnAddress = {
@@ -698,7 +698,7 @@ export default function GradingSubmit() {
           phone: manualReturnAddress.phone.trim(),
           address: manualReturnAddress.address.trim(),
           district: manualReturnAddress.district.trim() || undefined,
-          region: manualReturnAddress.region || '香港',
+          region: manualReturnAddress.region || t("gradingSubmit.address.regionDefault"),
         };
         // Save to profile if requested
         if (saveToProfile) {
@@ -708,7 +708,7 @@ export default function GradingSubmit() {
             phone: manualReturnAddress.phone.trim(),
             address: manualReturnAddress.address.trim(),
             district: manualReturnAddress.district.trim() || undefined,
-            region: manualReturnAddress.region || '香港',
+            region: manualReturnAddress.region || t("gradingSubmit.address.regionDefault"),
           });
         }
       }
@@ -759,11 +759,11 @@ export default function GradingSubmit() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">請先登入</h2>
-          <p className="text-gray-500 mb-6">提交 PSA 鑑定申請需要登入帳號</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t("gradingSubmit.loginRequired.title")}</h2>
+          <p className="text-gray-500 mb-6">{t("gradingSubmit.loginRequired.desc")}</p>
           <a href="/login">
             <Button className="bg-[#06038d] hover:bg-[#06038d]/90 text-white w-full">
-              登入 / 註冊
+              {t("gradingSubmit.loginRequired.btn")}
             </Button>
           </a>
         </div>
@@ -776,8 +776,8 @@ export default function GradingSubmit() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">PSA 代客鑑定申請</h1>
-          <p className="text-gray-500 text-sm mt-1">填寫卡牌資料，提交後請打印申請單連同卡牌寄出</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("gradingSubmit.pageTitle")}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t("gradingSubmit.pageDesc")}</p>
         </div>
 
         <StepIndicator step={step} />
@@ -853,7 +853,7 @@ export default function GradingSubmit() {
                           <span className="ml-1">· 已選層級：<strong>{draftTierName}</strong></span>
                         )}
                         {draft?.savedAt && (
-                          <span className={`ml-1 ${isExpiringSoon ? 'text-orange-500' : 'text-blue-500'}`}>· {formatDraftAge(draft.savedAt)}儲存</span>
+                          <span className={`ml-1 ${isExpiringSoon ? 'text-orange-500' : 'text-blue-500'}`}>· {formatDraftAge(draft.savedAt, t)}</span>
                         )}
                       </p>
                     </div>
@@ -884,8 +884,8 @@ export default function GradingSubmit() {
               <TierComparisonTable tiers={tiers} />
             )}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-bold text-gray-900 mb-1">選擇服務層級</h2>
-              <p className="text-xs text-gray-500 mb-4">此次申請的所有卡牌將使用相同服務層級</p>
+              <h2 className="font-bold text-gray-900 mb-1">{t("gradingSubmit.selectTier.title")}</h2>
+              <p className="text-xs text-gray-500 mb-4">{t("gradingSubmit.selectTier.desc")}</p>
               {tiersLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -936,7 +936,7 @@ export default function GradingSubmit() {
                 className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-8"
                 disabled={tiersLoading || !selectedTierId}
               >
-                下一步：填寫卡牌資料
+                {t("gradingSubmit.selectTier.nextStep")}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -950,7 +950,7 @@ export default function GradingSubmit() {
             {selectedTier && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-blue-600 font-semibold">已選服務層級</span>
+                  <span className="text-xs text-blue-600 font-semibold">{t("gradingSubmit.selectTier.selected")}</span>
                   <p className="font-bold text-[#06038d]">{selectedTier.name}</p>
                 </div>
                 <div className="text-right">
@@ -960,7 +960,7 @@ export default function GradingSubmit() {
                     onClick={() => setStep(1)}
                     className="text-xs text-blue-500 hover:underline"
                   >
-                    更改
+                    {t("gradingSubmit.selectTier.change")}
                   </button>
                 </div>
               </div>
@@ -985,29 +985,29 @@ export default function GradingSubmit() {
               onClick={addItem}
             >
               <Plus className="h-4 w-4 mr-2" />
-              新增卡牌
+              {t("gradingSubmit.addCard")}
             </Button>
 
             {/* Fee preview */}
             {selectedTier && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-gray-600">
-                  {totalQuantity} 張 × HK${parseFloat(selectedTier.feeHkd).toLocaleString()}
+                  {t("gradingSubmit.feeCalc", { qty: totalQuantity, fee: parseFloat(selectedTier.feeHkd).toLocaleString() })}
                 </span>
-                <span className="font-bold text-[#06038d]">合計 HK${totalFee.toLocaleString()}</span>
+                <span className="font-bold text-[#06038d]">{t("gradingSubmit.totalFee", { fee: totalFee.toLocaleString() })}</span>
               </div>
             )}
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => setStep(1)} className="flex-1 text-black">
                 <ChevronLeft className="mr-2 h-4 w-4" />
-                返回
+                {t("common.back")}
               </Button>
               <Button
                 onClick={handleNext}
                 className="flex-1 bg-[#06038d] hover:bg-[#06038d]/90 text-white"
               >
-                下一步：確認提交
+                {t("gradingSubmit.nextConfirm")}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -1021,13 +1021,13 @@ export default function GradingSubmit() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="bg-[#06038d] text-white px-5 py-3 flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
-                <span className="font-bold">費用明細</span>
+                <span className="font-bold">{t("gradingSubmit.feeBreakdown")}</span>
               </div>
               <div className="p-4 space-y-3">
                 {items.map((item, idx) => {
                   const cardName = item.isManual
                     ? item.manualCardName
-                    : (item.card?.name ?? "未知卡牌");
+                    : (item.card?.name ?? t("gradingSubmit.unknownCard"));
                   const qty = (item as any).quantity ?? 1;
                   const itemFee = selectedTier ? parseFloat(selectedTier.feeHkd) * qty : 0;
                   return (
@@ -1060,7 +1060,7 @@ export default function GradingSubmit() {
                 })}
                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-gray-900">代送 PSA 費用合計</p>
+                    <p className="font-bold text-gray-900">{t("gradingSubmit.totalPSAFee")}</p>
                     <p className="text-xs text-gray-500">
                       共 {items.reduce((sum, i) => sum + ((i as any).quantity ?? 1), 0)} 張卡牌 · 費用已包含 BOXIUM 代辦服務費
                     </p>
@@ -1076,10 +1076,10 @@ export default function GradingSubmit() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="bg-[#06038d] text-white px-5 py-3 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                <span className="font-bold">客戶收貨地址</span>
-                <span className="text-blue-200 text-xs ml-1 hidden sm:inline">（鑑定完成後回寄）</span>
+                <span className="font-bold">{t("gradingSubmit.returnAddress.title")}</span>
+                <span className="text-blue-200 text-xs ml-1 hidden sm:inline">{t("gradingSubmit.returnAddress.subtitle")}</span>
                 <span className="ml-auto flex items-center gap-1 text-xs bg-orange-400 text-white font-bold px-2 py-0.5 rounded-full">
-                  <Truck className="h-3 w-3" />順豐到付
+                  <Truck className="h-3 w-3" />{t("gradingSubmit.sfCOD")}
                 </span>
               </div>
 
@@ -1087,7 +1087,7 @@ export default function GradingSubmit() {
               <div className="bg-orange-50 border-b border-orange-100 px-4 py-2.5 flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-orange-700">
-                  <span className="font-bold">順豐到付：</span>所有回寄貨物均以順豐到付方式寄出，達付時預計進行收貨。如選擇順豐自提站，請確保站點已開放接件。
+                  <span className="font-bold">{t("gradingSubmit.sfCOD")}：</span>{t("gradingSubmit.sfCODDesc")}
                 </p>
               </div>
 
@@ -1097,10 +1097,10 @@ export default function GradingSubmit() {
                   <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                     <div className="text-xs text-amber-800">
-                      <p className="font-bold mb-0.5">您尚未儲存任何收貨地址</p>
-                      <p>請在下方填寫收貨地址，或先前往
+                      <p className="font-bold mb-0.5">您尚未儲存任何收貨{t("grading.address")}</p>
+                      <p>請在下方填寫收貨{t("grading.address")}，或先前往
                         <a href="/profile" target="_blank" className="underline font-semibold mx-1 inline-flex items-center gap-0.5">個人中心<ExternalLink className="h-3 w-3" /></a>
-                        儲存常用地址。
+                        {t("gradingSubmit.saveCommonAddress")}
                       </p>
                     </div>
                   </div>
@@ -1119,7 +1119,7 @@ export default function GradingSubmit() {
                       }`}
                     >
                       <Home className="h-4 w-4" />
-                      已儲存地址
+                      已儲存{t("grading.address")}
                     </button>
                     <button
                       type="button"
@@ -1131,7 +1131,7 @@ export default function GradingSubmit() {
                       }`}
                     >
                       <PlusCircle className="h-4 w-4" />
-                      輸入新地址
+                      輸入新{t("grading.address")}
                     </button>
                   </div>
                 )}
@@ -1160,10 +1160,10 @@ export default function GradingSubmit() {
                             <span className="font-semibold text-sm text-gray-900">{addr.recipientName}</span>
                             <span className="text-sm text-gray-500">{addr.phone}</span>
                             {addr.isDefault && (
-                              <span className="text-xs bg-[#06038d] text-white px-1.5 py-0.5 rounded">預設</span>
+                              <span className="text-xs bg-[#06038d] text-white px-1.5 py-0.5 rounded">{t("gradingSubmit.defaultLabel")}</span>
                             )}
                             {addr.addressType === 'sf_station' && (
-                              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">順豐站</span>
+                              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">{t("gradingSubmit.sfStation")}</span>
                             )}
                           </div>
                           {addr.addressType === 'sf_station' && addr.sfStationName ? (
@@ -1182,7 +1182,7 @@ export default function GradingSubmit() {
                       className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-[#06038d] hover:underline"
                     >
                       <PlusCircle className="h-3.5 w-3.5" />
-                      使用其他地址
+                      使用其他{t("grading.address")}
                     </button>
                   </div>
                 )}
@@ -1193,20 +1193,20 @@ export default function GradingSubmit() {
                     {/* Recipient name + phone */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">收件人姓名 <span className="text-red-500">*</span></label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">收件人{t("grading.name")} <span className="text-red-500">*</span></label>
                         <Input
                           value={manualReturnAddress.recipientName}
                           onChange={(e) => setManualReturnAddress(prev => ({ ...prev, recipientName: e.target.value }))}
-                          placeholder="例：陳大文"
+                          placeholder={t("gradingSubmit.recipientNamePlaceholder")}
                           className="text-sm text-black"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">聯絡電話 <span className="text-red-500">*</span></label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">聯絡{t("grading.phone")} <span className="text-red-500">*</span></label>
                         <Input
                           value={manualReturnAddress.phone}
                           onChange={(e) => setManualReturnAddress(prev => ({ ...prev, phone: e.target.value }))}
-                          placeholder="例：9123 4567"
+                          placeholder={t("gradingSubmit.phonePlaceholder")}
                           className="text-sm text-black"
                         />
                       </div>
@@ -1223,7 +1223,7 @@ export default function GradingSubmit() {
                             : 'border-gray-200 text-gray-500 hover:border-gray-300'
                         }`}
                       >
-                        <MapPin className="h-3.5 w-3.5" />一般地址
+                        <MapPin className="h-3.5 w-3.5" />一般{t("grading.address")}
                       </button>
                       <button
                         type="button"
@@ -1242,7 +1242,7 @@ export default function GradingSubmit() {
                     {manualInputType === 'normal' && (
                       <>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">詳細地址 <span className="text-red-500">*</span></label>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">詳細{t("grading.address")} <span className="text-red-500">*</span></label>
                           <Input
                             value={manualReturnAddress.address}
                             onChange={(e) => setManualReturnAddress(prev => ({ ...prev, address: e.target.value }))}
@@ -1343,7 +1343,7 @@ export default function GradingSubmit() {
                       />
                       <span className="text-xs text-gray-600 flex items-center gap-1">
                         <Save className="h-3.5 w-3.5" />
-                        儲存此地址到個人中心，方便下次使用
+                        儲存此{t("grading.address")}到個人中心，方便下次使用
                       </span>
                     </label>
 
@@ -1353,7 +1353,7 @@ export default function GradingSubmit() {
                         onClick={() => setReturnAddressMode('saved')}
                         className="text-xs text-[#06038d] hover:underline"
                       >
-                        ← 返回選擇已儲存地址
+                        ← 返回選擇已儲存{t("grading.address")}
                       </button>
                     )}
                   </div>
@@ -1365,11 +1365,11 @@ export default function GradingSubmit() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-3">
                 <FileText className="h-4 w-4 text-[#06038d]" />
-                <span className="font-bold text-gray-900">服務條款</span>
+                <span className="font-bold text-gray-900">{t("gradingSubmit.termsTitle")}</span>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 max-h-48 overflow-y-auto mb-4 text-xs text-gray-600 space-y-2">
-                {TERMS.map((term, i) => (
-                  <p key={i}>{i + 1}. {term}</p>
+                {TERMS_KEYS.map((key, i) => (
+                  <p key={i}>{i + 1}. {t(key)}</p>
                 ))}
               </div>
               <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -1388,7 +1388,7 @@ export default function GradingSubmit() {
                   }}
                 />
                 <span className="text-sm text-gray-700">
-                  我已閱讀並同意以上所有服務條款，並確認所提交資料屬實。
+                  {t("gradingSubmit.agreeTermsLabel")}
                 </span>
               </label>
             </div>
@@ -1400,7 +1400,7 @@ export default function GradingSubmit() {
                 className="flex-1 text-black"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
-                返回修改
+                {t("gradingSubmit.backToEdit")}
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -1410,11 +1410,11 @@ export default function GradingSubmit() {
                 {checkoutMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    處理中...
+                    {t("common.processing")}
                   </>
                 ) : (
                   <>
-                    提交申請
+                    {t("gradingSubmit.submitApplication")}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -1432,7 +1432,7 @@ export default function GradingSubmit() {
                   <CheckCircle2 className="h-8 w-8 text-green-600" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold text-green-800 mb-1">申請已成功提交！</h2>
+              <h2 className="text-xl font-bold text-green-800 mb-1">{t("gradingSubmit.success.title")}</h2>
               <p className="text-sm text-green-700 font-mono font-semibold">{submittedData.orderNo}</p>
             </div>
             {/* Payment CTA — high priority */}
@@ -1442,7 +1442,7 @@ export default function GradingSubmit() {
                 <div>
                   <p className="font-bold text-amber-800 text-sm">請立即完成付款，否則申請將無法進入處理流程</p>
                   <p className="text-xs text-amber-700 mt-1">
-                    共 {submittedData.cardCount} 張卡牌 · 費用合計 <span className="font-bold text-[#06038d]">HK${submittedData.totalFee.toLocaleString()}</span>
+                    共 {submittedData.cardCount} 張卡牌 · 費用{t("grading.total")} <span className="font-bold text-[#06038d]">HK${submittedData.totalFee.toLocaleString()}</span>
                   </p>
                 </div>
               </div>
@@ -1451,17 +1451,17 @@ export default function GradingSubmit() {
                 className="w-full bg-[#06038d] hover:bg-[#06038d]/90 text-white font-bold text-base py-3 h-auto"
               >
                 <DollarSign className="mr-2 h-5 w-5" />
-                前往申請詳情頁完成付款
+                {t("gradingSubmit.success.goToDetail")}
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
             {/* Next steps */}
             <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-              <p className="font-semibold text-gray-800 text-sm">付款後的下一步</p>
+              <p className="font-semibold text-gray-800 text-sm">{t("gradingSubmit.success.nextStepsTitle")}</p>
               {[
-                { icon: Package, text: "付款確認後，系統將自動發送確認通知（站內訊息 + Email），包含 BOXIUM 送件地址" },
-                { icon: FileText, text: "請打印申請單，連同卡牌自費寄至 BOXIUM 指定地址（順豐站 852Z351）" },
-                { icon: CheckCircle2, text: "BOXIUM 確認收件後，代辦 PSA 申報及專業包裝，每月 2 次出團直送美國 PSA" },
+                { icon: Package, text: t("gradingSubmit.success.step1") },
+                { icon: FileText, text: t("gradingSubmit.success.step2") },
+                { icon: CheckCircle2, text: t("gradingSubmit.success.step3") },
               ].map(({ icon: Icon, text }, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-[#06038d]/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
@@ -1477,7 +1477,7 @@ export default function GradingSubmit() {
                 onClick={() => navigate("/grading/orders")}
                 className="text-sm text-[#06038d] underline underline-offset-2"
               >
-                查看所有申請記錄
+                {t("gradingSubmit.success.viewAllApplications")}
               </button>
             </div>
           </div>

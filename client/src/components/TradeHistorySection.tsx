@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
@@ -59,6 +60,7 @@ function CardThumb({ imageUrl, name }: { imageUrl: string | null; name: string }
 
 // ─── Trade Detail Sheet ────────────────────────────────────────────────────────
 function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose: () => void; onDelete: () => void }) {
+  const { t } = useTranslation();
   const outItems = trade.items.filter((i) => i.direction === "out");
   const inItems = trade.items.filter((i) => i.direction === "in");
 
@@ -80,7 +82,7 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
         <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0" style={{ background: BRAND_BLUE }}>
           <ArrowLeftRight className="w-5 h-5 text-white" />
           <div className="flex-1">
-            <h3 className="font-bold text-white">交換記錄詳情</h3>
+            <h3 className="font-bold text-white">{t("tradeHistory.detailTitle")}</h3>
             <p className="text-white/70 text-xs">{dateStr}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/20 transition-colors">
@@ -108,8 +110,8 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
           <div className="rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: `${BRAND_BLUE}10` }}>
               <ArrowRight className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-              <span className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>換出卡牌</span>
-              <span className="ml-auto text-xs font-medium text-gray-500">共 {outItems.length} 張</span>
+              <span className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>{t("tradeHistory.cardsOut")}</span>
+              <span className="ml-auto text-xs font-medium text-gray-500">{t("tradeHistory.totalCards", { count: outItems.length })}</span>
             </div>
             <div className="divide-y divide-gray-50">
               {outItems.map((item) => (
@@ -126,7 +128,7 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
               ))}
             </div>
             <div className="px-4 py-2 bg-gray-50 text-right text-xs text-gray-500">
-              換出總估值：<span className="font-semibold text-gray-700">HKD {outTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              {t("tradeHistory.totalOutValue")}：<span className="font-semibold text-gray-700">HKD {outTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -134,8 +136,8 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
           <div className="rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: `${BRAND_BLUE}10` }}>
               <ArrowLeft className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
-              <span className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>換入卡牌</span>
-              <span className="ml-auto text-xs font-medium text-gray-500">共 {inItems.length} 張</span>
+              <span className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>{t("tradeHistory.cardsIn")}</span>
+              <span className="ml-auto text-xs font-medium text-gray-500">{t("tradeHistory.totalCards", { count: inItems.length })}</span>
             </div>
             <div className="divide-y divide-gray-50">
               {inItems.map((item) => (
@@ -152,7 +154,7 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
               ))}
             </div>
             <div className="px-4 py-2 bg-gray-50 text-right text-xs text-gray-500">
-              換入總估值：<span className="font-semibold text-gray-700">HKD {inTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              {t("tradeHistory.totalInValue")}：<span className="font-semibold text-gray-700">HKD {inTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -160,7 +162,7 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
           {cashAdj !== 0 && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50">
               <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">補差金額</span>
+              <span className="text-sm text-gray-600">{t("tradeHistory.cashDiff")}</span>
               <span className={`ml-auto text-sm font-semibold ${cashAdj > 0 ? "text-green-600" : "text-red-500"}`}>
                 {cashAdj > 0 ? "+" : ""}HKD {cashAdj.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
@@ -170,7 +172,7 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
           {/* Net difference */}
           <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: BRAND_BLUE }}>
             <ArrowLeftRight className="w-4 h-4 text-white/70" />
-            <span className="text-sm text-white/80">換入 − 換出差值</span>
+            <span className="text-sm text-white/80">{t("tradeHistory.cashDiffDesc")}</span>
             <span className={`ml-auto text-base font-bold ${netDiff >= 0 ? "text-green-300" : "text-red-300"}`}>
               {netDiff >= 0 ? "+" : ""}HKD {netDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -194,10 +196,10 @@ function TradeDetailSheet({ trade, onClose, onDelete }: { trade: Trade; onClose:
             onClick={onDelete}
           >
             <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-            刪除記錄
+            {t("tradeHistory.deleteRecord")}
           </Button>
           <Button size="sm" className="flex-1 text-white font-semibold" style={{ background: BRAND_BLUE }} onClick={onClose}>
-            關閉
+            {t("common.close")}
           </Button>
         </div>
       </div>
@@ -282,6 +284,7 @@ function TradeRow({ trade, onClick }: { trade: Trade; onClick: () => void }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function TradeHistorySection() {
+  const { t } = useTranslation();
   const utils = trpc.useUtils();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -292,7 +295,7 @@ export function TradeHistorySection() {
 
   const deleteMutation = trpc.profile.deleteTrade.useMutation({
     onSuccess: () => {
-      toast.success("交換記錄已刪除");
+      toast.success(t("tradeHistory.deleteSuccess"));
       utils.profile.getTrades.invalidate();
       utils.profile.getCollection.invalidate();
       utils.profile.getCollectionStats.invalidate();
@@ -300,13 +303,13 @@ export function TradeHistorySection() {
       setDeletingId(null);
     },
     onError: (e) => {
-      toast.error(`刪除失敗：${e.message}`);
+      toast.error(`${t("tradeHistory.deleteFailed")}：${e.message}`);
       setDeletingId(null);
     },
   });
 
   const handleDelete = (tradeId: number) => {
-    if (!confirm("確定要刪除此交換記錄嗎？此操作無法復原，換入的卡牌將從收藏中移除，換出的卡牌將恢復為正常狀態。")) return;
+    if (!confirm(t("tradeHistory.deleteConfirm"))) return;
     setDeletingId(tradeId);
     deleteMutation.mutate({ tradeId });
   };
@@ -327,8 +330,8 @@ export function TradeHistorySection() {
         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: `${BRAND_BLUE}10` }}>
           <ArrowLeftRight className="w-8 h-8" style={{ color: BRAND_BLUE }} />
         </div>
-        <p className="text-gray-500 font-medium">尚無交換記錄</p>
-        <p className="text-gray-400 text-sm mt-1">在收藏清單中點擊 ⇄ 按鈕開始記錄以卡換卡</p>
+        <p className="text-gray-500 font-medium">{t("tradeHistory.noRecords")}</p>
+        <p className="text-gray-400 text-sm mt-1">{t("tradeHistory.noRecordsDesc")}</p>
       </div>
     );
   }
@@ -339,7 +342,7 @@ export function TradeHistorySection() {
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: `${BRAND_BLUE}08` }}>
         <ArrowLeftRight className="w-4 h-4" style={{ color: BRAND_BLUE }} />
         <span className="text-sm font-medium" style={{ color: BRAND_BLUE }}>
-          共 {trades.length} 筆交換記錄
+          {t("tradeHistory.totalRecords", { count: trades.length })}
         </span>
       </div>
 

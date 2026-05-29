@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -41,7 +42,10 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function DisputeMediaUpload({ orderId, orderNo, canUpload = true }: DisputeMediaUploadProps) {
+export default function DisputeMediaUpload({
+  orderId, orderNo, canUpload = true
+}: DisputeMediaUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
@@ -63,7 +67,7 @@ export default function DisputeMediaUpload({ orderId, orderNo, canUpload = true 
     if (!files || files.length === 0) return;
     const currentCount = mediaList?.length ?? 0;
     if (currentCount >= 10) {
-      toast.error("最多上傳 10 個檔案");
+      toast.error(t("dispute.maxFilesError"));
       return;
     }
     const toUpload = Array.from(files).slice(0, 10 - currentCount);

@@ -131,14 +131,14 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
           <div className="flex flex-col items-end gap-1">
             {listing.sellerType === "platform" && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#06038D]/90 text-[#FEDD00] shadow-sm backdrop-blur-sm">
-                官方
+                {t("marketplace.official")}
               </span>
             )}
             {onWishlistToggle && (
               <button
                 className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:scale-110 transition-transform z-10"
                 onClick={e => { e.stopPropagation(); onWishlistToggle(listing.id); }}
-                aria-label={isWishlisted ? "移除收藏" : "加入收藏"}
+                aria-label={isWishlisted ? t("marketplace.removeWishlist") : t("marketplace.addWishlist")}
               >
                 <Heart className={`w-3.5 h-3.5 transition-colors ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-400"}`} />
               </button>
@@ -150,7 +150,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
         <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <div className="bg-[#06038D]/90 backdrop-blur-sm text-white font-semibold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-lg">
             <ShoppingCart className="w-3.5 h-3.5" />
-            查看詳情
+            {t("marketplace.viewDetails")}
           </div>
         </div>
       </div>
@@ -166,7 +166,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
           </p>
           {listing.quantity <= 3 && listing.quantity > 0 && (
             <span className="text-[10px] text-orange-600 font-semibold flex items-center gap-0.5 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
-              <Zap className="w-2.5 h-2.5" />僅剩{listing.quantity}
+              <Zap className="w-2.5 h-2.5" />{t("marketplace.onlyLeft", { count: listing.quantity })}
             </span>
           )}
         </div>
@@ -255,7 +255,7 @@ function SidebarFilter({
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-[#06038D] text-sm flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4" />
-          篩選條件
+          {t("marketplace.filter.title")}
           {activeFilterCount > 0 && (
             <span className="bg-[#FEDD00] text-[#06038D] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
               {activeFilterCount}
@@ -267,14 +267,14 @@ function SidebarFilter({
             onClick={clearAllFilters}
             className="text-xs text-gray-400 hover:text-[#06038D] transition-colors"
           >
-            清除全部
+            {t("marketplace.filter.clearAll")}
           </button>
         )}
       </div>
 
       {/* TCG Series */}
       <div className="space-y-2">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TCG 系列</p>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("marketplace.filter.tcgSeries")}</p>
         <div className="space-y-1">
           {TCG_SERIES.map(s => {
             const isActive = tcgSeries === s.value;
@@ -309,11 +309,11 @@ function SidebarFilter({
 
       {/* Seller Type */}
       <div className="space-y-2">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">商品來源</p>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("marketplace.filter.source")}</p>
         <div className="space-y-1">
           {[
-            { value: "all",      label: "全部來源", icon: ShoppingBag },
-            { value: "platform", label: "官方商品",  icon: Shield },
+            { value: "all",      label: t("marketplace.filter.allSources"), icon: ShoppingBag },
+            { value: "platform", label: t("marketplace.filter.official"),  icon: Shield },
             { value: "seller",   label: t("marketplace.filter.individualSeller"),  icon: Star },
           ].map(chip => {
             const Icon = chip.icon;
@@ -342,10 +342,10 @@ function SidebarFilter({
       {/* Condition */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">品相篩選</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("marketplace.filter.condition")}</p>
           {selectedConditions.length > 0 && (
             <button onClick={() => { clearConditions(); resetAndSearch(); }} className="text-[11px] text-[#06038D] hover:underline">
-              清除
+              {t("marketplace.filter.clear")}
             </button>
           )}
         </div>
@@ -379,27 +379,27 @@ function SidebarFilter({
       {/* Price Range */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">價格範圍 (HKD)</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("marketplace.filter.priceRange")}</p>
           {(priceMin || priceMax) && (
             <button
               onClick={() => { setPriceMin(""); setPriceMax(""); resetAndSearch(); }}
               className="text-[11px] text-[#06038D] hover:underline"
             >
-              清除
+              {t("marketplace.filter.clear")}
             </button>
           )}
         </div>
         <div className="grid grid-cols-2 gap-1.5 items-center">
           <Input
             type="number"
-            placeholder="最低"
+            placeholder={t("marketplace.filter.minPrice")}
             value={priceMin}
             onChange={e => { setPriceMin(e.target.value); resetAndSearch(); }}
             className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
           />
           <Input
             type="number"
-            placeholder="最高"
+            placeholder={t("marketplace.filter.maxPrice")}
             value={priceMax}
             onChange={e => { setPriceMax(e.target.value); resetAndSearch(); }}
             className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
@@ -412,16 +412,16 @@ function SidebarFilter({
 
 //// ─── Maintenance Page ───────────────────────────────────────────────────────
 function MarketplaceMaintenancePage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
           <Shield className="w-10 h-10 text-[#06038D]" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
+        <h1 className="text-3xl font-bold text-white mb-3">{t("marketplace.maintenance.title")}</h1>
         <p className="text-white/70 text-base mb-6 leading-relaxed">
-          我們正在緊鑼密鼓地開發中，敬請期待！<br />
-          維護期間市集暫停對外開放，感謝您的耐心等候。
+          {t("marketplace.maintenance.message")}
         </p>
         <div className="flex items-center justify-center gap-2 mb-8">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -429,7 +429,7 @@ function MarketplaceMaintenancePage() {
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
         <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">
-          返回首頁
+          {t("common.backToHome")}
         </a>
       </div>
     </div>
@@ -507,9 +507,9 @@ export default function Marketplace() {
   const FALLBACK_BANNERS = useMemo(() => [
     {
       id: 1,
-      title: "TCG 卡牌交易平台",
-      subtitle: "Pokémon · One Piece · Yu-Gi-Oh!",
-      cta: "探索商城",
+      title: t("marketplace.banner.title1"),
+      subtitle: t("marketplace.banner.subtitle1"),
+      cta: t("marketplace.banner.cta1"),
       ctaConditions: "[]",
       ctaSellerType: "all",
       gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
@@ -520,9 +520,9 @@ export default function Marketplace() {
     },
     {
       id: 2,
-      title: "PSA 評級卡專區",
-      subtitle: "精選 PSA 10 完美品相 · 限量珍藏",
-      cta: "立即選購",
+      title: t("marketplace.banner.title2"),
+      subtitle: t("marketplace.banner.subtitle2"),
+      cta: t("marketplace.banner.cta2"),
       ctaConditions: JSON.stringify(["psa10"]),
       ctaSellerType: "all",
       gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
@@ -533,14 +533,14 @@ export default function Marketplace() {
     },
     {
       id: 3,
-      title: "BOXIUM 官方上架",
-      subtitle: "官方認證 · 品質保證 · 安心購買",
-      cta: "查看官方商品",
+      title: t("marketplace.banner.title3"),
+      subtitle: t("marketplace.banner.subtitle3"),
+      cta: t("marketplace.banner.cta3"),
       ctaConditions: "[]",
       ctaSellerType: "platform",
       gradient: "from-[#06038d] via-[#06038d] to-[#1a0a9e]",
       accentColor: "#FEDD00",
-      badge: "官方",
+      badge: t("marketplace.official"),
       badgeClass: "bg-[#FEDD00] text-[#06038d]",
       emoji: "✨",
     },
@@ -566,7 +566,7 @@ export default function Marketplace() {
   const { data: wishlistIds = [] } = trpc.marketplace.getWishlistIds.useQuery(undefined, { enabled: !!me });
   const toggleWishlistMutation = trpc.marketplace.toggleWishlist.useMutation({
     onSuccess: (res) => {
-      toast.success(res.wishlisted ? "已加入收藏" : "已移除收藏");
+      toast.success(res.wishlisted ? t("marketplace.wishlist.added") : t("marketplace.wishlist.removed"));
       utils.marketplace.getWishlistIds.invalidate();
     },
     onError: () => toast.error(t("marketplace.wishlist.loginRequired")),
@@ -709,9 +709,9 @@ export default function Marketplace() {
   return (
     <>
     <PageHead
-      title="卡牌市集 - BOXIUM TCG | 買賣 TCG 卡牌"
-      description="BOXIUM TCG 卡牌市集，提供 Pokémon、One Piece、遊戲王等 TCG 卡牌的買賣平台，安全、便捷、價格透明。"
-      keywords="TCG 市集, Pokémon 卡牌買賣, PSA 卡牌市集, BOXIUM TCG"
+      title={t("marketplace.pageTitle")}
+      description={t("marketplace.pageDescription")}
+      keywords={t("marketplace.pageKeywords")}
     />
     <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
 
@@ -759,11 +759,11 @@ export default function Marketplace() {
                     </button>
                   )}
                 </div>
-                <Button
+                  <Button
                   type="submit"
                   className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold h-12 px-5 rounded-full text-sm shadow-lg"
                 >
-                  搜尋
+                  {t("common.search")}
                 </Button>
               </div>
 
@@ -880,10 +880,10 @@ export default function Marketplace() {
             <div className="min-w-0">
               <div className={`font-bold text-sm leading-tight ${
                 marketTab === 'shop' ? 'text-white' : 'text-[#06038D]'
-              }`}>商城</div>
+              }`}>{t("marketplace.tab.shop")}</div>
               <div className={`text-xs mt-0.5 ${
                 marketTab === 'shop' ? 'text-white/70' : 'text-gray-400'
-              }`}>即買即賣</div>
+              }`}>{t("marketplace.tab.shopSub")}</div>
             </div>
             {marketTab === 'shop' && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
@@ -908,7 +908,7 @@ export default function Marketplace() {
               <div className={`font-bold text-sm leading-tight flex items-center gap-2 ${
                 marketTab === 'auction' ? 'text-white' : 'text-[#06038D]'
               }`}>
-                拍賣
+                {t("marketplace.tab.auction")}
                 {auctionData && auctionData.total > 0 && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                     marketTab === 'auction' ? 'bg-[#FEDD00] text-[#06038D]' : 'bg-orange-100 text-orange-600'
@@ -919,7 +919,7 @@ export default function Marketplace() {
               </div>
               <div className={`text-xs mt-0.5 ${
                 marketTab === 'auction' ? 'text-white/70' : 'text-gray-400'
-              }`}>競價得標</div>
+              }`}>{t("marketplace.tab.auctionSub")}</div>
             </div>
             {marketTab === 'auction' && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
@@ -970,13 +970,13 @@ export default function Marketplace() {
                 <span className={`text-[10px] sm:text-xs font-semibold ${
                   isActive ? 'text-white/90' : 'text-gray-500'
                 }`}>
-                  {s.value === 'all' ? '所有系列' : s.label}
+                  {s.value === 'all' ? t("marketplace.allSeries") : s.label}
                 </span>
                 {count != null && (
                   <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
                     isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                   }`}>
-                    {count} 件
+                    {t("marketplace.itemCount", { count })}
                   </span>
                 )}
                 {isActive && (
@@ -1010,9 +1010,9 @@ export default function Marketplace() {
                 {/* Auction top bar */}
                 <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                   <p className="text-sm text-gray-500">
-                    {auctionLoading ? '載入中...' : auctionData && auctionData.total > 0 ? (
-                      <>共 <span className="text-[#06038D] font-bold">{auctionData.total}</span> 個拍賣</>
-                    ) : '暫無進行中的拍賣'}
+                    {auctionLoading ? t("common.loading") : auctionData && auctionData.total > 0 ? (
+                      <>{t("marketplace.auction.total", { count: auctionData.total })}</>
+                    ) : t("marketplace.auction.empty")}
                   </p>
                   <div className="flex items-center gap-2">
                     {/* Series filter for auction */}
@@ -1021,7 +1021,7 @@ export default function Marketplace() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent align="end">
-                        <SelectItem value="all">全部系列</SelectItem>
+                        <SelectItem value="all">{t("marketplace.allSeries")}</SelectItem>
                         <SelectItem value="pokemon">Pokémon</SelectItem>
                         <SelectItem value="onepiece">One Piece</SelectItem>
                         <SelectItem value="yugioh">Yu-Gi-Oh!</SelectItem>
@@ -1032,10 +1032,10 @@ export default function Marketplace() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent align="end">
-                        <SelectItem value="ending_soon">即將結標</SelectItem>
+                        <SelectItem value="ending_soon">{t("marketplace.sort.endingSoon")}</SelectItem>
                         <SelectItem value="newest">{t("marketplace.sort.newest")}</SelectItem>
-                        <SelectItem value="price_asc">價格低→高</SelectItem>
-                        <SelectItem value="price_desc">價格高→低</SelectItem>
+                        <SelectItem value="price_asc">{t("marketplace.sort.priceAsc")}</SelectItem>
+                        <SelectItem value="price_desc">{t("marketplace.sort.priceDesc")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1051,8 +1051,8 @@ export default function Marketplace() {
                     <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
                       <Gavel className="w-10 h-10 text-[#06038D]/30" />
                     </div>
-                    <h3 className="text-lg font-bold text-[#06038D] mb-2">暫無進行中的拍賣</h3>
-                    <p className="text-sm text-gray-500 max-w-xs">即將開放拍賣功能，敬請期待！</p>
+                    <h3 className="text-lg font-bold text-[#06038D] mb-2">{t("marketplace.auction.empty")}</h3>
+                    <p className="text-sm text-gray-500 max-w-xs">{t("marketplace.auction.comingSoon")}</p>
                   </div>
                 ) : (
                   <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
@@ -1072,9 +1072,9 @@ export default function Marketplace() {
                       onClick={() => setAuctionPage(p => p - 1)}
                       className="border-gray-200"
                     >
-                      上一頁
+                      {t("common.prevPage")}
                     </Button>
-                    <span className="text-sm text-gray-500">第 {auctionPage} 頁</span>
+                    <span className="text-sm text-gray-500">{t("common.page", { page: auctionPage })}</span>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1082,7 +1082,7 @@ export default function Marketplace() {
                       onClick={() => setAuctionPage(p => p + 1)}
                       className="border-gray-200"
                     >
-                      下一頁
+                      {t("common.nextPage")}
                     </Button>
                   </div>
                 )}
@@ -1105,7 +1105,7 @@ export default function Marketplace() {
                   }`}
                 >
                   <Filter className="w-3.5 h-3.5" />
-                  篩選
+                  {t("marketplace.filter.title")}
                   {activeFilterCount > 0 && (
                     <span className="bg-[#FEDD00] text-[#06038D] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                       {activeFilterCount}
@@ -1114,9 +1114,9 @@ export default function Marketplace() {
                 </button>
 
                 <p className="text-sm text-gray-500">
-                  {isLoading && page === 1 ? "載入中..." : total > 0 ? (
-                    <>共 <span className="text-[#06038D] font-bold">{total}</span> 件商品</>
-                  ) : "暫無商品"}
+                  {isLoading && page === 1 ? t("common.loading") : total > 0 ? (
+                    <>{t("marketplace.shop.total", { count: total })}</>
+                  ) : t("marketplace.shop.empty")}
                 </p>
               </div>
 
@@ -1127,8 +1127,8 @@ export default function Marketplace() {
                 </SelectTrigger>
                 <SelectContent align="end">
                   <SelectItem value="newest">{t("marketplace.sort.newest")}</SelectItem>
-                  <SelectItem value="price_asc">價格低→高</SelectItem>
-                  <SelectItem value="price_desc">價格高→低</SelectItem>
+                  <SelectItem value="price_asc">{t("marketplace.sort.priceAsc")}</SelectItem>
+                  <SelectItem value="price_desc">{t("marketplace.sort.priceDesc")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1145,7 +1145,7 @@ export default function Marketplace() {
               <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 {search && (
                   <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
-                    搜尋：{search}
+                    {t("marketplace.filter.searchTag", { search })}
                     <button onClick={clearSearch}><X className="w-3 h-3" /></button>
                   </span>
                 )}
@@ -1163,7 +1163,7 @@ export default function Marketplace() {
                 ))}
                 {sellerType !== "all" && (
                   <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
-                    {sellerType === "platform" ? "官方商品" : "個人賣家"}
+                    {sellerType === "platform" ? t("marketplace.filter.official") : t("marketplace.filter.individualSeller")}
                     <button onClick={() => { setSellerType("all"); resetAndSearch(); }}><X className="w-3 h-3" /></button>
                   </span>
                 )}
@@ -1174,7 +1174,7 @@ export default function Marketplace() {
                   </span>
                 )}
                 <button onClick={clearAllFilters} className="text-xs text-gray-400 hover:text-[#06038D] font-medium ml-1">
-                  清除全部
+                  {t("marketplace.filter.clearAll")}
                 </button>
               </div>
             )}
@@ -1189,9 +1189,9 @@ export default function Marketplace() {
                 <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
                   <ShoppingBag className="w-10 h-10 text-[#06038D]/30" />
                 </div>
-                <h3 className="text-lg font-bold text-[#06038D] mb-2">暫無在售商品</h3>
+                <h3 className="text-lg font-bold text-[#06038D] mb-2">{t("marketplace.shop.emptyTitle")}</h3>
                 <p className="text-sm text-gray-500 max-w-xs">
-                  {hasActiveFilters ? "嘗試調整篩選條件以查看更多商品" : "商城即將上架更多精選卡牌，敬請期待！"}
+                  {hasActiveFilters ? t("marketplace.shop.adjustFilter") : t("marketplace.shop.comingSoon")}
                 </p>
                 {hasActiveFilters && (
                   <Button
@@ -1199,7 +1199,7 @@ export default function Marketplace() {
                     className="mt-4 bg-[#06038D] hover:bg-[#0804b8] text-white"
                     onClick={clearAllFilters}
                   >
-                    清除篩選
+                    {t("marketplace.filter.clearFilters")}
                   </Button>
                 )}
               </div>
@@ -1221,11 +1221,11 @@ export default function Marketplace() {
                   {isFetching && page > 1 && (
                     <div className="flex items-center gap-2 text-gray-400 text-sm">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      載入更多商品...
+                      {t("marketplace.shop.loadingMore")}
                     </div>
                   )}
                   {!hasMore && allListings.length > 0 && (
-                    <p className="text-gray-400 text-sm">已顯示全部 {allListings.length} 件商品</p>
+                    <p className="text-gray-400 text-sm">{t("marketplace.shop.allShown", { count: allListings.length })}</p>
                   )}
                 </div>
               </>
@@ -1241,20 +1241,20 @@ export default function Marketplace() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: Shield,      title: "買家保障",  desc: "商品與描述不符可退款" },
-              { icon: TrendingUp,  title: "價格透明",  desc: "SNKRDUNK 即時數據" },
-              { icon: Zap,         title: "快速交易",  desc: "付款後即時確認" },
-              { icon: Star,        title: "賣家評分",  desc: "真實買家評價" },
+              { icon: Shield,      titleKey: "marketplace.trust.buyerProtection",  descKey: "marketplace.trust.buyerProtectionDesc" },
+              { icon: TrendingUp,  titleKey: "marketplace.trust.priceTransparency",  descKey: "marketplace.trust.priceTransparencyDesc" },
+              { icon: Zap,         titleKey: "marketplace.trust.fastTrade",  descKey: "marketplace.trust.fastTradeDesc" },
+              { icon: Star,        titleKey: "marketplace.trust.sellerRating",  descKey: "marketplace.trust.sellerRatingDesc" },
             ].map(item => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                <div key={item.titleKey} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
                   <div className="w-10 h-10 rounded-xl bg-[#06038D]/5 flex items-center justify-center shrink-0">
                     <Icon className="w-5 h-5 text-[#06038D]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#06038D]">{item.title}</p>
-                    <p className="text-xs text-gray-500">{item.desc}</p>
+                    <p className="text-sm font-semibold text-[#06038D]">{t(item.titleKey)}</p>
+                    <p className="text-xs text-gray-500">{t(item.descKey)}</p>
                   </div>
                 </div>
               );

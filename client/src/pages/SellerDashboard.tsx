@@ -61,7 +61,7 @@ function PayoutProofThumbnail({ url }: { url: string }) {
               rel="noopener noreferrer"
               className="block text-center mt-2 text-xs text-white/70 hover:text-white underline"
             >
-              在新標籤頁開啟原圖
+              {t("seller.openOriginalImage")}
             </a>
           </div>
         </div>
@@ -88,24 +88,24 @@ function ImageUploader({
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
       const remaining = maxImages - images.length;
-      if (remaining <= 0) { toast.error(`最多上傳 ${maxImages} 張圖片`); return; }
+      if (remaining <= 0) { toast.error(t("seller.maxImagesError", { max: maxImages })); return; }
       const toUpload = Array.from(files).slice(0, remaining);
       setUploading(true);
       try {
         const uploaded: string[] = [];
         for (const file of toUpload) {
-          if (!file.type.startsWith("image/")) { toast.error(`${file.name} 不是圖片`); continue; }
-          if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} 超過 10MB`); continue; }
+          if (!file.type.startsWith("image/")) { toast.error(t("seller.notImageError", { name: file.name })); continue; }
+          if (file.size > 10 * 1024 * 1024) { toast.error(t("seller.fileTooLargeError", { name: file.name })); continue; }
           const fd = new FormData();
           fd.append("file", file);
           const res = await fetch("/api/upload-marketplace-image", { method: "POST", body: fd });
-          if (!res.ok) throw new Error("上傳失敗");
+          if (!res.ok) throw new Error(t("seller.uploadFailed"));
           const { url } = await res.json();
           uploaded.push(url);
         }
-        if (uploaded.length > 0) { onChange([...images, ...uploaded]); toast.success(`已上傳 ${uploaded.length} 張圖片`); }
+        if (uploaded.length > 0) { onChange([...images, ...uploaded]); toast.success(t("seller.uploadSuccess", { count: uploaded.length })); }
       } catch (e: any) {
-        toast.error(e.message || "圖片上傳失敗");
+        toast.error(e.message || t("seller.imageUploadFailed"));
       } finally {
         setUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -123,7 +123,7 @@ function ImageUploader({
         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {images.map((url, idx) => (
             <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
-              <LazyImage src={url} alt={`商品圖 ${idx + 1}`} className="w-full h-full object-cover" />
+              <LazyImage src={url} alt={t("seller.productImageAlt", { num: idx + 1 })} className="w-full h-full object-cover" />
               <button type="button" onClick={() => onChange(images.filter((_, i) => i !== idx))}
                 className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X className="w-3 h-3" />
@@ -158,40 +158,44 @@ function ImageUploader({
   );
 }
 
-const conditionOptions = [
-  { group: "PSA", items: [
-    { value: "psa10", label: "PSA 10" },
-    { value: "psa9", label: "PSA 9" },
-    { value: "psa8_below", label: "PSA 8 以下" },
-  ]},
-  { group: "BGS", items: [
-    { value: "bgs10", label: "BGS 10" },
-    { value: "bgs9", label: "BGS 9" },
-    { value: "bgs8_below", label: "BGS 8 以下" },
-  ]},
-  { group: "TAG", items: [
-    { value: "tag10", label: "TAG 10" },
-    { value: "tag9_below", label: "TAG 9 以下" },
-  ]},
-  { group: "Raw 卡", items: [
-    { value: "raw_a", label: "A品" },
-    { value: "raw_b", label: "B品" },
-    { value: "raw_c", label: "C品" },
-    { value: "raw_d", label: "D品" },
-  ]},
-];
+function getConditionOptions(t: (key: string) => string) {
+  return [
+    { group: "PSA", items: [
+      { value: "psa10", label: "PSA 10" },
+      { value: "psa9", label: "PSA 9" },
+      { value: "psa8_below", label: t("seller.grade.psa8Below") },
+    ]},
+    { group: "BGS", items: [
+      { value: "bgs10", label: "BGS 10" },
+      { value: "bgs9", label: "BGS 9" },
+      { value: "bgs8_below", label: t("seller.grade.bgs8Below") },
+    ]},
+    { group: "TAG", items: [
+      { value: "tag10", label: "TAG 10" },
+      { value: "tag9_below", label: t("seller.grade.tag9Below") },
+    ]},
+    { group: t("seller.grade.rawGroup"), items: [
+      { value: "raw_a", label: t("seller.grade.rawA") },
+      { value: "raw_b", label: t("seller.grade.rawB") },
+      { value: "raw_c", label: t("seller.grade.rawC") },
+      { value: "raw_d", label: t("seller.grade.rawD") },
+    ]},
+  ];
+}
 
-const orderStatusLabel: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800" },
-  paid_held: { label: "已付款，請出貨", color: "bg-blue-100 text-blue-800" },
-  payment_received: { label: "已收款，請出貨", color: "bg-blue-100 text-blue-800" },
-  processing: { label: "處理中，請出貨", color: "bg-purple-100 text-purple-800" },
-  shipped: { label: "已寄出", color: "bg-indigo-100 text-indigo-800" },
-  delivered: { label: "已送達", color: "bg-teal-100 text-teal-800" },
-  completed: { label: "已完成", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "已取消", color: "bg-red-100 text-red-800" },
-  disputed: { label: "爭議中", color: "bg-orange-100 text-orange-800" },
-};
+function getOrderStatusLabel(t: (key: string) => string): Record<string, { label: string; color: string }> {
+  return {
+    pending_payment: { label: t("seller.status.pendingPayment"), color: "bg-yellow-100 text-yellow-800" },
+    paid_held: { label: t("seller.status.paidHeld"), color: "bg-blue-100 text-blue-800" },
+    payment_received: { label: t("seller.status.paymentReceived"), color: "bg-blue-100 text-blue-800" },
+    processing: { label: t("seller.status.processing"), color: "bg-purple-100 text-purple-800" },
+    shipped: { label: t("seller.status.shipped"), color: "bg-indigo-100 text-indigo-800" },
+    delivered: { label: t("seller.status.delivered"), color: "bg-teal-100 text-teal-800" },
+    completed: { label: t("seller.status.completed"), color: "bg-green-100 text-green-800" },
+    cancelled: { label: t("seller.status.cancelled"), color: "bg-red-100 text-red-800" },
+    disputed: { label: t("seller.status.disputed"), color: "bg-orange-100 text-orange-800" },
+  };
+}
 
 // ─── SellerShippingProof ────────────────────────────────────────────────────
 function SellerShippingProof({ url }: { url: string }) {
@@ -206,7 +210,7 @@ function SellerShippingProof({ url }: { url: string }) {
           className="relative group w-24 h-16 rounded-lg overflow-hidden border border-indigo-200 hover:border-[#06038d] transition-colors block"
           title={t("seller.shippingProof.zoomAction")}
         >
-          <LazyImage src={url} alt="出貨憑證" className="w-full h-full object-cover" />
+          <LazyImage src={url} alt={t("seller.shippingProofAlt")} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
             <svg className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
@@ -214,25 +218,26 @@ function SellerShippingProof({ url }: { url: string }) {
           </div>
         </button>
       </div>
-      <ImageLightbox src={url} alt="出貨憑證" isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+      <ImageLightbox src={url} alt={t("seller.shippingProofAlt")} isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} />
     </>
   );
 }
 
 // ─── SellerOrderStepper ─────────────────────────────────────────────────────
 function SellerOrderStepper({ item }: { item: any }) {
+  const { t } = useTranslation();
   const [showStep, setShowStep] = useState(false);
   const statusText = (() => {
     const s = item.orderStatus;
-    if (s === 'pending_payment') return '待買家付款';
-    if (s === 'payment_review' || s === 'payment_submitted' || s === 'alipay_pending') return '付款審核中';
-    if (s === 'paid' || s === 'paid_held' || s === 'payment_received' || s === 'processing') return '已收款，請出貨';
-    if (s === 'shipped') return '已寄出，等待買家確認';
-    if (s === 'delivered') return '買家確認收貨中';
-    if (s === 'completed') return '訂單已完成';
-    if (s === 'cancelled') return '訂單已取消';
-    if (s === 'dispute' || s === 'disputed') return '爭議處理中';
-    if (s === 'refunded') return '已退款';
+    if (s === 'pending_payment') return t('seller.statusHelper.pendingPayment');
+    if (s === 'payment_review' || s === 'payment_submitted' || s === 'alipay_pending') return t('seller.statusHelper.paymentReview');
+    if (s === 'paid' || s === 'paid_held' || s === 'payment_received' || s === 'processing') return t('seller.statusHelper.paidShipNow');
+    if (s === 'shipped') return t('seller.statusHelper.shipped');
+    if (s === 'delivered') return t('seller.statusHelper.delivered');
+    if (s === 'completed') return t('seller.statusHelper.completed');
+    if (s === 'cancelled') return t('seller.statusHelper.cancelled');
+    if (s === 'dispute' || s === 'disputed') return t('seller.statusHelper.disputed');
+    if (s === 'refunded') return t('seller.statusHelper.refunded');
     return s;
   })();
   const isTerminal = ['completed', 'cancelled', 'refunded'].includes(item.orderStatus);
@@ -253,7 +258,7 @@ function SellerOrderStepper({ item }: { item: any }) {
           <span className="text-xs font-medium text-[#06038d]">{statusText}</span>
         </div>
         <div className="flex items-center gap-1 text-xs text-gray-400 group-hover:text-[#06038d] transition-colors">
-          <span>{showStep ? '收起' : '查看進度'}</span>
+          <span>{showStep ? t('common.collapse') : t('seller.viewProgress')}</span>
           {showStep ? <ChevronDown className="w-3.5 h-3.5 rotate-180" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </div>
       </button>
@@ -281,6 +286,7 @@ function ShareButton({
   coverImg?: string | null;
   condition?: string;
 }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
 
@@ -294,10 +300,10 @@ function ShareButton({
         condition,
       });
       downloadShareImage(dataUrl, `boxium-${title.slice(0, 20).replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '-')}.png`);
-      toast.success("分享圖片已下載！");
+      toast.success(t("seller.shareImageDownloaded"));
     } catch (err) {
       console.error(err);
-      toast.error("生成圖片失敗，請稍後再試");
+      toast.error(t("seller.shareImageFailed"));
     } finally {
       setGeneratingImage(false);
     }
@@ -307,10 +313,10 @@ function ShareButton({
     try {
       await navigator.clipboard.writeText(listingUrl);
       setCopied(true);
-      toast.success("連結已複製！");
+      toast.success(t("seller.linkCopied"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("複製失敗，請手動複製連結");
+      toast.error(t("seller.copyFailed"));
     }
   };
 
@@ -339,7 +345,7 @@ function ShareButton({
       color: "text-[#E1306C]",
       onClick: () => {
         navigator.clipboard.writeText(listingUrl);
-        toast.info("連結已複製！請貼到 Instagram Story 中分享");
+        toast.info(t("seller.instagramCopyHint"));
       },
     },
   ];
@@ -351,14 +357,14 @@ function ShareButton({
           size="sm"
           variant="outline"
           className="h-7 w-7 p-0 border-gray-200 text-gray-500 hover:border-[#06038d] hover:text-[#06038d] hover:bg-blue-50 transition-colors"
-          title="分享商品"
+          title={t("seller.shareProduct")}
         >
           <Share2 className="w-3.5 h-3.5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-3 py-2 border-b border-gray-100">
-          <p className="text-xs font-semibold text-gray-700">分享商品</p>
+          <p className="text-xs font-semibold text-gray-700">{t("seller.shareProduct")}</p>
           <p className="text-[10px] text-gray-400 truncate mt-0.5">{title}</p>
         </div>
         {shareOptions.map((opt) => (
@@ -383,7 +389,7 @@ function ShareButton({
             <ImageDown className="w-4 h-4 text-purple-500" />
           )}
           <span className="text-sm text-gray-700">
-            {generatingImage ? "生成中... " : "生成分享圖片"}
+            {generatingImage ? t("common.generating") : t("seller.generateShareImage")}
           </span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -397,7 +403,7 @@ function ShareButton({
             <Link2 className="w-4 h-4 text-gray-500" />
           )}
           <span className={`text-sm ${copied ? "text-green-600 font-medium" : "text-gray-700"}`}>
-            {copied ? "已複製！" : "複製連結"}
+            {copied ? t("seller.copied") : t("seller.copyLink")}
           </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -437,7 +443,7 @@ function EarningsTab() {
       <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
         <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
         <p className="text-xs text-blue-700 leading-relaxed">
-          以下為平台透過 Stripe 轉帳至你帳戶的收款記錄。所有金額均已扣除 5% 平台手續費。如有疑問請聯絡客服。
+          {t("seller.revenueDesc")}
         </p>
       </div>
       {/* Summary Cards */}
@@ -445,48 +451,48 @@ function EarningsTab() {
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
           <p className="text-xs text-gray-500 mb-1">{t("seller.stats.completedOrders")}</p>
           <p className="text-2xl font-bold" style={{ color: "#06038d" }}>{summary.completedCount}</p>
-          <p className="text-xs text-gray-400 mt-1">待出貨/運送中 {summary.pendingCount} 筆</p>
+          <p className="text-xs text-gray-400 mt-1">{t("seller.pendingOrders", { count: summary.pendingCount })}</p>
         </div>
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
-          <p className="text-xs text-gray-500 mb-1">累計销售額</p>
+          <p className="text-xs text-gray-500 mb-1">{t("seller.totalSales")}</p>
           <p className="text-2xl font-bold" style={{ color: "#06038d" }}>HKD {summary.totalRevenue.toFixed(0)}</p>
-          <p className="text-xs text-gray-400 mt-1">平台手續費 HKD {summary.totalFees.toFixed(0)}</p>
+          <p className="text-xs text-gray-400 mt-1">{t("seller.platformFeeAmount", { amount: summary.totalFees.toFixed(0) })}</p>
         </div>
          <div className="col-span-2 bg-gradient-to-r from-[#06038d] to-[#0a06b5] rounded-2xl shadow-md p-4">
-          <p className="text-xs text-white/70 mb-1">累計淨收入</p>
+          <p className="text-xs text-white/70 mb-1">{t("seller.totalNetIncome")}</p>
           <p className="text-3xl font-bold text-white">HKD {summary.totalEarnings.toFixed(2)}</p>
-          <p className="text-xs text-white/60 mt-1">扣除平台手續費後實際收款金額</p>
+          <p className="text-xs text-white/60 mt-1">{t("seller.netIncomeDesc")}</p>
         </div>
         {pendingPayoutAmount > 0 && (
           <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Wallet className="w-4 h-4 text-amber-600" />
-              <p className="text-xs text-amber-700 font-medium">待收款金額（進行中訂單）</p>
+              <p className="text-xs text-amber-700 font-medium">{t("seller.pendingIncome")}</p>
             </div>
             <p className="text-2xl font-bold text-amber-700">HKD {pendingPayoutAmount.toFixed(2)}</p>
-            <p className="text-xs text-amber-600 mt-1">訂單完成後轉入累計淨收入</p>
+            <p className="text-xs text-amber-600 mt-1">{t("seller.pendingIncomeDesc")}</p>
           </div>
         )}
       </div>
       {/* Monthly Revenue Chart */}
       {monthlyData.length > 0 && (
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4">
-          <p className="text-sm font-semibold text-gray-700 mb-3">近 6 個月收益趨勢</p>
+          <p className="text-sm font-semibold text-gray-700 mb-3">{t("seller.revenueChart")}</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={monthlyData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v: number) => `$${v}`} width={48} />
               <Tooltip
-                formatter={(value) => [`HKD ${Number(value ?? 0).toFixed(0)}`, '淨收入'] as [string, string]}
+                formatter={(value) => [`HKD ${Number(value ?? 0).toFixed(0)}`, t('seller.netIncome')] as [string, string]}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
               />
               <Bar dataKey="revenue" fill="#06038d" radius={[4, 4, 0, 0]} name={t("seller.completedOrders.netIncome")} />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
-            <span>已完成訂單數：{monthlyData.reduce((s: number, m: any) => s + m.orders, 0)} 筆</span>
-            <span>本月：{monthlyData[monthlyData.length - 1]?.orders ?? 0} 筆</span>
+            <span>{t("seller.completedOrders", { count: monthlyData.reduce((s: number, m: any) => s + m.orders, 0) })}</span>
+            <span>{t("seller.thisMonth", { count: monthlyData[monthlyData.length - 1]?.orders ?? 0 })}</span>
           </div>
         </div>
       )}
@@ -494,19 +500,19 @@ function EarningsTab() {
       {!orders.length ? (
         <div className="text-center py-12 text-muted-foreground">
           <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>尚無已完成訂單</p>
-          <p className="text-sm mt-1">訂單完成後將顯示收款明細</p>
+          <p>{t("seller.noCompletedOrders")}</p>
+          <p className="text-sm mt-1">{t("seller.noCompletedOrdersDesc")}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-600">收款明細（{orders.length} 筆）</p>
+          <p className="text-sm font-medium text-gray-600">{t("seller.paymentDetails", { count: orders.length })}</p>
           {(orders as any[]).map((order) => (
             <div key={order.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
               {/* Brand Header Bar */}
               <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #06038d 0%, #0a06b5 100%)" }}>
-                <span className="text-xs text-white/80 font-medium">訂單 #{order.orderNo ?? order.id}</span>
+                <span className="text-xs text-white/80 font-medium">{t("common.order")} #{order.orderNo ?? order.id}</span>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-200 border border-green-400/30">
-                  已完成
+                  {t("seller.status.completed")}
                 </span>
               </div>
               {/* Card Body */}
@@ -522,7 +528,7 @@ function EarningsTab() {
                       if (Array.isArray(imgs) && imgs.length > 0) imgUrl = imgs[0];
                     } catch {}
                     return imgUrl ? (
-                      <LazyImage src={imgUrl} alt={order.title || '商品'} className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                      <LazyImage src={imgUrl} alt={order.title || t('seller.product')} className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Package className="w-5 h-5 text-gray-400" />
@@ -532,7 +538,7 @@ function EarningsTab() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{order.title}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      完成日期：{order.completedAt ? new Date(order.completedAt).toLocaleDateString('zh-HK') : new Date(order.updatedAt).toLocaleDateString('zh-HK')}
+                      {t('seller.completedDate')}：{order.completedAt ? new Date(order.completedAt).toLocaleDateString('zh-HK') : new Date(order.updatedAt).toLocaleDateString('zh-HK')}
                     </p>
                   </div>
                 </div>
@@ -543,7 +549,7 @@ function EarningsTab() {
                     <span className="font-medium">HKD {parseFloat(order.subtotalHkd ?? '0').toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">平台手續費 ({parseFloat(order.platformFeeRate ?? '0.05') * 100}%)</span>
+                    <span className="text-gray-500">{t("seller.platformFee", { rate: parseFloat(order.platformFeeRate ?? '0.05') * 100 })}</span>
                     <span className="text-red-500">- HKD {parseFloat(order.platformFeeHkd ?? '0').toFixed(2)}</span>
                   </div>
                   <div className="border-t border-gray-200 pt-1.5 flex justify-between">
@@ -692,7 +698,7 @@ function EditRejectedAuctionDialog({
             </div>
           </div>
           <div>
-            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">即時購價 (HK$) <span className="text-gray-400 normal-case font-normal">{t("seller.auctions.editRejected.optionalLabel")}</span></Label>
+            <Label className="text-[#06038D] font-bold text-xs uppercase tracking-wide">{t("seller.instantBuyPrice")} (HK$) <span className="text-gray-400 normal-case font-normal">{t("seller.auctions.editRejected.optionalLabel")}</span></Label>
             <Input type="number" value={buyNowPrice} onChange={e => setBuyNowPrice(e.target.value)}
               className="mt-1.5 text-gray-900 bg-white border-gray-200 focus:border-[#06038D] rounded-xl h-10" min={1} placeholder={t("seller.auctions.editRejected.buyNowPricePlaceholder")} />
           </div>
@@ -711,7 +717,7 @@ function EditRejectedAuctionDialog({
         <div className="px-5 pb-5 flex gap-2.5 border-t border-gray-100 pt-4 bg-white rounded-b-2xl">
           <Button variant="outline" onClick={onClose}
             className="flex-1 rounded-xl border-2 border-gray-200 text-gray-600 font-bold h-11 bg-white hover:bg-gray-50 hover:border-gray-300">
-            取消
+            {t("common.cancel")}
           </Button>
           <Button
             className="flex-[2] bg-[#06038D] hover:bg-[#0804b8] text-white rounded-xl font-black h-11 shadow-lg shadow-[#06038D]/20"
@@ -719,7 +725,7 @@ function EditRejectedAuctionDialog({
             disabled={updateMutation.isPending}
           >
             {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
-            儲存修改
+            {t("common.saveChanges")}
           </Button>
         </div>
       </DialogContent>
@@ -728,6 +734,7 @@ function EditRejectedAuctionDialog({
 }
 
 function SellerAuctionsTab() {
+  const { t } = useTranslation();
   const [subTab, setSubTab] = useState<"active" | "ended" | "rejected">("active");
   const { data: auctions, isLoading, refetch } = trpc.auction.sellerAuctions.useQuery(
     { page: 1, pageSize: 50 },
@@ -738,7 +745,7 @@ function SellerAuctionsTab() {
 
   const resubmitMutation = trpc.auction.resubmitAuction.useMutation({
     onSuccess: () => {
-      toast.success('已重新上架拍賣');
+      toast.success(t('seller.auctionRelisted'));
       refetch();
     },
     onError: (e) => toast.error(parseApiError(e)),
@@ -770,21 +777,21 @@ function SellerAuctionsTab() {
     let endedSoldLabel: string;
     let endedSoldCls: string;
     if (auctionPaymentStatus === 'paid') {
-      endedSoldLabel = '已成交'; endedSoldCls = 'bg-green-100 text-green-700';
+      endedSoldLabel = t('seller.auctionSold'); endedSoldCls = 'bg-green-100 text-green-700';
     } else if (auctionPaymentStatus === 'expired' || auctionPaymentStatus === 'failed') {
-      endedSoldLabel = '已取消'; endedSoldCls = 'bg-red-100 text-red-600';
+      endedSoldLabel = t('seller.status.cancelled'); endedSoldCls = 'bg-red-100 text-red-600';
     } else {
-      endedSoldLabel = '已得標（待付款）'; endedSoldCls = 'bg-[#06038D]/10 text-[#06038D]';
+      endedSoldLabel = t('seller.auctionWonPending'); endedSoldCls = 'bg-[#06038D]/10 text-[#06038D]';
     }
     const map: Record<string, { label: string; cls: string }> = {
-      active:         { label: "競拍中",   cls: "bg-blue-100 text-blue-700" },
-      ending_soon:    { label: "即將結標", cls: "bg-orange-100 text-orange-700" },
-      scheduled:      { label: "已排程",   cls: "bg-indigo-100 text-indigo-700" },
+      active:         { label: t("seller.auctionStatus.active"),      cls: "bg-blue-100 text-blue-700" },
+      ending_soon:    { label: t("seller.auctionStatus.endingSoon"),  cls: "bg-orange-100 text-orange-700" },
+      scheduled:      { label: t("seller.auctionStatus.scheduled"),   cls: "bg-indigo-100 text-indigo-700" },
       pending_review: { label: t("seller.auctions.tab.filter.review"),   cls: "bg-yellow-100 text-yellow-700" },
       ended_sold:     { label: endedSoldLabel, cls: endedSoldCls },
-      ended_no_bid:   { label: "流標",     cls: "bg-gray-100 text-gray-500" },
-      ended:          { label: "已結標",   cls: "bg-green-100 text-green-700" },
-      sold:           { label: "已成交",   cls: "bg-green-100 text-green-700" },
+      ended_no_bid:   { label: t("seller.auctionStatus.endedNoBid"),  cls: "bg-gray-100 text-gray-500" },
+      ended:          { label: t("seller.auctionStatus.ended"),       cls: "bg-green-100 text-green-700" },
+      sold:           { label: t("seller.auctionStatus.sold"),        cls: "bg-green-100 text-green-700" },
       cancelled:      { label: t("seller.orderStatus.cancelled"),   cls: "bg-gray-100 text-gray-500" },
       rejected:       { label: t("seller.auctions.tab.filter.rejected"),   cls: "bg-red-100 text-red-600" },
     };
@@ -799,15 +806,15 @@ function SellerAuctionsTab() {
       if (!endAt) { setTimeLeft("—"); return; }
       const update = () => {
         const diff = new Date(endAt).getTime() - Date.now();
-        if (diff <= 0) { setTimeLeft("已結標"); return; }
+        if (diff <= 0) { setTimeLeft(t("seller.auctionEnded")); return; }
         const h = Math.floor(diff / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
         setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
       };
       update();
-      const t = setInterval(update, 1000);
-      return () => clearInterval(t);
+      const intervalId = setInterval(update, 1000);
+      return () => clearInterval(intervalId);
     }, [endAt]);
     const isUrgent = endAt && new Date(endAt).getTime() - Date.now() < 3600000;
     return <span className={`text-xs font-mono font-bold ${isUrgent ? "text-red-600" : "text-gray-600"}`}>{timeLeft}</span>;
@@ -832,23 +839,23 @@ function SellerAuctionsTab() {
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">拍賣中心</p>
-                <h3 className="text-white font-bold text-lg leading-tight">開設你的第一場拍賣</h3>
-                <p className="text-white/60 text-xs mt-1">讓買家競價，以最佳價格成交</p>
+                <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">{t("seller.auctionCenter")}</p>
+                <h3 className="text-white font-bold text-lg leading-tight">{t("seller.startFirstAuction")}</h3>
+                <p className="text-white/60 text-xs mt-1">{t("seller.auctionPromoDesc")}</p>
               </div>
               <button
                 className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold text-sm px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
                 onClick={handleStartAuction}
               >
                 <Gavel className="w-4 h-4" />
-                開始拍賣
+                {t("seller.startAuction")}
               </button>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {[
-                { step: '1', title: '設定起拍價', desc: '最低入場價格' },
-                { step: '2', title: '選擇天數', desc: '3 日或 7 日拍賣' },
-                { step: '3', title: '等候競價', desc: '自動通知結果' },
+                { step: '1', title: t('seller.auctionStep1Title'), desc: t('seller.auctionStep1Desc') },
+                { step: '2', title: t('seller.auctionStep2Title'), desc: t('seller.auctionStep2Desc') },
+                { step: '3', title: t('seller.auctionStep3Title'), desc: t('seller.auctionStep3Desc') },
               ].map(s => (
                 <div key={s.step} className="bg-white/10 rounded-xl px-3 py-2.5 flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
@@ -865,9 +872,9 @@ function SellerAuctionsTab() {
       {/* Sub-tab switcher */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
         {([
-          { key: "active", label: "進行中", count: activeAuctions.length },
-          { key: "ended", label: "已結標", count: endedAuctions.length },
-          { key: "rejected", label: "已下架", count: rejectedAuctions.length },
+          { key: "active", label: t("seller.auctionTab.active"), count: activeAuctions.length },
+          { key: "ended", label: t("seller.auctionTab.ended"), count: endedAuctions.length },
+          { key: "rejected", label: t("seller.auctionTab.rejected"), count: rejectedAuctions.length },
         ] as const).map(t => (
           <button
             key={t.key}
@@ -893,10 +900,10 @@ function SellerAuctionsTab() {
         <div className="text-center py-12">
           <Gavel className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-400 text-sm">
-            {subTab === "active" ? "目前沒有進行中或已排程的拍賣" : subTab === "rejected" ? "沒有被拒絕的拍賣" : "尚無已結標的拍賣"}
+            {subTab === "active" ? t("seller.noActiveAuctions") : subTab === "rejected" ? t("seller.noRejectedAuctions") : t("seller.noEndedAuctions")}
           </p>
           {subTab === "active" && (
-            <p className="text-gray-400 text-xs mt-1">在「我的商品」標簽中選擇「拍賣模式」上架新拍賣</p>
+            <p className="text-gray-400 text-xs mt-1">{t("seller.noAuctionsHint")}</p>
           )}
         </div>
       ) : (
@@ -934,7 +941,7 @@ function SellerAuctionsTab() {
                     <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
                       <span className="text-indigo-500 text-sm">🗓️</span>
                       <div>
-                        <p className="text-xs font-semibold text-indigo-700">預計開始時間</p>
+                        <p className="text-xs font-semibold text-indigo-700">{t("seller.scheduledStart")}</p>
                         <p className="text-xs text-indigo-600">{new Date(auction.auctionStartAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
@@ -943,30 +950,30 @@ function SellerAuctionsTab() {
                   <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
                     <div className="flex items-center gap-4">
                       <div>
-                        <p className="text-xs text-gray-400">{"起標價"}</p>
+                        <p className="text-xs text-gray-400">{t("seller.startingBid")}</p>
                         <p className="text-sm font-bold" style={{ color: "#06038d" }}>HK${parseFloat(auction.startingBid ?? '0').toLocaleString()}</p>
                       </div>
                       {auction.auctionStatus !== 'scheduled' && (
                         <div>
-                          <p className="text-xs text-gray-400">目前最高出價</p>
+                          <p className="text-xs text-gray-400">{t("seller.currentHighBid")}</p>
                           {auction.currentHighestBid ? (
                             <p className="text-sm font-black text-[#FEDD00] bg-[#06038D] px-2 py-0.5 rounded-lg inline-block">
                               HK${parseFloat(auction.currentHighestBid).toLocaleString()}
                             </p>
                           ) : (
-                            <p className="text-sm font-bold text-gray-400">{"尚無出價"}</p>
+                            <p className="text-sm font-bold text-gray-400">{t("seller.noBids")}</p>
                           )}
                         </div>
                       )}
                       {auction.auctionStatus !== 'scheduled' && auction.bidCount !== undefined && (
                         <div>
-                          <p className="text-xs text-gray-400">出價次數</p>
-                          <p className="text-sm font-bold text-gray-700">{auction.bidCount} 次</p>
+                          <p className="text-xs text-gray-400">{t("seller.bidCount")}</p>
+                          <p className="text-sm font-bold text-gray-700">{t("seller.bidCountValue", { count: auction.bidCount })}</p>
                         </div>
                       )}
                       {auction.auctionStatus === 'scheduled' && auction.buyNowPrice && (
                         <div>
-                          <p className="text-xs text-gray-400">即買價</p>
+                          <p className="text-xs text-gray-400">{t("seller.buyNowPrice")}</p>
                           <p className="text-sm font-bold text-emerald-600">HK${parseFloat(auction.buyNowPrice).toLocaleString()}</p>
                         </div>
                       )}
@@ -974,20 +981,20 @@ function SellerAuctionsTab() {
                     <div className="flex items-center gap-2">
                       {auction.auctionStatus === "active" && (
                         <div className="text-right">
-                          <p className="text-xs text-gray-400">{"剩餘時間"}</p>
+                          <p className="text-xs text-gray-400">{t("seller.timeLeft")}</p>
                           <AuctionCountdown endAt={auction.auctionEndAt} />
                         </div>
                       )}
                       {auction.auctionStatus === "ending_soon" && (
                         <div className="text-right">
-                          <p className="text-xs text-orange-500 font-semibold">{"即將結標"}</p>
+                          <p className="text-xs text-orange-500 font-semibold">{t("seller.endingSoon")}</p>
                           <AuctionCountdown endAt={auction.auctionEndAt} />
                         </div>
                       )}
                       {auction.auctionStatus !== 'rejected' && (
                         <a href={`/auction/${auction.id}`} target="_blank" rel="noopener noreferrer">
                           <button className="text-xs px-3 py-1.5 rounded-lg font-semibold border border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors">
-                            查看拍賣
+                            {t("seller.viewAuction")}
                           </button>
                         </a>
                       )}
@@ -996,15 +1003,15 @@ function SellerAuctionsTab() {
                   {/* Delist reason + edit + resubmit (governance mode: adminDelisted or rejected) */}
                   {(auction.auctionStatus === 'rejected' || auction.adminDelisted) && (
                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-                      <p className="text-xs font-semibold text-red-600 mb-1">下架原因：</p>
-                      <p className="text-xs text-red-700 mb-3 break-words min-h-[1.5rem]">{auction.rejectedReason || '未提供原因'}</p>
+                      <p className="text-xs font-semibold text-red-600 mb-1">{t("seller.rejectReason")}：</p>
+                      <p className="text-xs text-red-700 mb-3 break-words min-h-[1.5rem]">{auction.rejectedReason || t('seller.noRejectReason')}</p>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           className="text-xs px-3 py-2.5 rounded-lg font-semibold border-2 border-[#06038d] text-[#06038d] hover:bg-[#06038d] hover:text-white transition-colors flex items-center justify-center gap-1.5 w-full"
                           onClick={() => setEditingAuction(auction)}
                         >
                           <Pencil className="w-3 h-3 flex-shrink-0" />
-                          編輯拍賣
+                          {t("seller.editAuction")}
                         </button>
                         <button
                           className="text-xs px-3 py-2.5 rounded-lg font-semibold bg-[#06038d] text-white hover:bg-[#06038d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 w-full"
@@ -1012,7 +1019,7 @@ function SellerAuctionsTab() {
                           onClick={() => resubmitMutation.mutate({ listingId: auction.id })}
                         >
                           {resubmitMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" /> : <Check className="w-3 h-3 flex-shrink-0" />}
-                          {resubmitMutation.isPending ? '提交中...' : '重新上架'}
+                          {resubmitMutation.isPending ? t('common.submitting') : t('seller.relistAuction')}
                         </button>
                       </div>
                     </div>
@@ -1056,7 +1063,7 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
   t: any;
 }) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const conditionLabels: Record<string, string> = { raw_a: 'A品', raw_b: 'B品', raw_c: 'C品', psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', cgc10: 'CGC 10', bgs10: 'BGS 10' };
+  const conditionLabels: Record<string, string> = { raw_a: t('seller.grade.rawA'), raw_b: t('seller.grade.rawB'), raw_c: t('seller.grade.rawC'), psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', cgc10: 'CGC 10', bgs10: 'BGS 10' };
   const tcgLogos: Record<string, { logo: string; label: string }> = {
     pokemon:  { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif",  label: "Pokémon" },
     onepiece: { logo: "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif", label: "One Piece" },
@@ -1067,11 +1074,11 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
       {/* Desktop header row */}
       <div className="hidden sm:grid border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2.5" style={{ gridTemplateColumns: '1fr auto auto auto auto' }}>
         {batchMode && <span className="w-6"></span>}
-        <span>商品名稱</span>
-        <span className="text-right pr-3">售價</span>
-        <span className="text-center px-3 hidden md:block">庫存</span>
-        <span className="text-center px-3 hidden lg:block">品相</span>
-        <span className="text-left">狀態</span>
+        <span>{t("seller.productName")}</span>
+        <span className="text-right pr-3">{t("seller.price")}</span>
+        <span className="text-center px-3 hidden md:block">{t("seller.stock")}</span>
+        <span className="text-center px-3 hidden lg:block">{t("seller.condition")}</span>
+        <span className="text-left">{t("seller.statusLabel")}</span>
       </div>
       {listings.map((listing: any) => {
         let coverImg: string | null = null;
@@ -1091,7 +1098,7 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
             'bg-gray-100 text-gray-500 border-gray-200'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isActive ? 'bg-green-500' : isSold ? 'bg-blue-500' : isRemoved ? 'bg-red-400' : 'bg-gray-400'}`} />
-            {isActive ? '上架中' : isSold ? '已售出' : isRemoved ? (isAdminDelisted ? '強制下架' : '已下架') : listing.status}
+            {isActive ? t('seller.listingActive') : isSold ? t('seller.listingSold') : isRemoved ? (isAdminDelisted ? t('seller.listingAdminDelisted') : t('seller.listingRemoved')) : listing.status}
           </span>
         );
         const actionButtons = (
@@ -1099,21 +1106,21 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
             {!isSold && (
               <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-[#06038d]/40 text-[#06038d] hover:bg-[#06038d]/5"
                 onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}>
-                <Pencil className="w-3 h-3 mr-1" />編輯
+                <Pencil className="w-3 h-3 mr-1" />{t("common.edit")}
               </Button>
             )}
             {isActive && (
               <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-red-300 text-red-600 hover:bg-red-50"
                 disabled={deactivateMutation.isPending}
                 onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}>
-                <EyeOff className="w-3 h-3 mr-1" />下架
+                <EyeOff className="w-3 h-3 mr-1" />{t("seller.delist")}
               </Button>
             )}
             {isRemoved && !isAdminDelisted && (
               <Button size="sm" variant="outline" className="h-8 text-xs px-3 border-green-500 text-green-700 hover:bg-green-50"
                 disabled={reactivateMutation.isPending}
                 onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}>
-                <Eye className="w-3 h-3 mr-1" />重新上架
+                <Eye className="w-3 h-3 mr-1" />{t("seller.relist")}
               </Button>
             )}
             {isRemoved && isAdminDelisted && (
@@ -1187,7 +1194,7 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
               <div className="px-4 pb-3 pt-1 bg-[#f8f9ff] border-t border-gray-100">
                 {/* Extra meta on mobile */}
                 <div className="flex items-center gap-3 mb-2.5 sm:hidden">
-                  <span className="text-xs text-gray-500">庫存：<strong className={`${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</strong></span>
+                  <span className="text-xs text-gray-500">{t("seller.stockLabel")}：<strong className={`${listing.quantity === 0 ? 'text-red-500' : listing.quantity <= 2 ? 'text-amber-500' : 'text-gray-700'}`}>{listing.quantity}</strong></span>
                   <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{conditionLabels[listing.condition as string] ?? listing.condition ?? '—'}</span>
                   {seriesInfo && <img src={seriesInfo.logo} alt={seriesInfo.label} className="h-4 w-auto object-contain opacity-70" />}
                 </div>
@@ -1198,7 +1205,7 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
         );
       })}
       <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-        共 {listings.length} 件商品
+        {t("seller.totalListings", { count: listings.length })}
       </div>
     </div>
   );
@@ -1206,6 +1213,8 @@ function ListingTable({ listings, batchMode, selectedIds, toggleSelectId, isAdmi
 
 export default function SellerDashboard() {
   const { t } = useTranslation();
+  const conditionOptions = getConditionOptions(t);
+  const orderStatusLabel = getOrderStatusLabel(t);
   // ── Maintenance mode check (query placed before other hooks, guard after all hooks) ──
   const { data: accessData, isLoading: accessLoading } = trpc.marketplace.getMarketplaceAccess.useQuery();
   const [showApply, setShowApply] = useState(false);
@@ -1267,7 +1276,7 @@ export default function SellerDashboard() {
   const utils = trpc.useUtils();
   const respondToOfferMutation = trpc.marketplace.respondToOffer.useMutation({
     onSuccess: (_, vars) => {
-      toast.success(vars.action === 'accept' ? '已接受出價' : '已拒絕出價');
+      toast.success(vars.action === 'accept' ? t('seller.offerAccepted') : t('seller.offerRejected'));
       utils.marketplace.getMyOffers.invalidate();
       utils.marketplace.getSellerOffers.invalidate();
     },
@@ -1303,7 +1312,7 @@ export default function SellerDashboard() {
 
   const parseCsv = (text: string) => {
     const lines = text.trim().split(/\r?\n/);
-    if (lines.length < 2) { toast.error('CSV 至少需要一行標題和一行資料'); return; }
+    if (lines.length < 2) { toast.error(t('seller.csvMinRows')); return; }
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
     const rows = lines.slice(1).map(line => {
       const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
@@ -1352,7 +1361,7 @@ export default function SellerDashboard() {
 
   const batchDeactivateMutation = trpc.marketplace.batchDeactivateListings.useMutation({
     onSuccess: (data) => {
-      toast.success(`已下架 ${data.count} 件商品`);
+      toast.success(t('seller.bulkDelistSuccess', { count: data.count }));
       setSelectedIds(new Set());
       setBatchMode(false);
       refetchListings();
@@ -1363,7 +1372,7 @@ export default function SellerDashboard() {
 
   const batchReactivateMutation = trpc.marketplace.batchReactivateListings.useMutation({
     onSuccess: (data) => {
-      toast.success(`已重新上架 ${data.count} 件商品！`);
+      toast.success(t('seller.bulkRelistSuccess', { count: data.count }));
       setSelectedIds(new Set());
       setBatchMode(false);
       refetchListings();
@@ -1375,7 +1384,7 @@ export default function SellerDashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const batchDeleteMutation = trpc.marketplace.batchDeleteListings.useMutation({
     onSuccess: (data) => {
-      toast.success(`已刪除 ${data.deletedCount} 件商品${data.cancelledOrdersCount > 0 ? `，已取消 ${data.cancelledOrdersCount} 個待付款訂單` : ''}`);
+      toast.success(t('seller.bulkDeleteSuccess', { count: data.deletedCount, cancelCount: data.cancelledOrdersCount })) || toast.success(`已刪除 ${data.deletedCount} 件商品${data.cancelledOrdersCount > 0 ? `，已取消 ${data.cancelledOrdersCount} 個待付款訂單` : ''}`);
       setSelectedIds(new Set());
       setBatchMode(false);
       setShowDeleteConfirm(false);
@@ -1498,7 +1507,7 @@ export default function SellerDashboard() {
               rel="noopener noreferrer"
               className="underline font-bold text-[#06038D] whitespace-nowrap"
             >
-              查看商品 →
+              {t("seller.viewProduct")} →
             </a>
           )}
         </div>,
@@ -1519,9 +1528,9 @@ export default function SellerDashboard() {
       if (!data.connectEnabled) {
         // Stripe Connect not enabled on platform - open Stripe Dashboard to enable it
         window.open("https://dashboard.stripe.com/connect", "_blank");
-        toast.info("請先在 Stripe Dashboard 開通 Connect 功能，完成後返回此頁面再設定。", { duration: 8000 });
+        toast.info(t("seller.stripeConnectHint"), { duration: 8000 });
       } else {
-        toast.info("正在跳轉到 Stripe 設定頁面...");
+        toast.info(t("seller.redirectingToStripe"));
         window.open(data.onboardingUrl, "_blank");
       }
     },
@@ -1530,7 +1539,7 @@ export default function SellerDashboard() {
 
   const stripeLoginMutation = trpc.marketplace.getStripeExpressDashboardLink.useMutation({
     onSuccess: (data) => {
-      toast.info("正在跳轉到 Stripe Express Dashboard...");
+      toast.info(t("seller.redirectingToStripeDashboard"));
       window.open(data.url, "_blank");
     },
     onError: (e) => toast.error(parseApiError(e)),
@@ -1557,7 +1566,7 @@ export default function SellerDashboard() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
-        toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+        toast.error(t('seller.stripeConnectRequired'));
         return;
       }
       if (detail?.mode === 'auction') {
@@ -1574,14 +1583,14 @@ export default function SellerDashboard() {
   const [shipForm, setShipForm] = useState({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
   const [shipImageUploading, setShipImageUploading] = useState(false);
   const CARRIERS = [
-    { value: "sf_express", label: "🚚 順豐速運（運費到付）", trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
-    { value: "hk_post", label: "📮 香港郵政（平郵）", trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
+    { value: "sf_express", label: `🚚 ${t("seller.carrier.sfExpress")}`, trackingUrl: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
+    { value: "hk_post", label: `📮 ${t("seller.carrier.hkPost")}`, trackingUrl: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
   ];
 
   const uploadShippingImageMutation = trpc.marketplace.uploadShippingImage.useMutation();
   const markShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
-      toast.success("已標記為已寄出，已通知買家");
+      toast.success(t("seller.markedShipped"));
       setShipDialog({ open: false, orderId: 0, orderNo: "" });
       setShipForm({ shippingMethod: "", trackingNumber: "", shippingImageUrl: "" });
       utils.marketplace.getMySellerOrders.invalidate();
@@ -1593,8 +1602,8 @@ export default function SellerDashboard() {
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-        <p className="text-lg font-medium">請先登入</p>
-        <Link href="/login"><Button className="mt-4 text-white font-bold" style={{ backgroundColor: "#06038d" }}>登入</Button></Link>
+        <p className="text-lg font-medium">{t("common.pleaseLogin")}</p>
+        <Link href="/login"><Button className="mt-4 text-white font-bold" style={{ backgroundColor: "#06038d" }}>{t("common.login")}</Button></Link>
       </div>
     </div>
   );
@@ -1603,9 +1612,9 @@ export default function SellerDashboard() {
   if (accessData && !accessData.allowed) return (
     <div className="min-h-screen bg-[#06038D] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="text-3xl font-bold text-white mb-3">市集正在維護中</h1>
-        <p className="text-white/70 mb-6">我們正在緊鑼密鼓地開發中，敬請期待！</p>
-        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">返回首頁</a>
+        <h1 className="text-3xl font-bold text-white mb-3">{t("marketplace.maintenance")}</h1>
+        <p className="text-white/70 mb-6">{t("marketplace.maintenanceDesc")}</p>
+        <a href="/" className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">{t("common.backToHome")}</a>
       </div>
     </div>
   );
@@ -1627,8 +1636,8 @@ export default function SellerDashboard() {
               <ShoppingBag className="w-5 h-5" style={{ color: "#06038d" }} />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold text-white leading-tight">賣家中心</h1>
-              <p className="text-white/60 text-xs">管理商品、訂單和收款</p>
+              <h1 className="text-base font-bold text-white leading-tight">{t("seller.title")}</h1>
+              <p className="text-white/60 text-xs">{t("seller.subtitle")}</p>
             </div>
           </div>
           {/* Desktop: original layout */}
@@ -1646,8 +1655,8 @@ export default function SellerDashboard() {
                 <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
               </div>
               <div className="text-left pb-1 flex-1">
-                <h1 className="text-3xl font-bold text-white">賣家中心</h1>
-                <p className="text-white/70 text-sm mt-1">管理你的商品、訂單和收款</p>
+                <h1 className="text-3xl font-bold text-white">{t("seller.title")}</h1>
+                <p className="text-white/70 text-sm mt-1">{t("seller.subtitle")}</p>
               </div>
             </div>
           </div>
@@ -1662,12 +1671,12 @@ export default function SellerDashboard() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: "#f0f4ff" }}>
               <ShoppingBag className="w-10 h-10" style={{ color: "#06038d" }} />
             </div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: "#06038d" }}>成為 BOXIUM 賣家</h2>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#06038d" }}>{t("seller.becomeSellerTitle")}</h2>
             <p className="text-gray-500 mb-6 max-w-md">
-              在 BOXIUM 平台上架你的 TCG 卡牌，觸及更多買家。平台收取 5% 服務費，款項透過 Stripe 自動轉帳到你的帳戶。
+              {t("seller.becomeSellerDesc")}
             </p>
             <Button onClick={() => setShowApply(true)} className="bg-[#06038d] hover:bg-[#0804b8] text-white font-bold">
-              申請成為賣家
+              {t("seller.applyToSell")}
             </Button>
           </div>
         )}
@@ -1683,14 +1692,14 @@ export default function SellerDashboard() {
               <div>
                 {(sellerProfile as any).rejectReason ? (
                   <>
-                    <p className="font-medium text-red-900">申請未獲批准</p>
-                    <p className="text-sm text-red-700 mt-1">原因：{(sellerProfile as any).rejectReason}</p>
-                    <p className="text-xs text-red-600 mt-2">如有疑問，請聯絡平台客服。</p>
+                    <p className="font-medium text-red-900">{t("seller.applicationRejected")}</p>
+                    <p className="text-sm text-red-700 mt-1">{t("seller.rejectReason")}：{(sellerProfile as any).rejectReason}</p>
+                    <p className="text-xs text-red-600 mt-2">{t("seller.contactSupport")}</p>
                   </>
                 ) : (
                   <>
-                    <p className="font-medium text-amber-900">申請審批中</p>
-                    <p className="text-sm text-amber-700">你的賣家申請正在審批，通常需要 1-3 個工作天。</p>
+                    <p className="font-medium text-amber-900">{t("seller.applicationPending")}</p>
+                    <p className="text-sm text-amber-700">{t("seller.applicationPendingDesc")}</p>
                   </>
                 )}
               </div>
@@ -1707,13 +1716,13 @@ export default function SellerDashboard() {
                     <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
                     <div>
                       <p className="font-bold text-blue-900">{t("seller.payouts.stripeSetupButton")}</p>
-                      <p className="text-sm text-blue-700">完成 <strong>Stripe Connect</strong> 設定後才能收取款項。平台將透過 <strong>Stripe</strong> 自動轉帳給你。</p>
+                      <p className="text-sm text-blue-700">{t("seller.stripeSetupDesc")}</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
                     className="bg-blue-600 hover:bg-blue-700 text-white">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    {stripeMutation.isPending ? "處理中..." : "設定 Stripe 帳戶"}
+                    {stripeMutation.isPending ? t("common.processing") : t("seller.setupStripe")}
                   </Button>
                 </CardContent>
               </Card>
@@ -1724,14 +1733,14 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-amber-900">Stripe 帳戶驗證中</p>
-                      <p className="text-sm text-amber-700">你的 Stripe Express 帳戶已連結，正在等待 Stripe 完成驗證。驗證完成後即可自動收款。</p>
+                      <p className="font-medium text-amber-900">{t("seller.stripeVerifying")}</p>
+                      <p className="text-sm text-amber-700">{t("seller.stripeVerifyingDesc")}</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
                     variant="outline" className="border-amber-600 text-amber-700 hover:bg-amber-100">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    {stripeMutation.isPending ? "處理中..." : "繼續完成驗證"}
+                    {stripeMutation.isPending ? t("common.processing") : t("seller.continueVerification")}
                   </Button>
                 </CardContent>
               </Card>
@@ -1742,14 +1751,14 @@ export default function SellerDashboard() {
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-yellow-900">Stripe 帳戶需要補充資料</p>
-                      <p className="text-sm text-yellow-700">你的 Stripe Connect 帳戶尚未完成驗證，請繼續完成設定流程。</p>
+                      <p className="font-medium text-yellow-900">{t("seller.stripeNeedsInfo")}</p>
+                      <p className="text-sm text-yellow-700">{t("seller.stripeNeedsInfoDesc")}</p>
                     </div>
                   </div>
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
                     variant="outline" className="border-yellow-600 text-yellow-700 hover:bg-yellow-100">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    {stripeMutation.isPending ? "處理中..." : "繼續完成設定"}
+                    {stripeMutation.isPending ? t("common.processing") : t("seller.continueSetup")}
                   </Button>
                 </CardContent>
               </Card>
@@ -1767,7 +1776,7 @@ export default function SellerDashboard() {
                   <Button onClick={() => stripeMutation.mutate()} disabled={stripeMutation.isPending}
                     variant="outline" className="border-red-600 text-red-700 hover:bg-red-100">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    {stripeMutation.isPending ? "處理中..." : "重新設定"}
+                    {stripeMutation.isPending ? t("common.processing") : t("seller.resetStripe")}
                   </Button>
                 </CardContent>
               </Card>
@@ -1789,7 +1798,7 @@ export default function SellerDashboard() {
                     className="border-green-600 text-green-700 hover:bg-green-100"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    {stripeLoginMutation.isPending ? "處理中..." : "管理收款帳戶"}
+                    {stripeLoginMutation.isPending ? t("common.processing") : t("seller.manageStripe")}
                   </Button>
                 </CardContent>
               </Card>
@@ -1852,7 +1861,7 @@ export default function SellerDashboard() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xl font-bold leading-tight" style={{ color: "#06038d" }}>{parseFloat((sellerProfile?.avgRating as string) ?? '0').toFixed(1)}</p>
-                    <p className="text-[11px] text-gray-500 leading-tight">評分 ({sellerProfile?.ratingCount ?? 0} 則)</p>
+                    <p className="text-[11px] text-gray-500 leading-tight">{t("seller.rating", { count: sellerProfile?.ratingCount ?? 0 })}</p>
                   </div>
                 </div>
               </div>
@@ -1861,13 +1870,13 @@ export default function SellerDashboard() {
             <BrandTabs defaultValue="listings" value={activeTab} onValueChange={setActiveTab}>
               <BrandTabsList grid tabCount={5}>
                 <BrandTabsTrigger value="listings" icon={<Package className="w-4 h-4" />} label={t("seller.tabs.myListings")} mobileLabel={t("seller.completedOrders.product")}>
-                  我的商品
+                  {t("seller.myProducts")}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="auctions" icon={<Gavel className="w-4 h-4" />} label={t("seller.auctions.tab.title")} mobileLabel={t("seller.tabs.myAuctionsMobile")}>
-                  我的拍賣
+                  {t("seller.myAuctions")}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="orders" icon={<ShoppingBag className="w-4 h-4" />} label={t("seller.tabs.orderManagement")} mobileLabel={t("seller.stats.orders")}>
-                  訂單管理
+                  {t("seller.orderManagement")}
                   {pendingOrdersCount > 0 && (
                     <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
@@ -1875,7 +1884,7 @@ export default function SellerDashboard() {
                   )}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="offers" icon={<MessageSquare className="w-4 h-4" />} label={t("seller.tabs.buyerOffers")} mobileLabel={t("seller.auctions.card.bids")}>
-                  買家出價
+                  {t("seller.buyerOffers")}
                   {pendingSellerOffersCount > 0 && (
                     <span className="inline-flex items-center justify-center min-w-[1rem] h-4 px-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
                       {pendingSellerOffersCount > 99 ? '99+' : pendingSellerOffersCount}
@@ -1883,7 +1892,7 @@ export default function SellerDashboard() {
                   )}
                 </BrandTabsTrigger>
                 <BrandTabsTrigger value="earnings" icon={<DollarSign className="w-4 h-4" />} label={t("seller.tabs.earnings")} mobileLabel={t("seller.tabs.earningsMobile")}>
-                  收款記錄
+                  {t("seller.revenueRecord")}
                 </BrandTabsTrigger>
               </BrandTabsList>
 
@@ -1893,30 +1902,30 @@ export default function SellerDashboard() {
                   <div className="px-5 pt-5 pb-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">賣家中心</p>
-                        <h3 className="text-white font-bold text-lg leading-tight">上架你的商品</h3>
-                        <p className="text-white/60 text-xs mt-1">只需 3 個步驟，即可在 Boxium 開賣</p>
+                        <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">{t("seller.title")}</p>
+                        <h3 className="text-white font-bold text-lg leading-tight">{t("seller.listYourProduct")}</h3>
+                        <p className="text-white/60 text-xs mt-1">{t("seller.listPromoDesc")}</p>
                       </div>
                       <button
                         className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold text-sm px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
                         onClick={() => {
                           if (!isAdmin && sellerProfile?.stripeConnectStatus !== 'active') {
-                            toast.error('請先完成 Stripe Connect 收款帳戶設定，才能上架商品');
+                            toast.error(t('seller.stripeConnectRequired'));
                             return;
                           }
                           setShowNewListing(true);
                         }}
                       >
                         <Plus className="w-4 h-4" />
-                        上架新商品
+                        {t("seller.listNewProduct")}
                       </button>
                     </div>
                     {/* Step guide */}
                     <div className="mt-4 grid grid-cols-3 gap-2">
                       {[
-                        { step: '1', title: '填寫商品資料', desc: '名稱、品相、系列' },
-                        { step: '2', title: '設定售價', desc: '定價或拍賣模式' },
-                        { step: '3', title: '確認上架', desc: '商品即時公開' },
+                        { step: '1', title: t('seller.listStep1Title'), desc: t('seller.listStep1Desc') },
+                        { step: '2', title: t('seller.listStep2Title'), desc: t('seller.listStep2Desc') },
+                        { step: '3', title: t('seller.listStep3Title'), desc: t('seller.listStep3Desc') },
                       ].map(s => (
                         <div key={s.step} className="bg-white/10 rounded-xl px-3 py-2.5 flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-[#FEDD00] text-[#06038D] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{s.step}</span>
@@ -1933,11 +1942,11 @@ export default function SellerDashboard() {
                 {/* Listing Filter Sidebar + Content */}
                 {(() => {
                   const filterCategories = [
-                    { key: 'all' as const, label: '全部', count: myListings?.length ?? 0 },
-                    { key: 'active' as const, label: '上架中', count: myListings?.filter((l: any) => l.status === 'active').length ?? 0 },
-                    { key: 'sold' as const, label: '已售出', count: myListings?.filter((l: any) => l.status === 'sold').length ?? 0 },
+                    { key: 'all' as const, label: t('seller.listingTab.all'), count: myListings?.length ?? 0 },
+                    { key: 'active' as const, label: t('seller.listingTab.active'), count: myListings?.filter((l: any) => l.status === 'active').length ?? 0 },
+                    { key: 'sold' as const, label: t('seller.listingTab.sold'), count: myListings?.filter((l: any) => l.status === 'sold').length ?? 0 },
                     // Governance mode: no pending_review tab
-                    { key: 'removed' as const, label: '已下架', count: myListings?.filter((l: any) => l.status === 'removed').length ?? 0 },
+                    { key: 'removed' as const, label: t('seller.listingTab.removed'), count: myListings?.filter((l: any) => l.status === 'removed').length ?? 0 },
                   ];
                   const filteredListings = listingFilter === 'all'
                     ? (myListings ?? [])
@@ -1987,7 +1996,7 @@ export default function SellerDashboard() {
                 {!myListings?.length ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="w-10 h-10 mx-auto mb-2" style={{color:'#06038D', opacity:0.3}} />
-                    <p className="text-sm text-gray-400">點擊上方「立即上架」開始吸引買家</p>
+                    <p className="text-sm text-gray-400">{t("seller.emptyListingHint")}</p>
                   </div>
                 ) : (
                   <div className={listingViewMode === 'grid' ? 'space-y-3' : 'space-y-3'}>
@@ -2002,7 +2011,7 @@ export default function SellerDashboard() {
                           onClick={() => { setBatchMode(v => !v); setSelectedIds(new Set()); }}
                         >
                           {batchMode ? <X className="w-3 h-3 mr-1" /> : <CheckSquare className="w-3 h-3 mr-1" />}
-                          {batchMode ? "取消批量" : "批量管理"}
+                          {batchMode ? t("seller.cancelBatch") : t("seller.batchManage")}
                         </Button>
 
                         {/* View mode toggle */}
@@ -2012,7 +2021,7 @@ export default function SellerDashboard() {
                               listingViewMode === 'list' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-400 hover:bg-gray-50'
                             }`}
                             onClick={() => { setListingViewMode('list'); localStorage.setItem('seller-listing-view', 'list'); }}
-                            title="列表視圖"
+                            title={t("seller.listView")}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
@@ -2024,7 +2033,7 @@ export default function SellerDashboard() {
                               listingViewMode === 'grid' ? 'bg-[#06038d] text-white' : 'bg-white text-gray-400 hover:bg-gray-50'
                             }`}
                             onClick={() => { setListingViewMode('grid'); localStorage.setItem('seller-listing-view', 'grid'); }}
-                            title="網格視圖"
+                            title={t("seller.gridView")}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -2039,7 +2048,7 @@ export default function SellerDashboard() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <Button size="sm" variant="outline" className="text-xs h-8" onClick={toggleSelectAll}>
                             {selectedIds.size === filteredListings.length ? <CheckSquare className="w-3 h-3 mr-1" /> : <Square className="w-3 h-3 mr-1" />}
-                            {selectedIds.size === filteredListings.length ? "取消全選" : "全選"}
+                            {selectedIds.size === filteredListings.length ? t("common.deselectAll") : t("common.selectAll")}
                           </Button>
                           {selectedIds.size > 0 && (
                             <>
@@ -2063,7 +2072,7 @@ export default function SellerDashboard() {
                                     const l = filteredListings.find((x: any) => x.id === id);
                                     return l && l.status === 'active';
                                   }).length;
-                                  return `下架 (${deactivatableCount})`;
+                                  return `${t('seller.delist')} (${deactivatableCount})`;
                                 })()}
                               </Button>
 {(() => {
@@ -2082,7 +2091,7 @@ export default function SellerDashboard() {
                                     onClick={() => batchReactivateMutation.mutate({ ids: relistableIds })}
                                   >
                                     <Eye className="w-3 h-3 mr-1" />
-                                    重新上架 ({relistableIds.length})
+                                    {t("seller.relist")} ({relistableIds.length})
                                   </Button>
                                 );
                               })()}
@@ -2103,7 +2112,7 @@ export default function SellerDashboard() {
                                     onClick={() => setShowDeleteConfirm(true)}
                                   >
                                     <Trash2 className="w-3 h-3 mr-1" />
-                                    刪除 ({deletableIds.length})
+                                    {t("common.delete")} ({deletableIds.length})
                                   </Button>
                                 );
                               })()}
@@ -2116,7 +2125,7 @@ export default function SellerDashboard() {
                     {filteredListings.length === 0 ? (
                       <div className="text-center py-10 text-gray-400">
                         <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                        <p className="text-sm">此類別無商品</p>
+                        <p className="text-sm">{t("seller.noCategoryItems")}</p>
                       </div>
                     ) : listingViewMode === 'grid' ? (
                       /* ── Grid View ── */
@@ -2140,7 +2149,7 @@ export default function SellerDashboard() {
                                   {coverImg ? <LazyImage src={coverImg} alt={listing.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="text-white font-black text-sm tracking-tight text-center leading-tight">BOX<br/>IUM</span></div>}
                                 </div>
                                 <span className={`absolute top-1.5 right-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${isActive ? "bg-green-500 text-white" : isSold ? "bg-blue-500 text-white" : isRemoved ? "bg-red-500 text-white" : "bg-gray-500 text-white"}`}>
-                                  {isActive ? "上架" : isSold ? "售出" : isRemoved ? "下架" : listing.status}
+                                  {isActive ? t("seller.listingActive") : isSold ? t("seller.listingSold") : isRemoved ? t("seller.listingRemoved") : listing.status}
                                 </span>
                                 {batchMode && !isSold && (
                                   <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[#FEDD00] bg-[#FEDD00]' : 'border-white bg-white/30'}`}>
@@ -2157,9 +2166,9 @@ export default function SellerDashboard() {
                               </div>
                               {!batchMode && (
                                 <div className="flex items-center gap-1.5 px-2.5 pb-2.5">
-                                  {!isSold && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1" onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}><Pencil className="w-3 h-3 mr-1" />編輯</Button>}
-                                  {isActive && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-red-400 text-red-600 hover:bg-red-50 flex-1" disabled={deactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}><EyeOff className="w-3 h-3 mr-1" />下架</Button>}
-                                  {isRemoved && !isAdminDelisted && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-green-500 text-green-700 hover:bg-green-50 flex-1" disabled={reactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}><Eye className="w-3 h-3 mr-1" />上架</Button>}
+                                  {!isSold && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-[#06038d] text-[#06038d] hover:bg-blue-50 flex-1" onClick={(e) => { e.stopPropagation(); openEditDialog(listing); }}><Pencil className="w-3 h-3 mr-1" />{t("common.edit")}</Button>}
+                                  {isActive && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-red-400 text-red-600 hover:bg-red-50 flex-1" disabled={deactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); deactivateMutation.mutate({ id: listing.id }); }}><EyeOff className="w-3 h-3 mr-1" />{t("seller.listings.card.deactivate")}</Button>}
+                                  {isRemoved && !isAdminDelisted && <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-green-500 text-green-700 hover:bg-green-50 flex-1" disabled={reactivateMutation.isPending} onClick={(e) => { e.stopPropagation(); reactivateMutation.mutate({ id: listing.id, status: "active" }); }}><Eye className="w-3 h-3 mr-1" />{t("seller.listings.card.activate")}</Button>}
                                   {isRemoved && isAdminDelisted && <span className="text-[10px] text-red-500 font-medium">{t("seller.listings.card.adminDelisted")}</span>}
                                 </div>
                               )}
@@ -2200,10 +2209,10 @@ export default function SellerDashboard() {
                   <div className="mb-4 space-y-2">
                     <div className="flex gap-1.5 flex-wrap">
                       {([
-                        { key: 'all', label: '全部' },
-                        { key: 'pending', label: '待確認' },
-                        { key: 'active', label: '進行中' },
-                        { key: 'done', label: '已完成' },
+                        { key: 'all', label: t('common.all') },
+                        { key: 'pending', label: t('seller.orderTab.pending') },
+                        { key: 'active', label: t('seller.orderTab.active') },
+                        { key: 'done', label: t('seller.orderTab.done') },
                       ] as const).map(f => (
                         <button
                           key={f.key}
@@ -2261,7 +2270,7 @@ export default function SellerDashboard() {
                   if (!filtered.length) return (
                     <div className="text-center py-12 text-gray-400">
                       <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p>{(myOrders?.length ?? 0) > 0 ? '沒有符合條件的訂單' : '尚無訂單'}</p>
+                      <p>{(myOrders?.length ?? 0) > 0 ? t('seller.noMatchingOrders') : t('seller.noOrders')}</p>
                     </div>
                   );
                   return (
@@ -2294,7 +2303,7 @@ export default function SellerDashboard() {
                               const thumb = imgs[0];
                               return thumb ? (
                                 <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                                  <LazyImage src={thumb} alt={item.title ?? '商品'} className="w-full h-full object-cover" />
+                                  <LazyImage src={thumb} alt={item.title ?? t('seller.product')} className="w-full h-full object-cover" />
                                 </div>
                               ) : (
                                 <div className="flex-shrink-0 w-12 h-12 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
@@ -2318,8 +2327,8 @@ export default function SellerDashboard() {
                                   const addr = typeof item.shippingAddress === 'string' ? JSON.parse(item.shippingAddress) : item.shippingAddress;
                                   return (
                                     <>
-                                      <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>
-                                      <p>📍 地址：{(() => {
+                                      <p>📦 {t("seller.recipient")}：{item.shippingName} {item.shippingPhone}</p>
+                                      <p>📍 {t("seller.address")}：{(() => {
                                         if (addr && typeof addr === 'object') {
                                           const parts = [addr?.address, addr?.district, addr?.region].filter(Boolean);
                                           return parts.length > 0 ? parts.join(', ') : String(item.shippingAddress);
@@ -2329,11 +2338,11 @@ export default function SellerDashboard() {
                                     </>
                                   );
                                 } catch {
-                                  return <p>📦 收件人：{item.shippingName} {item.shippingPhone}</p>;
+                                  return <p>📦 {t('seller.recipient')}：{item.shippingName} {item.shippingPhone}</p>;
                                 }
                               })()}
-                              {item.trackingNumber && <p>🚚 追蹤號：{item.trackingNumber}</p>}
-                              {item.shippedAt && <p>📅 出貨日期：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
+                              {item.trackingNumber && <p>🚚 {t("seller.trackingNo")}：{item.trackingNumber}</p>}
+                              {item.shippedAt && <p>📅 {t("seller.shippedDate")}：{new Date(item.shippedAt).toLocaleDateString('zh-HK')}</p>}
                               {(item as any).shippingImageUrl && (
                                 <SellerShippingProof url={(item as any).shippingImageUrl} />
                               )}
@@ -2349,23 +2358,23 @@ export default function SellerDashboard() {
                           {/* Show shipping status for shipped orders */}
                           {item.orderStatus === 'shipped' && !item.shippingName && (
                             <div className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
-                              🚚 已寄出{item.trackingNumber ? `，追蹤號：${item.trackingNumber}` : ''}
+                              {t("seller.shippedStatus")}{item.trackingNumber ? `，${t("seller.trackingNo")}：${item.trackingNumber}` : ''}
                             </div>
                           )}
                           {/* Disputed order info */}
                           {item.orderStatus === 'disputed' && (
                             <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 space-y-1">
-                              <p className="font-semibold flex items-center gap-1"><span>⚠️</span> 買家申請爭議，等待管理員處理</p>
-                              {item.disputeReason && <p>申訴原因：{item.disputeReason}</p>}
-                              {item.disputeOpenedAt && <p>申訴時間：{new Date(item.disputeOpenedAt).toLocaleDateString('zh-HK')}</p>}
+                              <p className="font-semibold flex items-center gap-1"><span>⚠️</span> {t("seller.disputeOpened")}</p>
+                              {item.disputeReason && <p>{t("seller.disputeReason")}：{item.disputeReason}</p>}
+                              {item.disputeOpenedAt && <p>{t("seller.disputeOpenedAt")}：{new Date(item.disputeOpenedAt).toLocaleDateString('zh-HK')}</p>}
                             </div>
                           )}
                           {/* Dispute resolved info */}
                           {item.disputeResolution && item.orderStatus !== 'disputed' && (
                             <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 space-y-1">
-                              <p className="font-semibold">爭議結果：</p>
+                              <p className="font-semibold">{t("seller.disputeResult")}：</p>
                               <p>{item.disputeResolution.replace(/^\[.*?\]\s*/, '')}</p>
-                              {item.disputeResolvedAt && <p>處理時間：{new Date(item.disputeResolvedAt).toLocaleDateString('zh-HK')}</p>}
+                              {item.disputeResolvedAt && <p>{t("seller.disputeResolvedAt")}：{new Date(item.disputeResolvedAt).toLocaleDateString('zh-HK')}</p>}
                             </div>
                           )}
                           {/* Completed order summary */}
@@ -2373,7 +2382,7 @@ export default function SellerDashboard() {
                             <div className="space-y-1.5">
                               <div className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center gap-1.5">
                                 <CheckCircle className="w-3.5 h-3.5" />
-                                訂單已完成，收到 HKD {parseFloat(item.sellerReceivableHkd ?? item.priceHkd ?? '0').toFixed(2)}
+                                {t("seller.orderCompletedPayout", { amount: parseFloat(item.sellerReceivableHkd ?? item.priceHkd ?? '0').toFixed(2) })}
                               </div>
                               {/* Payout hold period info */}
                               {item.payoutStatus === 'processing' && (item as any).payoutHoldUntil && (() => {
@@ -2385,17 +2394,17 @@ export default function SellerDashboard() {
                                   <div className="text-xs bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1">
                                     <p className="font-semibold text-blue-800 flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
-                                      {hasExpired ? '💰 正在處理放款' : '預計放款時間'}
+                                      {hasExpired ? t("seller.processingPayout") : t("seller.estimatedPayout")}
                                     </p>
                                     <p className="text-blue-700">
                                       {hasExpired
-                                        ? '冷靜期已結束，系統正在處理轉帳給你'
-                                        : `${payoutHoldUntil.toLocaleString('zh-HK', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} (還有 ${hoursLeft} 小時)`
+                                        ? t('seller.cooldownEnded')
+                                        : `${payoutHoldUntil.toLocaleString(undefined, { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} (${t('seller.hoursLeft', { hours: hoursLeft })})`
                                       }
                                     </p>
                                     {!hasExpired && (
                                       <p className="text-blue-600 text-[10px]">
-                                        ⚠️ 48 小時冷靜期中，買家可申請爭議，到期後自動放款
+                                        {t('seller.cooldownWarning')}
                                       </p>
                                     )}
                                   </div>
@@ -2420,7 +2429,7 @@ export default function SellerDashboard() {
                                   });
                                   setShipForm({ shippingMethod: "sf_express", trackingNumber: "", shippingImageUrl: "" });
                                 }}>
-                                <Package className="w-3 h-3 mr-1" />填寫出貨資料
+                                <Package className="w-3 h-3 mr-1" />{t("seller.fillShipping")}
                               </Button>
                             )}
                             {/* View detail link */}
@@ -2431,7 +2440,7 @@ export default function SellerDashboard() {
                                   ["processing", "payment_received", "paid_held"].includes(item.orderStatus) ? 'flex-shrink-0' : 'flex-1'
                                 }`}
                               >
-                                <ExternalLink className="w-3 h-3" />查看詳情
+                                <ExternalLink className="w-3 h-3" />{t("seller.viewDetails")}
                               </a>
                             )}
                           </div>
@@ -2456,7 +2465,7 @@ export default function SellerDashboard() {
                 {sellerOffers && sellerOffers.length > 0 && (
                   <div className="flex gap-2 flex-wrap mb-3">
                     {(['all', 'pending', 'accepted', 'rejected'] as const).map((f) => {
-                      const labels = { all: '全部', pending: '待回覆', accepted: '已接受', rejected: '已拒絕' };
+                      const labels = { all: t('common.all'), pending: t('seller.offerStatus.pending'), accepted: t('seller.offerStatus.accepted'), rejected: t('seller.offerStatus.rejected') };
                       const counts = { all: sellerOffers.length, pending: sellerOffers.filter((o: any) => o.status === 'pending').length, accepted: sellerOffers.filter((o: any) => o.status === 'accepted').length, rejected: sellerOffers.filter((o: any) => o.status === 'rejected').length };
                       return (
                         <button key={f} onClick={() => setOfferFilter(f)}
@@ -2479,7 +2488,7 @@ export default function SellerDashboard() {
                   if (filtered.length === 0) return (
                     <div className="text-center py-10 text-muted-foreground">
                       <Tag className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">沒有符合條件的出價</p>
+                      <p className="text-sm">{t("seller.noMatchingOffers")}</p>
                     </div>
                   );
                   return (
@@ -2498,7 +2507,7 @@ export default function SellerDashboard() {
                               ? 'bg-red-400/20 text-red-200 border border-red-400/30'
                               : 'bg-yellow-400/20 text-yellow-200 border border-yellow-400/30'
                           }`}>
-                            {offer.status === 'pending' ? '待回覆' : offer.status === 'accepted' ? '已接受' : '已拒絕'}
+                            {offer.status === 'pending' ? t('seller.offerStatus.pending') : offer.status === 'accepted' ? t('seller.offerStatus.accepted') : t('seller.offerStatus.rejected')}
                           </span>
                         </div>
                         {/* Card Body */}
@@ -2517,7 +2526,7 @@ export default function SellerDashboard() {
                                 return imgUrl ? (
                                   <img
                                     src={imgUrl}
-                                    alt={offer.listingTitle || '商品'}
+                                    alt={offer.listingTitle || t('seller.product')}
                                     className="w-14 h-14 rounded-lg object-cover border border-gray-200 flex-shrink-0"
                                   />
                                 ) : (
@@ -2528,10 +2537,10 @@ export default function SellerDashboard() {
                               })()}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="font-semibold truncate text-gray-900 flex-1">{offer.listingTitle || '商品'}</p>
+                                  <p className="font-semibold truncate text-gray-900 flex-1">{offer.listingTitle || t('seller.product')}</p>
                                   {offer.listingId && (
                                     <Link href={`/listing/${offer.listingId}`} className="text-xs text-[#06038d] hover:underline flex-shrink-0">
-                                      前往商品
+                                      {t("seller.goToProduct")}
                                     </Link>
                                   )}
                                 </div>
@@ -2551,7 +2560,7 @@ export default function SellerDashboard() {
                                   if (diffMs <= 0) {
                                     return (
                                       <span className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
-                                        <Clock className="w-3 h-3" />已過期
+                                        <Clock className="w-3 h-3" />{t("seller.offerExpired")}
                                       </span>
                                     );
                                   }
@@ -2561,8 +2570,8 @@ export default function SellerDashboard() {
                                   const isUrgent = diffHours < 24; // less than 1 day
                                   const isWarning = diffHours < 48; // less than 2 days
                                   const label = diffDays > 0
-                                    ? `還有 ${diffDays} 天 ${remHours} 小時到期`
-                                    : `還有 ${Math.floor(diffHours)} 小時到期`;
+                                    ? `${t('seller.offerExpiresIn', { days: diffDays, hours: remHours })}`
+                                    : `${t('seller.offerExpiresInHours', { hours: Math.floor(diffHours) })}`;
                                   return (
                                     <span className={`inline-flex items-center gap-1 mt-1.5 text-xs font-medium rounded-full px-2 py-0.5 border ${
                                       isUrgent
@@ -2585,13 +2594,13 @@ export default function SellerDashboard() {
                                     disabled={respondToOfferMutation.isPending}
                                     onClick={() => respondToOfferMutation.mutate({ offerId: offer.id, action: 'accept' })}
                                   >
-                                    <Check className="w-3 h-3 mr-1" />接受出價
+                                    <Check className="w-3 h-3 mr-1" />{t("seller.acceptOffer")}
                                   </Button>
                                   <Button size="sm" variant="outline" className="flex-1 h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
                                     disabled={respondToOfferMutation.isPending}
                                     onClick={() => { setRejectingOfferId(offer.id); setRejectionReason(""); setShowRejectDialog(true); }}
                                   >
-                                    <X className="w-3 h-3 mr-1" />拒絕
+                                    <X className="w-3 h-3 mr-1" />{t("seller.rejectOffer")}
                                   </Button>
                                 </>
                               ) : (
@@ -2605,7 +2614,7 @@ export default function SellerDashboard() {
                               )}
                               {offer.listingId && (
                                 <Link href={`/listing/${offer.listingId}`} className="inline-flex items-center gap-1 text-xs text-[#06038d] hover:text-[#0804b8] font-medium border border-[#06038d]/30 hover:border-[#06038d] rounded-lg px-3 h-8 transition-colors bg-white hover:bg-blue-50 flex-shrink-0">
-                                  <ExternalLink className="w-3 h-3" />前往商品
+                                  <ExternalLink className="w-3 h-3" />{t("seller.goToProduct")}
                                 </Link>
                               )}
                             </div>
@@ -2651,8 +2660,8 @@ export default function SellerDashboard() {
                 <p>• condition: psa10 / psa9 / psa8_below / raw_a / raw_b / raw_c / raw_d</p>
                 <p>• tcg_series: pokemon / onepiece / yugioh</p>
                 <p>• allow_offers: true / false</p>
-                <p>• min_offer: 最低出價金額（可留空）</p>
-                <p>• image_url: 公開圖片 URL，多張用 | 分隔（可留空）</p>
+                <p>• min_offer: {t("seller.csvHint.minOffer")}</p>
+                <p>• image_url: {t("seller.csvHint.imageUrl")}</p>
               </div>
               <button
                 className="mt-2 text-xs text-[#06038D] underline font-medium"
@@ -2664,7 +2673,7 @@ export default function SellerDashboard() {
                   URL.revokeObjectURL(url);
                 }}
               >
-                下載範本 CSV
+                {t("seller.downloadCsvTemplate")}
               </button>
             </div>
             {/* File Upload */}
@@ -2692,7 +2701,7 @@ export default function SellerDashboard() {
             {csvRows.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-semibold text-[#06038D]">預覽 {csvRows.length} 件商品</p>
+                  <p className="text-sm font-semibold text-[#06038D]">{t("seller.csvPreview", { count: csvRows.length })}</p>
                   <button className="text-xs text-gray-400 underline" onClick={() => setCsvRows([])}>{t("seller.bulkUpload.reupload")}</button>
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-[#06038D]/20">
@@ -2722,7 +2731,7 @@ export default function SellerDashboard() {
                                 {row.imageUrls.length > 1 && <span className="text-[10px] text-gray-400">+{row.imageUrls.length - 1}</span>}
                               </div>
                             ) : (
-                              <span className="text-gray-300 text-[10px]">無</span>
+                              <span className="text-gray-300 text-[10px]">{t("common.none")}</span>
                             )}
                           </td>
                           <td className="px-3 py-2 max-w-[120px] truncate">{row.title}</td>
@@ -2748,10 +2757,10 @@ export default function SellerDashboard() {
             <div className="px-5 py-4 bg-white" style={{borderTop: '1px solid rgba(6,3,141,0.15)'}}>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-gray-500">
-                  {csvRows.filter(r => r._status === 'done').length} / {csvRows.length} 件完成
+                  {t("seller.csvProgress", { done: csvRows.filter(r => r._status === 'done').length, total: csvRows.length })}
                 </span>
                 {csvRows.some(r => r._status === 'error') && (
-                  <span className="text-xs text-red-500">{csvRows.filter(r => r._status === 'error').length} 件失敗</span>
+                  <span className="text-xs text-red-500">{t("seller.csvFailed", { count: csvRows.filter(r => r._status === 'error').length })}</span>
                 )}
               </div>
               <Button
@@ -2773,7 +2782,7 @@ export default function SellerDashboard() {
                     try {
                       const row = csvRows[i];
                       const priceNum = parseFloat(row.price);
-                      if (isNaN(priceNum) || priceNum <= 0) throw new Error('售價格式錯誤');
+                      if (isNaN(priceNum) || priceNum <= 0) throw new Error(t('seller.csvPriceError'));
                       // Use trpc client directly
                       await new Promise<void>((resolve, reject) => {
                         const utils2 = { resolve, reject };
@@ -2800,7 +2809,7 @@ export default function SellerDashboard() {
                             });
                             if (!result.ok) throw new Error(`HTTP ${result.status}`);
                             const data = await result.json();
-                            if (data?.error) throw new Error(data.error.message ?? '上架失敗');
+                            if (data?.error) throw new Error(data.error.message ?? t('seller.csvListingFailed'));
                             utils2.resolve();
                           } catch (err) { utils2.reject(err); }
                         })();
@@ -2815,15 +2824,15 @@ export default function SellerDashboard() {
                   setBulkUploading(false);
                   refetchListings();
                   const doneCount = csvRows.filter(r => r._status === 'done').length + 1;
-                  toast.success(`批量上架完成！${doneCount} 件商品已上架`);
+                  toast.success(t('seller.csvBatchSuccess', { count: doneCount }));
                 }}
               >
                 {bulkUploading ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("seller.bulkUpload.uploadingButton")}</>
                 ) : csvRows.every(r => r._status === 'done') ? (
-                  '全部完成'
+                  t('seller.csvAllDone')
                 ) : (
-                  `確認上架 ${csvRows.filter(r => r._status === 'pending' || r._status === 'error').length} 件商品`
+                  t('seller.csvConfirmList', { count: csvRows.filter(r => r._status === 'pending' || r._status === 'error').length })
                 )}
               </Button>
             </div>
@@ -2836,20 +2845,20 @@ export default function SellerDashboard() {
           <DialogHeader><DialogTitle>{t("seller.apply.title")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>顯示名稱 *</Label>
-              <Input className="mt-1" placeholder="例如：CardMaster HK"
+              <Label>{t("seller.displayName")} *</Label>
+              <Input className="mt-1" placeholder={t("seller.displayNamePlaceholder")}
                 value={applyForm.displayName}
                 onChange={(e) => setApplyForm(p => ({ ...p, displayName: e.target.value }))} />
             </div>
             <div>
-              <Label>自我介紹</Label>
-              <Textarea className="mt-1" placeholder="介紹你的賣家背景..."
+              <Label>{t("seller.bio")}</Label>
+              <Textarea className="mt-1" placeholder={t("seller.bioPlaceholder")}
                 value={applyForm.bio}
                 onChange={(e) => setApplyForm(p => ({ ...p, bio: e.target.value }))} />
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-              <p className="font-medium">平台服務費：5%</p>
-              <p className="mt-1">款項透過 Stripe Connect 自動轉帳到你的銀行帳戶，通常 2-3 個工作天到帳。</p>
+              <p className="font-medium">{t("seller.platformFeeRate")}</p>
+              <p className="mt-1">{t("seller.stripePayoutDesc")}</p>
             </div>
           </div>
           <DialogFooter>
@@ -2857,7 +2866,7 @@ export default function SellerDashboard() {
             <Button className="bg-[#06038d] hover:bg-[#0804b8] text-white"
               disabled={!applyForm.displayName || applyMutation.isPending}
               onClick={() => applyMutation.mutate({ displayName: applyForm.displayName, bio: applyForm.bio || undefined })}>
-              {applyMutation.isPending ? "提交中..." : "提交申請"}
+              {applyMutation.isPending ? t("common.submitting") : t("seller.submitApplication")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2867,15 +2876,15 @@ export default function SellerDashboard() {
       <Dialog open={showRejectDialog} onOpenChange={(v) => { setShowRejectDialog(v); if (!v) { setRejectingOfferId(null); setRejectionReason(""); } }}>
         <DialogContent bottomSheet className="sm:max-w-sm bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>拒絕出價</DialogTitle>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#06038d" }}>{t("seller.rejectOfferTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-gray-600">你可以選擇填寫拒絕原因，買家將會收到通知。</p>
+            <p className="text-sm text-gray-600">{t("seller.rejectOfferDesc")}</p>
             <div>
-              <Label className="text-sm font-medium text-gray-700">拒絕原因（選填）</Label>
+              <Label className="text-sm font-medium text-gray-700">{t("seller.rejectReasonLabel")}</Label>
               <Textarea
                 className="mt-1.5 resize-none"
-                placeholder="例如：此出價低於我的底價，請重新出價...（最多 300 字）"
+                placeholder={t("seller.rejectReasonPlaceholder")}
                 maxLength={300}
                 rows={3}
                 value={rejectionReason}
@@ -2884,7 +2893,7 @@ export default function SellerDashboard() {
               <p className="text-xs text-gray-400 mt-1 text-right">{rejectionReason.length}/300</p>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-700">⚠️ 拒絕後買家將收到通知，此操作不可撤回。</p>
+              <p className="text-xs text-amber-700">⚠️ {t("seller.rejectOfferWarning")}</p>
             </div>
           </div>
           <DialogFooter>
@@ -2907,7 +2916,7 @@ export default function SellerDashboard() {
                 );
               }}
             >
-              {respondToOfferMutation.isPending ? "處理中..." : "確認拒絕"}
+              {respondToOfferMutation.isPending ? t("common.processing") : t("seller.confirmReject")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2916,12 +2925,12 @@ export default function SellerDashboard() {
       {/* ─── Edit Listing Dialog ─────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingListing(null); }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
-          <VisuallyHidden><DialogTitle>編輯商品資訊</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("seller.editListingTitle")}</DialogTitle></VisuallyHidden>
           {/* Header - same style as new listing */}
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-white">編輯商品資訊</h2>
+                <h2 className="text-base font-bold text-white">{t("seller.editListingTitle")}</h2>
                 {editingListing && (
                   <p className="text-xs text-white/60 mt-0.5 truncate max-w-[260px]">{editingListing.title}</p>
                 )}
@@ -2956,8 +2965,8 @@ export default function SellerDashboard() {
                 })()}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#06038D] truncate">{editingListing.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">現售價 HKD {parseFloat(editingListing.priceHkd as string).toFixed(2)}</p>
-                  <p className="text-xs text-gray-400">庫存 {editingListing.quantity} 件</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t("seller.currentPrice")} HKD {parseFloat(editingListing.priceHkd as string).toFixed(2)}</p>
+                  <p className="text-xs text-gray-400">{t("seller.stockCount", { count: editingListing.quantity })}</p>
                 </div>
               </div>
             )}
@@ -2967,8 +2976,8 @@ export default function SellerDashboard() {
               <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50">
                 <span className="text-amber-500 mt-0.5 flex-shrink-0">⚠️</span>
                 <div>
-                  <p className="text-xs font-semibold text-amber-800">此商品有進行中的訂單</p>
-                  <p className="text-xs text-amber-700 mt-0.5">已售出 {editingListing.quantity - editingListing.remainingQuantity} 件，修改售價不影響已建立的訂單金額。</p>
+                  <p className="text-xs font-semibold text-amber-800">{t("seller.activeOrderWarning")}</p>
+                  <p className="text-xs text-amber-700 mt-0.5">{t("seller.soldCount", { count: editingListing.quantity - editingListing.remainingQuantity })}，{t("seller.priceChangeNote")}</p>
                 </div>
               </div>
             )}
@@ -2988,13 +2997,13 @@ export default function SellerDashboard() {
                 rows={3}
                 value={editForm.description}
                 onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="商品描述（可選）"
+                placeholder={t("seller.editListing.descPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-[#06038D] font-semibold">售價（HKD）</Label>
-                <p className="text-xs text-gray-400 mb-1">最低 HKD 4.00</p>
+                <Label className="text-[#06038D] font-semibold">{t("seller.editListing.priceLabel")}</Label>
+                <p className="text-xs text-gray-400 mb-1">{t("seller.editListing.minPrice")}</p>
                 <Input
                   type="number"
                   min="4"
@@ -3006,8 +3015,8 @@ export default function SellerDashboard() {
                 />
               </div>
               <div>
-                <Label className="text-[#06038D] font-semibold">庫存數量</Label>
-                <p className="text-xs text-gray-400 mb-1">最少 1 件</p>
+                <Label className="text-[#06038D] font-semibold">{t("seller.editListing.stockLabel")}</Label>
+                <p className="text-xs text-gray-400 mb-1">{t("seller.editListing.minStock")}</p>
                 <Input
                   type="number"
                   min="1"
@@ -3031,8 +3040,8 @@ export default function SellerDashboard() {
                 if (!editingListing) return;
                 const price = parseFloat(editForm.price);
                 const quantity = parseInt(editForm.quantity);
-                if (isNaN(price) || price < 4) { toast.error("售價不能低於 HKD 4.00"); return; }
-                if (isNaN(quantity) || quantity < 1) { toast.error("庫存數量不能小於 1"); return; }
+                if (isNaN(price) || price < 4) { toast.error(t("seller.editListing.priceError")); return; }
+                if (isNaN(quantity) || quantity < 1) { toast.error(t("seller.editListing.stockError")); return; }
                 updateListingMutation.mutate({
                   id: editingListing.id,
                   title: editForm.title || undefined,
@@ -3043,7 +3052,7 @@ export default function SellerDashboard() {
               }}
             >
               {updateListingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              儲存更改
+              {t("seller.editListing.saveChanges")}
             </Button>
           </div>
         </DialogContent>
@@ -3051,18 +3060,18 @@ export default function SellerDashboard() {
 
       <Dialog open={showNewListing} onOpenChange={(open) => { setShowNewListing(open); if (!open) setListingStep(1); }}>
         <DialogContent bottomSheet showCloseButton={false} className="flex flex-col gap-0 p-0 overflow-hidden sm:max-w-lg">
-          <VisuallyHidden><DialogTitle>上架新商品</DialogTitle></VisuallyHidden>
+          <VisuallyHidden><DialogTitle>{t("seller.newListing.title")}</DialogTitle></VisuallyHidden>
           {/* Step Header */}
           <div className="px-5 pt-5 pb-4" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-white">上架新商品</h2>
+              <h2 className="text-base font-bold text-white">{t("seller.newListing.title")}</h2>
               <button onClick={() => setShowNewListing(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
             {/* Step Indicator */}
             <div className="flex items-center gap-0">
-              {[{ n: 1, label: "基本資料" }, { n: 2, label: "定價設定" }, { n: 3, label: t("seller.newListing.preview.submitListing") }].map(({ n, label }, idx) => (
+              {[{ n: 1, label: t("seller.newListing.step1") }, { n: 2, label: t("seller.newListing.step2") }, { n: 3, label: t("seller.newListing.preview.submitListing") }].map(({ n, label }, idx) => (
                 <React.Fragment key={n}>
                   <div className="flex flex-col items-center gap-1">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -3094,11 +3103,11 @@ export default function SellerDashboard() {
               <>
                 <ImageUploader images={listingImages} onChange={setListingImages} />
                 {listingImages.length === 0 && (
-                  <p className="text-xs text-red-500 -mt-2">* 請至少上傳一張商品圖片（必填）</p>
+                  <p className="text-xs text-red-500 -mt-2">* {t("seller.newListing.imageRequired")}</p>
                 )}
                 {/* Card Picker */}
                 <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">（選填）</span></Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.associateCard")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">{t("common.optional")}</span></Label>
                   {selectedCard ? (
                     <div className="mt-1 flex items-center gap-3 p-2.5 rounded-lg border border-[#06038D]/30 bg-[#06038D]/5">
                       {selectedCard.imageUrl ? (
@@ -3118,7 +3127,7 @@ export default function SellerDashboard() {
                           {selectedCard.rarity && <span className="text-[10px] text-[#06038D]/70">{selectedCard.rarity}</span>}
                         </div>
                         {selectedCard.referencePrice && (
-                          <p className="text-[10px] text-[#06038D]/80 font-medium mt-0.5">PSA 10 市場均價 HKD {parseFloat(String(selectedCard.referencePrice)).toLocaleString()}</p>
+                          <p className="text-[10px] text-[#06038D]/80 font-medium mt-0.5">{t("seller.psa10MarketPrice")} HKD {parseFloat(String(selectedCard.referencePrice)).toLocaleString()}</p>
                         )}
                       </div>
                       <div className="flex gap-1">
@@ -3134,7 +3143,7 @@ export default function SellerDashboard() {
                     >
                       <span className="flex items-center gap-2">
                         <Layers className="w-4 h-4" />
-                        點擊搜索並關聯卡牌
+                        {t("seller.newListing.clickToSearchCard")}
                       </span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -3146,7 +3155,7 @@ export default function SellerDashboard() {
                     value={listingForm.title}
                     onChange={(e) => setListingForm(p => ({ ...p, title: e.target.value }))} />
                   {listingForm.title && listingForm.title.trim().length < 3 && (
-                    <p className="text-xs text-red-500 mt-1">商品名稱至少需要 3 個字元</p>
+                    <p className="text-xs text-red-500 mt-1">{t("seller.newListing.titleMinLength")}</p>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -3181,7 +3190,7 @@ export default function SellerDashboard() {
                   {listingImages[0] && <LazyImage src={listingImages[0]} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />}
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#06038D] truncate">{listingForm.title}</p>
-                    <p className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} · 數量 {listingForm.quantity}</p>
+                    <p className="text-xs text-[#06038D]/60">{conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} · {t("seller.newListing.quantity")} {listingForm.quantity}</p>
                   </div>
                 </div>
 
@@ -3218,8 +3227,8 @@ export default function SellerDashboard() {
                   <Label className="text-[#06038D] font-semibold">{t("seller.newListing.listingMode")}</Label>
                   <div className="mt-1 grid grid-cols-2 gap-2">
                     {[
-                      { value: "buy_now", label: t("seller.newListing.mode.buyNow"), icon: "🛒", desc: "買家直接以定價購買" },
-                      { value: "auction", label: t("seller.tabs.myAuctionsMobile"), icon: "🔨", desc: "買家競價，時限結標" },
+                      { value: "buy_now", label: t("seller.newListing.mode.buyNow"), icon: "🛒", desc: t("seller.newListing.mode.buyNowDesc") },
+                      { value: "auction", label: t("seller.tabs.myAuctionsMobile"), icon: "🔨", desc: t("seller.newListing.mode.auctionDesc") },
                     ].map(mode => (
                       <button
                         key={mode.value}
@@ -3241,7 +3250,7 @@ export default function SellerDashboard() {
 
                 {/* Description */}
                 <div>
-                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">（選填）</span></Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.productDescription")}<span className="text-[10px] font-normal text-[#06038D]/50 ml-1">（{t("common.optional")}）</span></Label>
                   <Textarea className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" placeholder={t("seller.newListing.productDescriptionPlaceholder")} rows={3}
                     value={listingForm.description}
                     onChange={(e) => setListingForm(p => ({ ...p, description: e.target.value }))} />
@@ -3250,42 +3259,42 @@ export default function SellerDashboard() {
                 {/* Buy Now pricing */}
                 {listingForm.listingMode === 'buy_now' && (
                 <div>
-                  <Label className="text-[#06038D] font-semibold">售價（HKD）*</Label>
+                  <Label className="text-[#06038D] font-semibold">{t("seller.newListing.priceLabel")}</Label>
                   {selectedCard && (
                     <div className="mt-1 mb-2">
                       {conditionPriceLoading ? (
-                        <p className="text-xs text-[#06038D]/50">查詢市場均價中...</p>
+                        <p className="text-xs text-[#06038D]/50">{t("seller.newListing.loadingMarketPrice")}</p>
                       ) : conditionPriceData?.avgPrice ? (
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-semibold text-[#06038D]">
                             {conditionPriceData.isFallback
-                              ? `PSA 10 市場均價（參考）：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
-                              : `${conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} 市場均價：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                              ? `${t("seller.psa10MarketPriceRef")}：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
+                              : `${conditionOptions.flatMap(g => g.items).find(i => i.value === listingForm.condition)?.label ?? listingForm.condition} ${t("seller.marketPrice")}：HKD ${conditionPriceData.avgPrice.toLocaleString()}`
                             }
                           </span>
-                          <span className="text-[10px] text-[#06038D]/40">(基於最近 {conditionPriceData.recordCount} 筆成交)</span>
+                          <span className="text-[10px] text-[#06038D]/40">({t("seller.basedOnRecords", { count: conditionPriceData.recordCount })})</span>
                           {conditionPriceData.isFallback && (
-                            <span className="text-[10px] text-amber-600">此品相無成交記錄，顯示 PSA 10 作參考</span>
+                            <span className="text-[10px] text-amber-600">{t("seller.noConditionRecords")}</span>
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-[#06038D]/40">此品相目前無市場均價資料</p>
+                        <p className="text-xs text-[#06038D]/40">{t("seller.noMarketPriceData")}</p>
                       )}
                     </div>
                   )}
-                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="最低 HKD 4.00"
+                  <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder={t("seller.editListing.minPrice")}
                     value={listingForm.price}
                     onChange={(e) => setListingForm(p => ({ ...p, price: e.target.value }))} />
                   {listingForm.price && parseFloat(listingForm.price) < 4.00 && (
-                    <p className="text-xs text-red-400 mt-1">定價不能低於 HKD 4.00（Stripe 信用卡付款最低限額）</p>
+                    <p className="text-xs text-red-400 mt-1">{t("seller.priceTooLow")}</p>
                   )}
                   {listingForm.price && parseFloat(listingForm.price) >= 4 && conditionPriceData?.avgPrice && (() => {
                     const refPrice = conditionPriceData.avgPrice;
                     const diff = ((parseFloat(listingForm.price) - refPrice) / refPrice) * 100;
-                    const condLabel = conditionPriceData.isFallback ? 'PSA 10 市場均價' : '市場均價';
+                    const condLabel = conditionPriceData.isFallback ? t('seller.psa10MarketPrice') : t('seller.marketPrice');
                     return (
                       <p className={`text-xs mt-1 ${diff < -15 ? "text-amber-600" : diff > 15 ? "text-green-600" : "text-gray-500"}`}>
-                        {diff > 0 ? `高於${condLabel} ${diff.toFixed(0)}%` : `低於${condLabel} ${Math.abs(diff).toFixed(0)}%`}
+                        {diff > 0 ? `${t("seller.aboveMarket", { label: condLabel, pct: diff.toFixed(0) })}` : `${t("seller.belowMarket", { label: condLabel, pct: Math.abs(diff).toFixed(0) })}`}
                       </p>
                     );
                   })()}
@@ -3297,11 +3306,11 @@ export default function SellerDashboard() {
                       return (
                         <div className="mt-2 rounded-lg border p-2.5 bg-green-50 border-green-200">
                           <div className="flex items-center justify-between text-xs font-semibold text-green-800">
-                            <span>管理員帳號（免平台費）</span>
-                            <span>預計平台費 HKD 0.00</span>
+                            <span>{t("seller.adminFeeExempt")}</span>
+                            <span>{t("seller.estimatedFee")} HKD 0.00</span>
                           </div>
                           <div className="flex items-center justify-between text-xs mt-1 opacity-75 text-green-800">
-                            <span>預計實收</span>
+                            <span>{t("seller.estimatedReceive")}</span>
                             <span className="font-bold">HKD {price.toFixed(2)}</span>
                           </div>
                         </div>
@@ -3332,11 +3341,11 @@ export default function SellerDashboard() {
                     return (
                       <div className={`mt-2 rounded-lg border p-2.5 ${tierBg}`}>
                         <div className={`flex items-center justify-between text-xs font-semibold ${tierText}`}>
-                          <span>適用第 {tier} 級費率（{ratePercent}%）</span>
-                          <span>預計平台費 -HKD {fee.toFixed(2)}</span>
+                          <span>{t("seller.feeTier", { tier, rate: ratePercent })}</span>
+                          <span>{t("seller.estimatedFeeAmount", { amount: fee.toFixed(2) })}</span>
                         </div>
                         <div className={`flex items-center justify-between text-xs mt-1 opacity-75 ${tierText}`}>
-                          <span>預計實收</span>
+                          <span>{t("seller.estimatedReceive")}</span>
                           <span className="font-bold">HKD {receivable.toFixed(2)}</span>
                         </div>
                       </div>
@@ -3351,39 +3360,39 @@ export default function SellerDashboard() {
                   {/* Market price reference */}
                   {selectedCard && conditionPriceData?.avgPrice && (
                     <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3">
-                      <p className="text-xs font-semibold text-[#06038D] mb-1">📊 市場參考價</p>
+                      <p className="text-xs font-semibold text-[#06038D] mb-1">📊 {t("seller.marketRefPrice")}</p>
                       <p className="text-sm font-bold text-[#06038D]">
                         HKD {conditionPriceData.avgPrice.toLocaleString()}
-                        <span className="text-xs font-normal text-[#06038D]/50 ml-1">(基於 {conditionPriceData.recordCount} 筆成交)</span>
+                        <span className="text-xs font-normal text-[#06038D]/50 ml-1">{t("seller.basedOnRecords", { count: conditionPriceData.recordCount })}</span>
                       </p>
                     </div>
                   )}
                   {/* Starting bid */}
                   <div>
-                    <Label className="text-[#06038D] font-semibold">起標價（HKD）*</Label>
-                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="例：100"
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.startingBid")}</Label>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder={t("seller.newListing.startingBidPlaceholder")}
                       value={listingForm.startingBid}
                       onChange={(e) => setListingForm(p => ({ ...p, startingBid: e.target.value }))} />
                   </div>
                   {/* Reserve price */}
                   <div>
-                    <Label className="text-[#06038D] font-semibold">底價（HKD，選填）</Label>
-                    <p className="text-[10px] text-[#06038D]/50 mb-1">競價須達底價才會成交，底價不公開顯示</p>
-                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="留空表示無底價"
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.reservePrice")}</Label>
+                    <p className="text-[10px] text-[#06038D]/50 mb-1">{t("seller.newListing.reservePriceHint")}</p>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder={t("seller.newListing.reservePricePlaceholder")}
                       value={listingForm.reservePrice}
                       onChange={(e) => setListingForm(p => ({ ...p, reservePrice: e.target.value }))} />
                   </div>
                   {/* Buy now price */}
                   <div>
-                    <Label className="text-[#06038D] font-semibold">即買價（HKD，選填）</Label>
-                    <p className="text-[10px] text-[#06038D]/50 mb-1">買家可以此價直接結標購買</p>
-                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder="留空表示無即買價"
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.buyNowPrice")}</Label>
+                    <p className="text-[10px] text-[#06038D]/50 mb-1">{t("seller.newListing.buyNowPriceHint")}</p>
+                    <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="1" step="1" placeholder={t("seller.newListing.buyNowPricePlaceholder")}
                       value={listingForm.buyNowPrice}
                       onChange={(e) => setListingForm(p => ({ ...p, buyNowPrice: e.target.value }))} />
                   </div>
                   {/* Bid increment */}
                   <div>
-                    <Label className="text-[#06038D] font-semibold">最低加價幅度（HKD）</Label>
+                    <Label className="text-[#06038D] font-semibold">{t("seller.newListing.bidIncrement")}</Label>
                     <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]" type="number" min="1" step="1"
                       value={listingForm.bidIncrement}
                       onChange={(e) => setListingForm(p => ({ ...p, bidIncrement: e.target.value }))} />
@@ -3392,7 +3401,7 @@ export default function SellerDashboard() {
                   <div className="space-y-3">
                     {/* Duration selector */}
                     <div>
-                      <Label className="text-[#06038D] font-semibold">拍賣天數 *</Label>
+                      <Label className="text-[#06038D] font-semibold">{t("seller.newListing.auctionDays")}</Label>
                       <div className="mt-2 grid grid-cols-2 gap-3">
                         {[3, 7].map((days) => (
                           <button
@@ -3425,14 +3434,14 @@ export default function SellerDashboard() {
                                 : 'border-[#06038D]/30 bg-white text-[#06038D] hover:border-[#06038D]/60'
                             }`}
                           >
-                            {days} 日
+                            {days} {t("common.days")}
                           </button>
                         ))}
                       </div>
                     </div>
                     {/* Start time - 24h time only, date = today */}
                     <div>
-                      <Label className="text-[#06038D] font-semibold">開始時間（24小時制，留空表示立即開始）</Label>
+                      <Label className="text-[#06038D] font-semibold">{t("seller.newListing.startTime")}</Label>
                       <Input
                         className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] focus:border-[#06038D]"
                         type="time"
@@ -3466,17 +3475,17 @@ export default function SellerDashboard() {
                         {!listingForm.auctionStartAt && (
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200">
                             <span className="text-green-600 text-xs">⚡</span>
-                            <span className="text-xs font-semibold text-green-700">立即開始</span>
-                            <span className="text-xs text-green-600">— 上架後立即開始拍賣</span>
+                            <span className="text-xs font-semibold text-green-700">{t("seller.newListing.startNow")}</span>
+                            <span className="text-xs text-green-600">— {t("seller.newListing.startNowDesc")}</span>
                           </div>
                         )}
                         <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${new Date(listingForm.auctionEndAt) <= new Date() ? 'bg-red-50 border-red-200' : 'bg-[#06038D]/5 border-[#06038D]/20'}`}>
-                          <span className="text-xs text-[#06038D]/60">預計結標時間：</span>
+                          <span className="text-xs text-[#06038D]/60">{t("seller.newListing.estimatedEndTime")}：</span>
                           <span className={`text-xs font-semibold ${new Date(listingForm.auctionEndAt) <= new Date() ? 'text-red-600' : 'text-[#06038D]'}`}>
                             {new Date(listingForm.auctionEndAt).toLocaleString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                           </span>
                           {new Date(listingForm.auctionEndAt) <= new Date() && (
-                            <span className="text-xs text-red-500 ml-1">⚠️ 結標時間已過去，請重新設定</span>
+                            <span className="text-xs text-red-500 ml-1">⚠️ {t("seller.newListing.endTimePast")}</span>
                           )}
                         </div>
                       </div>
@@ -3491,7 +3500,7 @@ export default function SellerDashboard() {
                       <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
                         <div>
                           <p className="text-sm font-medium text-[#06038D]">{t("seller.newListing.price.allowOffers")}</p>
-                          <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                          <p className="text-xs text-[#06038D]/50">{t("seller.newListing.acceptOffersHint")}</p>
                         </div>
                         <button
                           type="button"
@@ -3507,8 +3516,8 @@ export default function SellerDashboard() {
                       </div>
                       {listingForm.acceptOffers && (
                         <div>
-                          <Label className="text-[#06038D] font-semibold">最低接受出價（HKD，選填）</Label>
-                          <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder="留空表示不設下限"
+                          <Label className="text-[#06038D] font-semibold">{t("seller.newListing.minOffer")}</Label>
+                          <Input className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D]" type="number" min="4" step="0.01" placeholder={t("seller.newListing.minOfferPlaceholder")}
                             value={listingForm.minOffer}
                             onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))} />
                         </div>
@@ -3526,7 +3535,7 @@ export default function SellerDashboard() {
                   {listingImages.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                       {listingImages.map((url, i) => (
-                        <LazyImage key={i} src={url} alt={`圖片 ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
+                        <LazyImage key={i} src={url} alt={`${t("seller.newListing.imageAlt")} ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0" />
                       ))}
                     </div>
                   )}
@@ -3537,7 +3546,7 @@ export default function SellerDashboard() {
                     </div>
                     {selectedCard && (
                       <div className="flex items-center justify-between px-4 py-3">
-                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">關聯卡牌</span>
+                        <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.newListing.associateCard")}</span>
                         <span className="text-sm text-[#06038D] text-right">{selectedCard.name}</span>
                       </div>
                     )}
@@ -3563,14 +3572,14 @@ export default function SellerDashboard() {
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
                           <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.tabs.buyerOffers")}</span>
-                          <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `接受${listingForm.minOffer ? `（最低 HKD ${listingForm.minOffer}）` : ""}` : "不接受"}</span>
+                          <span className="text-sm text-[#06038D]">{listingForm.acceptOffers ? `${t("seller.newListing.acceptsOffers")}${listingForm.minOffer ? `（${t("seller.newListing.minOffer")} HKD ${listingForm.minOffer}）` : ""}` : t("seller.newListing.notAccepting")}</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">上架模式</span>
-                          <span className="text-sm font-bold text-[#06038D]">🔨 拍賣</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.newListing.listingMode")}</span>
+                          <span className="text-sm font-bold text-[#06038D]">🔨 {t("seller.newListing.mode.auction")}</span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
                           <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.card.startingBid")}</span>
@@ -3578,25 +3587,25 @@ export default function SellerDashboard() {
                         </div>
                         {listingForm.reservePrice && (
                           <div className="flex items-center justify-between px-4 py-3">
-                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">底價</span>
-                            <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.reservePrice).toLocaleString()} (不公開)</span>
+                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.newListing.reservePrice")}</span>
+                            <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.reservePrice).toLocaleString()} ({t("seller.newListing.reservePriceHidden")})</span>
                           </div>
                         )}
                         {listingForm.buyNowPrice && (
                           <div className="flex items-center justify-between px-4 py-3">
-                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">即買價</span>
+                            <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.newListing.buyNowPrice")}</span>
                             <span className="text-sm font-semibold text-[#06038D]">HKD {parseFloat(listingForm.buyNowPrice).toLocaleString()}</span>
                           </div>
                         )}
                         <div className="flex items-center justify-between px-4 py-3">
-                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">加價幅度</span>
+                          <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.newListing.bidIncrement")}</span>
                           <span className="text-sm text-[#06038D]">HKD {parseFloat(listingForm.bidIncrement || "10").toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
                           <span className="text-xs text-[#06038D]/50 w-20 flex-shrink-0">{t("seller.auctions.editRejected.auctionEndLabel")}</span>
                           <span className="text-sm text-[#06038D]">{listingForm.auctionEndAt
                             ? new Date(listingForm.auctionEndAt).toLocaleString('zh-HK')
-                            : new Date(Date.now() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000).toLocaleString('zh-HK') + '（上架後起算）'
+                            : new Date(Date.now() + (listingForm.auctionDurationDays || 7) * 24 * 60 * 60 * 1000).toLocaleString('zh-HK') + `（${t('seller.newListing.afterListing')}）`
                           }</span>
                         </div>
                       </>
@@ -3607,7 +3616,7 @@ export default function SellerDashboard() {
                       <div className="flex items-center justify-between p-3 rounded-xl border border-[#06038D]/20 bg-[#06038D]/5">
                         <div>
                           <p className="text-sm font-medium text-[#06038D]">{t("seller.newListing.price.allowOffers")}</p>
-                          <p className="text-xs text-[#06038D]/50">買家可提交低於定價的出價</p>
+                          <p className="text-xs text-[#06038D]/50">{t("seller.newListing.acceptOffersHint")}</p>
                         </div>
                         <button
                           type="button"
@@ -3623,13 +3632,13 @@ export default function SellerDashboard() {
                       </div>
                       {listingForm.acceptOffers && (
                         <div>
-                          <Label className="text-[#06038D] font-semibold text-xs">最低接受出價（HKD，選填）</Label>
+                          <Label className="text-[#06038D] font-semibold text-xs">{t("seller.newListing.minOffer")}</Label>
                           <Input
                             className="mt-1 bg-white border-[#06038D]/30 text-[#06038D] placeholder:text-gray-400 focus:border-[#06038D] h-9 text-sm"
                             type="number"
                             min="4"
                             step="0.01"
-                            placeholder="留空表示不設下限"
+                            placeholder={t("seller.newListing.minOfferPlaceholder")}
                             value={listingForm.minOffer}
                             onChange={(e) => setListingForm(p => ({ ...p, minOffer: e.target.value }))}
                           />
@@ -3639,11 +3648,11 @@ export default function SellerDashboard() {
                   )}
                   <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-xs text-[#06038D]">
                     {isAdmin ? (
-                      <p className="font-medium">確認後直接公開上架</p>
+                      <p className="font-medium">{t("seller.newListing.confirmPublish")}</p>
                     ) : (
                       <>
-                        <p className="font-medium">提交後立即公開上架</p>
-                        <p className="mt-0.5">商品提交後將自動公開，展示於市集中供買家瀏覽。</p>
+                        <p className="font-medium">{t("seller.newListing.confirmPublishAuction")}</p>
+                        <p className="mt-0.5">{t("seller.newListing.publishDesc")}</p>
                       </>
                     )}
                   </div>
@@ -3666,12 +3675,12 @@ export default function SellerDashboard() {
                       </div>
                     </div>
                     <span className="text-xs text-[#06038D]/80 leading-normal">
-                      我已閱讀並同意
+                      {t("seller.newListing.agreeTerms")}
                       <a href="/auction/terms" target="_blank" rel="noopener noreferrer"
                         className="font-semibold text-[#06038D] underline underline-offset-2 hover:text-[#06038D]/70 mx-1"
                         onClick={(e) => e.stopPropagation()}
-                      >買賣條款</a>
-                      ，包括平台服務費率、拍賣規則及退款政策。
+                      >{t("seller.newListing.termsLink")}</a>
+                      {t("seller.newListing.termsDesc")}
                     </span>
                   </label>
                 </div>
@@ -3711,7 +3720,7 @@ export default function SellerDashboard() {
                   setListingStep(s => (s + 1) as 1 | 2 | 3);
                 }}
               >
-                下一步
+                {t("common.nextStep")}
               </Button>
             )}
             {listingStep === 3 && (
@@ -3776,7 +3785,7 @@ export default function SellerDashboard() {
                   }
                 }}
               >
-                {(createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending) ? "提交中..." : "確認上架"}
+                {(createListingMutation.isPending || adminCreateListingMutation.isPending || createAuctionMutation.isPending) ? t("common.submitting") : t("seller.newListing.confirmList")}
               </Button>
             )}
           </div>
@@ -3803,48 +3812,48 @@ export default function SellerDashboard() {
           <DialogHeader>
             <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2">
               <Gavel className="w-5 h-5" />
-              拍賣賣家條款
+              {t("seller.auctionTerms.title")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-white/90 max-h-72 overflow-y-auto pr-1">
-            <p className="font-semibold text-white">上架拍賣前，請仔細閱讀並同意以下賣家責任條款：</p>
+            <p className="font-semibold text-white">{t("seller.auctionTerms.intro")}</p>
             <div className="space-y-2">
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">✅ 商品真實性保證</p>
-                <p className="text-xs">賣家須確保所上架商品為本人合法持有，商品描述、品相評級及圖片須如實反映商品狀況，不得虛假陳述或誇大。若商品為仿冒品或描述與實物不符，平台有權立即下架並封禁帳戶。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">✅ {t("seller.auctionTerms.authenticityTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.authenticityContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">📦 出貨責任</p>
-                <p className="text-xs">拍賣結標且買家完成付款後，賣家須於 <strong>3 個工作天內</strong>安排出貨，並在平台填寫有效追蹤號碼。逾期未出貨將被記錄違規，影響帳戶評分及上架資格。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">📦 {t("seller.auctionTerms.shippingTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.shippingContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🚫 撤拍限制</p>
-                <p className="text-xs">拍賣一經上架並有人出價後，賣家<strong>不得</strong>無故撤回拍賣。如需撤拍，須提前聯絡平台客服說明原因。惡意撤拍將視同違規處理，首次警告，再犯將限制上架資格。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🚫 {t("seller.auctionTerms.withdrawTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.withdrawContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">💰 平台服務費</p>
-                <p className="text-xs">每筆成功成交的拍賣，平台將收取成交金額 <strong>5%</strong> 作為服務費，於買家付款後自動扣除。賣家實際到手金額為成交價扣除服務費後的餘額。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">💰 {t("seller.auctionTerms.feeTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.feeContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ 新賣家限制</p>
-                <p className="text-xs">完成成交少於 5 次的新賣家，拍賣起拍價上限為 <strong>HK$5,000</strong>。起拍價超過 HK$10,000 的拍賣屬於高價風控監控範圍，將自動公開並通知管理員監控。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ {t("seller.auctionTerms.newSellerTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.newSellerContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ 違規處理</p>
-                <p className="text-xs">賣家違規（虛假描述、惡意撤拍、逾期不出貨等）將依以下程序處理：首次違規：警告 → 第二次：7 天限制上架 → 第三次：30 天封禁 → 第四次：永久封禁。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ {t("seller.auctionTerms.violationTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.violationContent")}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🤝 買賣雙方保障</p>
-                <p className="text-xs">平台設有買賣雙方評價系統。拍賣完成後，買家可對賣家評分，評分記錄公開顯示於賣家個人頁面。賣家亦可對買家評分，共同維護平台交易環境。</p>
+                <p className="font-bold text-[#FEDD00] text-xs mb-1">🤝 {t("seller.auctionTerms.protectionTitle")}</p>
+                <p className="text-xs">{t("seller.auctionTerms.protectionContent")}</p>
               </div>
             </div>
             <p className="text-xs text-white/60 mt-2">
-              如需查看完整條款，請訪問 <Link href="/auction/terms" className="text-[#FEDD00] underline">拍賣條款頁面</Link>
+              {t("seller.auctionTerms.fullTermsLink")} <Link href="/auction/terms" className="text-[#FEDD00] underline">{t("seller.auctionTerms.pageLink")}</Link>
             </p>
           </div>
           <DialogFooter className="gap-2 mt-2">
             <Button variant="outline" onClick={() => { setShowSellerTerms(false); setPendingAuctionSubmit(false); }} className="border-white/30 text-white hover:bg-white/10 bg-transparent">
-              取消
+              {t("common.cancel")}
             </Button>
             <Button
               className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
@@ -3852,7 +3861,7 @@ export default function SellerDashboard() {
               disabled={agreeSellerTermsMutation.isPending}
             >
               {agreeSellerTermsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
-              我同意並繼續上架
+              {t("seller.auctionTerms.agreeAndList")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3862,17 +3871,17 @@ export default function SellerDashboard() {
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(d => ({ ...d, open: o }))}>
         <DialogContent bottomSheet className="sm:max-w-md bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle className="text-[#06038d] font-bold">填寫出貨資料</DialogTitle>
+            <DialogTitle className="text-[#06038d] font-bold">{t("seller.shipping.title")}</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            {shipDialog.orderNo && <p className="text-xs text-gray-500">訂單號：<span className="font-mono font-semibold text-[#06038d]">{shipDialog.orderNo}</span></p>}
+            {shipDialog.orderNo && <p className="text-xs text-gray-500">{t("seller.shipping.orderNo")}：<span className="font-mono font-semibold text-[#06038d]">{shipDialog.orderNo}</span></p>}
             {/* 買家收件資訊 */}
             {shipDialog.shippingName && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1">
-                <p className="text-xs font-semibold text-[#06038d] mb-1">📦 買家收件資訊</p>
-                <p className="text-xs text-gray-700">收件人：{shipDialog.shippingName}{shipDialog.shippingPhone ? ` · ${shipDialog.shippingPhone}` : ""}</p>
+                <p className="text-xs font-semibold text-[#06038d] mb-1">📦 {t("seller.shipping.buyerInfo")}</p>
+                <p className="text-xs text-gray-700">{t("seller.recipient")}：{shipDialog.shippingName}{shipDialog.shippingPhone ? ` · ${shipDialog.shippingPhone}` : ""}</p>
                 {shipDialog.shippingAddress && (
-                  <p className="text-xs text-gray-700">地址：{(() => {
+                  <p className="text-xs text-gray-700">{t("seller.address")}：{(() => {
                     try {
                       const addr = typeof shipDialog.shippingAddress === "string" ? JSON.parse(shipDialog.shippingAddress) : shipDialog.shippingAddress;
                       if (addr && typeof addr === "object") {
@@ -3888,27 +3897,27 @@ export default function SellerDashboard() {
             )}
             {/* 送貨方式提示 */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-              <p className="text-xs font-semibold text-[#06038d] mb-1">📦 送貨方式說明</p>
-              <p className="text-xs text-gray-700">本平台僅支援以下兩種送貨方式，<strong>不支援面交或門市自取</strong>：</p>
+              <p className="text-xs font-semibold text-[#06038d] mb-1">📦 {t("seller.shipping.methodTitle")}</p>
+              <p className="text-xs text-gray-700">{t("seller.shipping.methodDesc")}</p>
               <ul className="text-xs text-gray-600 mt-1 space-y-0.5 pl-2">
-                <li>🚚 <strong>順豐速運</strong>（運費到付）：買家收貨時支付運費，請填寫有效追蹤號碼</li>
-                <li>📮 <strong>香港郵政（平郵）</strong>：訂單金額已包含 HK$10 郵費，平郵無追蹤號碼，追蹤號碼欄可留空</li>
+                <li>🚚 <strong>{t("seller.shipping.sfExpress")}</strong>：{t("seller.shipping.sfExpressDesc")}</li>
+                <li>📮 <strong>{t("seller.shipping.hkPost")}</strong>：{t("seller.shipping.hkPostDesc")}</li>
               </ul>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">送貨方式 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">{t("seller.shipping.methodLabel")} <span className="text-red-500">*</span></Label>
               <Select value={shipForm.shippingMethod} onValueChange={(v) => setShipForm(f => ({ ...f, shippingMethod: v }))}>
-                <SelectTrigger className="bg-white border-gray-300 text-gray-900"><SelectValue placeholder="選擇送貨方式" /></SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300 text-gray-900"><SelectValue placeholder={t("seller.shipping.selectMethod")} /></SelectTrigger>
                 <SelectContent>
                   {CARRIERS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">追蹤號碼 {shipForm.shippingMethod !== 'hk_post' && <span className="text-red-500">*</span>}</Label>
+              <Label className="text-gray-800 font-medium">{t("seller.shipping.trackingLabel")} {shipForm.shippingMethod !== 'hk_post' && <span className="text-red-500">*</span>}</Label>
               <Input
                 className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
-                placeholder={shipForm.shippingMethod === 'hk_post' ? '平郵可留空（如有追蹤號可填入）' : '例：SF1234567890'}
+                placeholder={shipForm.shippingMethod === 'hk_post' ? t('seller.shipping.hkPostTrackingPlaceholder') : t('seller.shipping.sfExpressPlaceholder')}
                 value={shipForm.trackingNumber}
                 onChange={(e) => setShipForm(f => ({ ...f, trackingNumber: e.target.value }))}
               />
@@ -3921,18 +3930,18 @@ export default function SellerDashboard() {
                   <a href={url} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs text-[#06038d] hover:underline mt-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    點擊預覽追蹤連結
+                    {t("seller.shipping.previewTracking")}
                   </a>
                 );
               })()}
             </div>
             {/* Shipping proof image upload */}
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">出貨憑證圖片 <span className="text-red-500">*</span></Label>
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ 必須上傳出貨憑證（如快遞單、收據截圖），否則無法提交</p>
+              <Label className="text-gray-800 font-medium">{t("seller.shipping.proofLabel")} <span className="text-red-500">*</span></Label>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ {t("seller.shipping.proofRequired")}</p>
               {shipForm.shippingImageUrl ? (
                 <div className="relative">
-                  <img src={shipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
+                  <img src={shipForm.shippingImageUrl} alt={t("seller.shipping.proofAlt")} className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
                   <button
                     type="button"
                     onClick={() => setShipForm(f => ({ ...f, shippingImageUrl: "" }))}
@@ -3949,8 +3958,8 @@ export default function SellerDashboard() {
                   ) : (
                     <div className="flex flex-col items-center gap-1 text-[#06038d]">
                       <ImagePlus className="w-6 h-6" />
-                      <span className="text-xs font-medium">點擊上傳出貨照片</span>
-                      <span className="text-xs text-gray-400">支援 JPG、PNG（最大 10MB）</span>
+                      <span className="text-xs font-medium">{t("seller.shipping.uploadPhoto")}</span>
+                      <span className="text-xs text-gray-400">{t("seller.shipping.uploadHint")}</span>
                     </div>
                   )}
                   <input
@@ -3961,7 +3970,7 @@ export default function SellerDashboard() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 10 * 1024 * 1024) { toast.error("圖片大小不能超過 10MB"); return; }
+                      if (file.size > 10 * 1024 * 1024) { toast.error(t("seller.shipping.fileSizeError")); return; }
                       setShipImageUploading(true);
                       try {
                         const reader = new FileReader();
@@ -3998,7 +4007,7 @@ export default function SellerDashboard() {
                 shippingImageUrl: shipForm.shippingImageUrl || undefined,
               })}
             >
-              {markShippedMutation.isPending ? "處理中..." : "確認出貨"}
+              {markShippedMutation.isPending ? t("common.processing") : t("seller.shipping.confirmShip")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -4015,7 +4024,7 @@ export default function SellerDashboard() {
               <div className="w-8 h-8 bg-[#FEDD00] rounded-lg flex items-center justify-center">
                 <Trash2 className="w-4 h-4 text-[#06038D]" />
               </div>
-              <span className="text-white font-black text-lg">確認刪除商品</span>
+              <span className="text-white font-black text-lg">{t("seller.deleteListing.title")}</span>
             </div>
           </div>
           {/* Body */}
@@ -4027,7 +4036,7 @@ export default function SellerDashboard() {
               return (
                 <>
                   <p className="text-sm text-gray-700">
-                    您即將永久刪除以下 <strong className="text-[#06038D]">{deletableListings.length} 件</strong>商品，此操作不可復原：
+                    {t("seller.deleteListing.desc", { count: deletableListings.length })}
                   </p>
                   <div className="border border-[#06038D]/20 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
                     {deletableListings.map((l, idx) => (
@@ -4035,12 +4044,12 @@ export default function SellerDashboard() {
                         idx % 2 === 0 ? 'bg-white' : 'bg-[#06038D]/3'
                       }`}>
                         <span className="text-[#06038D]/50 font-mono text-xs shrink-0 font-bold">#BOXIUM-{String(l.id).padStart(6, '0')}</span>
-                        <span className="text-gray-800 truncate flex-1 font-medium">{l.title || '(未命名商品)'}</span>
+                        <span className="text-gray-800 truncate flex-1 font-medium">{l.title || t('seller.deleteListing.unnamed')}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 font-medium ${
                           l.status === 'active' ? 'bg-green-100 text-green-700' :
                           'bg-gray-100 text-gray-500'
                         }`}>
-                          {l.status === 'active' ? '上架中' : '已下架'}
+                          {l.status === 'active' ? t('seller.listingActive') : t('seller.listingRemoved')}
                         </span>
                       </div>
                     ))}
@@ -4049,11 +4058,11 @@ export default function SellerDashboard() {
               );
             })()}
             <div className="bg-[#06038D]/5 border border-[#06038D]/15 rounded-xl p-3">
-              <p className="text-xs text-[#06038D] font-bold mb-1">注意事項</p>
+              <p className="text-xs text-[#06038D] font-bold mb-1">{t("seller.deleteListing.notes")}</p>
               <div className="text-xs text-[#06038D]/70 space-y-0.5">
-                <p>• 商品將從資料庫永久刪除</p>
-                <p>• 如有待付款訂單，將自動更新為已取消</p>
-                <p>• 已售出商品不會被刪除</p>
+                <p>• {t("seller.deleteListing.note1")}</p>
+                <p>• {t("seller.deleteListing.note2")}</p>
+                <p>• {t("seller.deleteListing.note3")}</p>
               </div>
             </div>
           </div>
@@ -4065,7 +4074,7 @@ export default function SellerDashboard() {
               disabled={batchDeleteMutation.isPending}
               className="border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/5"
             >
-              取消
+              {t("common.cancel")}
             </Button>
             <Button
               className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
@@ -4079,7 +4088,7 @@ export default function SellerDashboard() {
               }}
             >
               {batchDeleteMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />刪除中...</>
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{t("common.deleting")}</>
               ) : (
                 <><Trash2 className="w-4 h-4 mr-1" />{t("seller.listings.deleteConfirmTitle")}</>
               )}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // Watermark grid (same as Login/Register)
 const WatermarkGrid = () => (
@@ -30,6 +31,7 @@ const WatermarkGrid = () => (
 );
 
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [token, setToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -40,11 +42,11 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
-    if (!t) {
+    const tokenParam = params.get("token");
+    if (!tokenParam) {
       setStatus("no-token");
     } else {
-      setToken(t);
+      setToken(tokenParam);
     }
   }, []);
 
@@ -57,18 +59,18 @@ export default function ResetPassword() {
     },
     onError: (error) => {
       setStatus("error");
-      setErrorMessage(error.message || "重設密碼失敗，連結可能已過期");
+      setErrorMessage(error.message || t("resetPassword.failed"));
     },
   });
 
   const handleSubmit = () => {
     if (!token) return;
     if (newPassword.length < 8) {
-      toast.error("密碼至少需要 8 個字元");
+      toast.error(t("resetPassword.passwordTooShort"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("兩次輸入的密碼不一致");
+      toast.error(t("resetPassword.passwordMismatch"));
       return;
     }
     setStatus("loading");
@@ -106,14 +108,14 @@ export default function ResetPassword() {
             <div className="flex justify-center mb-4">
               <XCircle className="w-14 h-14 text-red-400" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">無效的連結</h2>
-            <p className="text-sm text-white/60 mb-6">此密碼重設連結無效或已過期。</p>
+            <h2 className="text-xl font-bold text-white mb-2">{t("resetPassword.invalidLink")}</h2>
+            <p className="text-sm text-white/60 mb-6">{t("resetPassword.invalidLinkDesc")}</p>
             <Button
               className="w-full font-semibold"
               style={{ background: "#06038d", color: "white" }}
               onClick={() => setLocation("/login")}
             >
-              返回登入
+              {t("resetPassword.backToLogin")}
             </Button>
           </>
         )}
@@ -125,17 +127,17 @@ export default function ResetPassword() {
                 <KeyRound className="w-7 h-7 text-yellow-400" />
               </div>
             </div>
-            <h2 className="text-xl font-bold text-white mb-1">重設密碼</h2>
-            <p className="text-sm text-white/60 mb-6">請輸入您的新密碼</p>
+            <h2 className="text-xl font-bold text-white mb-1">{t("resetPassword.title")}</h2>
+            <p className="text-sm text-white/60 mb-6">{t("resetPassword.subtitle")}</p>
 
             <div className="space-y-4 text-left">
               <div className="space-y-1.5">
-                <Label htmlFor="new-password" className="text-white/80 text-sm">新密碼</Label>
+                <Label htmlFor="new-password" className="text-white/80 text-sm">{t("resetPassword.newPassword")}</Label>
                 <div className="relative">
                   <Input
                     id="new-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="至少 8 個字元"
+                    placeholder={t("resetPassword.passwordPlaceholder")}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     disabled={status === "loading"}
@@ -152,11 +154,11 @@ export default function ResetPassword() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirm-password" className="text-white/80 text-sm">確認新密碼</Label>
+                <Label htmlFor="confirm-password" className="text-white/80 text-sm">{t("resetPassword.confirmPassword")}</Label>
                 <Input
                   id="confirm-password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="再次輸入新密碼"
+                  placeholder={t("resetPassword.confirmPlaceholder")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={status === "loading"}
@@ -172,8 +174,8 @@ export default function ResetPassword() {
               disabled={status === "loading" || !newPassword || !confirmPassword}
             >
               {status === "loading" ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />重設中...</>
-              ) : "確認重設密碼"}
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("resetPassword.resetting")}</>
+              ) : t("resetPassword.confirmReset")}
             </Button>
           </>
         )}
@@ -183,8 +185,8 @@ export default function ResetPassword() {
             <div className="flex justify-center mb-4">
               <CheckCircle className="w-14 h-14 text-green-400" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">密碼已重設！</h2>
-            <p className="text-sm text-white/60 mb-6">您的密碼已成功更新，即將跳轉至登入頁面...</p>
+            <h2 className="text-xl font-bold text-white mb-2">{t("resetPassword.successTitle")}</h2>
+            <p className="text-sm text-white/60 mb-6">{t("resetPassword.successDesc")}</p>
             <div className="flex justify-center">
               <Loader2 className="w-5 h-5 text-white/40 animate-spin" />
             </div>
@@ -196,14 +198,14 @@ export default function ResetPassword() {
             <div className="flex justify-center mb-4">
               <XCircle className="w-14 h-14 text-red-400" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">重設失敗</h2>
+            <h2 className="text-xl font-bold text-white mb-2">{t("resetPassword.errorTitle")}</h2>
             <p className="text-sm text-white/60 mb-6">{errorMessage}</p>
             <Button
               className="w-full font-semibold"
               style={{ background: "#06038d", color: "white" }}
               onClick={() => setLocation("/login")}
             >
-              返回登入
+              {t("resetPassword.backToLogin")}
             </Button>
           </>
         )}

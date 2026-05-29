@@ -71,7 +71,7 @@ export default function Wishlist() {
             className="bg-[#06038d] hover:bg-[#0a06b5] text-white"
             onClick={() => setLocation("/login")}
           >
-            立即登入
+            {t("wishlist.loginNow")}
           </Button>
         </div>
       </div>
@@ -88,13 +88,13 @@ export default function Wishlist() {
             className="flex items-center gap-1 text-white/70 hover:text-white text-sm transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            返回商城
+            {t("sellerPublicProfile.backToMarket")}
           </button>
           <div className="flex items-center gap-2">
             <Heart className="w-5 h-5 fill-red-400 text-red-400" />
             <h1 className="text-lg font-bold">{t("wishlist.myWishlist")}</h1>
           </div>
-          <span className="text-sm text-white/60 ml-auto">共 {wishlistItems.length} 件商品</span>
+          <span className="text-sm text-white/60 ml-auto">{t("wishlist.totalItems", { n: wishlistItems.length })}</span>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function Wishlist() {
               className="bg-[#06038d] hover:bg-[#0a06b5] text-white mt-2"
             >
               <ShoppingBag className="w-4 h-4 mr-2" />
-              前往商城
+              {t("wishlist.goToMarket")}
             </Button>
           </div>
         ) : (
@@ -182,7 +182,7 @@ export default function Wishlist() {
                       HK${Number(listing.priceHkd).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-400">
-                      收藏於 {new Date(item.createdAt).toLocaleDateString("zh-HK")}
+                      {t("wishlist.savedOn", { date: new Date(item.createdAt).toLocaleDateString() })}
                     </p>
                   </div>
                 </div>

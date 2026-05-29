@@ -2,6 +2,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Pause, Play, CheckCircle, XCircle, X, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 
 interface BatchTaskProgressBarProps {
@@ -34,6 +35,7 @@ export function BatchTaskProgressBar({
   isPauseLoading = false,
   isResumeLoading = false,
 }: BatchTaskProgressBarProps) {
+  const { t } = useTranslation();
   const [startTime] = useState(Date.now());
   const [estimatedTime, setEstimatedTime] = useState<string>("");
   const [processingSpeed, setProcessingSpeed] = useState<string>("");
@@ -105,13 +107,13 @@ export function BatchTaskProgressBar({
             {/* Title and Status */}
             <div>
               <h3 className="font-bold text-base">
-                {taskType} 批量更新
+                {taskType} {t("batch.batchUpdate")}
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                {isRunning && "正在處理中..."}
-                {isPaused && "已暫停"}
-                {isCompleted && "✨ 完成！"}
-                {isFailed && "處理失敗"}
+                {isRunning && t("batch.processing")}
+                {isPaused && t("batch.paused")}
+                {isCompleted && t("batch.completed")}
+                {isFailed && t("batch.failed")}
               </p>
             </div>
           </div>
@@ -149,7 +151,7 @@ export function BatchTaskProgressBar({
                     className="hover:scale-105 transition-transform"
                   >
                     <X className="w-4 h-4 mr-1" />
-                    取消
+                    {t("common.cancel")}
                   </Button>
                 )}
               </>
@@ -193,7 +195,7 @@ export function BatchTaskProgressBar({
           <details className="text-xs bg-red-50 dark:bg-red-950 rounded-lg p-3 border border-red-200 dark:border-red-800">
             <summary className="cursor-pointer text-red-700 dark:text-red-400 font-semibold flex items-center gap-2 hover:text-red-800 dark:hover:text-red-300">
               <AlertCircle className="w-4 h-4" />
-              錯誤詳情 ({progress.errors.length} 個)
+              {t("batch.error")}詳情 ({progress.errors.length} 個)
             </summary>
             <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
               {progress.errors.slice(0, 10).map((error, index) => (
@@ -204,7 +206,7 @@ export function BatchTaskProgressBar({
               ))}
               {progress.errors.length > 10 && (
                 <div className="text-center text-gray-500 dark:text-gray-400 py-2">
-                  還有 {progress.errors.length - 10} 個錯誤未顯示
+                  還有 {progress.errors.length - 10} 個{t("batch.error")}未顯示
                 </div>
               )}
             </div>
@@ -215,7 +217,7 @@ export function BatchTaskProgressBar({
         {showCelebration && isCompleted && (
           <div className="text-center py-2 bg-green-100 dark:bg-green-900 rounded-lg animate-bounce">
             <p className="text-green-700 dark:text-green-300 font-semibold">
-              🎉 批量更新完成！成功處理 {progress.successCount} 張卡牌
+              🎉 批量更新完成！{t("batch.success")}處理 {progress.successCount} 張卡牌
             </p>
           </div>
         )}

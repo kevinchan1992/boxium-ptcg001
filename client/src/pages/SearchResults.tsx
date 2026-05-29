@@ -115,19 +115,19 @@ export default function SearchResults() {
   // SEO: Update document title and meta tags
   useEffect(() => {
     if (query) {
-      document.title = `搜尋「${query}」的 TCG 卡牌價格 - BOXIUM 市場格價平台`;
+      document.title = t("searchResults.seo.titleWithQuery", { query });
       
       let metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', `在 BOXIUM 搜尋「${query}」相關的 TCG 卡牌，查看 PSA 10 價格、SNKRDUNK 交易記錄和市場趨勢分析。`);
+        metaDesc.setAttribute('content', t("searchResults.seo.descWithQuery", { query }));
       }
       
       let metaKeywords = document.querySelector('meta[name="keywords"]');
       if (metaKeywords) {
-        metaKeywords.setAttribute('content', `${query},TCG 卡牌,集換式卡牌,PSA 10,卡牌價格,SNKRDUNK,市場格價`);
+        metaKeywords.setAttribute('content', t("searchResults.seo.keywordsWithQuery", { query }));
       }
     } else {
-      document.title = '搜尋 TCG 卡牌價格 - BOXIUM 市場格價平台';
+      document.title = t("searchResults.seo.title");
     }
   }, [query]);
 
@@ -187,13 +187,13 @@ export default function SearchResults() {
         {/* Results Header with H1 */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-            {query ? `搜尋「${query}」的 TCG 卡牌價格` : '搜尋 TCG 卡牌價格'}
+            {query ? t("searchResults.header.titleWithQuery", { query }) : t("searchResults.header.title")}
           </h1>
           {isLoading ? (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">{t("searchResults.header.loading")}</p>
           ) : (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
-              找到 {searchResults.length} 張卡牌
+              {t("searchResults.header.found", { count: searchResults.length })}
             </p>
           )}
         </div>
@@ -233,8 +233,8 @@ export default function SearchResults() {
           <>
             {/* Results count and page info */}
             <div className="mb-4 text-sm text-muted-foreground flex justify-between items-center">
-              <span>第 {currentPage} 頁 / 共 {totalPages} 頁（總共 {totalResults} 張卡牌）</span>
-              <span>顯示 {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, totalResults)} 張</span>
+              <span>{t("searchResults.pagination.pageInfo", { page: currentPage, total: totalPages, count: totalResults })}</span>
+              <span>{t("searchResults.pagination.showing", { from: (currentPage - 1) * limit + 1, to: Math.min(currentPage * limit, totalResults) })}</span>
             </div>
             
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
@@ -248,7 +248,7 @@ export default function SearchResults() {
                   {card.imageUrl ? (
                     <img
                       src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像`}
+                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("searchResults.card.imageAlt")}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
@@ -261,7 +261,7 @@ export default function SearchResults() {
                 <div className="p-1.5 sm:p-2 flex flex-col">
                   {card.productType === 'sealed_product' && (
                     <span className="inline-block text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded mb-0.5 font-medium">
-                      卡盒
+                      {t("searchResults.card.sealedProduct")}
                     </span>
                   )}
                   <h3 className="font-semibold text-foreground text-[9px] sm:text-xs mb-0 sm:mb-0.5 line-clamp-2 leading-tight">
@@ -301,7 +301,7 @@ export default function SearchResults() {
                 variant="outline"
                 size="sm"
               >
-                上一頁
+                {t("common.prevPage")}
               </Button>
               
               {/* Page numbers */}
@@ -333,7 +333,7 @@ export default function SearchResults() {
                 variant="outline"
                 size="sm"
               >
-                下一頁
+                {t("common.nextPage")}
               </Button>
             </div>
           )}
@@ -344,7 +344,7 @@ export default function SearchResults() {
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground text-base">
-                {query ? `找不到「${query}」相符的卡牌` : "請輸入搜尋關鍵字"}
+                {query ? t("searchResults.noResults.withQuery", { query }) : t("searchResults.noResults.empty")}
               </p>
             </div>
 
@@ -358,13 +358,13 @@ export default function SearchResults() {
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:150ms]" />
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:300ms]" />
                     </div>
-                    <span className="text-sm text-muted-foreground">正在尋找相似搜尋</span>
+                    <span className="text-sm text-muted-foreground">{t("searchResults.suggestions.finding")}</span>
                   </div>
                 ) : suggestions.length > 0 ? (
                   <div className="bg-card border border-border rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Lightbulb className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span className="text-sm font-medium text-foreground">您是否想搜尋：</span>
+                      <span className="text-sm font-medium text-foreground">{t("searchResults.suggestions.didYouMean")}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {suggestions.map((s) => (

@@ -94,27 +94,27 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/research" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  卡牌搜尋
+                  {t("footer.cardSearch")}
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  市場格價
+                  {t("footer.pricing")}
                 </Link>
               </li>
               <li>
                 <Link href="/marketplace" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  市集
+                  {t("footer.marketplace")}
                 </Link>
               </li>
               <li>
                 <Link href="/grading" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  PSA 鑑定
+                  {t("footer.grading")}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  平台介紹
+                  {t("footer.about")}
                 </Link>
               </li>
             </ul>
@@ -125,7 +125,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/contact" className="text-white/60 hover:text-[#FEDD00] transition-colors text-sm">
-                  聯絡我們
+                  {t("footer.contact")}
                 </Link>
               </li>
               <li>

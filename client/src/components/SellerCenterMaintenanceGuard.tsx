@@ -6,12 +6,14 @@
 import { trpc } from "@/lib/trpc";
 import { Wrench, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   children: React.ReactNode;
 }
 
 export default function SellerCenterMaintenanceGuard({ children }: Props) {
+  const { t } = useTranslation();
   const { data: accessData, isLoading } = trpc.grading.getSellerCenterAccess.useQuery();
 
   // While loading, render nothing (avoid flash)
@@ -28,19 +30,19 @@ export default function SellerCenterMaintenanceGuard({ children }: Props) {
           </div>
           {/* Title */}
           <h1 className="text-3xl font-bold text-white mb-3">
-            賣家中心維護中
+            {t("maintenance.sellerTitle")}
           </h1>
           <p className="text-white/70 mb-2 text-base leading-relaxed">
-            賣家中心目前正在進行系統維護，暫時無法上架商品或管理訂單。
+            {t("maintenance.sellerDesc")}
           </p>
           <p className="text-white/50 text-sm mb-8">
-            維護期間如有查詢，請聯絡 BOXIUM 客服。
+            {t("maintenance.contactSupport")}
           </p>
           {/* Back button */}
           <Link href="/">
             <span className="inline-flex items-center gap-2 bg-yellow-400 text-[#06038D] font-semibold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors cursor-pointer">
               <ArrowLeft className="w-4 h-4" />
-              返回首頁
+              {t("common.backToHome")}
             </span>
           </Link>
         </div>

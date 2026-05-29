@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderThread {
@@ -50,19 +51,19 @@ const ROLE_COLORS: Record<string, { badge: string; avatar: string; bubble: strin
   seller: { badge: "bg-emerald-100 text-emerald-700 border-emerald-200", avatar: "bg-emerald-100 text-emerald-700", bubble: "bg-emerald-50 border border-emerald-100" },
   admin:  { badge: "bg-violet-100 text-violet-700 border-violet-200",  avatar: "bg-violet-100 text-violet-700",  bubble: "bg-violet-50 border border-violet-100" },
 };
-const ROLE_LABELS: Record<string, string> = { buyer: "買家", seller: "賣家", admin: "管理員" };
+const getRoleLabels = (t: (k: string) => string): Record<string, string> => ({ buyer: t("common.buyer"), seller: t("common.seller"), admin: t("common.admin") });
 
 // ─── Order status labels ───────────────────────────────────────────────────────
-const STATUS_LABELS: Record<string, string> = {
-  pending_payment: "待付款",
-  paid: "已付款",
-  processing: "處理中",
-  shipped: "已出貨",
-  delivered: "已送達",
-  completed: "已完成",
-  cancelled: "已取消",
-  refunded: "已退款",
-  disputed: "爭議中",
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  pending_payment: "pendingPayment",
+  paid: "paid",
+  processing: "processing",
+  shipped: "shipped",
+  delivered: "delivered",
+  completed: "completed",
+  cancelled: "cancelled",
+  refunded: "refunded",
+  disputed: "disputed",
 };
 
 // ─── Thread List Item ─────────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ function ThreadItem({
   isActive: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const timeStr = thread.latestAt
     ? new Date(thread.latestAt).toLocaleString("zh-HK", {
         month: "numeric",
@@ -112,7 +114,7 @@ function ThreadItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1">
           <span className="text-xs font-semibold text-gray-800 truncate leading-tight">
-            {thread.listingTitle ?? `訂單 ${thread.orderNo}`}
+            {thread.listingTitle ?? `${t("common.order")} ${thread.orderNo}`}
           </span>
           {thread.unreadCount > 0 && (
             <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
@@ -122,14 +124,14 @@ function ThreadItem({
         </div>
         <div className="flex items-center gap-1 mt-0.5">
           <span className="text-[10px] text-gray-400 truncate flex-1">
-            {thread.counterpartyName ? `與 ${thread.counterpartyName}` : ""}
+            {thread.counterpartyName ? `${t("common.with")} ${thread.counterpartyName}` : ""}
             {thread.latestContent ? ` · ${thread.latestContent}` : ""}
           </span>
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className="text-[10px] text-gray-400">{timeStr}</span>
           <span className="text-[10px] px-1 py-0 rounded bg-gray-100 text-gray-500">
-            {STATUS_LABELS[thread.orderStatus] ?? thread.orderStatus}
+            {t(`orderStatusLabel.${STATUS_LABEL_KEYS[thread.orderStatus] ?? thread.orderStatus}`, thread.orderStatus)}
           </span>
         </div>
       </div>
@@ -145,6 +147,7 @@ function ChatPanel({
   orderNo: string;
   onBack?: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: user } = trpc.auth.me.useQuery();
   const [message, setMessage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -167,7 +170,7 @@ function ChatPanel({
       utils.marketplace.getMyOrderThreads.invalidate();
       utils.marketplace.getTotalUnreadMessages.invalidate();
     },
-    onError: (e: any) => toast.error(e.message || "發送失敗"),
+    onError: (e: any) => toast.error(e.message || t("common.sendFailed")),
   });
 
   useEffect(() => {
@@ -189,7 +192,7 @@ function ChatPanel({
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("common.imageTooLarge")); return; }
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
@@ -209,7 +212,7 @@ function ChatPanel({
     }
     sendMutation.mutate({
       orderNo,
-      content: message.trim() || (imageFile ? "[圖片]" : ""),
+      content: message.trim() || (imageFile ? "[image]" : ""),
       imageBase64,
       imageMimeType,
     });
@@ -232,7 +235,7 @@ function ChatPanel({
           </button>
         )}
         <span className="text-xs font-semibold text-gray-700 truncate flex-1">
-          訂單 {orderNo}
+          {t("common.order")} {orderNo}
         </span>
         <a
           href={`/orders/${orderNo}`}
@@ -240,7 +243,7 @@ function ChatPanel({
           rel="noopener noreferrer"
           className="text-[10px] text-[#06038D] hover:underline flex-shrink-0"
         >
-          查看訂單
+          {t("common.viewOrder")}
         </a>
       </div>
 
@@ -249,7 +252,7 @@ function ChatPanel({
         {!messages || messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
             <MessageCircle className="w-8 h-8 opacity-40" />
-            <p className="text-xs">暫無訊息</p>
+            <p className="text-xs">{t("messageCenter.noMessages")}</p>
           </div>
         ) : (
           (messages as ChatMessage[]).map((msg) => {
@@ -271,7 +274,7 @@ function ChatPanel({
               <div key={msg.id} className={cn("flex gap-2", isMe ? "flex-row-reverse" : "flex-row")}>
                 {/* Avatar */}
                 <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5", colors.avatar)}>
-                  {(msg.senderName ?? ROLE_LABELS[msg.senderRole] ?? "?")[0]}
+                  {(msg.senderName ?? getRoleLabels(t)[msg.senderRole] ?? "?")[0]}
                 </div>
                 {/* Bubble */}
                 <div className={cn("max-w-[75%] flex flex-col gap-0.5", isMe ? "items-end" : "items-start")}>
@@ -280,12 +283,12 @@ function ChatPanel({
                       <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
                         <img
                           src={msg.imageUrl}
-                          alt="圖片"
+                          alt={t("common.image")}
                           className="max-w-[140px] max-h-[140px] rounded-lg object-cover mb-1"
                         />
                       </a>
                     )}
-                    {msg.content && msg.content !== "[圖片]" && (
+                    {msg.content && msg.content !== "[image]" && (
                       <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
                     )}
                   </div>
@@ -311,7 +314,7 @@ function ChatPanel({
       <div className="border-t border-gray-200 bg-white p-2 flex-shrink-0">
         {imagePreview && (
           <div className="relative inline-block mb-1.5">
-            <img src={imagePreview} alt="預覽" className="h-14 w-14 rounded-lg object-cover border border-gray-200" />
+            <img src={imagePreview} alt={t("common.preview")} className="h-14 w-14 rounded-lg object-cover border border-gray-200" />
             <button
               onClick={() => { setImageFile(null); setImagePreview(null); }}
               className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
@@ -338,7 +341,7 @@ function ChatPanel({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="輸入訊息… (Enter 發送)"
+            placeholder={t("messageCenter.inputPlaceholder")}
             className="flex-1 min-h-[36px] max-h-[80px] text-xs resize-none py-2 px-2.5 rounded-lg border-gray-200"
             rows={1}
           />
@@ -361,6 +364,7 @@ function ChatPanel({
 
 // ─── Main MessageCenter Component ─────────────────────────────────────────────
 export default function MessageCenter() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedOrderNo, setSelectedOrderNo] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
@@ -418,7 +422,7 @@ export default function MessageCenter() {
           "bg-[#06038D] hover:bg-[#06038D]/90 active:scale-95",
           open && "ring-2 ring-[#FEDD00] ring-offset-2"
         )}
-        aria-label="訊息中心"
+        aria-label={t("messageCenter.title")}
       >
         <MessageCircle className="w-6 h-6 text-white" />
         {totalUnread > 0 && (
@@ -446,7 +450,7 @@ export default function MessageCenter() {
           <div className="flex items-center justify-between px-4 py-3 bg-[#06038D] text-white flex-shrink-0">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-4 h-4" />
-              <span className="font-semibold text-sm">訊息中心</span>
+              <span className="font-semibold text-sm">{t("messageCenter.title")}</span>
               {totalUnread > 0 && (
                 <Badge className="bg-[#FEDD00] text-[#06038D] text-[10px] font-bold px-1.5 py-0 h-4 hover:bg-[#FEDD00]">
                   {totalUnread}
@@ -476,8 +480,8 @@ export default function MessageCenter() {
               {threadList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center flex-1 gap-3 text-gray-400 p-6">
                   <MessageCircle className="w-10 h-10 opacity-30" />
-                  <p className="text-xs text-center">暫無訊息記錄</p>
-                  <p className="text-[10px] text-center text-gray-300">購買或出售商品後，可在此與對方溝通</p>
+                  <p className="text-xs text-center">{t("messageCenter.noHistory")}</p>
+                  <p className="text-[10px] text-center text-gray-300">{t("messageCenter.noHistoryDesc")}</p>
                 </div>
               ) : (
                 threadList.map((thread) => (
@@ -507,8 +511,8 @@ export default function MessageCenter() {
               ) : (
                 <div className="flex flex-col items-center justify-center flex-1 gap-3 text-gray-400">
                   <MessageCircle className="w-12 h-12 opacity-20" />
-                  <p className="text-sm">選擇一個對話</p>
-                  <p className="text-xs text-gray-300">從左側選擇訂單訊息</p>
+                  <p className="text-sm">{t("messageCenter.selectChat")}</p>
+                  <p className="text-xs text-gray-300">{t("messageCenter.selectChatDesc")}</p>
                 </div>
               )}
             </div>

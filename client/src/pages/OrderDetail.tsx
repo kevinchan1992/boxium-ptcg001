@@ -46,17 +46,17 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
   const [isUploading, setIsUploading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
-  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: "香港" });
+  const [shippingForm, setShippingForm] = useState({ name: "", phone: "", address: "", district: "", region: t("orderDetail.hongKong") });
   const utils = trpc.useUtils();
 
   const getCheckoutMutation = trpc.marketplace.getOrderCheckoutUrl.useMutation({
     onSuccess: (data) => { setOpen(false); window.location.href = data.checkoutUrl; },
-    onError: (e: any) => toast.error(e.message || "無法獲取付款連結"),
+    onError: (e: any) => toast.error(e.message || t("orderDetail.errorGetCheckout")),
   });
 
   const switchToAlipayMutation = trpc.marketplace.switchOrderPaymentToAlipay.useMutation({
     onSuccess: () => setAlipayStep("qr"),
-    onError: (e: any) => toast.error(e.message || "無法切換付款方式"),
+    onError: (e: any) => toast.error(e.message || t("orderDetail.errorSwitchPayment")),
   });
 
   const submitProofMutation = trpc.marketplace.submitAlipayProof.useMutation({
@@ -65,7 +65,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
       utils.marketplace.getOrderByNo.invalidate();
       utils.marketplace.getMyOrders.invalidate();
     },
-    onError: (e: any) => toast.error(e.message || "提交失敗，請重試"),
+    onError: (e: any) => toast.error(e.message || t("common.submitFailed")),
   });
 
   const verifyProofMutation = trpc.marketplace.verifyPaymentProof.useMutation({
@@ -75,7 +75,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
       if (data.verified) toast.success(t("orderDetail.paymentVerifiedSuccess"));
       else toast.error(t("orderDetail.paymentVerifiedError"));
     },
-    onError: (e: any) => { setIsVerifying(false); toast.error("驗證失敗：" + e.message); },
+    onError: (e: any) => { setIsVerifying(false); toast.error(t("orderDetail.verifyFailed") + e.message); },
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +109,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
   return (
     <>
       <Button className="text-white font-bold" style={{ backgroundColor: "#06038d" }} onClick={() => { setAlipayStep(initialStep); setOpen(true); }}>
-        <CreditCard className="w-4 h-4 mr-2" />前往付款
+        <CreditCard className="w-4 h-4 mr-2" />{t("orderDetail.goToPay")}
       </Button>
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
@@ -122,7 +122,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                 {alipayStep === "select" ? <CreditCard className="w-4 h-4 text-[#FEDD00]" /> : <Smartphone className="w-4 h-4 text-[#FEDD00]" />}
               </div>
               <h2 className="text-white font-bold text-lg">
-                {alipayStep === "select" ? "選擇付款方式" : alipayStep === "done" ? "訂單已提交" : "支付寶 HK 付款"}
+                {alipayStep === "select" ? t("orderDetail.selectPayMethod") : alipayStep === "done" ? t("orderDetail.orderSubmitted") : t("orderDetail.alipayHkPay")}
               </h2>
             </div>
             <button onClick={resetAndClose} className="text-white/60 hover:text-white transition-colors">
@@ -148,7 +148,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
               {canUseAlipay && (
               <button className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#1677ff] hover:bg-[#f0f7ff] transition-all text-left group" disabled={isPending} onClick={() => switchToAlipayMutation.mutate({ orderId })}>
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#1677ff" }}>
-                  <span className="text-white font-bold text-lg">支</span>
+                  <span className="text-white font-bold text-lg">{t("orderDetail.alipayChar")}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 group-hover:text-[#1677ff]">{t("orderDetail.alipayHk")}</p>
@@ -167,26 +167,26 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                 <p className="font-bold text-[#06038D]">{t("orderDetail.paymentAmount")}<span className="text-lg">HKD {parseFloat(amount).toFixed(2)}</span></p>
               </div>
               <div className="text-center space-y-3">
-                <p className="text-sm text-gray-500">請揃描 QR Code 或點擊連結付款</p>
-                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ALIPAY_QR_URL)}`} alt="支付寶 HK QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-lg" />
+                <p className="text-sm text-gray-500">{t("orderDetail.scanQrOrClick")}</p>
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ALIPAY_QR_URL)}`} alt={t("orderDetail.alipayQrAlt")} className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-lg" />
                 <a href={ALIPAY_QR_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[#06038D] hover:underline text-sm">
-                  <Smartphone className="w-4 h-4" />在手機上開啟支付寶 HK
+                  <Smartphone className="w-4 h-4" />{t("orderDetail.openAlipayOnPhone")}
                 </a>
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
                 <p className="font-medium">{t("orderDetail.fillOrderNumber")}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="font-mono text-sm font-bold tracking-wide flex-1">{listingId ? `#BOXIUM-${listingId}` : "請查看訂單詳情"}</p>
+                  <p className="font-mono text-sm font-bold tracking-wide flex-1">{listingId ? `#BOXIUM-${listingId}` : t("orderDetail.checkOrderDetails")}</p>
                   {listingId && (
                     <button onClick={() => { navigator.clipboard.writeText(`#BOXIUM-${listingId}`); toast.success(t("orderDetail.listingIdCopied")); }} className="flex items-center gap-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg px-2 py-1 text-xs font-medium transition-colors">
-                      <Copy className="w-3 h-3" />複製編號
+                      <Copy className="w-3 h-3" />{t("orderDetail.copyId")}
                     </button>
                   )}
                 </div>
                 <p className="text-amber-600 mt-1">{t("orderDetail.alipayRemarkNotice")}</p>
               </div>
               <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={() => setAlipayStep(hasShippingAddress ? "upload" : "shipping")}>
-                {hasShippingAddress ? "我已完成付款，上傳截圖" : "我已完成付款，填寫收貨地址"}
+                {hasShippingAddress ? t("orderDetail.paidUploadScreenshot") : t("orderDetail.paidEnterAddress")}
               </Button>
             </div>
           )}
@@ -195,20 +195,20 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm text-[#06038D]">
                 <p className="font-medium">{t("orderDetail.fillShippingAddress")}</p>
-                <p className="text-xs mt-1 text-gray-500">收貨地址將提供給賣家安排寄送</p>
+                <p className="text-xs mt-1 text-gray-500">{t("orderDetail.addressForSeller")}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>收件人姓名 *</Label>
+                  <Label>{t("orderDetail.recipientName")} *</Label>
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：陳大文" value={shippingForm.name} onChange={e => setShippingForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>聯絡電話 *</Label>
+                  <Label>{t("orderDetail.contactPhone")} *</Label>
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：9123 4567" value={shippingForm.phone} onChange={e => setShippingForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>詳細地址 *</Label>
+                <Label>{t("orderDetail.detailedAddress")} *</Label>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角彌敦道 123 號 ABC 大廈 5 樓 A 室" value={shippingForm.address} onChange={e => setShippingForm(f => ({ ...f, address: e.target.value }))} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -217,20 +217,20 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                   <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D]" placeholder="例：旺角" value={shippingForm.district} onChange={e => setShippingForm(f => ({ ...f, district: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>區域</Label>
+                  <Label>{t("orderDetail.region")}</Label>
                   <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038D] bg-white" value={shippingForm.region} onChange={e => setShippingForm(f => ({ ...f, region: e.target.value }))}>
                     <option value={t("orderDetail.hongKongIsland")}>{t("orderDetail.hongKongIsland")}</option>
                     <option value={t("orderDetail.kowloon")}>{t("orderDetail.kowloon")}</option>
                     <option value={t("orderDetail.newTerritories")}>{t("orderDetail.newTerritories")}</option>
-                    <option value={t("orderDetail.hongKong")}>香港（不指定）</option>
+                    <option value={t("orderDetail.hongKong")}>{t("orderDetail.hongKongAny")}</option>
                   </select>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">* 必填欄位。如不需要寄送可跳過。</p>
+              <p className="text-xs text-gray-400">{t("orderDetail.requiredFields")}</p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("qr")}>{t("common.back")}</Button>
                 <Button className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white" disabled={!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.address.trim()} onClick={() => setAlipayStep("upload")}>
-                  下一步：上傳截圖
+                  {t("orderDetail.nextUploadScreenshot")}
                 </Button>
               </div>
             </div>
@@ -239,29 +239,29 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
           {alipayStep === "upload" && (
             <div className="space-y-4">
               <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-3 text-sm">
-                <p className="font-bold text-[#06038D]">付款金額：HKD {parseFloat(amount).toFixed(2)}</p>
-                <p className="text-gray-500 mt-1">請上傳支付寶 HK 的付款成功截圖，系統將自動驗證金額是否一致。</p>
+                <p className="font-bold text-[#06038D]">{t("orderDetail.paymentAmount")}：HKD {parseFloat(amount).toFixed(2)}</p>
+                <p className="text-gray-500 mt-1">{t("orderDetail.uploadAlipayScreenshotHint")}</p>
               </div>
               <div>
-                <Label>付款截圖 *</Label>
+                <Label>{t("orderDetail.paymentScreenshot")} *</Label>
                 <div className="mt-2 border-2 border-dashed border-[#06038D]/30 rounded-xl p-6 text-center">
                   {isUploading ? (
-                    <div className="flex flex-col items-center gap-2 text-gray-400"><Loader2 className="w-8 h-8 animate-spin" /><p className="text-sm">上傳中...</p></div>
+                    <div className="flex flex-col items-center gap-2 text-gray-400"><Loader2 className="w-8 h-8 animate-spin" />                <p className="text-sm">{t("common.uploading")}...</p></div>
                   ) : proofUrl ? (
                     <div className="space-y-3">
-                      <img src={proofUrl} alt="付款截圖" className="max-h-40 mx-auto rounded object-contain" />
+                      <img src={proofUrl} alt={t("orderDetail.paymentScreenshotAlt")} className="max-h-40 mx-auto rounded object-contain" />
                       {isVerifying ? (
-                        <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm"><Loader2 className="w-4 h-4 animate-spin" /><span>AI 正在驗證付款金額...</span></div>
+                        <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm"><Loader2 className="w-4 h-4 animate-spin" /><span>{t("orderDetail.aiVerifying")}</span></div>
                       ) : verifyResult ? (
                         <div className={`rounded-xl p-3 text-sm space-y-2 ${verifyResult.verified ? "bg-green-50 border border-green-200" : "bg-orange-50 border border-orange-200"}`}>
                           <div className="flex items-center gap-2 font-medium mb-2">
-                            {verifyResult.verified ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">三項驗證全部通過</span></> : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">驗證未完全通過</span></>}
+                            {verifyResult.verified ? <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-800">{t("orderDetail.allVerified")}</span></> : <><XCircle className="w-4 h-4 text-orange-600" /><span className="text-orange-800">{t("orderDetail.verifyNotComplete")}</span></>}
                           </div>
                           <div className="space-y-1.5">
                             {[
-                              { ok: verifyResult.payeeVerified, label: `收款方：${verifyResult.detectedPayee ?? "未識別"}${!verifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
-                              { ok: verifyResult.amountVerified, label: `金額：${verifyResult.currency ?? "HKD"} ${verifyResult.detectedAmount ?? "未識別"}${!verifyResult.amountVerified ? ` （需為 HKD ${parseFloat(amount).toFixed(2)}）` : ""}` },
-                              { ok: verifyResult.statusVerified, label: `狀態：${verifyResult.detectedStatus ?? "未識別"}${!verifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                              { ok: verifyResult.payeeVerified, label: `${t("orderDetail.payee")}：${verifyResult.detectedPayee ?? t("orderDetail.unrecognized")}${!verifyResult.payeeVerified ? " " : ""}` },
+                              { ok: verifyResult.amountVerified, label: `${t("orderDetail.amount")}：${verifyResult.currency ?? "HKD"} ${verifyResult.detectedAmount ?? t("orderDetail.unrecognized")}${!verifyResult.amountVerified ? ` （需為 HKD ${parseFloat(amount).toFixed(2)}）` : ""}` },
+                              { ok: verifyResult.statusVerified, label: `${t("orderDetail.status")}：${verifyResult.detectedStatus ?? t("orderDetail.unrecognized")}${!verifyResult.statusVerified ? " " : ""}` },
                             ].map((item, i) => (
                               <div key={i} className="flex items-center gap-2 text-xs">
                                 {item.ok ? <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
@@ -271,7 +271,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                           </div>
                           <p className={`text-xs mt-1 ${verifyResult.verified ? "text-green-700" : "text-orange-700"}`}>{verifyResult.reason}</p>
                           {!verifyResult.verified && (
-                            <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setProofUrl(""); setVerifyResult(null); }}>重新上傳截圖</button>
+                            <button className="mt-1 text-xs text-[#06038D] underline" onClick={() => { setProofUrl(""); setVerifyResult(null); }}>{t("orderDetail.reuploadScreenshotBtn")}</button>
                           )}
                         </div>
                       ) : null}
@@ -281,8 +281,8 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" id="order-proof-upload" />
                       <label htmlFor="order-proof-upload" className="cursor-pointer">
                         <div className="text-3xl mb-2">📷</div>
-                        <p className="text-sm text-gray-500">點擊上傳截圖</p>
-                        <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                        <p className="text-sm text-gray-500">{t("orderDetail.clickToUploadScreenshot")}</p>
+                        <p className="text-xs text-gray-400 mt-1">{t("orderDetail.screenshotHint")}</p>
                       </label>
                     </div>
                   )}
@@ -290,12 +290,12 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
               </div>
               {verifyResult && !verifyResult.verified && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                  <p className="font-medium">⚠️ 如確認已付款，可繼續提交</p>
-                  <p className="mt-1">訂單將標記為「待人工核對」，管理員將在 1-2 個工作天內確認。</p>
+                  <p className="font-medium">{t("orderDetail.ifConfirmedPaid")}</p>
+                  <p className="mt-1">{t("orderDetail.manualReviewNote")}</p>
                 </div>
               )}
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("shipping")}>返回</Button>
+                <Button variant="outline" className="flex-1 text-[#06038D] border-gray-200" onClick={() => setAlipayStep("shipping")}>{t("common.back")}</Button>
                 <Button
                   className="flex-1 bg-[#06038D] hover:bg-[#0804b8] text-white font-bold"
                   disabled={!proofUrl || isVerifying || isUploading}
@@ -305,7 +305,7 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
                     utils.marketplace.getMyOrders.invalidate();
                   }}
                 >
-                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</> : canSubmitProof ? "✅ 提交訂單" : "提交訂單（待核對）"}
+                  {submitProofMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.submitting")}</> : canSubmitProof ? `✅ ${t("orderDetail.submitOrder")}` : t("orderDetail.submitOrderPending")}
                 </Button>
               </div>
             </div>
@@ -316,9 +316,9 @@ function PayOrderButton({ orderId, listingId, amount, paymentMethod, hasShipping
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              <p className="font-bold text-lg text-[#06038D]">訂單已提交！</p>
-              <p className="text-sm text-gray-500">我們將在核對收款後確認你的訂單，通常需要 1-2 個工作天。</p>
-              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={resetAndClose}>關閉</Button>
+              <p className="font-bold text-lg text-[#06038D]">{t("orderDetail.orderSubmittedTitle")}</p>
+              <p className="text-sm text-gray-500">{t("orderDetail.orderSubmittedDesc")}</p>
+              <Button className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white" onClick={resetAndClose}>{t("common.close")}</Button>
             </div>
           )}
 
@@ -374,50 +374,55 @@ function useAutoCompleteCountdown(autoCompleteAt: Date | string | null | undefin
 }
 
 // Carrier tracking URL mapping
-const CARRIER_TRACKING: Record<string, { label: string; url: string | null }> = {
-  sf_express: { label: "順豐速運 (SF Express)", url: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/" },
-  hk_post: { label: "香港郵政 (HK Post)", url: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
-  hkpost: { label: "香港郵政 (HK Post)", url: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=" },
-  dhl: { label: "DHL", url: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=" },
-  fedex: { label: "FedEx", url: "https://www.fedex.com/fedextrack/?trknbr=" },
-  ups: { label: "UPS", url: "https://www.ups.com/track?tracknum=" },
-  chunghwa_post: { label: "中華郵政", url: "https://postserv.post.gov.tw/pstmail/main_mail.jsp?targetTxn=EB100&query_type=1&searchItem=" },
-  black_cat: { label: "黑貓宅急", url: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=" },
-  other: { label: "其他", url: null },
+const CARRIER_TRACKING_URLS: Record<string, string | null> = {
+  sf_express: "https://www.sf-express.com/hk/tc/dynamic_function/waybill/#search/bill-number/",
+  hk_post: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=",
+  hkpost: "https://www.hongkongpost.hk/en/mail_tracking/index.html?tracking_no=",
+  dhl: "https://www.dhl.com/hk-en/home/tracking.html?tracking-id=",
+  fedex: "https://www.fedex.com/fedextrack/?trknbr=",
+  ups: "https://www.ups.com/track?tracknum=",
+  chunghwa_post: "https://postserv.post.gov.tw/pstmail/main_mail.jsp?targetTxn=EB100&query_type=1&searchItem=",
+  black_cat: "https://www.t-cat.com.tw/Inquire/Trace.aspx?no=",
+  other: null,
 };
-
-function getCarrierLabel(shippingMethod: string | null | undefined): string {
-  if (!shippingMethod) return "快遞";
-  return CARRIER_TRACKING[shippingMethod]?.label ?? shippingMethod;
+function getCarrierLabel(shippingMethod: string | null | undefined, t: (key: string) => string): string {
+  if (!shippingMethod) return t("orderDetail.courier");
+  const labels: Record<string, string> = {
+    sf_express: t("orderDetail.sfExpress"),
+    hk_post: t("orderDetail.hkPost"),
+    hkpost: t("orderDetail.hkPost"),
+    dhl: "DHL",
+    fedex: "FedEx",
+    ups: "UPS",
+    chunghwa_post: t("orderDetail.chunghwaPost"),
+    black_cat: t("orderDetail.blackCat"),
+    other: t("orderDetail.other"),
+  };
+  return labels[shippingMethod] ?? shippingMethod;
 }
 
 function getTrackingUrl(shippingMethod: string | null | undefined, trackingNumber: string): string | null {
   if (!shippingMethod) return null;
-  const carrier = CARRIER_TRACKING[shippingMethod];
-  if (!carrier?.url) return null;
-  return carrier.url + encodeURIComponent(trackingNumber);
+  const url = CARRIER_TRACKING_URLS[shippingMethod];
+  if (!url) return null;
+  return url + encodeURIComponent(trackingNumber);
 }
 
-const ORDER_STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode; desc: string }> = {
-  pending_payment: { label: "待付款", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-4 h-4" />, desc: "等待買家完成付款" },
-  paid_held: { label: "已付款，等待出貨", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: "付款已確認，等待賣家出貨" },
-  payment_received: { label: "已收款", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-4 h-4" />, desc: "付款已確認，等待賣家處理" },
-  processing: { label: "處理中", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: "賣家正在準備出貨" },
-  shipped: { label: "已出貨", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-4 h-4" />, desc: "商品已寄出，請耐心等候" },
-  delivered: { label: "已送達", color: "bg-teal-100 text-teal-800 border-teal-200", icon: <Truck className="w-4 h-4" />, desc: "商品已送達，請確認收貨" },
-  completed: { label: "已完成", color: "bg-green-100 text-green-800 border-green-200", icon: <CheckCircle className="w-4 h-4" />, desc: "訂單已完成" },
-  cancelled: { label: "已取消", color: "bg-gray-100 text-gray-600 border-gray-200", icon: <XCircle className="w-4 h-4" />, desc: "訂單已取消" },
-  disputed: { label: "爭議中", color: "bg-red-100 text-red-800 border-red-200", icon: <AlertCircle className="w-4 h-4" />, desc: "爭議處理中，請等待管理員回覆" },
-};
+function getOrderStatusLabel(t: (key: string) => string): Record<string, { label: string; color: string; icon: React.ReactNode; desc: string }> {
+  return {
+    pending_payment: { label: t("orders.status.pending_payment"), color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="w-4 h-4" />, desc: t("orderDetail.statusDesc.pendingPayment") },
+    paid_held: { label: t("orders.status.paid_held"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: t("orderDetail.statusDesc.paidHeld") },
+    payment_received: { label: t("orders.status.payment_received"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CreditCard className="w-4 h-4" />, desc: t("orderDetail.statusDesc.paymentReceived") },
+    processing: { label: t("orders.status.processing"), color: "bg-blue-100 text-blue-800 border-blue-200", icon: <Package className="w-4 h-4" />, desc: t("orderDetail.statusDesc.processing") },
+    shipped: { label: t("orders.status.shipped"), color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: <Truck className="w-4 h-4" />, desc: t("orderDetail.statusDesc.shipped") },
+    delivered: { label: t("orders.status.delivered"), color: "bg-teal-100 text-teal-800 border-teal-200", icon: <Truck className="w-4 h-4" />, desc: t("orderDetail.statusDesc.delivered") },
+    completed: { label: t("orders.status.completed"), color: "bg-green-100 text-green-800 border-green-200", icon: <CheckCircle className="w-4 h-4" />, desc: t("orderDetail.statusDesc.completed") },
+    cancelled: { label: t("orders.status.cancelled"), color: "bg-gray-100 text-gray-600 border-gray-200", icon: <XCircle className="w-4 h-4" />, desc: t("orderDetail.statusDesc.cancelled") },
+    disputed: { label: t("orders.status.disputed"), color: "bg-red-100 text-red-800 border-red-200", icon: <AlertCircle className="w-4 h-4" />, desc: t("orderDetail.disputeWaitingAdmin") },
+  };
+}
 
-// Timeline steps in order
-const TIMELINE_STEPS = [
-  { key: "pending_payment", label: "訂單建立", icon: <CircleDot className="w-4 h-4" /> },
-  { key: "payment_received", label: "付款確認", icon: <CreditCard className="w-4 h-4" /> },
-  { key: "processing", label: "賣家處理中", icon: <Package className="w-4 h-4" /> },
-  { key: "shipped", label: "已出貨", icon: <Truck className="w-4 h-4" /> },
-  { key: "completed", label: "確認收貨", icon: <CheckCircle className="w-4 h-4" /> },
-];
+// Timeline steps in order - generated inside components using t()
 
 const STATUS_ORDER = ["pending_payment", "paid_held", "payment_received", "processing", "shipped", "delivered", "completed"];
 
@@ -449,6 +454,13 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 function OrderTimeline({ order }: { order: any }) {
   const { t } = useTranslation();
+  const TIMELINE_STEPS = [
+    { key: "pending_payment", label: t("orderDetail.timeline.orderCreated"), icon: <CircleDot className="w-4 h-4" /> },
+    { key: "payment_received", label: t("orderDetail.timeline.paymentConfirmed"), icon: <CreditCard className="w-4 h-4" /> },
+    { key: "processing", label: t("orderDetail.timeline.sellerProcessing"), icon: <Package className="w-4 h-4" /> },
+    { key: "shipped", label: t("orderDetail.timeline.shipped"), icon: <Truck className="w-4 h-4" /> },
+    { key: "completed", label: t("orderDetail.timeline.completed"), icon: <CheckCircle className="w-4 h-4" /> },
+  ];
   const currentIdx = STATUS_ORDER.indexOf(order.orderStatus);
   const isDisputed = order.orderStatus === "disputed";
   const isCancelled = order.orderStatus === "cancelled";
@@ -460,7 +472,7 @@ function OrderTimeline({ order }: { order: any }) {
           <XCircle className="w-6 h-6" />
           <div>
             <p className="font-medium text-gray-700">{t("orderDetail.orderCancelled")}</p>
-            <p className="text-sm text-gray-500">此訂單已被取消</p>
+            <p className="text-sm text-gray-500">{t("orderDetail.orderCancelled")}</p>
           </div>
         </div>
       </div>
@@ -474,12 +486,12 @@ function OrderTimeline({ order }: { order: any }) {
           <AlertCircle className="w-6 h-6 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold">{t("orderDetail.disputeInProgress")}</p>
-            <p className="text-sm text-red-500">管理員將在 1-3 個工作天內處理</p>
+            <p className="text-sm text-red-500">{t("orderDetail.adminWillProcess")}</p>
           </div>
         </div>
         {order.disputeReason && (
           <div className="pt-3 border-t border-red-200">
-            <p className="text-xs font-medium text-red-700 mb-1">爭議原因：</p>
+            <p className="text-xs font-medium text-red-700 mb-1">{t("orderDetail.disputeReason")}：</p>
             <p className="text-sm text-red-800">{order.disputeReason}</p>
           </div>
         )}
@@ -490,8 +502,8 @@ function OrderTimeline({ order }: { order: any }) {
               <div className="flex items-start gap-2">
                 <span className="text-lg leading-none mt-0.5">📎</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-orange-900">提交證據可加快處理</p>
-                  <p className="text-xs text-orange-700 mt-0.5">上傳商品照片、對話截圖等證據，有助管理員在 1 個工作天內更快裁決。</p>
+                  <p className="text-sm font-semibold text-orange-900">{t("orderDetail.submitEvidenceTitle")}</p>
+                  <p className="text-xs text-orange-700 mt-0.5">{t("orderDetail.submitEvidenceDesc")}</p>
                 </div>
               </div>
             </div>
@@ -500,7 +512,7 @@ function OrderTimeline({ order }: { order: any }) {
               style={{ background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)" }}
               onClick={() => document.getElementById('dispute-evidence')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
             >
-              <span>📤</span> 前往上傳爭議證據
+              <span>📤</span> {t("orderDetail.goUploadEvidence")}
             </button>
           </div>
         )}
@@ -508,7 +520,7 @@ function OrderTimeline({ order }: { order: any }) {
           <div className="pt-3 border-t border-red-200">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              <p className="text-xs font-semibold text-green-700">處理結果：</p>
+              <p className="text-xs font-semibold text-green-700">{t("orderDetail.disputeResult")}：</p>
             </div>
             <p className="text-sm text-green-700">{order.disputeResolution}</p>
           </div>
@@ -622,12 +634,12 @@ function OrderTimeline({ order }: { order: any }) {
                 const trackUrl = getTrackingUrl(order.shippingMethod, order.trackingNumber);
                 return (
                   <div className="mt-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 text-xs text-indigo-800">
-                    <span className="font-medium">{getCarrierLabel(order.shippingMethod)}</span>
+                    <span className="font-medium">{getCarrierLabel(order.shippingMethod, t)}</span>
                     <span className="mx-1">·</span>
-                    追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
+                    {t("orderDetail.trackingNo")}：<span className="font-mono font-bold">{order.trackingNumber}</span>
                     {trackUrl && (
                       <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-0.5 text-indigo-600 hover:text-indigo-800 underline">
-                        查詢<ExternalLink className="w-3 h-3" />
+                        {t("orderDetail.query")}<ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
@@ -636,7 +648,7 @@ function OrderTimeline({ order }: { order: any }) {
               {/* Auto-complete notice */}
               {step.key === "completed" && isPending && order.orderStatus === "shipped" && order.autoCompleteAt && (
                 <p className="text-xs text-gray-500 mt-1">
-                  系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成
+                  {t("orderDetail.autoCompleteOn")} {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")}
                 </p>
               )}
               {/* Alipay proof sub-timeline: 截圖已提交 → 審核中 → 已核准/已拒絕 */}
@@ -646,7 +658,7 @@ function OrderTimeline({ order }: { order: any }) {
                   <div className="flex items-start gap-2">
                     <FileImage className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-gray-700">截圖已提交</p>
+                      <p className="text-xs font-medium text-gray-700">{t("orderDetail.screenshotSubmitted")}</p>
                       <p className="text-xs text-gray-400">
                         {new Date(order.alipayProofSubmittedAt).toLocaleDateString("zh-HK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
@@ -657,8 +669,8 @@ function OrderTimeline({ order }: { order: any }) {
                     <div className="flex items-start gap-2">
                       <Hourglass className="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0 animate-pulse" />
                       <div>
-                        <p className="text-xs font-medium text-yellow-700">截圖審核中</p>
-                        <p className="text-xs text-gray-400">管理員將盡快核對，通常在 24 小時內完成</p>
+                        <p className="text-xs font-medium text-yellow-700">{t("orderDetail.screenshotReviewing")}</p>
+                        <p className="text-xs text-gray-400">{t("orderDetail.reviewWithin24h")}</p>
                       </div>
                     </div>
                   )}
@@ -666,8 +678,8 @@ function OrderTimeline({ order }: { order: any }) {
                     <div className="flex items-start gap-2">
                       <CheckSquare className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-xs font-medium text-green-700">截圖已核准</p>
-                        <p className="text-xs text-gray-400">付款已確認，賣家將開始處理訂單</p>
+                        <p className="text-xs font-medium text-green-700">{t("orderDetail.screenshotApproved")}</p>
+                        <p className="text-xs text-gray-400">{t("orderDetail.paymentConfirmedSellerProcessing")}</p>
                       </div>
                     </div>
                   )}
@@ -675,11 +687,11 @@ function OrderTimeline({ order }: { order: any }) {
                     <div className="flex items-start gap-2">
                       <XSquare className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-xs font-medium text-red-700">截圖已拒絕</p>
+                        <p className="text-xs font-medium text-red-700">{t("orderDetail.screenshotRejected")}</p>
                         {order.alipayProofRejectionReason && (
                           <p className="text-xs text-red-500">{order.alipayProofRejectionReason}</p>
                         )}
-                        <p className="text-xs text-gray-400">請重新上傳正確的付款截圖</p>
+                        <p className="text-xs text-gray-400">{t("orderDetail.reuploadScreenshot")}</p>
                       </div>
                     </div>
                   )}
@@ -743,7 +755,7 @@ export default function OrderDetail() {
 
   const buyerCancelMutation = trpc.marketplace.buyerCancelOrder.useMutation({
     onSuccess: () => {
-      toast.success("❌ 訂單已取消");
+      toast.success(t("orderDetail.orderCancelledToast"));
       setShowCancelDialog(false);
       setCancelReason("");
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
@@ -754,7 +766,7 @@ export default function OrderDetail() {
 
   const confirmReceiptMutation = trpc.marketplace.confirmReceipt.useMutation({
     onSuccess: () => {
-      toast.success("✅ 已確認收貨，款項將轉帳給賣家");
+      toast.success(t("orderDetail.confirmedDelivery"));
       setShowConfirmDialog(false);
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
       utils.marketplace.getMyOrders.invalidate();
@@ -765,7 +777,7 @@ export default function OrderDetail() {
   const uploadDisputeEvidenceMutation = trpc.marketplace.uploadDisputeEvidence.useMutation();
 
   const reuploadProofMutation = trpc.marketplace.resubmitAlipayProof.useMutation({
-    onError: (e: any) => toast.error(e.message || "上傳失敗，請重試"),
+    onError: (e: any) => toast.error(e.message || t("common.uploadFailed")),
   });
 
   const reuploadVerifyMutation = trpc.marketplace.verifyPaymentProof.useMutation({
@@ -775,7 +787,7 @@ export default function OrderDetail() {
       if (data.verified) toast.success(t("orderDetail.paymentVerifiedSuccess"));
       else toast.error(t("orderDetail.paymentVerifiedError"));
     },
-    onError: (e: any) => { setIsReuploadVerifying(false); toast.error("驗證失敗：" + e.message); },
+    onError: (e: any) => { setIsReuploadVerifying(false); toast.error(t("orderDetail.verifyFailed") + e.message); },
   });
 
   const handleReuploadProof = async (e: React.ChangeEvent<HTMLInputElement>, orderNo: string, amount: string) => {
@@ -801,7 +813,7 @@ export default function OrderDetail() {
 
   const openDisputeMutation = trpc.marketplace.openDispute.useMutation({
     onSuccess: () => {
-      toast.success("⚠️ 爭議申請已提交，管理員將盡快處理");
+      toast.success(t("orderDetail.disputeSubmitted"));
       setShowDisputeDialog(false);
       setDisputeReason("");
       setDisputeEvidenceUrls([]);
@@ -815,14 +827,14 @@ export default function OrderDetail() {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     if (disputeEvidenceUrls.length + files.length > 3) {
-      toast.error("最多可上傳 3 張截圖");
+      toast.error(t("orderDetail.maxScreenshots"));
       return;
     }
     setIsUploadingEvidence(true);
     try {
       const newUrls: string[] = [];
       for (const file of files) {
-        if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); continue; }
+        if (file.size > 5 * 1024 * 1024) { toast.error(t("orderDetail.imageTooLarge5MB")); continue; }
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve((reader.result as string).split(",")[1]);
@@ -837,9 +849,9 @@ export default function OrderDetail() {
         newUrls.push(result.url);
       }
       setDisputeEvidenceUrls(prev => [...prev, ...newUrls]);
-      toast.success(`已上傳 ${newUrls.length} 張截圖`);
+      toast.success(t("orderDetail.uploadedScreenshots", { count: newUrls.length }));
     } catch {
-      toast.error("上傳失敗，請重試");
+      toast.error(t("common.uploadFailed"));
     } finally {
       setIsUploadingEvidence(false);
       e.target.value = "";
@@ -848,7 +860,7 @@ export default function OrderDetail() {
 
   const markOrderShippedMutation = trpc.marketplace.markOrderShipped.useMutation({
     onSuccess: () => {
-      toast.success("📦 已確認出貨，買家將收到通知");
+      toast.success(t("orderDetail.shippedConfirmed"));
       setShowAdminShipDialog(false);
       setAdminShipForm({ shippingMethod: 'sf_express', trackingNo: '', shippingImageUrl: '' });
       utils.marketplace.getOrderByNo.invalidate({ orderNo });
@@ -861,7 +873,7 @@ export default function OrderDetail() {
   const handleAdminShipImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { toast.error("圖片不能超過 10MB"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error(t("orderDetail.imageTooLarge10MB")); return; }
     setIsAdminShipImageUploading(true);
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -872,14 +884,14 @@ export default function OrderDetail() {
       });
       const result = await uploadShippingImageMutation.mutateAsync({ orderId, imageBase64: base64, mimeType: file.type });
       setAdminShipForm(f => ({ ...f, shippingImageUrl: result.url }));
-      toast.success("出貨憑證已上傳");
-    } catch { toast.error("圖片上傳失敗，請重試"); }
+      toast.success(t("orderDetail.shippingProofUploaded"));
+    } catch { toast.error(t("common.uploadFailed")); }
     finally { setIsAdminShipImageUploading(false); e.target.value = ""; }
   };
 
   const submitReviewMutation = trpc.marketplace.submitReview.useMutation({
     onSuccess: () => {
-      toast.success("⭐ 評價已提交，感謝你的反饋！");
+      toast.success(t("orderDetail.reviewSubmitted"));
       setShowReviewDialog(false);
       setReviewComment("");
       setReviewRating(5);
@@ -925,7 +937,7 @@ export default function OrderDetail() {
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: "#f0f4ff" }}>
             <Package className="w-10 h-10" style={{ color: "#06038d", opacity: 0.4 }} />
           </div>
-          <p className="font-medium text-gray-700">訂單不存在或無權查看</p>
+          <p className="font-medium text-gray-700">{t("orderDetail.notFound")}</p>
           <Link href="/profile?tab=orders"><Button style={{ backgroundColor: "#06038d" }} className="text-white font-bold">{t("orderDetail.backToOrderList")}</Button></Link>
         </div>
       </div>
@@ -939,6 +951,7 @@ export default function OrderDetail() {
     try { return JSON.parse(order.shippingAddress as string); } catch { return null; }
   })();
 
+  const ORDER_STATUS_LABEL = getOrderStatusLabel(t);
   const statusInfo = ORDER_STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: "bg-gray-100 text-gray-600 border-gray-200", icon: null, desc: "" };
   const canConfirm = isBuyer && (order.orderStatus === "shipped" || order.orderStatus === "delivered");
   // Calculate dispute window: 7 days from shipment
@@ -984,7 +997,7 @@ export default function OrderDetail() {
               </div>
               <button
                 className="text-white/70 text-sm font-mono flex items-center gap-1 mt-1 hover:text-white transition-colors mx-auto md:mx-0"
-                onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success("訂單號已複製"); }}
+                onClick={() => { navigator.clipboard.writeText(order.orderNo); toast.success(t("orderDetail.orderNoCopied")); }}
               >
                 #{order.orderNo}
                 <Copy className="w-3.5 h-3.5" />
@@ -992,7 +1005,7 @@ export default function OrderDetail() {
             </div>
             <Link href="/profile?tab=orders">
               <Button size="sm" className="font-bold" style={{ background: "#FEDD00", color: "#06038d" }}>
-                <ArrowLeft className="w-4 h-4 mr-1" />返回訂單
+                <ArrowLeft className="w-4 h-4 mr-1" />{t("orderDetail.backToOrders")}
               </Button>
             </Link>
           </div>
@@ -1029,9 +1042,9 @@ export default function OrderDetail() {
                 <span className="text-[#06038D] font-bold text-sm">🏆</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-[#06038D]">拍賣得標訂單</p>
+                <p className="text-xs font-bold text-[#06038D]">{t("orderDetail.auctionWonOrder")}</p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  此訂單為拍賣競標得標，請於 {paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} 小時` : `${paymentTimeoutMinutes} 分鐘`} 內完成付款，逾時訂單將自動取消
+                  {t("orderDetail.auctionWonNotice", { time: paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} ${t("common.hours")}` : `${paymentTimeoutMinutes} ${t("common.minutes")}` })}
                 </p>
               </div>
             </div>
@@ -1044,8 +1057,8 @@ export default function OrderDetail() {
                 <Clock className="w-4 h-4 text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-amber-800">{isAuctionOrder ? `拍賣付款限時 ${paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} 小時` : `${paymentTimeoutMinutes} 分鐘`}` : '請盡快完成付款'}</p>
-                <p className="text-xs text-amber-600 mt-0.5">{isAuctionOrder ? '逾時訂單將自動取消，商品重新上架拍賣' : '超時後訂單將自動取消，商品重新上架'}</p>
+                <p className="text-xs font-semibold text-amber-800">{isAuctionOrder ? `${t("orderDetail.auctionPayLimit")} ${paymentTimeoutMinutes >= 60 ? `${Math.floor(paymentTimeoutMinutes / 60)} ${t("common.hours")}` : `${paymentTimeoutMinutes} ${t("common.minutes")}`}` : t('orderDetail.pleasePaySoon')}</p>
+                <p className="text-xs text-amber-600 mt-0.5">{isAuctionOrder ? t('orderDetail.auctionAutoCancel') : t('orderDetail.autoCancel')}</p>
               </div>
               <div className="flex-shrink-0 text-right">
                 <p className="text-lg font-bold text-amber-700 tabular-nums">
@@ -1054,14 +1067,14 @@ export default function OrderDetail() {
                     : `${String(paymentCountdown.minutes).padStart(2, '0')}:${String(paymentCountdown.seconds).padStart(2, '0')}`
                   }
                 </p>
-                <p className="text-[10px] text-amber-500">剩餘時間</p>
+                <p className="text-[10px] text-amber-500">{t("orderDetail.timeRemaining")}</p>
               </div>
             </div>
           )}
           {order.orderStatus === "pending_payment" && paymentCountdown?.expired && (
             <div className="mx-4 mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3">
               <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-xs text-red-700 font-medium">付款時限已到，訂單即將自動取消</p>
+              <p className="text-xs text-red-700 font-medium">{t("orderDetail.paymentExpired")}</p>
             </div>
           )}
 
@@ -1079,26 +1092,26 @@ export default function OrderDetail() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-blue-800">
-                      {hasExpired ? '💰 賣家即將收到款項' : '放款冷靜期中'}
+                      {hasExpired ? t('orderDetail.sellerReceivingSoon') : t('orderDetail.payoutCooldown')}
                     </p>
                     <p className="text-xs text-blue-600 mt-0.5">
                       {hasExpired
-                        ? '冷靜期已結束，系統正在處理放款給賣家'
-                        : `賣家將於 ${payoutHoldUntil.toLocaleString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 後收款，期間你可申請爭議`
+                        ? t('orderDetail.cooldownEndedProcessing')
+                        : `${t('orderDetail.sellerReceiveOn')} ${payoutHoldUntil.toLocaleString('zh-HK', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} ${t('orderDetail.afterReceiveDispute')}`
                       }
                     </p>
                   </div>
                   {!hasExpired && hoursLeft > 0 && (
                     <div className="flex-shrink-0 text-right">
                       <p className="text-lg font-bold text-blue-700 tabular-nums">{hoursLeft}</p>
-                      <p className="text-[10px] text-blue-500">小時</p>
+                      <p className="text-[10px] text-blue-500">{t("common.hours")}</p>
                     </div>
                   )}
                 </div>
                 {!hasExpired && canDispute && (
                   <div className="pt-2 border-t border-blue-200">
                     <p className="text-xs text-blue-700">
-                      ⚠️ 如商品有問題，請於冷靜期內申請爭議，放款後將無法退款。
+                      {t("orderDetail.disputeBeforePayout")}
                     </p>
                   </div>
                 )}
@@ -1115,7 +1128,7 @@ export default function OrderDetail() {
                   className="text-white font-bold"
                   style={{ backgroundColor: "#06038d" }}
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" />前往購物車付款
+                  <ShoppingCart className="w-4 h-4 mr-2" />{t("orderDetail.goToCartPay")}
                 </Button>
               </Link>
               <Button
@@ -1124,7 +1137,7 @@ export default function OrderDetail() {
                 className="border-red-300 text-red-600 hover:bg-red-50"
                 onClick={() => setShowCancelDialog(true)}
               >
-                <XCircle className="w-4 h-4 mr-1.5" />取消訂單
+                <XCircle className="w-4 h-4 mr-1.5" />{t("orderDetail.cancelOrder")}
               </Button>
             </div>
           )}
@@ -1132,7 +1145,7 @@ export default function OrderDetail() {
           {isBuyer && ["paid_held", "payment_received", "processing"].includes(order.orderStatus) && (
             <div className="px-4 pb-4 border-t pt-3">
               <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5" />付款已成功，等待賣家出貨中...
+                <Package className="w-3.5 h-3.5" />{t("orderDetail.waitingForShipment")}
               </span>
             </div>
           )}
@@ -1144,9 +1157,9 @@ export default function OrderDetail() {
                 className="bg-[#06038d] hover:bg-[#0804b8] text-white"
                 onClick={() => setShowAdminShipDialog(true)}
               >
-                <Truck className="w-4 h-4 mr-1.5" />確認出貨
+                <Truck className="w-4 h-4 mr-1.5" />{t("orderDetail.confirmShipment")}
               </Button>
-              <span className="text-xs text-gray-500">買家已付款，請盡快安排出貨</span>
+              <span className="text-xs text-gray-500">{t("orderDetail.buyerPaidPleaseShip")}</span>
             </div>
           )}
           {/* Admin seller actions: ship order */}
@@ -1157,7 +1170,7 @@ export default function OrderDetail() {
                 className="bg-[#06038d] hover:bg-[#0804b8] text-white"
                 onClick={() => setShowAdminShipDialog(true)}
               >
-                <Truck className="w-4 h-4 mr-1.5" />確認出貨
+                <Truck className="w-4 h-4 mr-1.5" />{t("orderDetail.confirmShipment")}
               </Button>
             </div>
           )}
@@ -1165,7 +1178,7 @@ export default function OrderDetail() {
           {order.orderStatus === 'disputed' && (
             <div className="px-4 pb-4 border-t pt-3">
               <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
-                <Flag className="w-3.5 h-3.5" />等待管理員處理中，請勿重複提交等待回覆
+                <Flag className="w-3.5 h-3.5" />{t("orderDetail.waitingAdminProcess")}
               </span>
             </div>
           )}
@@ -1174,25 +1187,25 @@ export default function OrderDetail() {
             <div className="px-4 pb-4 flex flex-wrap gap-2 border-t pt-3">
               {canConfirm && (
                 <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowConfirmDialog(true)}>
-                  <CheckCircle className="w-4 h-4 mr-1.5" />確認收貨
+                  <CheckCircle className="w-4 h-4 mr-1.5" />{t("orderDetail.confirmDelivery")}
                 </Button>
               )}
               {canDispute && (
                 <div className="flex flex-col gap-0.5">
                   <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setShowDisputeDialog(true)}>
-                    <Flag className="w-4 h-4 mr-1.5" />申請爭議
+                    <Flag className="w-4 h-4 mr-1.5" />{t("orderDetail.applyDispute")}
                   </Button>
                   {disputeDaysLeft !== null && disputeDaysLeft <= 3 && disputeDaysLeft > 0 && (
-                    <p className="text-[10px] text-red-500">還有 {disputeDaysLeft} 天可申請</p>
+                    <p className="text-[10px] text-red-500">{t("orderDetail.disputeDaysLeft", { days: disputeDaysLeft })}</p>
                   )}
                 </div>
               )}
               {isBuyer && ["shipped", "delivered"].includes(order.orderStatus) && !isWithinDisputeWindow && (
-                <p className="text-xs text-gray-500 self-center">爭議申請期限已過（7 天）</p>
+                <p className="text-xs text-gray-500 self-center">{t("orderDetail.disputeExpired")}</p>
               )}
               {canReview && (
                 <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50" onClick={() => setShowReviewDialog(true)}>
-                  <Star className="w-4 h-4 mr-1.5" />評價賣家
+                  <Star className="w-4 h-4 mr-1.5" />{t("orderDetail.rateSeller")}
                 </Button>
               )}
             </div>
@@ -1201,7 +1214,7 @@ export default function OrderDetail() {
             <div className="px-4 pb-4 border-t pt-3">
               <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                已評價 {review.rating} 星
+                {t("orderDetail.ratedStars", { rating: review.rating })}
                 {review.comment && <span className="ml-1 text-gray-600">· {review.comment}</span>}
               </span>
             </div>
@@ -1215,8 +1228,8 @@ export default function OrderDetail() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-amber-800 text-sm">截圖審核中</p>
-              <p className="text-amber-700 text-xs mt-1">管理員正在核對您的付款截圖，通常在 1 個工作日內完成。</p>
+              <p className="font-semibold text-amber-800 text-sm">{t("orderDetail.screenshotReviewing")}</p>
+              <p className="text-amber-700 text-xs mt-1">{t("orderDetail.reviewingDesc")}</p>
             </div>
           </div>
         )}
@@ -1226,8 +1239,8 @@ export default function OrderDetail() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-green-800 text-sm">截圖已核准 ✅</p>
-              <p className="text-green-700 text-xs mt-1">您的付款截圖已通過管理員審核，付款已確認完成。</p>
+              <p className="font-semibold text-green-800 text-sm">{t("orderDetail.screenshotApprovedTitle")}</p>
+              <p className="text-green-700 text-xs mt-1">{t("orderDetail.screenshotApprovedDesc")}</p>
             </div>
           </div>
         )}
@@ -1237,18 +1250,18 @@ export default function OrderDetail() {
             <div className="flex items-start gap-3">
               <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-red-800 text-sm">付款截圖已被拒絕</p>
+                <p className="font-semibold text-red-800 text-sm">{t("orderDetail.screenshotRejectedTitle")}</p>
                 {(order as any).paymentRejectionReason && (
-                  <p className="text-red-700 text-xs mt-1">管理員拒絕原因：{(order as any).paymentRejectionReason}</p>
+                  <p className="text-red-700 text-xs mt-1">{t("orderDetail.rejectionReason")}：{(order as any).paymentRejectionReason}</p>
                 )}
-                <p className="text-red-600 text-xs mt-1">請重新上傳正確的付款截圖。</p>
+                <p className="text-red-600 text-xs mt-1">{t("orderDetail.reuploadScreenshot")}</p>
               </div>
             </div>
             <button
               className="w-full text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg py-2.5 transition-colors flex items-center justify-center gap-2"
               onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
             >
-              <span>🔄</span> 重新上傳付款截圖
+              <span>🔄</span> {t("orderDetail.reuploadScreenshotBtn")}
             </button>
           </div>
         )}
@@ -1256,15 +1269,15 @@ export default function OrderDetail() {
         {/* Order Timeline */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#06038d" }}>
-            <ShieldCheck className="w-4 h-4" style={{ color: "#06038d" }} />訂單進度
+            <ShieldCheck className="w-4 h-4" style={{ color: "#06038d" }} />{t("orderDetail.orderProgress")}
           </h2>
           {/* Horizontal progress bar - quick visual overview */}
           {!(["cancelled", "disputed", "refunded"].includes(order.orderStatus)) && (() => {
             const hSteps = [
-              { key: "pending_payment", label: "待付款" },
-              { key: "paid_held", label: "付款確認" },
-              { key: "shipped", label: "已出貨" },
-              { key: "completed", label: "已完成" },
+              { key: "pending_payment", label: t("orderDetail.timeline.pendingPayment") },
+              { key: "paid_held", label: t("orderDetail.timeline.paymentConfirmed") },
+              { key: "shipped", label: t("orderDetail.timeline.shipped") },
+              { key: "completed", label: t("orderDetail.timeline.completed") },
             ];
             const statusToIdx: Record<string, number> = {
               pending_payment: 0,
@@ -1343,14 +1356,14 @@ export default function OrderDetail() {
               <div className="flex items-start gap-3">
                 <Truck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium text-indigo-900 text-sm">物流資訊</p>
+                  <p className="font-medium text-indigo-900 text-sm">{t("orderDetail.logisticsInfo")}</p>
                   <p className="text-sm text-indigo-700 mt-1">
-                    <span className="font-medium">{getCarrierLabel(order.shippingMethod)}</span>
+                    <span className="font-medium">{getCarrierLabel(order.shippingMethod, t)}</span>
                     <span className="mx-2">·</span>
-                    追蹤號：<span className="font-mono font-bold">{order.trackingNumber}</span>
+                    {t("orderDetail.trackingNo")}：<span className="font-mono font-bold">{order.trackingNumber}</span>
                     <button
                       className="ml-2 text-indigo-500 hover:text-indigo-700"
-                      onClick={() => { navigator.clipboard.writeText(order.trackingNumber!); toast.success("追蹤號已複製"); }}
+                      onClick={() => { navigator.clipboard.writeText(order.trackingNumber!); toast.success(t("orderDetail.trackingCopied")); }}
                     >
                       <Copy className="w-3.5 h-3.5 inline" />
                     </button>
@@ -1363,22 +1376,22 @@ export default function OrderDetail() {
                       className="inline-flex items-center gap-1 mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium underline"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      點擊查詢追蹤狀態
+                      {t("orderDetail.clickToTrack")}
                     </a>
                   )}
                   {order.shippedAt && (
                     <p className="text-xs text-indigo-600 mt-1">
-                      出貨時間：{new Date(order.shippedAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {t("orderDetail.shippedAt")}：{new Date(order.shippedAt).toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   )}
                   {order.autoCompleteAt && order.orderStatus === "shipped" && (
                     <div className="mt-2 rounded-lg border border-indigo-100 bg-indigo-50 p-2.5">
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-medium text-indigo-700">自動確認收貨倒計時</p>
+                        <p className="text-xs font-medium text-indigo-700">{t("orderDetail.autoCompleteCountdown")}</p>
                         {autoCompleteCountdown && (
                           <span className="text-xs font-bold text-indigo-800">
-                            {autoCompleteCountdown.days > 0 && `${autoCompleteCountdown.days} 天 `}
-                            {autoCompleteCountdown.hours} 小時 {autoCompleteCountdown.minutes} 分鐘
+                            {autoCompleteCountdown.days > 0 && `${autoCompleteCountdown.days} ${t("common.days")} `}
+                            {autoCompleteCountdown.hours} {t("common.hours")} {autoCompleteCountdown.minutes} {t("common.minutes")}
                           </span>
                         )}
                       </div>
@@ -1396,7 +1409,7 @@ export default function OrderDetail() {
                         </div>
                       )}
                       <p className="text-xs text-indigo-500 mt-1">
-                        如未手動確認，系統將於 {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")} 自動完成訂單
+                        {t("orderDetail.autoCompleteNote")} {new Date(order.autoCompleteAt).toLocaleDateString("zh-HK")}
                       </p>
                     </div>
                   )}
@@ -1413,7 +1426,7 @@ export default function OrderDetail() {
               <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#06038d" }}>
                 <Package className="w-4 h-4 text-white" />
               </div>
-              <p className="font-semibold text-sm" style={{ color: "#06038d" }}>賣家出貨憑證</p>
+              <p className="font-semibold text-sm" style={{ color: "#06038d" }}>{t("orderDetail.sellerShippingProof")}</p>
             </div>
             <div
               className="relative rounded-lg overflow-hidden cursor-pointer group border border-indigo-200"
@@ -1421,19 +1434,19 @@ export default function OrderDetail() {
             >
               <img
                 src={(order as any).shippingImageUrl}
-                alt="出貨憑證"
+                alt={t("orderDetail.shippingProofAlt")}
                 className="w-full max-h-64 object-contain bg-white"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow">
-                  點擊放大查看
+                  {t("orderDetail.clickToEnlarge")}
                 </span>
               </div>
             </div>
-            <p className="text-xs text-indigo-600 mt-2">賣家已上傳出貨憑證圖片，如有疑問請聯絡客服。</p>
+            <p className="text-xs text-indigo-600 mt-2">{t("orderDetail.shippingProofUploaded")}</p>
           </div>
         )}
-        <ImageLightbox src={(order as any).shippingImageUrl ?? ""} alt="出貨憑證" isOpen={shippingProofLightbox} onClose={() => setShippingProofLightbox(false)} />
+        <ImageLightbox src={(order as any).shippingImageUrl ?? ""} alt={t("orderDetail.shippingProofAlt")} isOpen={shippingProofLightbox} onClose={() => setShippingProofLightbox(false)} />
 
         {/* Product Info */}
         {listing && (
@@ -1461,7 +1474,7 @@ export default function OrderDetail() {
               </div>
               <Link href={`/marketplace/${listing.id}`}>
                 <Button variant="outline" size="sm" className="text-xs flex-shrink-0 text-gray-700 border-gray-300 bg-white hover:bg-gray-50">
-                  <ExternalLink className="w-3 h-3 mr-1" />查看
+                  <ExternalLink className="w-3 h-3 mr-1" />{t("common.view")}
                 </Button>
               </Link>
             </div>
@@ -1471,7 +1484,7 @@ export default function OrderDetail() {
         {/* Shipping Address */}
         {shippingAddr && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-gray-900">
-            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>收貨資料</h2>
+            <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>{t("orderDetail.shippingAddress")}</h2>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2.5">
                 <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -1498,7 +1511,7 @@ export default function OrderDetail() {
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {shippingAddr.sfStationCode.startsWith('H') ? '順豐智能櫃' : '順豐站'}
+                      {shippingAddr.sfStationCode.startsWith('H') ? t('orderDetail.sfLocker') : t('orderDetail.sfStation')}
                     </span>
                     <span className="font-mono text-gray-700">{shippingAddr.sfStationCode}</span>
                     {shippingAddr.sfStationName && (
@@ -1515,55 +1528,55 @@ export default function OrderDetail() {
 
         {/* Payment Summary */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>付款摘要</h2>
+          <h2 className="font-semibold mb-3 text-sm uppercase tracking-wide" style={{ color: "#06038d" }}>{t("orderDetail.paymentSummary")}</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">商品金額</span>
+              <span className="text-gray-500">{t("orderDetail.itemAmount")}</span>
               <span className="text-gray-800">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">送貨方式</span>
+              <span className="text-gray-500">{t("orderDetail.shippingMethod")}</span>
               <span className="text-gray-800">
-                {order.shippingMethod === 'sf_express' ? '🚚 順豐速運（運費到付）' :
-                 order.shippingMethod === 'hk_post' ? '📮 香港郵政（平郵）' :
-                 order.shippingMethod ? order.shippingMethod : '未設定'}
+                {order.shippingMethod === 'sf_express' ? `🚚 ${t('orderDetail.sfExpressCollect')}` :
+                 order.shippingMethod === 'hk_post' ? `📮 ${t('orderDetail.hkPostSurface')}` :
+                 order.shippingMethod ? order.shippingMethod : t('orderDetail.notSet')}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">{t("orderDetail.paymentMethod")}</span>
-              <span className="text-gray-800 capitalize">{order.paymentMethod === "alipay_hk" ? "支付寶 HK" : "Stripe 信用卡"}</span>
+              <span className="text-gray-800 capitalize">{order.paymentMethod === "alipay_hk" ? t("orderDetail.alipayHk") : t("orderDetail.stripeCard")}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">{t("orderDetail.paymentStatus")}</span>
               <span className={order.paymentStatus === "paid" ? "text-green-600 font-medium" : "text-amber-600"}>
-                {order.paymentStatus === "paid" ? "已付款" : order.paymentStatus === "pending" ? "待付款" : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
+                {order.paymentStatus === "paid" ? t("orderDetail.paid") : order.paymentStatus === "pending" ? t("orderDetail.pendingPayment") : order.paymentStatus === "refunded" ? "已退款" : order.paymentStatus}
               </span>
             </div>
             {/* P1 Fix #5: Alipay HK Refund Tracking */}
             {order.paymentMethod === 'alipay_hk' && (order as any).alipayRefundStatus && (order as any).alipayRefundStatus !== 'not_applicable' && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-amber-800">支付寶 HK 退款狀態</span>
+                  <span className="text-xs font-medium text-amber-800">{t("orderDetail.alipayRefundStatus")}</span>
                   <Badge variant="outline" className={
                     (order as any).alipayRefundStatus === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
                     (order as any).alipayRefundStatus === 'processing' ? 'bg-blue-100 text-blue-800 border-blue-200' :
                     'bg-amber-100 text-amber-800 border-amber-200'
                   }>
-                    {(order as any).alipayRefundStatus === 'completed' ? '已退款' :
-                     (order as any).alipayRefundStatus === 'processing' ? '退款處理中' : '待退款'}
+                    {(order as any).alipayRefundStatus === 'completed' ? t('orderDetail.refunded') :
+                     (order as any).alipayRefundStatus === 'processing' ? t('orderDetail.refundProcessing') : t('orderDetail.pendingRefund')}
                   </Badge>
                 </div>
                 {(order as any).alipayRefundAmount && (
-                  <p className="text-xs text-amber-700">退款金額：HKD {parseFloat((order as any).alipayRefundAmount).toFixed(2)}</p>
+                  <p className="text-xs text-amber-700">{t("orderDetail.refundAmount")}：HKD {parseFloat((order as any).alipayRefundAmount).toFixed(2)}</p>
                 )}
                 {(order as any).alipayRefundCompletedAt && (
-                  <p className="text-xs text-green-700">退款完成時間：{new Date((order as any).alipayRefundCompletedAt).toLocaleString('zh-HK')}</p>
+                  <p className="text-xs text-green-700">{t("orderDetail.refundCompletedAt")}：{new Date((order as any).alipayRefundCompletedAt).toLocaleString('zh-HK')}</p>
                 )}
               </div>
             )}
             <Separator />
             <div className="flex justify-between font-bold">
-              <span>總計</span>
+              <span>{t("orderDetail.total")}</span>
               <span className="text-[#06038d]">HKD {parseFloat(order.subtotalHkd as string ?? "0").toFixed(2)}</span>
             </div>
             {/* Fee tier info - shown to seller for C2C orders */}
@@ -1590,11 +1603,11 @@ export default function OrderDetail() {
               return (
                 <div className={`mt-2 rounded-lg border p-3 space-y-1.5 ${tierBg}`}>
                   <div className={`flex items-center justify-between text-xs font-semibold ${tierText}`}>
-                    <span>本訂單適用第 {tier} 級費率（{ratePercent}%）</span>
+                    <span>{t("orderDetail.feeTier", { tier, rate: ratePercent })}</span>
                     <span>-HKD {platformFee.toFixed(2)}</span>
                   </div>
                   <div className={`flex items-center justify-between text-xs opacity-75 ${tierText}`}>
-                    <span>賣家實收</span>
+                    <span>{t("orderDetail.sellerReceives")}</span>
                     <span className="font-bold">HKD {sellerReceivable.toFixed(2)}</span>
                   </div>
                 </div>
@@ -1606,26 +1619,26 @@ export default function OrderDetail() {
                 {order.alipayProofImageUrl ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-500 font-medium">支付寶 HK 付款截圖</p>
+                      <p className="text-xs text-gray-500 font-medium">{t("orderDetail.alipayScreenshot")}</p>
                       {order.orderStatus === "pending_payment" && !((order as any).paymentRejectionReason) && (
                         <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
-                          <Loader2 className="w-3 h-3 animate-spin" />截圖審核中
+                          <Loader2 className="w-3 h-3 animate-spin" />{t("orderDetail.screenshotReviewing")}
                         </span>
                       )}
                       {order.orderStatus === "pending_payment" && (order as any).paymentRejectionReason && (
                         <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2 py-0.5">
-                          <XCircle className="w-3 h-3" />已被拒絕
+                          <XCircle className="w-3 h-3" />{t("orderDetail.rejected")}
                         </span>
                       )}
                     </div>
                     {order.orderStatus === "pending_payment" && !((order as any).paymentRejectionReason) && (
                       <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-                        ⏱ 通常 <strong>1-2 個工作天</strong>內確認，請耐心等候。如有疑問請聯絡客服。
+                        {t("orderDetail.reviewTimeHint")}
                       </p>
                     )}
                     <img
                       src={order.alipayProofImageUrl}
-                      alt="付款截圖"
+                      alt={t("orderDetail.paymentScreenshotAlt")}
                       className="w-full max-h-40 object-contain rounded-lg border border-gray-200 cursor-pointer"
                       onClick={() => window.open(order.alipayProofImageUrl!, "_blank")}
                     />
@@ -1634,18 +1647,18 @@ export default function OrderDetail() {
                         className="w-full text-xs text-[#06038D] border border-[#06038D]/30 rounded-lg py-2 hover:bg-[#06038D]/5 transition-colors"
                         onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
                       >
-                        🔄 重新上傳截圖
+                        {t("orderDetail.reuploadScreenshotBtn")}
                       </button>
                     )}
                   </div>
                 ) : order.orderStatus === "pending_payment" ? (
                   <div className="space-y-1">
-                    <p className="text-xs text-amber-600">⚠️ 尚未上傳支付寶 HK 付款截圖</p>
+                    <p className="text-xs text-amber-600">{t("orderDetail.noAlipayScreenshot")}</p>
                     <button
                       className="w-full text-xs text-[#06038D] border border-[#06038D]/30 rounded-lg py-2 hover:bg-[#06038D]/5 transition-colors"
                       onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); setShowReuploadDialog(true); }}
                     >
-                      📷 上傳付款截圖
+                      {t("orderDetail.uploadPaymentScreenshot")}
                     </button>
                   </div>
                 ) : null}
@@ -1671,8 +1684,8 @@ export default function OrderDetail() {
 
         {/* Order Meta */}
         <div className="text-xs text-gray-500 space-y-1 px-1">
-          <p>訂單建立：{new Date(order.createdAt).toLocaleString("zh-HK")}</p>
-          <p>最後更新：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
+          <p>{t("orderDetail.orderCreatedAt")}：{new Date(order.createdAt).toLocaleString("zh-HK")}</p>
+          <p>{t("orderDetail.orderUpdatedAt")}：{new Date(order.updatedAt).toLocaleString("zh-HK")}</p>
         </div>
       </div>
 
@@ -1691,9 +1704,9 @@ export default function OrderDetail() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-white">
-                    {reuploadVerifyResult?.verified ? "截圖已提交" : "上傳支付寶 HK 截圖"}
+                    {reuploadVerifyResult?.verified ? t("orderDetail.screenshotSubmitted") : t("orderDetail.uploadAlipayScreenshot")}
                   </h2>
-                  <p className="text-xs text-white/70 mt-0.5">訂單 {order?.orderNo}</p>
+                  <p className="text-xs text-white/70 mt-0.5">{t("orderDetail.orderNo")} {order?.orderNo}</p>
                 </div>
               </div>
               <button
@@ -1713,8 +1726,8 @@ export default function OrderDetail() {
                   <CheckCircle className="w-10 h-10 text-green-500" />
                 </div>
                 <div>
-                  <p className="font-bold text-xl text-[#06038D]">截圖已提交！</p>
-                  <p className="text-sm text-gray-500 mt-2">管理員核對收款後將確認你的訂單。</p>
+                  <p className="font-bold text-xl text-[#06038D]">{t("orderDetail.screenshotSubmittedTitle")}</p>
+                  <p className="text-sm text-gray-500 mt-2">{t("orderDetail.adminWillConfirm")}</p>
                 </div>
               </div>
             ) : (
@@ -1722,41 +1735,41 @@ export default function OrderDetail() {
                 {/* Amount info */}
                 <div className="bg-[#06038D]/5 border border-[#06038D]/20 rounded-xl p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">需付金額</span>
+                    <span className="text-sm text-gray-500">{t("orderDetail.amountDue")}</span>
                     <span className="text-xl font-bold text-[#06038D]">HKD {parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">請上傳支付寶 HK 付款成功截圖，截圖須清晰顯示金額、收款方及「成功」狀態。</p>
+                  <p className="text-xs text-gray-500 mt-2">{t("orderDetail.alipayScreenshotRequirements")}</p>
                 </div>
 
                 {/* Upload area */}
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">付款截圖 <span className="text-red-500">*</span></p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">{t("orderDetail.paymentScreenshot")} <span className="text-red-500">*</span></p>
                   <div className="border-2 border-dashed border-[#06038D]/30 rounded-xl overflow-hidden bg-gray-50">
                     {isReuploadUploading ? (
                       <div className="flex flex-col items-center justify-center gap-3 py-12">
                         <Loader2 className="w-10 h-10 animate-spin text-[#06038D]" />
-                        <p className="text-sm text-gray-500">上傳中，請稍候...</p>
+                        <p className="text-sm text-gray-500">{t("common.uploading")}...</p>
                       </div>
                     ) : reuploadProofUrl ? (
                       <div>
-                        <img src={reuploadProofUrl} alt="付款截圖" className="w-full max-h-56 object-contain p-2" />
+                        <img src={reuploadProofUrl} alt={t("orderDetail.paymentScreenshotAlt")} className="w-full max-h-56 object-contain p-2" />
                         {isReuploadVerifying && (
                           <div className="flex items-center justify-center gap-2 text-[#06038D] text-sm py-3 border-t border-gray-100 bg-indigo-50">
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>AI 正在驗證付款金額...</span>
+                            <span>{t("orderDetail.aiVerifying")}</span>
                           </div>
                         )}
                         {reuploadVerifyResult && !reuploadVerifyResult.verified && (
                           <div className="p-3 bg-red-50 border-t border-red-200">
                             <div className="flex items-center gap-2 font-semibold text-sm text-red-700 mb-2">
                               <XCircle className="w-4 h-4 flex-shrink-0" />
-                              驗證未通過，請檢查以下項目
+                              {t("orderDetail.verifyFailed")}
                             </div>
                             <div className="space-y-1.5">
                               {[
-                                { ok: reuploadVerifyResult.payeeVerified, label: `收款方：${reuploadVerifyResult.detectedPayee ?? "未識別"}${!reuploadVerifyResult.payeeVerified ? " （需為「零度有限公司」）" : ""}` },
-                                { ok: reuploadVerifyResult.amountVerified, label: `金額：${reuploadVerifyResult.currency ?? "HKD"} ${reuploadVerifyResult.detectedAmount ?? "未識別"}${!reuploadVerifyResult.amountVerified ? ` （需為 HKD ${parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}）` : ""}` },
-                                { ok: reuploadVerifyResult.statusVerified, label: `狀態：${reuploadVerifyResult.detectedStatus ?? "未識別"}${!reuploadVerifyResult.statusVerified ? " （需為「成功」）" : ""}` },
+                                { ok: reuploadVerifyResult.payeeVerified, label: `${t("orderDetail.payee")}：${reuploadVerifyResult.detectedPayee ?? "未識別"}${!reuploadVerifyResult.payeeVerified ? " " : ""}` },
+                                { ok: reuploadVerifyResult.amountVerified, label: `${t("orderDetail.amount")}：${reuploadVerifyResult.currency ?? "HKD"} ${reuploadVerifyResult.detectedAmount ?? "未識別"}${!reuploadVerifyResult.amountVerified ? ` （需為 HKD ${parseFloat(order?.subtotalHkd as string ?? "0").toFixed(2)}）` : ""}` },
+                                { ok: reuploadVerifyResult.statusVerified, label: `${t("orderDetail.status")}：${reuploadVerifyResult.detectedStatus ?? "未識別"}${!reuploadVerifyResult.statusVerified ? " " : ""}` },
                               ].map((item, i) => (
                                 <div key={i} className="flex items-start gap-2 text-xs">
                                   {item.ok
@@ -1770,7 +1783,7 @@ export default function OrderDetail() {
                               className="mt-3 w-full text-xs text-[#06038D] font-medium border border-[#06038D]/30 rounded-lg py-1.5 hover:bg-[#06038D]/5 transition-colors"
                               onClick={() => { setReuploadProofUrl(""); setReuploadVerifyResult(null); }}
                             >
-                              🔄 重新選擇截圖
+                              {t("orderDetail.reselectScreenshot")}
                             </button>
                           </div>
                         )}
@@ -1783,8 +1796,8 @@ export default function OrderDetail() {
                             <span className="text-2xl">📷</span>
                           </div>
                           <div className="text-center">
-                            <p className="text-sm font-medium text-[#06038D]">點擊選擇截圖</p>
-                            <p className="text-xs text-gray-400 mt-1">支援 JPG、PNG，最大 5MB</p>
+                            <p className="text-sm font-medium text-[#06038D]">{t("orderDetail.clickToSelectScreenshot")}</p>
+                            <p className="text-xs text-gray-400 mt-1">{t("orderDetail.screenshotHint")}</p>
                           </div>
                         </label>
                       </div>
@@ -1802,7 +1815,7 @@ export default function OrderDetail() {
                 className="w-full bg-[#06038D] hover:bg-[#0804b8] text-white h-11 rounded-xl font-semibold"
                 onClick={() => { setShowReuploadDialog(false); setReuploadProofUrl(""); setReuploadVerifyResult(null); utils.marketplace.getOrderByNo.invalidate({ orderNo }); }}
               >
-                完成
+                {t("common.done")}
               </Button>
             ) : (
               <Button
@@ -1810,7 +1823,7 @@ export default function OrderDetail() {
                 className="w-full text-gray-600 border-gray-200 h-11 rounded-xl"
                 onClick={() => setShowReuploadDialog(false)}
               >
-                取消
+                {t("common.cancel")}
               </Button>
             )}
           </div>
@@ -1820,17 +1833,17 @@ export default function OrderDetail() {
       {/* Cancel Order Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={(open) => { setShowCancelDialog(open); if (!open) setCancelReason(""); }}>
         <DialogContent bottomSheet className="sm:max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-500" />取消訂單</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-500" />{t("orderDetail.cancelOrder")}</DialogTitle></DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">確認要取消此訂單？取消後訂單將無法恢復。</p>
+            <p className="text-sm text-muted-foreground">{t("orderDetail.cancelConfirmNote")}</p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
-              只有「待付款」狀態的訂單可以取消。付款後如需退款請申請爭議。
+              {t("orderDetail.cancelNote")}
             </div>
             <div className="space-y-1.5">
-              <p className="text-sm font-medium">取消原因（選填）</p>
+              <p className="text-sm font-medium">{t("orderDetail.cancelReason")}</p>
               <Textarea
-                placeholder="請說明取消原因，例如：誤購、不需要等"
+                placeholder={t("orderDetail.cancelReasonPlaceholder")}
                 value={cancelReason}
                 onChange={e => setCancelReason(e.target.value)}
                 rows={3}
@@ -1840,15 +1853,15 @@ export default function OrderDetail() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>保留訂單</Button>
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>{t("orderDetail.keepOrder")}</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={buyerCancelMutation.isPending}
               onClick={() => buyerCancelMutation.mutate({ orderId: order.id, reason: cancelReason.trim() || undefined })}
             >
               {buyerCancelMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
-                : <><XCircle className="w-4 h-4 mr-2" />確認取消</>}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.processing")}</>
+                : <><XCircle className="w-4 h-4 mr-2" />{t("orderDetail.confirmCancel")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1859,10 +1872,10 @@ export default function OrderDetail() {
         <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader><DialogTitle>{t("orderDetail.confirmReceipt")}</DialogTitle></DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">確認已收到商品後，款項將立即轉帳給賣家。此操作不可撤銷。</p>
+            <p className="text-sm text-muted-foreground">{t("orderDetail.confirmDeliveryNote")}</p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
               <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
-              請確認商品狀態與描述相符後再確認收貨。如有問題，請先申請爭議。
+              {t("orderDetail.confirmDeliveryWarning")}
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -1873,7 +1886,7 @@ export default function OrderDetail() {
               onClick={() => confirmReceiptMutation.mutate({ orderId: order.id })}
             >
               {confirmReceiptMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.processing")}</>
                 : <><CheckCircle className="w-4 h-4 mr-2" />{t("orderDetail.confirmReceipt")}</>}
             </Button>
           </DialogFooter>
@@ -1885,13 +1898,13 @@ export default function OrderDetail() {
         <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Flag className="w-5 h-5 text-red-500" />申請爭議
+              <Flag className="w-5 h-5 text-red-500" />{t("orderDetail.applyDispute")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">請詳細描述問題，管理員將在 1-3 個工作天內處理。</p>
+            <p className="text-sm text-muted-foreground">{t("orderDetail.disputeNote")}</p>
             <Textarea
-              placeholder="請描述問題，例如：商品與描述不符、未收到商品、商品損壞等（至少 10 字）"
+              placeholder={t("orderDetail.disputePlaceholder")}
               value={disputeReason}
               onChange={e => setDisputeReason(e.target.value)}
               rows={4}
@@ -1899,21 +1912,21 @@ export default function OrderDetail() {
             />
             <div className="flex items-center justify-between">
               {disputeReason.trim().length < 10 && disputeReason.length > 0 ? (
-                <p className="text-xs text-red-500">還需輸入 {10 - disputeReason.trim().length} 個字</p>
+                <p className="text-xs text-red-500">{t("orderDetail.disputeNeedMore", { count: 10 - disputeReason.trim().length })}</p>
               ) : disputeReason.trim().length >= 10 ? (
-                <p className="text-xs text-green-600">✓ 內容已符合要求</p>
+                <p className="text-xs text-green-600">{t("orderDetail.disputeOk")}</p>
               ) : (
-                <p className="text-xs text-muted-foreground">至少輸入 10 個字</p>
+                <p className="text-xs text-muted-foreground">{t("orderDetail.disputeMinChars")}</p>
               )}
               <span className="text-xs text-muted-foreground">{disputeReason.length}/1000</span>
             </div>
             {/* Evidence Image Upload */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">證據截圖（選項，最多 3 張）</p>
+              <p className="text-sm font-medium">{t("orderDetail.evidenceScreenshots")}</p>
               <div className="flex flex-wrap gap-2">
                 {disputeEvidenceUrls.map((url, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border border-border">
-                    <LazyImage src={url} alt={`證據 ${i + 1}`} className="w-full h-full object-cover" />
+                    <LazyImage src={url} alt={`${t("orderDetail.evidence")} ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       onClick={() => setDisputeEvidenceUrls(prev => prev.filter((_, idx) => idx !== i))}
                       className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-700"
@@ -1924,7 +1937,7 @@ export default function OrderDetail() {
                   <label className={`w-20 h-20 rounded-md border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors ${isUploadingEvidence ? 'opacity-50 pointer-events-none' : ''}`}>
                     {isUploadingEvidence
                       ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                      : <><span className="text-2xl text-muted-foreground">+</span><span className="text-[10px] text-muted-foreground">上傳圖片</span></>}
+                      : <><span className="text-2xl text-muted-foreground">+</span><span className="text-[10px] text-muted-foreground">{t("orderDetail.uploadImage")}</span></>}
                     <input
                       type="file"
                       accept="image/*"
@@ -1935,7 +1948,7 @@ export default function OrderDetail() {
                   </label>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">支援 JPG、PNG，單張不超過 5MB</p>
+              <p className="text-xs text-muted-foreground">{t("orderDetail.screenshotHint")}</p>
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -1946,8 +1959,8 @@ export default function OrderDetail() {
               onClick={() => openDisputeMutation.mutate({ orderId: order.id, reason: disputeReason.trim(), evidenceUrls: disputeEvidenceUrls.length > 0 ? disputeEvidenceUrls : undefined })}
             >
               {openDisputeMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
-                : <><Flag className="w-4 h-4 mr-2" />提交爭議</>}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.submitting")}</>
+                : <><Flag className="w-4 h-4 mr-2" />{t("orderDetail.submitDispute")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1958,25 +1971,25 @@ export default function OrderDetail() {
         <DialogContent bottomSheet className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-400" />評價賣家
+              <Star className="w-5 h-5 text-yellow-400" />{t("orderDetail.rateSeller")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">評分</p>
+              <p className="text-sm font-medium">{t("orderDetail.rating")}</p>
               <StarRating value={reviewRating} onChange={setReviewRating} />
               <p className="text-xs text-muted-foreground">
-                {reviewRating === 1 && "非常不滿意"}
-                {reviewRating === 2 && "不滿意"}
-                {reviewRating === 3 && "一般"}
-                {reviewRating === 4 && "滿意"}
-                {reviewRating === 5 && "非常滿意"}
+                {reviewRating === 1 && t("orderDetail.rating1")}
+                {reviewRating === 2 && t("orderDetail.rating2")}
+                {reviewRating === 3 && t("orderDetail.rating3")}
+                {reviewRating === 4 && t("orderDetail.rating4")}
+                {reviewRating === 5 && t("orderDetail.rating5")}
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium">評語（選填）</p>
+              <p className="text-sm font-medium">{t("orderDetail.reviewComment")}</p>
               <Textarea
-                placeholder="分享你的購物體驗..."
+                placeholder={t("orderDetail.reviewPlaceholder")}
                 value={reviewComment}
                 onChange={e => setReviewComment(e.target.value)}
                 rows={3}
@@ -1992,8 +2005,8 @@ export default function OrderDetail() {
                 onChange={e => setReviewAnonymous(e.target.checked)}
                 className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
               />
-              <span className="text-sm">匿名評價</span>
-              <span className="text-xs text-muted-foreground">（賣家將不會看到你的名字）</span>
+              <span className="text-sm">{t("orderDetail.anonymousReview")}</span>
+              <span className="text-xs text-muted-foreground">{t("orderDetail.anonymousNote")}</span>
             </label>
           </div>
           <DialogFooter className="gap-2">
@@ -2009,7 +2022,7 @@ export default function OrderDetail() {
               })}
             >
               {submitReviewMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />提交中...</>
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.submitting")}</>
                 : <><MessageSquare className="w-4 h-4 mr-2" />{t("orderDetail.submitRating")}</>}
             </Button>
           </DialogFooter>
@@ -2021,53 +2034,53 @@ export default function OrderDetail() {
         <DialogContent bottomSheet className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5" style={{ color: '#06038d' }} />填寫出貨資料
+              <Truck className="w-5 h-5" style={{ color: '#06038d' }} />{t("orderDetail.enterShippingInfo")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-4">
             {/* Buyer info */}
             {shippingAddr && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
-                <p className="font-semibold text-sm text-blue-900">📦 買家收貨資訊</p>
-                <p>收件人：{shippingAddr.name} {shippingAddr.phone}</p>
-                <p>地址：{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ''}，{shippingAddr.region}，香港</p>
+                <p className="font-semibold text-sm text-blue-900">{t("orderDetail.buyerShippingInfo")}</p>
+                <p>{t("orderDetail.recipient")}：{shippingAddr.name} {shippingAddr.phone}</p>
+                <p>{t("orderDetail.address")}：{shippingAddr.address}{shippingAddr.district ? `，${shippingAddr.district}` : ''}，{shippingAddr.region}，香港</p>
               </div>
             )}
             {/* Carrier select */}
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">物流公司 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">{t("orderDetail.courierCompany")} <span className="text-red-500">*</span></Label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06038d]"
                 value={adminShipForm.shippingMethod}
                 onChange={e => setAdminShipForm(f => ({ ...f, shippingMethod: e.target.value }))}
               >
-                <option value="sf_express">順豐速運 (SF Express)</option>
-                <option value="hkpost">香港郵政 (HK Post)</option>
+                <option value="sf_express">{t("orderDetail.sfExpress")}</option>
+                <option value="hkpost">{t("orderDetail.hkPost")}</option>
                 <option value="dhl">DHL</option>
                 <option value="fedex">FedEx</option>
                 <option value="ups">UPS</option>
-                <option value="chunghwa_post">中華郵政</option>
-                <option value="black_cat">黑貓宅急</option>
-                <option value="other">其他</option>
+                <option value="chunghwa_post">{t("orderDetail.chunghwaPost")}</option>
+                <option value="black_cat">{t("orderDetail.blackCat")}</option>
+                <option value="other">{t("orderDetail.other")}</option>
               </select>
             </div>
             {/* Tracking number */}
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">追蹤號碼 <span className="text-red-500">*</span></Label>
+              <Label className="text-gray-800 font-medium">{t("orderDetail.trackingNo")} <span className="text-red-500">*</span></Label>
               <input
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06038d]"
-                placeholder="例：SF1234567890"
+                placeholder={t("orderDetail.trackingPlaceholder")}
                 value={adminShipForm.trackingNo}
                 onChange={e => setAdminShipForm(f => ({ ...f, trackingNo: e.target.value }))}
               />
             </div>
             {/* Shipping proof image */}
             <div className="space-y-1.5">
-              <Label className="text-gray-800 font-medium">出貨憑證圖片 <span className="text-red-500">*</span></Label>
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ 必須上傳出貨憑證（如快遞單、收據截圖），否則無法提交</p>
+              <Label className="text-gray-800 font-medium">{t("orderDetail.shippingProofImage")} <span className="text-red-500">*</span></Label>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">⚠️ {t("seller.shipping.proofRequired")}憑證（如快遞單、收據截圖），否則無法提交</p>
               {adminShipForm.shippingImageUrl ? (
                 <div className="relative">
-                  <LazyImage src={adminShipForm.shippingImageUrl} alt="出貨憑證" className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
+                  <LazyImage src={adminShipForm.shippingImageUrl} alt={t("orderDetail.shippingProofAlt")} className="w-full max-h-40 object-contain rounded-lg border border-[#06038d]/30 bg-gray-50" />
                   <button type="button" onClick={() => setAdminShipForm(f => ({ ...f, shippingImageUrl: '' }))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
                 </div>
               ) : (
@@ -2075,13 +2088,13 @@ export default function OrderDetail() {
                   {isAdminShipImageUploading ? (
                     <div className="flex items-center gap-2 text-[#06038d]">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-xs">上傳中...</span>
+                      <span className="text-xs">{t("common.uploading")}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-1 text-[#06038d]">
                       <FileImage className="w-6 h-6" />
-                      <span className="text-xs font-medium">點擊上傳出貨照片</span>
-                      <span className="text-xs text-gray-400">支援 JPG、PNG（最大 10MB）</span>
+                      <span className="text-xs font-medium">{t("seller.shipping.uploadPhoto")}</span>
+                      <span className="text-xs text-gray-400">{t("seller.shipping.uploadHint")}</span>
                     </div>
                   )}
                   <input type="file" accept="image/*" className="hidden" disabled={isAdminShipImageUploading} onChange={(e) => handleAdminShipImageUpload(e, order.id)} />
@@ -2102,8 +2115,8 @@ export default function OrderDetail() {
               })}
             >
               {markOrderShippedMutation.isPending
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />處理中...</>
-                : <><Truck className="w-4 h-4 mr-2" />確認出貨</>}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("common.processing")}</>
+                : <><Truck className="w-4 h-4 mr-2" />{t("orderDetail.confirmShipment")}</>}
             </Button>
           </DialogFooter>
         </DialogContent>

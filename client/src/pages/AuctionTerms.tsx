@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronDown, ChevronUp, ShoppingCart, Gavel, DollarSign, Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, Package, CreditCard, RotateCcw, Clock, Scale, FileText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "react-i18next";
 
 const BRAND_BLUE = "#06038D";
 const BRAND_YELLOW = "#FEDD00";
@@ -76,19 +77,8 @@ function InfoBox({ type, children }: { type: "info" | "warning" | "success"; chi
   );
 }
 
-const TOC = [
-  { id: "overview", label: "平台概覽" },
-  { id: "buy-now", label: "直購流程" },
-  { id: "auction", label: "拍賣流程" },
-  { id: "fees", label: "平台收費" },
-  { id: "payment", label: "付款與結算" },
-  { id: "shipping", label: "交收安排" },
-  { id: "returns", label: "退款政策" },
-  { id: "conduct", label: "行為守則" },
-  { id: "liability", label: "免責聲明" },
-];
-
 export default function AuctionTerms() {
+  const { t } = useTranslation();
   const [tocOpen, setTocOpen] = useState(false);
   const [openSectionId, setOpenSectionId] = useState<string | null>("overview");
   const handleToggle = (id: string) => setOpenSectionId(prev => prev === id ? null : id);
@@ -102,30 +92,45 @@ export default function AuctionTerms() {
     }
   };
 
+  const TOC = [
+    { id: "overview", label: t("auctionTerms.toc.overview") },
+    { id: "buy-now", label: t("auctionTerms.toc.buyNow") },
+    { id: "auction", label: t("auctionTerms.toc.auction") },
+    { id: "fees", label: t("auctionTerms.toc.fees") },
+    { id: "payment", label: t("auctionTerms.toc.payment") },
+    { id: "shipping", label: t("auctionTerms.toc.shipping") },
+    { id: "returns", label: t("auctionTerms.toc.returns") },
+    { id: "conduct", label: t("auctionTerms.toc.conduct") },
+    { id: "liability", label: t("auctionTerms.toc.liability") },
+  ];
+
   // Build display tiers from API data or fall back to defaults
-  const displayTiers = feeTiersData ? feeTiersData.map((t, i) => {
-    const ratePercent = (t.rate * 100).toFixed(1).replace(/\.0$/, '') + '%';
+  const displayTiers = feeTiersData ? feeTiersData.map((tier, i) => {
+    const ratePercent = (tier.rate * 100).toFixed(1).replace(/\.0$/, '') + '%';
     const tierColors = [
       { color: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' },
       { color: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
       { color: 'bg-green-50', badge: 'bg-green-100 text-green-800' },
     ];
-    const tierNames = ['第一級', '第二級', '第三級'];
+    const tierNames = [
+      t("auctionTerms.fees.tier1"),
+      t("auctionTerms.fees.tier2"),
+      t("auctionTerms.fees.tier3"),
+    ];
     const tierRanges = [
-      t.maxAmount ? `HKD ${t.maxAmount.toLocaleString()} 或以下` : 'HKD 10,001 或以上',
+      tier.maxAmount ? t("auctionTerms.fees.rangeBelow", { amount: tier.maxAmount.toLocaleString() }) : t("auctionTerms.fees.rangeAbove", { amount: "10,001" }),
       feeTiersData[0]?.maxAmount && feeTiersData[1]?.maxAmount
         ? `HKD ${(feeTiersData[0].maxAmount + 1).toLocaleString()} – HKD ${feeTiersData[1].maxAmount.toLocaleString()}`
         : 'HKD 5,001 – HKD 10,000',
-      feeTiersData[1]?.maxAmount ? `HKD ${(feeTiersData[1].maxAmount + 1).toLocaleString()} 或以上` : 'HKD 10,001 或以上',
+      feeTiersData[1]?.maxAmount ? t("auctionTerms.fees.rangeAbove", { amount: (feeTiersData[1].maxAmount + 1).toLocaleString() }) : t("auctionTerms.fees.rangeAbove", { amount: "10,001" }),
     ];
-    // Example calculations
     const exampleAmounts = [1000, 8000, 15000];
     const exAmt = exampleAmounts[i] || 1000;
-    const exFee = Math.round(exAmt * t.rate);
+    const exFee = Math.round(exAmt * tier.rate);
     const exReceive = exAmt - exFee;
-    const example = `成交 HKD ${exAmt.toLocaleString()} → 服務費 HKD ${exFee.toLocaleString()}，實收 HKD ${exReceive.toLocaleString()}`;
+    const example = t("auctionTerms.fees.example", { amount: exAmt.toLocaleString(), fee: exFee.toLocaleString(), receive: exReceive.toLocaleString() });
     return {
-      tier: tierNames[i] || `第${i+1}級`,
+      tier: tierNames[i] || `${t("auctionTerms.fees.tierLabel")}${i+1}`,
       range: tierRanges[i],
       rate: ratePercent,
       color: (tierColors[i] || tierColors[0]).color,
@@ -133,15 +138,14 @@ export default function AuctionTerms() {
       example,
     };
   }) : [
-    { tier: '第一級', range: 'HKD 5,000 或以下', rate: '5.5%', color: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', example: '成交 HKD 1,000 → 服務費 HKD 55，實收 HKD 945' },
-    { tier: '第二級', range: 'HKD 5,001 – HKD 10,000', rate: '5%', color: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', example: '成交 HKD 8,000 → 服務費 HKD 400，實收 HKD 7,600' },
-    { tier: '第三級', range: 'HKD 10,001 或以上', rate: '4.5%', color: 'bg-green-50', badge: 'bg-green-100 text-green-800', example: '成交 HKD 15,000 → 服務費 HKD 675，實收 HKD 14,325' },
+    { tier: t("auctionTerms.fees.tier1"), range: t("auctionTerms.fees.rangeBelow", { amount: "5,000" }), rate: '5.5%', color: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', example: t("auctionTerms.fees.example", { amount: "1,000", fee: "55", receive: "945" }) },
+    { tier: t("auctionTerms.fees.tier2"), range: 'HKD 5,001 – HKD 10,000', rate: '5%', color: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', example: t("auctionTerms.fees.example", { amount: "8,000", fee: "400", receive: "7,600" }) },
+    { tier: t("auctionTerms.fees.tier3"), range: t("auctionTerms.fees.rangeAbove", { amount: "10,001" }), rate: '4.5%', color: 'bg-green-50', badge: 'bg-green-100 text-green-800', example: t("auctionTerms.fees.example", { amount: "15,000", fee: "675", receive: "14,325" }) },
   ];
 
   const scrollTo = (id: string) => {
     setOpenSectionId(id);
     setTocOpen(false);
-    // Wait a tick for the section to expand before scrolling
     setTimeout(() => {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -163,22 +167,22 @@ export default function AuctionTerms() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95"
           >
             <ArrowLeft className="w-4 h-4" />
-            返回上一頁
+            {t("auctionTerms.back")}
           </button>
         </div>
         <div className="relative max-w-3xl mx-auto px-4 pb-12 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4"
             style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
             <Shield className="w-3 h-3" />
-            BOXIUM TCG 官方條款
+            {t("auctionTerms.officialBadge")}
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
-            買賣條款及細則
+            {t("auctionTerms.heroTitle")}
           </h1>
           <p className="text-white/70 text-sm max-w-xl mx-auto">
-            本條款適用於 Boxium PTCG 平台上的所有買賣交易，包括直購及拍賣商品。請於交易前仔細閱讀，使用本平台即表示你同意以下所有條款。
+            {t("auctionTerms.heroDesc")}
           </p>
-          <p className="text-white/40 text-xs mt-4">最後更新：2025 年 4 月</p>
+          <p className="text-white/40 text-xs mt-4">{t("auctionTerms.lastUpdated")}</p>
         </div>
       </div>
 
@@ -189,7 +193,7 @@ export default function AuctionTerms() {
           style={{ color: BRAND_BLUE }}
           onClick={() => setTocOpen(v => !v)}
         >
-          <span>目錄導覽</span>
+          <span>{t("auctionTerms.tocTitle")}</span>
           {tocOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
         {tocOpen && (
@@ -207,92 +211,90 @@ export default function AuctionTerms() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Desktop TOC */}
         <div className="hidden sm:block mb-8 p-5 rounded-2xl border-2 border-blue-100 bg-white">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">目錄</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t("auctionTerms.tocTitle")}</p>
           <div className="grid grid-cols-3 gap-2">
-            {TOC.map(t => (
-              <button key={t.id} onClick={() => scrollTo(t.id)}
+            {TOC.map(item => (
+              <button key={item.id} onClick={() => scrollTo(item.id)}
                 className="text-left text-sm px-3 py-2 rounded-xl hover:bg-blue-50 text-[#06038D] font-medium transition-colors flex items-center gap-1.5">
                 <ArrowRight className="w-3 h-3 opacity-50" />
-                {t.label}
+                {item.label}
               </button>
             ))}
           </div>
         </div>
 
         {/* Section 1: Platform Overview */}
-        <Section id="overview" icon={<Package className="w-5 h-5" />} title="一、平台概覽" isOpen={openSectionId === "overview"} onToggle={handleToggle}>
-          <p>
-            Boxium PTCG（下稱「本平台」）是一個專為集換式卡牌（TCG）愛好者而設的香港買賣平台，提供<strong>直購</strong>及<strong>拍賣</strong>兩種交易模式，讓買賣雙方能夠安全、便捷地進行卡牌交易。
-          </p>
+        <Section id="overview" icon={<Package className="w-5 h-5" />} title={t("auctionTerms.s1.title")} isOpen={openSectionId === "overview"} onToggle={handleToggle}>
+          <p dangerouslySetInnerHTML={{ __html: t("auctionTerms.s1.intro") }} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
             <div className="rounded-xl p-4 border border-blue-100 bg-blue-50">
               <div className="flex items-center gap-2 mb-2">
                 <ShoppingCart className="w-4 h-4" style={{ color: BRAND_BLUE }} />
-                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>直購模式</span>
+                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>{t("auctionTerms.s1.buyNowMode")}</span>
               </div>
-              <p className="text-xs text-gray-600">賣家設定固定售價，買家即時購買，交易即時確認。</p>
+              <p className="text-xs text-gray-600">{t("auctionTerms.s1.buyNowDesc")}</p>
             </div>
             <div className="rounded-xl p-4 border border-blue-100 bg-blue-50">
               <div className="flex items-center gap-2 mb-2">
                 <Gavel className="w-4 h-4" style={{ color: BRAND_BLUE }} />
-                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>拍賣模式</span>
+                <span className="font-bold text-sm" style={{ color: BRAND_BLUE }}>{t("auctionTerms.s1.auctionMode")}</span>
               </div>
-              <p className="text-xs text-gray-600">賣家設定起拍價，買家競標，限時結束後最高出價者得標。</p>
+              <p className="text-xs text-gray-600">{t("auctionTerms.s1.auctionDesc")}</p>
             </div>
           </div>
           <InfoBox type="info">
-            本平台所有交易均以<strong>港幣（HKD）</strong>計算。賣家須完成 Stripe Connect 收款帳戶設定方可上架商品。
+            <span dangerouslySetInnerHTML={{ __html: t("auctionTerms.s1.infoBox") }} />
           </InfoBox>
         </Section>
 
         {/* Section 2: Buy Now Flow */}
-        <Section id="buy-now" icon={<ShoppingCart className="w-5 h-5" />} title="二、直購流程" badge="直購" isOpen={openSectionId === "buy-now"} onToggle={handleToggle}>
+        <Section id="buy-now" icon={<ShoppingCart className="w-5 h-5" />} title={t("auctionTerms.s2.title")} badge={t("auctionTerms.s2.badge")} isOpen={openSectionId === "buy-now"} onToggle={handleToggle}>
           <div className="space-y-3">
-            <p className="font-semibold text-[#06038D]">買家流程</p>
+            <p className="font-semibold text-[#06038D]">{t("auctionTerms.s2.buyerFlow")}</p>
             <div className="space-y-3">
-              <Rule num="1" title="瀏覽及選購">在商品列表中選擇心儀商品，查閱商品詳情、品相評級及賣家評分。</Rule>
-              <Rule num="2" title="加入購物車或即時購買">點擊「立即購買」或加入購物車後結帳，確認訂單詳情及總金額。</Rule>
-              <Rule num="3" title="完成付款">透過 Stripe 安全支付頁面完成付款，系統即時確認訂單。</Rule>
-              <Rule num="4" title="等候交收">賣家確認出貨後，根據雙方協議的交收方式完成交收。</Rule>
+              <Rule num="1" title={t("auctionTerms.s2.b1title")}>{t("auctionTerms.s2.b1desc")}</Rule>
+              <Rule num="2" title={t("auctionTerms.s2.b2title")}>{t("auctionTerms.s2.b2desc")}</Rule>
+              <Rule num="3" title={t("auctionTerms.s2.b3title")}>{t("auctionTerms.s2.b3desc")}</Rule>
+              <Rule num="4" title={t("auctionTerms.s2.b4title")}>{t("auctionTerms.s2.b4desc")}</Rule>
             </div>
             <div className="border-t border-gray-100 pt-3 mt-3">
-              <p className="font-semibold text-[#06038D] mb-3">賣家流程</p>
+              <p className="font-semibold text-[#06038D] mb-3">{t("auctionTerms.s2.sellerFlow")}</p>
               <div className="space-y-3">
-                <Rule num="1" title="上架商品">填寫商品名稱、品相、系列、售價及商品圖片，提交審核。</Rule>
-                <Rule num="2" title="等候管理員審核">所有商品須經平台管理員審核後方可公開上架，確保商品資訊準確。</Rule>
-                <Rule num="3" title="處理訂單">收到訂單通知後，在規定時間內確認出貨並安排交收。</Rule>
-                <Rule num="4" title="收款結算">交易完成後，平台扣除服務費後將款項結算至賣家 Stripe 帳戶。</Rule>
+                <Rule num="1" title={t("auctionTerms.s2.s1title")}>{t("auctionTerms.s2.s1desc")}</Rule>
+                <Rule num="2" title={t("auctionTerms.s2.s2title")}>{t("auctionTerms.s2.s2desc")}</Rule>
+                <Rule num="3" title={t("auctionTerms.s2.s3title")}>{t("auctionTerms.s2.s3desc")}</Rule>
+                <Rule num="4" title={t("auctionTerms.s2.s4title")}>{t("auctionTerms.s2.s4desc")}</Rule>
               </div>
             </div>
             <InfoBox type="warning">
-              買家確認付款後，訂單即告成立。除符合退款政策的情況外，買家不得單方面取消訂單。
+              {t("auctionTerms.s2.warningBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 3: Auction Flow */}
-        <Section id="auction" icon={<Gavel className="w-5 h-5" />} title="三、拍賣流程及條款" badge="拍賣" isOpen={openSectionId === "auction"} onToggle={handleToggle}>
+        <Section id="auction" icon={<Gavel className="w-5 h-5" />} title={t("auctionTerms.s3.title")} badge={t("auctionTerms.s3.badge")} isOpen={openSectionId === "auction"} onToggle={handleToggle}>
           <div className="space-y-4">
             <div>
-              <p className="font-semibold text-[#06038D] mb-3">拍賣流程</p>
+              <p className="font-semibold text-[#06038D] mb-3">{t("auctionTerms.s3.flowTitle")}</p>
               <div className="space-y-3">
-                <Rule num="1" title="賣家設定拍賣">設定起拍價、拍賣天數（3 日或 7 日）及可選即買價，提交審核後上架。</Rule>
-                <Rule num="2" title="買家出價">登入後可對進行中的拍賣出價，每次出價必須高於當前最高出價。</Rule>
-                <Rule num="3" title="拍賣結束">拍賣時間結束時，最高出價者自動得標。系統即時通知買賣雙方。</Rule>
-                <Rule num="4" title="付款及交收">得標買家須在 <strong>48 小時內</strong>完成付款，逾期視為放棄得標資格。</Rule>
+                <Rule num="1" title={t("auctionTerms.s3.a1title")}>{t("auctionTerms.s3.a1desc")}</Rule>
+                <Rule num="2" title={t("auctionTerms.s3.a2title")}>{t("auctionTerms.s3.a2desc")}</Rule>
+                <Rule num="3" title={t("auctionTerms.s3.a3title")}>{t("auctionTerms.s3.a3desc")}</Rule>
+                <Rule num="4" title={t("auctionTerms.s3.a4title")}><span dangerouslySetInnerHTML={{ __html: t("auctionTerms.s3.a4desc") }} /></Rule>
               </div>
             </div>
 
             <div className="rounded-xl overflow-hidden border border-blue-100">
-              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>拍賣重要規則</div>
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>{t("auctionTerms.s3.rulesTitle")}</div>
               <div className="divide-y divide-gray-100">
                 {[
-                  { icon: "🔒", title: "出價具法律約束力", desc: "一旦出價，即構成購買承諾。得標後必須完成付款，否則帳號將受到限制。" },
-                  { icon: "⏱️", title: "即買價機制", desc: "若賣家設有即買價，買家可隨時以即買價直接購買，拍賣即時結束。" },
-                  { icon: "🔔", title: "自動通知", desc: "被超越出價時，系統將自動通知買家，讓你有機會再次出價。" },
-                  { icon: "⏰", title: "防狙擊機制", desc: "拍賣結束前 5 分鐘內有新出價，拍賣時間將自動延長 5 分鐘，確保公平競標。" },
-                  { icon: "❌", title: "拍賣取消限制", desc: "拍賣開始後，若已有出價，賣家不得單方面取消拍賣，違者將受到平台處分。" },
-                  { icon: "🏆", title: "得標確認", desc: "拍賣結束後，系統自動向得標買家發送付款連結，請留意通知。" },
+                  { icon: "🔒", title: t("auctionTerms.s3.r1title"), desc: t("auctionTerms.s3.r1desc") },
+                  { icon: "⏱️", title: t("auctionTerms.s3.r2title"), desc: t("auctionTerms.s3.r2desc") },
+                  { icon: "🔔", title: t("auctionTerms.s3.r3title"), desc: t("auctionTerms.s3.r3desc") },
+                  { icon: "⏰", title: t("auctionTerms.s3.r4title"), desc: t("auctionTerms.s3.r4desc") },
+                  { icon: "❌", title: t("auctionTerms.s3.r5title"), desc: t("auctionTerms.s3.r5desc") },
+                  { icon: "🏆", title: t("auctionTerms.s3.r6title"), desc: t("auctionTerms.s3.r6desc") },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 px-4 py-3">
                     <span className="text-base flex-shrink-0">{r.icon}</span>
@@ -306,75 +308,75 @@ export default function AuctionTerms() {
             </div>
 
             <InfoBox type="warning">
-              得標買家若在 48 小時內未完成付款，平台有權將商品重新上架，並對違規帳號採取相應措施，包括限制出價資格。
+              {t("auctionTerms.s3.warningBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 4: Fees */}
-        <Section id="fees" icon={<DollarSign className="w-5 h-5" />} title="四、平台收費說明" badge="重要" isOpen={openSectionId === "fees"} onToggle={handleToggle}>
+        <Section id="fees" icon={<DollarSign className="w-5 h-5" />} title={t("auctionTerms.s4.title")} badge={t("auctionTerms.s4.badge")} isOpen={openSectionId === "fees"} onToggle={handleToggle}>
           <div className="space-y-4">
-            <p>本平台採用<strong>階梯式服務費</strong>，按成交金額高低收取不同費率，成交金額越高，費率越低。服務費僅向<strong>賣家</strong>收取，買家無需支付額外服務費。</p>
+            <p dangerouslySetInnerHTML={{ __html: t("auctionTerms.s4.intro") }} />
 
             {/* Fee Tier Table */}
             <div className="rounded-xl overflow-hidden border border-blue-100 shadow-sm">
               <div className="px-4 py-3 text-sm font-bold text-white flex items-center gap-2" style={{ background: BRAND_BLUE }}>
                 <DollarSign className="w-4 h-4" />
-                賣家服務費率（以成交金額計算）
+                {t("auctionTerms.s4.tableTitle")}
               </div>
               <div className="divide-y divide-blue-50">
                 {feeTiersLoading ? (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">載入費率中...</div>
-                ) : displayTiers.map((t, i) => (
-                  <div key={i} className={`px-4 py-3.5 ${t.color}`}>
+                  <div className="px-4 py-6 text-center text-sm text-gray-400">{t("auctionTerms.s4.loading")}</div>
+                ) : displayTiers.map((tier, i) => (
+                  <div key={i} className={`px-4 py-3.5 ${tier.color}`}>
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${t.badge}`}>{t.tier}</span>
-                        <span className="text-sm font-medium text-gray-700">{t.range}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tier.badge}`}>{tier.tier}</span>
+                        <span className="text-sm font-medium text-gray-700">{tier.range}</span>
                       </div>
-                      <span className="text-lg font-black" style={{ color: BRAND_BLUE }}>{t.rate}</span>
+                      <span className="text-lg font-black" style={{ color: BRAND_BLUE }}>{tier.rate}</span>
                     </div>
-                    <p className="text-xs text-gray-500 pl-0.5">{t.example}</p>
+                    <p className="text-xs text-gray-500 pl-0.5">{tier.example}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="rounded-xl p-4 border border-blue-100 bg-blue-50 space-y-2">
-              <p className="text-sm font-bold" style={{ color: BRAND_BLUE }}>費率補充說明</p>
+              <p className="text-sm font-bold" style={{ color: BRAND_BLUE }}>{t("auctionTerms.s4.notesTitle")}</p>
               <ul className="space-y-1.5 text-sm text-gray-600">
-                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>服務費於款項結算時自動扣除，賣家毋須另行繳付。</li>
-                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>費率以<strong>單筆成交金額</strong>計算，而非累計金額。</li>
-                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>平台保留調整費率的權利，並提前 7 日以公告形式通知賣家。</li>
-                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>買家付款時，Stripe 支付手續費由平台承擔，不另向買家收取。</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>{t("auctionTerms.s4.note1")}</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span><span dangerouslySetInnerHTML={{ __html: t("auctionTerms.s4.note2") }} /></li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>{t("auctionTerms.s4.note3")}</li>
+                <li className="flex gap-2"><span className="text-blue-400 mt-0.5">•</span>{t("auctionTerms.s4.note4")}</li>
               </ul>
             </div>
 
             <InfoBox type="success">
-              上架商品及瀏覽平台完全免費。平台僅於交易成功後才收取服務費，不成交不收費。
+              {t("auctionTerms.s4.successBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 5: Payment */}
-        <Section id="payment" icon={<CreditCard className="w-5 h-5" />} title="五、付款與結算" isOpen={openSectionId === "payment"} onToggle={handleToggle}>
+        <Section id="payment" icon={<CreditCard className="w-5 h-5" />} title={t("auctionTerms.s5.title")} isOpen={openSectionId === "payment"} onToggle={handleToggle}>
           <div className="space-y-3">
             <div>
-              <p className="font-semibold text-[#06038D] mb-2">買家付款</p>
+              <p className="font-semibold text-[#06038D] mb-2">{t("auctionTerms.s5.buyerPayment")}</p>
               <div className="space-y-2">
-                <Rule num="1" title="接受付款方式">本平台透過 Stripe 處理所有付款，支援 Visa、Mastercard、American Express 等主要信用卡及扣帳卡。</Rule>
-                <Rule num="2" title="付款安全">所有付款均透過 Stripe 加密處理，本平台不儲存任何信用卡資料。</Rule>
-                <Rule num="3" title="付款時限">直購訂單須即時完成付款；拍賣得標後須於 48 小時內付款。</Rule>
+                <Rule num="1" title={t("auctionTerms.s5.p1title")}>{t("auctionTerms.s5.p1desc")}</Rule>
+                <Rule num="2" title={t("auctionTerms.s5.p2title")}>{t("auctionTerms.s5.p2desc")}</Rule>
+                <Rule num="3" title={t("auctionTerms.s5.p3title")}>{t("auctionTerms.s5.p3desc")}</Rule>
               </div>
             </div>
             <div className="border-t border-gray-100 pt-3">
-              <p className="font-semibold text-[#06038D] mb-2">賣家結算與放款流程</p>
+              <p className="font-semibold text-[#06038D] mb-2">{t("auctionTerms.s5.sellerPayout")}</p>
               <div className="space-y-2">
-                <Rule num="1" title="Stripe Connect 帳戶">賣家須設立並連接 Stripe Connect 帳戶，方可接收款項。</Rule>
-                <Rule num="2" title="買家確認收貨">買家收到商品後，須在訂單頁面點擊「確認收貨」。如買家在出貨後 14 天內未確認收貨，系統將自動完成訂單。</Rule>
-                <Rule num="3" title="48 小時冷靜期">買家確認收貨（或系統自動完成訂單）後，款項進入 <strong>48 小時冷靜期保護</strong>。在此期間，買家可就商品問題提出爭議申請。</Rule>
-                <Rule num="4" title="自動放款">冷靜期結束後，若無任何爭議，系統將自動將款項（扣除平台服務費後的實收金額）轉帳至賣家 Stripe Connect 帳戶。</Rule>
-                <Rule num="5" title="爭議暫停放款">如冷靜期內買家提出爭議，款項將暫時凍結，直至爭議處理完畢後方可放款。</Rule>
+                <Rule num="1" title={t("auctionTerms.s5.sp1title")}>{t("auctionTerms.s5.sp1desc")}</Rule>
+                <Rule num="2" title={t("auctionTerms.s5.sp2title")}>{t("auctionTerms.s5.sp2desc")}</Rule>
+                <Rule num="3" title={t("auctionTerms.s5.sp3title")}><span dangerouslySetInnerHTML={{ __html: t("auctionTerms.s5.sp3desc") }} /></Rule>
+                <Rule num="4" title={t("auctionTerms.s5.sp4title")}>{t("auctionTerms.s5.sp4desc")}</Rule>
+                <Rule num="5" title={t("auctionTerms.s5.sp5title")}>{t("auctionTerms.s5.sp5desc")}</Rule>
               </div>
             </div>
 
@@ -382,14 +384,11 @@ export default function AuctionTerms() {
             <div className="rounded-xl overflow-hidden border border-blue-100">
               <div className="px-4 py-2.5 text-xs font-bold text-white flex items-center gap-2" style={{ background: BRAND_BLUE }}>
                 <Clock className="w-3.5 h-3.5" />
-                放款時間軸
+                {t("auctionTerms.s5.timelineTitle")}
               </div>
               <div className="p-4">
-                {/* Timeline: full-width connector line with dots centered on it */}
                 <div className="relative">
-                  {/* Full-width background line */}
                   <div className="absolute top-[5px] left-[6px] right-[6px] h-0.5 bg-gray-200" />
-                  {/* Dots row */}
                   <div className="relative flex justify-between mb-2">
                     {[
                       { color: "bg-blue-500" },
@@ -399,12 +398,11 @@ export default function AuctionTerms() {
                       <div key={i} className={`w-3 h-3 rounded-full flex-shrink-0 ${item.color} relative z-10`} />
                     ))}
                   </div>
-                  {/* Labels row */}
                   <div className="flex justify-between">
                     {[
-                      { step: "買家確認收貨", sub: "或系統自動完成（14天後）" },
-                      { step: "48 小時冷静期", sub: "買家可提出爭議申請" },
-                      { step: "自動放款", sub: "款項轉入賣家帳戶" },
+                      { step: t("auctionTerms.s5.tl1step"), sub: t("auctionTerms.s5.tl1sub") },
+                      { step: t("auctionTerms.s5.tl2step"), sub: t("auctionTerms.s5.tl2sub") },
+                      { step: t("auctionTerms.s5.tl3step"), sub: t("auctionTerms.s5.tl3sub") },
                     ].map((item, i) => (
                       <div key={i} className={`text-center ${i === 0 ? 'text-left' : i === 2 ? 'text-right' : 'text-center'}`} style={{ width: '33%' }}>
                         <p className="text-xs font-semibold text-gray-800">{item.step}</p>
@@ -417,26 +415,26 @@ export default function AuctionTerms() {
             </div>
 
             <InfoBox type="info">
-              如賣家尚未設立 Stripe Connect 帳戶，款項將暫時保留，直至帳戶設立完成後方可提取。冷靜期保護機制旨在保障買家權益，同時確保賣家在無爭議的情況下能及時收款。
+              {t("auctionTerms.s5.infoBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 6: Shipping */}
-        <Section id="shipping" icon={<Package className="w-5 h-5" />} title="六、交收安排" isOpen={openSectionId === "shipping"} onToggle={handleToggle}>
+        <Section id="shipping" icon={<Package className="w-5 h-5" />} title={t("auctionTerms.s6.title")} isOpen={openSectionId === "shipping"} onToggle={handleToggle}>
           <div className="space-y-3">
-            <p>本平台採用郵寄方式進行交收，<strong>不支援面交或門市自取</strong>。買家在結帳時選擇以下寄送方式：</p>
+            <p dangerouslySetInnerHTML={{ __html: t("auctionTerms.s6.intro") }} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 {
                   icon: "🚚",
-                  title: "順豐速運（運費到付）",
-                  desc: "賣家負責安全包裝及寄出，運費由順豐速運收取，買家於取件時支付。運費金額視貨件重量及地址而定。"
+                  title: t("auctionTerms.s6.sf.title"),
+                  desc: t("auctionTerms.s6.sf.desc")
                 },
                 {
                   icon: "📮",
-                  title: "香港郵政（平郵）",
-                  desc: "賣家負責安全包裝及寄出，運費 HK$10 將自動計入訂單總額，以平郵方式寄出。"
+                  title: t("auctionTerms.s6.hkpost.title"),
+                  desc: t("auctionTerms.s6.hkpost.desc")
                 },
               ].map((m, i) => (
                 <div key={i} className="rounded-xl p-3.5 border border-blue-100 bg-blue-50">
@@ -447,22 +445,22 @@ export default function AuctionTerms() {
               ))}
             </div>
             <InfoBox type="warning">
-              本平台不支援面交及門市自取。如商品在運送途中損毀或遺失，責任歸屬由雙方協商解決，平台不承擔相關責任。
+              {t("auctionTerms.s6.warningBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 7: Returns */}
-        <Section id="returns" icon={<RotateCcw className="w-5 h-5" />} title="七、退款及退貨政策" isOpen={openSectionId === "returns"} onToggle={handleToggle}>
+        <Section id="returns" icon={<RotateCcw className="w-5 h-5" />} title={t("auctionTerms.s7.title")} isOpen={openSectionId === "returns"} onToggle={handleToggle}>
           <div className="space-y-3">
-            <p>本平台的退款政策以保障買家利益為前提，同時尊重賣家的合理權益。</p>
+            <p>{t("auctionTerms.s7.intro")}</p>
             <div className="rounded-xl overflow-hidden border border-blue-100">
-              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>可申請退款的情況</div>
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>{t("auctionTerms.s7.acceptTitle")}</div>
               <div className="divide-y divide-gray-100">
                 {[
-                  { icon: "✅", title: "商品與描述嚴重不符", desc: "收到商品的品相、版本或狀況與賣家描述有重大差異。" },
-                  { icon: "✅", title: "收到損毀商品", desc: "商品在運送過程中損毀，且非買家原因造成。" },
-                  { icon: "✅", title: "賣家未能出貨", desc: "賣家在承諾時間內未能安排交收，且未有合理解釋。" },
+                  { icon: "✅", title: t("auctionTerms.s7.a1title"), desc: t("auctionTerms.s7.a1desc") },
+                  { icon: "✅", title: t("auctionTerms.s7.a2title"), desc: t("auctionTerms.s7.a2desc") },
+                  { icon: "✅", title: t("auctionTerms.s7.a3title"), desc: t("auctionTerms.s7.a3desc") },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 px-4 py-3">
                     <span className="text-base flex-shrink-0">{r.icon}</span>
@@ -475,12 +473,12 @@ export default function AuctionTerms() {
               </div>
             </div>
             <div className="rounded-xl overflow-hidden border border-red-100">
-              <div className="px-4 py-2.5 text-xs font-bold text-white bg-red-500">不接受退款的情況</div>
+              <div className="px-4 py-2.5 text-xs font-bold text-white bg-red-500">{t("auctionTerms.s7.rejectTitle")}</div>
               <div className="divide-y divide-gray-100">
                 {[
-                  { icon: "❌", title: "買家個人原因", desc: "買家改變主意、重複購買或個人喜好問題，不接受退款。" },
-                  { icon: "❌", title: "拍賣得標後", desc: "拍賣成交後，除商品描述嚴重不符外，一律不接受退款。" },
-                  { icon: "❌", title: "已使用或改動的商品", desc: "商品經買家使用、改動或損毀後，不接受退款申請。" },
+                  { icon: "❌", title: t("auctionTerms.s7.r1title"), desc: t("auctionTerms.s7.r1desc") },
+                  { icon: "❌", title: t("auctionTerms.s7.r2title"), desc: t("auctionTerms.s7.r2desc") },
+                  { icon: "❌", title: t("auctionTerms.s7.r3title"), desc: t("auctionTerms.s7.r3desc") },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 px-4 py-3">
                     <span className="text-base flex-shrink-0">{r.icon}</span>
@@ -493,23 +491,23 @@ export default function AuctionTerms() {
               </div>
             </div>
             <InfoBox type="info">
-              如商品出現問題需申請退款，請於收貨後 <strong>48 小時</strong>內透過平台客服提交申請介入調解，並提供相關證明（如照片）。平台客服將協助處理您的退款事宜。
+              <span dangerouslySetInnerHTML={{ __html: t("auctionTerms.s7.infoBox") }} />
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 8: Conduct */}
-        <Section id="conduct" icon={<Scale className="w-5 h-5" />} title="八、用戶行為守則" isOpen={openSectionId === "conduct"} onToggle={handleToggle}>
+        <Section id="conduct" icon={<Scale className="w-5 h-5" />} title={t("auctionTerms.s8.title")} isOpen={openSectionId === "conduct"} onToggle={handleToggle}>
           <div className="space-y-3">
-            <p>為維護平台的公平交易環境，所有用戶須遵守以下行為守則：</p>
+            <p>{t("auctionTerms.s8.intro")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { icon: "🚫", title: "禁止虛假描述", desc: "賣家不得以虛假或誤導性資訊描述商品，包括品相、版本及真偽。" },
-                { icon: "🚫", title: "禁止操控出價", desc: "禁止以多個帳號或與他人勾結的方式操控拍賣出價。" },
-                { icon: "🚫", title: "禁止場外交易", desc: "禁止繞過平台進行私下交易，以規避平台服務費。" },
-                { icon: "🚫", title: "禁止騷擾行為", desc: "禁止以任何形式騷擾、威脅或欺詐其他用戶。" },
-                { icon: "✅", title: "誠實交易", desc: "買賣雙方須誠實、守信地完成每一筆交易。" },
-                { icon: "✅", title: "及時回應", desc: "交易雙方應在合理時間內回應對方的訊息及請求。" },
+                { icon: "🚫", title: t("auctionTerms.s8.c1title"), desc: t("auctionTerms.s8.c1desc") },
+                { icon: "🚫", title: t("auctionTerms.s8.c2title"), desc: t("auctionTerms.s8.c2desc") },
+                { icon: "🚫", title: t("auctionTerms.s8.c3title"), desc: t("auctionTerms.s8.c3desc") },
+                { icon: "🚫", title: t("auctionTerms.s8.c4title"), desc: t("auctionTerms.s8.c4desc") },
+                { icon: "✅", title: t("auctionTerms.s8.c5title"), desc: t("auctionTerms.s8.c5desc") },
+                { icon: "✅", title: t("auctionTerms.s8.c6title"), desc: t("auctionTerms.s8.c6desc") },
               ].map((r, i) => (
                 <div key={i} className="flex gap-2.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
                   <span className="text-lg flex-shrink-0">{r.icon}</span>
@@ -523,22 +521,22 @@ export default function AuctionTerms() {
 
             {/* Violation Penalty Table */}
             <div className="rounded-xl overflow-hidden border border-blue-100 mt-2">
-              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>違規懲罰制度</div>
+              <div className="px-4 py-2.5 text-xs font-bold text-white" style={{ background: BRAND_BLUE }}>{t("auctionTerms.s8.penaltyTitle")}</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-blue-50">
-                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">違規次數</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">懲罰措施</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">封禁時長</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">{t("auctionTerms.s8.penaltyCount")}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">{t("auctionTerms.s8.penaltyAction")}</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-bold text-[#06038D]">{t("auctionTerms.s8.penaltyDuration")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {[
-                      { count: "第 1 次", action: "書面警告，永久記錄", duration: "無封禁", color: "text-emerald-600" },
-                      { count: "第 2 次", action: "封禁競標資格", duration: "7 天", color: "text-amber-600" },
-                      { count: "第 3 次", action: "封禁競標資格", duration: "30 天", color: "text-orange-600" },
-                      { count: "第 4 次及以上", action: "永久封禁，保留追討損失權利", duration: "永久", color: "text-red-600" },
+                      { count: t("auctionTerms.s8.p1count"), action: t("auctionTerms.s8.p1action"), duration: t("auctionTerms.s8.p1duration"), color: "text-emerald-600" },
+                      { count: t("auctionTerms.s8.p2count"), action: t("auctionTerms.s8.p2action"), duration: t("auctionTerms.s8.p2duration"), color: "text-amber-600" },
+                      { count: t("auctionTerms.s8.p3count"), action: t("auctionTerms.s8.p3action"), duration: t("auctionTerms.s8.p3duration"), color: "text-orange-600" },
+                      { count: t("auctionTerms.s8.p4count"), action: t("auctionTerms.s8.p4action"), duration: t("auctionTerms.s8.p4duration"), color: "text-red-600" },
                     ].map((row, i) => (
                       <tr key={i} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-semibold text-gray-800 text-sm">{row.count}</td>
@@ -552,24 +550,24 @@ export default function AuctionTerms() {
             </div>
 
             <InfoBox type="warning">
-              違反行為守則的用戶，平台有權採取相應措施，包括警告、暫停帳號或永久封禁，視乎違規嚴重程度而定。如認為違規記錄有誤，可在 7 個工作日內向平台客服提出書面申訴。
+              {t("auctionTerms.s8.warningBox")}
             </InfoBox>
           </div>
         </Section>
 
         {/* Section 9: Liability */}
-        <Section id="liability" icon={<FileText className="w-5 h-5" />} title="九、免責聲明及法律條款" isOpen={openSectionId === "liability"} onToggle={handleToggle}>
+        <Section id="liability" icon={<FileText className="w-5 h-5" />} title={t("auctionTerms.s9.title")} isOpen={openSectionId === "liability"} onToggle={handleToggle}>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Rule num="1" title="平台角色">本平台僅作為買賣雙方的交易媒介，不對商品的真偽、品質或狀況作出任何保證。</Rule>
-              <Rule num="2" title="交易風險">買賣雙方須自行承擔交易風險。本平台對因交易產生的任何損失不承擔法律責任。</Rule>
-              <Rule num="3" title="賠償上限">若本平台被裁定須就任何事項承擔責任，最高賠償責任不超過相關交易中本平台實際收取的服務費金額。</Rule>
-              <Rule num="4" title="服務中斷">本平台不保證服務的持續性及穩定性，因技術故障或維護導致的服務中斷，平台不承擔責任。</Rule>
-              <Rule num="5" title="條款修改">本平台保留隨時修改條款的權利，修改後的條款將在平台公告後生效。繼續使用本平台即表示接受修改後的條款。</Rule>
-              <Rule num="6" title="適用法律">本條款受香港特別行政區法律管轄，任何爭議應提交香港法院解決。</Rule>
+              <Rule num="1" title={t("auctionTerms.s9.l1title")}>{t("auctionTerms.s9.l1desc")}</Rule>
+              <Rule num="2" title={t("auctionTerms.s9.l2title")}>{t("auctionTerms.s9.l2desc")}</Rule>
+              <Rule num="3" title={t("auctionTerms.s9.l3title")}>{t("auctionTerms.s9.l3desc")}</Rule>
+              <Rule num="4" title={t("auctionTerms.s9.l4title")}>{t("auctionTerms.s9.l4desc")}</Rule>
+              <Rule num="5" title={t("auctionTerms.s9.l5title")}>{t("auctionTerms.s9.l5desc")}</Rule>
+              <Rule num="6" title={t("auctionTerms.s9.l6title")}>{t("auctionTerms.s9.l6desc")}</Rule>
             </div>
             <InfoBox type="info">
-              如對本條款有任何疑問，請透過平台客服功能聯絡我們。我們致力於為買賣雙方提供公平、安全的交易環境。
+              {t("auctionTerms.s9.infoBox")}
             </InfoBox>
           </div>
         </Section>
@@ -577,9 +575,9 @@ export default function AuctionTerms() {
         {/* Key Highlights */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           {[
-            { icon: Shield, title: "平台保障", desc: "本平台作為中介，提供爭議調解服務，保障買賣雙方的合理權益。" },
-            { icon: Scale, title: "公平交易", desc: "所有出價具法律約束力，防狙擊機制確保公平競標，違規行為受到相應處理。" },
-            { icon: Clock, title: "時效要求", desc: "得標後 48 小時內付款，賣家付款確認後 3 個工作日內發貨，逾期將受處分。" },
+            { icon: Shield, title: t("auctionTerms.highlights.h1title"), desc: t("auctionTerms.highlights.h1desc") },
+            { icon: Scale, title: t("auctionTerms.highlights.h2title"), desc: t("auctionTerms.highlights.h2desc") },
+            { icon: Clock, title: t("auctionTerms.highlights.h3title"), desc: t("auctionTerms.highlights.h3desc") },
           ].map((item, i) => (
             <div key={i} className="rounded-xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
@@ -595,20 +593,20 @@ export default function AuctionTerms() {
         <div className="rounded-2xl overflow-hidden border-2 border-[#FEDD00]" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a0a9e 100%)` }}>
           <div className="px-6 py-8 text-center">
             <p className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-2">BOXIUM TCG</p>
-            <h3 className="text-white font-black text-xl mb-2">準備好開始交易了嗎？</h3>
-            <p className="text-white/60 text-sm mb-6">閱讀並同意以上條款後，即可開始在 Boxium PTCG 買賣卡牌。</p>
+            <h3 className="text-white font-black text-xl mb-2">{t("auctionTerms.cta.title")}</h3>
+            <p className="text-white/60 text-sm mb-6">{t("auctionTerms.cta.desc")}</p>
             <div className="flex flex-row flex-wrap gap-3 justify-center">
               <Link href="/marketplace">
                 <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
                   style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
                   <ShoppingCart className="w-4 h-4" />
-                  瀏覽商品
+                  {t("auctionTerms.cta.browse")}
                 </button>
               </Link>
               <Link href="/seller">
                 <button className="px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 justify-center border-2 border-white/30 text-white transition-all hover:bg-white/10 whitespace-nowrap">
                   <Gavel className="w-4 h-4" />
-                  開始出售
+                  {t("auctionTerms.cta.sell")}
                 </button>
               </Link>
             </div>
@@ -616,8 +614,8 @@ export default function AuctionTerms() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6 pb-4">
-          © 2025 Boxium PTCG. 保留所有權利。 ·{" "}
-          <Link href="/privacy" className="hover:underline">私隱政策</Link>
+          © 2025 Boxium PTCG. {t("auctionTerms.copyright")} ·{" "}
+          <Link href="/privacy" className="hover:underline">{t("auctionTerms.privacyLink")}</Link>
         </p>
       </div>
     </div>

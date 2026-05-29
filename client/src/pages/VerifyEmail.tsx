@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Watermark grid (same as Login/Register)
 const WatermarkGrid = () => (
@@ -27,6 +28,7 @@ const WatermarkGrid = () => (
 );
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [status, setStatus] = useState<"loading" | "success" | "error" | "no-token">("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -40,18 +42,18 @@ export default function VerifyEmail() {
     },
     onError: (error) => {
       setStatus("error");
-      setErrorMessage(error.message || "驗證失敗，請重試");
+      setErrorMessage(error.message || t("verifyEmail.failed") as string);
     },
   });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
-    if (!t) {
+    const token = params.get("token");
+    if (!token) {
       setStatus("no-token");
       return;
     }
-    verifyMutation.mutate({ token: t });
+    verifyMutation.mutate({ token });
   }, []);
 
   return (
@@ -80,8 +82,8 @@ export default function VerifyEmail() {
             <>
               <Loader2 className="h-16 w-16 mx-auto animate-spin" style={{ color: "#c9a227" }} />
               <div>
-                <h2 className="text-xl font-bold text-white mb-2">正在驗證電郵地址...</h2>
-                <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>請稍候，正在處理您的驗證請求</p>
+                <h2 className="text-xl font-bold text-white mb-2">{t("verifyEmail.verifying")}</h2>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{t("verifyEmail.verifyingDesc")}</p>
               </div>
             </>
           )}
@@ -90,10 +92,10 @@ export default function VerifyEmail() {
             <>
               <CheckCircle className="h-16 w-16 mx-auto text-green-400" />
               <div>
-                <h2 className="text-xl font-bold text-white mb-2">電郵驗證成功！🎉</h2>
+                <h2 className="text-xl font-bold text-white mb-2">{t("verifyEmail.success")}</h2>
                 <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  您的帳號已成功啟用，歡迎加入 BOXIUM TCG！<br />
-                  正在為您跳轉至主頁...
+                  {t("verifyEmail.successDesc")}<br />
+                  {t("verifyEmail.redirecting")}
                 </p>
               </div>
               <button
@@ -101,7 +103,7 @@ export default function VerifyEmail() {
                 className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
                 style={{ background: "linear-gradient(135deg, #c9a227, #e8c547)", color: "#0a1628" }}
               >
-                立即前往主頁
+                {t("verifyEmail.goHome")}
               </button>
             </>
           )}
@@ -110,7 +112,7 @@ export default function VerifyEmail() {
             <>
               <XCircle className="h-16 w-16 mx-auto text-red-400" />
               <div>
-                <h2 className="text-xl font-bold text-white mb-2">驗證失敗</h2>
+                <h2 className="text-xl font-bold text-white mb-2">{t("verifyEmail.errorTitle")}</h2>
                 <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>{errorMessage}</p>
               </div>
               <div className="space-y-2">
@@ -120,14 +122,14 @@ export default function VerifyEmail() {
                   style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}
                 >
                   <Mail className="h-4 w-4" />
-                  重新發送驗證電郵
+                  {t("verifyEmail.resendEmail")}
                 </button>
                 <button
                   onClick={() => setLocation("/")}
                   className="w-full py-3 rounded-xl text-sm transition-all"
                   style={{ color: "rgba(255,255,255,0.5)" }}
                 >
-                  返回主頁
+                  {t("verifyEmail.backToHome")}
                 </button>
               </div>
             </>
@@ -137,9 +139,9 @@ export default function VerifyEmail() {
             <>
               <Mail className="h-16 w-16 mx-auto" style={{ color: "#c9a227" }} />
               <div>
-                <h2 className="text-xl font-bold text-white mb-2">無效的驗證連結</h2>
+                <h2 className="text-xl font-bold text-white mb-2">{t("verifyEmail.invalidLink")}</h2>
                 <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  此驗證連結無效。請從電郵中點擊驗證連結，或重新發送驗證電郵。
+                  {t("verifyEmail.invalidLinkDesc")}
                 </p>
               </div>
               <div className="space-y-2">
@@ -149,14 +151,14 @@ export default function VerifyEmail() {
                   style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}
                 >
                   <Mail className="h-4 w-4" />
-                  重新發送驗證電郵
+                  {t("verifyEmail.resendEmail")}
                 </button>
                 <button
                   onClick={() => setLocation("/")}
                   className="w-full py-3 rounded-xl text-sm transition-all"
                   style={{ color: "rgba(255,255,255,0.5)" }}
                 >
-                  返回主頁
+                  {t("verifyEmail.backToHome")}
                 </button>
               </div>
             </>

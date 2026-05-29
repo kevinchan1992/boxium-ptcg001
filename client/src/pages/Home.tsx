@@ -117,7 +117,7 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
                   {card.imageUrl ? (
                     <img
                       src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
+                       alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("home.cardImageAlt")}${card.series ? ` - ${card.series}` : ''}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
@@ -447,6 +447,7 @@ function CtaSection() {
 
 // ─── HeroQuickAccess: magazine-style horizontal nav bar ──────────────────────────────────────────────────────
 function HeroQuickAccess() {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
   const { data: stats } = trpc.cards.getStats.useQuery();
@@ -462,17 +463,17 @@ function HeroQuickAccess() {
 
   // Format numbers dynamically from DB stats
   const cardCountDesc = stats?.totalCards
-    ? `${stats.totalCards.toLocaleString()}+ 張卡牌資料庫`
-    : "55,000+ 張卡牌資料庫";
+    ? `${stats.totalCards.toLocaleString()}+ ${t("home.cardDatabase")}`
+    : `55,000+ ${t("home.cardDatabase")}`;
   const priceRecordDesc = stats?.totalPriceRecords
-    ? `${Math.round(stats.totalPriceRecords / 10000)}萬+ 全球成交記錄`
-    : "121萬+ 全球成交記錄";
+    ? `${Math.round(stats.totalPriceRecords / 10000)}${t("home.globalTransactions")}`
+    : `121${t("home.globalTransactions")}`;
 
   const items = [
-    { tag: "SEARCH",  href: "/research",    label: "卡牌搜尋", desc: cardCountDesc },
-    { tag: "PRICING", href: "/pricing",     label: "市場格價", desc: priceRecordDesc },
-    { tag: "GRADING", href: "/grading",     label: "PSA 鑑定", desc: "專業代客鑑定服務" },
-    { tag: "MARKET",  href: "/marketplace", label: "市集",    desc: "安全交易平台" },
+    { tag: "SEARCH",  href: "/research",    label: t("home.cardSearch"), desc: cardCountDesc },
+    { tag: "PRICING", href: "/pricing",     label: t("home.priceComparison"), desc: priceRecordDesc },
+    { tag: "GRADING", href: "/grading",     label: t("home.psaGrading"), desc: t("home.gradingDesc") },
+    { tag: "MARKET",  href: "/marketplace", label: t("home.marketplace"), desc: t("home.marketplaceDesc2") },
   ];
 
   return (
@@ -536,6 +537,7 @@ function HeroQuickAccess() {
 
 // ─── AboutUsSection: brand story + values + contact CTA ─────────────────────
 function AboutUsSection() {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
 
@@ -551,18 +553,18 @@ function AboutUsSection() {
   const values = [
     {
       icon: Zap,
-      title: "即時數據",
-      desc: "每 12 小時自動更新，整合 SNKRDUNK 及全球市場的真實成交記錄。",
+      title: t("home.realtimeDataTitle"),
+      desc: t("home.realtimeDataDesc"),
     },
     {
       icon: Shield,
-      title: "安全交易",
-      desc: "市集採用 Stripe 支付保障，買賣雙方均受平台條款保護。",
+      title: t("home.safeTrading"),
+      desc: t("home.safeTradingDesc"),
     },
     {
       icon: Users,
-      title: "玩家社群",
-      desc: "為 TCG 愛好者打造的專屬平台，追蹤卡牌動態、交流收藏樂趣。",
+      title: t("home.playerCommunity"),
+      desc: t("home.playerCommunityDesc"),
     },
   ];
 
@@ -592,10 +594,10 @@ function AboutUsSection() {
             className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 leading-tight"
             style={{ color: "#06038d" }}
           >
-            關於 BOXIUM
+            {t("home.aboutBoxium")}
           </h2>
           <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-            BOXIUM 是專為 TCG 集換式卡牌愛好者打造的綜合平台，整合全球市場數據，提供即時、準確的卡牌價格資訊，並設有安全可靠的二手交易市集。
+            {t("home.aboutBoxiumDesc")}
           </p>
         </div>
 
@@ -610,16 +612,16 @@ function AboutUsSection() {
               <img src="/boxium-logo.png" alt="BOXIUM" className="h-7 object-contain" />
             </div>
             <h3 className="text-lg font-bold mb-3" style={{ color: "#06038d" }}>
-              我們的故事
+              {t("home.ourStory")}
             </h3>
             <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              BOXIUM 由一群熱愛 TCG 的玩家創立，深知卡牌市場資訊分散、價格難以追蹤的痛點。我們致力於整合 SNKRDUNK 等全球交易平台的真實成交數據，讓每位玩家都能輕鬆掌握市場行情。
+              {t("home.ourStoryDesc1")}
             </p>
             <p className="text-gray-600 text-sm leading-relaxed mb-6">
-              從 Pokémon 到 One Piece、遊戲王，我們覆蓋多款主流 TCG，並持續擴展數據來源，為收藏家和投資者提供最可靠的參考依據。
+              {t("home.ourStoryDesc2")}
             </p>
             <div className="flex flex-wrap gap-2">
-              {["Pokémon TCG", "One Piece", "遊戲王", "PSA 鑑定"].map((tag) => (
+              {["Pokémon TCG", "One Piece", t("home.yugioh", "遊戲王"), t("common.grading")].map((tag) => (
                 <span
                   key={tag}
                   className="text-xs font-semibold px-3 py-1 rounded-full"
@@ -659,8 +661,8 @@ function AboutUsSection() {
               style={{ backgroundColor: "#06038d" }}
             >
               <div>
-                <div className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">聯絡我們</div>
-                <p className="text-white/80 text-sm">有任何問題或建議？歡迎與我們聯繫。</p>
+                <div className="text-[#FEDD00] text-xs font-bold uppercase tracking-widest mb-1">{t("home.contactUs")}</div>
+                <p className="text-white/80 text-sm">{t("home.contactUsDesc")}</p>
               </div>
               <Link
                 href="/contact"
@@ -668,7 +670,7 @@ function AboutUsSection() {
                 style={{ backgroundColor: "#FEDD00", color: "#06038d" }}
               >
                 <MessageSquare className="w-4 h-4" />
-                聯絡
+                {t("home.contact")}
               </Link>
             </div>
           </div>
@@ -681,7 +683,7 @@ function AboutUsSection() {
             className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors hover:underline"
             style={{ color: "#06038d" }}
           >
-            了解更多關於 BOXIUM
+            {t("home.learnMoreAboutBoxium")}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -768,7 +770,7 @@ export default function Home() {
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
                 <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
                   {stats?.totalPriceRecords
-                    ? `${Math.round(animatedPriceRecords / 10000)}萬+`
+                    ? `${Math.round(animatedPriceRecords / 10000)}${t("home.globalTransactions")}`
                     : '—'}
                 </div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
@@ -840,7 +842,7 @@ export default function Home() {
               <div className="space-y-2 text-xs md:text-sm text-gray-600">
                 <div>✓ {t("home.globalMarket")}</div>
                 <div>✓ {t("home.psaSupport")}</div>
-                <div>✓ 美元價格</div>
+                <div>✓ {t("home.usdPrice")}</div>
               </div>
             </div>
           </div>

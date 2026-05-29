@@ -259,7 +259,7 @@ export function PriceTrendChart({
                 stroke: "#0A1628",
                 strokeWidth: 2,
               }}
-              name={isSealedProduct ? "SNKRDUNK 卡盒" : "SNKRDUNK PSA 10"}
+              name={isSealedProduct ? t("priceTrendChart.snkrdunkBox") : t("priceTrendChart.snkrdunkPsa10")}
               isAnimationActive={true}
               animationDuration={600}
             />

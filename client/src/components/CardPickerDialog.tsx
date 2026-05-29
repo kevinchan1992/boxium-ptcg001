@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,10 @@ function useDebounce(value: string, delay: number) {
   return debounced;
 }
 
-export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId }: CardPickerDialogProps) {
+export function CardPickerDialog({
+  open, onOpenChange, onSelect, selectedCardId
+}: CardPickerDialogProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 400);
 
@@ -76,7 +80,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
         {/* Header — deep blue + yellow bottom border */}
         <div className="px-5 pt-5 pb-3" style={{backgroundColor: '#06038D', borderBottom: '3px solid #FEDD00'}}>
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-white">選擇卡牌</DialogTitle>
+            <DialogTitle className="text-base font-bold text-white">{t("cardPicker.title")}</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-white/60 mt-1">搜索並選擇對應的卡牌，系統將自動關聯市場數據</p>
           {/* Search Input */}
@@ -194,7 +198,7 @@ export function CardPickerDialog({ open, onOpenChange, onSelect, selectedCardId 
           </p>
           <Button variant="outline" size="sm" onClick={handleClose}
             className="border-[#06038D]/30 text-[#06038D] hover:bg-[#06038D]/10 hover:text-[#06038D] bg-white">
-            取消
+            {t("common.cancel")}
           </Button>
         </div>
       </DialogContent>

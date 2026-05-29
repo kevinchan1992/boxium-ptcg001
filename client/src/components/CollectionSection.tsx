@@ -70,8 +70,16 @@ const GRADER_GRADES: Record<string, string[]> = {
   PSA: ["PSA 10", "PSA 9", "PSA 8", "PSA 7", "PSA 6", "PSA 5", "PSA 4", "PSA 3", "PSA 2", "PSA 1"],
   BGS: ["BGS 10", "BGS 9.5", "BGS 9", "BGS 8.5", "BGS 8", "BGS 7.5", "BGS 7", "BGS 6", "BGS 5"],
   TAG: ["TAG 10", "TAG 9", "TAG 8", "TAG 7"],
-  RAW: ["A品", "B品", "C品", "D品"],
+  RAW: ["A", "B", "C", "D"],
   UNGRADED: [],
+};
+
+// Map RAW grade values to translation keys
+const RAW_GRADE_KEYS: Record<string, string> = {
+  A: "collection.gradeA",
+  B: "collection.gradeB",
+  C: "collection.gradeC",
+  D: "collection.gradeD",
 };
 
 const GRADERS = ["PSA", "BGS", "TAG", "RAW", "UNGRADED"] as const;
@@ -316,8 +324,8 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
 
   const handleSubmit = () => {
     // In edit mode, cardId is already set from editItem; skip card selection check
-    if (!editItem && !form.cardId) { toast.error("請先選擇卡牌"); return; }
-    if (!form.grader) { toast.error("請選擇評級公司"); return; }
+    if (!editItem && !form.cardId) { toast.error(t("collection.selectCardFirst")); return; }
+    if (!form.grader) { toast.error(t("collection.selectGraderFirst")); return; }
     const payload = {
       cardId: form.cardId,
       grader: form.grader,
@@ -350,7 +358,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
   };
 
   const handlePhotoSearch = async (useCrop = false) => {
-    if (!selectedImage) { toast.error("請選擇圖片"); return; }
+    if (!selectedImage) { toast.error(t("collection.selectImageFirst")); return; }
     setSearchStep("compress");
     try {
       let base64: string;
@@ -529,7 +537,9 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
                   </SelectTrigger>
                   <SelectContent>
                     {GRADER_GRADES[form.grader].map(g => (
-                      <SelectItem key={g} value={g} className="font-semibold">{g}</SelectItem>
+                      <SelectItem key={g} value={g} className="font-semibold">
+                        {form.grader === "RAW" && RAW_GRADE_KEYS[g] ? t(RAW_GRADE_KEYS[g]) : g}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -684,7 +694,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowCropView(true)} className="flex-1">
-                  裁剪
+                  {t("collection.crop")}
                 </Button>
                 <Button size="sm" onClick={() => handlePhotoSearch(false)} disabled={!!searchStep}
                   className="flex-1 font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
@@ -702,7 +712,7 @@ export function AddEditSheet({ open, onOpenChange, editItem, onSuccess, prefillC
                 <img ref={imgRef} src={imagePreview} alt="crop" className="max-h-64 w-full object-contain" />
               </ReactCrop>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowCropView(false)} className="flex-1">取消裁剪</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowCropView(false)} className="flex-1">{t("collection.cancelCrop")}</Button>
                 <Button size="sm" onClick={() => handlePhotoSearch(true)} disabled={!!searchStep}
                   className="flex-1 font-bold" style={{ background: BRAND_BLUE, color: "white" }}>
                   {searchStep ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
@@ -899,7 +909,7 @@ export function CollectionSection() {
     setShowBulkDeleteConfirm(false);
     setBulkMode(false);
     setSelectedIds(new Set());
-    toast.success(`已刪除 ${successCount} 筆收藏`);
+    t("collection.deletedNItems", { count: successCount });
     utils.profile.getCollection.invalidate();
     utils.profile.getCollectionStats.invalidate();
   };
@@ -924,7 +934,7 @@ export function CollectionSection() {
             style={viewMode === "active" ? { background: BRAND_BLUE } : {}}
           >
             <Package className="w-3.5 h-3.5" />
-            現有收藏
+            {t("collection.currentCollection")}
           </button>
           <button
             onClick={() => { setViewMode("traded"); setCurrentPage(1); }}
@@ -934,7 +944,7 @@ export function CollectionSection() {
             style={viewMode === "traded" ? { background: BRAND_BLUE } : {}}
           >
             <ArrowLeftRight className="w-3.5 h-3.5" />
-            已換走
+            {t("collection.traded")}
           </button>
         </div>
         <div className="flex items-center justify-between gap-2">
@@ -977,7 +987,7 @@ export function CollectionSection() {
               className="gap-1 text-[10px] sm:text-xs font-bold h-7 sm:h-8 px-2 sm:px-3 rounded-lg border-gray-200"
               style={bulkMode ? { background: BRAND_BLUE, color: 'white', borderColor: BRAND_BLUE } : {}}>
               {bulkMode ? <X className="w-3 h-3" /> : <CheckSquare2 className="w-3 h-3" />}
-              {bulkMode ? '取消' : '批量'}
+              {bulkMode ? t("common.cancel") : t("collection.bulk")}
             </Button>
           )}
           {/* Add button */}
@@ -1085,12 +1095,12 @@ export function CollectionSection() {
               {isAllSelected
                 ? <CheckSquare2 className="w-4 h-4" />
                 : <Square className="w-4 h-4" />}
-              {isAllSelected ? '取消全選' : '全選本頁'}
+              {isAllSelected ? t("collection.deselectAll") : t("collection.selectAllPage")}
             </button>
             {selectedIds.size > 0 && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
                 style={{ background: BRAND_BLUE, color: 'white' }}>
-                已選 {selectedIds.size} 筆
+                {t("collection.selectedN", { n: selectedIds.size })}
               </span>
             )}
           </div>
@@ -1102,7 +1112,7 @@ export function CollectionSection() {
                 style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }}
               >
                 <Trash className="w-3.5 h-3.5" />
-                刪除 {selectedIds.size} 筆
+                {t("collection.deleteN", { n: selectedIds.size })}
               </button>
             </div>
           )}
@@ -1158,7 +1168,7 @@ export function CollectionSection() {
               <button onClick={() => setSortOrder(o => o === "asc" ? "desc" : "asc")}
                 className="flex items-center gap-1 h-8 px-3 rounded-md border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                 {sortOrder === "desc" ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-                {sortOrder === "desc" ? "降序" : "升序"}
+                {sortOrder === "desc" ? t("collection.descending") : t("collection.ascending")}
               </button>
             </div>
           )}
@@ -1180,8 +1190,8 @@ export function CollectionSection() {
           </div>
           {viewMode === "traded" ? (
             <>
-              <p className="text-gray-600 font-semibold mb-2">尚無已換走的卡牌</p>
-              <p className="text-sm text-gray-400 max-w-xs mx-auto">在收藏清單中點擊 ⇄ 按鈕開始記錄以卡換卡</p>
+              <p className="text-gray-600 font-semibold mb-2">{t("collection.noTradedCards")}</p>
+              <p className="text-sm text-gray-400 max-w-xs mx-auto">{t("collection.tradedCardHint")}</p>
             </>
           ) : (
             <>
@@ -1201,7 +1211,7 @@ export function CollectionSection() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-1 py-1">
               <span className="text-xs text-gray-400 font-medium">
-                第 {currentPage} / {totalPages} 頁 · 共 {totalItems} 筆
+                {t("collection.pagination", { current: currentPage, total: totalPages, items: totalItems })}
               </span>
               <div className="flex items-center gap-1">
                 <button
@@ -1306,17 +1316,17 @@ export function CollectionSection() {
                           )}
                           {item.isPublic && (
                             <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400">
-                              <Eye className="w-3 h-3" />公開
+                              <Eye className="w-3 h-3" />{t("collection.public")}
                             </span>
                           )}
                           {viewMode === "traded" && item.tradedAt && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
-                              ↔ 已換走 {new Date(item.tradedAt).toLocaleDateString('zh-HK', { month: '2-digit', day: '2-digit' })}
+                              ↔ {t("collection.tradedOn", { date: new Date(item.tradedAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) })}
                             </span>
                           )}
                           {viewMode === "active" && tradedOutIds.has(item.id) && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
-                              ↔ 已換出
+                              ↔ {t("collection.tradedOut")}
                             </span>
                           )}
                         </div>
@@ -1325,7 +1335,7 @@ export function CollectionSection() {
                           <div className="hidden sm:flex items-center gap-1 mt-1.5">
                             <CalendarDays className="w-3 h-3 text-gray-300" />
                             <span className="text-[10px] font-medium text-gray-400">
-                              {new Date(item.purchasedAt).toLocaleDateString('zh-HK', { year: 'numeric', month: '2-digit', day: '2-digit' })} 購入
+                              {t("collection.purchasedOn", { date: new Date(item.purchasedAt).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) })}
                             </span>
                           </div>
                         )}
@@ -1347,7 +1357,7 @@ export function CollectionSection() {
                           }); setShowTradeSheet(true); }}
                           className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-blue-50"
                           style={{ color: BRAND_BLUE }}
-                          title="以卡換卡"
+                          title={t("collection.tradeCard")}
                         >
                           <ArrowLeftRight className="w-3.5 h-3.5" />
                         </button>
@@ -1449,7 +1459,7 @@ export function CollectionSection() {
                 className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
                 style={{ background: currentPage === 1 ? '#f3f4f6' : `${BRAND_BLUE}10`, color: BRAND_BLUE, border: `1px solid ${BRAND_BLUE}20` }}
               >
-                <ChevronDown className="w-3.5 h-3.5 rotate-90" />上一頁
+                <ChevronDown className="w-3.5 h-3.5 rotate-90" />{t("common.prevPage")}
               </button>
               <span className="text-xs font-bold" style={{ color: BRAND_BLUE }}>
                 {currentPage} / {totalPages}
@@ -1460,7 +1470,7 @@ export function CollectionSection() {
                 className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
                 style={{ background: currentPage === totalPages ? '#f3f4f6' : BRAND_BLUE, color: currentPage === totalPages ? '#9ca3af' : 'white', border: `1px solid ${currentPage === totalPages ? '#e5e7eb' : BRAND_BLUE}` }}
               >
-                下一頁<ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+                {t("common.nextPage")}<ChevronDown className="w-3.5 h-3.5 -rotate-90" />
               </button>
             </div>
           )}
@@ -1524,17 +1534,17 @@ export function CollectionSection() {
                 style={{ background: `${BRAND_YELLOW}22` }}>
                 <AlertTriangle className="w-5 h-5" style={{ color: BRAND_YELLOW }} />
               </div>
-              <AlertDialogTitle className="text-gray-900 font-black">批量刪除確認</AlertDialogTitle>
+              <AlertDialogTitle className="text-gray-900 font-black">{t("collection.bulkDeleteConfirm")}</AlertDialogTitle>
             </div>
             <AlertDialogDescription className="text-gray-500 pl-13">
-              確定要刪除已選的 <span className="font-black text-gray-900">{selectedIds.size} 筆</span> 收藏記錄？此操作無法復原。
+              {t("collection.bulkDeleteWarning", { n: selectedIds.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={bulkDeleting}
               className="border-gray-200 text-gray-600 hover:bg-gray-50">
-              取消
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDelete}
@@ -1542,8 +1552,8 @@ export function CollectionSection() {
               className="border-0 text-white font-bold"
               style={{ background: `linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)` }}>
               {bulkDeleting
-                ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />刪除中...</>
-                : `確定刪除 ${selectedIds.size} 筆`}
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />{t("collection.deleting")}</>
+                : t("collection.confirmDeleteN", { n: selectedIds.size })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -49,7 +49,7 @@ export default function Login() {
       setForgotSent(true);
     },
     onError: (err) => {
-      toast.error(err.message || "發送失敗，請稍後再試");
+      toast.error(err.message || t("login.sendFailed"));
     },
   });
 
@@ -60,27 +60,27 @@ export default function Login() {
     if (error === "blocked" && message) {
       setErrorMessage(decodeURIComponent(message));
     } else if (error === "user_creation_failed") {
-      setErrorMessage("帳號建立失敗，請稍後再試或聯絡客服");
+      setErrorMessage(t("login.accountCreateFailed"));
     } else if (error === "auth_failed") {
-      setErrorMessage("Google 登入失敗，請稍後再試");
+      setErrorMessage(t("login.googleLoginFailed"));
     } else if (error === "no_email") {
-      setErrorMessage("無法取得 Google 帳號 Email，請確認授權設定");
+      setErrorMessage(t("login.googleEmailFailed"));
     } else if (error === "apple_denied") {
-      setErrorMessage("Apple 登入已取消");
+      setErrorMessage(t("login.appleLoginCancelled"));
     } else if (error === "apple_auth_failed") {
-      setErrorMessage("Apple 登入失敗，請稍後再試或使用其他登入方式");
+      setErrorMessage(t("login.appleLoginFailed"));
     } else if (error === "apple_user_creation_failed") {
-      setErrorMessage("Apple 帳號建立失敗，請稍後再試或聯絡客服");
+      setErrorMessage(t("login.appleAccountCreateFailed"));
     } else if (error === "apple_no_code") {
-      setErrorMessage("Apple 登入驗證失敗，請重試");
+      setErrorMessage(t("login.appleVerifyFailed"));
     } else if (error === "apple_invalid_token") {
-      setErrorMessage("Apple 登入 Token 無效，請重試");
+      setErrorMessage(t("login.appleTokenInvalid"));
     }
   }, []);
 
   const resendMutation = trpc.auth.resendVerificationEmail.useMutation({
-    onSuccess: () => toast.success("驗證電郵已重新發送！"),
-    onError: () => toast.error("發送失敗，請稍後再試"),
+    onSuccess: () => toast.success(t("login.verifyEmailResent")),
+    onError: () => toast.error(t("login.sendFailed")),
   });
 
   const loginMutation = trpc.auth.login.useMutation({
@@ -94,14 +94,14 @@ export default function Login() {
       }, 100);
     },
     onError: (error) => {
-      const msg = error.message || "登入失敗";
+      const msg = error.message || t("login.loginFailed");
       if (msg === "EMAIL_NOT_VERIFIED") {
         setEmailNotVerified(true);
         setIsLoading(false);
         return;
       }
       setEmailNotVerified(false);
-      if (msg.includes("封鎖") || msg.includes("blocked")) {
+      if (msg.includes("blocked") || msg.includes("封鎖")) {
         setErrorMessage(msg);
       } else {
         toast.error(msg);
@@ -140,13 +140,13 @@ export default function Login() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`[DEV] 已以 ${data.user.name || data.user.email} 身份登入`);
+        toast.success(`[DEV] Logged in as ${data.user.name || data.user.email}`);
         setTimeout(() => { window.location.href = "/"; }, 200);
       } else {
-        toast.error("Dev 登入失敗: " + (data.error || "未知錯誤"));
+        toast.error("Dev login failed: " + (data.error || "Unknown error"));
       }
     } catch (e: any) {
-      toast.error("Dev 登入失敗: " + e.message);
+      toast.error("Dev login failed: " + e.message);
     } finally {
       setDevLoading(false);
     }
@@ -212,7 +212,7 @@ export default function Login() {
             <div className="h-px w-10" style={{ background: "linear-gradient(90deg, #c9a84c, transparent)" }} />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide mt-2">{t("login.title")}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>輸入您的帳號密碼以登入 BOXIUM TCG</p>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{t("login.subtitle")}</p>
         </div>
 
         {/* Error / Verification alerts */}
@@ -226,15 +226,15 @@ export default function Login() {
           <Alert className="mb-4 border-amber-500/40 bg-amber-950/50">
             <Mail className="h-4 w-4 text-amber-400" />
             <AlertDescription className="text-amber-200">
-              <p className="font-semibold mb-1">您的電郵尚未驗證</p>
-              <p className="text-sm mb-2">請查看您的收件箱，點擊驗證連結完成帳號啟用。</p>
+              <p className="font-semibold mb-1">{t("login.emailNotVerified")}</p>
+              <p className="text-sm mb-2">{t("login.checkInbox")}</p>
               <button
                 type="button"
                 className="text-sm underline text-amber-400 hover:text-amber-300 disabled:opacity-50"
                 disabled={resendMutation.isPending}
                 onClick={() => resendMutation.mutate({ email })}
               >
-                {resendMutation.isPending ? "發送中..." : "重新發送驗證電郵"}
+                {resendMutation.isPending ? t("login.sending") : t("login.resendVerifyEmail")}
               </button>
             </AlertDescription>
           </Alert>
@@ -276,7 +276,7 @@ export default function Login() {
             style={{ background: "linear-gradient(135deg, #c9a84c, #f0d080, #c9a84c)", color: "#0a0f2e" }}
             disabled={isLoading}
           >
-            {isLoading ? "登入中..." : "登入"}
+            {isLoading ? t("login.loggingIn") : t("login.loginButton")}
           </Button>
           <div className="text-center mt-2">
             <button
@@ -284,7 +284,7 @@ export default function Login() {
               onClick={() => setShowForgotPassword(true)}
               className="text-xs text-white/50 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
             >
-              忘記密碼？
+              {t("login.forgotPassword")}
             </button>
           </div>
         </form>
@@ -295,7 +295,7 @@ export default function Login() {
             <span className="w-full border-t border-white/10" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-3 text-white/35" style={{ background: "transparent" }}>或使用社交帳號</span>
+            <span className="px-3 text-white/35" style={{ background: "transparent" }}>{t("login.orUseSocial")}</span>
           </div>
         </div>
 
@@ -314,7 +314,7 @@ export default function Login() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            使用 Google 登入
+            {t("login.loginWithGoogle")}
           </Button>
 
           <Button
@@ -327,22 +327,22 @@ export default function Login() {
             <svg className="mr-2 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
             </svg>
-            使用 Apple 登入
+            {t("login.loginWithApple")}
           </Button>
         </div>
 
         {/* Footer links */}
         <div className="mt-7 space-y-2 text-center">
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-            還沒有帳號？{" "}
+            {t("login.noAccount")}{" "}
             <Link href="/register" className="font-semibold hover:underline" style={{ color: "#c9a84c" }}>
-              立即註冊
+              {t("login.registerNow")}
             </Link>
           </p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-            登入即表示你同意我們的{" "}
+            {t("login.agreeToTerms")}{" "}
             <a href="https://boxium.asia/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">
-              隱私政策
+              {t("login.privacyPolicy")}
             </a>
           </p>
         </div>
@@ -367,7 +367,7 @@ export default function Login() {
               onClick={handleDevLogin}
               disabled={devLoading}
             >
-              {devLoading ? "登入中..." : "⚡ 開發模式快速登入 (Admin id=1)"}
+              {devLoading ? t("login.loggingIn") : "⚡ Dev Quick Login (Admin id=1)"}
             </Button>
           </div>
         )}
@@ -391,12 +391,12 @@ export default function Login() {
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#06038d15" }}>
               <KeyRound className="w-4 h-4" style={{ color: "#06038d" }} />
             </div>
-            <DialogTitle>忘記密碼</DialogTitle>
+            <DialogTitle>{t("login.forgotPasswordTitle")}</DialogTitle>
           </div>
           <DialogDescription>
             {forgotSent
-              ? "重設密碼的電郵已發送，請檢查你的收件包。"
-              : "輸入你的註冊 Email，我們會發送重設密碼的連結。"}
+              ? t("login.resetEmailSent")
+              : t("login.enterEmailForReset")}
           </DialogDescription>
         </DialogHeader>
 
@@ -404,14 +404,14 @@ export default function Login() {
           <div className="flex flex-col items-center gap-3 py-4">
             <CheckCircle2 className="w-12 h-12 text-green-500" />
             <p className="text-sm text-center text-gray-600">
-              已發送至 <strong>{forgotEmail}</strong>
+              {t("login.sentTo")} <strong>{forgotEmail}</strong>
             </p>
-            <p className="text-xs text-gray-400 text-center">若沒收到電郵，請檢查垃圾郵件夺。</p>
+            <p className="text-xs text-gray-400 text-center">{t("login.checkSpam")}</p>
           </div>
         ) : (
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="forgot-email" className="text-sm font-medium">Email 地址</Label>
+              <Label htmlFor="forgot-email" className="text-sm font-medium">{t("login.emailAddress")}</Label>
               <Input
                 id="forgot-email"
                 type="email"
@@ -427,12 +427,12 @@ export default function Login() {
         <DialogFooter>
           {forgotSent ? (
             <Button className="w-full" onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(""); }}>
-              完成
+              {t("common.done")}
             </Button>
           ) : (
             <div className="flex gap-2 w-full">
               <Button variant="outline" className="flex-1" onClick={() => setShowForgotPassword(false)}>
-                取消
+                {t("common.cancel")}
               </Button>
               <Button
                 className="flex-1 font-semibold"
@@ -440,7 +440,7 @@ export default function Login() {
                 onClick={() => forgotPasswordMutation.mutate({ email: forgotEmail })}
                 disabled={!forgotEmail || forgotPasswordMutation.isPending}
               >
-                {forgotPasswordMutation.isPending ? "發送中..." : "發送重設連結"}
+                {forgotPasswordMutation.isPending ? t("login.sending") : t("login.sendResetLink")}
               </Button>
             </div>
           )}
