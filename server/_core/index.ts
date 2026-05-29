@@ -2032,6 +2032,248 @@ async function startServer() {
     }
   });
 
+  // ─── OG SSR: Pricing detail page for ALL requests (Google, social, users) ───
+  // Unlike /marketplace/:id (crawlers only), /pricing/:id serves SSR to everyone
+  // because Google needs to see price data for Rich Snippets on market price pages.
+  app.get("/pricing/:id", async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return next();
+
+      // Fetch card info from DB (fast, no external API calls)
+      const card = await getCardById(id);
+      if (!card) return next();
+
+      const cardName = card.name || null;
+      if (!cardName) return next();
+
+      const cardNumber = card.cardNumber || null;
+      const nameJa = card.nameJa || null;
+      const setName = card.setName || null;
+      const rarity = card.rarity || null;
+      const cardImageUrl = card.imageUrl || null;
+
+      // Fetch PSA 10 price for JSON-LD (non-critical)
+      let psa10Price: number | null = null;
+      try {
+        const { getCardPriceByGrade } = await import('../db');
+        const priceResult = await getCardPriceByGrade(id, 'PSA 10');
+        if (priceResult.avgPrice && priceResult.avgPrice > 0) {
+          psa10Price = Math.round(priceResult.avgPrice);
+        }
+      } catch (_e) { /* non-critical */ }
+
+      // Fetch lowest marketplace listing price (non-critical)
+      let lowestListingPrice: number | null = null;
+      try {
+        const { getSnkrdunkListingsCache } = await import('../db');
+        const cache = await getSnkrdunkListingsCache(id);
+        if (cache?.listings) {
+          const items: Array<{ price: number; status?: string }> =
+            typeof cache.listings === 'string' ? JSON.parse(cache.listings as string) : (cache.listings as any);
+          const onSale = items.filter((i) => !i.status || i.status === 'on-sale');
+          if (onSale.length > 0) {
+            const min = Math.min(...onSale.map((i) => i.price));
+            if (isFinite(min) && min > 0) lowestListingPrice = Math.round(min);
+          }
+        }
+      } catch (_e) { /* non-critical */ }
+
+      const pageUrl = `https://boxium.asia/pricing/${id}`;
+      const simplifiedName = cardName.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim();
+
+      // Build SEO title: card number + name + price
+      let ogTitle: string;
+      if (cardNumber && psa10Price !== null) {
+        ogTitle = `${cardNumber} | ${simplifiedName} 市場格價 HKD ${psa10Price.toLocaleString()} - BOXIUM`;
+      } else if (cardNumber) {
+        ogTitle = `${cardNumber} | ${simplifiedName} 市場格價查詢 - BOXIUM`;
+      } else if (psa10Price !== null) {
+        ogTitle = `${simplifiedName} 市場格價 HKD ${psa10Price.toLocaleString()} - BOXIUM`;
+      } else {
+        ogTitle = `${simplifiedName} PSA 10 市場格價 - BOXIUM TCG`;
+      }
+      if (ogTitle.length > 65) {
+        ogTitle = cardNumber
+          ? `${cardNumber} | ${simplifiedName} 格價 - BOXIUM`
+          : `${simplifiedName} 市場格價 - BOXIUM`;
+      }
+      if (ogTitle.length > 70) ogTitle = ogTitle.slice(0, 67) + '...';
+
+      // Build meta description
+      const descJa = nameJa ? `（${nameJa}）` : '';
+      const descNum = cardNumber ? ` ${cardNumber}` : '';
+      let ogDescription: string;
+      if (psa10Price !== null && lowestListingPrice !== null) {
+        ogDescription = `${simplifiedName}${descJa}${descNum} 的即時市場格價。PSA 10 參考價 HKD ${psa10Price.toLocaleString()}，目前最低在售價 HKD ${lowestListingPrice.toLocaleString()}。整合 SNKRDUNK 及 eBay 即時成交資料，BOXIUM 為你提供最準確的 PTCG 格價。`;
+      } else if (psa10Price !== null) {
+        ogDescription = `${simplifiedName}${descJa}${descNum} 的即時市場格價。PSA 10 參考價 HKD ${psa10Price.toLocaleString()}。整合 SNKRDUNK 及 eBay 即時成交資料，BOXIUM 為你提供最準確的 PTCG 格價。`;
+      } else {
+        ogDescription = `查看 ${simplifiedName}${descJa}${descNum} 的 PSA 10 市場列價，整合 SNKRDUNK 及 eBay 即時成交資料。想買賣 TCG 卡牌、查詢最新 PTCG 格價，就上 BOXIUM！`;
+      }
+      if (ogDescription.length > 160) ogDescription = ogDescription.slice(0, 157) + '...';
+
+      // Keywords
+      const keywordParts: string[] = [cardName, '市場格價', 'PSA 10 價格'];
+      if (nameJa) keywordParts.push(nameJa);
+      if (cardNumber) keywordParts.push(cardNumber);
+      if (setName) keywordParts.push(setName);
+      keywordParts.push('PTCG 格價', 'Pokemon Card Price', 'SNKRDUNK', 'eBay');
+      const keywords = keywordParts.join(', ');
+
+      // OG image (use card image with BOXIUM watermark)
+      let imageUrl = getDefaultOgImageUrl();
+      if (cardImageUrl) {
+        const s3Url = await composeAndCacheOgImage(id, cardImageUrl);
+        if (s3Url) imageUrl = s3Url;
+      }
+
+      // Product JSON-LD
+      const productName = cardNumber ? `${simplifiedName} ${cardNumber}` : simplifiedName;
+      const primaryPrice = lowestListingPrice ?? psa10Price;
+      const hasMarketplaceListing = lowestListingPrice !== null;
+      const productJsonLd: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: productName,
+        description: ogDescription,
+        url: pageUrl,
+        image: cardImageUrl || imageUrl,
+        brand: { '@type': 'Brand', name: 'Pokemon TCG' },
+        sku: cardNumber || `BOXIUM-${id}`,
+        category: 'Collectible Trading Cards',
+      };
+      if (primaryPrice !== null) {
+        if (lowestListingPrice !== null && psa10Price !== null && lowestListingPrice !== psa10Price) {
+          productJsonLd.offers = {
+            '@type': 'AggregateOffer',
+            lowPrice: Math.min(lowestListingPrice, psa10Price),
+            highPrice: Math.max(lowestListingPrice, psa10Price),
+            priceCurrency: 'HKD',
+            availability: 'https://schema.org/InStock',
+            offerCount: 2,
+            url: pageUrl,
+          };
+        } else {
+          productJsonLd.offers = {
+            '@type': 'Offer',
+            price: primaryPrice,
+            priceCurrency: 'HKD',
+            availability: hasMarketplaceListing ? 'https://schema.org/InStock' : 'https://schema.org/LimitedAvailability',
+            itemCondition: 'https://schema.org/NewCondition',
+            url: pageUrl,
+            seller: { '@type': 'Organization', name: 'BOXIUM TCG', url: 'https://boxium.asia' },
+            priceValidUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          };
+        }
+      } else {
+        productJsonLd.offers = { '@type': 'Offer', price: 0, priceCurrency: 'HKD', availability: 'https://schema.org/OutOfStock', url: pageUrl };
+      }
+
+      // BreadcrumbList JSON-LD
+      const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '主頁', item: 'https://boxium.asia/' },
+          { '@type': 'ListItem', position: 2, name: '市場格價', item: 'https://boxium.asia/pricing' },
+          { '@type': 'ListItem', position: 3, name: cardName },
+        ],
+      };
+
+      // FAQ JSON-LD
+      const faqItems: Array<{ question: string; answer: string }> = [];
+      if (psa10Price !== null) {
+        faqItems.push({
+          question: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} 的 PSA 10 市場格價是多少？`,
+          answer: `根據 BOXIUM 最新數據，${simplifiedName}${cardNumber ? `（${cardNumber}）` : ''} 的 PSA 10 參考價為 HKD ${psa10Price.toLocaleString()}。${lowestListingPrice ? `目前市場最低在售價為 HKD ${lowestListingPrice.toLocaleString()}。` : ''}價格每日更新，請以網站顯示為準。`,
+        });
+      }
+      if (lowestListingPrice !== null) {
+        faqItems.push({
+          question: `哪裡可以買到 ${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''}？`,
+          answer: `您可以在 BOXIUM 查看 ${simplifiedName} 的即時市場格價，整合 SNKRDUNK 及 eBay 的在售商品。目前最低售價為 HKD ${lowestListingPrice.toLocaleString()}。`,
+        });
+      }
+      if (setName || rarity) {
+        faqItems.push({
+          question: `${simplifiedName}${cardNumber ? ` ${cardNumber}` : ''} 是什麼卡片？`,
+          answer: [
+            simplifiedName,
+            cardNumber ? `編號 ${cardNumber}` : '',
+            setName ? `屬於「${setName}」系列` : '',
+            rarity ? `稀有度為 ${rarity}` : '',
+            nameJa ? `日文名「${nameJa}」` : '',
+          ].filter(Boolean).join('，') + '。',
+        });
+      }
+      const faqJsonLd = faqItems.length > 0 ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      } : null;
+
+      const jsonLdScripts = [
+        `<script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`,
+        `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd)}</script>`,
+        faqJsonLd ? `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>` : '',
+      ].filter(Boolean).join('\n    ');
+
+      const ogTags = [
+        `<meta name="description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta name="keywords" content="${keywords.replace(/"/g, '&quot;')}" />`,
+        `<link rel="canonical" href="${pageUrl}" />`,
+        `<meta property="og:type" content="website" />`,
+        `<meta property="og:url" content="${pageUrl}" />`,
+        `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta property="og:image" content="${imageUrl}" />`,
+        `<meta property="og:image:width" content="1200" />`,
+        `<meta property="og:image:height" content="630" />`,
+        `<meta property="og:site_name" content="BOXIUM TCG" />`,
+        `<meta property="og:locale" content="zh_HK" />`,
+        `<meta name="twitter:card" content="summary_large_image" />`,
+        `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />`,
+        `<meta name="twitter:image" content="${imageUrl}" />`,
+        `<title>${ogTitle.replace(/<[^>]*>/g, '')}</title>`,
+        jsonLdScripts,
+      ].join('\n    ');
+
+      let template: string;
+      if (process.env.NODE_ENV === 'development') {
+        const clientTemplate = path.resolve(import.meta.dirname, '../..', 'client', 'index.html');
+        template = await fs.promises.readFile(clientTemplate, 'utf-8');
+      } else {
+        const distTemplate = path.resolve(import.meta.dirname, 'public', 'index.html');
+        template = await fs.promises.readFile(distTemplate, 'utf-8');
+      }
+
+      const injected = template
+        .replace(/<title>[^<]*<\/title>/, '')
+        .replace(/<meta\s+property="og:[^"]*"[^>]*\/>/g, '')
+        .replace(/<meta\s+name="twitter:[^"]*"[^>]*\/>/g, '')
+        .replace(/<meta\s+name="description"[^>]*\/>/g, '')
+        .replace(/<meta\s+name="keywords"[^>]*\/>/g, '')
+        .replace(/<link\s+rel="canonical"[^>]*\/>/g, '')
+        .replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    ${ogTags}`);
+
+      res.status(200).set({
+        'Content-Type': 'text/html',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'CDN-Cache-Control': 'no-store',
+      }).end(injected);
+    } catch (err) {
+      console.error('[OG SSR Pricing] Error:', err);
+      next();
+    }
+  });
+
   // Financial Report PDF Export
   app.get("/api/admin/financial-report-pdf", async (req, res) => {
     try {
