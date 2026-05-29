@@ -982,7 +982,8 @@
     "contactUsDesc": "有任何問題或建議？歡迎與我們聯繫。",
     "contact": "聯絡",
     "learnMoreAboutBoxium": "了解更多關於 BOXIUM",
-    "cardImageAlt": "卡牌圖像"
+    "cardImageAlt": "卡牌圖像",
+    "tenThousandUnit": "萬"
   },
   "login": {
     "description": "輸入您的帳號密碼以登入 BOXIUM PTCG",

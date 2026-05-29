@@ -982,7 +982,8 @@
     "contactUsDesc": "ご質問やご提案がございましたら、お気軽にご連絡ください。",
     "contact": "連絡",
     "learnMoreAboutBoxium": "BOXIUMについてもっと知る",
-    "cardImageAlt": "カード画像"
+    "cardImageAlt": "カード画像",
+    "tenThousandUnit": "万"
   },
   "login": {
     "description": "BOXIUM PTCGにログインするには、アカウントのパスワードを入力してください",

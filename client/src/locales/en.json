@@ -982,7 +982,8 @@
     "contactUsDesc": "Have any questions or suggestions? Feel free to reach out.",
     "contact": "Contact",
     "learnMoreAboutBoxium": "Learn more about BOXIUM",
-    "cardImageAlt": "card image"
+    "cardImageAlt": "card image",
+    "tenThousandUnit": "M"
   },
   "login": {
     "description": "Enter your account and password to log in to BOXIUM PTCG",

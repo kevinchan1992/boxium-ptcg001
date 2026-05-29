@@ -770,7 +770,7 @@ export default function Home() {
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
                 <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
                   {stats?.totalPriceRecords
-                    ? `${Math.round(animatedPriceRecords / 10000)}${t("home.globalTransactions")}`
+                    ? `${Math.round(animatedPriceRecords / 10000)}${t("home.tenThousandUnit")}+`
                     : '—'}
                 </div>
                 <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
