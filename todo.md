@@ -9572,3 +9572,12 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 建立 client/src/types/react-image-crop.d.ts 類型聲明覆蓋文件（備用方案）
 - [x] 驗證：npx tsc --noEmit 退出碼 0，0 個錯誤
 - [x] 儲存 checkpoint 並部署
+
+## i18n 全面修復（2026-05-29）
+- [x] 修復 Grading.tsx 加入完整 i18n 支援（useTranslation + 三語翻譯 key）
+- [x] 修復 GradingOrders.tsx 加入完整 i18n 支援
+- [x] 修復 GradingSubmit.tsx 加入完整 i18n 支援
+- [x] 修復 GradingOrderDetail.tsx 加入完整 i18n 支援
+- [x] 批量翻譯 ja.json 中所有缺失的日語翻譯（1537 個 key）
+- [x] 新增 176 個 grading 相關翻譯 key 到三語文件
+- [x] 建立 AGENTS.md 記錄強制 i18n 規則（日後新頁面/UI 必須加入翻譯）

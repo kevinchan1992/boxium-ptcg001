@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams, useSearch } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,14 +49,7 @@ const compressImageToBase64 = (file: File, maxWidthPx = 1600, quality = 0.82): P
     img.src = url;
   });
 
-const STATUS_STEPS = [
-  { key: "pending_payment", label: "申請提交" },
-  { key: "received", label: "BOXIUM 收件" },
-  { key: "submitted_to_psa", label: "已出團" },
-  { key: "grading", label: "鑑定中" },
-  { key: "graded", label: "鑑定完成" },
-  { key: "completed", label: "已完成" },
-];
+// STATUS_STEPS is now generated inside the component using t()
 
 const STATUS_ORDER = [
    "pending_payment", "received", "submitted_to_psa", "grading", "graded", "returned", "completed"
@@ -75,23 +69,11 @@ function getStepIndex(status: string) {
   };
   return map[status] ?? 0;
 }
-const STATUS_LABEL: Record<string, string> = {
-  awaiting_payment: "待付款確認",
-  pending_review: "截圖待審核",
-  pending_shipment: "待寄件",
-  pending_payment: "待收件",
-  received: "已收件",
-  submitted_to_psa: "已出團",
-  grading: "鑑定中",
-  graded: "鑑定完成",
-  payment_overdue: "付款逾期",
-  returned: "已寄回",
-  completed: "已完成",
-  cancelled: "已取消",
-};
+// STATUS_LABEL is now generated inside the component using t()
 
 // ─── Printable Slip ───────────────────────────────────────────────────────────
 function PrintableSlip({ submission }: { submission: any }) {
+  const { t } = useTranslation();
   return (
     <div id="printable-slip-root" className="hidden print:block font-sans text-black bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
       <style>{`
@@ -135,12 +117,12 @@ function PrintableSlip({ submission }: { submission: any }) {
             <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>用戶 ID：#{submission.userId ?? submission.user?.id ?? '—'}</div>
           </div>
           <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>服務層級</div>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('grading.detail.tier')}</div>
             <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d' }}>{submission.items?.[0]?.tier?.name ?? '—'}</div>
             <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>HK${submission.items?.[0]?.tier ? parseFloat(submission.items[0].tier.feeHkd).toLocaleString() : '—'} / 張 · 共 {submission.items.length} 張</div>
           </div>
           <div style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px 16px', background: '#f8faff' }}>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>申請編號</div>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('grading.detail.orderNo')}</div>
             <div style={{ fontWeight: '700', fontSize: '14px', color: '#06038d', fontFamily: 'monospace' }}>{submission.orderNo}</div>
             <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>共 {submission.items.length} 張卡牌</div>
           </div>
@@ -192,7 +174,7 @@ function PrintableSlip({ submission }: { submission: any }) {
         {/* Card List */}
         <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
           <div style={{ background: '#06038d', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: 'white', fontWeight: '700', fontSize: '13px' }}>卡牌清單</span>
+            <span style={{ color: 'white', fontWeight: '700', fontSize: '13px' }}>{t('grading.detail.cardList')}</span>
             <span style={{ color: '#FEDD00', fontWeight: '600', fontSize: '12px' }}>共 {submission.items.length} 張</span>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -201,7 +183,7 @@ function PrintableSlip({ submission }: { submission: any }) {
                 <th style={{ padding: '8px 12px', textAlign: 'left', width: '28px', color: '#374151', fontWeight: '600' }}>#</th>
                 <th style={{ padding: '8px 12px', textAlign: 'left', color: '#374151', fontWeight: '600' }}>卡牌名稱</th>
                 <th style={{ padding: '8px 12px', textAlign: 'left', width: '100px', color: '#374151', fontWeight: '600' }}>系列 / 編號</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center', width: '80px', color: '#374151', fontWeight: '600' }}>服務層級</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center', width: '80px', color: '#374151', fontWeight: '600' }}>{t('grading.detail.tier')}</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right', width: '70px', color: '#374151', fontWeight: '600' }}>費用</th>
               </tr>
             </thead>
@@ -345,6 +327,29 @@ function ReviewSection({ submissionId }: { submissionId: number }) {
 }
 
 export default function GradingOrderDetail() {
+  const { t } = useTranslation();
+  const STATUS_STEPS = [
+    { key: "pending_payment", label: t('grading.detail.statusStep.submitted') },
+    { key: "received", label: t('grading.detail.statusStep.received') },
+    { key: "submitted_to_psa", label: t('grading.detail.statusStep.sentToPSA') },
+    { key: "grading", label: t('grading.detail.statusStep.grading') },
+    { key: "graded", label: t('grading.detail.statusStep.graded') },
+    { key: "completed", label: t('grading.detail.statusStep.completed') },
+  ];
+  const STATUS_LABEL: Record<string, string> = {
+    awaiting_payment: t('grading.detail.status.awaitingPayment'),
+    pending_review: t('grading.detail.status.pendingReview'),
+    pending_shipment: t('grading.detail.status.pendingShipment'),
+    pending_payment: t('grading.detail.status.pendingPayment'),
+    received: t('grading.detail.status.received'),
+    submitted_to_psa: t('grading.detail.status.submittedToPSA'),
+    grading: t('grading.detail.status.grading'),
+    graded: t('grading.detail.status.graded'),
+    payment_overdue: t('grading.detail.status.paymentOverdue'),
+    returned: t('grading.detail.status.returned'),
+    completed: t('grading.detail.status.completed'),
+    cancelled: t('grading.detail.status.cancelled'),
+  };
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const searchString = useSearch();
@@ -670,12 +675,12 @@ export default function GradingOrderDetail() {
           <div style="font-size:12px;color:#6b7280;margin-top:2px">用戶 ID：#${userId}</div>
         </div>
         <div style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;background:#f8faff">
-          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">服務層級</div>
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">{t('grading.detail.tier')}</div>
           <div style="font-weight:700;font-size:14px;color:#06038d">${tierName}</div>
           <div style="font-size:12px;color:#6b7280;margin-top:2px">HK$${tierFee} / 張 · 共 ${(submission as any).items.length} 張</div>
         </div>
         <div style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;background:#f8faff">
-          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">申請編號</div>
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase">{t('grading.detail.orderNo')}</div>
           <div style="font-weight:700;font-size:14px;color:#06038d;font-family:monospace">${submission.orderNo}</div>
           <div style="font-size:12px;color:#6b7280;margin-top:2px">共 ${(submission as any).items.length} 張卡牌</div>
         </div>
@@ -698,7 +703,7 @@ export default function GradingOrderDetail() {
       </div>
       <div style="border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:16px">
         <div style="background:#06038d;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
-          <span style="color:white;font-weight:700;font-size:13px">卡牌清單</span>
+          <span style="color:white;font-weight:700;font-size:13px">{t('grading.detail.cardList')}</span>
           <span style="color:#FEDD00;font-weight:600;font-size:12px">共 ${(submission as any).items.length} 張</span>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -706,7 +711,7 @@ export default function GradingOrderDetail() {
             <th style="padding:8px 12px;text-align:left;width:28px;color:#374151;font-weight:600">#</th>
             <th style="padding:8px 12px;text-align:left;color:#374151;font-weight:600">卡牌名稱</th>
             <th style="padding:8px 12px;text-align:left;width:100px;color:#374151;font-weight:600">系列 / 編號</th>
-            <th style="padding:8px 12px;text-align:center;width:80px;color:#374151;font-weight:600">服務層級</th>
+            <th style="padding:8px 12px;text-align:center;width:80px;color:#374151;font-weight:600">{t('grading.detail.tier')}</th>
             <th style="padding:8px 12px;text-align:right;width:70px;color:#374151;font-weight:600">費用</th>
           </tr></thead>
           <tbody>${itemsHtml}</tbody>
@@ -1008,9 +1013,9 @@ export default function GradingOrderDetail() {
                       className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-6"
                     >
                       {payingLoading ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t('common.processing')}</>
                       ) : (
-                        <><CreditCard className="h-4 w-4 mr-2" />立即付款</>
+                        <><CreditCard className="h-4 w-4 mr-2" />{t('grading.detail.payNow')}</>
                       )}
                     </Button>
                   </div>
@@ -1053,7 +1058,7 @@ export default function GradingOrderDetail() {
                   {/* Upload proof */}
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-bold text-black">上傳付款截圖</p>
+                      <p className="text-sm font-bold text-black">{t('grading.detail.uploadScreenshot')}</p>
                       <div className="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
                         <Bot className="h-3 w-3 text-[#06038d]" />
                         <span className="text-xs text-[#06038d] font-semibold">AI 自動核對</span>
@@ -1209,7 +1214,7 @@ export default function GradingOrderDetail() {
                     <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
                       {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
                     </Button>
-                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>{t('common.back')}</Button>
                   </div>
                 )}
               </div>
@@ -1273,7 +1278,7 @@ export default function GradingOrderDetail() {
                     <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
                       {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
                     </Button>
-                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>{t('common.back')}</Button>
                   </div>
                 )}
               </div>
@@ -1371,7 +1376,7 @@ export default function GradingOrderDetail() {
                     <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white h-7 text-xs px-3" disabled={cancelSubmissionMutation.isPending} onClick={() => cancelSubmissionMutation.mutate({ submissionId })}>
                       {cancelSubmissionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "確認取消"}
                     </Button>
-                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>返回</Button>
+                    <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 h-7 text-xs px-3" onClick={() => setCancelConfirm(false)}>{t('common.back')}</Button>
                   </div>
                 )}
               </div>
@@ -1380,7 +1385,7 @@ export default function GradingOrderDetail() {
           {/* Progress stepper */}
           {!isCancelled && !isAwaitingPayment && !isAlipayPendingReview && !isAlipayRejected && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm">申請進度</h3>
+              <h3 className="font-bold text-gray-900 mb-4 text-sm">{t('grading.detail.progress')}</h3>
               <div className="flex items-start">
                 {STATUS_STEPS.map((step, idx) => {
                   const done = currentStepIdx > idx;
@@ -1566,7 +1571,7 @@ export default function GradingOrderDetail() {
                       disabled={reopenUpgradeCheckoutMutation.isPending}
                     >
                       {reopenUpgradeCheckoutMutation.isPending ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t('common.processing')}</>
                       ) : (
                         <><CreditCard className="h-4 w-4 mr-2" />信用卡補付差價</>
                       )}
@@ -1602,7 +1607,7 @@ export default function GradingOrderDetail() {
                     <p className="text-xs text-gray-500">掃描 QR code 或點擊連結完成付款</p>
                   </div>
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-sm font-semibold text-gray-900 mb-2">上傳付款截圖</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-2">{t('grading.detail.uploadScreenshot')}</p>
                     <p className="text-xs text-gray-500 mb-3">付款後請上傳截圖，管理員確認後補付將完成。</p>
                     <input type="file" accept="image/*" onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -1614,7 +1619,7 @@ export default function GradingOrderDetail() {
                     {upgradeAlipayProofPreview && <img src={upgradeAlipayProofPreview} alt="截圖預覽" className="mt-3 max-h-48 rounded-lg border border-gray-200 mx-auto block object-contain" />}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowUpgradeAlipayQR(false)} className="flex-1 text-black border-orange-300">返回</Button>
+                    <Button variant="outline" onClick={() => setShowUpgradeAlipayQR(false)} className="flex-1 text-black border-orange-300">{t('common.back')}</Button>
                     <Button
                       onClick={async () => {
                         if (!upgradeAlipayProofFile) return;
@@ -1795,9 +1800,9 @@ export default function GradingOrderDetail() {
                       className="bg-[#06038d] hover:bg-[#06038d]/90 text-white px-6"
                     >
                       {payingLoading ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />處理中...</>
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t('common.processing')}</>
                       ) : (
-                        <><CreditCard className="h-4 w-4 mr-2" />立即付款</>
+                        <><CreditCard className="h-4 w-4 mr-2" />{t('grading.detail.payNow')}</>
                       )}
                     </Button>
                   </div>
@@ -1840,7 +1845,7 @@ export default function GradingOrderDetail() {
                   {/* Upload proof */}
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-bold text-black">上傳付款截圖</p>
+                      <p className="text-sm font-bold text-black">{t('grading.detail.uploadScreenshot')}</p>
                       <div className="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
                         <Bot className="h-3 w-3 text-[#06038d]" />
                         <span className="text-xs text-[#06038d] font-semibold">AI 自動核對</span>

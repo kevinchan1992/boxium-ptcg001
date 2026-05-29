@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +61,8 @@ function newItem(): GradingItem {
 // ─── Step Indicator ─────────────────────────────────────────────────────────────────────────────
 function StepIndicator({ step }: { step: number }) {
   if (step === 4) return null; // Hide step indicator on confirmation page
-  const steps = ["選擇服務層級", "填寫卡牌資料", "確認提交"];
+  const { t } = useTranslation();
+  const steps = [t('grading.submit.step1'), t('grading.submit.step2'), t('grading.submit.step3')];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {steps.map((label, i) => {
@@ -120,9 +122,10 @@ function ItemCard({
     [item.id, onUpdate]
   );
 
+  const { t } = useTranslation();
   const cardLabel = item.isManual
-    ? item.manualCardName || "（未填寫）"
-    : item.card?.name || "（未選擇）";
+    ? item.manualCardName || t('grading.submit.notFilled')
+    : item.card?.name || t('grading.submit.notSelected');
 
   const isFilled = item.isManual ? !!item.manualCardName.trim() : !!item.card;
 
@@ -134,7 +137,7 @@ function ItemCard({
         onClick={onToggle}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-[#06038d] text-sm flex-shrink-0">卡牌 #{index + 1}</span>
+          <span className="font-bold text-[#06038d] text-sm flex-shrink-0">{t('grading.submit.cardNo', { n: index + 1 })}</span>
           {!isExpanded && (
             <span className={`text-sm truncate ${isFilled ? "text-gray-700" : "text-gray-400"}`}>
               {cardLabel}
@@ -169,7 +172,7 @@ function ItemCard({
         <div className="px-4 pb-4 border-t border-gray-100">
           {/* Card selection */}
           <div className="mt-4 mb-4">
-            <Label className="text-xs font-semibold text-gray-600 mb-2 block">卡牌資料 *</Label>
+            <Label className="text-xs font-semibold text-gray-600 mb-2 block">{t('grading.submit.cardInfo')} *</Label>
             {!item.isManual ? (
               <>
                 {item.card ? (
@@ -202,7 +205,7 @@ function ItemCard({
                     onClick={() => setPickerOpen(true)}
                   >
                     <Search className="h-4 w-4 mr-2" />
-                    搜尋並選擇卡牌
+                    {t('grading.submit.searchCard')}
                   </Button>
                 )}
                 <button
@@ -210,25 +213,25 @@ function ItemCard({
                   onClick={() => onUpdate(item.id, { isManual: true, card: null })}
                   className="text-xs text-gray-400 hover:text-gray-600 mt-1 underline"
                 >
-                  找不到您要找的卡牌？手動填寫
+                  {t('grading.submit.manualFill')}
                 </button>
               </>
             ) : (
               <div className="space-y-2">
                 <Input
-                  placeholder="卡牌名稱 *"
+                  placeholder={t('grading.submit.cardNamePlaceholder')}
                   value={item.manualCardName}
                   onChange={(e) => onUpdate(item.id, { manualCardName: e.target.value })}
                   className="text-sm"
                 />
                 <Input
-                  placeholder="卡牌系列 / 套組"
+                  placeholder={t('grading.submit.cardSetPlaceholder')}
                   value={item.manualCardSet}
                   onChange={(e) => onUpdate(item.id, { manualCardSet: e.target.value })}
                   className="text-sm"
                 />
                 <Input
-                  placeholder="卡牌編號（如 001/100）"
+                  placeholder={t('grading.submit.cardNumberPlaceholder')}
                   value={item.manualCardNumber}
                   onChange={(e) => onUpdate(item.id, { manualCardNumber: e.target.value })}
                   className="text-sm"
@@ -238,7 +241,7 @@ function ItemCard({
                   onClick={() => onUpdate(item.id, { isManual: false })}
                   className="text-xs text-[#06038d] hover:underline"
                 >
-                  返回搜尋
+                  {t('grading.submit.backSearch')}
                 </button>
               </div>
             )}
@@ -252,7 +255,7 @@ function ItemCard({
 
           {/* Quantity */}
           <div>
-            <Label className="text-xs font-semibold text-gray-600 mb-2 block">數量</Label>
+            <Label className="text-xs font-semibold text-gray-600 mb-2 block">{t('grading.submit.qty')}</Label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -300,7 +303,7 @@ function ItemCard({
               >
                 +
               </button>
-              <span className="text-xs text-gray-400 ml-1">張（1-999）</span>
+              <span className="text-xs text-gray-400 ml-1">{t('grading.submit.qtyUnit')}</span>
             </div>
           </div>
         </div>
@@ -379,6 +382,7 @@ function clearDraft(userId?: number | string) {
 
 // ─── Tier Comparison Table ────────────────────────────────────────────────────
 function TierComparisonTable({ tiers }: { tiers: any[] }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   if (!tiers || tiers.length === 0) return null;
   return (
@@ -390,8 +394,8 @@ function TierComparisonTable({ tiers }: { tiers: any[] }) {
       >
         <div className="flex items-center gap-2">
           <span className="text-base">📊</span>
-          <span className="font-semibold text-gray-900 text-sm">各層級服務對比</span>
-          <span className="text-xs text-gray-400">（點擊展開）</span>
+          <span className="font-semibold text-gray-900 text-sm">{t('grading.submit.tierCompare')}</span>
+          <span className="text-xs text-gray-400">{t('grading.submit.clickExpand')}</span>
         </div>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
@@ -400,10 +404,10 @@ function TierComparisonTable({ tiers }: { tiers: any[] }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50">
-                <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">層級</th>
-                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">費用 / 張</th>
-                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">最高申報</th>
-                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">預計時效</th>
+                <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">{t('grading.submit.tier')}</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">{t('grading.submit.feePerCard')}</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">{t('grading.submit.maxDeclared')}</th>
+                <th className="text-right p-3 font-semibold text-gray-700 whitespace-nowrap">{t('grading.submit.estDays')}</th>
               </tr>
             </thead>
             <tbody>
@@ -417,7 +421,7 @@ function TierComparisonTable({ tiers }: { tiers: any[] }) {
                     USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()}
                   </td>
                   <td className="p-3 text-right text-gray-600 whitespace-nowrap">
-                    {tier.estimatedDaysMin}–{tier.estimatedDaysMax} 工作天
+                    {tier.estimatedDaysMin}–{tier.estimatedDaysMax} {t('grading.submit.workDays')}
                   </td>
                 </tr>
               ))}
@@ -425,7 +429,7 @@ function TierComparisonTable({ tiers }: { tiers: any[] }) {
           </table>
           <div className="px-4 py-3 bg-blue-50 border-t border-blue-100">
             <p className="text-xs text-blue-700">
-              <strong>選層級建議：</strong>選擇「最高申報」<strong>高於卡牌實際市值</strong>的層級，避免鑑定後需補付差價。
+              <strong>{t('grading.submit.tierTipTitle')}</strong>{t('grading.submit.tierTipBody')}
             </p>
           </div>
         </div>
@@ -437,6 +441,7 @@ function TierComparisonTable({ tiers }: { tiers: any[] }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function GradingSubmit() {
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
   const { data: user, isLoading: authLoading } = trpc.auth.me.useQuery();
 
   // ── Draft restore ──
@@ -910,14 +915,14 @@ export default function GradingSubmit() {
                         <div>
                           <p className="font-bold text-black">{tier.name}</p>
                           <p className="text-xs text-black/60">
-                            最高申報 USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
-                            約 {tier.estimatedDaysMin} - {tier.estimatedDaysMax} 工作天
+                            {t('grading.submit.maxDeclared')} USD ${parseFloat(tier.maxDeclaredValueUsd).toLocaleString()} ·{" "}
+                            {t('grading.submit.about')} {tier.estimatedDaysMin} - {tier.estimatedDaysMax} {t('grading.submit.workDays')}
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="font-bold text-[#06038d] text-lg">HK${parseFloat(tier.feeHkd).toLocaleString()}</p>
-                        <p className="text-xs text-gray-400">/ 張</p>
+                        <p className="text-xs text-gray-400">/ {t('grading.submit.cardUnit')}</p>
                       </div>
                     </label>
                   ))}
@@ -949,7 +954,7 @@ export default function GradingSubmit() {
                   <p className="font-bold text-[#06038d]">{selectedTier.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#06038d]">HK${parseFloat(selectedTier.feeHkd).toLocaleString()} / 張</p>
+                  <p className="font-bold text-[#06038d]">HK${parseFloat(selectedTier.feeHkd).toLocaleString()} / {t('grading.submit.cardUnit')}</p>
                   <button
                     type="button"
                     onClick={() => setStep(1)}
