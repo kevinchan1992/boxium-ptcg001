@@ -1006,16 +1006,12 @@ async function startServer() {
       if (pregen) {
         res.header("Content-Type", "application/xml; charset=utf-8");
         res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-        res.header("CDN-Cache-Control", "max-age=86400");
-        res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
         return res.send(pregen);
       }
       // Fallback: generate on-demand (slow path, first request after cold start)
       const sitemap = await generateSitemapIndex();
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating sitemap index:", error);
@@ -1030,15 +1026,11 @@ async function startServer() {
       if (pregen) {
         res.header("Content-Type", "application/xml; charset=utf-8");
         res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
-        res.header("CDN-Cache-Control", "max-age=86400");
-        res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
         return res.send(pregen);
       }
       const sitemap = await generateStaticSitemap();
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating static sitemap:", error);
@@ -1053,15 +1045,11 @@ async function startServer() {
       if (pregen) {
         res.header("Content-Type", "application/xml; charset=utf-8");
         res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
-        res.header("CDN-Cache-Control", "max-age=86400");
-        res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
         return res.send(pregen);
       }
       const sitemap = await generateSetsSitemap();
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating sets sitemap:", error);
@@ -1076,15 +1064,11 @@ async function startServer() {
       if (pregen) {
         res.header("Content-Type", "application/xml; charset=utf-8");
         res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-        res.header("CDN-Cache-Control", "max-age=86400");
-        res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
         return res.send(pregen);
       }
       const sitemap = await generateBlogSitemap();
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating blog sitemap:", error);
@@ -1102,16 +1086,12 @@ async function startServer() {
       if (pregen) {
         res.header("Content-Type", "application/xml; charset=utf-8");
         res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-        res.header("CDN-Cache-Control", "max-age=86400");
-        res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
         return res.send(pregen);
       }
       const sitemap = await generateCardSitemap(page);
       if (!sitemap) return res.status(404).send("Not found");
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=3600, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(sitemap);
     } catch (error) {
       console.error("[Sitemap] Error generating card sitemap:", error);
@@ -1129,8 +1109,6 @@ async function startServer() {
       if (!content) return res.status(404).send("Not found");
       res.header("Content-Type", "application/xml; charset=utf-8");
       res.header("Cache-Control", "public, max-age=86400, s-maxage=86400");
-      res.header("CDN-Cache-Control", "max-age=86400");
-      res.header("Cloudflare-CDN-Cache-Control", "max-age=86400");
       res.send(content);
     } catch (error) {
       console.error("[Sitemap] Error serving series sitemap:", error);
