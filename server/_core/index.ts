@@ -1727,11 +1727,44 @@ async function startServer() {
           contentUrl: cardImageUrl || imageUrl,
         },
         brand: { '@type': 'Brand', name: 'Pokemon TCG' },
-        sku: cardNumber || `BOXIUM-${id}`,
+        sku: cardNumber ? cardNumber.replace(/\//g, '-').replace(/\s+/g, '-') : `BOXIUM-${id}`,
         mpn: cardNumber ? cardNumber.replace(/\//g, '-') : undefined,
         category: 'Collectible Trading Cards',
         // Additional identifiers for search matching
         productID: cardNumber || `BOXIUM-${id}`,
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          applicableCountry: 'HK',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          merchantReturnLink: 'https://boxium.asia/terms',
+        },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            value: 0,
+            currency: 'HKD',
+          },
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: 'HK',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 3,
+              unitCode: 'DAY',
+            },
+            transitTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 5,
+              unitCode: 'DAY',
+            },
+          },
+        },
       };
 
       // Determine the primary price and availability for Rich Snippets
@@ -2140,8 +2173,41 @@ async function startServer() {
         url: pageUrl,
         image: cardImageUrl || imageUrl,
         brand: { '@type': 'Brand', name: 'Pokemon TCG' },
-        sku: cardNumber || `BOXIUM-${id}`,
+        sku: cardNumber ? cardNumber.replace(/\//g, '-').replace(/\s+/g, '-') : `BOXIUM-${id}`,
         category: 'Collectible Trading Cards',
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          applicableCountry: 'HK',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          merchantReturnLink: 'https://boxium.asia/terms',
+        },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            value: 0,
+            currency: 'HKD',
+          },
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: 'HK',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 3,
+              unitCode: 'DAY',
+            },
+            transitTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 5,
+              unitCode: 'DAY',
+            },
+          },
+        },
       };
       if (primaryPrice !== null) {
         if (lowestListingPrice !== null && psa10Price !== null && lowestListingPrice !== psa10Price) {
