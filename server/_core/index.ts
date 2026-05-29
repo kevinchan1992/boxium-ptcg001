@@ -1007,35 +1007,68 @@ async function startServer() {
     res.header("Cloudflare-CDN-Cache-Control", `public, max-age=${cdnMaxAge}`);
   }
 
+  // Static fallback sitemap index (used during cold start before /tmp/sitemaps/ is populated)
+  // This is hardcoded to ensure sub-100ms response even on cold start.
+  // The actual count (6 card sitemaps) matches ~55k cards / 10k per file.
+  const STATIC_SITEMAP_INDEX = (() => {
+    const d = new Date().toISOString().split('T')[0];
+    const BASE = 'https://boxium.asia';
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += `  <sitemap><loc>${BASE}/sitemap-static.xml</loc><lastmod>${d}</lastmod></sitemap>\n`;
+    xml += `  <sitemap><loc>${BASE}/sitemap-sets.xml</loc><lastmod>${d}</lastmod></sitemap>\n`;
+    xml += `  <sitemap><loc>${BASE}/sitemap-blog.xml</loc><lastmod>${d}</lastmod></sitemap>\n`;
+    for (let i = 1; i <= 6; i++) {
+      xml += `  <sitemap><loc>${BASE}/sitemap-cards-${i}.xml</loc><lastmod>${d}</lastmod></sitemap>\n`;
+    }
+    xml += '</sitemapindex>';
+    return xml;
+  })();
+
   app.get("/sitemap.xml", async (req, res) => {
     try {
       // Serve pre-generated sitemap if available (fast path, < 1ms)
       const pregen = getPregenSitemap("index");
-      if (pregen) {
-        setSitemapCacheHeaders(res, 3600, 86400);
-        return res.send(pregen);
-      }
-      // Fallback: generate on-demand (slow path, first request after cold start)
-      const sitemap = await generateSitemapIndex();
+      // Always respond immediately: use pregen if available, else use static fallback
+      // This ensures sub-100ms TTFB even on cold start (no DB query needed for index)
       setSitemapCacheHeaders(res, 3600, 86400);
-      res.send(sitemap);
+      return res.send(pregen ?? STATIC_SITEMAP_INDEX);
     } catch (error) {
       console.error("[Sitemap] Error generating sitemap index:", error);
       res.status(500).send("Error generating sitemap");
     }
   });
 
+  // Static sitemap fallback (hardcoded, no DB needed)
+  const STATIC_PAGES_SITEMAP = (() => {
+    const d = new Date().toISOString().split('T')[0];
+    const BASE = 'https://boxium.asia';
+    const pages = [
+      { url: '/', priority: '1.0', changefreq: 'daily' },
+      { url: '/research', priority: '0.9', changefreq: 'daily' },
+      { url: '/trending', priority: '0.9', changefreq: 'hourly' },
+      { url: '/pricing', priority: '0.9', changefreq: 'daily' },
+      { url: '/sets', priority: '0.8', changefreq: 'weekly' },
+      { url: '/blog', priority: '0.9', changefreq: 'daily' },
+      { url: '/marketplace', priority: '0.8', changefreq: 'daily' },
+      { url: '/about', priority: '0.7', changefreq: 'monthly' },
+      { url: '/disclaimer', priority: '0.6', changefreq: 'monthly' },
+      { url: '/terms', priority: '0.6', changefreq: 'monthly' },
+      { url: '/privacy', priority: '0.6', changefreq: 'monthly' },
+    ];
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    for (const p of pages) {
+      xml += `  <url><loc>${BASE}${p.url}</loc><lastmod>${d}</lastmod><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>\n`;
+    }
+    xml += '</urlset>';
+    return xml;
+  })();
+
   // Static pages sitemap
   app.get("/sitemap-static.xml", async (req, res) => {
     try {
       const pregen = getPregenSitemap("static");
-      if (pregen) {
-        setSitemapCacheHeaders(res, 86400, 86400);
-        return res.send(pregen);
-      }
-      const sitemap = await generateStaticSitemap();
       setSitemapCacheHeaders(res, 86400, 86400);
-      res.send(sitemap);
+      return res.send(pregen ?? STATIC_PAGES_SITEMAP);
     } catch (error) {
       console.error("[Sitemap] Error generating static sitemap:", error);
       res.status(500).send("Error generating sitemap");
