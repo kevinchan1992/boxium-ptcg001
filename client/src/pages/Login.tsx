@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,116 @@ import { useTranslation } from "react-i18next";
 
 const IS_DEV = import.meta.env.DEV;
 
+/* ─── Floating Boxium Logo Particle ─────────────────────────────────── */
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  rotation: number;
+  rotationSpeed: number;
+}
+
+function ParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const animFrameRef = useRef<number>(0);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  const createParticle = useCallback((id: number, width: number, height: number): Particle => ({
+    id,
+    x: Math.random() * width,
+    y: Math.random() * height,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    size: 28 + Math.random() * 36,
+    opacity: 0.04 + Math.random() * 0.08,
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: (Math.random() - 0.5) * 0.008,
+  }), []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Load the white logo
+    const img = new Image();
+    img.src = "/boxium-logo-white.png";
+    imgRef.current = img;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      // Re-init particles on resize
+      particlesRef.current = Array.from({ length: 40 }, (_, i) =>
+        createParticle(i, canvas.width, canvas.height)
+      );
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const draw = () => {
+      if (!canvas || !ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const img = imgRef.current;
+      if (!img || !img.complete) {
+        animFrameRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      particlesRef.current.forEach((p) => {
+        // Move
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+
+        // Wrap around edges
+        if (p.x < -p.size) p.x = canvas.width + p.size;
+        if (p.x > canvas.width + p.size) p.x = -p.size;
+        if (p.y < -p.size) p.y = canvas.height + p.size;
+        if (p.y > canvas.height + p.size) p.y = -p.size;
+
+        // Draw logo
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        const w = p.size * (img.width / img.height);
+        const h = p.size;
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      });
+
+      animFrameRef.current = requestAnimationFrame(draw);
+    };
+
+    img.onload = () => { draw(); };
+    // Start even if image not loaded yet (will retry each frame)
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [createParticle]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none"
+      aria-hidden="true"
+    />
+  );
+}
+
+/* ─── Main Login Page ────────────────────────────────────────────────── */
 export default function Login() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -154,45 +264,20 @@ export default function Login() {
 
   return (
     <>
+    {/* ── Full-screen dark background ── */}
     <div
       className="min-h-screen w-full relative flex items-center justify-center overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #0a0f2e 0%, #0d1a4a 40%, #0a1535 70%, #060d24 100%)" }}
+      style={{ background: "#0a0a0f" }}
     >
-      {/* ── Watermark grid of BOXIUM logos ── */}
-      <div
-        className="absolute inset-0 pointer-events-none select-none"
-        aria-hidden="true"
-        style={{ opacity: 0.045 }}
-      >
-        {Array.from({ length: 48 }).map((_, i) => (
-          <img
-            key={i}
-            src="/boxium-logo-white.png"
-            alt=""
-            style={{
-              position: "absolute",
-              width: "120px",
-              left: `${(i % 6) * 18 - 2}%`,
-              top: `${Math.floor(i / 6) * 14 - 2}%`,
-              transform: `rotate(-15deg)`,
-              mixBlendMode: "screen" as const,
-            }}
-          />
-        ))}
-      </div>
+      {/* ── Animated Boxium logo particles ── */}
+      <ParticleCanvas />
 
-      {/* ── Subtle radial glow in center ── */}
+      {/* ── Subtle radial glow ── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(30,80,200,0.18) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%)",
         }}
-      />
-
-      {/* ── Thin gold accent line at top ── */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{ background: "linear-gradient(90deg, transparent, #c9a84c 30%, #f0d080 50%, #c9a84c 70%, transparent)" }}
       />
 
       {/* ── Main form panel ── */}
@@ -203,27 +288,27 @@ export default function Login() {
           <img
             src="/boxium-logo.png"
             alt="BOXIUM"
-            className="h-16 w-auto mb-4"
-            style={{ filter: "drop-shadow(0 0 16px rgba(201,168,76,0.5))" }}
+            className="h-16 w-auto mb-5"
+            style={{ filter: "drop-shadow(0 0 20px rgba(201,168,76,0.45))" }}
           />
-          <div className="flex items-center gap-3 mb-1">
-            <div className="h-px w-10" style={{ background: "linear-gradient(90deg, transparent, #c9a84c)" }} />
-            <span className="text-xs tracking-[0.2em] uppercase whitespace-nowrap" style={{ color: "#c9a84c" }}>Trading Card Platform</span>
-            <div className="h-px w-10" style={{ background: "linear-gradient(90deg, #c9a84c, transparent)" }} />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-px w-10" style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.6))" }} />
+            <span className="text-xs tracking-[0.2em] uppercase whitespace-nowrap" style={{ color: "rgba(201,168,76,0.7)" }}>Trading Card Platform</span>
+            <div className="h-px w-10" style={{ background: "linear-gradient(90deg, rgba(201,168,76,0.6), transparent)" }} />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-wide mt-2">{t("login.title")}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{t("login.subtitle")}</p>
+          <h1 className="text-2xl font-bold text-white tracking-wide mt-1">{t("login.title")}</h1>
+          <p className="text-sm mt-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>{t("login.subtitle")}</p>
         </div>
 
         {/* Error / Verification alerts */}
         {errorMessage && (
-          <Alert variant="destructive" className="mb-4 border-red-500/50 bg-red-950/60 text-red-200">
+          <Alert variant="destructive" className="mb-4 border-red-500/40 bg-red-950/50 text-red-200">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
         {emailNotVerified && (
-          <Alert className="mb-4 border-amber-500/40 bg-amber-950/50">
+          <Alert className="mb-4 border-amber-500/40 bg-amber-950/40">
             <Mail className="h-4 w-4 text-amber-400" />
             <AlertDescription className="text-amber-200">
               <p className="font-semibold mb-1">{t("login.emailNotVerified")}</p>
@@ -243,7 +328,7 @@ export default function Login() {
         {/* Email / Password form */}
         <form onSubmit={handleSubmit} className="space-y-4 mb-5">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-white/70 text-xs tracking-wider uppercase text-center block">Email</Label>
+            <Label htmlFor="email" className="text-xs tracking-wider uppercase block" style={{ color: "rgba(255,255,255,0.55)" }}>Email</Label>
             <Input
               id="email"
               type="email"
@@ -252,12 +337,12 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
-              className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-[#c9a84c]/60 focus:ring-[#c9a84c]/20 h-11"
-              style={{ background: "rgba(255,255,255,0.06)" }}
+              className="h-11 text-white placeholder:text-white/25 border-white/10 focus:border-[#c9a84c]/50 focus-visible:ring-[#c9a84c]/20"
+              style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px)" }}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-white/70 text-xs tracking-wider uppercase text-center block">{t("login.form.passwordLabel")}</Label>
+            <Label htmlFor="password" className="text-xs tracking-wider uppercase block" style={{ color: "rgba(255,255,255,0.55)" }}>{t("login.form.passwordLabel")}</Label>
             <Input
               id="password"
               type="password"
@@ -266,23 +351,24 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="bg-white/8 border-white/15 text-white placeholder:text-white/30 focus:border-[#c9a84c]/60 focus:ring-[#c9a84c]/20 h-11"
-              style={{ background: "rgba(255,255,255,0.06)" }}
+              className="h-11 text-white placeholder:text-white/25 border-white/10 focus:border-[#c9a84c]/50 focus-visible:ring-[#c9a84c]/20"
+              style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px)" }}
             />
           </div>
           <Button
             type="submit"
             className="w-full h-11 font-semibold tracking-wide text-sm"
-            style={{ background: "linear-gradient(135deg, #c9a84c, #f0d080, #c9a84c)", color: "#0a0f2e" }}
+            style={{ background: "linear-gradient(135deg, #c9a84c 0%, #f0d080 50%, #c9a84c 100%)", color: "#0a0a0f" }}
             disabled={isLoading}
           >
             {isLoading ? t("login.loggingIn") : t("login.loginButton")}
           </Button>
-          <div className="text-center mt-2">
+          <div className="text-center mt-1">
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
-              className="text-xs text-white/50 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
+              className="text-xs hover:opacity-80 transition-opacity underline-offset-2 hover:underline"
+              style={{ color: "rgba(255,255,255,0.4)" }}
             >
               {t("login.forgotPassword")}
             </button>
@@ -292,54 +378,54 @@ export default function Login() {
         {/* Divider */}
         <div className="relative my-5">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-white/10" />
+            <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }} />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-3 text-white/35" style={{ background: "transparent" }}>{t("login.orUseSocial")}</span>
+            <span className="px-3" style={{ background: "transparent", color: "rgba(255,255,255,0.3)" }}>{t("login.orUseSocial")}</span>
           </div>
         </div>
 
         {/* Social login buttons */}
         <div className="space-y-3">
-          <Button
+          <button
             type="button"
-            className="w-full h-11 font-medium text-sm"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white" }}
+            className="w-full h-11 rounded-lg flex items-center justify-center gap-2.5 font-medium text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
-            <svg className="mr-2 h-4 w-4 shrink-0" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
             {t("login.loginWithGoogle")}
-          </Button>
+          </button>
 
-          <Button
+          <button
             type="button"
-            className="w-full h-11 font-medium text-sm"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "white" }}
+            className="w-full h-11 rounded-lg flex items-center justify-center gap-2.5 font-medium text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}
             onClick={handleAppleLogin}
             disabled={isLoading}
           >
-            <svg className="mr-2 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
             </svg>
             {t("login.loginWithApple")}
-          </Button>
+          </button>
         </div>
 
         {/* Footer links */}
         <div className="mt-7 space-y-2 text-center">
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             {t("login.noAccount")}{" "}
             <Link href="/register" className="font-semibold hover:underline" style={{ color: "#c9a84c" }}>
               {t("login.registerNow")}
             </Link>
           </p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
             {t("login.agreeToTerms")}{" "}
             <a href="https://boxium.asia/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">
               {t("login.privacyPolicy")}
@@ -372,12 +458,6 @@ export default function Login() {
           </div>
         )}
       </div>
-
-      {/* ── Bottom thin gold line ── */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-[1px]"
-        style={{ background: "linear-gradient(90deg, transparent, #c9a84c 30%, #c9a84c 70%, transparent)", opacity: 0.4 }}
-      />
     </div>
 
     {/* 忘記密碼 Dialog */}
