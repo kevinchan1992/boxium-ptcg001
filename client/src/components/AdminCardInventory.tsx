@@ -20,8 +20,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
-  Copy, Layers, MessageSquare, TrendingDown, CalendarDays,
+  Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera,
 } from "lucide-react";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { LazyImage } from "@/components/LazyImage";
 
@@ -714,6 +715,10 @@ function BatchBuyDialog({
   const [sharedSourceCustom, setSharedSourceCustom] = useState("");
   const [sharedType, setSharedType] = useState<"card" | "sealed">("card");
 
+  // Camera batch scan state
+  const [batchCameraOpen, setBatchCameraOpen] = useState(false);
+  const [scanCount, setScanCount] = useState(0);
+
   // Rows
   const [rows, setRows] = useState<BatchRow[]>([makeBatchRow()]);
   const rowsContainerRef = useRef<HTMLDivElement>(null);
@@ -806,10 +811,23 @@ function BatchBuyDialog({
       <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
         {/* Blue header */}
         <div className="bg-primary px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
-          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2 flex-1">
             <Layers className="w-5 h-5" />
             批量買取記錄
+            {scanCount > 0 && (
+              <span className="text-xs font-normal bg-white/20 rounded-full px-2 py-0.5">
+                已掃 {scanCount} 張
+              </span>
+            )}
           </DialogTitle>
+          <button
+            type="button"
+            onClick={() => setBatchCameraOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors flex-shrink-0"
+          >
+            <Camera className="w-4 h-4" />
+            相機掃描
+          </button>
         </div>
         {/* Scrollable content */}
         <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[calc(95dvh-130px)] sm:max-h-[calc(92vh-130px)]">
@@ -1033,6 +1051,34 @@ function BatchBuyDialog({
             {batchCreateMutation.isPending ? "儲存中..." : `批量新增 ${rows.filter(r => r.cardName.trim() && parseFloat(r.buyPriceOriginal) > 0).length} 筆`}
           </Button>
         </div>
+        {/* Batch camera scanner — re-opens after each successful scan */}
+        <CameraSearchSheet
+          open={batchCameraOpen}
+          onOpenChange={(open) => {
+            setBatchCameraOpen(open);
+          }}
+          onCardSelect={(card) => {
+            const last = rows[rows.length - 1];
+            const newRow: BatchRow = {
+              ...makeBatchRow({ cardSet: card.series ?? last?.cardSet, buyPriceCurrency: last?.buyPriceCurrency }),
+              cardName: card.name,
+              cardSet: card.series ?? last?.cardSet ?? "",
+              imageUrl: card.imageUrl ?? "",
+              linkedCardId: card.id,
+            };
+            setRows(rs => [...rs, newRow]);
+            setScanCount(c => c + 1);
+            toast.success(`已新增：${card.name}`, { duration: 1500 });
+            // Close then re-open for next card
+            setBatchCameraOpen(false);
+            setTimeout(() => setBatchCameraOpen(true), 350);
+            setTimeout(() => {
+              if (rowsContainerRef.current) {
+                rowsContainerRef.current.scrollTop = rowsContainerRef.current.scrollHeight;
+              }
+            }, 100);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -1047,18 +1093,28 @@ function CardSearchPicker({
   onManualMode: () => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium block">搜尋平台卡牌</label>
-      <button
-        type="button"
-        onClick={() => setModalOpen(true)}
-        className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-colors text-left"
-      >
-        <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <span className="text-sm text-muted-foreground">點擊搜尋並關聯卡牌...</span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">文字搜尋</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setCameraOpen(true)}
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors"
+        >
+          <Camera className="w-4 h-4 text-primary" />
+          <span className="text-sm text-primary font-medium">相機掃描</span>
+        </button>
+      </div>
       <CardSearchModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -1067,6 +1123,22 @@ function CardSearchPicker({
           setModalOpen(false);
         }}
         title="選擇卡牌"
+      />
+      <CameraSearchSheet
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCardSelect={(card) => {
+          onSelect({
+            id: card.id,
+            name: card.name,
+            nameJa: null,
+            imageUrl: card.imageUrl,
+            cardNumber: null,
+            setName: card.series ?? null,
+            latestPrice: null,
+          });
+          setCameraOpen(false);
+        }}
       />
       <button
         type="button"
