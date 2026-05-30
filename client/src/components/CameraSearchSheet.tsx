@@ -48,7 +48,7 @@ interface CameraSearchSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Picker mode: when provided, selecting a card calls this instead of navigating */
-  onCardSelect?: (card: { id: number; name: string; imageUrl: string | null; series: string | null }) => void;
+  onCardSelect?: (card: { id: number; name: string; imageUrl: string | null; series: string | null; cardNumber: string | null; rarity: string | null }) => void;
   /** Link prefix for card navigation: "card" (default) or "pricing" */
   cardLinkPrefix?: string;
 }
@@ -191,7 +191,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
           setSuccessFlash(false);
           if (onCardSelect) {
             onOpenChange(false);
-            onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series });
+            onCardSelect({ id: best.id, name: best.nameJa || best.name, imageUrl: best.imageUrl, series: best.series, cardNumber: best.cardNumber, rarity: best.rarity });
           } else {
             onOpenChange(false);
             setLocation(`/${cardLinkPrefix}/${best.id}`);
@@ -311,7 +311,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
   const handleSelectCard = (card: MatchedCard) => {
     if (onCardSelect) {
       handleClose();
-      onCardSelect({ id: card.id, name: card.nameJa || card.name, imageUrl: card.imageUrl, series: card.series });
+      onCardSelect({ id: card.id, name: card.nameJa || card.name, imageUrl: card.imageUrl, series: card.series, cardNumber: card.cardNumber, rarity: card.rarity });
     } else {
       handleClose();
       setLocation(`/${cardLinkPrefix}/${card.id}`);

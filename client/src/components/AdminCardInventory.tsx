@@ -1089,7 +1089,7 @@ function CardSearchPicker({
   onSelect,
   onManualMode,
 }: {
-  onSelect: (card: CardSearchResult) => void;
+  onSelect: (card: CardSearchResult, rarity?: string | null) => void;
   onManualMode: () => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -1133,10 +1133,10 @@ function CardSearchPicker({
             name: card.name,
             nameJa: null,
             imageUrl: card.imageUrl,
-            cardNumber: null,
+            cardNumber: card.cardNumber ?? null,
             setName: card.series ?? null,
             latestPrice: null,
-          });
+          }, card.rarity ?? null);
           setCameraOpen(false);
         }}
       />
@@ -1203,7 +1203,7 @@ function BuyFormDialog({
     onError: (e) => toast.error(e.message),
   });
 
-  const handleCardSelect = (card: CardSearchResult) => {
+  const handleCardSelect = (card: CardSearchResult, rarity?: string | null) => {
     setSelectedCard(card);
     setManualMode(true);
     setForm(f => ({
@@ -1213,6 +1213,8 @@ function BuyFormDialog({
       cardNumber: extractCardNumber(card),
       imageUrl: card.imageUrl ?? "",
       linkedCardId: card.id,
+      // Auto-fill rarity from camera scan into notes if rarity field doesn't exist
+      notes: rarity && !f.notes ? `稀有度: ${rarity}` : f.notes,
     }));
   };
 
