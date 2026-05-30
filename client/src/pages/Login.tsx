@@ -45,12 +45,12 @@ function ParticleCanvas() {
       x: Math.random() * width,
       y: Math.random() * height,
       // Very slow drift — like dust motes in still air
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: (Math.random() - 0.5) * 0.18,
-      // Small particles, varied sizes
-      size: 18 + Math.random() * 28,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      // Small logo particles — visible but unobtrusive
+      size: 22 + Math.random() * 32,
       // Dim and translucent — stays in background
-      opacity: 0.05 + Math.random() * 0.09,
+      opacity: 0.06 + Math.random() * 0.10,
       rotation: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() - 0.5) * 0.004,
     }),
@@ -63,17 +63,17 @@ function ParticleCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Load the logo image
+    // Load the white outline logo image
     const img = new Image();
-    img.src = "/boxium-logo.png";
+    img.src = "/boxium-logo-outline.png";
     imgRef.current = img;
     img.onload = () => { imgLoadedRef.current = true; };
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      // ~60 sparse particles across the screen
-      particlesRef.current = Array.from({ length: 60 }, (_, i) =>
+      // ~50 sparse particles across the screen
+      particlesRef.current = Array.from({ length: 50 }, (_, i) =>
         createParticle(i, canvas.width, canvas.height)
       );
     };
