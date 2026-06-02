@@ -41,30 +41,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Duplicate-run guard ──────────────────────────────────────────────────
-      # GitHub's scheduler can fire multiple times on the same UTC day due to
+      # ── Duplicate-run guard (HKT-aware) ─────────────────────────────────────
+      # GitHub's scheduler can fire multiple times on the same HKT day due to
       # queue backlog. This step checks if a SUCCESSFUL scheduled run already
-      # completed today (UTC date). If yes, skip the rest of the job.
-      - name: Check for duplicate scheduled run today
+      # completed today in HKT (UTC+8). If yes, skip the rest of the job.
+      #
+      # WHY HKT: The cron fires at UTC 18:00 which is HKT 02:00 next day.
+      # Using UTC date would cause the guard to miss runs that crossed midnight
+      # in UTC but are on the same HKT calendar day.
+      - name: Check for duplicate scheduled run today (HKT)
         if: github.event_name == 'schedule'
         id: dup_check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TODAY=$(date -u +%Y-%m-%d)
-          echo "Today (UTC): $TODAY"
+          # Use HKT (UTC+8) for "today" to match the intended daily schedule
+          TODAY_HKT=$(TZ=Asia/Hong_Kong date +%Y-%m-%d)
+          echo "Today (HKT): $TODAY_HKT"
 
-          # Fetch the last 10 completed runs for this workflow
+          # Fetch the last 10 completed successful scheduled runs
           RUNS=$(gh api \
             "repos/${{ github.repository }}/actions/workflows/snkrdunk-batch-update.yml/runs?per_page=10&status=success&event=schedule" \
             --jq '.workflow_runs[].created_at' 2>/dev/null || echo "")
 
-          if echo "$RUNS" | grep -q "^${TODAY}"; then
+          echo "Recent successful runs:"
+          echo "$RUNS"
+
+          # Convert each UTC timestamp to HKT date and check if any match today
+          ALREADY_RAN=false
+          while IFS= read -r ts; do
+            [ -z "$ts" ] && continue
+            RUN_DATE_HKT=$(TZ=Asia/Hong_Kong date -d "$ts" +%Y-%m-%d 2>/dev/null || echo "")
+            echo "  Run at $ts → HKT date: $RUN_DATE_HKT"
+            if [ "$RUN_DATE_HKT" = "$TODAY_HKT" ]; then
+              ALREADY_RAN=true
+              break
+            fi
+          done <<< "$RUNS"
+
+          if [ "$ALREADY_RAN" = "true" ]; then
             echo "already_ran=true" >> "$GITHUB_OUTPUT"
-            echo "⚠️  A successful scheduled run already completed today ($TODAY). Skipping duplicate."
+            echo "⚠️  A successful scheduled run already completed today HKT ($TODAY_HKT). Skipping duplicate."
           else
             echo "already_ran=false" >> "$GITHUB_OUTPUT"
-            echo "✅ No successful run found for today ($TODAY). Proceeding."
+            echo "✅ No successful run found for today HKT ($TODAY_HKT). Proceeding."
           fi
 
       - name: Skip if duplicate
