@@ -396,14 +396,18 @@ function SidebarFilter({
             type="number"
             placeholder={t("marketplace.filter.minPrice")}
             value={priceMin}
-            onChange={e => { setPriceMin(e.target.value); resetAndSearch(); }}
+            onChange={e => setPriceMin(e.target.value)}
+            onBlur={() => resetAndSearch()}
+            onKeyDown={e => e.key === 'Enter' && resetAndSearch()}
             className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
           />
           <Input
             type="number"
             placeholder={t("marketplace.filter.maxPrice")}
             value={priceMax}
-            onChange={e => { setPriceMax(e.target.value); resetAndSearch(); }}
+            onChange={e => setPriceMax(e.target.value)}
+            onBlur={() => resetAndSearch()}
+            onKeyDown={e => e.key === 'Enter' && resetAndSearch()}
             className="h-8 text-xs border-gray-200 focus-visible:ring-[#06038D] min-w-0 text-gray-900 placeholder:text-gray-400"
           />
         </div>
@@ -941,7 +945,11 @@ export default function Marketplace() {
         <div className="grid grid-cols-4 gap-3">
           {TCG_SERIES.map(s => {
             const isActive = marketTab === 'auction' ? auctionSeries === s.value : tcgSeries === s.value;
-            const count = marketTab === 'auction' ? undefined : seriesCounts[s.value];
+            const count = marketTab === 'auction'
+              ? (s.value === 'all'
+                  ? auctionData?.total
+                  : auctionData?.listings.filter((a: any) => a.tcgSeries === s.value).length)
+              : seriesCounts[s.value];
             return (
               <button
                 key={s.value}
