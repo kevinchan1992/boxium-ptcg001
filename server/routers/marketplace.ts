@@ -269,7 +269,8 @@ export const marketplaceRouter = router({
       let sellerProfile: { id: number; displayName: string; totalSales: number; ratingCount: number; avgRating: string | null; avatarUrl: string | null } | null = null;
       if (listing.sellerType === "seller" && listing.sellerId) {
         const sp = await getSellerProfileById(listing.sellerId);
-        if (sp) sellerProfile = {
+        // isActive 保護：停用或封禁的賣家不對外公開資料
+        if (sp && sp.isActive && !sp.isSuspended) sellerProfile = {
           id: sp.id,
           displayName: sp.displayName,
           totalSales: sp.totalSales ?? 0,

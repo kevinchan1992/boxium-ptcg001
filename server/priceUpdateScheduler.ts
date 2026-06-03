@@ -2468,3 +2468,78 @@ export function stopGradingUpgradeOverdueReminderScheduler() {
     gradingUpgradeOverdueCronJob = null;
   }
 }
+
+
+// ─── TTL Auto-Cleanup Scheduler ───────────────────────────────────────────────
+// Runs daily at 03:30 HKT (= 19:30 UTC) to clean up stale data:
+//   1. trendingCardsCache  — rows older than 8 days
+//   2. adminAuditLogs      — rows older than 90 days
+//   3. notifications       — read rows older than 30 days
+// ─────────────────────────────────────────────────────────────────────────────
+
+let ttlCleanupCronJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startTtlCleanupScheduler() {
+  if (ttlCleanupCronJob) return; // Already running
+
+  // 03:30 HKT = 19:30 UTC
+  ttlCleanupCronJob = cron.schedule(
+    '30 19 * * *',
+    async () => {
+      console.log('[TTL Cleanup] Starting daily TTL cleanup...');
+      try {
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) {
+          console.warn('[TTL Cleanup] DB unavailable, skipping cleanup');
+          return;
+        }
+
+        const { trendingCardsCache, adminAuditLogs, notifications } = await import('../drizzle/schema_new');
+        const { lt, and, eq } = await import('drizzle-orm');
+        const now = new Date();
+
+        // 1. trendingCardsCache: delete rows older than 8 days
+        const tccCutoff = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+        const tccResult = await db
+          .delete(trendingCardsCache)
+          .where(lt(trendingCardsCache.calculatedAt, tccCutoff));
+        const tccDeleted = (tccResult as any)?.[0]?.affectedRows ?? 0;
+        console.log(`[TTL Cleanup] trendingCardsCache: deleted ${tccDeleted} rows older than 8 days`);
+
+        // 2. adminAuditLogs: delete rows older than 90 days
+        const auditCutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        const auditResult = await db
+          .delete(adminAuditLogs)
+          .where(lt(adminAuditLogs.createdAt, auditCutoff));
+        const auditDeleted = (auditResult as any)?.[0]?.affectedRows ?? 0;
+        console.log(`[TTL Cleanup] adminAuditLogs: deleted ${auditDeleted} rows older than 90 days`);
+
+        // 3. notifications: delete read rows older than 30 days
+        const notifCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const notifResult = await db
+          .delete(notifications)
+          .where(and(
+            eq(notifications.isRead, true),
+            lt(notifications.createdAt, notifCutoff)
+          ));
+        const notifDeleted = (notifResult as any)?.[0]?.affectedRows ?? 0;
+        console.log(`[TTL Cleanup] notifications: deleted ${notifDeleted} read rows older than 30 days`);
+
+        console.log(`[TTL Cleanup] Completed. Total deleted: ${tccDeleted + auditDeleted + notifDeleted} rows`);
+      } catch (err) {
+        console.error('[TTL Cleanup] Error during TTL cleanup:', err);
+      }
+    },
+    { timezone: 'Asia/Hong_Kong' }
+  );
+
+  console.log('[TTL Cleanup] Daily TTL cleanup scheduler started (03:30 HKT)');
+}
+
+export function stopTtlCleanupScheduler() {
+  if (ttlCleanupCronJob) {
+    ttlCleanupCronJob.stop();
+    ttlCleanupCronJob = null;
+  }
+}

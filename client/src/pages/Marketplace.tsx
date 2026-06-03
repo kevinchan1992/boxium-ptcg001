@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useLocation, useSearch, Link } from "wouter";
 
 import { trpc } from "@/lib/trpc";
@@ -75,6 +76,7 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
   const coverImage = getProxiedImageUrl(coverImageRaw);
   const conditionKey = listing.condition as ConditionValue;
   const isWishlisted = wishlistIds?.includes(listing.id) ?? false;
+  const isSoldOut = listing.remainingQuantity === 0 || listing.status === 'sold';
 
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,8 +90,8 @@ function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
 
   return (
     <div
-      className="group cursor-pointer bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-[#FEDD00] hover:shadow-lg transition-all duration-300 flex flex-col relative"
-      onClick={() => setLocation(`/marketplace/${listing.id}`)}
+      className={`group bg-white rounded-xl overflow-hidden border border-gray-100 transition-all duration-300 flex flex-col relative ${isSoldOut ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:border-[#FEDD00] hover:shadow-lg'}`}
+      onClick={() => { if (!isSoldOut) setLocation(`/marketplace/${listing.id}`); }}
     >
       {/* Image */}
       <div className="relative aspect-square bg-gray-50 overflow-hidden">
@@ -465,6 +467,8 @@ export default function Marketplace() {
   const [tcgSeries, setTcgSeries] = useState<string>(initParams.series);
   const [priceMin, setPriceMin] = useState<string>(initParams.priceMin);
   const [priceMax, setPriceMax] = useState<string>(initParams.priceMax);
+  const debouncedPriceMin = useDebounce(priceMin, 400);
+  const debouncedPriceMax = useDebounce(priceMax, 400);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">(initParams.sortBy);
   const [allListings, setAllListings] = useState<any[]>([]);
@@ -501,7 +505,9 @@ export default function Marketplace() {
     sortBy: auctionSort,
     status: ['active', 'ending_soon'],
   }), [auctionPage, auctionSeries, auctionSort]);
-  const { data: auctionData, isLoading: auctionLoading } = trpc.auction.list.useQuery(auctionQueryInput);
+  const { data: auctionData, isLoading: auctionLoading } = trpc.auction.list.useQuery(auctionQueryInput, {
+    enabled: marketTab === 'auction',
+  });
 
   // Banners
   const FALLBACK_BANNERS = useMemo(() => [
@@ -585,11 +591,13 @@ export default function Marketplace() {
     sellerType: sellerType !== "all" ? (sellerType as "platform" | "seller") : undefined,
     tcgSeries: tcgSeries !== "all" ? (tcgSeries as any) : undefined,
     sortBy,
-    minPrice: priceMin ? Number(priceMin) : undefined,
-    maxPrice: priceMax ? Number(priceMax) : undefined,
-  }), [page, search, selectedConditions, sellerType, tcgSeries, sortBy, priceMin, priceMax]);
+    minPrice: debouncedPriceMin ? Number(debouncedPriceMin) : undefined,
+    maxPrice: debouncedPriceMax ? Number(debouncedPriceMax) : undefined,
+  }), [page, search, selectedConditions, sellerType, tcgSeries, sortBy, debouncedPriceMin, debouncedPriceMax]);
 
-  const { data, isLoading, isFetching } = trpc.marketplace.getListings.useQuery(queryInput);
+  const { data, isLoading, isFetching } = trpc.marketplace.getListings.useQuery(queryInput, {
+    enabled: marketTab === 'shop',
+  });
   const seriesCounts = data?.seriesCounts ?? {};
 
   useEffect(() => {
