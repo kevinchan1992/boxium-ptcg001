@@ -140,6 +140,41 @@ function calcSellerReceivableWithRate(sellerType: string | null | undefined, amo
   return amount - calcPlatformFeeWithRate(sellerType, amount, rate);
 }
 
+// ============================================================
+// View Count In-Memory Cache
+// Avoids per-request DB writes that cause lock contention.
+// Increments are batched and flushed to MySQL every 5 minutes.
+// ============================================================
+const viewCountCache = new Map<number, number>();
+
+setInterval(async () => {
+  if (viewCountCache.size === 0) return;
+
+  // Snapshot and clear immediately to avoid holding stale data if flush is slow
+  const snapshot = new Map(viewCountCache);
+  viewCountCache.clear();
+
+  const db = await getDb();
+  if (!db) {
+    // DB unavailable — put counts back so they are not lost
+    Array.from(snapshot.entries()).forEach(([id, inc]) => {
+      viewCountCache.set(id, (viewCountCache.get(id) ?? 0) + inc);
+    });
+    return;
+  }
+
+  console.log(`[ViewCount Cache] Flushing ${snapshot.size} listing view counts to DB...`);
+  for (const [listingId, increment] of Array.from(snapshot.entries())) {
+    try {
+      await db.update(marketplaceListings)
+        .set({ viewCount: sql`${marketplaceListings.viewCount} + ${increment}` })
+        .where(eq(marketplaceListings.id, listingId));
+    } catch (err) {
+      console.error(`[ViewCount Cache] Failed to flush view count for listing ${listingId}:`, err);
+    }
+  }
+}, 5 * 60 * 1000); // 5 minutes
+
 export const marketplaceRouter = router({
   // ============================================================
   // PUBLIC - Listings
@@ -220,8 +255,16 @@ export const marketplaceRouter = router({
     .query(async ({ input }) => {
       const listing = await getListingById(input.id);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "商品不存在" });
-      // Increment view count
-      await updateListing(input.id, { viewCount: (listing.viewCount ?? 0) + 1 });
+
+      // ====== 🔥 【核心修改：移出 DB 同步寫入，改用記憶體計數器】 ======
+      // 不再直接 updateListing，改為將小形量累加到記憶體 Map
+      // 定時器會每 5 分鐘批量寫入資料庫，避免鎖定問題
+      const currentIncrement = viewCountCache.get(input.id) ?? 0;
+      viewCountCache.set(input.id, currentIncrement + 1);
+      // 即時回傳虛擬的瀏覽數（DB 儲存值 + 記憶體未寫入的累加值）
+      const virtualViewCount = (listing.viewCount ?? 0) + currentIncrement + 1;
+      // ==========================================
+
       // Fetch seller profile if C2C listing
       let sellerProfile: { id: number; displayName: string; totalSales: number; ratingCount: number; avgRating: string | null; avatarUrl: string | null } | null = null;
       if (listing.sellerType === "seller" && listing.sellerId) {
@@ -236,7 +279,7 @@ export const marketplaceRouter = router({
         };
       }
       // First-come-first-served: no locking, buyers compete at payment time
-      return { ...listing, sellerProfile };
+      return { ...listing, viewCount: virtualViewCount, sellerProfile };
     }),
 
   // ============================================================
