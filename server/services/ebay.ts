@@ -13,51 +13,72 @@ import sharp from "sharp";
 // ─── OAuth Token Cache ───────────────────────────────────────────────
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+// Promise 鎖：防止 Token 過期瞬間多個並發請求重複申請
+let tokenFetchPromise: Promise<string> | null = null;
+
 /**
- * Get eBay OAuth 2.0 Access Token (with caching)
- * Uses Client Credentials Grant Flow
+ * Get eBay OAuth 2.0 Access Token (with caching + concurrency lock)
+ * Uses Client Credentials Grant Flow.
+ * If multiple requests arrive while a token fetch is in-flight,
+ * they all share the same Promise instead of firing duplicate requests.
  */
 async function getEbayAccessToken(): Promise<string> {
-  // Check if cached token is still valid (refresh 5 minutes early)
+  // 1. 檢查快取是否有效（提前 5 分鐘刷新）
   if (cachedToken && cachedToken.expiresAt > Date.now() + 5 * 60 * 1000) {
     return cachedToken.token;
   }
 
-  console.log('[eBay Browse API] Fetching new OAuth Access Token...');
-
-  const appId = process.env.EBAY_APP_ID;
-  const certId = process.env.EBAY_CERT_ID;
-
-  if (!appId || !certId) {
-    throw new Error('EBAY_APP_ID or EBAY_CERT_ID not configured');
+  // 2. 如果目前已經有別的請求在發起獲取 Token，直接重用該 Promise
+  if (tokenFetchPromise) {
+    console.log('[eBay Browse API] Reusing in-flight token fetching promise...');
+    return tokenFetchPromise;
   }
 
-  const credentials = Buffer.from(`${appId}:${certId}`).toString('base64');
+  // 3. 建立請領 Token 的鎖，并將 Promise 儲存到全域變數
+  tokenFetchPromise = (async () => {
+    try {
+      console.log('[eBay Browse API] Fetching new OAuth Access Token...');
 
-  const response = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${credentials}`,
-    },
-    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
-  });
+      const appId = process.env.EBAY_APP_ID;
+      const certId = process.env.EBAY_CERT_ID;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`eBay OAuth failed: ${response.status} ${errorText}`);
-  }
+      if (!appId || !certId) {
+        throw new Error('EBAY_APP_ID or EBAY_CERT_ID not configured');
+      }
 
-  const data = await response.json() as { access_token: string; expires_in: number };
+      const credentials = Buffer.from(`${appId}:${certId}`).toString('base64');
 
-  // Cache the token
-  cachedToken = {
-    token: data.access_token,
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
+      const response = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${credentials}`,
+        },
+        body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+      });
 
-  console.log('[eBay Browse API] Access Token obtained successfully');
-  return data.access_token;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`eBay OAuth failed: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json() as { access_token: string; expires_in: number };
+
+      // Cache the token
+      cachedToken = {
+        token: data.access_token,
+        expiresAt: Date.now() + data.expires_in * 1000,
+      };
+
+      console.log('[eBay Browse API] Access Token obtained successfully');
+      return data.access_token;
+    } finally {
+      // 執行完畢後（不論成功失敗）釋放鎖，下次失效再重新申請
+      tokenFetchPromise = null;
+    }
+  })();
+
+  return tokenFetchPromise;
 }
 
 // ─── Types ───────────────────────────────────────────────────────────
