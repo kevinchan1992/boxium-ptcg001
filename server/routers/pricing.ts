@@ -414,4 +414,54 @@ export const pricingRouter = router({
       console.log(`[Pricing Router] Cleared cache for cardId=${input.cardId} (SNKRDUNK: ${snkrdunkCleared} rows)`);
       return { success: true, snkrdunkCleared };
     }),
+
+  /**
+   * 外部排程/心跳主動觸發端點（Keep-Alive 備用入口）
+   * 用於維持伺服器活躍，防止冷啟動時第一個用戶承擔補跟排程的效能代價
+   * 外部呼叫方：Manus Heartbeat / UptimeRobot / GitHub Actions
+   * 呼叫方式：POST /api/trpc/pricing.triggerHeartbeatBatchUpdate
+   * Body: { "json": { "secret": "<CRON_SECRET_KEY>" } }
+   */
+  triggerHeartbeatBatchUpdate: publicProcedure
+    .input(
+      z.object({
+        secret: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const cronSecret = process.env.CRON_SECRET;
+
+      if (!cronSecret || input.secret !== cronSecret) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: '安全密鑰無效，拒絕存取。',
+        });
+      }
+
+      console.log('[Heartbeat Active] 外部定時心跳成功喚醒伺服器。');
+
+      try {
+        // 輕量級健康檢查：確認 DB 連線正常
+        const dbInstance = await db.getDb();
+        const dbOk = !!dbInstance;
+
+        // 可選：如果需要，在此加入輕量分批更新邏輯
+        // 目前僅作 Keep-Alive + DB 健康檢查，不觸發重度更新
+
+        return {
+          success: true,
+          status: 'Server is active and healthy.',
+          dbConnected: dbOk,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (error: any) {
+        console.error('[Heartbeat Active] 心跳檢查失敗:', error);
+        // 回傳 success: false 而非拋出錯誤，避免讓外部監控誤判為「整台伺服器掉機 (500)」
+        return {
+          success: false,
+          error: error.message || String(error),
+          timestamp: new Date().toISOString(),
+        };
+      }
+    }),
 });
