@@ -103,6 +103,7 @@ export const cards = mysqlTable("cards", {
   gameIdIdx: index("idx_cards_gameId").on(table.gameId),
   nameIdx: index("cards_name_idx").on(table.name),
   nameJaIdx: index("cards_nameJa_idx").on(table.nameJa),
+  cardNumberIdx: index("cards_cardNumber_idx").on(table.cardNumber), // 加速 cardNumber 搜尋
 }));
 
 export type Card = typeof cards.$inferSelect;
@@ -1944,3 +1945,82 @@ export const cardTradeItems = mysqlTable("cardTradeItems", {
 }));
 export type CardTradeItem = typeof cardTradeItems.$inferSelect;
 export type InsertCardTradeItem = typeof cardTradeItems.$inferInsert;
+
+// ============================================================
+// Master-Detail Order Architecture
+// orders       → 主訂單表（一次結帳 = 一張主訂單）
+// orderItems   → 訂單子項目表（每個商品 = 一筆子項目）
+// 設計目標：支援購物車合併結帳（一次買多個賣家的卡牌）
+// ============================================================
+
+/**
+ * Orders Master Table
+ * 每次結帳產生一張主訂單，記錄付款方式、狀態與總金額
+ */
+export const orders = mysqlTable("orders", {
+  id: int("id").autoincrement().primaryKey(),
+  orderNo: varchar("orderNo", { length: 64 }).notNull().unique(), // 平台唯一訂單號，格式：BOXIUM-{timestamp}-{random}
+  buyerId: int("buyerId").notNull(),                              // FK to users.id
+
+  totalAmountHkd: decimal("totalAmountHkd", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 32 }).notNull(), // 'stripe' | 'alipay_hk'
+  paymentStatus: varchar("paymentStatus", { length: 32 }).default("pending").notNull(), // 'pending' | 'paid' | 'failed' | 'refunded'
+  orderStatus: varchar("orderStatus", { length: 32 }).default("pending_payment").notNull(), // 'pending_payment' | 'processing' | 'shipped' | 'completed' | 'cancelled' | 'disputed'
+
+  // Stripe
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+
+  // Alipay HK
+  alipayProofUrl: text("alipayProofUrl"),
+  alipayProofStatus: varchar("alipayProofStatus", { length: 32 }), // 'pending_review' | 'approved' | 'rejected'
+
+  // Timestamps
+  paidAt: timestamp("paidAt"),
+  completedAt: timestamp("completedAt"),
+  cancelledAt: timestamp("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  buyerIdIdx: index("orders_buyerId_idx").on(table.buyerId),
+  orderNoIdx: index("orders_orderNo_idx").on(table.orderNo),
+  orderStatusIdx: index("orders_orderStatus_idx").on(table.orderStatus),
+  paymentStatusIdx: index("orders_paymentStatus_idx").on(table.paymentStatus),
+  createdAtIdx: index("orders_createdAt_idx").on(table.createdAt),
+}));
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * Order Items Detail Table
+ * 每張主訂單可包含多個子項目（不同賣家、不同商品）
+ * 每個子項目有獨立的出貨狀態，支援分批出貨
+ */
+export const orderItems = mysqlTable("orderItems", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),                              // FK to orders.id
+  sellerId: int("sellerId").notNull(),                            // FK to users.id（賣家）
+  listingId: int("listingId").notNull(),                          // FK to marketplaceListings.id
+
+  quantity: int("quantity").default(1).notNull(),
+  priceAtPurchaseHkd: decimal("priceAtPurchaseHkd", { precision: 10, scale: 2 }).notNull(), // 購買時的快照價格
+
+  // 子項目出貨狀態（支援分批出貨）
+  shippingStatus: varchar("shippingStatus", { length: 32 }).default("pending").notNull(), // 'pending' | 'shipped' | 'delivered'
+  trackingNumber: varchar("trackingNumber", { length: 128 }),
+  shippedAt: timestamp("shippedAt"),
+  deliveredAt: timestamp("deliveredAt"),
+
+  // 賣家備注
+  sellerNote: text("sellerNote"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index("orderItems_orderId_idx").on(table.orderId),
+  sellerIdIdx: index("orderItems_sellerId_idx").on(table.sellerId),
+  listingIdIdx: index("orderItems_listingId_idx").on(table.listingId),
+  shippingStatusIdx: index("orderItems_shippingStatus_idx").on(table.shippingStatus),
+}));
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;

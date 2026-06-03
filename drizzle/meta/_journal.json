@@ -470,6 +470,13 @@
       "when": 1747490100000,
       "tag": "0068_add_snkrdunk_grade_index",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1780458671169,
+      "tag": "0069_foamy_gambit",
+      "breakpoints": true
     }
   ]
 }
