@@ -1776,30 +1776,70 @@ export const marketplaceRouter = router({
     .input(z.object({
       orderId: z.number().int(),
       reason: z.string().min(1, "請填寫拒絕原因"),
+      // allowResubmit: true = let buyer retry (lenient); false (default) = cancel order + restore stock
+      allowResubmit: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
       if (!order) throw new TRPCError({ code: "NOT_FOUND" });
-      // Reset order back to pending_payment, clear proof, save rejection reason
-      await updateMarketplaceOrder(input.orderId, {
-        paymentStatus: "pending",
-        orderStatus: "pending_payment",
-        alipayProofImageUrl: null,
-        aiVerificationResult: null,
-        paymentRejectionReason: input.reason,
-        alipayProofStatus: "rejected",
-      });
-      // Notify buyer of rejection with reason
-      await createNotification({
-        userId: order.buyerId,
-        type: "trade",
-        title: "支付寶 HK 付款截圖未通過審核 ❌",
-        body: `訂單 ${order.orderNo} 的付款截圖未通過審核，請重新上傳正確截圖。原因：${input.reason}`,
-        linkUrl: `/orders/${order.orderNo}`,
-      }).catch(() => {});
+
+      if (input.allowResubmit) {
+        // ── Lenient path: reset to pending_payment, allow buyer to resubmit ──
+        await updateMarketplaceOrder(input.orderId, {
+          paymentStatus: "pending",
+          orderStatus: "pending_payment",
+          alipayProofImageUrl: null,
+          aiVerificationResult: null,
+          paymentRejectionReason: input.reason,
+          alipayProofStatus: "rejected",
+        });
+        await createNotification({
+          userId: order.buyerId,
+          type: "trade",
+          title: "支付寶 HK 付款截圖未通過審核 ❌",
+          body: `訂單 ${order.orderNo} 的付款截圖未通過審核，請重新上傳正確截圖。原因：${input.reason}`,
+          linkUrl: `/orders/${order.orderNo}`,
+        }).catch(() => {});
+      } else {
+        // ── Strict path (default): cancel order + restore stock atomically ──
+        // Prevents malicious buyers from indefinitely locking inventory with fake proofs
+        await updateMarketplaceOrder(input.orderId, {
+          paymentStatus: "cancelled",
+          orderStatus: "cancelled",
+          alipayProofImageUrl: null,
+          aiVerificationResult: null,
+          paymentRejectionReason: input.reason,
+          alipayProofStatus: "rejected",
+        });
+        // Restore listing stock so other buyers can purchase immediately
+        if (order.listingId) {
+          await restoreListingStock(order.listingId, order.quantity ?? 1).catch((e) =>
+            console.error(`[RejectProof] Failed to restore stock for listing ${order.listingId}:`, e)
+          );
+        }
+        await createNotification({
+          userId: order.buyerId,
+          type: "trade",
+          title: "訂單已取消 — 付款截圖未通過審核 ❌",
+          body: `訂單 ${order.orderNo} 因付款截圖審核未通過，訂單已自動取消。原因：${input.reason}。如需購買請重新下單。`,
+          linkUrl: `/orders/${order.orderNo}`,
+        }).catch(() => {});
+      }
+
       // Audit log
-      await createAuditLog({ adminId: ctx.user.id, action: 'reject_alipay_payment', targetType: 'order', targetId: input.orderId, details: JSON.stringify({ orderNo: order.orderNo, reason: input.reason }) });
-      return { success: true };
+      await createAuditLog({
+        adminId: ctx.user.id,
+        action: 'reject_alipay_payment',
+        targetType: 'order',
+        targetId: input.orderId,
+        details: JSON.stringify({
+          orderNo: order.orderNo,
+          reason: input.reason,
+          allowResubmit: input.allowResubmit,
+          stockRestored: !input.allowResubmit && !!order.listingId,
+        }),
+      });
+      return { success: true, cancelled: !input.allowResubmit };
     }),
 
   // Manual payout for alipay_hk orders (record offline bank transfer)
