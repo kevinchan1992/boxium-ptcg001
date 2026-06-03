@@ -8,6 +8,7 @@
  */
 
 import { logPerformance } from "./performanceTracker";
+import sharp from "sharp";
 
 // ─── OAuth Token Cache ───────────────────────────────────────────────
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -255,7 +256,7 @@ export async function fetchEbayListingsByImage(
   try {
     console.log(`[eBay Image Search] Downloading image from: ${imageUrl}`);
 
-    // Step 1: Download the image and convert to Base64
+    // Step 1: Download the image
     const imageResponse = await fetch(imageUrl, {
       signal: AbortSignal.timeout(10000),
     });
@@ -264,9 +265,21 @@ export async function fetchEbayListingsByImage(
       throw new Error(`Failed to download image: ${imageResponse.status}`);
     }
 
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
-    console.log(`[eBay Image Search] Image downloaded, size: ${Math.round(imageBuffer.byteLength / 1024)}KB`);
+    const originalArrayBuffer = await imageResponse.arrayBuffer();
+    console.log(`[eBay Image Search] Original size: ${Math.round(originalArrayBuffer.byteLength / 1024)}KB`);
+
+    // ====== 🔥 【核心修改：使用 Sharp 壓縮圖片，防止 512MB RAM 崩潰】 ======
+    // eBay 搜尋不需要高畫質，400~500px 寬度的 JPEG 綰綰有餘
+    const compressedBuffer = await sharp(Buffer.from(originalArrayBuffer))
+      .resize(500, 500, { fit: 'inside', withoutEnlargement: true }) // 限制最大寬高 500px
+      .jpeg({ quality: 75 }) // 轉為 JPEG 並設定品質 75%
+      .toBuffer();
+
+    console.log(`[eBay Image Search] Compressed size: ${Math.round(compressedBuffer.length / 1024)}KB`);
+
+    // 用壓縮後的 Buffer 轉換為 Base64
+    const base64Image = compressedBuffer.toString('base64');
+    // ===================================================================
 
     // Step 2: Get OAuth token
     const accessToken = await getEbayAccessToken();
