@@ -452,17 +452,31 @@ export const marketplaceRouter = router({
   submitAlipayProof: protectedProcedure
     .input(z.object({
       orderId: z.number().int(),
-      proofImageBase64: z.string(), // base64 image
+      proofImageBase64: z.string(),
       mimeType: z.string().default("image/jpeg"),
     }))
     .mutation(async ({ ctx, input }) => {
       const order = await getMarketplaceOrderById(input.orderId);
-      if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "訂單不存在" });
       if (order.buyerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
       if (order.paymentMethod !== "alipay_hk") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單不是支付寶 HK 付款" });
-      // Block only if already fully paid; allow resubmission on cancelled orders (buyer retrying payment)
       if (order.paymentStatus === "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "此訂單已付款確認，無需重複上傳" });
+
       const isCancelledRetry = order.orderStatus === "cancelled";
+
+      // ====== 🔥 【核心修改：修復超賣漏洞】 ======
+      // 若訂單曾被取消，重新提交水單前先確認商品庫存仍然有效
+      // 避免商品在訂單取消期間已被其他買家購買，卻仍允許提交付款的超賣情況
+      if (isCancelledRetry && order.listingId) {
+        const available = await reserveListingStock(order.listingId, 1);
+        if (!available) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "很抱歉，該商品在訂單取消期間已被其他買家購買，無法重新提交付款。請聯繫客服辦理退款手續。",
+          });
+        }
+      }
+      // ==========================================
 
       const buffer = Buffer.from(input.proofImageBase64, "base64");
       const key = `alipay-proofs/${order.orderNo}-${Date.now()}.jpg`;
@@ -481,6 +495,15 @@ export const marketplaceRouter = router({
         alipayProofStatus: 'pending_review' as any,
         ...reactivateFields,
       });
+
+      // 記錄審計日誌（非阻塞）
+      createAuditLog({
+        adminId: ctx.user.id,
+        action: "SUBMIT_ALIPAY_PROOF",
+        targetType: "order",
+        targetId: order.id,
+        details: JSON.stringify({ orderNo: order.orderNo, proofUrl: url, reactivated: isCancelledRetry }),
+      }).catch((e: any) => console.error("Failed to log audit:", e));
       // Notify owner that a new Alipay HK payment proof has been submitted
       const notifyTitle = isCancelledRetry
         ? "🔄 買家重新提交支付寶 HK 截圖（訂單已重新激活）"
