@@ -531,6 +531,21 @@ export function validatePaymentProofMime(req: Request, res: Response, next: Next
 // ─── 4. Security Headers (CSP + HSTS + others) ───────────────────────────────
 
 export function securityHeaders(req: Request, res: Response, next: NextFunction) {
+  // HSTS applies to all responses (including XML)
+  res.setHeader("Strict-Transport-Security", "max-age=2592000; includeSubDomains; preload");
+
+  // Skip HTML-specific security headers for sitemap and robots.txt.
+  // Google Search Console marks sitemaps as "cannot fetch" when they carry
+  // Content-Security-Policy / X-Frame-Options / Permissions-Policy headers,
+  // because those are browser-only directives that have no meaning on XML files.
+  const isSitemapOrRobots =
+    req.path === "/robots.txt" ||
+    req.path === "/sitemap.xml" ||
+    req.path.startsWith("/sitemap-");
+  if (isSitemapOrRobots) {
+    return next();
+  }
+
   // Prevent MIME sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
   // Prevent clickjacking
@@ -539,8 +554,6 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   // Permissions policy
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self)");
-  // HSTS — tell browsers to always use HTTPS (1 year)
-  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   // Content Security Policy
   res.setHeader(
     "Content-Security-Policy",
