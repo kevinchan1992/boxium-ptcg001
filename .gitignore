@@ -112,3 +112,4 @@ temp/
 # Playwright browsers (auto-installed on startup)
 .playwright-browsers/
 .sitemaps/
+.project-config.json
