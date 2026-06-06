@@ -1099,7 +1099,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
       {/* Similar Cards Section */}
       {!isSealedProduct && cardId && (
-        <SimilarCardsSection cardId={cardId} series={product.series ?? null} setName={product.setName ?? null} cardName={product.name} />
+        <SimilarCardsSection cardId={cardId} series={product.series ?? null} setName={product.setName ?? null} cardName={product.name ?? ''} />
       )}
     </div>
 
@@ -1126,7 +1126,7 @@ function SimilarCardsSection({ cardId, series, setName, cardName }: { cardId: nu
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
   // Display the set name or series as section subtitle
-  const sectionLabel = setName || series || cardName.split(/[\s\[\(]/)[0];
+  const sectionLabel = setName || series || (cardName ? cardName.split(/[\s\[\(]/)[0] : null);
   const { data: similarCards, isLoading } = trpc.cards.getSimilarCards.useQuery(
     { cardId, series: series ?? undefined, setName: setName ?? undefined, limit: 12 },
     { enabled: !!cardId }
@@ -1144,7 +1144,7 @@ function SimilarCardsSection({ cardId, series, setName, cardName }: { cardId: nu
           {sectionLabel && <span className="text-xs text-zinc-500 ml-1">{sectionLabel}</span>}
         </div>
         <button
-          onClick={() => setLocation(`/search?q=${encodeURIComponent(sectionLabel)}`)}
+          onClick={() => setLocation(`/search?q=${encodeURIComponent(sectionLabel ?? '')}`)}
           className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors flex items-center gap-1 font-medium"
         >
           {t("common.viewMore")}
