@@ -37,6 +37,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 // Manus OAuth removed
 import { appRouter } from "../routers";
 import googleOAuthRouter from "../googleOAuth";
+import { registerStorageProxy } from "./storageProxy";
 import appleOAuthRouter from "../appleOAuth";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -972,6 +973,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
   // Manus OAuth removed
   
+  // Storage proxy for /manus-storage/* paths
+  registerStorageProxy(app);
+
   // Google OAuth routes — apply auth rate limiter
   app.use("/api/auth", authLimiter, googleOAuthRouter);
 

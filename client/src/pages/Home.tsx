@@ -189,9 +189,9 @@ function TrendingCardRow({ gameId, logoUrl, logoAlt, accentColor, badgeBg }: {
   );
 }
 
-const POKEMON_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/pokemon-logo_69947aad.avif";
-const ONEPIECE_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/onepiece-logo_666cea4e.avif";
-const YUGIOH_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320884517/Mua4eQ38uVnrovHUJBRepi/yugioh-logo_d165899b.webp";
+const POKEMON_LOGO = "/manus-storage/pokemon-logo_8b934176.avif";
+const ONEPIECE_LOGO = "/manus-storage/onepiece-logo_d5c27900.avif";
+const YUGIOH_LOGO = "/manus-storage/yugioh-logo_de4317ba.webp";
 
 function TrendingCardsGrid() {
   return (
