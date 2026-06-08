@@ -142,8 +142,9 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
   const normalizeGrade = (grade: string | null) => {
     if (!grade) return undefined;
-    // Return grade as-is — DB stores canonical form with spaces (e.g. "PSA 10")
-    // Do NOT strip spaces: "PSA 10" → "PSA10" would break the grade filter
+    // Map frontend key "used" to DB canonical value "中古"
+    // DB stores SNKRDUNK condition field directly (e.g. "PSA 10", "中古")
+    if (grade === "used") return "中古";
     return grade;
   };
 
