@@ -2300,26 +2300,65 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  // Volatility = (MAX price - MIN price) / AVG price * 100, filtered to PSA 10 SNKRDUNK only
+  // Volatility = STDDEV(price) / AVG(price) * 100 (Coefficient of Variation)
+  // Two-pass outlier filter:
+  //   Pass 1: Compute trimmed median (AVG of middle 50% prices) as robust reference
+  //   Pass 2: Exclude prices outside [median * 0.3, median * 3.0] before computing STDDEV
+  // This prevents a single anomalous record (e.g. HKD 13,750 vs normal HKD 700-900)
+  // from inflating the reference average and bypassing the filter.
   const [rows] = await (db as any).execute(sql`
     SELECT
-      ph.cardId,
+      base.cardId,
       c.name AS cardName,
       c.imageUrl AS cardImage,
-      MIN(ph.price) AS minPrice,
-      MAX(ph.price) AS maxPrice,
-      AVG(ph.price) AS avgPrice,
-      ph.currency,
-      ((MAX(ph.price) - MIN(ph.price)) / AVG(ph.price) * 100) AS volatility
-    FROM priceHistory ph
-    JOIN cards c ON c.id = ph.cardId
-    WHERE ph.source = 'snkrdunk'
-      AND ph.grade = 'PSA 10'
-      AND ph.isSuspectedBulk = 0
-      AND COALESCE(ph.soldAt, ph.createdAt) >= ${cutoffDate}
-    GROUP BY ph.cardId, c.name, c.imageUrl, ph.currency
-    HAVING COUNT(*) >= 3
-    ORDER BY volatility DESC
+      base.avgPrice,
+      base.currency,
+      base.volatility,
+      base.txCount
+    FROM (
+      SELECT
+        ph.cardId,
+        ph.currency,
+        AVG(ph.price) AS avgPrice,
+        (STDDEV(ph.price) / AVG(ph.price) * 100) AS volatility,
+        COUNT(*) AS txCount
+      FROM priceHistory ph
+      JOIN (
+        -- Compute trimmed reference: AVG of prices between 25th and 75th percentile
+        -- Using MIN+MAX of the inner 50% as a robust central estimate
+        SELECT
+          cardId,
+          currency,
+          AVG(price) AS trimmedRef
+        FROM (
+          SELECT
+            cardId,
+            currency,
+            price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk'
+            AND grade = 'PSA 10'
+            AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref ON ref.cardId = ph.cardId AND ref.currency = ph.currency
+      WHERE ph.source = 'snkrdunk'
+        AND ph.grade = 'PSA 10'
+        AND ph.isSuspectedBulk = 0
+        AND COALESCE(ph.soldAt, ph.createdAt) >= ${cutoffDate}
+        -- Exclude prices outside 30%~300% of the trimmed median
+        AND ph.price >= ref.trimmedRef * 0.3
+        AND ph.price <= ref.trimmedRef * 3.0
+      GROUP BY ph.cardId, ph.currency
+      HAVING COUNT(*) >= 5
+        AND AVG(ph.price) > 0
+        AND (STDDEV(ph.price) / AVG(ph.price) * 100) <= 200
+    ) base
+    JOIN cards c ON c.id = base.cardId
+    ORDER BY base.volatility DESC
     LIMIT ${limit}
   `) as [any[], any];
 
@@ -2328,8 +2367,8 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
     cardName: String(row.cardName || ''),
     cardImage: row.cardImage ? String(row.cardImage) : null,
     currency: String(row.currency || 'HKD'),
-    minPrice: Number(row.minPrice),
-    maxPrice: Number(row.maxPrice),
+    minPrice: 0,
+    maxPrice: 0,
     avgPrice: Number(row.avgPrice),
     volatility: Number(row.volatility),
   }));
