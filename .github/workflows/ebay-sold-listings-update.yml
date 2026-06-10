@@ -1,7 +1,7 @@
 name: eBay Sold Listings Batch Update
 on:
   schedule:
-    # Twice weekly: Monday and Thursday at HKT 03:00 (UTC 19:00 prev day)
+    # Twice weekly: Monday and Thursday at HKT 03:00 (UTC 19:00 prev day )
     - cron: '0 19 * * 0,3'
   workflow_dispatch:
     inputs:
@@ -39,25 +39,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Use HKT (UTC+8) for "today" to match the intended schedule
           TODAY_HKT=$(TZ=Asia/Hong_Kong date +%Y-%m-%d)
           echo "Today (HKT): $TODAY_HKT"
-
-          # Get recent workflow runs for this workflow
           RUNS=$(gh run list \
             --workflow=ebay-sold-listings-update.yml \
             --status=success \
             --limit=10 \
             --json createdAt,event \
             --jq '.[] | "\(.event) \(.createdAt)"' 2>/dev/null || echo "")
-
           ALREADY_RAN=false
           while IFS= read -r line; do
             if [ -z "$line" ]; then continue; fi
             EVENT=$(echo "$line" | awk '{print $1}')
             CREATED_AT=$(echo "$line" | awk '{print $2}')
             if [ "$EVENT" = "schedule" ]; then
-              # Convert UTC timestamp to HKT date
               RUN_DATE_HKT=$(TZ=Asia/Hong_Kong date -d "$CREATED_AT" +%Y-%m-%d 2>/dev/null || \
                              TZ=Asia/Hong_Kong date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_AT" +%Y-%m-%d 2>/dev/null || echo "")
               if [ "$RUN_DATE_HKT" = "$TODAY_HKT" ]; then
@@ -66,22 +61,20 @@ jobs:
               fi
             fi
           done <<< "$RUNS"
-
           if [ "$ALREADY_RAN" = "true" ]; then
             echo "already_ran=true" >> "$GITHUB_OUTPUT"
-            echo "⚠️  A successful scheduled run already completed today HKT ($TODAY_HKT). Skipping duplicate."
+            echo "⚠️  Already ran today HKT. Skipping."
           else
             echo "already_ran=false" >> "$GITHUB_OUTPUT"
-            echo "✅ No successful run found for today HKT ($TODAY_HKT). Proceeding."
+            echo "✅ No run found today HKT. Proceeding."
           fi
 
       - name: Skip if duplicate
         if: github.event_name == 'schedule' && steps.dup_check.outputs.already_ran == 'true'
         run: |
-          echo "Duplicate run detected — exiting early to avoid redundant processing."
+          echo "Duplicate run detected — exiting early."
           exit 0
 
-      # ────────────────────────────────────────────────────────────────────────
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -125,3 +118,6 @@ jobs:
           name: ebay-scraper-failure-${{ github.run_id }}
           path: '/tmp/ebay-runner/*.log'
           retention-days: 7
+
+
+ 
