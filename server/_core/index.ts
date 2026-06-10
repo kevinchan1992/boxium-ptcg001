@@ -1391,8 +1391,11 @@ async function startServer() {
       });
       res.status(200).end(pngBuffer);
     } catch (err) {
-      console.error("[Share Image API] Error:", err);
-      res.status(500).json({ error: "Failed to generate share image" });
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : undefined;
+      console.error("[Share Image API] Error:", errMsg);
+      if (errStack) console.error("[Share Image API] Stack:", errStack);
+      res.status(500).json({ error: "Failed to generate share image", detail: errMsg });
     }
   });
 
