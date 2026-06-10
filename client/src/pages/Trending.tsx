@@ -132,18 +132,17 @@ function CardRow({
   return (
     <Link href={`/card/${cardId}`}>
       <div
-        className={`group grid items-center px-4 py-3 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
+        className={`group flex items-center px-4 py-3 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
           isFirst ? "bg-amber-50/40" : ""
         }`}
-        style={{gridTemplateColumns: '2rem 3rem 1fr 160px 1.25rem'}}
       >
-        {/* Rank badge */}
-        <div className="flex justify-center">
+        {/* Rank badge — fixed w-8 */}
+        <div className="w-8 flex-none flex justify-center">
           <RankBadge rank={rank} />
         </div>
 
-        {/* Card image */}
-        <div className="flex items-center justify-center">
+        {/* Card image — fixed w-12 */}
+        <div className="w-12 flex-none flex justify-center">
           <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-200">
             {imgSrc ? (
               <img
@@ -159,24 +158,24 @@ function CardRow({
           </div>
         </div>
 
-        {/* Card name + PSA */}
-        <div className="min-w-0 pl-3 py-1">
-          <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words">
+        {/* Card name + PSA — flex-1 grows, wraps naturally */}
+        <div className="flex-1 min-w-0 pl-3">
+          <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors">
             {cardName}
           </p>
           <span className="text-xs text-gray-400 font-medium mt-0.5 block">PSA 10</span>
         </div>
 
-        {/* Fixed right column: price + badge — always same column */}
-        <div className="flex flex-col items-end justify-center gap-1.5 py-1">
+        {/* Fixed right column — w-36, price top-right, badge below */}
+        <div className="w-36 flex-none flex flex-col items-end gap-1.5">
           <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
             {formatCurrency(currentPrice, currency)}
           </span>
           <ChangeBadge value={changeValue} isVolatility={isVolatility} />
         </div>
 
-        {/* Arrow */}
-        <div className="flex justify-center">
+        {/* Arrow — fixed */}
+        <div className="w-5 flex-none flex justify-center">
           <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
         </div>
       </div>
@@ -429,21 +428,19 @@ export default function TrendingPage() {
             </div>
           ) : (
             <>
-              {/* Table header */}
-              <div className="bg-white rounded-t-2xl border border-gray-100 border-b-0 overflow-hidden">
-                <div className="grid px-4 py-2.5 bg-gray-50 border-b border-gray-100"           style={{gridTemplateColumns: '2rem 3rem 1fr 160px 1.25rem'}}>
-                  <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">#</div>
-                  <div />
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">卡牌</div>
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
+              {/* Table — use w-full table layout for strict column alignment */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-center px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                  <div className="w-8 text-center text-xs font-bold text-gray-400 uppercase tracking-wider flex-none">#</div>
+                  <div className="w-12 flex-none" />
+                  <div className="flex-1 min-w-0 text-xs font-bold text-gray-400 uppercase tracking-wider pl-3">卡牌</div>
+                  <div className="w-36 flex-none text-xs font-bold text-gray-400 uppercase tracking-wider text-right pr-6">
                     {activeTab === "volatile" ? "波動率" : "漲跌幅"}
                   </div>
-                  <div />
                 </div>
-              </div>
 
-              {/* Rows */}
-              <div className="bg-white rounded-b-2xl shadow-sm border border-gray-100 border-t-0 overflow-hidden">
+                {/* Rows */}
                 {activeData.map((card, idx) => {
                   const isVolatility = activeTab === "volatile";
                   const currentPrice = isVolatility
