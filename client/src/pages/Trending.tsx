@@ -130,56 +130,57 @@ function CardRow({
   const imgSrc = cardImage ? getProxiedImageUrl(cardImage) : null;
 
   return (
-    <Link href={`/card/${cardId}`}>
-      <div
-        className={`group flex items-center px-4 py-3 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
-          isFirst ? "bg-amber-50/40" : ""
-        }`}
-      >
-        {/* Rank badge — fixed w-8 */}
-        <div className="w-8 flex-none flex justify-center">
-          <RankBadge rank={rank} />
-        </div>
+    <tr
+      className={`group border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
+        isFirst ? "bg-amber-50/40" : ""
+      }`}
+      onClick={() => window.location.href = `/card/${cardId}`}
+    >
+      {/* Rank — col 1 */}
+      <td className="text-center py-3 px-1 align-middle">
+        <RankBadge rank={rank} />
+      </td>
 
-        {/* Card image — fixed w-12 */}
-        <div className="w-12 flex-none flex justify-center">
-          <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-200">
-            {imgSrc ? (
-              <img
-                src={imgSrc}
-                alt={cardName}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
-                No img
-              </div>
-            )}
-          </div>
+      {/* Image — col 2 */}
+      <td className="py-3 align-middle">
+        <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-200 mx-auto">
+          {imgSrc ? (
+            <img
+              src={imgSrc}
+              alt={cardName}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
+              No img
+            </div>
+          )}
         </div>
+      </td>
 
-        {/* Card name + PSA — flex-1 grows, wraps naturally */}
-        <div className="flex-1 min-w-0 pl-3">
-          <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors">
-            {cardName}
-          </p>
-          <span className="text-xs text-gray-400 font-medium mt-0.5 block">PSA 10</span>
-        </div>
+      {/* Name + PSA — col 3, wraps freely */}
+      <td className="py-3 pl-3 pr-2 align-middle">
+        <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words">
+          {cardName}
+        </p>
+        <span className="text-xs text-gray-400 font-medium mt-0.5 block">PSA 10</span>
+      </td>
 
-        {/* Fixed right column — w-36, price top-right, badge below */}
-        <div className="w-36 flex-none flex flex-col items-end gap-1.5">
-          <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-            {formatCurrency(currentPrice, currency)}
-          </span>
+      {/* Price + badge — col 4, always same column */}
+      <td className="py-3 pr-2 align-middle text-right">
+        <span className="text-sm font-bold text-gray-900 whitespace-nowrap block">
+          {formatCurrency(currentPrice, currency)}
+        </span>
+        <div className="flex justify-end mt-1.5">
           <ChangeBadge value={changeValue} isVolatility={isVolatility} />
         </div>
+      </td>
 
-        {/* Arrow — fixed */}
-        <div className="w-5 flex-none flex justify-center">
-          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-        </div>
-      </div>
-    </Link>
+      {/* Arrow — col 5 */}
+      <td className="py-3 align-middle text-center">
+        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all inline-block" />
+      </td>
+    </tr>
   );
 }
 
@@ -428,42 +429,53 @@ export default function TrendingPage() {
             </div>
           ) : (
             <>
-              {/* Table — use w-full table layout for strict column alignment */}
+              {/* Table — HTML table for strict column alignment */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Header row */}
-                <div className="flex items-center px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                  <div className="w-8 text-center text-xs font-bold text-gray-400 uppercase tracking-wider flex-none">#</div>
-                  <div className="w-12 flex-none" />
-                  <div className="flex-1 min-w-0 text-xs font-bold text-gray-400 uppercase tracking-wider pl-3">卡牌</div>
-                  <div className="w-36 flex-none text-xs font-bold text-gray-400 uppercase tracking-wider text-right pr-6">
-                    {activeTab === "volatile" ? "波動率" : "漲跌幅"}
-                  </div>
-                </div>
-
-                {/* Rows */}
-                {activeData.map((card, idx) => {
-                  const isVolatility = activeTab === "volatile";
-                  const currentPrice = isVolatility
-                    ? (card as any).avgPrice
-                    : (card as any).latestPrice;
-                  const changeValue = isVolatility
-                    ? (card as any).volatility
-                    : (card as any).priceChange;
-                  return (
-                    <CardRow
-                      key={card.cardId}
-                      rank={idx + 1}
-                      cardId={card.cardId}
-                      cardName={card.cardName}
-                      cardImage={card.cardImage ?? null}
-                      currentPrice={currentPrice}
-                      changeValue={changeValue}
-                      currency={card.currency}
-                      isVolatility={isVolatility}
-                      isFirst={idx === 0}
-                    />
-                  );
-                })}
+                <table className="w-full table-fixed border-collapse">
+                  <colgroup>
+                    <col style={{width: '2.5rem'}} />
+                    <col style={{width: '3.5rem'}} />
+                    <col />
+                    <col style={{width: '9rem'}} />
+                    <col style={{width: '1.5rem'}} />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 px-1">#</th>
+                      <th />
+                      <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 pl-3">卡牌</th>
+                      <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 pr-2">
+                        {activeTab === "volatile" ? "波動率" : "漲跌幅"}
+                      </th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeData.map((card, idx) => {
+                      const isVolatility = activeTab === "volatile";
+                      const currentPrice = isVolatility
+                        ? (card as any).avgPrice
+                        : (card as any).latestPrice;
+                      const changeValue = isVolatility
+                        ? (card as any).volatility
+                        : (card as any).priceChange;
+                      return (
+                        <CardRow
+                          key={card.cardId}
+                          rank={idx + 1}
+                          cardId={card.cardId}
+                          cardName={card.cardName}
+                          cardImage={card.cardImage ?? null}
+                          currentPrice={currentPrice}
+                          changeValue={changeValue}
+                          currency={card.currency}
+                          isVolatility={isVolatility}
+                          isFirst={idx === 0}
+                        />
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {/* Disclaimer */}
