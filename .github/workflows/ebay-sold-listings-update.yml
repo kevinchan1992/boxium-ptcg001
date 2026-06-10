@@ -1,0 +1,120 @@
+name: eBay Sold Listings Batch Update
+on:
+  schedule:
+    # Twice weekly: Monday and Thursday at HKT 03:00 (UTC 19:00 prev day )
+    - cron: '0 19 * * 0,3'
+  workflow_dispatch:
+    inputs:
+      batch_limit:
+        description: 'Max cards to scrape per run (default: 100)'
+        required: false
+        default: '100'
+      skip_days:
+        description: 'Skip cards updated within N days (default: 3)'
+        required: false
+        default: '3'
+
+# Prevent concurrent runs
+concurrency:
+  group: ebay-sold-listings-update
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ebay-scrape:
+    name: Scrape eBay Sold Listings
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Duplicate-run guard (HKT-aware) ─────────────────────────────────────
+      - name: Check for duplicate scheduled run this week (HKT)
+        if: github.event_name == 'schedule'
+        id: dup_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY_HKT=$(TZ=Asia/Hong_Kong date +%Y-%m-%d)
+          echo "Today (HKT): $TODAY_HKT"
+          RUNS=$(gh run list \
+            --workflow=ebay-sold-listings-update.yml \
+            --status=success \
+            --limit=10 \
+            --json createdAt,event \
+            --jq '.[] | "\(.event) \(.createdAt)"' 2>/dev/null || echo "")
+          ALREADY_RAN=false
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then continue; fi
+            EVENT=$(echo "$line" | awk '{print $1}')
+            CREATED_AT=$(echo "$line" | awk '{print $2}')
+            if [ "$EVENT" = "schedule" ]; then
+              RUN_DATE_HKT=$(TZ=Asia/Hong_Kong date -d "$CREATED_AT" +%Y-%m-%d 2>/dev/null || \
+                             TZ=Asia/Hong_Kong date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_AT" +%Y-%m-%d 2>/dev/null || echo "")
+              if [ "$RUN_DATE_HKT" = "$TODAY_HKT" ]; then
+                ALREADY_RAN=true
+                break
+              fi
+            fi
+          done <<< "$RUNS"
+          if [ "$ALREADY_RAN" = "true" ]; then
+            echo "already_ran=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️  Already ran today HKT. Skipping."
+          else
+            echo "already_ran=false" >> "$GITHUB_OUTPUT"
+            echo "✅ No run found today HKT. Proceeding."
+          fi
+
+      - name: Skip if duplicate
+        if: github.event_name == 'schedule' && steps.dup_check.outputs.already_ran == 'true'
+        run: |
+          echo "Duplicate run detected — exiting early."
+          exit 0
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install script dependencies (mysql2 + playwright)
+        run: |
+          mkdir -p /tmp/ebay-runner
+          cp scripts/githubActionsEbayBatchUpdate.mjs /tmp/ebay-runner/
+          cp scripts/package.json /tmp/ebay-runner/
+          cd /tmp/ebay-runner
+          npm install --ignore-scripts
+          echo "Dependencies installed:"
+          ls node_modules/ | head -20
+
+      - name: Install Playwright Chromium browser
+        run: |
+          cd /tmp/ebay-runner
+          npx playwright install chromium --with-deps
+          echo "Playwright Chromium installed"
+
+      - name: Run eBay sold listings batch scraper
+        working-directory: /tmp/ebay-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '100' }}
+          SKIP_DAYS: ${{ github.event.inputs.skip_days || '3' }}
+          HEADLESS: 'true'
+          NODE_ENV: 'production'
+        run: |
+          echo "Starting eBay sold listings batch scraper..."
+          echo "BATCH_LIMIT=$BATCH_LIMIT, SKIP_DAYS=$SKIP_DAYS"
+          node githubActionsEbayBatchUpdate.mjs
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ebay-scraper-failure-${{ github.run_id }}
+          path: '/tmp/ebay-runner/*.log'
+          retention-days: 7
