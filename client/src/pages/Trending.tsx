@@ -154,22 +154,20 @@ function CardRow({
           )}
         </div>
 
-        {/* Card info + price block */}
-        <div className="flex-1 min-w-0">
-          {/* Row 1: name + price */}
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-sm md:text-base font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words whitespace-normal">
-              {cardName}
-            </p>
-            <span className="flex-shrink-0 text-sm md:text-base font-bold text-gray-900 whitespace-nowrap ml-2">
-              {formatCurrency(currentPrice, currency)}
-            </span>
-          </div>
-          {/* Row 2: PSA badge + change badge */}
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs text-gray-400 font-medium">PSA 10</span>
-            <ChangeBadge value={changeValue} isVolatility={isVolatility} />
-          </div>
+        {/* Card name + PSA */}
+        <div className="flex-1 min-w-0 py-0.5">
+          <p className="text-sm md:text-base font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words whitespace-normal">
+            {cardName}
+          </p>
+          <span className="text-xs text-gray-400 font-medium mt-0.5 block">PSA 10</span>
+        </div>
+
+        {/* Fixed right column: price + badge */}
+        <div className="flex-shrink-0 w-[130px] md:w-[150px] flex flex-col items-end justify-center gap-1.5">
+          <span className="text-sm md:text-base font-bold text-gray-900 whitespace-nowrap">
+            {formatCurrency(currentPrice, currency)}
+          </span>
+          <ChangeBadge value={changeValue} isVolatility={isVolatility} />
         </div>
 
         {/* Arrow */}
