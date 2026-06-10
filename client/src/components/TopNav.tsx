@@ -148,7 +148,7 @@ export function TopNav() {
     { href: "/", label: t("common.home") },
     { href: "/research", label: t("common.research") },
     { href: "/pricing", label: t("common.priceComparison") },
-    { href: "/trending", label: "🔥 漲幅榜" },
+    { href: "/trending", label: "TCG 漲幅榜" },
     { href: "/marketplace", label: t("topnav.marketplace") },
     { href: "/grading", label: t("common.grading") },
     { href: "/blog", label: t("common.blog") },
