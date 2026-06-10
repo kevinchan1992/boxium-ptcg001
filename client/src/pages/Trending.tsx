@@ -110,7 +110,6 @@ interface CardRowProps {
   cardName: string;
   cardImage: string | null;
   currentPrice: number;
-  oldPrice?: number;
   changeValue: number;
   currency: string;
   isVolatility?: boolean;
@@ -123,7 +122,6 @@ function CardRow({
   cardName,
   cardImage,
   currentPrice,
-  oldPrice,
   changeValue,
   currency,
   isVolatility,
@@ -163,11 +161,6 @@ function CardRow({
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-gray-500">PSA 10</span>
-            {oldPrice != null && oldPrice > 0 && (
-              <span className="text-xs text-gray-400 line-through hidden sm:inline">
-                {formatCurrency(oldPrice, currency)}
-              </span>
-            )}
           </div>
         </div>
 
@@ -455,7 +448,6 @@ export default function TrendingPage() {
                   const changeValue = isVolatility
                     ? (card as any).volatility
                     : (card as any).priceChange;
-                  const oldPrice = isVolatility ? undefined : (card as any).oldestPrice;
                   return (
                     <CardRow
                       key={card.cardId}
@@ -464,7 +456,6 @@ export default function TrendingPage() {
                       cardName={card.cardName}
                       cardImage={card.cardImage ?? null}
                       currentPrice={currentPrice}
-                      oldPrice={oldPrice}
                       changeValue={changeValue}
                       currency={card.currency}
                       isVolatility={isVolatility}
