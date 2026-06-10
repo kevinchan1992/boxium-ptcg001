@@ -135,7 +135,7 @@ function CardRow({
         className={`group grid items-center px-4 py-3 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
           isFirst ? "bg-amber-50/40" : ""
         }`}
-        style={{gridTemplateColumns: '2rem 3rem 1fr 7.5rem 1.25rem'}}
+        style={{gridTemplateColumns: '2rem 3rem 1fr 160px 1.25rem'}}
       >
         {/* Rank badge */}
         <div className="flex justify-center">
@@ -431,7 +431,7 @@ export default function TrendingPage() {
             <>
               {/* Table header */}
               <div className="bg-white rounded-t-2xl border border-gray-100 border-b-0 overflow-hidden">
-                <div className="grid px-4 py-2.5 bg-gray-50 border-b border-gray-100" style={{gridTemplateColumns: '2rem 3rem 1fr 7.5rem 1.25rem'}}>
+                <div className="grid px-4 py-2.5 bg-gray-50 border-b border-gray-100"           style={{gridTemplateColumns: '2rem 3rem 1fr 160px 1.25rem'}}>
                   <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">#</div>
                   <div />
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">卡牌</div>
