@@ -1386,6 +1386,7 @@ async function startServer() {
         latestPrice: Number(item.latestPrice || item.currentPrice || 0),
         currency: item.currency || "HKD",
         changePercent: Number(item.priceChange || item.volatility || 0),
+        cardImageUrl: item.cardImage || item.imageUrl || undefined,
       }));
 
       const pngBuffer = await generateTrendingShareImage(
