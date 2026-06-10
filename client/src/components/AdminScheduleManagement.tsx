@@ -875,7 +875,7 @@ function GitHubActionsGuide() {
               <p className="text-green-400/80 text-xs mt-1">
                 兩個 workflow 均已就緒：<br/>
                 <code className="bg-gray-800 px-1 rounded">snkrdunk-batch-update.yml</code> — 每日 01:00 HKT 更新價格歷史<br/>
-                <code className="bg-gray-800 px-1 rounded">snkrdunk-listings-batch-update.yml</code> — 每 6 小時更新在售商品
+                <code className="bg-gray-800 px-1 rounded">snkrdunk-listings-batch-update.yml</code> — 每 2 天更新在售商品
               </p>
             </div>
           </div>
