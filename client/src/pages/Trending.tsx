@@ -132,46 +132,53 @@ function CardRow({
   return (
     <Link href={`/card/${cardId}`}>
       <div
-        className={`group flex items-center gap-3 md:gap-4 px-4 py-3.5 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
+        className={`group grid items-center px-4 py-3 border-b border-gray-100 hover:bg-blue-50/60 transition-all duration-200 cursor-pointer ${
           isFirst ? "bg-amber-50/40" : ""
         }`}
+        style={{gridTemplateColumns: '2rem 3rem 1fr 7.5rem 1.25rem'}}
       >
         {/* Rank badge */}
-        <RankBadge rank={rank} />
+        <div className="flex justify-center">
+          <RankBadge rank={rank} />
+        </div>
 
         {/* Card image */}
-        <div className="flex-shrink-0 w-10 h-14 md:w-12 md:h-[4.2rem] rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-200">
-          {imgSrc ? (
-            <img
-              src={imgSrc}
-              alt={cardName}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
-              No img
-            </div>
-          )}
+        <div className="flex items-center justify-center">
+          <div className="w-10 h-14 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-200">
+            {imgSrc ? (
+              <img
+                src={imgSrc}
+                alt={cardName}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
+                No img
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card name + PSA */}
-        <div className="flex-1 min-w-0 py-0.5">
-          <p className="text-sm md:text-base font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words whitespace-normal">
+        <div className="min-w-0 pl-3 py-1">
+          <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-800 transition-colors break-words">
             {cardName}
           </p>
           <span className="text-xs text-gray-400 font-medium mt-0.5 block">PSA 10</span>
         </div>
 
-        {/* Fixed right column: price + badge */}
-        <div className="flex-shrink-0 w-[130px] md:w-[150px] flex flex-col items-end justify-center gap-1.5">
-          <span className="text-sm md:text-base font-bold text-gray-900 whitespace-nowrap">
+        {/* Fixed right column: price + badge — always same column */}
+        <div className="flex flex-col items-end justify-center gap-1.5 py-1">
+          <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
             {formatCurrency(currentPrice, currency)}
           </span>
           <ChangeBadge value={changeValue} isVolatility={isVolatility} />
         </div>
 
         {/* Arrow */}
-        <ChevronRight className="flex-shrink-0 w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all hidden sm:block" />
+        <div className="flex justify-center">
+          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+        </div>
       </div>
     </Link>
   );
@@ -424,15 +431,14 @@ export default function TrendingPage() {
             <>
               {/* Table header */}
               <div className="bg-white rounded-t-2xl border border-gray-100 border-b-0 overflow-hidden">
-                <div className="flex items-center gap-3 md:gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                  <div className="w-8 text-center text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">
-                    #
-                  </div>
-                  <div className="w-10 md:w-12 flex-shrink-0" />
-                  <div className="flex-1 text-xs font-bold text-gray-400 uppercase tracking-wider">卡牌</div>
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider text-right pr-4 sm:pr-8">
+                <div className="grid px-4 py-2.5 bg-gray-50 border-b border-gray-100" style={{gridTemplateColumns: '2rem 3rem 1fr 7.5rem 1.25rem'}}>
+                  <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">#</div>
+                  <div />
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">卡牌</div>
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
                     {activeTab === "volatile" ? "波動率" : "漲跌幅"}
                   </div>
+                  <div />
                 </div>
               </div>
 
