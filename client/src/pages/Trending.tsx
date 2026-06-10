@@ -199,15 +199,33 @@ function StatTicker({ label, value, color }: { label: string; value: string; col
 }
 
 // ─── Share Image Button ──────────────────────────────────────────────────────
-function ShareImageButton({ type, days, limit }: { type: string; days: number; limit: number }) {
+function ShareImageButton({ type, days, items }: { type: string; days: number; items: any[] }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleGenerate = useCallback(async () => {
+    if (!items || items.length === 0) {
+      alert("暫無排名數據，請稍後再試");
+      return;
+    }
     setIsGenerating(true);
     try {
-      const url = `/api/share/trending?type=${type}&days=${days}&limit=${limit}`;
-      const res = await fetch(url);
+      // POST pre-computed ranking data directly - no DB re-query needed
+      const shareItems = items.slice(0, 5).map((item: any, idx: number) => ({
+        rank: idx + 1,
+        cardName: item.cardName || item.name || "Unknown Card",
+        cardNumber: item.cardNumber || undefined,
+        setName: item.setName || undefined,
+        latestPrice: Number(item.latestPrice || item.currentPrice || 0),
+        currency: item.currency || "HKD",
+        changePercent: Number(item.priceChange || item.volatility || 0),
+        cardImageUrl: item.cardImage || item.imageUrl || undefined,
+      }));
+      const res = await fetch("/api/share/trending", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, days, items: shareItems }),
+      });
       if (!res.ok) throw new Error("Failed to generate image");
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -218,7 +236,7 @@ function ShareImageButton({ type, days, limit }: { type: string; days: number; l
     } finally {
       setIsGenerating(false);
     }
-  }, [type, days, limit]);
+  }, [type, days, items]);
 
   const handleDownload = useCallback(() => {
     if (!previewUrl) return;
@@ -509,7 +527,7 @@ export default function TrendingPage() {
               <ShareImageButton
                 type={activeTab}
                 days={periodDays}
-                limit={3}
+                items={activeData}
               />
             </div>
           </div>

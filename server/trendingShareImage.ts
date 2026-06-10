@@ -1,9 +1,13 @@
 /**
- * Trending Share Image Generator (v3)
+ * Trending Share Image Generator (v4 — Japanese Pro Style)
  *
- * Generates a 1080x1350 PNG image for social media sharing (Instagram/Threads portrait).
- * Uses Satori (JSX→SVG) + sharp (SVG→PNG via librsvg).
- * Fetches card images from URLs and embeds as base64 data URIs.
+ * Design principles:
+ * - Brand colors: #08038d (deep blue) + #feda00 (bright yellow)
+ * - Background: pure #08038d + subtle central radial glow (same blue family)
+ * - Title: Noto Serif TC (Japanese mincho) in #feda00 + Orbitron small English subtitle
+ * - Rank badges: circle shape — #1 yellow/blue, #2-3 white outline, #4-5 semi-transparent
+ * - Card rows: semi-transparent white container (rgba 5%) + card image with white border float
+ * - Change %: Orbitron font for geometric tech feel
  *
  * Endpoint: GET /api/share/trending?type=gainers|losers|volatile&days=7&limit=5
  */
@@ -23,17 +27,35 @@ const __dirname = path.dirname(__filename);
 const FONTS_DIR = path.join(__dirname, "fonts");
 const ASSETS_DIR = path.join(__dirname, "assets");
 
+// ── Brand colors ──────────────────────────────────────────────────────────────
+const BRAND_BLUE = "#08038d";
+const BRAND_YELLOW = "#feda00";
+
 // ── Cached assets ─────────────────────────────────────────────────────────────
-let fontDataBold: Buffer | null = null;
-let fontDataRegular: Buffer | null = null;
+let fontNotoSansBold: Buffer | null = null;
+let fontNotoSansRegular: Buffer | null = null;
+let fontNotoSerifBold: Buffer | null = null;
+let fontOrbitronBold: Buffer | null = null;
 let logoBase64: string | null = null;
 
 function loadAssets() {
-  if (!fontDataBold) {
-    fontDataBold = fs.readFileSync(path.join(FONTS_DIR, "NotoSansTC-Bold.otf"));
+  if (!fontNotoSansBold) {
+    fontNotoSansBold = fs.readFileSync(path.join(FONTS_DIR, "NotoSansTC-Bold.otf"));
   }
-  if (!fontDataRegular) {
-    fontDataRegular = fs.readFileSync(path.join(FONTS_DIR, "NotoSansTC-Regular.otf"));
+  if (!fontNotoSansRegular) {
+    fontNotoSansRegular = fs.readFileSync(path.join(FONTS_DIR, "NotoSansTC-Regular.otf"));
+  }
+  if (!fontNotoSerifBold) {
+    const serifPath = path.join(FONTS_DIR, "NotoSerifTC-Bold.ttf");
+    if (fs.existsSync(serifPath)) {
+      fontNotoSerifBold = fs.readFileSync(serifPath);
+    }
+  }
+  if (!fontOrbitronBold) {
+    const orbitronPath = path.join(FONTS_DIR, "Orbitron-Bold.ttf");
+    if (fs.existsSync(orbitronPath)) {
+      fontOrbitronBold = fs.readFileSync(orbitronPath);
+    }
   }
   if (!logoBase64) {
     const logoPath = path.join(ASSETS_DIR, "boxium-logo-blue-yellow.png");
@@ -67,9 +89,9 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
         clearTimeout(timeout);
         try {
           const raw = Buffer.concat(chunks);
-          // Resize to 120×168px (card aspect ratio ~0.71) for performance
+          // Resize to 108×152px (card aspect ratio ~0.71)
           const resized = await sharp(raw)
-            .resize(120, 168, { fit: "cover", position: "top" })
+            .resize(108, 152, { fit: "cover", position: "top" })
             .png()
             .toBuffer();
           const b64 = `data:image/png;base64,${resized.toString("base64")}`;
@@ -117,36 +139,69 @@ function formatChange(value: number, type: ShareImageType): string {
 }
 
 function getChangeColor(value: number, type: ShareImageType): string {
-  if (type === "volatile") return "#FFD700";
+  if (type === "volatile") return BRAND_YELLOW;
   if (value >= 0) return "#00E676";
   return "#FF5252";
 }
 
-function getRankBadgeStyle(rank: number): { bg: string; text: string; border: string } {
-  if (rank === 1) return { bg: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)", text: "#0a0a1a", border: "#FFD700" };
-  if (rank === 2) return { bg: "linear-gradient(135deg, #E8E8E8 0%, #B0B0B0 100%)", text: "#0a0a1a", border: "#C0C0C0" };
-  if (rank === 3) return { bg: "linear-gradient(135deg, #CD7F32 0%, #8B4513 100%)", text: "#ffffff", border: "#CD7F32" };
-  return { bg: "rgba(255,255,255,0.08)", text: "#aaaacc", border: "rgba(255,255,255,0.15)" };
-}
+/**
+ * Japanese-style circular rank badge
+ * #1: yellow fill + brand blue text
+ * #2-3: white outline circle + white text
+ * #4-5: semi-transparent dark + dim text
+ */
+function buildRankBadge(rank: number) {
+  const SIZE = 48;
+  let bgColor: string;
+  let textColor: string;
+  let borderColor: string;
+  let borderWidth: string;
 
-function getTitleInfo(type: ShareImageType, days: number): { title: string; subtitle: string; accentColor: string; changeLabel: string } {
-  if (type === "gainers") return {
-    title: `${days}日漲幅榜`,
-    subtitle: `PSA 10 · TOP 5 GAINERS · ${days}D`,
-    accentColor: "#00E676",
-    changeLabel: "漲幅",
-  };
-  if (type === "losers") return {
-    title: `${days}日跌幅榜`,
-    subtitle: `PSA 10 · TOP 5 LOSERS · ${days}D`,
-    accentColor: "#FF5252",
-    changeLabel: "跌幅",
-  };
+  if (rank === 1) {
+    bgColor = BRAND_YELLOW;
+    textColor = BRAND_BLUE;
+    borderColor = BRAND_YELLOW;
+    borderWidth = "0px";
+  } else if (rank <= 3) {
+    bgColor = "transparent";
+    textColor = "#FFFFFF";
+    borderColor = "rgba(255,255,255,0.85)";
+    borderWidth = "1.5px";
+  } else {
+    bgColor = "rgba(255,255,255,0.06)";
+    textColor = "rgba(255,255,255,0.40)";
+    borderColor = "rgba(255,255,255,0.18)";
+    borderWidth = "1px";
+  }
+
   return {
-    title: `${days}日波動榜`,
-    subtitle: `PSA 10 · TOP 5 VOLATILE · ${days}D`,
-    accentColor: "#FFD700",
-    changeLabel: "波動",
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: `${SIZE}px`,
+        height: `${SIZE}px`,
+        borderRadius: "50%",
+        background: bgColor,
+        border: `${borderWidth} solid ${borderColor}`,
+        flexShrink: 0,
+      },
+      children: {
+        type: "span",
+        props: {
+          style: {
+            fontSize: "18px",
+            fontWeight: "bold",
+            color: textColor,
+            fontFamily: "NotoSansTC",
+            lineHeight: 1,
+          },
+          children: `${rank}`,
+        },
+      },
+    },
   };
 }
 
@@ -162,7 +217,6 @@ function buildCardRow(
   isLast: boolean,
   cardImgB64: string | null
 ) {
-  const rankStyle = getRankBadgeStyle(item.rank);
   const changeColor = getChangeColor(item.changePercent, type);
   const changeText = formatChange(item.changePercent, type);
   const priceText = formatPrice(item.latestPrice, item.currency);
@@ -179,41 +233,22 @@ function buildCardRow(
         flexDirection: "row" as const,
         alignItems: "center",
         width: "100%",
-        padding: "20px 0",
-        borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.07)",
-        gap: "18px",
+        padding: "16px 20px",
+        marginBottom: isLast ? "0px" : "10px",
+        borderRadius: "12px",
+        // Japanese card layering: subtle semi-transparent container
+        background: isTop3
+          ? "rgba(255,255,255,0.06)"
+          : "rgba(255,255,255,0.03)",
+        border: isTop3
+          ? `1px solid rgba(254,218,0,0.15)`
+          : "1px solid rgba(255,255,255,0.06)",
+        gap: "16px",
       },
       children: [
-        // ── Rank badge ──────────────────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: rankStyle.bg,
-              border: `1.5px solid ${rankStyle.border}`,
-              flexShrink: 0,
-            },
-            children: {
-              type: "span",
-              props: {
-                style: {
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  color: rankStyle.text,
-                  fontFamily: "NotoSansTC",
-                },
-                children: `${item.rank}`,
-              },
-            },
-          },
-        },
-        // ── Card image ──────────────────────────────────────────────────
+        // ── Rank badge (circle) ─────────────────────────────────────────
+        buildRankBadge(item.rank),
+        // ── Card image with white border float effect ───────────────────
         cardImgB64
           ? {
               type: "div",
@@ -222,11 +257,14 @@ function buildCardRow(
                   display: "flex",
                   width: `${IMG_W}px`,
                   height: `${IMG_H}px`,
-                  borderRadius: "8px",
+                  borderRadius: "6px",
                   overflow: "hidden",
                   flexShrink: 0,
-                  border: isTop3 ? `2px solid ${changeColor}40` : "2px solid rgba(255,255,255,0.10)",
-                  boxShadow: isTop3 ? `0 4px 16px ${changeColor}30` : "none",
+                  // White border + shadow = "floating card" effect
+                  border: "1.5px solid rgba(255,255,255,0.85)",
+                  boxShadow: isTop3
+                    ? `0 6px 20px rgba(0,0,0,0.55), 0 2px 8px ${changeColor}30`
+                    : "0 4px 12px rgba(0,0,0,0.45)",
                 },
                 children: {
                   type: "img",
@@ -245,20 +283,20 @@ function buildCardRow(
               type: "div",
               props: {
                 style: {
-                  width: `${IMG_W}px`,
-                  height: `${IMG_H}px`,
-                  borderRadius: "8px",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "2px solid rgba(255,255,255,0.10)",
-                  flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  width: `${IMG_W}px`,
+                  height: `${IMG_H}px`,
+                  borderRadius: "6px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1.5px solid rgba(255,255,255,0.15)",
+                  flexShrink: 0,
                 },
                 children: {
                   type: "span",
                   props: {
-                    style: { fontSize: "24px", color: "rgba(255,255,255,0.2)" },
+                    style: { fontSize: "20px", color: "rgba(255,255,255,0.15)" },
                     children: "?",
                   },
                 },
@@ -273,7 +311,7 @@ function buildCardRow(
               flexDirection: "column" as const,
               flex: 1,
               overflow: "hidden",
-              gap: "4px",
+              gap: "3px",
               justifyContent: "center",
             },
             children: [
@@ -281,13 +319,13 @@ function buildCardRow(
                 type: "span",
                 props: {
                   style: {
-                  fontSize: isTop3 ? "24px" : "22px",
-                  fontWeight: "bold",
-                  color: isTop3 ? "#FFFFFF" : "#CCCCDD",
-                  fontFamily: "NotoSansTC",
-                  lineHeight: 1.3,
+                    fontSize: isTop3 ? "21px" : "19px",
+                    fontWeight: "bold",
+                    color: isTop3 ? "#FFFFFF" : "rgba(255,255,255,0.75)",
+                    fontFamily: "NotoSansTC",
+                    lineHeight: 1.35,
                   },
-                  children: truncateText(item.cardName, 24),
+                  children: truncateText(item.cardName, 22),
                 },
               },
               cardLabel
@@ -295,9 +333,10 @@ function buildCardRow(
                     type: "span",
                     props: {
                       style: {
-                        fontSize: "14px",
-                        color: "#555577",
+                        fontSize: "13px",
+                        color: "rgba(254,218,0,0.55)",
                         fontFamily: "NotoSansTC",
+                        letterSpacing: "0.5px",
                       },
                       children: cardLabel,
                     },
@@ -308,7 +347,7 @@ function buildCardRow(
                 props: {
                   style: {
                     fontSize: "14px",
-                    color: "#888899",
+                    color: "rgba(255,255,255,0.45)",
                     fontFamily: "NotoSansTC",
                     marginTop: "2px",
                   },
@@ -318,7 +357,7 @@ function buildCardRow(
             ].filter(Boolean),
           },
         },
-        // ── Change percent ──────────────────────────────────────────────
+        // ── Change percent (Orbitron geometric font) ────────────────────
         {
           type: "div",
           props: {
@@ -333,11 +372,12 @@ function buildCardRow(
               type: "span",
               props: {
                 style: {
-                  fontSize: isTop3 ? "36px" : "30px",
+                  fontSize: isTop3 ? "30px" : "26px",
                   fontWeight: "bold",
                   color: changeColor,
-                  fontFamily: "NotoSansTC",
+                  fontFamily: "Orbitron",
                   lineHeight: 1,
+                  letterSpacing: "-0.5px",
                 },
                 children: changeText,
               },
@@ -358,7 +398,25 @@ export async function generateTrendingShareImage(
 
   const { type, items, dateLabel } = options;
   const displayItems = items.slice(0, 5);
-  const { title, subtitle, accentColor } = getTitleInfo(type, days);
+
+  // Title info
+  let titleZH: string;
+  let subtitleEN: string;
+  let accentColor: string;
+
+  if (type === "gainers") {
+    titleZH = `${days}日漲幅榜`;
+    subtitleEN = `WEEKLY GAINERS · PSA 10 · TOP 5`;
+    accentColor = "#00E676";
+  } else if (type === "losers") {
+    titleZH = `${days}日跌幅榜`;
+    subtitleEN = `WEEKLY LOSERS · PSA 10 · TOP 5`;
+    accentColor = "#FF5252";
+  } else {
+    titleZH = `${days}日波動榜`;
+    subtitleEN = `WEEKLY VOLATILE · PSA 10 · TOP 5`;
+    accentColor = BRAND_YELLOW;
+  }
 
   const today = dateLabel || new Date().toLocaleDateString("zh-HK", {
     timeZone: "Asia/Hong_Kong",
@@ -375,7 +433,7 @@ export async function generateTrendingShareImage(
   );
 
   const W = 1080;
-  const H = 1350; // Portrait format (4:5) — better for Instagram/Threads
+  const H = 1350;
 
   const svgElement = {
     type: "div",
@@ -385,13 +443,12 @@ export async function generateTrendingShareImage(
         flexDirection: "column" as const,
         width: `${W}px`,
         height: `${H}px`,
-        background: "#06038d",
-        fontFamily: "NotoSansTC",
+        background: BRAND_BLUE,
         position: "relative" as const,
         overflow: "hidden",
       },
       children: [
-        // ── Background gradient ──────────────────────────────────────────
+        // ── Background: pure brand blue + subtle central radial glow ────
         {
           type: "div",
           props: {
@@ -399,48 +456,37 @@ export async function generateTrendingShareImage(
               display: "flex",
               position: "absolute" as const,
               top: 0, left: 0, right: 0, bottom: 0,
-              background: "linear-gradient(160deg, #0a07b0 0%, #05038a 30%, #030265 60%, #010040 100%)",
+              // Subtle radial glow in same blue family — elevates the flat color
+              background: `radial-gradient(ellipse 80% 60% at 50% 30%, #1208c8 0%, #08038d 45%, #040265 100%)`,
             },
           },
         },
-        // ── Glow accent top-right ────────────────────────────────────────
+        // ── Yellow accent line at top ────────────────────────────────────
         {
           type: "div",
           props: {
             style: {
               display: "flex",
               position: "absolute" as const,
-              top: "-120px", right: "-120px",
-              width: "600px", height: "600px",
+              top: 0, left: 0, right: 0,
+              height: "4px",
+              background: BRAND_YELLOW,
+            },
+          },
+        },
+        // ── Subtle corner accent (top-right) ─────────────────────────────
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              position: "absolute" as const,
+              top: "-80px",
+              right: "-80px",
+              width: "320px",
+              height: "320px",
               borderRadius: "50%",
-              background: `radial-gradient(circle, ${accentColor}15 0%, transparent 65%)`,
-            },
-          },
-        },
-        // ── Glow accent bottom-left ──────────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              position: "absolute" as const,
-              bottom: "-100px", left: "-100px",
-              width: "500px", height: "500px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(255,221,0,0.12) 0%, transparent 65%)",
-            },
-          },
-        },
-        // ── Subtle grid texture overlay ──────────────────────────────────
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              position: "absolute" as const,
-              top: 0, left: 0, right: 0, bottom: 0,
-              opacity: 0.03,
-              backgroundImage: "repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 40px)",
+              background: `radial-gradient(circle, rgba(254,218,0,0.08) 0%, transparent 65%)`,
             },
           },
         },
@@ -453,13 +499,13 @@ export async function generateTrendingShareImage(
               flexDirection: "column" as const,
               width: "100%",
               height: "100%",
-              padding: "52px 64px 48px",
+              padding: "48px 60px 44px",
               boxSizing: "border-box" as const,
               position: "relative" as const,
               zIndex: 1,
             },
             children: [
-              // ── Header: LOGO + date ────────────────────────────────────
+              // ── Header: LOGO + date badge ──────────────────────────────
               {
                 type: "div",
                 props: {
@@ -468,7 +514,7 @@ export async function generateTrendingShareImage(
                     flexDirection: "row" as const,
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: "40px",
+                    marginBottom: "36px",
                   },
                   children: [
                     logoBase64
@@ -477,8 +523,8 @@ export async function generateTrendingShareImage(
                           props: {
                             src: logoBase64,
                             style: {
-                              width: "220px",
-                              height: "132px",
+                              width: "200px",
+                              height: "120px",
                               objectFit: "contain" as const,
                             },
                           },
@@ -486,11 +532,16 @@ export async function generateTrendingShareImage(
                       : {
                           type: "span",
                           props: {
-                            style: { fontSize: "40px", fontWeight: "bold", color: "#FEDD00", fontFamily: "NotoSansTC" },
+                            style: {
+                              fontSize: "36px",
+                              fontWeight: "bold",
+                              color: BRAND_YELLOW,
+                              fontFamily: "NotoSansTC",
+                            },
                             children: "BOXIUM",
                           },
                         },
-                    // Date badge
+                    // Date badge — clean pill shape
                     {
                       type: "div",
                       props: {
@@ -498,15 +549,20 @@ export async function generateTrendingShareImage(
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          background: "rgba(255,221,0,0.10)",
-                          borderRadius: "32px",
-                          padding: "12px 28px",
-                          border: "1px solid rgba(255,221,0,0.28)",
+                          background: "rgba(254,218,0,0.10)",
+                          borderRadius: "28px",
+                          padding: "10px 24px",
+                          border: `1px solid rgba(254,218,0,0.35)`,
                         },
                         children: {
                           type: "span",
                           props: {
-                            style: { fontSize: "22px", color: "#FEDD00", fontFamily: "NotoSansTC", letterSpacing: "1px" },
+                            style: {
+                              fontSize: "20px",
+                              color: BRAND_YELLOW,
+                              fontFamily: "Orbitron",
+                              letterSpacing: "2px",
+                            },
                             children: today,
                           },
                         },
@@ -515,16 +571,17 @@ export async function generateTrendingShareImage(
                   ],
                 },
               },
-              // ── Title section ──────────────────────────────────────────
+              // ── Title section (Japanese mincho style) ─────────────────
               {
                 type: "div",
                 props: {
                   style: {
                     display: "flex",
                     flexDirection: "column" as const,
-                    marginBottom: "24px",
+                    marginBottom: "28px",
                   },
                   children: [
+                    // Yellow accent bar + main title
                     {
                       type: "div",
                       props: {
@@ -532,8 +589,8 @@ export async function generateTrendingShareImage(
                           display: "flex",
                           flexDirection: "row" as const,
                           alignItems: "center",
-                          gap: "18px",
-                          marginBottom: "10px",
+                          gap: "16px",
+                          marginBottom: "8px",
                         },
                         children: [
                           // Accent bar
@@ -541,56 +598,60 @@ export async function generateTrendingShareImage(
                             type: "div",
                             props: {
                               style: {
-                                width: "7px",
-                                height: "64px",
-                                borderRadius: "4px",
-                                background: "#FEDD00",
+                                display: "flex",
+                                width: "6px",
+                                height: "68px",
+                                borderRadius: "3px",
+                                background: BRAND_YELLOW,
                                 flexShrink: 0,
                               },
                             },
                           },
+                          // Main title in Noto Serif TC (Japanese mincho)
                           {
                             type: "span",
                             props: {
                               style: {
-                                fontSize: "72px",
+                                fontSize: "76px",
                                 fontWeight: "bold",
-                                color: "#FFFFFF",
-                                fontFamily: "NotoSansTC",
-                                letterSpacing: "2px",
+                                color: BRAND_YELLOW,
+                                fontFamily: "NotoSerifTC",
+                                letterSpacing: "3px",
                                 lineHeight: 1,
                               },
-                              children: title,
+                              children: titleZH,
                             },
                           },
                         ],
                       },
                     },
+                    // Small English subtitle in Orbitron (Jaapokki-style)
                     {
                       type: "span",
                       props: {
                         style: {
-                          fontSize: "18px",
-                          color: "rgba(255,255,255,0.40)",
-                          fontFamily: "NotoSansTC",
+                          fontSize: "14px",
+                          color: "rgba(255,255,255,0.35)",
+                          fontFamily: "Orbitron",
                           letterSpacing: "4px",
-                          marginLeft: "25px",
+                          marginLeft: "22px",
                         },
-                        children: subtitle,
+                        children: subtitleEN,
                       },
                     },
                   ],
                 },
               },
-              // ── Gold divider ───────────────────────────────────────────
+              // ── Thin yellow divider ────────────────────────────────────
               {
                 type: "div",
                 props: {
                   style: {
+                    display: "flex",
                     width: "100%",
                     height: "1px",
-                    background: "linear-gradient(90deg, rgba(254,221,0,0.7) 0%, rgba(254,221,0,0.15) 55%, transparent 100%)",
-                    marginBottom: "8px",
+                    background: `linear-gradient(90deg, ${BRAND_YELLOW}80 0%, ${BRAND_YELLOW}20 60%, transparent 100%)`,
+                    marginBottom: "16px",
                   },
                 },
               },
@@ -602,6 +663,8 @@ export async function generateTrendingShareImage(
                     display: "flex",
                     flexDirection: "column" as const,
                     flex: 1,
+                    justifyContent: "space-between",
+                    gap: "0px",
                   },
                   children: displayItems.map((item, idx) =>
                     buildCardRow(item, type, idx === displayItems.length - 1, cardImages[idx])
@@ -617,10 +680,12 @@ export async function generateTrendingShareImage(
                     flexDirection: "row" as const,
                     alignItems: "center",
                     justifyContent: "space-between",
-                    paddingTop: "20px",
-                    borderTop: "1px solid rgba(254,221,0,0.18)",
+                    paddingTop: "16px",
+                    borderTop: `1px solid rgba(254,218,0,0.20)`,
+                    marginTop: "8px",
                   },
                   children: [
+                    // Site URL with yellow dot
                     {
                       type: "div",
                       props: {
@@ -635,10 +700,11 @@ export async function generateTrendingShareImage(
                             type: "div",
                             props: {
                               style: {
+                                display: "flex",
                                 width: "8px",
                                 height: "8px",
                                 borderRadius: "50%",
-                                background: "#FEDD00",
+                                background: BRAND_YELLOW,
                                 flexShrink: 0,
                               },
                             },
@@ -647,10 +713,10 @@ export async function generateTrendingShareImage(
                             type: "span",
                             props: {
                               style: {
-                                fontSize: "24px",
+                                fontSize: "22px",
                                 fontWeight: "bold",
-                                color: "#FEDD00",
-                                fontFamily: "NotoSansTC",
+                                color: BRAND_YELLOW,
+                                fontFamily: "Orbitron",
                                 letterSpacing: "0.5px",
                               },
                               children: "boxium.asia/trending",
@@ -659,12 +725,13 @@ export async function generateTrendingShareImage(
                         ],
                       },
                     },
+                    // Data source label
                     {
                       type: "span",
                       props: {
                         style: {
-                          fontSize: "15px",
-                          color: "rgba(255,255,255,0.28)",
+                          fontSize: "13px",
+                          color: "rgba(255,255,255,0.25)",
                           fontFamily: "NotoSansTC",
                           letterSpacing: "1px",
                         },
@@ -681,13 +748,22 @@ export async function generateTrendingShareImage(
     },
   };
 
+  // Build font list for Satori
+  const satorifonts: Array<{ name: string; data: Buffer; weight: 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900; style: "normal" | "italic" }> = [
+    { name: "NotoSansTC", data: fontNotoSansBold!, weight: 700, style: "normal" },
+    { name: "NotoSansTC", data: fontNotoSansRegular!, weight: 400, style: "normal" },
+  ];
+  if (fontNotoSerifBold) {
+    satorifonts.push({ name: "NotoSerifTC", data: fontNotoSerifBold, weight: 700, style: "normal" });
+  }
+  if (fontOrbitronBold) {
+    satorifonts.push({ name: "Orbitron", data: fontOrbitronBold, weight: 700, style: "normal" });
+  }
+
   const svg = await satori(svgElement as any, {
     width: W,
     height: H,
-    fonts: [
-      { name: "NotoSansTC", data: fontDataBold!, weight: 700, style: "normal" },
-      { name: "NotoSansTC", data: fontDataRegular!, weight: 400, style: "normal" },
-    ],
+    fonts: satorifonts,
   });
 
   // Use sharp (librsvg) to convert SVG → PNG — works in Cloud Run without native binaries
