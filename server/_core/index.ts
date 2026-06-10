@@ -58,6 +58,7 @@ import {
 } from "../middleware/security";
 import { getListingById, getCardById, getSealedProductById, preloadGlobalPriceMap } from "../db";
 import { composeOgImage, composeAndCacheOgImage, getDefaultOgImageUrl, composeAndCacheMarketplaceOgImage } from "../ogImageComposer";
+import { generateTrendingShareImage, ShareImageType } from "../trendingShareImage";
 import Stripe from "stripe";
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" }); }
 
@@ -1346,6 +1347,63 @@ async function startServer() {
     } catch (err) {
       console.error("[OG Image API] Error:", err);
       res.redirect(getDefaultOgImageUrl());
+    }
+  });
+
+  // ─── Trending Share Image API ─────────────────────────────────────────────
+  // GET /api/share/trending?type=gainers|losers|volatile&days=7&limit=3
+  app.get("/api/share/trending", async (req, res) => {
+    try {
+      const type = (req.query.type as string) || "gainers";
+      const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+      const limit = Math.min(5, Math.max(1, parseInt(req.query.limit as string) || 3));
+
+      if (!["gainers", "losers", "volatile"].includes(type)) {
+        return res.status(400).json({ error: "Invalid type. Use: gainers, losers, volatile" });
+      }
+
+      // Fetch data
+      const { getTopPriceGainers, getTopPriceLosers, getTopVolatileCards } = await import("../db");
+      let rawItems: any[] = [];
+      if (type === "gainers") {
+        rawItems = await getTopPriceGainers(days, limit);
+      } else if (type === "losers") {
+        rawItems = await getTopPriceLosers(days, limit);
+      } else {
+        rawItems = await getTopVolatileCards(days, limit);
+      }
+
+      if (!rawItems || rawItems.length === 0) {
+        return res.status(404).json({ error: "No data available for the requested period" });
+      }
+
+      // Map to ShareCardItem
+      const items = rawItems.map((item: any, idx: number) => ({
+        rank: idx + 1,
+        cardName: item.cardName || item.name || "Unknown Card",
+        cardNumber: item.cardNumber || undefined,
+        setName: item.setName || undefined,
+        latestPrice: Number(item.latestPrice || item.currentPrice || 0),
+        currency: item.currency || "HKD",
+        changePercent: Number(item.priceChange || item.volatility || 0),
+      }));
+
+      const pngBuffer = await generateTrendingShareImage(
+        { type: type as ShareImageType, items },
+        days
+      );
+
+      // Cache for 10 minutes
+      res.set({
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=600, stale-while-revalidate=60",
+        "Content-Length": pngBuffer.length.toString(),
+        "Content-Disposition": `inline; filename="boxium-trending-${type}-${days}d.png"`,
+      });
+      res.status(200).end(pngBuffer);
+    } catch (err) {
+      console.error("[Share Image API] Error:", err);
+      res.status(500).json({ error: "Failed to generate share image" });
     }
   });
 

@@ -2143,57 +2143,95 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  // Correct approach:
-  // 1. Bucket transactions by DATE (not exact timestamp) to avoid same-day duplicates
-  // 2. Use AVG price per day as the representative price
-  // 3. Compare earliest day avg vs latest day avg
+  // Two-pass outlier filter (same as getTopVolatileCards):
+  //   Pass 1: Compute trimmed median (AVG of middle 50% prices) per card as robust reference
+  //   Pass 2: Exclude prices outside [median * 0.3, median * 3.0] before computing daily avg
+  // Hard cap: priceChange <= 500% to exclude data-quality outliers.
   const [rows] = await (db as any).execute(sql`
     SELECT
       c.id AS cardId,
       c.name AS cardName,
+      c.cardNumber AS cardNumber,
+      c.setName AS setName,
       c.imageUrl AS cardImage,
       first_day.avgPrice AS oldestPrice,
       last_day.avgPrice AS latestPrice,
       first_day.currency AS currency,
       ((last_day.avgPrice - first_day.avgPrice) / first_day.avgPrice * 100) AS priceChange
     FROM (
-      SELECT
-        cardId,
-        MIN(DATE(COALESCE(soldAt, createdAt))) AS firstDate,
-        MAX(DATE(COALESCE(soldAt, createdAt))) AS lastDate,
-        currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk'
-        AND grade = 'PSA 10'
-        AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, currency
-      HAVING COUNT(DISTINCT DATE(COALESCE(soldAt, createdAt))) >= 2
-        AND MIN(DATE(COALESCE(soldAt, createdAt))) < MAX(DATE(COALESCE(soldAt, createdAt)))
+      SELECT ph2.cardId, MIN(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) AS firstDate,
+        MAX(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) AS lastDate, ph2.currency
+      FROM priceHistory ph2
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref ON ref.refCardId = ph2.cardId AND ref.refCurrency = ph2.currency
+      WHERE ph2.source = 'snkrdunk' AND ph2.grade = 'PSA 10' AND ph2.isSuspectedBulk = 0
+        AND COALESCE(ph2.soldAt, ph2.createdAt) >= ${cutoffDate}
+        AND ph2.price >= ref.trimmedRef * 0.3
+        AND ph2.price <= ref.trimmedRef * 3.0
+      GROUP BY ph2.cardId, ph2.currency
+      HAVING COUNT(DISTINCT DATE(COALESCE(ph2.soldAt, ph2.createdAt))) >= 2
+        AND MIN(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) < MAX(DATE(COALESCE(ph2.soldAt, ph2.createdAt)))
     ) ph_range
     JOIN (
-      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, txDate, currency
+      SELECT ph3.cardId, DATE(COALESCE(ph3.soldAt, ph3.createdAt)) AS txDate, AVG(ph3.price) AS avgPrice, ph3.currency
+      FROM priceHistory ph3
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked2
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref2 ON ref2.refCardId = ph3.cardId AND ref2.refCurrency = ph3.currency
+      WHERE ph3.source = 'snkrdunk' AND ph3.grade = 'PSA 10' AND ph3.isSuspectedBulk = 0
+        AND COALESCE(ph3.soldAt, ph3.createdAt) >= ${cutoffDate}
+        AND ph3.price >= ref2.trimmedRef * 0.3
+        AND ph3.price <= ref2.trimmedRef * 3.0
+      GROUP BY ph3.cardId, ph3.currency, txDate
     ) first_day
-      ON first_day.cardId = ph_range.cardId
-      AND first_day.txDate = ph_range.firstDate
+      ON first_day.cardId = ph_range.cardId AND first_day.txDate = ph_range.firstDate
       AND first_day.currency = ph_range.currency
     JOIN (
-      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, txDate, currency
+      SELECT ph4.cardId, DATE(COALESCE(ph4.soldAt, ph4.createdAt)) AS txDate, AVG(ph4.price) AS avgPrice, ph4.currency
+      FROM priceHistory ph4
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked3
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref3 ON ref3.refCardId = ph4.cardId AND ref3.refCurrency = ph4.currency
+      WHERE ph4.source = 'snkrdunk' AND ph4.grade = 'PSA 10' AND ph4.isSuspectedBulk = 0
+        AND COALESCE(ph4.soldAt, ph4.createdAt) >= ${cutoffDate}
+        AND ph4.price >= ref3.trimmedRef * 0.3
+        AND ph4.price <= ref3.trimmedRef * 3.0
+      GROUP BY ph4.cardId, ph4.currency, txDate
     ) last_day
-      ON last_day.cardId = ph_range.cardId
-      AND last_day.txDate = ph_range.lastDate
+      ON last_day.cardId = ph_range.cardId AND last_day.txDate = ph_range.lastDate
       AND last_day.currency = ph_range.currency
     JOIN cards c ON c.id = ph_range.cardId
     WHERE first_day.avgPrice > 0
       AND last_day.avgPrice > first_day.avgPrice
+      AND ((last_day.avgPrice - first_day.avgPrice) / first_day.avgPrice * 100) <= 500
     ORDER BY priceChange DESC
     LIMIT ${limit}
   `) as [any[], any];
@@ -2201,6 +2239,8 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
   return (rows || []).map((row: any) => ({
     cardId: Number(row.cardId),
     cardName: String(row.cardName || ''),
+    cardNumber: row.cardNumber ? String(row.cardNumber) : undefined,
+    setName: row.setName ? String(row.setName) : undefined,
     cardImage: row.cardImage ? String(row.cardImage) : null,
     currency: String(row.currency || 'HKD'),
     oldestPrice: Number(row.oldestPrice),
@@ -2225,50 +2265,87 @@ export async function getTopPriceLosers(days: number = 7, limit: number = 10) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  // Same logic as gainers but filter for price drops, using daily avg to avoid duplicates
+  // Same logic as gainers but filter for price drops, with trimmed median outlier filter
   const [rows] = await (db as any).execute(sql`
     SELECT
       c.id AS cardId,
       c.name AS cardName,
+      c.cardNumber AS cardNumber,
+      c.setName AS setName,
       c.imageUrl AS cardImage,
       first_day.avgPrice AS oldestPrice,
       last_day.avgPrice AS latestPrice,
       first_day.currency AS currency,
       ((last_day.avgPrice - first_day.avgPrice) / first_day.avgPrice * 100) AS priceChange
     FROM (
-      SELECT
-        cardId,
-        MIN(DATE(COALESCE(soldAt, createdAt))) AS firstDate,
-        MAX(DATE(COALESCE(soldAt, createdAt))) AS lastDate,
-        currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk'
-        AND grade = 'PSA 10'
-        AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, currency
-      HAVING COUNT(DISTINCT DATE(COALESCE(soldAt, createdAt))) >= 2
-        AND MIN(DATE(COALESCE(soldAt, createdAt))) < MAX(DATE(COALESCE(soldAt, createdAt)))
+      SELECT ph2.cardId, MIN(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) AS firstDate,
+        MAX(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) AS lastDate, ph2.currency
+      FROM priceHistory ph2
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref ON ref.refCardId = ph2.cardId AND ref.refCurrency = ph2.currency
+      WHERE ph2.source = 'snkrdunk' AND ph2.grade = 'PSA 10' AND ph2.isSuspectedBulk = 0
+        AND COALESCE(ph2.soldAt, ph2.createdAt) >= ${cutoffDate}
+        AND ph2.price >= ref.trimmedRef * 0.3
+        AND ph2.price <= ref.trimmedRef * 3.0
+      GROUP BY ph2.cardId, ph2.currency
+      HAVING COUNT(DISTINCT DATE(COALESCE(ph2.soldAt, ph2.createdAt))) >= 2
+        AND MIN(DATE(COALESCE(ph2.soldAt, ph2.createdAt))) < MAX(DATE(COALESCE(ph2.soldAt, ph2.createdAt)))
     ) ph_range
     JOIN (
-      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, txDate, currency
+      SELECT ph3.cardId, DATE(COALESCE(ph3.soldAt, ph3.createdAt)) AS txDate, AVG(ph3.price) AS avgPrice, ph3.currency
+      FROM priceHistory ph3
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked2
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref2 ON ref2.refCardId = ph3.cardId AND ref2.refCurrency = ph3.currency
+      WHERE ph3.source = 'snkrdunk' AND ph3.grade = 'PSA 10' AND ph3.isSuspectedBulk = 0
+        AND COALESCE(ph3.soldAt, ph3.createdAt) >= ${cutoffDate}
+        AND ph3.price >= ref2.trimmedRef * 0.3
+        AND ph3.price <= ref2.trimmedRef * 3.0
+      GROUP BY ph3.cardId, ph3.currency, txDate
     ) first_day
-      ON first_day.cardId = ph_range.cardId
-      AND first_day.txDate = ph_range.firstDate
+      ON first_day.cardId = ph_range.cardId AND first_day.txDate = ph_range.firstDate
       AND first_day.currency = ph_range.currency
     JOIN (
-      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
-      FROM priceHistory
-      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
-        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
-      GROUP BY cardId, txDate, currency
+      SELECT ph4.cardId, DATE(COALESCE(ph4.soldAt, ph4.createdAt)) AS txDate, AVG(ph4.price) AS avgPrice, ph4.currency
+      FROM priceHistory ph4
+      JOIN (
+        SELECT cardId AS refCardId, currency AS refCurrency, AVG(price) AS trimmedRef
+        FROM (
+          SELECT cardId, currency, price,
+            PERCENT_RANK() OVER (PARTITION BY cardId, currency ORDER BY price) AS prank
+          FROM priceHistory
+          WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+            AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+        ) ranked3
+        WHERE prank BETWEEN 0.25 AND 0.75
+        GROUP BY cardId, currency
+      ) ref3 ON ref3.refCardId = ph4.cardId AND ref3.refCurrency = ph4.currency
+      WHERE ph4.source = 'snkrdunk' AND ph4.grade = 'PSA 10' AND ph4.isSuspectedBulk = 0
+        AND COALESCE(ph4.soldAt, ph4.createdAt) >= ${cutoffDate}
+        AND ph4.price >= ref3.trimmedRef * 0.3
+        AND ph4.price <= ref3.trimmedRef * 3.0
+      GROUP BY ph4.cardId, ph4.currency, txDate
     ) last_day
-      ON last_day.cardId = ph_range.cardId
-      AND last_day.txDate = ph_range.lastDate
+      ON last_day.cardId = ph_range.cardId AND last_day.txDate = ph_range.lastDate
       AND last_day.currency = ph_range.currency
     JOIN cards c ON c.id = ph_range.cardId
     WHERE first_day.avgPrice > 0
@@ -2280,6 +2357,8 @@ export async function getTopPriceLosers(days: number = 7, limit: number = 10) {
   return (rows || []).map((row: any) => ({
     cardId: Number(row.cardId),
     cardName: String(row.cardName || ''),
+    cardNumber: row.cardNumber ? String(row.cardNumber) : undefined,
+    setName: row.setName ? String(row.setName) : undefined,
     cardImage: row.cardImage ? String(row.cardImage) : null,
     currency: String(row.currency || 'HKD'),
     oldestPrice: Number(row.oldestPrice),

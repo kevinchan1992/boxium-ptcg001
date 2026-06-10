@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-import { TrendingUp, TrendingDown, Zap, BarChart2, Clock, ChevronRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Zap, BarChart2, Clock, ChevronRight, ArrowUpRight, ArrowDownRight, Share2, Download, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import Footer from "@/components/Footer";
 import PageHead from "@/components/PageHead";
@@ -195,6 +195,103 @@ function StatTicker({ label, value, color }: { label: string; value: string; col
         {label}
       </span>
     </div>
+  );
+}
+
+// ─── Share Image Button ──────────────────────────────────────────────────────
+function ShareImageButton({ type, days, limit }: { type: string; days: number; limit: number }) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handleGenerate = useCallback(async () => {
+    setIsGenerating(true);
+    try {
+      const url = `/api/share/trending?type=${type}&days=${days}&limit=${limit}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to generate image");
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewUrl(objectUrl);
+    } catch (err) {
+      console.error(err);
+      alert("生成圖片失敗，請稍後再試");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [type, days, limit]);
+
+  const handleDownload = useCallback(() => {
+    if (!previewUrl) return;
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    const typeLabel = type === "gainers" ? "漲幅榜" : type === "losers" ? "跌幅榜" : "波動榜";
+    a.download = `BOXIUM-PTCG-${typeLabel}-${days}D-${new Date().toLocaleDateString("zh-HK").replace(/\//g, "-")}.png`;
+    a.click();
+  }, [previewUrl, type, days]);
+
+  const handleClose = useCallback(() => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }, [previewUrl]);
+
+  return (
+    <>
+      <button
+        onClick={handleGenerate}
+        disabled={isGenerating}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border"
+        style={{
+          background: "#06038d",
+          color: "#FEDD00",
+          borderColor: "#06038d",
+          opacity: isGenerating ? 0.7 : 1,
+        }}
+        title="生成社媒分享圖 (1080×1080)"
+      >
+        {isGenerating ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <Share2 className="w-3.5 h-3.5" />
+        )}
+        <span className="hidden sm:inline">{isGenerating ? "生成中…" : "分享圖"}</span>
+      </button>
+
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={handleClose}
+        >
+          <div
+            className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span className="font-bold text-sm text-gray-900">分享圖預覽</span>
+              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            {/* Image */}
+            <img src={previewUrl} alt="分享圖" className="w-full" />
+            {/* Actions */}
+            <div className="flex gap-2 p-4">
+              <button
+                onClick={handleDownload}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: "#06038d", color: "#FEDD00" }}
+              >
+                <Download className="w-4 h-4" />
+                下載 PNG (1080×1080)
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 text-center pb-3 px-4">
+              適用於 Threads / Instagram 正方形貼文
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -407,7 +504,14 @@ export default function TrendingPage() {
               <p className="text-xs text-gray-500 mt-0.5">{cfg.subtitle}</p>
             </div>
             <div className="flex-1" />
-            <span className="text-xs text-gray-400 hidden sm:block">{periodLabel[period]}統計</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 hidden sm:block">{periodLabel[period]}統計</span>
+              <ShareImageButton
+                type={activeTab}
+                days={periodDays}
+                limit={3}
+              />
+            </div>
           </div>
 
           {/* Card list */}
