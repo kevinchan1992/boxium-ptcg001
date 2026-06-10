@@ -277,12 +277,12 @@ function ShareImageButton({ type, days, items }: { type: string; days: number; i
       {/* Preview Modal */}
       {previewUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
           style={{ background: "rgba(0,0,0,0.75)" }}
           onClick={handleClose}
         >
           <div
-            className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full"
+            className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full mt-16 mb-8"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
