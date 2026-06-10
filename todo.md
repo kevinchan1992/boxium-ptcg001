@@ -9638,3 +9638,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] scripts/package.json 新增 playwright 依賴
 - [x] CardDetail 頁面：eBay PSA 10 已成交記錄 table（單張卡牌專用，不影響封裝商品 eBay 功能）
 - [x] 多語言翻譯更新（zh-TW.json、en.json）
+
+---
+
+## ✅ 漲幅榜頁面（/trending）雜誌式設計（2026-06-10）
+
+- [x] 建立 client/src/pages/Trending.tsx（雜誌式設計）
+- [x] 漲幅榜 / 跌幅榜 / 波動榜三個 Tab
+- [x] 7天 / 14天 / 30天時間範圍切換
+- [x] Hero Card（#1 卡牌大圖展示）
+- [x] 排行列表（#2-#10 卡牌）
+- [x] 統計 Ticker（追蹤卡牌、成交記錄、平均漲幅）
+- [x] 連接後端 API（getTopGainers / getTopVolatile / getMarketOverview）
+- [x] 修正 NaN% 顯示問題
+- [x] 在 App.tsx 加入路由（取代原本的 Redirect）
+- [x] 在 TopNav 桌面版和漢堡選單中加入漲幅榜連結
+- [x] 保存 checkpoint
+

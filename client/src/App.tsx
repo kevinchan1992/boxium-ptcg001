@@ -52,6 +52,7 @@ const GradingSubmit = lazy(() => import("./pages/GradingSubmit"));
 const GradingOrders = lazy(() => import("./pages/GradingOrders"));
 const GradingOrderDetail = lazy(() => import("./pages/GradingOrderDetail"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const Trending = lazy(() => import("./pages/Trending"));
 const SellerPublicProfile = lazy(() => import("./pages/SellerPublicProfile"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
@@ -102,9 +103,7 @@ function Router() {
               }}
             </Route>
             <Route path="/research" component={Research} />
-            <Route path="/trending">
-              <Redirect to="/" />
-            </Route>
+            <Route path="/trending" component={Trending} />
 
             <Route path="/pricing" component={Pricing} />
             <Route path="/pricing/search" component={PricingSearch} />
