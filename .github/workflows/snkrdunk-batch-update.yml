@@ -1,14 +1,15 @@
 name: SNKRDUNK Batch Price Update
 on:
   schedule:
-    # Once daily at HKT 02:00 (UTC 18:00 prev day)
-    - cron: '0 18 * * *'
+    # Twice daily at HKT 01:00 (UTC 17:00 prev day) and HKT 13:00 (UTC 05:00)
+    - cron: '0 17 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
     inputs:
       skip_hours:
-        description: 'Skip cards updated within N hours (default: 8)'
+        description: 'Skip cards updated within N hours (default: 4)'
         required: false
-        default: '8'
+        default: '4'
       parallel:
         description: 'Number of parallel workers (default: 8)'
         required: false
@@ -46,20 +47,22 @@ jobs:
       # queue backlog. This step checks if a SUCCESSFUL scheduled run already
       # completed today in HKT (UTC+8). If yes, skip the rest of the job.
       #
-      # WHY HKT: The cron fires at UTC 18:00 which is HKT 02:00 next day.
+      # WHY HKT: The cron fires at UTC 17:00 (HKT 01:00) and UTC 05:00 (HKT 13:00).
       # Using UTC date would cause the guard to miss runs that crossed midnight
       # in UTC but are on the same HKT calendar day.
-      - name: Check for duplicate scheduled run today (HKT)
+      - name: Check for duplicate scheduled run in last 8 hours
         if: github.event_name == 'schedule'
         id: dup_check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Use HKT (UTC+8) for "today" to match the intended daily schedule
-          TODAY_HKT=$(TZ=Asia/Hong_Kong date +%Y-%m-%d)
-          echo "Today (HKT): $TODAY_HKT"
+          # Since we run twice daily (HKT 01:00 and 13:00), guard against
+          # GitHub queue backlog duplicates by checking the last 8 hours.
+          # This allows both scheduled runs to proceed while blocking true duplicates.
+          NOW_EPOCH=$(date +%s)
+          WINDOW_SECONDS=28800  # 8 hours
+          echo "Checking for successful runs in the last 8 hours..."
 
-          # Fetch the last 10 completed successful scheduled runs
           RUNS=$(gh api \
             "repos/${{ github.repository }}/actions/workflows/snkrdunk-batch-update.yml/runs?per_page=10&status=success&event=schedule" \
             --jq '.workflow_runs[].created_at' 2>/dev/null || echo "")
@@ -67,13 +70,13 @@ jobs:
           echo "Recent successful runs:"
           echo "$RUNS"
 
-          # Convert each UTC timestamp to HKT date and check if any match today
           ALREADY_RAN=false
           while IFS= read -r ts; do
             [ -z "$ts" ] && continue
-            RUN_DATE_HKT=$(TZ=Asia/Hong_Kong date -d "$ts" +%Y-%m-%d 2>/dev/null || echo "")
-            echo "  Run at $ts → HKT date: $RUN_DATE_HKT"
-            if [ "$RUN_DATE_HKT" = "$TODAY_HKT" ]; then
+            RUN_EPOCH=$(date -d "$ts" +%s 2>/dev/null || echo "0")
+            DIFF=$((NOW_EPOCH - RUN_EPOCH))
+            echo "  Run at $ts → $DIFF seconds ago"
+            if [ "$DIFF" -lt "$WINDOW_SECONDS" ]; then
               ALREADY_RAN=true
               break
             fi
@@ -81,10 +84,10 @@ jobs:
 
           if [ "$ALREADY_RAN" = "true" ]; then
             echo "already_ran=true" >> "$GITHUB_OUTPUT"
-            echo "⚠️  A successful scheduled run already completed today HKT ($TODAY_HKT). Skipping duplicate."
+            echo "⚠️  A successful scheduled run already completed within the last 8 hours. Skipping duplicate."
           else
             echo "already_ran=false" >> "$GITHUB_OUTPUT"
-            echo "✅ No successful run found for today HKT ($TODAY_HKT). Proceeding."
+            echo "✅ No successful run found in the last 8 hours. Proceeding."
           fi
 
       - name: Skip if duplicate
@@ -116,7 +119,7 @@ jobs:
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
-          SKIP_HOURS: ${{ github.event.inputs.skip_hours || '8' }}
+          SKIP_HOURS: ${{ github.event.inputs.skip_hours || '4' }}
           BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '0' }}
           EMPTY_CARD_RECHECK_DAYS: ${{ github.event.inputs.empty_card_recheck_days || '7' }}
           REQUEST_TIMEOUT_MS: '15000'
