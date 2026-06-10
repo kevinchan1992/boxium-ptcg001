@@ -9581,3 +9581,60 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 批量翻譯 ja.json 中所有缺失的日語翻譯（1537 個 key）
 - [x] 新增 176 個 grading 相關翻譯 key 到三語文件
 - [x] 建立 AGENTS.md 記錄強制 i18n 規則（日後新頁面/UI 必須加入翻譯）
+
+
+---
+
+## 🛒 eBay 已成交記錄爬蟲（GitHub Actions + Playwright）
+
+### 目標
+使用 GitHub Actions + Playwright 爬取 eBay 已成交記錄，存入 priceHistory 表（source='ebay'），並在 CardDetail 頁面顯示 eBay 成交歷史。
+
+### 架構設計
+- 爬蟲腳本：`scripts/githubActionsEbayBatchUpdate.mjs`（Node.js + Playwright）
+- Workflow：`.github/workflows/ebay-batch-update.yml`（每天 1 次）
+- 數據庫：priceHistory 表新增 `title` 欄位（存 eBay 商品標題）
+- eBay 搜尋關鍵字：自動生成（`{cardName} {cardNumber} PSA 10`），存入 `dataSources` 表
+- 後端 API：接收 GitHub Actions 推送的 eBay 成交數據
+
+### 任務清單
+
+#### Schema 更新
+- [ ] 在 priceHistory 表新增 `title` 欄位（varchar 255，nullable）
+- [ ] 執行 db:push 遷移
+
+#### 後端 API
+- [ ] 新增 `scheduled/ebay-batch-progress` API 端點（接收 GitHub Actions 進度回報）
+- [ ] 新增 `scheduled/ebay-batch-report` API 端點（接收最終報告）
+- [ ] 新增 `admin.getEbayKeywords` procedure（取得需要爬取的卡牌關鍵字列表）
+- [ ] 新增 `admin.upsertEbayPriceHistory` procedure（批量寫入 eBay 成交記錄）
+- [ ] 新增 `admin.getEbayBatchTaskStatus` procedure（查看 eBay 批量任務狀態）
+
+#### GitHub Actions 腳本
+- [ ] 撰寫 `scripts/githubActionsEbayBatchUpdate.mjs`（Playwright + 防封鎖機制）
+- [ ] 撰寫 `.github/workflows/ebay-batch-update.yml`（每天 HKT 03:00 執行）
+- [ ] 加入 duplicate check（防止同一天重複執行）
+- [ ] 加入隨機 delay（5-15 秒）防封鎖
+- [ ] 加入 Smart Skip（有記錄的卡牌優先，空卡牌每 7 天重試一次）
+
+#### 前端 UI
+- [ ] CardDetail 頁面新增 eBay 成交歷史 tab/section
+- [ ] 顯示 eBay 成交記錄（標題、價格、日期、eBay 連結）
+- [ ] Admin 排程管理頁面新增 eBay 批量更新狀態顯示
+
+#### 測試
+- [ ] 撰寫後端 API 單元測試
+- [ ] 測試 eBay 爬蟲腳本（本地 Playwright 測試）
+- [ ] 保存 checkpoint
+
+## ✅ eBay 已成交記錄爬蟲（GitHub Actions + Playwright）
+
+- [x] priceHistory 表新增 title 欄位（存 eBay 商品標題）
+- [x] 後端 API：`/api/scheduled/ebay-ingest`（接收爬蟲數據）
+- [x] 後端 API：`/api/scheduled/github-ebay-batch-report`（最終報告）
+- [x] 後端 API：`/api/scheduled/github-ebay-batch-progress`（進度更新）
+- [x] GitHub Actions 爬蟲腳本：`scripts/githubActionsEbayBatchUpdate.mjs`（Playwright + 防封鎖）
+- [x] GitHub Actions workflow：`.github/workflows/ebay-sold-listings-update.yml`（每週二、五 HKT 03:00）
+- [x] scripts/package.json 新增 playwright 依賴
+- [x] CardDetail 頁面：eBay PSA 10 已成交記錄 table（單張卡牌專用，不影響封裝商品 eBay 功能）
+- [x] 多語言翻譯更新（zh-TW.json、en.json）

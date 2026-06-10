@@ -2605,6 +2605,302 @@ async function startServer() {
     }
   });
 
+  // ─── Scheduled Task Endpoint: GitHub Actions eBay Batch Update Report ────────
+  // Called by GitHub Actions at the end of eBay sold listings batch update
+  app.post("/api/scheduled/github-ebay-batch-report", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        console.warn('[ScheduledTask] github-ebay-batch-report: invalid or missing CRON_SECRET token');
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+
+      const {
+        totalItems = 0,
+        successCount = 0,
+        failureCount = 0,
+        durationMs = 0,
+        startedAt,
+        status = 'completed',
+        runId,
+        runUrl,
+      } = req.body || {};
+
+      console.log(`[ScheduledTask] github-ebay-batch-report: total=${totalItems} success=${successCount} fail=${failureCount} duration=${durationMs}ms`);
+
+      const { getDb } = await import('../db');
+      const { scheduledTasks: scheduledTasksTable } = await import('../../drizzle/schema_new');
+      const db = await getDb();
+      if (!db) {
+        return res.status(500).json({ error: 'Database not available' });
+      }
+
+      const startTime = startedAt ? new Date(startedAt) : new Date(Date.now() - Number(durationMs));
+      const endTime = new Date();
+      const finalStatus = String(status) === 'failed' ? 'failed' : 'completed';
+
+      await db.insert(scheduledTasksTable).values({
+        taskType: 'batch_ebay_update',
+        status: finalStatus as 'completed' | 'failed',
+        totalItems: Number(totalItems),
+        processedItems: Number(totalItems),
+        successCount: Number(successCount),
+        failureCount: Number(failureCount),
+        progress: 100,
+        startedAt: startTime,
+        completedAt: endTime,
+        activeProcessingMs: Number(durationMs),
+        metadata: JSON.stringify({
+          source: 'github_actions',
+          runId: runId || null,
+          runUrl: runUrl || null,
+          errors: [],
+        }),
+      });
+
+      console.log(`[ScheduledTask] github-ebay-batch-report: task record inserted successfully (${finalStatus})`);
+      return res.json({ success: true, insertedAt: endTime.toISOString() });
+    } catch (err: any) {
+      console.error('[ScheduledTask] github-ebay-batch-report failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to insert task record', detail: err?.message });
+    }
+  });
+
+  // ─── Scheduled Task Endpoint: GitHub Actions eBay Batch Update Progress ──────
+  // Called by GitHub Actions periodically during eBay batch update
+  app.post("/api/scheduled/github-ebay-batch-progress", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+      const {
+        runId,
+        totalItems = 0,
+        processedItems = 0,
+        successCount = 0,
+        failureCount = 0,
+        startedAt,
+        speedPerSec = 0,
+        etaMinutes = 0,
+      } = req.body || {};
+
+      const { getDb } = await import('../db');
+      const { scheduledTasks: scheduledTasksTable } = await import('../../drizzle/schema_new');
+      const { eq, and } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database not available' });
+
+      const progress = Number(totalItems) > 0 ? Math.min(99, Math.round((Number(processedItems) / Number(totalItems)) * 100)) : 0;
+      const startTime = startedAt ? new Date(startedAt) : new Date();
+      const ghRunId = String(runId || '');
+
+      const existing = await db.query.scheduledTasks.findFirst({
+        where: and(
+          eq(scheduledTasksTable.taskType, 'batch_ebay_update'),
+          eq(scheduledTasksTable.status, 'running')
+        ),
+        orderBy: (t: any, { desc }: any) => [desc(t.startedAt)],
+      });
+
+      if (existing) {
+        await db.update(scheduledTasksTable)
+          .set({
+            totalItems: Number(totalItems),
+            processedItems: Number(processedItems),
+            successCount: Number(successCount),
+            failureCount: Number(failureCount),
+            progress,
+            metadata: JSON.stringify({
+              source: 'github_actions',
+              runId: ghRunId,
+              speedPerSec: Number(speedPerSec),
+              etaMinutes: Number(etaMinutes),
+              errors: [],
+            }),
+          })
+          .where(eq(scheduledTasksTable.id, existing.id));
+        console.log(`[ScheduledTask] github-ebay-batch-progress: updated task ${existing.id} (${processedItems}/${totalItems}, ${progress}%)`);
+      } else {
+        await db.insert(scheduledTasksTable).values({
+          taskType: 'batch_ebay_update',
+          status: 'running',
+          totalItems: Number(totalItems),
+          processedItems: Number(processedItems),
+          successCount: Number(successCount),
+          failureCount: Number(failureCount),
+          progress,
+          startedAt: startTime,
+          completedAt: null,
+          activeProcessingMs: 0,
+          metadata: JSON.stringify({
+            source: 'github_actions',
+            runId: ghRunId,
+            speedPerSec: Number(speedPerSec),
+            etaMinutes: Number(etaMinutes),
+            errors: [],
+          }),
+        });
+        console.log(`[ScheduledTask] github-ebay-batch-progress: created running task (${processedItems}/${totalItems}, ${progress}%)`);
+      }
+      return res.json({ success: true, progress });
+    } catch (err: any) {
+      console.error('[ScheduledTask] github-ebay-batch-progress failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to update progress', detail: err?.message });
+    }
+  });
+
+  // ─── Scheduled Task Endpoint: Get eBay Batch Keywords ───────────────────────
+  // Called by GitHub Actions to get the list of cards to scrape eBay sold listings for
+  app.get("/api/scheduled/ebay-batch-keywords", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+
+      const limitParam = req.query.limit;
+      const limit = limitParam ? Math.min(parseInt(String(limitParam), 10) || 200, 500) : 200;
+      const offsetParam = req.query.offset;
+      const offset = offsetParam ? parseInt(String(offsetParam), 10) || 0 : 0;
+
+      const { getDb } = await import('../db');
+      const { cards, dataSources } = await import('../../drizzle/schema_new');
+      const { eq, and, isNotNull, sql: sqlFn } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database not available' });
+
+      // Get cards that have SNKRDUNK data sources (active cards worth tracking)
+      // Build eBay search keyword: card name (English part before '[') + card number + 'PSA 10'
+      const rows = await db
+        .select({
+          cardId: cards.id,
+          name: cards.name,
+          cardNumber: cards.cardNumber,
+        })
+        .from(cards)
+        .innerJoin(dataSources, and(
+          eq(dataSources.cardId, cards.id),
+          eq(dataSources.source, 'snkrdunk'),
+          eq(dataSources.isActive, 1 as any)
+        ))
+        .groupBy(cards.id)
+        .limit(limit)
+        .offset(offset);
+
+      // Build eBay search keywords from card names
+      const keywords = rows.map(row => {
+        // Extract English name: take the part before '[' or use full name
+        const rawName = row.name || '';
+        const bracketIdx = rawName.indexOf('[');
+        const engName = bracketIdx > 0 ? rawName.slice(0, bracketIdx).trim() : rawName.trim();
+        // Remove Japanese characters and clean up
+        const cleanName = engName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
+        const cardNum = row.cardNumber || '';
+        const keyword = `${cleanName} ${cardNum} PSA 10`.trim().replace(/\s+/g, ' ');
+        return {
+          cardId: row.cardId,
+          keyword,
+          cardNumber: cardNum,
+        };
+      });
+
+      return res.json({ keywords, total: keywords.length, offset, limit });
+    } catch (err: any) {
+      console.error('[ScheduledTask] ebay-batch-keywords failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to get keywords', detail: err?.message });
+    }
+  });
+
+  // ─── Scheduled Task Endpoint: Ingest eBay Sold Listings ─────────────────────
+  // Called by GitHub Actions to bulk-insert eBay sold listing records
+  app.post("/api/scheduled/ebay-ingest", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers['authorization'] || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid cron token' });
+      }
+
+      const { records } = req.body || {};
+      if (!Array.isArray(records) || records.length === 0) {
+        return res.json({ inserted: 0, skipped: 0 });
+      }
+
+      const { getDb } = await import('../db');
+      const { priceHistory } = await import('../../drizzle/schema_new');
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'Database not available' });
+
+      let inserted = 0;
+      let skipped = 0;
+
+      for (const record of records) {
+        try {
+          const {
+            cardId,
+            priceHkd,
+            priceUsd,
+            title,
+            soldAt,
+            listingUrl,
+            grade = 'PSA 10',
+            sourcePosition = 0,
+          } = record;
+
+          if (!cardId || !priceHkd || !soldAt) { skipped++; continue; }
+
+          // Convert USD to HKD if needed
+          // Convert USD to HKD: 1 USD ≈ 7.8 HKD
+          const finalHkd = priceHkd || (priceUsd ? Math.round(Number(priceUsd) * 7.8 * 100) / 100 : null);
+          if (!finalHkd) { skipped++; continue; }
+
+          // Use USD cents as jpyPrice equivalent for deduplication
+          const jpyPrice = priceUsd ? Math.round(priceUsd * 100) : Math.round(finalHkd * 13);
+
+          await db.insert(priceHistory).values({
+            cardId: Number(cardId),
+            productType: 'single_card',
+            source: 'ebay',
+            price: String(finalHkd),
+            currency: 'HKD',
+            grade: String(grade),
+            jpyPrice,
+            sourcePosition: Number(sourcePosition),
+            listingUrl: listingUrl || null,
+            soldAt: new Date(soldAt),
+            title: title ? String(title).slice(0, 512) : null,
+            isSuspectedBulk: false,
+          }).onDuplicateKeyUpdate({
+            set: { title: title ? String(title).slice(0, 512) : null },
+          });
+          inserted++;
+        } catch (rowErr: any) {
+          // Duplicate key = already exists, skip silently
+          if (rowErr?.code === 'ER_DUP_ENTRY' || rowErr?.message?.includes('Duplicate')) {
+            skipped++;
+          } else {
+            console.warn('[ScheduledTask] ebay-ingest row error:', rowErr?.message);
+            skipped++;
+          }
+        }
+      }
+
+      console.log(`[ScheduledTask] ebay-ingest: inserted=${inserted} skipped=${skipped} total=${records.length}`);
+      return res.json({ inserted, skipped, total: records.length });
+    } catch (err: any) {
+      console.error('[ScheduledTask] ebay-ingest failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to ingest eBay records', detail: err?.message });
+    }
+  });
+
   // ─── Scheduled Task Endpoint: Keepalive (Heartbeat) ─────────────────────────
   // Called by Manus Heartbeat every 60s to keep Cloud Run instance warm
   app.post("/api/scheduled/keepalive", (_req, res) => {

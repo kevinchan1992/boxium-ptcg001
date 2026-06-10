@@ -1,0 +1,1 @@
+ALTER TABLE `priceHistory` ADD `title` varchar(512);

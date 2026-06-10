@@ -166,6 +166,12 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     { enabled: !!cardId && !isSealedProduct, retry: 1 }
   );
 
+  // eBay sold listings history (single cards only)
+  const { data: ebayPriceHistory = [], isLoading: ebayHistoryLoading } = trpc.prices.getHistory.useQuery(
+    { cardId: cardId!, source: "ebay", grade: "PSA 10", limit: 60 },
+    { enabled: !!cardId && !isSealedProduct, retry: 1 }
+  );
+
   const { data: sealedRecentPrices = [], isLoading: sealedRecentLoading } = trpc.products.getPriceHistory.useQuery(
     { productId: cardId!, productType: 'sealed_product', source: "snkrdunk", limit: 10, days: 60 },
     { enabled: !!cardId && isSealedProduct, retry: 1 }
@@ -919,6 +925,93 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </div>
           )}
         </div>
+
+        {/* ── eBay Sold History Table (single cards only) ── */}
+        {!isSealedProduct && (
+          <div className="rounded-xl overflow-hidden border border-zinc-800 mb-4 sm:mb-6">
+            <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-4 rounded-full bg-[#e53238] inline-block" />
+                <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                  eBay {t("cardDetail.actualPriceHistory")}
+                </h3>
+                <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                  PSA 10
+                </span>
+              </div>
+              {ebayPriceHistory.length > 0 && (
+                <span className="text-xs text-zinc-500">
+                  {t("cardDetail.nRecords", { n: ebayPriceHistory.length })}
+                </span>
+              )}
+            </div>
+            {ebayHistoryLoading ? (
+              <div className="flex flex-col items-center justify-center py-10 bg-zinc-900/50 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-[#e53238]" />
+              </div>
+            ) : ebayPriceHistory.length > 0 ? (
+              <div className="overflow-y-auto max-h-80 overflow-x-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
+                    <tr>
+                      <th className="text-left py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
+                        {t("cardDetail.date")}
+                      </th>
+                      <th className="text-left py-2.5 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wide hidden sm:table-cell">
+                        {t("cardDetail.title", "商品標題")}
+                      </th>
+                      <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
+                        {t("cardDetail.price")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ebayPriceHistory.map((item: any, index: number) => (
+                      <tr key={index} className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${index % 2 === 0 ? 'bg-zinc-900/30' : 'bg-zinc-900/60'}`}>
+                        <td className="py-2.5 px-4 text-zinc-400 text-xs sm:text-sm whitespace-nowrap">
+                          {item.soldAt ? formatDate(item.soldAt) : "N/A"}
+                        </td>
+                        <td className="py-2.5 px-3 text-zinc-400 text-xs hidden sm:table-cell">
+                          {item.listingUrl ? (
+                            <a
+                              href={item.listingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-zinc-300 hover:text-white hover:underline line-clamp-1 flex items-center gap-1 group"
+                            >
+                              <span className="line-clamp-1">{item.title || '—'}</span>
+                              <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-blue-400 flex-shrink-0" />
+                            </a>
+                          ) : (
+                            <span className="line-clamp-1">{item.title || '—'}</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-semibold text-[#e53238] text-xs sm:text-sm whitespace-nowrap">
+                          {formatCurrency(item.price)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-10 text-center bg-zinc-900/30">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3">
+                  <span className="text-lg font-bold text-[#e53238]">e</span>
+                </div>
+                <p className="text-zinc-500 text-sm">{t("cardDetail.noEbayData")}</p>
+                <p className="text-zinc-600 text-xs mt-1">{t("cardDetail.ebayDataComingSoon", "eBay 成交記錄將由 GitHub Actions 定期更新")}</p>
+              </div>
+            )}
+            {ebayPriceHistory.length > 0 && (
+              <div className="px-4 py-2 border-t border-zinc-800/50">
+                <p className="text-[10px] text-zinc-500">
+                  {t("cardDetail.ebayDataNote", "eBay PSA 10 已成交記錄，由 GitHub Actions 定期爬取更新")}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Price Trend Chart ── */}
         <div className="mb-4 sm:mb-6">

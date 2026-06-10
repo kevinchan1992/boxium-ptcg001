@@ -130,6 +130,7 @@ export const priceHistory = mysqlTable("priceHistory", {
   // SHA-256 stable deduplication key: hex(sha256(cardId|source|grade|soldAtDate|jpyPrice|sourcePosition))
   // Computed deterministically from normalised fields; NULL until backfill migration runs.
   recordHash: varchar("recordHash", { length: 64 }),
+  title: varchar("title", { length: 512 }), // Original listing title from source (e.g., eBay item title)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   // UNIQUE index to prevent duplicate price history records
