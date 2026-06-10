@@ -396,6 +396,7 @@ export async function generateTrendingShareImage(
           type: "div",
           props: {
             style: {
+              display: "flex",
               position: "absolute" as const,
               top: 0, left: 0, right: 0, bottom: 0,
               background: "linear-gradient(160deg, #0a07b0 0%, #05038a 30%, #030265 60%, #010040 100%)",
@@ -407,6 +408,7 @@ export async function generateTrendingShareImage(
           type: "div",
           props: {
             style: {
+              display: "flex",
               position: "absolute" as const,
               top: "-120px", right: "-120px",
               width: "600px", height: "600px",
@@ -420,6 +422,7 @@ export async function generateTrendingShareImage(
           type: "div",
           props: {
             style: {
+              display: "flex",
               position: "absolute" as const,
               bottom: "-100px", left: "-100px",
               width: "500px", height: "500px",
@@ -433,6 +436,7 @@ export async function generateTrendingShareImage(
           type: "div",
           props: {
             style: {
+              display: "flex",
               position: "absolute" as const,
               top: 0, left: 0, right: 0, bottom: 0,
               opacity: 0.03,
