@@ -2143,33 +2143,66 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  // Get cards with price history in the past N days (SNKRDUNK only)
-  const result = await db
-    .select({
-      cardId: priceHistory.cardId,
-      cardName: cards.name,
-      cardImage: cards.imageUrl,
-      oldestPrice: sql<number>`MIN(${priceHistory.price})`,
-      latestPrice: sql<number>`MAX(${priceHistory.price})`,
-      priceChange: sql<number>`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`,
-      currency: priceHistory.currency,
-    })
-    .from(priceHistory)
-    .innerJoin(cards, eq(priceHistory.cardId, cards.id))
-    .where(
-      and(
-        gte(priceHistory.createdAt, cutoffDate),
-        eq(priceHistory.source, 'snkrdunk') // Only use SNKRDUNK actual transaction data
-      )
-    )
-    .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
-    .having(sql`COUNT(*) >= 2`) // At least 2 price records to calculate change
-    .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / MIN(${priceHistory.price}) * 100)`))
-    .limit(limit);
+  // Correct approach:
+  // 1. Bucket transactions by DATE (not exact timestamp) to avoid same-day duplicates
+  // 2. Use AVG price per day as the representative price
+  // 3. Compare earliest day avg vs latest day avg
+  const [rows] = await (db as any).execute(sql`
+    SELECT
+      c.id AS cardId,
+      c.name AS cardName,
+      c.imageUrl AS cardImage,
+      first_day.avgPrice AS oldestPrice,
+      last_day.avgPrice AS latestPrice,
+      first_day.currency AS currency,
+      ((last_day.avgPrice - first_day.avgPrice) / first_day.avgPrice * 100) AS priceChange
+    FROM (
+      SELECT
+        cardId,
+        MIN(DATE(COALESCE(soldAt, createdAt))) AS firstDate,
+        MAX(DATE(COALESCE(soldAt, createdAt))) AS lastDate,
+        currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk'
+        AND grade = 'PSA 10'
+        AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, currency
+      HAVING COUNT(DISTINCT DATE(COALESCE(soldAt, createdAt))) >= 2
+        AND MIN(DATE(COALESCE(soldAt, createdAt))) < MAX(DATE(COALESCE(soldAt, createdAt)))
+    ) ph_range
+    JOIN (
+      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, txDate, currency
+    ) first_day
+      ON first_day.cardId = ph_range.cardId
+      AND first_day.txDate = ph_range.firstDate
+      AND first_day.currency = ph_range.currency
+    JOIN (
+      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, txDate, currency
+    ) last_day
+      ON last_day.cardId = ph_range.cardId
+      AND last_day.txDate = ph_range.lastDate
+      AND last_day.currency = ph_range.currency
+    JOIN cards c ON c.id = ph_range.cardId
+    WHERE first_day.avgPrice > 0
+      AND last_day.avgPrice > first_day.avgPrice
+    ORDER BY priceChange DESC
+    LIMIT ${limit}
+  `) as [any[], any];
 
-  // Ensure numeric fields are properly converted
-  return result.map(row => ({
-    ...row,
+  return (rows || []).map((row: any) => ({
+    cardId: Number(row.cardId),
+    cardName: String(row.cardName || ''),
+    cardImage: row.cardImage ? String(row.cardImage) : null,
+    currency: String(row.currency || 'HKD'),
     oldestPrice: Number(row.oldestPrice),
     latestPrice: Number(row.latestPrice),
     priceChange: Number(row.priceChange),
@@ -2179,6 +2212,81 @@ export async function getTopPriceGainers(days: number = 7, limit: number = 5) {
 /**
  * Get top searched cards in the past N days
  */
+
+/**
+ * Top Price Losers (biggest price drop)
+ */
+export async function getTopPriceLosers(days: number = 7, limit: number = 10) {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  // Same logic as gainers but filter for price drops, using daily avg to avoid duplicates
+  const [rows] = await (db as any).execute(sql`
+    SELECT
+      c.id AS cardId,
+      c.name AS cardName,
+      c.imageUrl AS cardImage,
+      first_day.avgPrice AS oldestPrice,
+      last_day.avgPrice AS latestPrice,
+      first_day.currency AS currency,
+      ((last_day.avgPrice - first_day.avgPrice) / first_day.avgPrice * 100) AS priceChange
+    FROM (
+      SELECT
+        cardId,
+        MIN(DATE(COALESCE(soldAt, createdAt))) AS firstDate,
+        MAX(DATE(COALESCE(soldAt, createdAt))) AS lastDate,
+        currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk'
+        AND grade = 'PSA 10'
+        AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, currency
+      HAVING COUNT(DISTINCT DATE(COALESCE(soldAt, createdAt))) >= 2
+        AND MIN(DATE(COALESCE(soldAt, createdAt))) < MAX(DATE(COALESCE(soldAt, createdAt)))
+    ) ph_range
+    JOIN (
+      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, txDate, currency
+    ) first_day
+      ON first_day.cardId = ph_range.cardId
+      AND first_day.txDate = ph_range.firstDate
+      AND first_day.currency = ph_range.currency
+    JOIN (
+      SELECT cardId, DATE(COALESCE(soldAt, createdAt)) AS txDate, AVG(price) AS avgPrice, currency
+      FROM priceHistory
+      WHERE source = 'snkrdunk' AND grade = 'PSA 10' AND isSuspectedBulk = 0
+        AND COALESCE(soldAt, createdAt) >= ${cutoffDate}
+      GROUP BY cardId, txDate, currency
+    ) last_day
+      ON last_day.cardId = ph_range.cardId
+      AND last_day.txDate = ph_range.lastDate
+      AND last_day.currency = ph_range.currency
+    JOIN cards c ON c.id = ph_range.cardId
+    WHERE first_day.avgPrice > 0
+      AND last_day.avgPrice < first_day.avgPrice
+    ORDER BY priceChange ASC
+    LIMIT ${limit}
+  `) as [any[], any];
+
+  return (rows || []).map((row: any) => ({
+    cardId: Number(row.cardId),
+    cardName: String(row.cardName || ''),
+    cardImage: row.cardImage ? String(row.cardImage) : null,
+    currency: String(row.currency || 'HKD'),
+    oldestPrice: Number(row.oldestPrice),
+    latestPrice: Number(row.latestPrice),
+    priceChange: Number(row.priceChange),
+  }));
+}
 
 /**
  * Get top volatile cards (highest price volatility) in the past N days
@@ -2192,33 +2300,34 @@ export async function getTopVolatileCards(days: number = 7, limit: number = 5) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
-  const result = await db
-    .select({
-      cardId: priceHistory.cardId,
-      cardName: cards.name,
-      cardImage: cards.imageUrl,
-      minPrice: sql<number>`MIN(${priceHistory.price})`,
-      maxPrice: sql<number>`MAX(${priceHistory.price})`,
-      avgPrice: sql<number>`AVG(${priceHistory.price})`,
-      volatility: sql<number>`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`,
-      currency: priceHistory.currency,
-    })
-    .from(priceHistory)
-    .innerJoin(cards, eq(priceHistory.cardId, cards.id))
-    .where(
-      and(
-        gte(priceHistory.createdAt, cutoffDate),
-        eq(priceHistory.source, 'snkrdunk') // Only use SNKRDUNK actual transaction data
-      )
-    )
-    .groupBy(priceHistory.cardId, cards.name, cards.imageUrl, priceHistory.currency)
-    .having(sql`COUNT(*) >= 3`) // At least 3 price records to calculate volatility
-    .orderBy(desc(sql`((MAX(${priceHistory.price}) - MIN(${priceHistory.price})) / AVG(${priceHistory.price}) * 100)`))
-    .limit(limit);
+  // Volatility = (MAX price - MIN price) / AVG price * 100, filtered to PSA 10 SNKRDUNK only
+  const [rows] = await (db as any).execute(sql`
+    SELECT
+      ph.cardId,
+      c.name AS cardName,
+      c.imageUrl AS cardImage,
+      MIN(ph.price) AS minPrice,
+      MAX(ph.price) AS maxPrice,
+      AVG(ph.price) AS avgPrice,
+      ph.currency,
+      ((MAX(ph.price) - MIN(ph.price)) / AVG(ph.price) * 100) AS volatility
+    FROM priceHistory ph
+    JOIN cards c ON c.id = ph.cardId
+    WHERE ph.source = 'snkrdunk'
+      AND ph.grade = 'PSA 10'
+      AND ph.isSuspectedBulk = 0
+      AND COALESCE(ph.soldAt, ph.createdAt) >= ${cutoffDate}
+    GROUP BY ph.cardId, c.name, c.imageUrl, ph.currency
+    HAVING COUNT(*) >= 3
+    ORDER BY volatility DESC
+    LIMIT ${limit}
+  `) as [any[], any];
 
-  // Ensure numeric fields are properly converted
-  return result.map(row => ({
-    ...row,
+  return (rows || []).map((row: any) => ({
+    cardId: Number(row.cardId),
+    cardName: String(row.cardName || ''),
+    cardImage: row.cardImage ? String(row.cardImage) : null,
+    currency: String(row.currency || 'HKD'),
     minPrice: Number(row.minPrice),
     maxPrice: Number(row.maxPrice),
     avgPrice: Number(row.avgPrice),

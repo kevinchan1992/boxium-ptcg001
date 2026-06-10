@@ -19,6 +19,17 @@ export const marketInsightsRouter = router({
         return topGainers;
       }),
 
+    // Get top cards with highest price decrease in the past N days
+    getTopLosers: publicProcedure
+      .input(z.object({
+        days: z.number().optional().default(7),
+        limit: z.number().optional().default(10),
+      }))
+      .query(async ({ input }) => {
+        const topLosers = await db.getTopPriceLosers(input.days, input.limit);
+        return topLosers;
+      }),
+
     // Get top 5 most searched cards in the past 7 days
     getTopSearched: publicProcedure
       .input(z.object({
