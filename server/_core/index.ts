@@ -1379,8 +1379,7 @@ async function startServer() {
       }));
 
       const pngBuffer = await generateTrendingShareImage(
-        { type: type as ShareImageType, items: shareItems },
-        daysNum
+        { type: type as ShareImageType, items: shareItems, days: daysNum }
       );
 
       res.set({
