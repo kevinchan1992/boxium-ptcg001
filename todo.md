@@ -9655,3 +9655,29 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 在 TopNav 桌面版和漢堡選單中加入漲幅榜連結
 - [x] 保存 checkpoint
 
+
+---
+
+## ✅ GitHub Actions 並行 eBay Scraper v3.0（2026-06-11）
+
+### 目標
+停用 EC2 scraper（1GB RAM 不足），全面升級 GitHub Actions 為 12 個並行 Job 的終極優化方案。
+
+### 任務清單
+- [x] 停用 EC2 systemd service（ebay-scraper.service: STOPPED + DISABLED）
+- [x] 更新 EC2 AGENTS.md 記錄停用原因和決策
+- [x] 重寫 .github/workflows/ebay-scraper.yml：
+  - 12 個並行 Job（matrix: batch_index 0-11）
+  - Pre-flight 重複執行檢查（HKT 感知）
+  - 錯開啟動：batch_index × 45s + 0-60s 隨機 jitter
+  - fail-fast: false（一個 job 失敗不影響其他）
+  - 每個 job 獨立上傳失敗 log artifact
+- [x] 重寫 scripts/githubActionsEbayBatchUpdate.mjs v3.0：
+  - 分片 sharding：WHERE MOD(c.id, TOTAL_BATCHES) = BATCH_INDEX
+  - 6 種瀏覽器指紋輪替（UA/platform/language/viewport/timezone）
+  - Stealth：navigator.webdriver 隱藏、plugins 偽造、chrome 物件注入
+  - 極致資源攔截：images/fonts/CSS/ads/analytics 全部 abort
+  - 智能重試：CAPTCHA 偵測 → 睡眠 3-5 分鐘 → 最多 3 次重試
+  - 隨機延遲：每張卡牌間隔 2-5 秒
+  - 每個 shard 回報進度到 platform API
+- [x] 保存 checkpoint
