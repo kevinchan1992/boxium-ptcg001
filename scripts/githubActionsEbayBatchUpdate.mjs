@@ -383,7 +383,7 @@ async function getCardsToScrape() {
       keyword = `${cardNum} PSA 10`;
     } else {
       // Last resort: name only
-      keyword = `${engName || noRarity.split(/\s+/).slice(0, 3).join(' ')} PSA 10`.trim();
+      keyword = `${engName || cleanedName.split(/\s+/).slice(0, 3).join(' ')} PSA 10`.trim();
     }
 
     keyword = keyword.replace(/\s+/g, ' ').trim();
