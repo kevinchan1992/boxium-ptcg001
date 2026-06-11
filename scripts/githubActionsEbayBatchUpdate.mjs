@@ -458,8 +458,9 @@ async function scrapeEbaySoldListings(page, keyword) {
       }
 
       // Wait for results to appear — eBay renders via JS after page load
+      // eBay updated HTML structure: items are now li.s-card (was li.s-item)
       const selectorFound = await page.waitForSelector(
-        '.s-item__wrapper, li.s-item, #srp-river-results .s-item',
+        'li.s-card, ul.srp-results li',
         { timeout: CONFIG.PAGE_TIMEOUT }
       ).then(() => true).catch(() => false);
 
@@ -468,38 +469,38 @@ async function scrapeEbaySoldListings(page, keyword) {
         const debugInfo = await page.evaluate(() => ({
           title: document.title,
           bodyLen: document.body?.innerText?.length || 0,
-          sItemCount: document.querySelectorAll('[class*="s-item"]').length,
-          srpCount: document.querySelectorAll('[id*="srp"], [class*="srp"]').length,
+          sCardCount: document.querySelectorAll('li.s-card').length,
+          srpCount: document.querySelectorAll('ul.srp-results').length,
         }));
-        console.warn(`[eBay] No results selector found for "${keyword}" — title:"${debugInfo.title}" bodyLen:${debugInfo.bodyLen} s-item:${debugInfo.sItemCount} srp:${debugInfo.srpCount}`);
+        console.warn(`[eBay] No results selector found for "${keyword}" — title:"${debugInfo.title}" bodyLen:${debugInfo.bodyLen} s-card:${debugInfo.sCardCount} srp-ul:${debugInfo.srpCount}`);
       }
 
       const pageListings = await page.evaluate(() => {
         const items = [];
-        // Try multiple selector strategies for resilience
-        const candidates = [
-          ...document.querySelectorAll('.s-item__wrapper'),
-          ...document.querySelectorAll('li.s-item'),
-        ];
-        // Deduplicate
-        const seen = new Set();
+        // eBay new structure (2025+): li.s-card inside ul.srp-results
+        // Title:  .su-styled-text.primary.default  (or fallback: a[href*="itm"] text)
+        // Price:  .s-card__price
+        // Date:   .su-styled-text.positive.default  (contains "Sold May 9, 2026")
+        // Link:   a[href*="itm"]
+        const candidates = document.querySelectorAll('li.s-card');
         for (const el of candidates) {
-          if (seen.has(el)) continue;
-          seen.add(el);
-
-          const titleEl = el.querySelector('.s-item__title, [class*="s-item__title"]');
+          // Title: primary.default span
+          const titleEl = el.querySelector('.su-styled-text.primary.default, .s-item__title');
           const title = titleEl?.textContent?.trim() || '';
           if (!title || title.toLowerCase().includes('shop on ebay')) continue;
 
-          const priceEl = el.querySelector('.s-item__price, [class*="s-item__price"]');
+          // Price: s-card__price or fallback
+          const priceEl = el.querySelector('.s-card__price, .s-item__price, [class*="s-card__price"]');
           const priceText = priceEl?.textContent?.trim() || '';
 
+          // Sold date: positive.default span ("Sold May 9, 2026")
           const dateEl = el.querySelector(
-            '.s-item__ended-date, .s-item__title--tag span, [class*="sold-date"], [class*="ended-date"]'
+            '.su-styled-text.positive.default, .s-item__ended-date, [class*="ended-date"]'
           );
           const dateText = dateEl?.textContent?.trim() || '';
 
-          const linkEl = el.querySelector('a.s-item__link, a[class*="s-item__link"]');
+          // Link
+          const linkEl = el.querySelector('a[href*="itm"], a[href*="ebay.com/itm"]');
           const listingUrl = linkEl?.href || '';
 
           if (title && priceText) items.push({ title, priceText, dateText, listingUrl });
