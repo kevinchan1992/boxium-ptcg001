@@ -1,18 +1,18 @@
 name: eBay Scraper
 on:
   schedule:
-    # Twice weekly: Monday and Thursday at HKT 03:00 (UTC 19:00 prev day)
-    - cron: '0 19 * * 0,3'
+    # Daily at HKT 03:00 (UTC 19:00 prev day)
+    - cron: '0 19 * * *'
   workflow_dispatch:
     inputs:
       batch_limit:
-        description: 'Max cards to scrape per run (default: 100)'
+        description: 'Max cards to scrape per run (default: 3000, ~2.5h with tiered strategy)'
         required: false
-        default: '100'
-      skip_days:
-        description: 'Skip cards updated within N days (default: 3)'
+        default: '3000'
+      headless:
+        description: 'Run browser headless (default: true)'
         required: false
-        default: '3'
+        default: 'true'
 
 # Prevent concurrent runs
 concurrency:
@@ -27,7 +27,7 @@ jobs:
   ebay-scrape:
     name: Scrape eBay Sold Listings
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 330  # 5.5 hours (under GitHub Actions 6h limit)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -108,13 +108,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '100' }}
-          SKIP_DAYS: ${{ github.event.inputs.skip_days || '3' }}
-          HEADLESS: 'true'
+          BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '3000' }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
-          echo "Starting eBay sold listings batch scraper..."
-          echo "BATCH_LIMIT=$BATCH_LIMIT, SKIP_DAYS=$SKIP_DAYS"
+          echo "Starting eBay sold listings batch scraper v2.0 (tiered strategy)..."
+          echo "BATCH_LIMIT=$BATCH_LIMIT"
           node githubActionsEbayBatchUpdate.mjs
 
       - name: Upload failure logs

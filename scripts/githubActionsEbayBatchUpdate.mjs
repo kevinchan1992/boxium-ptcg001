@@ -1,25 +1,20 @@
 /**
- * GitHub Actions eBay Sold Listings Batch Scraper v1.0
+ * GitHub Actions eBay Sold Listings Batch Scraper v2.0
  *
- * Scrapes eBay completed/sold listings for PSA 10 graded Pokémon cards
- * using Playwright to bypass Cloudflare/bot detection.
+ * Tiered update strategy for 55,000+ cards:
+ *   - TIER 1 (Hot):  Cards with SNKRDUNK data source → update every 1 day
+ *   - TIER 2 (Warm): Cards with existing eBay records (no SNKRDUNK) → update every 3 days
+ *   - TIER 3 (Cold): All other cards (never scraped) → update every 7 days
  *
- * Strategy:
- *   - Fetch card keywords from platform API (built from card name + number)
- *   - Use Playwright (Chromium) to scrape eBay sold listings pages
- *   - Parse each listing: title, sold price (USD → HKD), sold date
- *   - Batch-ingest results into platform via /api/scheduled/ebay-ingest
- *   - Report progress and final status to platform
+ * Daily quota: ~3,000 cards → ~2.5 hours per run (within GitHub Actions 6h limit)
  *
  * Required env:
- *   DATABASE_URL   - MySQL connection string (for direct DB access)
- *   PLATFORM_URL   - Platform base URL (e.g. https://boxiumptcg-xxx.manus.space)
+ *   DATABASE_URL   - MySQL connection string
+ *   PLATFORM_URL   - Platform base URL
  *   CRON_SECRET    - Bearer token for platform API auth
  *
  * Optional env:
- *   BATCH_LIMIT    - Max cards to process per run (default: 100)
- *   SKIP_DAYS      - Skip cards updated within N days (default: 3)
- *   INGEST_BATCH   - Records to send per API call (default: 50)
+ *   BATCH_LIMIT    - Max cards per run (default: 3000)
  *   HEADLESS       - Set to 'false' for debugging (default: true)
  */
 
@@ -28,26 +23,46 @@ import mysql from 'mysql2/promise';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
-  BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '100', 10),
-  SKIP_DAYS: parseInt(process.env.SKIP_DAYS || '3', 10),
+  // Tiered update intervals (days)
+  TIER1_HOT_DAYS: 1,    // SNKRDUNK cards: update daily
+  TIER2_WARM_DAYS: 3,   // Cards with eBay history: update every 3 days
+  TIER3_COLD_DAYS: 7,   // All other cards: update every 7 days
+
+  // Per-run quota: how many cards from each tier
+  // Total ~3000/day → ~2.5 hours at 3s/card
+  TIER1_QUOTA: 1000,    // Up to 1000 hot cards per run
+  TIER2_QUOTA: 1000,    // Up to 1000 warm cards per run
+  TIER3_QUOTA: 1000,    // Up to 1000 cold cards per run
+
   INGEST_BATCH: parseInt(process.env.INGEST_BATCH || '50', 10),
   HEADLESS: process.env.HEADLESS !== 'false',
   USD_TO_HKD: 7.8,
   PAGE_TIMEOUT: 30000,
   NAV_TIMEOUT: 45000,
-  DELAY_BETWEEN_CARDS_MS: 2000,
-  DELAY_ON_BLOCK_MS: 10000,
-  MAX_PAGES_PER_CARD: 3,       // Max eBay result pages to scrape per card
-  MAX_LISTINGS_PER_CARD: 60,   // Max sold listings to collect per card
-  PROGRESS_REPORT_INTERVAL: 10, // Report progress every N cards
+  DELAY_BETWEEN_CARDS_MS: 2500,   // 2.5s base delay between cards
+  DELAY_ON_BLOCK_MS: 15000,       // 15s wait on CAPTCHA/block
+  MAX_PAGES_PER_CARD: 3,
+  MAX_LISTINGS_PER_CARD: 60,
+  PROGRESS_REPORT_INTERVAL: 20,
 };
+
+// Allow manual override via env
+if (process.env.BATCH_LIMIT) {
+  const limit = parseInt(process.env.BATCH_LIMIT, 10);
+  if (!isNaN(limit) && limit > 0) {
+    // Distribute manual limit evenly across tiers
+    const perTier = Math.ceil(limit / 3);
+    CONFIG.TIER1_QUOTA = perTier;
+    CONFIG.TIER2_QUOTA = perTier;
+    CONFIG.TIER3_QUOTA = perTier;
+  }
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function parseEbayPrice(priceText) {
   if (!priceText) return null;
-  // Remove currency symbols, commas, spaces; handle "US $123.45" or "HK $123.45"
   const cleaned = priceText.replace(/[^\d.]/g, '');
   const val = parseFloat(cleaned);
   return isNaN(val) ? null : val;
@@ -56,12 +71,15 @@ function parseEbayPrice(priceText) {
 function parseEbaySoldDate(dateText) {
   if (!dateText) return new Date();
   try {
-    // eBay formats: "Sold  Jan 15, 2025" or "Jan 15, 2025" or "15 Jan 2025"
     const cleaned = dateText.replace(/^Sold\s+/i, '').trim();
     const parsed = new Date(cleaned);
     if (!isNaN(parsed.getTime())) return parsed;
   } catch (_) {}
   return new Date();
+}
+
+function toMysqlDatetime(date) {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 // ─── Database Connection ──────────────────────────────────────────────────────
@@ -87,35 +105,93 @@ async function getPool() {
   return pool;
 }
 
-// ─── Get Cards to Scrape ──────────────────────────────────────────────────────
+// ─── Tiered Card Selection ────────────────────────────────────────────────────
 async function getCardsToScrape() {
   const db = await getPool();
-  const skipMs = CONFIG.SKIP_DAYS * 24 * 60 * 60 * 1000;
-  // Format cutoffDate as MySQL-compatible datetime string
-  const cutoffDate = new Date(Date.now() - skipMs);
-  const cutoffStr = cutoffDate.toISOString().slice(0, 19).replace('T', ' ');
-  const batchLimit = Math.floor(CONFIG.BATCH_LIMIT);
+  const now = Date.now();
 
-  // Get cards with SNKRDUNK data sources (active cards worth tracking)
-  // Skip cards that have been scraped recently
-  const [rows] = await db.execute(
+  const tier1Cutoff = toMysqlDatetime(new Date(now - CONFIG.TIER1_HOT_DAYS * 86400000));
+  const tier2Cutoff = toMysqlDatetime(new Date(now - CONFIG.TIER2_WARM_DAYS * 86400000));
+  const tier3Cutoff = toMysqlDatetime(new Date(now - CONFIG.TIER3_COLD_DAYS * 86400000));
+
+  const tier1Limit = Math.floor(CONFIG.TIER1_QUOTA);
+  const tier2Limit = Math.floor(CONFIG.TIER2_QUOTA);
+  const tier3Limit = Math.floor(CONFIG.TIER3_QUOTA);
+
+  // TIER 1: Cards with active SNKRDUNK data source (hot cards) — update daily
+  const [tier1Rows] = await db.execute(
     `SELECT DISTINCT c.id as cardId, c.name, c.cardNumber,
-            MAX(ph.soldAt) as lastEbayRecord
+            MAX(ph.soldAt) as lastEbayRecord,
+            1 as tier
      FROM cards c
      INNER JOIN dataSources ds ON ds.cardId = c.id AND ds.source = 'snkrdunk' AND ds.isActive = 1
      LEFT JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
      GROUP BY c.id, c.name, c.cardNumber
      HAVING lastEbayRecord IS NULL OR lastEbayRecord < ?
      ORDER BY (lastEbayRecord IS NOT NULL) ASC, lastEbayRecord ASC
-     LIMIT ${batchLimit}`,
-    [cutoffStr]
+     LIMIT ${tier1Limit}`,
+    [tier1Cutoff]
   );
 
-  return rows.map(row => {
+  // Collect tier1 card IDs to exclude from tier2/tier3
+  const tier1Ids = tier1Rows.map(r => r.cardId);
+  const tier1IdSet = new Set(tier1Ids);
+
+  // TIER 2: Cards with existing eBay records but no SNKRDUNK — update every 3 days
+  let tier2Rows = [];
+  if (tier2Limit > 0) {
+    const excludeClause = tier1Ids.length > 0
+      ? `AND c.id NOT IN (${tier1Ids.map(() => '?').join(',')})` : '';
+    const [rows] = await db.execute(
+      `SELECT DISTINCT c.id as cardId, c.name, c.cardNumber,
+              MAX(ph.soldAt) as lastEbayRecord,
+              2 as tier
+       FROM cards c
+       INNER JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
+       LEFT JOIN dataSources ds ON ds.cardId = c.id AND ds.source = 'snkrdunk' AND ds.isActive = 1
+       WHERE ds.id IS NULL ${excludeClause}
+       GROUP BY c.id, c.name, c.cardNumber
+       HAVING lastEbayRecord < ?
+       ORDER BY lastEbayRecord ASC
+       LIMIT ${tier2Limit}`,
+      [...tier1Ids, tier2Cutoff]
+    );
+    tier2Rows = rows;
+  }
+
+  const tier2Ids = tier2Rows.map(r => r.cardId);
+  const excludeIds = [...tier1Ids, ...tier2Ids];
+
+  // TIER 3: All other cards (never scraped or cold) — update every 7 days
+  let tier3Rows = [];
+  if (tier3Limit > 0) {
+    const excludeClause = excludeIds.length > 0
+      ? `AND c.id NOT IN (${excludeIds.map(() => '?').join(',')})` : '';
+    const [rows] = await db.execute(
+      `SELECT DISTINCT c.id as cardId, c.name, c.cardNumber,
+              MAX(ph.soldAt) as lastEbayRecord,
+              3 as tier
+       FROM cards c
+       LEFT JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
+       WHERE 1=1 ${excludeClause}
+       GROUP BY c.id, c.name, c.cardNumber
+       HAVING lastEbayRecord IS NULL OR lastEbayRecord < ?
+       ORDER BY (lastEbayRecord IS NOT NULL) ASC, lastEbayRecord ASC
+       LIMIT ${tier3Limit}`,
+      [...excludeIds, tier3Cutoff]
+    );
+    tier3Rows = rows;
+  }
+
+  const allRows = [...tier1Rows, ...tier2Rows, ...tier3Rows];
+
+  console.log(`[eBay] Tier breakdown: T1(hot)=${tier1Rows.length}, T2(warm)=${tier2Rows.length}, T3(cold)=${tier3Rows.length}`);
+  console.log(`[eBay] Total cards to scrape: ${allRows.length}`);
+
+  return allRows.map(row => {
     const rawName = row.name || '';
     const bracketIdx = rawName.indexOf('[');
     const engName = bracketIdx > 0 ? rawName.slice(0, bracketIdx).trim() : rawName.trim();
-    // Remove Japanese/Chinese characters
     const cleanName = engName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
     const cardNum = row.cardNumber || '';
     const keyword = `${cleanName} ${cardNum} PSA 10`.trim().replace(/\s+/g, ' ');
@@ -124,6 +200,7 @@ async function getCardsToScrape() {
       keyword,
       cardNumber: cardNum,
       lastEbayRecord: row.lastEbayRecord,
+      tier: row.tier,
     };
   });
 }
@@ -232,13 +309,11 @@ async function scrapeEbaySoldListings(page, keyword) {
   for (let pageNum = 1; pageNum <= CONFIG.MAX_PAGES_PER_CARD; pageNum++) {
     if (listings.length >= CONFIG.MAX_LISTINGS_PER_CARD) break;
 
-    // eBay sold/completed listings URL
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodedKeyword}&LH_Sold=1&LH_Complete=1&_pgn=${pageNum}&_ipg=60`;
 
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: CONFIG.NAV_TIMEOUT });
 
-      // Check for CAPTCHA or block page
       const title = await page.title();
       if (title.toLowerCase().includes('captcha') || title.toLowerCase().includes('security')) {
         console.warn(`[eBay] CAPTCHA detected for "${keyword}" on page ${pageNum}, waiting...`);
@@ -246,31 +321,24 @@ async function scrapeEbaySoldListings(page, keyword) {
         break;
       }
 
-      // Wait for search results to load
       await page.waitForSelector('.srp-results, .s-item__wrapper, #srp-river-results', {
         timeout: CONFIG.PAGE_TIMEOUT,
       }).catch(() => {});
 
-      // Extract listings using eBay's DOM structure
       const pageListings = await page.evaluate(() => {
         const items = [];
-        // eBay sold listings selector
         const itemEls = document.querySelectorAll('.s-item__wrapper, li.s-item');
         itemEls.forEach(el => {
-          // Skip "Shop on eBay" placeholder items
           const titleEl = el.querySelector('.s-item__title');
           const title = titleEl?.textContent?.trim() || '';
           if (!title || title.toLowerCase().includes('shop on ebay')) return;
 
-          // Price
           const priceEl = el.querySelector('.s-item__price');
           const priceText = priceEl?.textContent?.trim() || '';
 
-          // Sold date
           const dateEl = el.querySelector('.s-item__ended-date, .s-item__title--tag span, [class*="sold-date"]');
           const dateText = dateEl?.textContent?.trim() || '';
 
-          // Listing URL
           const linkEl = el.querySelector('a.s-item__link');
           const listingUrl = linkEl?.href || '';
 
@@ -289,7 +357,7 @@ async function scrapeEbaySoldListings(page, keyword) {
       for (const item of pageListings) {
         if (listings.length >= CONFIG.MAX_LISTINGS_PER_CARD) break;
         const priceUsd = parseEbayPrice(item.priceText);
-        if (!priceUsd || priceUsd < 5) continue; // Skip very cheap items (likely not PSA 10)
+        if (!priceUsd || priceUsd < 5) continue;
 
         const soldAt = parseEbaySoldDate(item.dateText);
         const priceHkd = Math.round(priceUsd * CONFIG.USD_TO_HKD * 100) / 100;
@@ -306,7 +374,6 @@ async function scrapeEbaySoldListings(page, keyword) {
 
       console.log(`[eBay] Page ${pageNum}: found ${pageListings.length} listings for "${keyword}" (total: ${listings.length})`);
 
-      // Small delay between pages to avoid rate limiting
       if (pageNum < CONFIG.MAX_PAGES_PER_CARD && listings.length < CONFIG.MAX_LISTINGS_PER_CARD) {
         await delay(1500 + Math.random() * 1000);
       }
@@ -322,13 +389,11 @@ async function scrapeEbaySoldListings(page, keyword) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('='.repeat(60));
-  console.log('[eBay] GitHub Actions eBay Sold Listings Batch Scraper v1.0');
-  console.log(`[eBay] Config: BATCH_LIMIT=${CONFIG.BATCH_LIMIT}, SKIP_DAYS=${CONFIG.SKIP_DAYS}`);
+  console.log('[eBay] GitHub Actions eBay Sold Listings Batch Scraper v2.0');
+  console.log(`[eBay] Tiered Strategy: T1(hot)=${CONFIG.TIER1_HOT_DAYS}d quota=${CONFIG.TIER1_QUOTA}, T2(warm)=${CONFIG.TIER2_WARM_DAYS}d quota=${CONFIG.TIER2_QUOTA}, T3(cold)=${CONFIG.TIER3_COLD_DAYS}d quota=${CONFIG.TIER3_QUOTA}`);
   console.log('='.repeat(60));
 
-  // Get cards to scrape
   const cards = await getCardsToScrape();
-  console.log(`[eBay] Found ${cards.length} cards to scrape`);
 
   if (!cards.length) {
     console.log('[eBay] Nothing to scrape. All cards are up to date.');
@@ -336,7 +401,6 @@ async function main() {
     return;
   }
 
-  // Launch Playwright browser
   console.log('[eBay] Launching Playwright browser...');
   const browser = await chromium.launch({
     headless: CONFIG.HEADLESS,
@@ -352,7 +416,6 @@ async function main() {
     ],
   });
 
-  // Create browser context with realistic user agent
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     viewport: { width: 1366, height: 768 },
@@ -371,27 +434,30 @@ async function main() {
   let totalInserted = 0;
   const pendingRecords = [];
 
+  // Track tier stats
+  const tierStats = { 1: { success: 0, fail: 0 }, 2: { success: 0, fail: 0 }, 3: { success: 0, fail: 0 } };
+
   try {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
-      console.log(`[eBay] [${i + 1}/${cards.length}] Scraping: "${card.keyword}" (cardId=${card.cardId})`);
+      const tierLabel = `T${card.tier}`;
+      console.log(`[eBay] [${i + 1}/${cards.length}][${tierLabel}] Scraping: "${card.keyword}" (cardId=${card.cardId})`);
 
       try {
         const listings = await scrapeEbaySoldListings(page, card.keyword);
 
         if (listings.length > 0) {
-          // Add cardId to each record
           const records = listings.map(l => ({ ...l, cardId: card.cardId }));
           pendingRecords.push(...records);
           successCards++;
-          console.log(`[eBay] ✅ cardId=${card.cardId}: ${listings.length} listings scraped`);
+          tierStats[card.tier].success++;
+          console.log(`[eBay] ✅ [${tierLabel}] cardId=${card.cardId}: ${listings.length} listings scraped`);
         } else {
-          // No listings found is not a failure (card may not have eBay PSA 10 sales)
           successCards++;
-          console.log(`[eBay] ⚠️  cardId=${card.cardId}: 0 listings found (keyword: "${card.keyword}")`);
+          tierStats[card.tier].success++;
+          console.log(`[eBay] ⚠️  [${tierLabel}] cardId=${card.cardId}: 0 listings found (keyword: "${card.keyword}")`);
         }
 
-        // Flush pending records in batches
         if (pendingRecords.length >= CONFIG.INGEST_BATCH) {
           const batch = pendingRecords.splice(0, CONFIG.INGEST_BATCH);
           const result = await ingestRecords(batch);
@@ -399,23 +465,23 @@ async function main() {
           console.log(`[eBay] Ingested batch: +${result.inserted} inserted, ${result.skipped} skipped`);
         }
 
-        // Report progress periodically
         if ((i + 1) % CONFIG.PROGRESS_REPORT_INTERVAL === 0) {
           await reportProgress(i + 1, successCards, failCards, cards.length, totalInserted);
         }
 
-        // Delay between cards to avoid rate limiting
         if (i < cards.length - 1) {
-          await delay(CONFIG.DELAY_BETWEEN_CARDS_MS + Math.random() * 1000);
+          // Slightly longer delay for cold cards to be gentler on eBay
+          const extraDelay = card.tier === 3 ? 500 : 0;
+          await delay(CONFIG.DELAY_BETWEEN_CARDS_MS + extraDelay + Math.random() * 1000);
         }
       } catch (err) {
         failCards++;
-        console.error(`[eBay] ❌ cardId=${card.cardId} failed: ${err.message}`);
+        tierStats[card.tier].fail++;
+        console.error(`[eBay] ❌ [${tierLabel}] cardId=${card.cardId} failed: ${err.message}`);
         await delay(CONFIG.DELAY_ON_BLOCK_MS);
       }
     }
 
-    // Flush remaining records
     if (pendingRecords.length > 0) {
       const result = await ingestRecords(pendingRecords);
       totalInserted += result.inserted || 0;
@@ -428,7 +494,11 @@ async function main() {
 
   const elapsed = (Date.now() - startTime) / 1000;
   console.log('='.repeat(60));
-  console.log(`[eBay] COMPLETED: ${successCards} success, ${failCards} failed, ${totalInserted} records inserted in ${Math.ceil(elapsed / 60)}min`);
+  console.log(`[eBay] COMPLETED in ${Math.ceil(elapsed / 60)}min`);
+  console.log(`[eBay] Total: ${successCards} success, ${failCards} failed, ${totalInserted} records inserted`);
+  console.log(`[eBay] T1(hot): ${tierStats[1].success} ok / ${tierStats[1].fail} fail`);
+  console.log(`[eBay] T2(warm): ${tierStats[2].success} ok / ${tierStats[2].fail} fail`);
+  console.log(`[eBay] T3(cold): ${tierStats[3].success} ok / ${tierStats[3].fail} fail`);
   console.log('='.repeat(60));
 
   const failRate = failCards / (successCards + failCards || 1);
