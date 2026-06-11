@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-<<<<<<< Updated upstream
-import { TrendingUp, TrendingDown, Zap, BarChart2, Clock, ChevronRight, ArrowUpRight, ArrowDownRight, Share2, Download, Loader2 } from "lucide-react";
-=======
 import { TrendingUp, TrendingDown, Zap, BarChart2, Clock, ChevronRight, ArrowUpRight, ArrowDownRight, Share2, Loader2 } from "lucide-react";
->>>>>>> Stashed changes
 import { trpc } from "@/lib/trpc";
 import Footer from "@/components/Footer";
 import PageHead from "@/components/PageHead";
@@ -202,16 +198,9 @@ function StatTicker({ label, value, color }: { label: string; value: string; col
   );
 }
 
-<<<<<<< Updated upstream
-// ─── Share Image Button ──────────────────────────────────────────────────────
-function ShareImageButton({ type, days, items }: { type: string; days: number; items: any[] }) {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-=======
 // ─── Share Image Button (direct download, no preview) ───────────────────────
 function ShareImageButton({ type, days, items }: { type: string; days: number; items: any[] }) {
   const [isGenerating, setIsGenerating] = useState(false);
->>>>>>> Stashed changes
 
   const handleGenerate = useCallback(async () => {
     if (!items || items.length === 0) {
@@ -220,20 +209,12 @@ function ShareImageButton({ type, days, items }: { type: string; days: number; i
     }
     setIsGenerating(true);
     try {
-<<<<<<< Updated upstream
-      // POST pre-computed ranking data directly - no DB re-query needed
-=======
->>>>>>> Stashed changes
       const shareItems = items.slice(0, 5).map((item: any, idx: number) => ({
         rank: idx + 1,
         cardName: item.cardName || item.name || "Unknown Card",
         cardNumber: item.cardNumber || undefined,
         setName: item.setName || undefined,
-<<<<<<< Updated upstream
-        latestPrice: Number(item.latestPrice || item.currentPrice || 0),
-=======
         latestPrice: Number(item.latestPrice || item.avgPrice || item.currentPrice || 0),
->>>>>>> Stashed changes
         currency: item.currency || "HKD",
         changePercent: Number(item.priceChange || item.volatility || 0),
         cardImageUrl: item.cardImage || item.imageUrl || undefined,
@@ -246,16 +227,12 @@ function ShareImageButton({ type, days, items }: { type: string; days: number; i
       if (!res.ok) throw new Error("Failed to generate image");
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
-<<<<<<< Updated upstream
-      setPreviewUrl(objectUrl);
-=======
       const a = document.createElement("a");
       a.href = objectUrl;
       const typeLabel = type === "gainers" ? "漲幅榜" : type === "losers" ? "跌幅榜" : "波動榜";
       a.download = `BOXIUM-PTCG-${typeLabel}-${days}D-${new Date().toLocaleDateString("zh-HK").replace(/\//g, "-")}.png`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
->>>>>>> Stashed changes
     } catch (err) {
       console.error(err);
       alert("生成圖片失敗，請稍後再試");
@@ -264,80 +241,6 @@ function ShareImageButton({ type, days, items }: { type: string; days: number; i
     }
   }, [type, days, items]);
 
-<<<<<<< Updated upstream
-  const handleDownload = useCallback(() => {
-    if (!previewUrl) return;
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    const typeLabel = type === "gainers" ? "漲幅榜" : type === "losers" ? "跌幅榜" : "波動榜";
-    a.download = `BOXIUM-PTCG-${typeLabel}-${days}D-${new Date().toLocaleDateString("zh-HK").replace(/\//g, "-")}.png`;
-    a.click();
-  }, [previewUrl, type, days]);
-
-  const handleClose = useCallback(() => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-  }, [previewUrl]);
-
-  return (
-    <>
-      <button
-        onClick={handleGenerate}
-        disabled={isGenerating}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border"
-        style={{
-          background: "#06038d",
-          color: "#FEDD00",
-          borderColor: "#06038d",
-          opacity: isGenerating ? 0.7 : 1,
-        }}
-        title="生成社媒分享圖 (1080×1080)"
-      >
-        {isGenerating ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <Share2 className="w-3.5 h-3.5" />
-        )}
-        <span className="hidden sm:inline">{isGenerating ? "生成中…" : "分享圖"}</span>
-      </button>
-
-      {/* Preview Modal */}
-      {previewUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
-          style={{ background: "rgba(0,0,0,0.75)" }}
-          onClick={handleClose}
-        >
-          <div
-            className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full mt-16 mb-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <span className="font-bold text-sm text-gray-900">分享圖預覽</span>
-              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
-            </div>
-            {/* Image */}
-            <img src={previewUrl} alt="分享圖" className="w-full" />
-            {/* Actions */}
-            <div className="flex gap-2 p-4">
-              <button
-                onClick={handleDownload}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
-                style={{ background: "#06038d", color: "#FEDD00" }}
-              >
-                <Download className="w-4 h-4" />
-                下載 PNG (1080×1080)
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 text-center pb-3 px-4">
-              適用於 Threads / Instagram 正方形貼文
-            </p>
-          </div>
-        </div>
-      )}
-    </>
-=======
   return (
     <button
       onClick={handleGenerate}
@@ -358,7 +261,6 @@ function ShareImageButton({ type, days, items }: { type: string; days: number; i
       )}
       <span className="hidden sm:inline">{isGenerating ? "生成中…" : "分享圖"}</span>
     </button>
->>>>>>> Stashed changes
   );
 }
 
@@ -571,19 +473,8 @@ export default function TrendingPage() {
               <p className="text-xs text-gray-500 mt-0.5">{cfg.subtitle}</p>
             </div>
             <div className="flex-1" />
-<<<<<<< Updated upstream
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 hidden sm:block">{periodLabel[period]}統計</span>
-              <ShareImageButton
-                type={activeTab}
-                days={periodDays}
-                items={activeData}
-              />
-            </div>
-=======
             <span className="text-xs text-gray-400 hidden sm:block">{periodLabel[period]}統計</span>
             <ShareImageButton type={activeTab} days={periodDays} items={activeData} />
->>>>>>> Stashed changes
           </div>
 
           {/* Card list */}
