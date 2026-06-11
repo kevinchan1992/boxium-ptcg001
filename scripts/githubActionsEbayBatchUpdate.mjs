@@ -440,7 +440,8 @@ async function scrapeEbaySoldListings(page, keyword) {
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodedKeyword}&LH_Sold=1&LH_Complete=1&_pgn=${pageNum}&_ipg=60`;
 
     try {
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: CONFIG.NAV_TIMEOUT });
+      // Use 'load' to wait for JS-rendered content (eBay results are dynamic)
+      const response = await page.goto(url, { waitUntil: 'load', timeout: CONFIG.NAV_TIMEOUT });
 
       // ⑤ Detect 403 or redirect to block page
       const status = response?.status() || 200;
@@ -456,28 +457,53 @@ async function scrapeEbaySoldListings(page, keyword) {
         return null;
       }
 
-      await page.waitForSelector('.srp-results, .s-item__wrapper, #srp-river-results', {
-        timeout: CONFIG.PAGE_TIMEOUT,
-      }).catch(() => {});
+      // Wait for results to appear — eBay renders via JS after page load
+      const selectorFound = await page.waitForSelector(
+        '.s-item__wrapper, li.s-item, #srp-river-results .s-item',
+        { timeout: CONFIG.PAGE_TIMEOUT }
+      ).then(() => true).catch(() => false);
+
+      if (!selectorFound) {
+        // Debug: log page title and item count to diagnose
+        const debugInfo = await page.evaluate(() => ({
+          title: document.title,
+          bodyLen: document.body?.innerText?.length || 0,
+          sItemCount: document.querySelectorAll('[class*="s-item"]').length,
+          srpCount: document.querySelectorAll('[id*="srp"], [class*="srp"]').length,
+        }));
+        console.warn(`[eBay] No results selector found for "${keyword}" — title:"${debugInfo.title}" bodyLen:${debugInfo.bodyLen} s-item:${debugInfo.sItemCount} srp:${debugInfo.srpCount}`);
+      }
 
       const pageListings = await page.evaluate(() => {
         const items = [];
-        document.querySelectorAll('.s-item__wrapper, li.s-item').forEach(el => {
-          const titleEl = el.querySelector('.s-item__title');
-          const title = titleEl?.textContent?.trim() || '';
-          if (!title || title.toLowerCase().includes('shop on ebay')) return;
+        // Try multiple selector strategies for resilience
+        const candidates = [
+          ...document.querySelectorAll('.s-item__wrapper'),
+          ...document.querySelectorAll('li.s-item'),
+        ];
+        // Deduplicate
+        const seen = new Set();
+        for (const el of candidates) {
+          if (seen.has(el)) continue;
+          seen.add(el);
 
-          const priceEl = el.querySelector('.s-item__price');
+          const titleEl = el.querySelector('.s-item__title, [class*="s-item__title"]');
+          const title = titleEl?.textContent?.trim() || '';
+          if (!title || title.toLowerCase().includes('shop on ebay')) continue;
+
+          const priceEl = el.querySelector('.s-item__price, [class*="s-item__price"]');
           const priceText = priceEl?.textContent?.trim() || '';
 
-          const dateEl = el.querySelector('.s-item__ended-date, .s-item__title--tag span, [class*="sold-date"]');
+          const dateEl = el.querySelector(
+            '.s-item__ended-date, .s-item__title--tag span, [class*="sold-date"], [class*="ended-date"]'
+          );
           const dateText = dateEl?.textContent?.trim() || '';
 
-          const linkEl = el.querySelector('a.s-item__link');
+          const linkEl = el.querySelector('a.s-item__link, a[class*="s-item__link"]');
           const listingUrl = linkEl?.href || '';
 
           if (title && priceText) items.push({ title, priceText, dateText, listingUrl });
-        });
+        }
         return items;
       });
 
