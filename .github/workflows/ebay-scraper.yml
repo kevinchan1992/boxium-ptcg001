@@ -10,15 +10,15 @@ on:
         required: false
         default: '12'
       cards_per_batch:
-        description: 'Max cards per job (default: 300, total ~3600/day)'
+        description: 'Max cards per job (default: 4700 → 12×4700=56400 covers all 56K cards)'
         required: false
-        default: '300'
+        default: '4700'
       headless:
         description: 'Run browser headless (default: true)'
         required: false
         default: 'true'
 
-# Prevent concurrent full runs; allow manual dispatch to override
+# Prevent concurrent full runs
 concurrency:
   group: ebay-scraper
   cancel-in-progress: false
@@ -84,21 +84,22 @@ jobs:
         id: params
         run: |
           TOTAL="${{ github.event.inputs.total_batches || '12' }}"
-          PER_BATCH="${{ github.event.inputs.cards_per_batch || '300' }}"
+          PER_BATCH="${{ github.event.inputs.cards_per_batch || '4700' }}"
           echo "total_batches=$TOTAL" >> "$GITHUB_OUTPUT"
           echo "cards_per_batch=$PER_BATCH" >> "$GITHUB_OUTPUT"
-          echo "Will run $TOTAL parallel jobs × $PER_BATCH cards each = $(( TOTAL * PER_BATCH )) total cards"
+          echo "Will run $TOTAL parallel jobs × $PER_BATCH cards each"
+          echo "At ~2.5s/card (with asset blocking), each job ≈ $(( PER_BATCH * 25 / 10 / 60 )) min"
 
   # ─── Matrix: 12 parallel scraper jobs ───────────────────────────────────────
   ebay-scrape:
-    name: "Scrape Batch ${{ matrix.batch_index }}"
+    name: "Scrape Shard ${{ matrix.batch_index }}"
     needs: preflight
     if: needs.preflight.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 330  # 5.5 hours (under GitHub Actions 6h limit)
+    timeout-minutes: 330  # 5.5 hours hard limit (GitHub max is 6h)
 
     strategy:
-      fail-fast: false   # Don't cancel other jobs if one fails
+      fail-fast: false   # One job failing must NOT cancel the others
       matrix:
         batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
@@ -106,16 +107,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Staggered startup: each job waits batch_index × (30-90s random) ────
-      - name: Staggered startup delay
+      # ── Staggered startup: 1-15 min spread to avoid simultaneous eBay hits ──
+      - name: Staggered startup delay (1–15 min based on shard index)
         run: |
           BATCH_IDX=${{ matrix.batch_index }}
-          # Base delay: batch_index * 45 seconds (0s to ~8min spread)
-          # Plus random jitter: 0-60 seconds
-          BASE_DELAY=$(( BATCH_IDX * 45 ))
-          JITTER=$(( RANDOM % 60 ))
+          # Base: shard index × 60s (0s … 11min spread)
+          # Jitter: 0–120s random per job
+          BASE_DELAY=$(( BATCH_IDX * 60 ))
+          JITTER=$(( RANDOM % 120 ))
           TOTAL_DELAY=$(( BASE_DELAY + JITTER ))
-          echo "Batch $BATCH_IDX: waiting ${TOTAL_DELAY}s before starting (base=${BASE_DELAY}s + jitter=${JITTER}s)"
+          echo "Shard $BATCH_IDX: staggered delay = ${TOTAL_DELAY}s (base=${BASE_DELAY}s + jitter=${JITTER}s)"
           sleep $TOTAL_DELAY
 
       - name: Set up Node.js 22
@@ -130,15 +131,15 @@ jobs:
           cp scripts/package.json /tmp/ebay-runner/
           cd /tmp/ebay-runner
           npm install --ignore-scripts
-          echo "Dependencies installed."
+          echo "✅ Dependencies installed."
 
       - name: Install Playwright Chromium browser
         run: |
           cd /tmp/ebay-runner
           npx playwright install chromium --with-deps
-          echo "Playwright Chromium installed."
+          echo "✅ Playwright Chromium installed."
 
-      - name: Run eBay sold listings scraper (batch ${{ matrix.batch_index }})
+      - name: Run eBay scraper — shard ${{ matrix.batch_index }}
         working-directory: /tmp/ebay-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -150,13 +151,16 @@ jobs:
           HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
-          echo "Starting eBay scraper v3.0 — Batch ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }}"
+          echo "=== eBay Scraper v3.1 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
+          echo "Cards per shard: ${{ needs.preflight.outputs.cards_per_batch }}"
           node githubActionsEbayBatchUpdate.mjs
 
       - name: Upload failure logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ebay-scraper-failure-batch${{ matrix.batch_index }}-${{ github.run_id }}
-          path: '/tmp/ebay-runner/*.log'
+          name: ebay-failure-shard${{ matrix.batch_index }}-run${{ github.run_id }}
+          path: |
+            /tmp/ebay-runner/*.log
+            /tmp/ebay-runner/skipped-cards.json
           retention-days: 7
