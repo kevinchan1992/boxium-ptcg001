@@ -331,11 +331,17 @@ async function getCardsToScrape() {
     const cardNum = (row.cardNumber || '').trim();
 
     // Strategy: card number is the most precise identifier on eBay
-    // Format: "pokemon 043/080 PSA 10" or "043/080 PSA 10" (if no card number, fall back to short name)
+    // Extract only the "NNN/NNN" numeric part from cardNumber (strip set code prefix like "M2a", "S8b", etc.)
+    // e.g. "M2a 199/193" → "199/193",  "S8b 043/080" → "043/080",  "043/080" → "043/080"
+    const numericCardNum = cardNum.match(/(\d+\/\d+)/)?.[1] || cardNum;
+
     let keyword;
-    if (cardNum && /\d/.test(cardNum)) {
-      // Has a card number — use it as primary search term
-      // e.g. "043/080" → "pokemon 043/080 PSA 10"
+    if (numericCardNum && /\d\/\d/.test(numericCardNum)) {
+      // Has a "NNN/NNN" style card number — use it as primary search term
+      // e.g. "199/193" → "pokemon 199/193 PSA 10"
+      keyword = `pokemon ${numericCardNum} PSA 10`;
+    } else if (cardNum && /\d/.test(cardNum)) {
+      // Has some numeric card number but not NNN/NNN format — use full cardNum
       keyword = `pokemon ${cardNum} PSA 10`;
     } else {
       // No card number — extract short English name (strip Japanese, strip set code in brackets)
