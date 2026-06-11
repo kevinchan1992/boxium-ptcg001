@@ -91,7 +91,10 @@ async function getPool() {
 async function getCardsToScrape() {
   const db = await getPool();
   const skipMs = CONFIG.SKIP_DAYS * 24 * 60 * 60 * 1000;
+  // Format cutoffDate as MySQL-compatible datetime string
   const cutoffDate = new Date(Date.now() - skipMs);
+  const cutoffStr = cutoffDate.toISOString().slice(0, 19).replace('T', ' ');
+  const batchLimit = Math.floor(CONFIG.BATCH_LIMIT);
 
   // Get cards with SNKRDUNK data sources (active cards worth tracking)
   // Skip cards that have been scraped recently
@@ -104,8 +107,8 @@ async function getCardsToScrape() {
      GROUP BY c.id, c.name, c.cardNumber
      HAVING lastEbayRecord IS NULL OR lastEbayRecord < ?
      ORDER BY (lastEbayRecord IS NOT NULL) ASC, lastEbayRecord ASC
-     LIMIT ?`,
-    [cutoffDate, CONFIG.BATCH_LIMIT]
+     LIMIT ${batchLimit}`,
+    [cutoffStr]
   );
 
   return rows.map(row => {
