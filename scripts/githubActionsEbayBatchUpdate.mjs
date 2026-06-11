@@ -330,28 +330,57 @@ async function getCardsToScrape() {
     const rawName = row.name || '';
     const cardNum = (row.cardNumber || '').trim();
 
-    // Strategy: card number is the most precise identifier on eBay
-    // Extract only the "NNN/NNN" numeric part from cardNumber (strip set code prefix like "M2a", "S8b", etc.)
-    // e.g. "M2a 199/193" → "199/193",  "S8b 043/080" → "043/080",  "043/080" → "043/080"
+    // ── Extract English card name from the name field ──────────────────────────
+    // name format examples:
+    //   "[OP01-029] Radical Beam!! UC"        → engName = "Radical Beam"
+    //   "[SM12a 219/173] Eevee GX HR"         → engName = "Eevee GX"
+    //   "Sigilyph C [BW1 024/053](Pack)"      → engName = "Sigilyph"
+    //   "Sanji R [OP12-070] [EN](Pack)"       → engName = "Sanji"
+    //   "Slowpoke: PROMO[PROMO E 004/T](...)" → engName = "Slowpoke"
+    //   "Voltorb :1ED [e2 034/092](Pack)"     → engName = "Voltorb"
+    //   "Meowth : Old Back [PMCG2 No.052]"    → engName = "Meowth"
+    //
+    // Step 1: strip leading bracket section e.g. "[OP01-029] " or "[SM12a 219/173] "
+    let cleanedName = rawName.replace(/^\[[^\]]*\]\s*/, '').trim();
+    // Step 2: strip trailing parenthesis section e.g. "(DUELIST LEGACY Volume.5)"
+    cleanedName = cleanedName.replace(/\s*\(.*\)\s*$/, '').trim();
+    // Step 3: strip trailing [EN] [JP] [XX] language tags
+    cleanedName = cleanedName.replace(/\s*\[[A-Z]{2}\]\s*$/, '').trim();
+    // Step 4: strip inline bracket sections that appear mid-name e.g. "PROMO[PROMO E 004/T]" → "PROMO"
+    cleanedName = cleanedName.replace(/\s*\[[^\]]*\]\s*/g, ' ').trim();
+    // Step 5: remove colon-based descriptors e.g. ":1ED", ": Old Back", ": PROMO"
+    cleanedName = cleanedName.replace(/\s*:.*$/, '').trim();
+    // Step 6: remove Japanese characters
+    cleanedName = cleanedName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
+    // Step 7: remove !! ? punctuation
+    cleanedName = cleanedName.replace(/[!?]+/g, '').trim();
+    // Step 8: remove single-char rarity suffixes at end (C, R, S, N, V) — must be standalone word
+    //         but keep multi-char type suffixes like GX, EX, VMAX, VSTAR
+    const singleRarityPattern = /\s+(?:UC|RR?|SR|HR|UR|AR|SAR|SSR|SP|PROMO|VMAX|VSTAR|VUNION|TAG|TEAM|[CRSUNV])\s*$/i;
+    cleanedName = cleanedName.replace(singleRarityPattern, '').trim();
+    // Step 9: take first 2 words max (keeps query concise and precise)
+    const engName = cleanedName.split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
+
+    // ── Extract card number ────────────────────────────────────────────────────
+    // Extract only the "NNN/NNN" numeric part (strip set code prefix like "M2a", "S8b", "SM12a")
+    // e.g. "M2a 199/193" → "199/193",  "S8b 043/080" → "043/080"
     const numericCardNum = cardNum.match(/(\d+\/\d+)/)?.[1] || cardNum;
 
+    // ── Build keyword: "{engName} {cardNum} PSA 10" ───────────────────────────
     let keyword;
-    if (numericCardNum && /\d\/\d/.test(numericCardNum)) {
-      // Has a "NNN/NNN" style card number — use it directly (no "pokemon" prefix)
-      // e.g. "199/193" → "199/193 PSA 10"
+    if (engName && (numericCardNum || cardNum)) {
+      // Best case: have both name and card number
+      const num = numericCardNum || cardNum;
+      keyword = `${engName} ${num} PSA 10`;
+    } else if (numericCardNum && /\d\/\d/.test(numericCardNum)) {
+      // Fallback: card number only (NNN/NNN format)
       keyword = `${numericCardNum} PSA 10`;
     } else if (cardNum && /\d/.test(cardNum)) {
-      // Has some numeric card number but not NNN/NNN format — use full cardNum
+      // Fallback: other card number formats
       keyword = `${cardNum} PSA 10`;
     } else {
-      // No card number — extract short English name (strip Japanese, strip set code in brackets)
-      const bracketIdx = rawName.indexOf('[');
-      const engPart = bracketIdx > 0 ? rawName.slice(0, bracketIdx).trim() : rawName.trim();
-      // Remove Japanese characters
-      const cleanName = engPart.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
-      // Take first 3 words max to keep query short
-      const shortName = cleanName.split(/\s+/).slice(0, 3).join(' ');
-      keyword = `${shortName} PSA 10`.trim();
+      // Last resort: name only
+      keyword = `${engName || noRarity.split(/\s+/).slice(0, 3).join(' ')} PSA 10`.trim();
     }
 
     keyword = keyword.replace(/\s+/g, ' ').trim();
