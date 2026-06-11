@@ -337,12 +337,12 @@ async function getCardsToScrape() {
 
     let keyword;
     if (numericCardNum && /\d\/\d/.test(numericCardNum)) {
-      // Has a "NNN/NNN" style card number — use it as primary search term
-      // e.g. "199/193" → "pokemon 199/193 PSA 10"
-      keyword = `pokemon ${numericCardNum} PSA 10`;
+      // Has a "NNN/NNN" style card number — use it directly (no "pokemon" prefix)
+      // e.g. "199/193" → "199/193 PSA 10"
+      keyword = `${numericCardNum} PSA 10`;
     } else if (cardNum && /\d/.test(cardNum)) {
       // Has some numeric card number but not NNN/NNN format — use full cardNum
-      keyword = `pokemon ${cardNum} PSA 10`;
+      keyword = `${cardNum} PSA 10`;
     } else {
       // No card number — extract short English name (strip Japanese, strip set code in brackets)
       const bracketIdx = rawName.indexOf('[');
