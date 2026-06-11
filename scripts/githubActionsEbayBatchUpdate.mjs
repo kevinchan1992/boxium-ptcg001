@@ -362,9 +362,12 @@ async function getCardsToScrape() {
     const engName = cleanedName.split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
 
     // ── Extract card number ────────────────────────────────────────────────────
-    // Extract only the "NNN/NNN" numeric part (strip set code prefix like "M2a", "S8b", "SM12a")
-    // e.g. "M2a 199/193" → "199/193",  "S8b 043/080" → "043/080"
-    const numericCardNum = cardNum.match(/(\d+\/\d+)/)?.[1] || cardNum;
+    // Extract the "NNN/NNN" or "NNN/X" part from cardNumber (strip set code prefix)
+    // e.g. "M2a 199/193"   → "199/193"
+    //      "S8b 043/080"   → "043/080"
+    //      "PROMO E 004/T" → "004/T"
+    //      "XY-P 295/XY-P" → "295/XY-P"
+    const numericCardNum = cardNum.match(/(\d+\/[\w-]+)/)?.[1] || cardNum;
 
     // ── Build keyword: "{engName} {cardNum} PSA 10" ───────────────────────────
     let keyword;
