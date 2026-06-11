@@ -129,10 +129,10 @@ const BROWSER_PROFILES = [
 const PROFILE = BROWSER_PROFILES[BATCH_INDEX % BROWSER_PROFILES.length];
 
 // ─── ① Blocked Resource Types & URL Patterns ─────────────────────────────────
-// Block everything that isn't needed for HTML text extraction
+// Block static assets only — do NOT block xhr/fetch/script/other as eBay uses
+// dynamic requests to load search results (blocking them causes 0 listings)
 const BLOCKED_RESOURCE_TYPES = new Set([
   'image', 'media', 'font', 'stylesheet', 'ping',
-  'websocket', 'manifest', 'other',
 ]);
 
 const BLOCKED_URL_PATTERNS = [
