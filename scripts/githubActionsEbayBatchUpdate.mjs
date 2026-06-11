@@ -103,7 +103,7 @@ async function getCardsToScrape() {
      LEFT JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
      GROUP BY c.id, c.name, c.cardNumber
      HAVING lastEbayRecord IS NULL OR lastEbayRecord < ?
-     ORDER BY lastEbayRecord ASC NULLS FIRST
+     ORDER BY (lastEbayRecord IS NOT NULL) ASC, lastEbayRecord ASC
      LIMIT ?`,
     [cutoffDate, CONFIG.BATCH_LIMIT]
   );
