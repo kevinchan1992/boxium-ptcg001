@@ -461,8 +461,41 @@ async function reportFinal(total, success, fail, inserted, status) {
 }
 
 // ─── eBay Scraper (single card) ───────────────────────────────────────────────
+// ─── Title Relevance Filter ──────────────────────────────────────────────────
+// Returns true if the listing title is relevant to the target card.
+// Rules:
+//   1. Title must contain "PSA 10" (or "PSA10") — case-insensitive
+//   2. Title must contain the card number (e.g. "199/193", "OP01-029", "295/XY-P")
+//      We accept the number portion with flexible separators (space, dash, slash)
+function isTitleRelevant(title, cardNumber) {
+  if (!title) return false;
+  const t = title.toLowerCase();
+
+  // Rule 1: must contain PSA 10
+  if (!/\bpsa\s*10\b/.test(t)) return false;
+
+  // Rule 2: must contain the card number (if we have one)
+  if (!cardNumber) return true; // no card number to check against — accept
+
+  // Extract the numeric portion from cardNumber:
+  //   "M2a 199/193"   → "199/193"
+  //   "XY-P 295/XY-P" → "295/XY-P"
+  //   "OP01-029"       → "OP01-029" (keep as-is — it IS the identifier)
+  //   "PROMO E 004/T" → "004/T"
+  const numPart = cardNumber.match(/(\d+\/[\w-]+)/)?.[1] || cardNumber.trim();
+
+  // Build a flexible regex that allows any non-alphanumeric separator between parts
+  // e.g. "199/193" matches "199/193", "199 193", "199-193"
+  // e.g. "OP01-029" matches "OP01-029", "OP01 029"
+  const escapedNum = numPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // escape regex special chars
+  const flexNum = escapedNum.replace(/[\/\-]/g, '[\\s\\-\/]'); // allow flexible separators
+  const numRegex = new RegExp(flexNum, 'i');
+
+  return numRegex.test(title);
+}
+
 // Returns: array of listings, or null if blocked (caller should retry)
-async function scrapeEbaySoldListings(page, keyword) {
+async function scrapeEbaySoldListings(page, keyword, cardNumber) {
   const listings = [];
   const encodedKeyword = encodeURIComponent(keyword);
 
@@ -546,6 +579,11 @@ async function scrapeEbaySoldListings(page, keyword) {
         if (listings.length >= CONFIG.MAX_LISTINGS_PER_CARD) break;
         const priceUsd = parseEbayPrice(item.priceText);
         if (!priceUsd || priceUsd < 5) continue;
+        // ✔ Title relevance check: must contain card number + PSA 10
+        if (!isTitleRelevant(item.title, cardNumber)) {
+          console.log(`[eBay] ⏩ Skipped irrelevant listing: "${item.title.slice(0, 80)}"`);
+          continue;
+        }
         const soldAt = parseEbaySoldDate(item.dateText);
         listings.push({
           priceUsd,
@@ -573,10 +611,10 @@ async function scrapeEbaySoldListings(page, keyword) {
 
 // ─── ⑤ Scrape with Retry & Skip ──────────────────────────────────────────────
 // Returns { listings, skipped }
-async function scrapeWithRetryOrSkip(page, keyword, cardId) {
+async function scrapeWithRetryOrSkip(page, keyword, cardId, cardNumber) {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
     try {
-      const result = await scrapeEbaySoldListings(page, keyword);
+      const result = await scrapeEbaySoldListings(page, keyword, cardNumber);
 
       if (result === null) {
         // Blocked — sleep 3 min then retry
@@ -682,7 +720,7 @@ async function main() {
       const tl = `T${card.tier}`;
       console.log(`[eBay] [${i + 1}/${cards.length}][${tl}][shard${BATCH_INDEX}] "${card.keyword}" (id=${card.cardId})`);
 
-      const { listings, skipped } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId);
+      const { listings, skipped } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber);
 
       if (skipped) {
         skippedCards++;
