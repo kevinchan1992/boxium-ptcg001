@@ -387,7 +387,7 @@ async function getCardsToScrape() {
     }
 
     keyword = keyword.replace(/\s+/g, ' ').trim();
-    return { cardId: row.cardId, keyword, cardNumber: cardNum, tier: row.tier };
+    return { cardId: row.cardId, keyword, cardNumber: cardNum, engName, cleanedName, tier: row.tier };
   });
 }
 
@@ -461,41 +461,92 @@ async function reportFinal(total, success, fail, inserted, status) {
 }
 
 // ─── eBay Scraper (single card) ───────────────────────────────────────────────
-// ─── Title Relevance Filter ──────────────────────────────────────────────────
-// Returns true if the listing title is relevant to the target card.
-// Rules:
-//   1. Title must contain "PSA 10" (or "PSA10") — case-insensitive
-//   2. Title must contain the card number (e.g. "199/193", "OP01-029", "295/XY-P")
-//      We accept the number portion with flexible separators (space, dash, slash)
-function isTitleRelevant(title, cardNumber) {
+// ─── Title Relevance Filter (Smart Scoring) ──────────────────────────────────
+/**
+ * isTitleRelevant — Smart multi-layer relevance scoring for eBay listing titles.
+ *
+ * Problem: eBay sellers often omit card numbers from titles, or use different
+ * number formats. A strict card-number-only check misses many valid listings.
+ *
+ * Solution: Score-based approach.
+ *   Hard filter: title MUST contain "PSA 10" (or "PSA10").
+ *   Then compute a SCORE:
+ *     +3  card number found in title (flex-separator match)
+ *     +2  engName (first 2 words of card name) found in title
+ *     +1  any significant word from cleanedName found in title
+ *     -3  title contains a DIFFERENT card number of the same format
+ *         (e.g. our card is 199/193 but title has 150/XY-P → wrong card)
+ *   Accept if score >= 2.
+ *
+ * This allows:
+ *   - Titles that have card number but no name   → score 3 ✅
+ *   - Titles that have name but no card number   → score 2 ✅
+ *   - Titles with both name and card number      → score 5 ✅
+ *   - Titles with wrong card number              → score -1 ❌
+ *   - Titles with neither name nor card number   → score 0 ❌
+ */
+function isTitleRelevant(title, cardNumber, engName = '', cleanedName = '') {
   if (!title) return false;
   const t = title.toLowerCase();
 
-  // Rule 1: must contain PSA 10
+  // ── Hard filter: must have PSA 10 ──────────────────────────────────────────
   if (!/\bpsa\s*10\b/.test(t)) return false;
 
-  // Rule 2: must contain the card number (if we have one)
-  if (!cardNumber) return true; // no card number to check against — accept
+  // ── If we have nothing to verify against, accept ───────────────────────────
+  if (!cardNumber && !engName) return true;
 
-  // Extract the numeric portion from cardNumber:
-  //   "M2a 199/193"   → "199/193"
-  //   "XY-P 295/XY-P" → "295/XY-P"
-  //   "OP01-029"       → "OP01-029" (keep as-is — it IS the identifier)
-  //   "PROMO E 004/T" → "004/T"
-  const numPart = cardNumber.match(/(\d+\/[\w-]+)/)?.[1] || cardNumber.trim();
+  let score = 0;
 
-  // Build a flexible regex that allows any non-alphanumeric separator between parts
-  // e.g. "199/193" matches "199/193", "199 193", "199-193"
-  // e.g. "OP01-029" matches "OP01-029", "OP01 029"
-  const escapedNum = numPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // escape regex special chars
-  const flexNum = escapedNum.replace(/[\/\-]/g, '[\\s\\-\/]'); // allow flexible separators
-  const numRegex = new RegExp(flexNum, 'i');
+  // ── Card number check ──────────────────────────────────────────────────────
+  if (cardNumber) {
+    // Extract the numeric portion: "M2a 199/193" → "199/193", "OP01-029" → "OP01-029"
+    const numPart = cardNumber.match(/(\d+\/[\w-]+)/)?.[1] || cardNumber.trim();
+    const escapedNum = numPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const flexNum = escapedNum.replace(/[\/\-]/g, '[\\s\\-\/]');
+    const numRegex = new RegExp(flexNum, 'i');
 
-  return numRegex.test(title);
+    if (numRegex.test(title)) {
+      score += 3; // ✅ our card number found
+    } else {
+      // Check if title contains a DIFFERENT number of the same format
+      // NNN/NNN format (e.g. 199/193, 295/XY-P) or XXNN-NNN format (e.g. OP01-029)
+      const slashNums = t.match(/\b(\d{2,3}\/[\w-]+)\b/g) || [];
+      const dashNums  = t.match(/\b([a-z]{2}\d{2}-\d{3})\b/gi) || [];
+      const titleNums = [...slashNums, ...dashNums];
+      if (titleNums.length > 0) {
+        // Title has card numbers but none match ours → likely wrong card
+        score -= 3;
+      }
+      // If title has no card numbers at all, don't penalise — seller may have omitted it
+    }
+  }
+
+  // ── Card name check ────────────────────────────────────────────────────────
+  if (engName) {
+    const engLower = engName.toLowerCase();
+    if (t.includes(engLower)) {
+      score += 2; // ✅ full engName found
+    } else {
+      // Partial: check if all significant words of engName appear
+      const engWords = engLower.split(/\s+/).filter(w => w.length > 3);
+      if (engWords.length > 0 && engWords.every(w => t.includes(w))) {
+        score += 1;
+      }
+    }
+  } else if (cleanedName) {
+    const cleanWords = cleanedName.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    if (cleanWords.length > 0 && cleanWords.some(w => t.includes(w))) {
+      score += 1;
+    }
+  }
+
+  // ── Accept threshold: need score >= 2 ─────────────────────────────────────
+  // Means: either card number found, OR name found with no conflicting number
+  return score >= 2;
 }
 
 // Returns: array of listings, or null if blocked (caller should retry)
-async function scrapeEbaySoldListings(page, keyword, cardNumber) {
+async function scrapeEbaySoldListings(page, keyword, cardNumber, engName = '', cleanedName = '') {
   const listings = [];
   const encodedKeyword = encodeURIComponent(keyword);
 
@@ -580,7 +631,7 @@ async function scrapeEbaySoldListings(page, keyword, cardNumber) {
         const priceUsd = parseEbayPrice(item.priceText);
         if (!priceUsd || priceUsd < 5) continue;
         // ✔ Title relevance check: must contain card number + PSA 10
-        if (!isTitleRelevant(item.title, cardNumber)) {
+        if (!isTitleRelevant(item.title, cardNumber, engName, cleanedName)) {
           console.log(`[eBay] ⏩ Skipped irrelevant listing: "${item.title.slice(0, 80)}"`);
           continue;
         }
@@ -611,10 +662,10 @@ async function scrapeEbaySoldListings(page, keyword, cardNumber) {
 
 // ─── ⑤ Scrape with Retry & Skip ──────────────────────────────────────────────
 // Returns { listings, skipped }
-async function scrapeWithRetryOrSkip(page, keyword, cardId, cardNumber) {
+async function scrapeWithRetryOrSkip(page, keyword, cardId, cardNumber, engName = '', cleanedName = '') {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
     try {
-      const result = await scrapeEbaySoldListings(page, keyword, cardNumber);
+      const result = await scrapeEbaySoldListings(page, keyword, cardNumber, engName, cleanedName);
 
       if (result === null) {
         // Blocked — sleep 3 min then retry
@@ -720,7 +771,7 @@ async function main() {
       const tl = `T${card.tier}`;
       console.log(`[eBay] [${i + 1}/${cards.length}][${tl}][shard${BATCH_INDEX}] "${card.keyword}" (id=${card.cardId})`);
 
-      const { listings, skipped } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber);
+      const { listings, skipped } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber, card.engName || '', card.cleanedName || '');
 
       if (skipped) {
         skippedCards++;
