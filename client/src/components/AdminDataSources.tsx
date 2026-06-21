@@ -30,6 +30,8 @@ export function AdminDataSources() {
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
   const [refreshingId, setRefreshingId] = useState<number | null>(null);
   const [refreshResult, setRefreshResult] = useState<Record<number, { priceCount: number; timestamp: number } | null>>({});
+  const [ebayTriggeringCardId, setEbayTriggeringCardId] = useState<number | null>(null);
+  const [ebayTriggerResult, setEbayTriggerResult] = useState<Record<number, 'triggered' | 'error'>>({});
   const pausedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "pending" | "failed">("all");
@@ -75,6 +77,29 @@ export function AdminDataSources() {
       toast.error(`添加失敗: ${error.message}`);
     },
   });
+
+  const triggerEbayForCardMutation = trpc.admin.triggerEbayForCard.useMutation({
+    onSuccess: (data, variables) => {
+      setEbayTriggeringCardId(null);
+      setEbayTriggerResult(prev => ({ ...prev, [variables.cardId]: 'triggered' }));
+      toast.success(data.message, {
+        action: { label: '查看 Actions', onClick: () => window.open(data.repoUrl, '_blank') },
+        duration: 8000,
+      });
+      setTimeout(() => setEbayTriggerResult(prev => { const n = { ...prev }; delete n[variables.cardId]; return n; }), 30000);
+    },
+    onError: (error: any, variables) => {
+      setEbayTriggeringCardId(null);
+      setEbayTriggerResult(prev => ({ ...prev, [variables.cardId]: 'error' }));
+      toast.error(`eBay 爬取觸發失敗: ${error.message}`);
+      setTimeout(() => setEbayTriggerResult(prev => { const n = { ...prev }; delete n[variables.cardId]; return n; }), 8000);
+    },
+  });
+
+  const handleTriggerEbay = (cardId: number, cardName?: string) => {
+    setEbayTriggeringCardId(cardId);
+    triggerEbayForCardMutation.mutate({ cardId, cardName });
+  };
 
   const refreshDataSourceMutation = trpc.admin.refreshDataSource.useMutation({
     onSuccess: (data, variables) => {
@@ -978,8 +1003,8 @@ export function AdminDataSources() {
                         />
                       )}
                     </div>
-                    {/* 底部行動列：重新爬取按鈕（完整寬度，易於點擊） */}
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/40">
+                    {/* 底部行動列：重新爬取按鈕 + 更新 eBay 按鈕 */}
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/40 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
@@ -1010,6 +1035,47 @@ export function AdminDataSources() {
                           </>
                         )}
                       </Button>
+                      {/* 更新 eBay 按鈕：僅對 single_card 類型顯示 */}
+                      {source.productType !== 'sealed_product' && source.card && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleTriggerEbay(source.card!.id, source.card!.name || undefined)}
+                          disabled={ebayTriggeringCardId === source.card.id}
+                          title="觸發 GitHub Actions 爬取此卡牌的 eBay 已售出記錄"
+                          className={`flex-1 sm:flex-none h-8 text-xs transition-all ${
+                            ebayTriggeringCardId === source.card.id
+                              ? 'border-orange-500/50 text-orange-400 bg-orange-500/10'
+                              : ebayTriggerResult[source.card.id] === 'triggered'
+                              ? 'border-green-500/50 text-green-400 bg-green-500/10'
+                              : ebayTriggerResult[source.card.id] === 'error'
+                              ? 'border-red-500/50 text-red-400 bg-red-500/10'
+                              : 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10'
+                          }`}
+                        >
+                          {ebayTriggeringCardId === source.card.id ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                              觸發中...
+                            </>
+                          ) : ebayTriggerResult[source.card.id] === 'triggered' ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 mr-1.5" />
+                              已觸發 eBay
+                            </>
+                          ) : ebayTriggerResult[source.card.id] === 'error' ? (
+                            <>
+                              <XCircle className="w-3 h-3 mr-1.5" />
+                              觸發失敗
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-3 h-3 mr-1.5" />
+                              更新 eBay
+                            </>
+                          )}
+                        </Button>
+                      )}
                       <span className="text-xs text-muted-foreground ml-auto">ID: {source.id}</span>
                     </div>
                   </div>

@@ -43,7 +43,15 @@ const TOTAL_BATCHES = parseInt(process.env.TOTAL_BATCHES || '12', 10);
 // 56,000 ÷ 12 ≈ 4,667 cards/shard; at 2.5s/card ≈ 194 min ≈ 3.2h (well within 5.5h limit)
 const CARDS_PER_BATCH = parseInt(process.env.CARDS_PER_BATCH || '4700', 10);
 
-if (isNaN(BATCH_INDEX) || BATCH_INDEX < 0 || BATCH_INDEX >= TOTAL_BATCHES) {
+// Single-card mode: CARD_IDS is a comma-separated list of card IDs to scrape directly.
+// e.g. CARD_IDS="123,456" — bypasses all shard/tier logic, runs only those specific cards.
+const CARD_IDS_ENV = (process.env.CARD_IDS || '').trim();
+const SINGLE_CARD_MODE = CARD_IDS_ENV.length > 0;
+const SINGLE_CARD_IDS = SINGLE_CARD_MODE
+  ? CARD_IDS_ENV.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0)
+  : [];
+
+if (!SINGLE_CARD_MODE && (isNaN(BATCH_INDEX) || BATCH_INDEX < 0 || BATCH_INDEX >= TOTAL_BATCHES)) {
   console.error(`[eBay] Invalid BATCH_INDEX=${BATCH_INDEX} for TOTAL_BATCHES=${TOTAL_BATCHES}`);
   process.exit(1);
 }
@@ -252,6 +260,51 @@ async function getPool() {
 async function getCardsToScrape() {
   const db = await getPool();
   const now = Date.now();
+
+  // ─── SINGLE-CARD MODE: bypass shard/tier logic ────────────────────────────
+  if (SINGLE_CARD_MODE) {
+    if (SINGLE_CARD_IDS.length === 0) {
+      console.warn('[eBay] SINGLE_CARD_MODE: no valid card IDs found in CARD_IDS env var');
+      return [];
+    }
+    console.log(`[eBay] 🎯 Single-card mode: fetching ${SINGLE_CARD_IDS.length} card(s): [${SINGLE_CARD_IDS.join(', ')}]`);
+    const placeholders = SINGLE_CARD_IDS.map(() => '?').join(',');
+    const [rows] = await db.execute(
+      `SELECT c.id as cardId, c.name, c.cardNumber, NULL as lastEbayRecord, 0 as tier
+       FROM cards c
+       WHERE c.id IN (${placeholders})`,
+      [...SINGLE_CARD_IDS]
+    );
+    console.log(`[eBay] Single-card mode: found ${rows.length} card(s) in DB`);
+    return rows.map(row => {
+      const rawName = row.name || '';
+      const cardNum = (row.cardNumber || '').trim();
+      let cleanedName = rawName.replace(/^\[[^\]]*\]\s*/, '').trim();
+      cleanedName = cleanedName.replace(/\s*\(.*\)\s*$/, '').trim();
+      cleanedName = cleanedName.replace(/\s*\[[A-Z]{2}\]\s*$/, '').trim();
+      cleanedName = cleanedName.replace(/\s*\[[^\]]*\]\s*/g, ' ').trim();
+      cleanedName = cleanedName.replace(/\s*:.*$/, '').trim();
+      cleanedName = cleanedName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
+      cleanedName = cleanedName.replace(/[!?]+/g, '').trim();
+      const singleRarityPattern = /\s+(?:UC|RR?|SR|HR|UR|AR|SAR|SSR|SP|PROMO|VMAX|VSTAR|VUNION|TAG|TEAM|[CRSUNV])\s*$/i;
+      cleanedName = cleanedName.replace(singleRarityPattern, '').trim();
+      const engName = cleanedName.split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
+      const numericCardNum = cardNum.match(/(\d+\/[\w-]+)/)?.[1] || cardNum;
+      let keyword;
+      if (engName && (numericCardNum || cardNum)) {
+        keyword = `${engName} ${numericCardNum || cardNum} PSA 10`;
+      } else if (numericCardNum && /\d\/\d/.test(numericCardNum)) {
+        keyword = `${numericCardNum} PSA 10`;
+      } else if (cardNum && /\d/.test(cardNum)) {
+        keyword = `${cardNum} PSA 10`;
+      } else {
+        keyword = `${engName || cleanedName.split(/\s+/).slice(0, 3).join(' ')} PSA 10`.trim();
+      }
+      keyword = keyword.replace(/\s+/g, ' ').trim();
+      return { cardId: row.cardId, keyword, cardNumber: cardNum, engName, cleanedName, tier: 0 };
+    });
+  }
+  // ─── END SINGLE-CARD MODE ─────────────────────────────────────────────────
 
   const tier1Cutoff = toMysqlDatetime(new Date(now - CONFIG.TIER1_HOT_DAYS * 86400000));
   const tier2Cutoff = toMysqlDatetime(new Date(now - CONFIG.TIER2_WARM_DAYS * 86400000));
