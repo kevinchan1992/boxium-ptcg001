@@ -1258,7 +1258,14 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
       lastFetchStatus: dataSources.lastFetchStatus,
       fetchErrorMessage: dataSources.fetchErrorMessage,
       createdAt: dataSources.createdAt,
-      gameId: dataSources.gameId,
+            gameId: dataSources.gameId,
+      // eBay last updated: most recent priceHistory record with source='ebay' for this card
+      ebayLastUpdatedAt: sql<Date | null>`(
+        SELECT MAX(ph.createdAt)
+        FROM priceHistory ph
+        WHERE ph.cardId = ${dataSources.cardId}
+          AND ph.source = 'ebay'
+      )`,
       card: {
         id: cards.id,
         name: cards.name,
@@ -1273,7 +1280,6 @@ export async function getDataSources(options?: { page?: number; pageSize?: numbe
     .orderBy(desc(dataSources.createdAt))
     .limit(pageSize)
     .offset(offset);
-
   return { data: result, total, totalPages };
 }
 

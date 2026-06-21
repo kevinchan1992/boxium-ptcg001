@@ -1035,46 +1035,69 @@ export function AdminDataSources() {
                           </>
                         )}
                       </Button>
-                      {/* 更新 eBay 按鈕：僅對 single_card 類型顯示 */}
+                      {/* 更新 eBay 按鈕 + 最後更新時間：僅對 single_card 類型顯示 */}
                       {source.productType !== 'sealed_product' && source.card && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleTriggerEbay(source.card!.id, source.card!.name || undefined)}
-                          disabled={ebayTriggeringCardId === source.card.id}
-                          title="觸發 GitHub Actions 爬取此卡牌的 eBay 已售出記錄"
-                          className={`flex-1 sm:flex-none h-8 text-xs transition-all ${
-                            ebayTriggeringCardId === source.card.id
-                              ? 'border-orange-500/50 text-orange-400 bg-orange-500/10'
-                              : ebayTriggerResult[source.card.id] === 'triggered'
-                              ? 'border-green-500/50 text-green-400 bg-green-500/10'
-                              : ebayTriggerResult[source.card.id] === 'error'
-                              ? 'border-red-500/50 text-red-400 bg-red-500/10'
-                              : 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10'
-                          }`}
-                        >
-                          {ebayTriggeringCardId === source.card.id ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                              觸發中...
-                            </>
-                          ) : ebayTriggerResult[source.card.id] === 'triggered' ? (
-                            <>
-                              <CheckCircle className="w-3 h-3 mr-1.5" />
-                              已觸發 eBay
-                            </>
-                          ) : ebayTriggerResult[source.card.id] === 'error' ? (
-                            <>
-                              <XCircle className="w-3 h-3 mr-1.5" />
-                              觸發失敗
-                            </>
+                        <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTriggerEbay(source.card!.id, source.card!.name || undefined)}
+                            disabled={ebayTriggeringCardId === source.card.id}
+                            title="觸發 GitHub Actions 爬取此卡牌的 eBay 已售出記錄"
+                            className={`h-8 text-xs transition-all ${
+                              ebayTriggeringCardId === source.card.id
+                                ? 'border-orange-500/50 text-orange-400 bg-orange-500/10'
+                                : ebayTriggerResult[source.card.id] === 'triggered'
+                                ? 'border-green-500/50 text-green-400 bg-green-500/10'
+                                : ebayTriggerResult[source.card.id] === 'error'
+                                ? 'border-red-500/50 text-red-400 bg-red-500/10'
+                                : 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10'
+                            }`}
+                          >
+                            {ebayTriggeringCardId === source.card.id ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                                觸發中...
+                              </>
+                            ) : ebayTriggerResult[source.card.id] === 'triggered' ? (
+                              <>
+                                <CheckCircle className="w-3 h-3 mr-1.5" />
+                                已觸發 eBay
+                              </>
+                            ) : ebayTriggerResult[source.card.id] === 'error' ? (
+                              <>
+                                <XCircle className="w-3 h-3 mr-1.5" />
+                                觸發失敗
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1.5" />
+                                更新 eBay
+                              </>
+                            )}
+                          </Button>
+                          {/* eBay 最後更新時間 */}
+                          {(source as any).ebayLastUpdatedAt ? (
+                            <span
+                              className="text-xs text-muted-foreground whitespace-nowrap"
+                              title={`eBay 最後更新：${new Date((source as any).ebayLastUpdatedAt).toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' })}`}
+                            >
+                              eBay: {(() => {
+                                const d = new Date((source as any).ebayLastUpdatedAt);
+                                const now = new Date();
+                                const diffMs = now.getTime() - d.getTime();
+                                const diffDays = Math.floor(diffMs / 86400000);
+                                if (diffDays === 0) return '今天';
+                                if (diffDays === 1) return '昨天';
+                                if (diffDays < 7) return `${diffDays}天前`;
+                                if (diffDays < 30) return `${Math.floor(diffDays / 7)}週前`;
+                                return `${Math.floor(diffDays / 30)}個月前`;
+                              })()}
+                            </span>
                           ) : (
-                            <>
-                              <RefreshCw className="w-3 h-3 mr-1.5" />
-                              更新 eBay
-                            </>
+                            <span className="text-xs text-muted-foreground/50 whitespace-nowrap">eBay: 未爬取</span>
                           )}
-                        </Button>
+                        </div>
                       )}
                       <span className="text-xs text-muted-foreground ml-auto">ID: {source.id}</span>
                     </div>
