@@ -49,9 +49,10 @@ import {
   ChevronDown, ChevronUp, Eye, EyeOff, Loader2,
   BarChart3, Star, ArrowUpRight, ArrowDownRight, Minus,
   SlidersHorizontal, RefreshCw, X, AlertTriangle,
-  CheckSquare2, Square, CalendarDays, Trash, ArrowLeftRight,
+  CheckSquare2, Square, CalendarDays, Trash, ArrowLeftRight, Share2,
 } from "lucide-react";
 import { TradeSheet } from "@/components/TradeSheet";
+import { CollectionShareCard } from "@/components/CollectionShareCard";
 import ReactCropBase, { type Crop as CropType, type ReactCropProps } from "react-image-crop";
 // Type cast to fix React 19 PureComponent incompatibility
 const ReactCrop = ReactCropBase as unknown as React.FC<ReactCropProps>;
@@ -803,6 +804,9 @@ export function CollectionSection() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
+  // Share card state
+  const [showShareCard, setShowShareCard] = useState(false);
+
   // Trade sheet state
   const [showTradeSheet, setShowTradeSheet] = useState(false);
   const [tradePreselectedItem, setTradePreselectedItem] = useState<any | null>(null);
@@ -959,6 +963,16 @@ export function CollectionSection() {
             </p>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Share card button */}
+          {totalItems > 0 && stats && (
+            <Button variant="outline" size="sm"
+              onClick={() => setShowShareCard(true)}
+              className="gap-1 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 border-gray-200 hover:border-gray-300"
+              title="生成分享圖片">
+              <Share2 className="w-3 h-3" />
+              <span className="hidden sm:inline">分享</span>
+            </Button>
+          )}
           {/* PDF export */}
           <div className="relative">
             <Button variant="outline" size="sm" onClick={() => setShowPdfMenu(!showPdfMenu)}
@@ -1558,6 +1572,14 @@ export function CollectionSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Share Card Modal */}
+      {showShareCard && stats && (
+        <CollectionShareCard
+          stats={stats}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
     </div>
   );
 }

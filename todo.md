@@ -9681,3 +9681,22 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
   - 隨機延遲：每張卡牌間隔 2-5 秒
   - 每個 shard 回報進度到 platform API
 - [x] 保存 checkpoint
+
+
+---
+
+## 🎨 收藏價值分享卡功能（Collection Share Card）
+
+### 目標
+設計並實作「收藏價值分享卡」功能，讓用戶可以生成含 BOXIUM 藍黃色 Logo 的精美圖片，顯示個人收藏總市值、購入成本、未實現盈虧等數據，並可下載分享至 FB/IG。
+
+### 任務清單
+- [x] 設計分享卡 UI 元件（Canvas/HTML 渲染，1080x1080 正方形格式，適合 IG）
+- [x] 加入 BOXIUM 藍黃色 Logo 和品牌元素
+- [x] 顯示總市值、購入成本、未實現盈虧、持有張數等數據
+- [x] 實作後端 tRPC 取得個人收藏統計數據（已有 getCollectionStats，直接複用）
+- [x] 前端整合 html2canvas 生成圖片
+- [x] 加入下載按鈕（儲存至相簿）
+- [x] 加入分享按鈕（FB/IG/WhatsApp/複製連結，使用 Web Share API）
+- [x] 在個人收藏頁面加入「分享收藏」入口按鈕
+- [ ] 測試並保存 checkpoint
