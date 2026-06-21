@@ -9700,3 +9700,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 加入分享按鈕（FB/IG/WhatsApp/複製連結，使用 Web Share API）
 - [x] 在個人收藏頁面加入「分享收藏」入口按鈕
 - [ ] 測試並保存 checkpoint
+
+
+## 🔍 單張卡牌即時 eBay 爬取功能
+
+- [ ] 修改 ebay-scraper.yml 加入 card_ids 輸入參數和 single_card_mode
+- [ ] 修改 githubActionsEbayBatchUpdate.mjs 支持 CARD_IDS 環境變數模式（跳過 shard 邏輯）
+- [ ] 後端加入 triggerEbayForCard tRPC 程序（觸發 GitHub Actions 並傳入 card_ids）
+- [ ] 前端 AdminDataSources 加入「更新 eBay」按鈕（每張卡牌一個，顯示觸發狀態）
