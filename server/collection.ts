@@ -111,6 +111,7 @@ export interface CollectionStats {
   totalGain: number;
   totalGainPct: number;
   top3Gainers: CollectionItem[];
+  top3ByValue: CollectionItem[];
   currency: string;
 }
 
@@ -310,6 +311,11 @@ export async function getUserCollectionStats(userId: number): Promise<Collection
     .sort((a, b) => (b.unrealizedGainPct ?? 0) - (a.unrealizedGainPct ?? 0))
     .slice(0, 3);
 
+  const top3ByValue = [...items]
+    .filter((i) => i.marketPrice != null)
+    .sort((a, b) => (b.marketPrice ?? 0) - (a.marketPrice ?? 0))
+    .slice(0, 3);
+
   return {
     totalItems,
     totalQuantity,
@@ -318,6 +324,7 @@ export async function getUserCollectionStats(userId: number): Promise<Collection
     totalGain: Math.round(totalGain * 100) / 100,
     totalGainPct,
     top3Gainers,
+    top3ByValue,
     currency: "HKD",
   };
 }
