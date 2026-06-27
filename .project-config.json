@@ -13,10 +13,10 @@
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663320884517/Mua4eQ38uVnrovHUJBRepi",
-    "access_key_id": "ASIAZV3A2ECZLENZWBMR",
-    "secret_access_key": "vcBVzt0XwE1H/bDG39fF46BMe7IYvkzVSuJUeIY7",
-    "session_token": "IQoJb3JpZ2luX2VjECQaCXVzLWVhc3QtMSJHMEUCIQCeZ04r+9Nhn0654HMcDxFGQ0DzCrto3DQhsdHcGuKlCgIgSQq+fTPbPEkWaFfCOMW9OpuB8WAbOXJHe2eg8F+GW70q/wMI7P//////////ARAEGgw2NjUzODYwOTg4NjYiDOfT/pWG7pFkdcjW9yrTA/ru9thyRMEVjmjz9eDdLV/JTgLMM36nUBDhglqa9rIa9XIDIGiHMER4ySVMuFRlsYmgeCfJIHfJaRNz2W1L78MJPAj+Xur+uYMgO2V62vXqgeGAeGbuYhs7Anba6hqpU5hERJ3dHIUxMKAQV6Q34jlkiu+fjQshHYNbaIKfotvUeWOmqJd+r+y9YLk1HNe58J+UzfjLU4gMmTp7BX25foWMmgbBusWvK1LDMQQRnLXMi4G50S0jhSUdssKugQy8wQAM2f1TajqeEOukftQBG7mnKyjh8VGe/kktvr2vQkVU+ne0D5j4yDaecDHROcQ9ZrjxMO35b0ME3sE+R3dyQd4Ri6k3DJfOds56BCBCD7mBEEEpiwpCNJV5oQXdVpOtxFhH81oBHCV3Ws4wH+ql3SSlgIL+A6YkMnh7oBGhfu5HNBOvgt8sov48Ncz2fHq8eC9Mej3KLMer2LlVAfvU/OzARIZQVulg+lG0BQC9ELDZFcRVtxUAV79mjoI1zKb/DTYYto1Ka6mwFrrIsiozjcw4e3JeRN7/iCnPuu7Ad5DLWS0K34LJBhOascenjYl8ftfzQT/Vq03BJRZxuhJ/+GtAQV8fuRRX4r9ejigPRv8XeJYnMJaS39EGOp0BDoCmE0mc4RDAThzBHR47Ko4oZkVLA6p8Y/uf+d+6/jadY+sY56RLXkmv+iCXHkkNY32hJ/3ZDiSO4PCE8XyUQVuqYKz4wAeGZSouiT3UPxI6WjdX/TNGOt8A/bkTcGQgdKtcUsbi94esFMzJeWYyl3Fl+JzwqXZlT2iLex3qJ6MbMYM9Sc7mVbZAQulK5hqXyLe3tXDwLRJd88TSNA==",
-    "expiration": "2026-06-21T23:20:54.000Z",
+    "access_key_id": "ASIAZV3A2ECZDSRX4PSX",
+    "secret_access_key": "lDhu4YfrIQ+npxdPet9elrxgqi4FkxP1D9ey1WPR",
+    "session_token": "IQoJb3JpZ2luX2VjEDMaCXVzLWVhc3QtMSJIMEYCIQC7h3/l9refAZTBXCakCfcEUe6N0m9MdLPivPT+xGbCjwIhAIhEfhqGJTyo7YrcCijrX77Z/k5mhrHhRmY98VBDpMzeKv8DCPz//////////wEQBBoMNjY1Mzg2MDk4ODY2Igw1TJPcDR9+bKxpY4Eq0wMnkG7oRj8tvbzg1MoNXGbtJ36n3Qc+OYHVrf3bFed/Doqe+6QvIRUmuF4cZtXRm9H2oBkVJpG0OiBCtgM3GcxuJsCYuBd5ZgW7EfANS1DiUM1XKixdkYi9rDO+hXfum33xBseP2Ty9oOknuHi7eyUSoPTJAwQX+EO9zO6Mm8shFDJ/jssJZLYmWDHbpEh6NG62Z1TyYII50t9VXxkYwpq+puPq2TjrdpJiW2UUn05XWiWzocTOBLf8NKlnlUN1S7IQvVLBDcpF2E6t4hsPomQAsTCrwWVCR4UsU0dZuV8E1dsLaENwlFEQi0WlO6g/eAOw6TX4rVD+SmbXAENjMgdrucNXfku7/LFlPI1P6GhwUpQpqone7Wi5pUkv/nH41ULij7NqzM0tbgHR8NhJcXHJyIZ55bEndYimhmwB8FW+1fkT5LtIl4K8se1pmTXjAyJnzsOLlTTVnEaEVj9/mw+G0edTRgQEKoRKB0nKaU8QhAjdFcS8aypGdqB7BPjIP+a67HZIcZ9gp4O9XN+NDm1HOYiynZYJMH36EFbeAMSO5kdNdQJkkJgC1f5MHZQM4+1IeYU4S/bzoBaN03Rcn8KnK2vfWnU5eWZZHegl8Yn/yJlR3jCsveLRBjqcASMfNn9BKAtZo2t1dhm4xMBzPMr+QFO/P3D2oZ5q0q1iQi6O+ex6vx83+dC6VPSVBLSc6yANroLUUhhf/FtPNUSpxhf0vzrwRXrAhinwazLoBnLryUDJjlO5Tm4uAugq4Pn+xeUQVetmcTsJ69PpWzYjurMKyTQLNa4RFEMF5wuBNNYAlBrrm3yGRepk7/IY+4bx3SmoA6RWdzCV7w==",
+    "expiration": "2026-06-22T14:32:12.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "boxium-ptcg",
@@ -38,7 +38,7 @@
     "FACEBOOK_APP_SECRET": "5328fbe53da8f38823e9b5f462e0366b",
     "GEMINI_API_KEY": "AIzaSyDs8M74nRjastro19GV5Qsa3PLa4kni8IQ",
     "GITHUB_BRANCH": "主要的",
-    "GITHUB_PAT": "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",
+    "GITHUB_PAT": "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",
     "GITHUB_REPO": "kevinchan1992/boxium-ptcg001",
     "GMAIL_APP_PASSWORD": "sswuwyjvqjyomvab",
     "GOOGLE_CLIENT_ID": "170370228156-bcvrn01mktiacrml17ic78uih3ifrhfr.apps.googleusercontent.com",
