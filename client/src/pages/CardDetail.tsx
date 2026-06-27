@@ -184,7 +184,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
     { cardIds: [cardId!], pageSize: 1, sortBy: 'price_asc' },
     { enabled: !!cardId && !isSealedProduct, staleTime: 5 * 60 * 1000, retry: 1 }
   );
-  const lowestMarketplacePrice = lowestListingData?.listings?.[0]?.priceHkd ?? null;
+  const lowestMarketplacePrice = lowestListingData?.listings?.[0]?.priceHkd != null ? parseFloat(lowestListingData.listings[0].priceHkd as any) : null;
 
   // eBay listings for sealed products
   const { data: ebayData, isLoading: ebayLoading, refetch: refetchEbay } = trpc.pricing.getListings.useQuery(
