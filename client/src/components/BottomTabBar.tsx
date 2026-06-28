@@ -136,7 +136,13 @@ export function BottomTabBar() {
                 <button
                   key={tab.path}
                   className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-highlight-transparent"
-                  onClick={() => setLocation(tab.path)}
+                  onClick={() => {
+                    if (tab.path === "/profile" && !user) {
+                      setLocation("/login");
+                    } else {
+                      setLocation(tab.path);
+                    }
+                  }}
                   aria-label={label}
                   aria-current={active ? "page" : undefined}
                 >
