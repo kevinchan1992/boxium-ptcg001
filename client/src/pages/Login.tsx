@@ -19,6 +19,24 @@ import { useTranslation } from "react-i18next";
 
 const IS_DEV = import.meta.env.DEV;
 
+// Detect if running inside a Capacitor native app (iOS/Android)
+const isCapacitor = () => !!(window as any).Capacitor?.isNativePlatform?.();
+
+// Open OAuth URL: use in-app browser (SFSafariViewController) on iOS, normal redirect on web
+async function openOAuthUrl(url: string) {
+  if (isCapacitor()) {
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url, presentationStyle: 'popover' });
+    } catch {
+      // Fallback to window.location if plugin fails
+      window.location.href = url;
+    }
+  } else {
+    window.location.href = url;
+  }
+}
+
 /* ─── Boxium Logo Particle Canvas ───────────────────────────────────── */
 interface Particle {
   id: number;
@@ -142,6 +160,7 @@ const BRAND_YELLOW = "#f5c518"; // bright yellow (logo text)
 export default function Login() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
   const { data: currentUser, isLoading: authLoading } = trpc.auth.me.useQuery(undefined, {
     retry: false,
     staleTime: 0,
@@ -153,6 +172,24 @@ export default function Login() {
       setLocation(returnTo);
     }
   }, [currentUser, authLoading, setLocation]);
+
+  // When running in Capacitor: listen for in-app browser close event
+  // After OAuth completes, the SFSafariViewController closes and we refresh auth state
+  useEffect(() => {
+    if (!isCapacitor()) return;
+    let cleanup: (() => void) | undefined;
+    (async () => {
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        const listener = await Browser.addListener('browserFinished', async () => {
+          // Browser closed — refresh auth state to pick up new session cookie
+          await utils.auth.me.invalidate();
+        });
+        cleanup = () => listener.remove();
+      } catch { /* ignore */ }
+    })();
+    return () => { cleanup?.(); };
+  }, [utils]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -237,12 +274,12 @@ export default function Login() {
 
   const handleGoogleLogin = () => {
     const origin = window.location.origin;
-    window.location.href = `/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`;
+    openOAuthUrl(`${origin}/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`);
   };
 
   const handleAppleLogin = () => {
     const origin = window.location.origin;
-    window.location.href = `/api/auth/apple?origin=${encodeURIComponent(origin)}&returnTo=/`;
+    openOAuthUrl(`${origin}/api/auth/apple?origin=${encodeURIComponent(origin)}&returnTo=/`);
   };
 
   const handleDevLogin = async () => {
