@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "bash scripts/ensure-playwright.sh && NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && cp -r server/fonts dist/fonts && cp -r server/assets dist/assets && bash scripts/ensure-playwright.sh",
+    "build": "node scripts/download-fonts.mjs && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && rm -rf dist/fonts && mkdir -p dist/fonts && cp -r server/fonts/. dist/fonts && cp -r server/assets dist/assets && bash scripts/ensure-playwright.sh",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

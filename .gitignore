@@ -113,3 +113,6 @@ temp/
 .playwright-browsers/
 .sitemaps/
 .project-config.json
+
+# Font files - downloaded at build time from S3
+server/fonts/
