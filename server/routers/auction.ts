@@ -118,10 +118,24 @@ export const auctionRouter = router({
       if (banned) throw new TRPCError({ code: "FORBIDDEN", message: "您的帳戶已被禁止參與拍賣" });
 
       // High-value risk control: check seller's completed sales count
-      const sellerProfile = await getSellerProfileByUserId(ctx.user.id);
-      if (!sellerProfile) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: '請先完成賣家認證才能上架拍賣' });
+      const isAdmin = ctx.user.role === 'admin';
+      let sellerProfile = await getSellerProfileByUserId(ctx.user.id);
+      if (!sellerProfile) {
+        if (isAdmin) {
+          // Auto-create sellerProfile for admin users so they can list items
+          const { createSellerProfile } = await import('../db');
+          sellerProfile = await createSellerProfile({
+            userId: ctx.user.id,
+            displayName: ctx.user.name || 'Admin',
+            isActive: true,
+            isSuspended: false,
+          });
+        } else {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: '請先完成賣家認證才能上架拍賣' });
+        }
+      }
       const sellerTotalSales = sellerProfile?.totalSales ?? 0;
-      const isNewSeller = sellerTotalSales < NEW_SELLER_SALES_THRESHOLD;
+      const isNewSeller = !isAdmin && sellerTotalSales < NEW_SELLER_SALES_THRESHOLD;
       if (isNewSeller && input.startingBid > NEW_SELLER_MAX_BID_HKD) {
         throw new TRPCError({
           code: "BAD_REQUEST",
