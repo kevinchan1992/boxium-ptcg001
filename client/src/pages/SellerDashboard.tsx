@@ -3808,7 +3808,7 @@ export default function SellerDashboard() {
 
       {/* Seller Terms Dialog */}
       <Dialog open={showSellerTerms} onOpenChange={(o) => { setShowSellerTerms(o); if (!o) setPendingAuctionSubmit(false); }}>
-        <DialogContent bottomSheet className="lg:max-w-lg bg-white text-gray-900 p-0 overflow-hidden">
+        <DialogContent bottomSheet className="lg:max-w-lg bg-white text-gray-900 p-0 overflow-hidden border border-gray-200 shadow-2xl">
           {/* Header */}
           <div className="bg-[#06038D] px-5 py-4">
             <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2 m-0">
