@@ -3808,62 +3808,49 @@ export default function SellerDashboard() {
 
       {/* Seller Terms Dialog */}
       <Dialog open={showSellerTerms} onOpenChange={(o) => { setShowSellerTerms(o); if (!o) setPendingAuctionSubmit(false); }}>
-        <DialogContent bottomSheet className="lg:max-w-lg bg-[#06038D] text-white">
-          <DialogHeader>
-            <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2">
-              <Gavel className="w-5 h-5" />
+        <DialogContent bottomSheet className="lg:max-w-lg bg-white text-gray-900 p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-[#06038D] px-5 py-4">
+            <DialogTitle className="text-[#FEDD00] font-black text-lg flex items-center gap-2 m-0">
+              <Gavel className="w-5 h-5 flex-shrink-0" />
               {t("seller.auctionTerms.title")}
             </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-sm text-white/90 max-h-72 overflow-y-auto pr-1">
-            <p className="font-semibold text-white">{t("seller.auctionTerms.intro")}</p>
-            <div className="space-y-2">
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">✅ {t("seller.auctionTerms.authenticityTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.authenticityContent")}</p>
+            <p className="text-white/80 text-sm mt-1">{t("seller.auctionTerms.intro")}</p>
+          </div>
+          {/* Scrollable terms body */}
+          <div className="overflow-y-auto max-h-[55vh] px-5 py-4 space-y-3">
+            {[
+              { icon: "✅", title: t("seller.auctionTerms.authenticityTitle"), content: t("seller.auctionTerms.authenticityContent"), color: "border-green-400 bg-green-50" },
+              { icon: "📦", title: t("seller.auctionTerms.shippingTitle"), content: t("seller.auctionTerms.shippingContent"), color: "border-blue-400 bg-blue-50" },
+              { icon: "🚫", title: t("seller.auctionTerms.withdrawTitle"), content: t("seller.auctionTerms.withdrawContent"), color: "border-red-400 bg-red-50" },
+              { icon: "💰", title: t("seller.auctionTerms.feeTitle"), content: t("seller.auctionTerms.feeContent"), color: "border-yellow-400 bg-yellow-50" },
+              { icon: "🏷️", title: t("seller.auctionTerms.newSellerTitle"), content: t("seller.auctionTerms.newSellerContent"), color: "border-purple-400 bg-purple-50" },
+              { icon: "⚠️", title: t("seller.auctionTerms.violationTitle"), content: t("seller.auctionTerms.violationContent"), color: "border-orange-400 bg-orange-50" },
+              { icon: "🤝", title: t("seller.auctionTerms.protectionTitle"), content: t("seller.auctionTerms.protectionContent"), color: "border-teal-400 bg-teal-50" },
+            ].map((item, i) => (
+              <div key={i} className={`border-l-4 rounded-r-lg px-4 py-3 ${item.color}`}>
+                <p className="font-bold text-gray-800 text-sm mb-1">{item.icon} {item.title}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">{item.content}</p>
               </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">📦 {t("seller.auctionTerms.shippingTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.shippingContent")}</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🚫 {t("seller.auctionTerms.withdrawTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.withdrawContent")}</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">💰 {t("seller.auctionTerms.feeTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.feeContent")}</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🏷️ {t("seller.auctionTerms.newSellerTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.newSellerContent")}</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">⚠️ {t("seller.auctionTerms.violationTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.violationContent")}</p>
-              </div>
-              <div className="bg-white/10 rounded-xl p-3">
-                <p className="font-bold text-[#FEDD00] text-xs mb-1">🤝 {t("seller.auctionTerms.protectionTitle")}</p>
-                <p className="text-xs">{t("seller.auctionTerms.protectionContent")}</p>
-              </div>
-            </div>
-            <p className="text-xs text-white/60 mt-2">
-              {t("seller.auctionTerms.fullTermsLink")} <Link href="/auction/terms" className="text-[#FEDD00] underline">{t("seller.auctionTerms.pageLink")}</Link>
+            ))}
+            <p className="text-xs text-gray-400 pt-1">
+              {t("seller.auctionTerms.fullTermsLink")} <Link href="/auction/terms" className="text-[#06038D] underline font-medium">{t("seller.auctionTerms.pageLink")}</Link>
             </p>
           </div>
-          <DialogFooter className="gap-2 mt-2">
-            <Button variant="outline" onClick={() => { setShowSellerTerms(false); setPendingAuctionSubmit(false); }} className="border-white/30 text-white hover:bg-white/10 bg-transparent">
+          {/* Footer */}
+          <div className="border-t border-gray-100 px-5 py-4 flex gap-3 justify-end bg-gray-50">
+            <Button variant="outline" onClick={() => { setShowSellerTerms(false); setPendingAuctionSubmit(false); }} className="border-gray-300 text-gray-700 hover:bg-gray-100 bg-white">
               {t("common.cancel")}
             </Button>
             <Button
-              className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold"
+              className="bg-[#FEDD00] hover:bg-[#FEDD00]/90 text-[#06038D] font-bold shadow-sm"
               onClick={() => agreeSellerTermsMutation.mutate({ role: 'seller' })}
               disabled={agreeSellerTermsMutation.isPending}
             >
               {agreeSellerTermsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
               {t("seller.auctionTerms.agreeAndList")}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
