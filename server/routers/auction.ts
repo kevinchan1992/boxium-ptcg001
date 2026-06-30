@@ -207,6 +207,14 @@ export const auctionRouter = router({
       const banned = await isUserAuctionBanned(ctx.user.id);
       if (banned) throw new TRPCError({ code: "FORBIDDEN", message: "您的帳戶已被禁止參與拍賣" });
 
+      // Check phone verification
+      if (!ctx.user.phoneVerified) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "參與拍賣需要已驗證的 WhatsApp 電話號碼。請到「我的」頁面完成電話驗證。",
+        });
+      }
+
       const listing = await getAuctionListingById(input.listingId);
       if (!listing) throw new TRPCError({ code: "NOT_FOUND", message: "拍賣不存在" });
       if (!['active', 'ending_soon'].includes(listing.auctionStatus ?? '')) {
@@ -281,7 +289,7 @@ export const auctionRouter = router({
       }
       await updateAuctionListing(input.listingId, updateData);
 
-      // Notify previous highest bidder if outbid (station notification + email)
+      // Notify previous highest bidder if outbid (station notification + email + WhatsApp)
       if (listing.currentHighestBidderId && listing.currentHighestBidderId !== ctx.user.id) {
         await createNotification({
           userId: listing.currentHighestBidderId,
@@ -307,6 +315,28 @@ export const auctionRouter = router({
             listingId: input.listingId,
           }).catch(e => console.error('[Auction] Failed to send outbid email:', e));
         }).catch(e => console.error('[Auction] Failed to import emailService:', e));
+
+        // Send WhatsApp outbid notification (non-blocking)
+        import('../db').then(async ({ getDb }) => {
+          const { users: usersTable } = await import('../../drizzle/schema_new');
+          const { eq } = await import('drizzle-orm');
+          const db = await getDb();
+          if (!db) return;
+          const [prevBidder] = await db.select({ phone: usersTable.phone, phoneVerified: usersTable.phoneVerified })
+            .from(usersTable).where(eq(usersTable.id, listing.currentHighestBidderId!)).limit(1);
+          if (prevBidder?.phone && prevBidder.phoneVerified) {
+            const { sendWhatsAppMessage, buildOutbidMessage } = await import('../whatsapp');
+            const msg = buildOutbidMessage({
+              cardName,
+              yourBidHkd: parseFloat(prevBidAmount).toLocaleString('en-HK', { minimumFractionDigits: 0 }),
+              newHighestBidHkd: input.amount.toLocaleString('en-HK', { minimumFractionDigits: 0 }),
+              auctionEndAt: endAtStr,
+              listingId: input.listingId,
+            });
+            sendWhatsAppMessage(prevBidder.phone, msg)
+              .catch(e => console.error('[Auction] Failed to send outbid WhatsApp:', e));
+          }
+        }).catch(e => console.error('[Auction] Failed to send outbid WhatsApp (import error):', e));
       }
 
       return {

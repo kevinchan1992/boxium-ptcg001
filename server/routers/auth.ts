@@ -485,5 +485,116 @@ export const authRouter = router({
 
       return { success: true };
     }),
+
+  /**
+   * Send WhatsApp phone verification message.
+   * Generates a token, saves it to DB, then sends a WhatsApp message with the verify link.
+   */
+  sendPhoneVerification: protectedProcedure
+    .input(z.object({
+      phone: z.string().min(5).max(30),
+      origin: z.string().url(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { getDb } = await import('../db');
+      const { users: usersTable } = await import('../../drizzle/schema_new');
+      const { eq: eqOp } = await import('drizzle-orm');
+      const drizzleDb = await getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+      // Normalise phone: keep digits and leading +
+      const normalised = input.phone.trim();
+      if (!/^\+?[0-9\s\-()]{5,30}$/.test(normalised)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '電話號碼格式不正確，請包含國碼（例如 +852 9123 4567）' });
+      }
+
+      // 60-second cooldown
+      const userRows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+      const user = userRows[0];
+      if (user?.phoneVerifyExpires) {
+        const issuedAt = user.phoneVerifyExpires - 30 * 60 * 1000; // token valid 30 min
+        const secondsSinceIssued = (Date.now() - issuedAt) / 1000;
+        if (secondsSinceIssued < 60) {
+          const remaining = Math.ceil(60 - secondsSinceIssued);
+          throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: `請等待 ${remaining} 秒後再重新發送` });
+        }
+      }
+
+      // Generate token
+      const crypto = await import('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const expires = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+      // Save phone + token to DB (reset phoneVerified if phone changed)
+      const phoneChanged = user?.phone !== normalised;
+      await drizzleDb.update(usersTable).set({
+        phone: normalised,
+        phoneVerified: phoneChanged ? false : user?.phoneVerified ?? false,
+        phoneVerifyToken: token,
+        phoneVerifyExpires: expires,
+      }).where(eqOp(usersTable.id, ctx.user.id));
+
+      // Invalidate session cache so next auth.me returns fresh data
+      const { invalidateSessionCache } = await import('../_core/authenticateSession');
+      invalidateSessionCache(ctx.user.id);
+
+      // Send WhatsApp verification message
+      const { sendWhatsAppMessage, buildVerificationMessage } = await import('../whatsapp');
+      const verifyUrl = `${input.origin}/api/verify-phone?token=${token}`;
+      const message = buildVerificationMessage(verifyUrl);
+      const sent = await sendWhatsAppMessage(normalised, message);
+
+      if (!sent) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: '無法發送 WhatsApp 訊息，請確認電話號碼正確並已開通 WhatsApp',
+        });
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Verify phone via token (called from the verify link in WhatsApp message).
+   * This is also exposed as a tRPC procedure for programmatic use.
+   */
+  verifyPhone: publicProcedure
+    .input(z.object({ token: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const { getDb } = await import('../db');
+      const { users: usersTable } = await import('../../drizzle/schema_new');
+      const { eq: eqOp, and, gt } = await import('drizzle-orm');
+      const drizzleDb = await getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
+
+      const now = Date.now();
+      const userRows = await drizzleDb
+        .select()
+        .from(usersTable)
+        .where(
+          and(
+            eqOp(usersTable.phoneVerifyToken, input.token),
+            gt(usersTable.phoneVerifyExpires, now)
+          )
+        )
+        .limit(1);
+
+      if (userRows.length === 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: '驗證連結無效或已過期' });
+      }
+
+      const user = userRows[0];
+      await drizzleDb.update(usersTable).set({
+        phoneVerified: true,
+        phoneVerifyToken: null,
+        phoneVerifyExpires: null,
+      }).where(eqOp(usersTable.id, user.id));
+
+      // Invalidate session cache
+      const { invalidateSessionCache } = await import('../_core/authenticateSession');
+      invalidateSessionCache(user.id);
+
+      return { success: true, phone: user.phone };
+    }),
 });
 

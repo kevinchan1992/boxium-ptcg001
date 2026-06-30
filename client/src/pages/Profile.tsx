@@ -534,6 +534,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user.name || "");
   const [editPhone, setEditPhone] = useState(user.phone || "");
+  const [isSendingVerify, setIsSendingVerify] = useState(false);
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
       toast.success(t("profile.profileUpdated"));
@@ -542,6 +543,33 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
     },
     onError: (err) => toast.error(`${t("profile.updateFailed")}：${err.message}`),
   });
+  const sendPhoneVerification = trpc.auth.sendPhoneVerification.useMutation({
+    onSuccess: () => {
+      toast.success("✅ WhatsApp 驗證訊息已發送，請檢查您的 WhatsApp");
+      utils.auth.me.invalidate();
+    },
+    onError: (err) => toast.error(`發送失敗：${err.message}`),
+    onSettled: () => setIsSendingVerify(false),
+  });
+
+  // Handle phone_verify query param (redirect from verify link)
+  const [location] = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("phone_verify");
+    if (status === "success") {
+      toast.success("✅ WhatsApp 電話驗證成功！");
+      utils.auth.me.invalidate();
+      // Remove query param
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (status === "expired") {
+      toast.error("驗證連結已過期，請重新發送");
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (status === "invalid" || status === "error") {
+      toast.error("驗證失敗，請重試");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [location]);
   const readonlyFields = [
     { icon: Mail, label: t("profile.infoSection.email"), value: user.email || t("profile.infoSection.notSet") },
     { icon: Shield, label: t("profile.infoSection.role"), value: user.role === "admin" ? t("profile.infoSection.adminRole") : t("profile.infoSection.normalUser") },
@@ -607,22 +635,54 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           )}
         </div>
         {/* Phone row */}
-        <div className="flex items-center px-4 py-3.5">
-          <div className="flex items-center gap-2 w-24 flex-shrink-0">
-            <Phone className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-sm text-gray-500">{t("profile.phone")}</span>
+        <div className="flex flex-col px-4 py-3.5 gap-2">
+          <div className="flex items-center">
+            <div className="flex items-center gap-2 w-24 flex-shrink-0">
+              <Phone className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-sm text-gray-500">{t("profile.phone")}</span>
+            </div>
+            {isEditing ? (
+              <Input
+                value={editPhone}
+                onChange={e => setEditPhone(e.target.value)}
+                placeholder="+852 XXXX XXXX"
+                className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-end gap-2">
+                <span className="text-sm text-gray-700">
+                  {user.phone || <span className="text-gray-400 text-xs">{t("profile.notSet")}</span>}
+                </span>
+                {user.phone && (
+                  user.phoneVerified
+                    ? <span className="flex items-center gap-0.5 text-xs font-semibold text-green-600"><CheckCircle className="w-3 h-3" />已驗證</span>
+                    : <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-500"><AlertCircle className="w-3 h-3" />未驗證</span>
+                )}
+              </div>
+            )}
           </div>
-          {isEditing ? (
-            <Input
-              value={editPhone}
-              onChange={e => setEditPhone(e.target.value)}
-              placeholder="+852 XXXX XXXX"
-              className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
-            />
-          ) : (
-            <span className="flex-1 text-sm text-right text-gray-700">
-              {user.phone || <span className="text-gray-400 text-xs">{t("profile.notSet")}</span>}
-            </span>
+          {/* WhatsApp verification button (only show when not editing and phone not verified) */}
+          {!isEditing && user.phone && !user.phoneVerified && (
+            <button
+              onClick={() => {
+                setIsSendingVerify(true);
+                sendPhoneVerification.mutate({ phone: user.phone, origin: window.location.origin });
+              }}
+              disabled={sendPhoneVerification.isPending || isSendingVerify}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors self-end"
+              style={{ background: "#25D366", color: "white" }}
+            >
+              {sendPhoneVerification.isPending || isSendingVerify ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Phone className="w-3 h-3" />
+              )}
+              發送 WhatsApp 驗證
+            </button>
+          )}
+          {/* Prompt to set phone if not set */}
+          {!isEditing && !user.phone && (
+            <p className="text-xs text-amber-600 self-end">請先設定電話號碼以接收 WhatsApp 通知</p>
           )}
         </div>
       </div>

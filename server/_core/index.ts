@@ -1003,6 +1003,49 @@ async function startServer() {
     });
   });
 
+  // Phone verification endpoint — user clicks the link in their WhatsApp message
+  app.get("/api/verify-phone", async (req, res) => {
+    const token = req.query.token as string | undefined;
+    if (!token) {
+      return res.redirect("https://boxium.asia/profile?phone_verify=invalid");
+    }
+    try {
+      const { getDb } = await import("../db");
+      const { users: usersTable } = await import("../../drizzle/schema_new");
+      const { eq, and, gt } = await import("drizzle-orm");
+      const drizzleDb = await getDb();
+      if (!drizzleDb) return res.redirect("https://boxium.asia/profile?phone_verify=error");
+
+      const now = Date.now();
+      const userRows = await drizzleDb
+        .select()
+        .from(usersTable)
+        .where(and(eq(usersTable.phoneVerifyToken, token), gt(usersTable.phoneVerifyExpires, now)))
+        .limit(1);
+
+      if (userRows.length === 0) {
+        return res.redirect("https://boxium.asia/profile?phone_verify=expired");
+      }
+
+      const user = userRows[0];
+      await drizzleDb.update(usersTable).set({
+        phoneVerified: true,
+        phoneVerifyToken: null,
+        phoneVerifyExpires: null,
+      }).where(eq(usersTable.id, user.id));
+
+      // Invalidate session cache
+      const { invalidateSessionCache } = await import("../_core/authenticateSession");
+      invalidateSessionCache(user.id);
+
+      console.log(`[PhoneVerify] User ${user.id} phone ${user.phone} verified successfully`);
+      return res.redirect("https://boxium.asia/profile?phone_verify=success");
+    } catch (err) {
+      console.error("[PhoneVerify] Error:", err);
+      return res.redirect("https://boxium.asia/profile?phone_verify=error");
+    }
+  });
+
   // Sitemap index route (points to individual sitemaps)
   // Helper to set sitemap cache headers (forces Cloudflare CDN caching)
   function setSitemapCacheHeaders(res: Response, maxAge: number = 3600, cdnMaxAge: number = 86400) {

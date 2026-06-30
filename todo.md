@@ -9708,3 +9708,18 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [ ] 修改 githubActionsEbayBatchUpdate.mjs 支持 CARD_IDS 環境變數模式（跳過 shard 邏輯）
 - [ ] 後端加入 triggerEbayForCard tRPC 程序（觸發 GitHub Actions 並傳入 card_ids）
 - [ ] 前端 AdminDataSources 加入「更新 eBay」按鈕（每張卡牌一個，顯示觸發狀態）
+
+## 拍賣 WhatsApp 通知系統（Green API）
+
+- [x] 設定 Green API 密鑰（GREEN_API_INSTANCE_ID, GREEN_API_TOKEN）
+- [x] 更新資料庫 schema：users 加入 phoneVerified, phoneVerifyToken, phoneVerifyExpires 欄位
+- [x] 新增 Green API WhatsApp 發送工具函數（server/whatsapp.ts）
+- [x] 實作電話驗證流程：個人資料頁輸入電話 + 發送 WhatsApp 驗證連結
+- [x] 實作 /verify-phone 驗證端點（點擊連結後標記 phoneVerified=true）
+- [x] 拍賣出標時檢查 phoneVerified，未驗證則提示用戶
+- [x] 被超標時發送 WhatsApp 通知給前一名出標者
+- [x] 得標後發送 WhatsApp 通知含 Stripe 付款連結（帶 token）
+- [x] 未得標者發送 WhatsApp 通知
+- [x] Stripe webhook 付款完成後同步更新系統訂單狀態（已有，確認 WhatsApp 通知）
+- [x] 實作 15 分鐘提醒（在現有 notifyEndingSoon 內嵌入 15 分鐘內觸發逻輯）
+- [x] 拍賣結標定時任務加入 WhatsApp 通知

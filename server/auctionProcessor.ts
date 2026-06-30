@@ -120,6 +120,11 @@ export async function notifyEndingSoon(): Promise<void> {
       // Notify ALL distinct bidders (not just the current highest)
       try {
         const bidderIds = await getDistinctBidderIds(listing.id);
+        const now = new Date();
+        const endAt = listing.auctionEndAt ? new Date(listing.auctionEndAt) : null;
+        const minutesLeft = endAt ? (endAt.getTime() - now.getTime()) / 60000 : 999;
+        const is15MinWindow = minutesLeft <= 15;
+
         for (const bidderId of bidderIds) {
           const isLeading = bidderId === listing.currentHighestBidderId;
           await createNotification({
@@ -132,6 +137,35 @@ export async function notifyEndingSoon(): Promise<void> {
             relatedId: listing.id,
             linkUrl: `/auction/${listing.id}`,
           });
+        }
+
+        // Send WhatsApp 15-minute reminder (only when within 15 minutes)
+        if (is15MinWindow) {
+          import('./db').then(async ({ getDb }) => {
+            const { users } = await import('../drizzle/schema_new');
+            const { inArray } = await import('drizzle-orm');
+            const { sendWhatsAppMessage, buildEndingSoonMessage } = await import('./whatsapp');
+            const db = await getDb();
+            if (!db || bidderIds.length === 0) return;
+            const bidderRows = await db
+              .select({ id: users.id, phone: users.phone, phoneVerified: users.phoneVerified })
+              .from(users).where(inArray(users.id, bidderIds)).limit(50);
+            const currentBidHkd = listing.currentHighestBid
+              ? parseFloat(String(listing.currentHighestBid)).toLocaleString('en-HK', { minimumFractionDigits: 0 })
+              : (listing.startingBid ? parseFloat(String(listing.startingBid)).toLocaleString('en-HK', { minimumFractionDigits: 0 }) : '0');
+            for (const bidder of bidderRows) {
+              if (!bidder.phone || !bidder.phoneVerified) continue;
+              const isLeading = bidder.id === listing.currentHighestBidderId;
+              const msg = buildEndingSoonMessage({
+                cardName: listing.title ?? `拍賣品 #${listing.id}`,
+                currentHighestBidHkd: currentBidHkd,
+                isLeading,
+                listingId: listing.id,
+              });
+              sendWhatsAppMessage(bidder.phone, msg)
+                .catch(e => console.error(`[AuctionProcessor] Failed to send 15min WhatsApp to user ${bidder.id}:`, e));
+            }
+          }).catch(e => console.error('[AuctionProcessor] Failed to send 15min WhatsApp reminders:', e));
         }
       } catch (err) {
         console.error(`[AuctionProcessor] Failed to notify bidders for auction ${listing.id}:`, err);
@@ -383,18 +417,26 @@ async function finalizeAuction(listing: any): Promise<void> {
       });
     }
 
-    // Get buyer name for seller email
+    // Get buyer info (name + phone) for notifications
     let buyerName = '買家';
+    let buyerPhone: string | null = null;
+    let buyerPhoneVerified = false;
     try {
       const { getDb } = await import('./db');
       const { users } = await import('../drizzle/schema_new');
       const { eq } = await import('drizzle-orm');
       const db = await getDb();
       if (db) {
-        const [buyer] = await db.select({ name: users.name }).from(users).where(eq(users.id, winningBid.bidderId)).limit(1);
+        const [buyer] = await db.select({ name: users.name, phone: users.phone, phoneVerified: users.phoneVerified })
+          .from(users).where(eq(users.id, winningBid.bidderId)).limit(1);
         if (buyer?.name) buyerName = buyer.name;
+        if (buyer?.phone) buyerPhone = buyer.phone;
+        buyerPhoneVerified = buyer?.phoneVerified ?? false;
       }
     } catch { /* ignore */ }
+
+    // Build Stripe payment URL for WhatsApp message
+    const paymentUrl = `https://boxium.asia/auction/${listing.id}?pay=1`;
 
     // Send email to winner
     sendAuctionWonEmail({
@@ -404,6 +446,21 @@ async function finalizeAuction(listing: any): Promise<void> {
       orderNo,
       paymentDeadline: paymentDeadlineStr,
     }).catch(err => console.error('[AuctionProcessor] Failed to send auction won email:', err));
+
+    // Send WhatsApp to winner (non-blocking)
+    if (buyerPhone && buyerPhoneVerified) {
+      import('./whatsapp').then(({ sendWhatsAppMessage, buildAuctionWonMessage }) => {
+        const msg = buildAuctionWonMessage({
+          cardName: listing.title ?? `拍賣品 #${listing.id}`,
+          winAmountHkd: winAmount.toFixed(0),
+          orderNo,
+          paymentUrl,
+          paymentDeadline: paymentDeadlineStr,
+        });
+        sendWhatsAppMessage(buyerPhone!, msg)
+          .catch(e => console.error('[AuctionProcessor] Failed to send won WhatsApp:', e));
+      }).catch(e => console.error('[AuctionProcessor] Failed to import whatsapp:', e));
+    }
 
     // Send email to seller (get seller's userId from sellerProfile)
     if (listing.sellerId) {
@@ -424,12 +481,38 @@ async function finalizeAuction(listing: any): Promise<void> {
     }
   }
 
-  // Mark all other bids as retracted
+  // Mark all other bids as retracted + send WhatsApp lost notification
   const allBids = await getBidsByListingId(listing.id, 100);
+  // Collect unique losers (exclude winner)
+  const loserBidderIds = new Set<number>();
   for (const bid of allBids) {
     if (bid.id !== winningBid.id && (bid.status === 'active' || bid.status === 'outbid')) {
       await updateBidStatus(bid.id, 'retracted');
+      if (bid.bidderId !== winningBid.bidderId) loserBidderIds.add(bid.bidderId);
     }
+  }
+  // Send WhatsApp lost notifications (non-blocking)
+  if (loserBidderIds.size > 0) {
+    import('./db').then(async ({ getDb }) => {
+      const { users } = await import('../drizzle/schema_new');
+      const { inArray } = await import('drizzle-orm');
+      const { sendWhatsAppMessage, buildAuctionLostMessage } = await import('./whatsapp');
+      const db = await getDb();
+      if (!db) return;
+      const loserRows = await db.select({ id: users.id, phone: users.phone, phoneVerified: users.phoneVerified })
+        .from(users).where(inArray(users.id, Array.from(loserBidderIds))).limit(50);
+      for (const loser of loserRows) {
+        if (loser.phone && loser.phoneVerified) {
+          const msg = buildAuctionLostMessage({
+            cardName: listing.title ?? `拍賣品 #${listing.id}`,
+            winAmountHkd: winAmount.toFixed(0),
+            listingId: listing.id,
+          });
+          sendWhatsAppMessage(loser.phone, msg)
+            .catch(e => console.error(`[AuctionProcessor] Failed to send lost WhatsApp to user ${loser.id}:`, e));
+        }
+      }
+    }).catch(e => console.error('[AuctionProcessor] Failed to send lost WhatsApp notifications:', e));
   }
 }
 

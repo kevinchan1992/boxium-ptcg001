@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index, uniqueIndex } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index, uniqueIndex, bigint } from "drizzle-orm/mysql-core";
 
 /**
  * Games table - manages TCG game types
@@ -66,6 +66,9 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   phone: varchar("phone", { length: 30 }),
+  phoneVerified: boolean("phoneVerified").default(false).notNull(),
+  phoneVerifyToken: varchar("phoneVerifyToken", { length: 128 }),
+  phoneVerifyExpires: bigint("phoneVerifyExpires", { mode: "number" }),
   isBlocked: boolean("isBlocked").default(false).notNull(),
   blockReason: text("blockReason"),
   emailVerificationToken: varchar("emailVerificationToken", { length: 128 }), // Token for email verification (null after verified)
