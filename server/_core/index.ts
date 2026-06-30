@@ -1006,15 +1006,24 @@ async function startServer() {
   // Phone verification endpoint — user clicks the link in their WhatsApp message
   app.get("/api/verify-phone", async (req, res) => {
     const token = req.query.token as string | undefined;
+
+    // Helper to render a styled result page
+    const renderPage = (opts: { success: boolean; title: string; message: string; sub?: string }) => {
+      const icon = opts.success
+        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="64" height="64"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="64" height="64"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+      return `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${opts.title} — BOXIUM PTCG</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#06038D;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}.card{background:#fff;border-radius:1.5rem;padding:2.5rem 2rem;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}.logo{font-size:1.1rem;font-weight:900;color:#06038D;letter-spacing:.05em;margin-bottom:2rem;opacity:.7}.icon{margin-bottom:1.5rem}.title{font-size:1.5rem;font-weight:800;color:#111;margin-bottom:.75rem}.msg{font-size:.95rem;color:#555;line-height:1.6;margin-bottom:.5rem}.sub{font-size:.8rem;color:#999;margin-bottom:2rem}.btn{display:inline-block;background:#FEDD00;color:#06038D;font-weight:800;font-size:.95rem;padding:.75rem 2rem;border-radius:.75rem;text-decoration:none;transition:opacity .2s}.btn:hover{opacity:.85}.wa{display:inline-block;background:#25D366;color:#fff;font-weight:700;font-size:.85rem;padding:.5rem 1.25rem;border-radius:.75rem;text-decoration:none;margin-top:.75rem}</style></head><body><div class="card"><div class="logo">BOXIUM PTCG</div><div class="icon">${icon}</div><h1 class="title">${opts.title}</h1><p class="msg">${opts.message}</p>${opts.sub ? `<p class="sub">${opts.sub}</p>` : ''}<a href="https://boxium.asia/profile" class="btn">返回個人資料</a></div></body></html>`;
+    };
+
     if (!token) {
-      return res.redirect("https://boxium.asia/profile?phone_verify=invalid");
+      return res.status(400).send(renderPage({ success: false, title: '連結無效', message: '驗證連結不完整，請重新儲存電話號碼以重新發送驗證訊息。' }));
     }
     try {
       const { getDb } = await import("../db");
       const { users: usersTable } = await import("../../drizzle/schema_new");
       const { eq, and, gt } = await import("drizzle-orm");
       const drizzleDb = await getDb();
-      if (!drizzleDb) return res.redirect("https://boxium.asia/profile?phone_verify=error");
+      if (!drizzleDb) return res.status(500).send(renderPage({ success: false, title: '伺服器錯誤', message: '系統暫時無法處理，請稍後再試。' }));
 
       const now = Date.now();
       const userRows = await drizzleDb
@@ -1024,7 +1033,7 @@ async function startServer() {
         .limit(1);
 
       if (userRows.length === 0) {
-        return res.redirect("https://boxium.asia/profile?phone_verify=expired");
+        return res.status(400).send(renderPage({ success: false, title: '連結已過期', message: '此驗證連結已失效（有效期 30 分鐘）。', sub: '請到個人資料頁重新儲存電話號碼以重新發送驗證訊息。' }));
       }
 
       const user = userRows[0];
@@ -1039,10 +1048,10 @@ async function startServer() {
       invalidateSessionCache(user.id);
 
       console.log(`[PhoneVerify] User ${user.id} phone ${user.phone} verified successfully`);
-      return res.redirect("https://boxium.asia/profile?phone_verify=success");
+      return res.send(renderPage({ success: true, title: '驗證成功！', message: `您的 WhatsApp 電話號碼 <strong>${user.phone}</strong> 已成功驗證。`, sub: '現在可以參與所有拍賣活動並接收 WhatsApp 通知。' }));
     } catch (err) {
       console.error("[PhoneVerify] Error:", err);
-      return res.redirect("https://boxium.asia/profile?phone_verify=error");
+      return res.status(500).send(renderPage({ success: false, title: '驗證失敗', message: '系統發生錯誤，請稍後再試。' }));
     }
   });
 
