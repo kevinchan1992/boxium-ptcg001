@@ -825,7 +825,9 @@
     "addToWishlist": "加入收藏",
     "addedToWishlist": "已加入收藏",
     "share": "分享",
-    "wishlist": "收藏"
+    "wishlist": "收藏",
+    "save": "儲存",
+    "saving": "儲存中..."
   },
   "disclaimerPage": {
     "contactInfo": "如有任何疑問，請聯繫我們：boxium.asia@gmail.com",

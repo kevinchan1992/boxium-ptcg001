@@ -533,7 +533,19 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
   const utils = trpc.useUtils();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user.name || "");
-  const [editPhone, setEditPhone] = useState(user.phone || "");
+  // Phone: store prefix and number separately for UI, combine on save
+  const parsePhonePrefix = (phone: string) => {
+    if (!phone) return { prefix: "+852", number: "" };
+    const prefixes = ["+852", "+886", "+86", "+1", "+44", "+81", "+65"];
+    for (const p of prefixes) {
+      if (phone.startsWith(p)) return { prefix: p, number: phone.slice(p.length).trim() };
+    }
+    return { prefix: "+852", number: phone };
+  };
+  const parsedPhone = parsePhonePrefix(user.phone || "");
+  const [phonePrefix, setPhonePrefix] = useState(parsedPhone.prefix);
+  const [phoneNumber, setPhoneNumber] = useState(parsedPhone.number);
+  const editPhone = phoneNumber ? `${phonePrefix} ${phoneNumber}`.trim() : "";
   const [isSendingVerify, setIsSendingVerify] = useState(false);
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -594,7 +606,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           </div>
           {!isEditing ? (
             <button
-              onClick={() => { setEditName(user.name || ""); setEditPhone(user.phone || ""); setIsEditing(true); }}
+              onClick={() => { setEditName(user.name || ""); const p = parsePhonePrefix(user.phone || ""); setPhonePrefix(p.prefix); setPhoneNumber(p.number); setIsEditing(true); }}
               className="flex items-center gap-1 text-sm font-semibold transition-colors"
               style={{ color: BRAND_BLUE }}
             >
@@ -642,12 +654,27 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
               <span className="text-sm text-gray-500">{t("profile.phone")}</span>
             </div>
             {isEditing ? (
-              <Input
-                value={editPhone}
-                onChange={e => setEditPhone(e.target.value)}
-                placeholder="+852 XXXX XXXX"
-                className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
-              />
+              <div className="flex-1 flex items-center gap-1">
+                <select
+                  value={phonePrefix}
+                  onChange={e => setPhonePrefix(e.target.value)}
+                  className="border-0 border-b border-gray-200 rounded-none h-7 text-sm focus:outline-none bg-transparent text-gray-700 pr-1 flex-shrink-0"
+                >
+                  <option value="+852">+852 🇭🇰</option>
+                  <option value="+886">+886 🇹🇼</option>
+                  <option value="+86">+86 🇨🇳</option>
+                  <option value="+65">+65 🇸🇬</option>
+                  <option value="+81">+81 🇯🇵</option>
+                  <option value="+1">+1 🇺🇸</option>
+                  <option value="+44">+44 🇬🇧</option>
+                </select>
+                <Input
+                  value={phoneNumber}
+                  onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="XXXX XXXX"
+                  className="flex-1 border-0 border-b border-gray-200 rounded-none px-0 h-7 text-sm focus-visible:ring-0 bg-transparent text-gray-900"
+                />
+              </div>
             ) : (
               <div className="flex-1 flex items-center justify-end gap-2">
                 <span className="text-sm text-gray-700">

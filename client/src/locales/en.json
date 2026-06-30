@@ -825,7 +825,9 @@
     "addToWishlist": "Add to Wishlist",
     "addedToWishlist": "Added to Wishlist",
     "share": "Share",
-    "wishlist": "Wishlist"
+    "wishlist": "Wishlist",
+    "save": "Save",
+    "saving": "Saving..."
   },
   "disclaimerPage": {
     "contactInfo": "For any questions, please contact us: boxium.asia@gmail.com",

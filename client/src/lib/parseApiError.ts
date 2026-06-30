@@ -167,6 +167,13 @@ export function parseApiError(error: unknown): string {
 
     // 嘗試從 tRPC code 解析
     const code = (data?.code as string) ?? (err.code as string);
+    // For PRECONDITION_FAILED, prefer the backend's detailed message over the generic fallback
+    if (code === 'PRECONDITION_FAILED') {
+      const msg = err.message as string | undefined;
+      if (msg && !msg.startsWith('{') && !msg.startsWith('[')) {
+        return msg;
+      }
+    }
     if (code && trpcCodeMessages[code]) {
       return trpcCodeMessages[code];
     }
