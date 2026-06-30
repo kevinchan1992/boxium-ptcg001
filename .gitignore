@@ -116,3 +116,6 @@ temp/
 
 # Font files - downloaded at build time from S3
 server/fonts/
+
+# DB export files - large JSON data, not needed in deployment
+db_export/
