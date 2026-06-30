@@ -113,20 +113,85 @@ export const authRouter = router({
     .input(z.object({
       name: z.string().min(1).max(100).optional(),
       phone: z.string().max(30).optional().nullable(),
+      origin: z.string().url().optional(), // required when phone is provided, for building verify URL
     }))
     .mutation(async ({ input, ctx }) => {
       const { getDb } = await import('../db');
       const drizzleDb = await getDb();
       if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: '資料庫連線失敗' });
-      const updateData: Record<string, any> = {};
-      if (input.name !== undefined) updateData.name = input.name;
-      if (input.phone !== undefined) updateData.phone = input.phone;
-      if (Object.keys(updateData).length === 0) throw new TRPCError({ code: 'BAD_REQUEST', message: '沒有需要更新的資料' });
       const { users: usersTable } = await import('../../drizzle/schema_new');
       const { eq: eqOp } = await import('drizzle-orm');
+
+      // Fetch current user to detect phone change
+      const userRows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
+      const currentUser = userRows[0];
+
+      const updateData: Record<string, any> = {};
+      if (input.name !== undefined) updateData.name = input.name;
+
+      let shouldSendVerification = false;
+      let newPhone: string | null = null;
+
+      if (input.phone !== undefined) {
+        if (input.phone === null || input.phone === '') {
+          // Clearing phone
+          updateData.phone = null;
+          updateData.phoneVerified = false;
+          updateData.phoneVerifyToken = null;
+          updateData.phoneVerifyExpires = null;
+        } else {
+          const normalised = input.phone.trim();
+          if (!/^\+?[0-9\s\-()]{5,30}$/.test(normalised)) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: '電話號碼格式不正確，請包含國碼（例如 +852 9123 4567）' });
+          }
+          const phoneChanged = currentUser?.phone !== normalised;
+          updateData.phone = normalised;
+          if (phoneChanged) {
+            // Reset verification status when phone changes
+            updateData.phoneVerified = false;
+            updateData.phoneVerifyToken = null;
+            updateData.phoneVerifyExpires = null;
+            shouldSendVerification = true;
+            newPhone = normalised;
+          }
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) throw new TRPCError({ code: 'BAD_REQUEST', message: '沒有需要更新的資料' });
       await drizzleDb.update(usersTable).set(updateData).where(eqOp(usersTable.id, ctx.user.id));
+
+      // Auto-send WhatsApp verification when phone is newly set/changed
+      let verificationSent = false;
+      let verificationError: string | undefined;
+      if (shouldSendVerification && newPhone && input.origin) {
+        try {
+          const crypto = await import('crypto');
+          const token = crypto.randomBytes(32).toString('hex');
+          const expires = Date.now() + 30 * 60 * 1000;
+          await drizzleDb.update(usersTable).set({
+            phoneVerifyToken: token,
+            phoneVerifyExpires: expires,
+          }).where(eqOp(usersTable.id, ctx.user.id));
+          const { invalidateSessionCache } = await import('../_core/authenticateSession');
+          invalidateSessionCache(ctx.user.id);
+          const { sendWhatsAppMessage, buildVerificationMessage } = await import('../whatsapp');
+          const verifyUrl = `${input.origin}/api/verify-phone?token=${token}`;
+          const message = buildVerificationMessage(verifyUrl);
+          verificationSent = await sendWhatsAppMessage(newPhone, message);
+          if (!verificationSent) {
+            verificationError = '電話已儲存，但 WhatsApp 驗證訊息發送失敗，請確認號碼正確並已開通 WhatsApp';
+          }
+        } catch (err) {
+          console.error('[updateProfile] Failed to send WhatsApp verification:', err);
+          verificationError = '電話已儲存，但 WhatsApp 驗證訊息發送失敗';
+        }
+      }
+
+      const { invalidateSessionCache } = await import('../_core/authenticateSession');
+      invalidateSessionCache(ctx.user.id);
+
       const rows = await drizzleDb.select().from(usersTable).where(eqOp(usersTable.id, ctx.user.id)).limit(1);
-      return rows[0] || null;
+      return { user: rows[0] || null, verificationSent, verificationError };
     }),
   changePassword: protectedProcedure
     .input(z.object({

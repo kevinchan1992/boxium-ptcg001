@@ -546,22 +546,21 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
   const [phonePrefix, setPhonePrefix] = useState(parsedPhone.prefix);
   const [phoneNumber, setPhoneNumber] = useState(parsedPhone.number);
   const editPhone = phoneNumber ? `${phonePrefix} ${phoneNumber}`.trim() : "";
-  const [isSendingVerify, setIsSendingVerify] = useState(false);
+
   const updateProfile = trpc.auth.updateProfile.useMutation({
-    onSuccess: () => {
-      toast.success(t("profile.profileUpdated"));
+    onSuccess: (data) => {
       setIsEditing(false);
       utils.auth.me.invalidate();
+      if (data?.verificationSent) {
+        toast.success("✅ 資料已儲存， WhatsApp 驗證訊息已發送，請點擊訊息中的連結完成驗證");
+      } else if (data?.verificationError) {
+        toast.success(t("profile.profileUpdated"));
+        toast.error(data.verificationError);
+      } else {
+        toast.success(t("profile.profileUpdated"));
+      }
     },
     onError: (err) => toast.error(`${t("profile.updateFailed")}：${err.message}`),
-  });
-  const sendPhoneVerification = trpc.auth.sendPhoneVerification.useMutation({
-    onSuccess: () => {
-      toast.success("✅ WhatsApp 驗證訊息已發送，請檢查您的 WhatsApp");
-      utils.auth.me.invalidate();
-    },
-    onError: (err) => toast.error(`發送失敗：${err.message}`),
-    onSettled: () => setIsSendingVerify(false),
   });
 
   // Handle phone_verify query param (redirect from verify link)
@@ -615,7 +614,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
           ) : (
             <div className="flex gap-2">
               <button
-                onClick={() => updateProfile.mutate({ name: editName || undefined, phone: editPhone || null })}
+                onClick={() => updateProfile.mutate({ name: editName || undefined, phone: editPhone || null, origin: window.location.origin })}
                 disabled={updateProfile.isPending}
                 className="flex items-center gap-1 text-sm font-semibold"
                 style={{ color: BRAND_BLUE }}
@@ -688,24 +687,9 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
               </div>
             )}
           </div>
-          {/* WhatsApp verification button (only show when not editing and phone not verified) */}
+          {/* Unverified phone hint */}
           {!isEditing && user.phone && !user.phoneVerified && (
-            <button
-              onClick={() => {
-                setIsSendingVerify(true);
-                sendPhoneVerification.mutate({ phone: user.phone, origin: window.location.origin });
-              }}
-              disabled={sendPhoneVerification.isPending || isSendingVerify}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors self-end"
-              style={{ background: "#25D366", color: "white" }}
-            >
-              {sendPhoneVerification.isPending || isSendingVerify ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Phone className="w-3 h-3" />
-              )}
-              發送 WhatsApp 驗證
-            </button>
+            <p className="text-xs text-amber-600 self-end">⚠️ 電話尚未驗證，請編輯儲存以重新發送 WhatsApp 驗證訊息</p>
           )}
           {/* Prompt to set phone if not set */}
           {!isEditing && !user.phone && (
