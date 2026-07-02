@@ -25,8 +25,9 @@ const __dirname = path.dirname(__filename);
 const BASE_URL = "https://boxium.asia";
 const CARDS_PER_SITEMAP = 10000;
 
-// Resolve to client/public/ directory (two levels up from server/scripts/)
-const PUBLIC_DIR = path.resolve(__dirname, "../../client/public");
+// Resolve to dist/public/ directory (written AFTER vite build, not bundled into Vite)
+// This avoids bloating the Vite build with large XML files (8MB+)
+const PUBLIC_DIR = path.resolve(__dirname, "../../dist/public");
 
 async function main() {
   const startTime = Date.now();
