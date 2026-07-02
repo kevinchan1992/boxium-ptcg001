@@ -139,7 +139,9 @@
       "youAreHighest": "您目前是最高出價者",
       "waitForOthers": "等待其他買家出價後方可繼續出價",
       "yourBid": "您的出價（最低 HK${{amount}}）",
-      "placeBidNow": "立即出價"
+      "placeBidNow": "立即出價",
+      "yourAuction": "這是您的拍賣",
+      "yourAuctionDesc": "您是此拍賣的賣家，無法參與競投。"
     },
     "buyerProtection": {
       "description": "得標後 24 小時內付款，商品與描述不符可申請退款保障。",

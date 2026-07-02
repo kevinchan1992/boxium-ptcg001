@@ -139,7 +139,9 @@
       "youAreHighest": "You are the highest bidder",
       "waitForOthers": "Wait for other buyers to bid before bidding again",
       "yourBid": "Your bid (min HK${{amount}})",
-      "placeBidNow": "Bid Now"
+      "placeBidNow": "Bid Now",
+      "yourAuction": "This is your auction",
+      "yourAuctionDesc": "You are the seller of this auction and cannot place bids."
     },
     "buyerProtection": {
       "description": "Pay within 24 hours of winning. If the item doesn't match the description, you can apply for a refund.",

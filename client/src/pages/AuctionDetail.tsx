@@ -479,8 +479,21 @@ function BidPanel({ listing, bids, onRefetch }: { listing: any; bids: any[]; onR
           </p>
         </div>
       )}
+      {/* Seller notice - shown when user is the seller of this auction */}
+      {user && (user as any).id === listing.sellerId && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+            <Gavel className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-blue-700">{t("auctionDetail.bidPanel.yourAuction")}</p>
+            <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">{t("auctionDetail.bidPanel.yourAuctionDesc")}</p>
+          </div>
+        </div>
+      )}
+
       {/* Bid input */}
-      {isActive && !isEnded && (
+      {isActive && !isEnded && !(user && (user as any).id === listing.sellerId) && (
         <div className="space-y-3">
           {/* Highest bidder restriction */}
           {user && listing.currentHighestBidderId === (user as any).id ? (
