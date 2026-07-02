@@ -119,3 +119,7 @@ server/fonts/
 
 # DB export files - large JSON data, not needed in deployment
 db_export/
+
+# SSG-generated sitemap files (auto-generated at build time via generate-sitemaps.ts)
+# These are written to client/public/ before vite build, then bundled into dist/public/
+client/public/sitemap*.xml

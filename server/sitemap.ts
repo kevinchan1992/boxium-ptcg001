@@ -8,9 +8,9 @@ const BASE_URL = "https://boxium.asia";
 const CARDS_PER_SITEMAP = 10000; // 10k per file keeps each response < 2MB
 
 // ─── Static file paths ────────────────────────────────────────────────────────
-// IMPORTANT: Sitemap files are stored in /tmp/sitemaps/ (NOT in dist/public/).
-// This prevents express.static() from intercepting sitemap requests and serving
-// them without proper Cache-Control/CDN headers.
+// IMPORTANT: Sitemap files are stored in two possible locations:
+// 1. dist/public/ — generated at BUILD time (SSG), served as static assets (preferred)
+// 2. /tmp/sitemaps/ — generated at RUNTIME (fallback for dynamic refresh)
 // In development, we use a local .sitemaps/ directory.
 function getStaticPublicDir(): string {
   if (process.env.NODE_ENV === "production") {
@@ -20,15 +20,36 @@ function getStaticPublicDir(): string {
   }
 }
 
+// Returns the dist/public directory path (for SSG-generated sitemaps)
+function getDistPublicDir(): string {
+  if (process.env.NODE_ENV === "production") {
+    // In production, __dirname is dist/ so public is dist/public
+    return path.resolve(import.meta.dirname, "public");
+  } else {
+    return path.resolve(import.meta.dirname, "../dist/public");
+  }
+}
+
 function getStaticSitemapPath(filename: string): string {
   return path.join(getStaticPublicDir(), filename);
 }
 
 /**
  * Read a static sitemap file from disk.
+ * Priority: dist/public/ (SSG, build-time) > /tmp/sitemaps/ (runtime refresh)
  * Returns null if the file doesn't exist or can't be read.
  */
 function readStaticSitemap(filename: string): string | null {
+  // 1. Try SSG path first (dist/public/ — generated at build time, always available)
+  try {
+    const ssgPath = path.join(getDistPublicDir(), filename);
+    if (fs.existsSync(ssgPath)) {
+      return fs.readFileSync(ssgPath, "utf-8");
+    }
+  } catch (e) {
+    // ignore
+  }
+  // 2. Fallback to runtime-generated path (/tmp/sitemaps/)
   try {
     const filePath = getStaticSitemapPath(filename);
     if (fs.existsSync(filePath)) {
