@@ -168,40 +168,6 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Vendor: React core
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'vendor-react';
-          }
-          // Vendor: UI primitives (Radix)
-          if (id.includes('node_modules/@radix-ui/')) {
-            return 'vendor-radix';
-          }
-          // Vendor: Icons (lucide-react)
-          if (id.includes('node_modules/lucide-react/')) {
-            return 'vendor-icons';
-          }
-          // Vendor: Charts (recharts + chart.js)
-          if (id.includes('node_modules/recharts/') || id.includes('node_modules/chart.js/')) {
-            return 'vendor-charts';
-          }
-          // Vendor: Animation (framer-motion)
-          if (id.includes('node_modules/framer-motion/')) {
-            return 'vendor-motion';
-          }
-          // Vendor: tRPC + tanstack query
-          if (id.includes('node_modules/@trpc/') || id.includes('node_modules/@tanstack/')) {
-            return 'vendor-trpc';
-          }
-          // Vendor: Date utilities
-          if (id.includes('node_modules/date-fns/')) {
-            return 'vendor-date';
-          }
-        },
-      },
-    },
   },
   server: {
     host: true,
