@@ -1,10 +1,12 @@
 #!/bin/bash
 # Ensure Playwright browsers are installed for production scraping
 # This script is called during build to install Chromium browser
-
-if [ "$NODE_ENV" = "production" ] || [ -z "$NODE_ENV" ]; then
-  echo "Installing Playwright Chromium browser..."
-  npx playwright install chromium --with-deps 2>/dev/null || echo "Playwright install skipped (may not be available in build env)"
-else
-  echo "Skipping Playwright install in development mode"
-fi
+#
+# NOTE: Playwright Chromium (~600MB) is NOT installed during build.
+# Installing it at build time causes deployment timeout because:
+# 1. The download is ~600MB and takes several minutes
+# 2. Manus deployment has a strict build timeout
+#
+# Chromium is installed lazily at runtime on first use via the admin panel
+# (Admin > Diagnostics > Install Playwright).
+echo "Skipping Playwright install during build (installed lazily at runtime via admin panel)"
