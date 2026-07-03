@@ -1136,13 +1136,10 @@ async function startServer() {
   app.get("/sitemap-sets.xml", async (req, res) => {
     try {
       const pregen = getPregenSitemap("sets");
-      if (pregen) {
-        setSitemapCacheHeaders(res, 86400, 86400);
-        return res.send(pregen);
-      }
-      const sitemap = await generateSetsSitemap();
+      // Cold-start fallback: return empty urlset immediately (< 1ms), never block on DB
+      const EMPTY_URLSET = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
       setSitemapCacheHeaders(res, 86400, 86400);
-      res.send(sitemap);
+      return res.send(pregen || EMPTY_URLSET);
     } catch (error) {
       console.error("[Sitemap] Error generating sets sitemap:", error);
       res.status(500).send("Error generating sitemap");
@@ -1153,13 +1150,10 @@ async function startServer() {
   app.get("/sitemap-blog.xml", async (req, res) => {
     try {
       const pregen = getPregenSitemap("blog");
-      if (pregen) {
-        setSitemapCacheHeaders(res, 3600, 86400);
-        return res.send(pregen);
-      }
-      const sitemap = await generateBlogSitemap();
+      // Cold-start fallback: return empty urlset immediately (< 1ms), never block on DB
+      const EMPTY_URLSET = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
       setSitemapCacheHeaders(res, 3600, 86400);
-      res.send(sitemap);
+      return res.send(pregen || EMPTY_URLSET);
     } catch (error) {
       console.error("[Sitemap] Error generating blog sitemap:", error);
       res.status(500).send("Error generating sitemap");
@@ -1167,20 +1161,26 @@ async function startServer() {
   });
 
   // Paginated card sitemaps: /sitemap-cards-1.xml, /sitemap-cards-2.xml, etc.
+  // Cold-start guarantee: NEVER block on DB — return empty urlset immediately if not ready.
+  // Background pregenerateSitemaps() will populate /tmp/sitemaps/ within ~20s of startup.
+  // Cloudflare CDN caches the real content for 24h once populated.
   app.get("/sitemap-cards-:page.xml", async (req, res) => {
     try {
       const page = parseInt(req.params.page, 10);
       if (isNaN(page) || page < 1) return res.status(404).send("Not found");
-      // Serve pre-generated card sitemap if available
+      // Serve pre-generated card sitemap if available (fast path)
       const pregen = getPregenCardSitemap(page);
       if (pregen) {
         setSitemapCacheHeaders(res, 3600, 86400);
         return res.send(pregen);
       }
-      const sitemap = await generateCardSitemap(page);
-      if (!sitemap) return res.status(404).send("Not found");
-      setSitemapCacheHeaders(res, 3600, 86400);
-      res.send(sitemap);
+      // Cold-start fallback: return empty urlset immediately (< 1ms)
+      // This ensures Google never times out — it will re-crawl after CDN cache expires
+      const EMPTY_URLSET = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>';
+      // Use short cache (5 min) so Google retries soon after warmup completes
+      res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      return res.send(EMPTY_URLSET);
     } catch (error) {
       console.error("[Sitemap] Error generating card sitemap:", error);
       res.status(500).send("Error generating sitemap");
@@ -3181,6 +3181,17 @@ async function startServer() {
     // Without this, the first search request after cold start waits ~1s for the DB query.
     // With this, the price map is ready before any user request arrives.
     preloadGlobalPriceMap().catch(err => console.error('[Server] preloadGlobalPriceMap failed:', err));
+    // v13.1: Clear stale /tmp/sitemaps/ on startup to avoid serving dirty cached files
+    // from a previous instance. Serverless (Cloud Run) may reuse /tmp across warm restarts.
+    try {
+      const tmpSitemapsDir = '/tmp/sitemaps';
+      if (fs.existsSync(tmpSitemapsDir)) {
+        fs.rmSync(tmpSitemapsDir, { recursive: true, force: true });
+        console.log('[Sitemap] Cleared stale /tmp/sitemaps/ on startup');
+      }
+    } catch (e) {
+      console.warn('[Sitemap] Could not clear /tmp/sitemaps/:', e);
+    }
     // v12.0: Pre-generate all sitemaps at startup so Google gets sub-100ms responses.
     // Without this, Cloud Run cold starts cause 15-21s sitemap responses → Google "cannot read sitemap".
     // Runs in background (non-blocking), completes in ~10-15s after startup.
