@@ -14,10 +14,10 @@ import MessageCenter from "./components/MessageCenter";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 
 // Eagerly loaded pages (critical path)
-import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
 // Lazily loaded pages (code-split per route)
+const Home = lazy(() => import("./pages/Home"));
 const CardDetail = lazy(() => import("./pages/CardDetail"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Research = lazy(() => import("./pages/Research"));
