@@ -1,117 +1,26 @@
 # robots.txt for BOXIUM PTCG
-# Last updated: 2026-05-28
+# Last updated: 2026-07-04
+#
+# All public pages are allowed by default.
+# Only private/functional paths are explicitly disallowed.
 
-# ── Googlebot ─────────────────────────────────────────────────────────────────
-User-agent: Googlebot
-Allow: /
-Allow: /card/
-Allow: /card/*
-Allow: /blog
-Allow: /blog/*
-Allow: /research
-Allow: /trending
-Allow: /pricing
-Allow: /pricing/*
-Allow: /about
-Allow: /marketplace
-Allow: /auctions
-Allow: /sitemap.xml
-Allow: /sitemap-static.xml
-Allow: /sitemap-sets.xml
-Allow: /sitemap-blog.xml
-Allow: /sitemap-cards-*.xml
-Allow: /sets
-Allow: /set/*
-Disallow: /api/
-Disallow: /admin
-Disallow: /admin/*
-Disallow: /seller-dashboard
-Disallow: /seller-dashboard/*
-Disallow: /profile
-Disallow: /profile/*
-Disallow: /cart
-Disallow: /orders
-Disallow: /orders/*
-Disallow: /wishlist
-Disallow: /notifications
-Disallow: /messages
-Disallow: /checkout
-Disallow: /payment
-
-# ── Bingbot ───────────────────────────────────────────────────────────────────
-User-agent: Bingbot
-Allow: /
-Allow: /card/
-Allow: /card/*
-Allow: /blog
-Allow: /blog/*
-Allow: /research
-Allow: /trending
-Allow: /pricing
-Allow: /pricing/*
-Allow: /about
-Allow: /marketplace
-Allow: /auctions
-Allow: /sitemap.xml
-Allow: /sitemap-static.xml
-Allow: /sitemap-sets.xml
-Allow: /sitemap-blog.xml
-Allow: /sitemap-cards-*.xml
-Allow: /sets
-Allow: /set/*
-Disallow: /api/
-Disallow: /admin
-Disallow: /admin/*
-Disallow: /seller-dashboard
-Disallow: /seller-dashboard/*
-Disallow: /profile
-Disallow: /profile/*
-Disallow: /cart
-Disallow: /orders
-Disallow: /orders/*
-Disallow: /wishlist
-Disallow: /notifications
-Disallow: /messages
-Disallow: /checkout
-Disallow: /payment
-
-# ── All other bots ────────────────────────────────────────────────────────────
 User-agent: *
-Allow: /
-Allow: /card/
-Allow: /card/*
-Allow: /blog
-Allow: /blog/*
-Allow: /research
-Allow: /trending
-Allow: /pricing
-Allow: /pricing/*
-Allow: /about
-Allow: /marketplace
-Allow: /auctions
-Allow: /sitemap.xml
-Allow: /sitemap-static.xml
-Allow: /sitemap-sets.xml
-Allow: /sitemap-blog.xml
-Allow: /sitemap-cards-*.xml
-Allow: /sets
-Allow: /set/*
 Disallow: /api/
 Disallow: /admin
-Disallow: /admin/*
+Disallow: /admin/
 Disallow: /seller-dashboard
-Disallow: /seller-dashboard/*
+Disallow: /seller-dashboard/
 Disallow: /profile
-Disallow: /profile/*
+Disallow: /profile/
 Disallow: /cart
 Disallow: /orders
-Disallow: /orders/*
+Disallow: /orders/
 Disallow: /wishlist
 Disallow: /notifications
 Disallow: /messages
 Disallow: /checkout
 Disallow: /payment
-Crawl-delay: 10
 
-# ── Sitemap ───────────────────────────────────────────────────────────────────
+# Sitemap
 Sitemap: https://boxium.asia/sitemap.xml
+
