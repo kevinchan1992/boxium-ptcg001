@@ -808,7 +808,7 @@ export default function MarketplaceListing() {
       </div>
 
       {/* ── Main Content ── */}
-      <div className="max-w-6xl mx-auto px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-[calc(160px+env(safe-area-inset-bottom,0px))] lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
 
           {/* Left: Image Gallery */}

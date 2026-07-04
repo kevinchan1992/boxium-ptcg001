@@ -786,7 +786,7 @@ export default function AuctionDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-[calc(160px+env(safe-area-inset-bottom,0px))] lg:pt-8 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-8">
 
           {/* ── Left Column ─────────────────────────────────────── */}
