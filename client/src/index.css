@@ -1,9 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./styles/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ── Brand Token Utilities (Tailwind class generation) ── */
+  /* Usage: bg-brand-primary, text-brand-accent, border-brand-border-default, etc. */
+  --color-brand-primary:         var(--brand-primary);
+  --color-brand-primary-hover:   var(--brand-primary-hover);
+  --color-brand-primary-light:   var(--brand-primary-light);
+  --color-brand-accent:          var(--brand-accent);
+  --color-brand-accent-hover:    var(--brand-accent-hover);
+  --color-brand-accent-light:    var(--brand-accent-light);
+  --color-brand-surface-page:    var(--brand-surface-page);
+  --color-brand-surface-card:    var(--brand-surface-card);
+  --color-brand-surface-nav:     var(--brand-surface-nav);
+  --color-brand-text-main:       var(--brand-text-main);
+  --color-brand-text-secondary:  var(--brand-text-secondary);
+  --color-brand-text-muted:      var(--brand-text-muted);
+  --color-brand-text-on-primary: var(--brand-text-on-primary);
+  --color-brand-text-on-accent:  var(--brand-text-on-accent);
+  --color-brand-border-default:  var(--brand-border-default);
+  --color-brand-border-focus:    var(--brand-border-focus);
+  --color-brand-border-hover:    var(--brand-border-hover);
+  /* Safety fallback utilities (legacy hardcoded colors) */
+  --color-blue-boxium:    #06038D;
+  --color-yellow-boxium:  #FEDD00;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

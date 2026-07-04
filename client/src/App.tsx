@@ -26,6 +26,7 @@ const PricingSearch = lazy(() => import("./pages/PricingSearch"));
 const PricingDetail = lazy(() => import("./pages/PricingDetail"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminMarketplace = lazy(() => import("./pages/AdminMarketplace"));
+const DesignSystem = lazy(() => import("./pages/DesignSystem"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const MarketplaceListing = lazy(() => import("./pages/MarketplaceListing"));
 const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
@@ -130,6 +131,13 @@ function Router() {
               <ProtectedAdminRoute>
                 <Suspense fallback={<PageLoader />}>
                   <AdminMarketplace />
+                </Suspense>
+              </ProtectedAdminRoute>
+            </Route>
+            <Route path="/admin/design-system">
+              <ProtectedAdminRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <DesignSystem />
                 </Suspense>
               </ProtectedAdminRoute>
             </Route>

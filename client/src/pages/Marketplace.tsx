@@ -13,6 +13,7 @@ import {
   ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter, Share2, Copy, Check, Gavel
 } from "lucide-react";
 import { AuctionCard, AuctionCardSkeleton } from "@/components/AuctionCard";
+import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
 import { toast } from "sonner";
 import {
   CONDITION_GROUPS, CONDITION_SHORT, CONDITION_BADGE,
@@ -60,7 +61,25 @@ const PAGE_SIZE = 24;
 
 // ─── Product Card ────────────────────────────────────────────────────────────
 
+// ProductCard is now replaced by ListingCard from @/components/ListingCard
+// Keeping this stub to avoid breaking any remaining references during migration
 function ProductCard({ listing, wishlistIds, onWishlistToggle }: {
+  listing: any;
+  wishlistIds?: number[];
+  onWishlistToggle?: (id: number) => void;
+}) {
+  return (
+    <ListingCard
+      listing={listing}
+      variant="marketplace"
+      wishlistIds={wishlistIds}
+      onWishlistToggle={onWishlistToggle}
+    />
+  );
+}
+
+// Legacy stub — kept for reference only
+function _ProductCardLegacy({ listing, wishlistIds, onWishlistToggle }: {
   listing: any;
   wishlistIds?: number[];
   onWishlistToggle?: (id: number) => void;

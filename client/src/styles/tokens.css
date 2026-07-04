@@ -1,0 +1,83 @@
+/**
+ * Boxium Design Tokens
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 語義化命名原則：按「用途」命名，而非按「顏色」命名。
+ * 修改品牌色時，只需更改此文件，全站自動同步。
+ *
+ * 安全回退：舊的 #06038D / #FEDD00 硬編碼仍可繼續使用（blue-boxium / yellow-boxium），
+ * 新組件優先使用 var(--brand-*) Token。
+ */
+
+:root {
+  /* ── 品牌核心色 ─────────────────────────────────────────── */
+  --brand-primary:        #06038D;   /* 深藍：主要品牌色，用於按鈕、高亮、重點元素 */
+  --brand-primary-hover:  #0805b8;   /* 深藍 hover 狀態（略亮） */
+  --brand-primary-light:  rgba(6, 3, 141, 0.08);  /* 淺藍背景：用於選中狀態、hover 背景 */
+  --brand-primary-border: rgba(6, 3, 141, 0.20);  /* 品牌色邊框 */
+  --brand-accent:         #FEDD00;   /* 黃色：強調色，用於 CTA、badge、hover 邊框 */
+  --brand-accent-hover:   #f5d000;   /* 黃色 hover 狀態 */
+  --brand-accent-light:   rgba(254, 221, 0, 0.15); /* 淺黃背景 */
+
+  /* ── Surface（背景面）Token ─────────────────────────────── */
+  --brand-surface-page:     #f5f5fa;   /* 頁面背景：整體頁面的底色 */
+  --brand-surface-card:     #ffffff;   /* 卡片背景：所有卡片、面板的背景 */
+  --brand-surface-overlay:  rgba(6, 3, 141, 0.04); /* 懸浮覆蓋層背景 */
+  --brand-surface-input:    #ffffff;   /* 輸入框背景 */
+  --brand-surface-sidebar:  #06038D;   /* 側邊欄背景（品牌深藍） */
+  --brand-surface-nav:      #06038D;   /* 頂部導航背景 */
+
+  /* ── Text（文字）Token ──────────────────────────────────── */
+  --brand-text-main:          #1a1a2e;   /* 主要文字：標題、正文 */
+  --brand-text-secondary:     #4b5563;   /* 次要文字：副標題、描述 */
+  --brand-text-muted:         #9ca3af;   /* 靜默文字：placeholder、輔助說明 */
+  --brand-text-on-primary:    #ffffff;   /* 在品牌藍背景上的文字（白色） */
+  --brand-text-on-accent:     #06038D;   /* 在黃色背景上的文字（品牌藍） */
+  --brand-text-on-dark:       #ffffff;   /* 在深色背景上的文字 */
+  --brand-text-link:          #06038D;   /* 連結文字 */
+  --brand-text-link-hover:    #0805b8;   /* 連結 hover */
+
+  /* ── Border（邊框）Token ────────────────────────────────── */
+  --brand-border-default:   #e5e7eb;   /* 預設邊框：卡片、輸入框 */
+  --brand-border-focus:     #06038D;   /* 聚焦邊框：輸入框 focus 狀態 */
+  --brand-border-hover:     #FEDD00;   /* hover 邊框：卡片 hover */
+  --brand-border-strong:    #d1d5db;   /* 強調邊框：分隔線 */
+
+  /* ── Status（狀態）Token ────────────────────────────────── */
+  --brand-status-active-bg:    rgba(16, 185, 129, 0.10);
+  --brand-status-active-text:  #065f46;
+  --brand-status-active-border: rgba(16, 185, 129, 0.30);
+
+  --brand-status-sold-bg:    rgba(107, 114, 128, 0.10);
+  --brand-status-sold-text:  #374151;
+  --brand-status-sold-border: rgba(107, 114, 128, 0.30);
+
+  --brand-status-pending-bg:    rgba(245, 158, 11, 0.10);
+  --brand-status-pending-text:  #92400e;
+  --brand-status-pending-border: rgba(245, 158, 11, 0.30);
+
+  --brand-status-disputed-bg:    rgba(239, 68, 68, 0.10);
+  --brand-status-disputed-text:  #991b1b;
+  --brand-status-disputed-border: rgba(239, 68, 68, 0.30);
+
+  --brand-status-auction-bg:    rgba(6, 3, 141, 0.08);
+  --brand-status-auction-text:  #06038D;
+  --brand-status-auction-border: rgba(6, 3, 141, 0.25);
+
+  /* ── Shadow（陰影）Token ────────────────────────────────── */
+  --brand-shadow-sm:   0 1px 3px rgba(6, 3, 141, 0.08), 0 1px 2px rgba(6, 3, 141, 0.04);
+  --brand-shadow-md:   0 4px 12px rgba(6, 3, 141, 0.10), 0 2px 4px rgba(6, 3, 141, 0.06);
+  --brand-shadow-lg:   0 8px 24px rgba(6, 3, 141, 0.12), 0 4px 8px rgba(6, 3, 141, 0.08);
+  --brand-shadow-card: 0 2px 8px rgba(6, 3, 141, 0.06);
+  --brand-shadow-hover: 0 8px 20px rgba(6, 3, 141, 0.14);
+
+  /* ── Spacing（間距）Token ───────────────────────────────── */
+  /* 使用 Tailwind 4px 系統，此處僅作文檔用途 */
+  /* gap-1=4px, gap-2=8px, gap-3=12px, gap-4=16px, gap-6=24px, gap-8=32px */
+
+  /* ── Border Radius（圓角）Token ─────────────────────────── */
+  --brand-radius-sm:   6px;    /* 小圓角：badge、chip */
+  --brand-radius-md:   8px;    /* 中圓角：按鈕、輸入框 */
+  --brand-radius-lg:   12px;   /* 大圓角：卡片 */
+  --brand-radius-xl:   16px;   /* 超大圓角：模態框、大卡片 */
+  --brand-radius-full: 9999px; /* 全圓：圓形按鈕、頭像 */
+}
