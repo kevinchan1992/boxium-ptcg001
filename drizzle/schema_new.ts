@@ -2028,3 +2028,30 @@ export const orderItems = mysqlTable("orderItems", {
 }));
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+// ─── Stripe Webhook Dead Letter Queue (DLQ) ──────────────────────────────────
+/**
+ * 記錄所有 Stripe Webhook 事件的處理狀態。
+ * 用於：
+ * 1. 失敗時即時告警（Manus Notification）
+ * 2. 定時重試（Cron Job 每 5 分鐘掃描 failed 狀態）
+ * 3. 審計軌跡（排查訂單卡住問題）
+ */
+export const webhookLogs = mysqlTable("webhookLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: varchar("eventId", { length: 128 }).notNull().unique(),   // Stripe event ID (evt_xxx)
+  eventType: varchar("eventType", { length: 128 }).notNull(),        // e.g. checkout.session.completed
+  status: varchar("status", { length: 32 }).default("pending").notNull(), // 'pending' | 'processed' | 'failed' | 'retry_pending'
+  rawPayload: text("rawPayload"),                                     // JSON string of event (for retry)
+  errorLog: text("errorLog"),                                        // Error message if failed
+  retryCount: int("retryCount").default(0).notNull(),
+  processedAt: timestamp("processedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  statusIdx: index("webhookLogs_status_idx").on(table.status),
+  eventTypeIdx: index("webhookLogs_eventType_idx").on(table.eventType),
+  createdAtIdx: index("webhookLogs_createdAt_idx").on(table.createdAt),
+}));
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type InsertWebhookLog = typeof webhookLogs.$inferInsert;

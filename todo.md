@@ -9723,3 +9723,21 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] Stripe webhook 付款完成後同步更新系統訂單狀態（已有，確認 WhatsApp 通知）
 - [x] 實作 15 分鐘提醒（在現有 notifyEndingSoon 內嵌入 15 分鐘內觸發逻輯）
 - [x] 拍賣結標定時任務加入 WhatsApp 通知
+
+---
+
+## 🔧 P0：Sitemap ESM 修復 + Stripe Webhook DLQ + 即時 WhatsApp 告警
+
+- [x] 修復 imageCardSearch.ts 中的 `require('./utils/cardNumberNormalize')` → 改為 `import`
+- [x] 新增 `webhookLogs` 資料表（schema_new.ts）：記錄 eventId、eventType、status、errorLog、retryCount
+- [x] 執行 SQL 直接建立 webhookLogs 表（drizzle-kit 版本問題，改用 webdev_execute_sql）
+- [x] 修改 _core/index.ts Webhook 頂層 catch：失敗時寫入 webhookLogs 並呼叫 notifyOwner 即時告警
+- [ ] 新增 Cron Job（每 5 分鐘）：掃描 `failed` 狀態的 webhookLogs，重試處理
+- [ ] 撰寫 vitest 測試覆蓋 Webhook DLQ 邏輯
+
+## 🎨 P1：前端 OrderTimeline 組件 + AlipayHK 審核反饋 + Loading 防連點
+
+- [x] 確認 `OrderStatusStepper.tsx` 已存在且功能完整（含大/小兩種佈局、時間戳、動畫）— 無需重建
+- [x] 確認 AlipayHK sub-timeline 已存在（截圖已提交 → 審核中 → 已核准/已拒絕 + 24h 提示）— 無需修改
+- [x] 確認全域交易按鈕防連點已實作（出價/購買/付款/取消均有 disabled + Loader2 animate-spin）— 無需修改
+- [ ] 撰寫 vitest 測試覆蓋 OrderTimeline 狀態渲染

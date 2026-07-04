@@ -1,6 +1,7 @@
 import { ENV } from "./_core/env";
 import * as db from "./db";
 import * as crypto from "crypto";
+import { normalizeCardQuery } from "./utils/cardNumberNormalize";
 
 // ─── Fast LLM call bypassing the global thinking/max_tokens defaults ──────────
 const LLM_API_URL = () =>
@@ -259,7 +260,6 @@ async function findMatchingCards(identification: CardIdentification): Promise<Ma
  * Handles formats like "110/080", "110/80", "085/070", "SM-P 288", "288/SM-P", etc.
  */
 function normalizeCardNumber(cardNumber: string): string {
-  const { normalizeCardQuery } = require('./utils/cardNumberNormalize');
   // First try smart normalization (handles set code variants)
   const smart = normalizeCardQuery(cardNumber);
   if (smart !== cardNumber.trim()) return smart;

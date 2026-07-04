@@ -963,8 +963,41 @@ async function startServer() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("[Webhook] Error processing event:", err);
+      // ─── DLQ: 寫入 webhookLogs 並即時告警 ───────────────────────────────
+      try {
+        const { getDb: _dlqGetDb } = await import("../db");
+        const { webhookLogs: _webhookLogs } = await import("../../drizzle/schema_new");
+        const _dlqDb = await _dlqGetDb();
+        if (_dlqDb && event?.id) {
+          const { eq: _dlqEq } = await import("drizzle-orm");
+          const _existing = await _dlqDb.select({ id: _webhookLogs.id, retryCount: _webhookLogs.retryCount })
+            .from(_webhookLogs).where(_dlqEq(_webhookLogs.eventId, event.id)).limit(1);
+          if (_existing.length > 0) {
+            await _dlqDb.update(_webhookLogs)
+              .set({ status: 'failed', errorLog: err?.message ?? String(err), retryCount: (_existing[0].retryCount ?? 0) + 1 })
+              .where(_dlqEq(_webhookLogs.eventId, event.id));
+          } else {
+            await _dlqDb.insert(_webhookLogs).values({
+              eventId: event.id,
+              eventType: event.type ?? 'unknown',
+              status: 'failed',
+              rawPayload: JSON.stringify(event).slice(0, 65535),
+              errorLog: err?.message ?? String(err),
+              retryCount: 0,
+            });
+          }
+          // 即時告警 Owner
+          const { notifyOwner: _notifyOwnerDlq } = await import("./notification");
+          _notifyOwnerDlq({
+            title: `⚠️ Stripe Webhook 處理失敗 — ${event.type}`,
+            content: `事件 ID: ${event.id}\n類型: ${event.type}\n錯誤: ${err?.message ?? String(err)}\n\n請前往 Admin > Webhook 日誌查看詳情。`,
+          }).catch(() => {});
+        }
+      } catch (dlqErr: any) {
+        console.error("[Webhook DLQ] Failed to write to webhookLogs:", dlqErr?.message);
+      }
     }
     res.json({ received: true });
   });
