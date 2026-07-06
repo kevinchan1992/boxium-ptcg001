@@ -9741,3 +9741,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 確認 AlipayHK sub-timeline 已存在（截圖已提交 → 審核中 → 已核准/已拒絕 + 24h 提示）— 無需修改
 - [x] 確認全域交易按鈕防連點已實作（出價/購買/付款/取消均有 disabled + Loader2 animate-spin）— 無需修改
 - [ ] 撰寫 vitest 測試覆蓋 OrderTimeline 狀態渲染
+
+## ✅ Global Modal/Dialog UI 統一（2026-07-06）
+### 目標
+統一所有彈窗/對話框為白色背景 + 品牌色系，修復深色 CSS 變數導致的黑色輸入框問題。
+
+### 根本原因
+`--input: oklch(0.2 0 0)` 和 `--background: oklch(0 0 0)` 是深色 CSS 變數（ThemeProvider defaultTheme="dark"），
+導致 Dialog 內的 Input/Select/Textarea 顯示黑色背景。
+
+### 修復清單
+- [x] `dialog.tsx`：白色背景（bg-white）、backdrop-blur-sm 遮罩、rounded-2xl、圓形 X 關閉按鈕
+- [x] `input.tsx`：替換深色 CSS 變數為明確淺色樣式（bg-gray-50, border-gray-200, text-[#1a1a2e], focus 品牌藍）
+- [x] `select.tsx`：SelectTrigger + SelectContent + SelectItem 同樣修復
+- [x] `textarea.tsx`：同樣修復
+- [x] 掃描所有 Dialog 使用頁面，確認無意外深色背景覆蓋（AdminMarketplace 財務報表 Dialog 保留深色為刻意設計）
+- [x] TypeScript 0 errors
+- [x] 保存 checkpoint
