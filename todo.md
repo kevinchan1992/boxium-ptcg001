@@ -9771,3 +9771,11 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 更新 Trust Footer：移除深藍色背景，改為極簡灰色 icon + 文字
 - [x] 修復 AuctionHero/AuctionCard 路由（/marketplace/auction/:id → /auction/:id）
 - [x] TypeScript 0 errors
+
+## ✅ BidDrawer — 右側滑出出價面板（2026-07-06）
+- [x] 建立 BidDrawer 組件（右側滑出 Drawer，極簡雜誌風）
+- [x] 整合入 AuctionHero：點擊「Place Bid」觸發 Drawer
+- [x] 整合入 AuctionCard：卡片底部加入「Place Bid」按鈕觸發 Drawer
+- [x] 出價邏輯：最低出價計算、快速出價 chips、條款確認 Dialog、防狙擊機制
+- [x] 即時倒數計時（最後 1 小時紅色警示）、出價記錄預覽
+- [x] 行動裝置支援（min(420px, 100vw)）

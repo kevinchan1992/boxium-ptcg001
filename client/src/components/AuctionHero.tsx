@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { Gavel, Clock, TrendingUp, ArrowRight, Zap, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { BidDrawer } from "@/components/BidDrawer";
 
 // ─── Countdown Hook ──────────────────────────────────────────────────────────
 function useCountdown(endTime: Date | string | null) {
@@ -179,6 +180,7 @@ interface AuctionHeroProps {
 export function AuctionHero({ auctions, total, isLoading, onViewAll }: AuctionHeroProps) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const [bidDrawerAuction, setBidDrawerAuction] = useState<any | null>(null);
 
   // Featured = first auction (sorted by ending_soon)
   const featured = auctions[0] ?? null;
@@ -384,7 +386,7 @@ export function AuctionHero({ auctions, total, isLoading, onViewAll }: AuctionHe
               {/* CTA */}
               {!isEnded && (
                 <button
-                  onClick={e => { e.stopPropagation(); setLocation(`/auction/${featured.id}`); }}
+                  onClick={e => { e.stopPropagation(); setBidDrawerAuction(featured); }}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-semibold text-sm tracking-wide transition-all duration-200 bg-[#1a1a2e] text-white hover:bg-[#06038D] group/btn"
                 >
                   <Gavel className="w-4 h-4" />
@@ -427,6 +429,16 @@ export function AuctionHero({ auctions, total, isLoading, onViewAll }: AuctionHe
           </div>
         )}
       </div>
+
+      {/* ── BidDrawer ── */}
+      {bidDrawerAuction && (
+        <BidDrawer
+          listing={bidDrawerAuction}
+          open={!!bidDrawerAuction}
+          onClose={() => setBidDrawerAuction(null)}
+          onBidSuccess={() => setBidDrawerAuction(null)}
+        />
+      )}
     </div>
   );
 }
