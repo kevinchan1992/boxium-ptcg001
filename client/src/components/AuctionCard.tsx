@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Gavel, Clock, TrendingUp, Eye, Zap } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Gavel, Clock, TrendingUp, Zap } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 // ─── Countdown Hook ──────────────────────────────────────────────────────────
@@ -54,27 +54,33 @@ export function AuctionCard({ auction }: { auction: any }) {
     try { return auction.images ? JSON.parse(auction.images) : null; }
     catch { return null; }
   })();
-  const coverImage = images && images.length > 0 ? images[0] : null;
+  const coverImageRaw = images && images.length > 0 ? images[0] : null;
+  const coverImage = getProxiedImageUrl(coverImageRaw);
 
   const currentPrice = auction.currentHighestBid
     ? parseFloat(auction.currentHighestBid)
     : parseFloat(auction.startingBid || "0");
 
-  const isEndingSoon = auction.auctionStatus === 'ending_soon' || (remainingMs > 0 && remainingMs < 30 * 60 * 1000);
+  const isEndingSoon = auction.auctionStatus === 'ending_soon' || (remainingMs > 0 && remainingMs < 3600_000);
   // Only mark as ended when remaining is calculated (not null) and is 0, or auctionStatus indicates ended
   const isEnded = (remaining !== null && remaining <= 0) || auction.auctionStatus === 'ended_sold' || auction.auctionStatus === 'ended_no_bid';
   const hasBids = (auction.bidCount ?? 0) > 0;
 
   const TCG_BADGE: Record<string, string> = {
-    pokemon:  "bg-yellow-100 text-yellow-800",
-    onepiece: "bg-red-100 text-red-800",
-    yugioh:   "bg-purple-100 text-purple-800",
+    pokemon:  "bg-yellow-50 text-yellow-700 border border-yellow-200",
+    onepiece: "bg-red-50 text-red-700 border border-red-200",
+    yugioh:   "bg-purple-50 text-purple-700 border border-purple-200",
+  };
+  const TCG_LABEL: Record<string, string> = {
+    pokemon: "Pokémon",
+    onepiece: "One Piece",
+    yugioh: "Yu-Gi-Oh!",
   };
 
   return (
     <div
       onClick={() => setLocation(`/auction/${auction.id}`)}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#06038D]/20 transition-all duration-200 cursor-pointer overflow-hidden group hover:scale-[1.02] active:scale-[0.98]"
+      className="bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group"
     >
       {/* Image */}
       <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden">
@@ -91,28 +97,20 @@ export function AuctionCard({ auction }: { auction: any }) {
           </div>
         )}
 
-        {/* Auction badge */}
-        <div className="absolute top-2 left-2">
-          <span className="flex items-center gap-1 bg-[#06038D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-            <Gavel className="w-2.5 h-2.5" />
-            {t("auctionCard.auction")}
-          </span>
-        </div>
-
         {/* Ending soon badge */}
         {isEndingSoon && !isEnded && (
           <div className="absolute top-2 right-2">
-            <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-              <Zap className="w-2.5 h-2.5" />
-              {t("auctionCard.endingSoon")}
+            <span className="flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+              <Zap className="w-2 h-2" />
+              HOT
             </span>
           </div>
         )}
 
         {/* Buy Now badge */}
         {auction.buyNowPrice && !isEnded && (
-          <div className="absolute bottom-2 right-2">
-            <span className="bg-[#FEDD00] text-[#06038D] text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+          <div className="absolute bottom-2 left-2">
+            <span className="bg-amber-400 text-amber-900 text-[9px] font-bold px-2 py-0.5 rounded-full">
               {t("auctionCard.buyNow")}
             </span>
           </div>
@@ -132,43 +130,41 @@ export function AuctionCard({ auction }: { auction: any }) {
       <div className="p-3 space-y-2">
         {/* TCG series badge */}
         {auction.tcgSeries && auction.tcgSeries !== 'all' && (
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${TCG_BADGE[auction.tcgSeries] ?? 'bg-gray-100 text-gray-600'}`}>
-            {auction.tcgSeries === 'pokemon' ? 'Pokémon' : auction.tcgSeries === 'onepiece' ? 'One Piece' : 'Yu-Gi-Oh!'}
+          <span className={`inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${TCG_BADGE[auction.tcgSeries] ?? 'bg-gray-100 text-gray-500'}`}>
+            {TCG_LABEL[auction.tcgSeries] ?? auction.tcgSeries}
           </span>
         )}
 
         {/* Title */}
-        <p className="text-xs font-semibold text-gray-900 line-clamp-2 leading-tight">
+        <p className="text-xs font-semibold text-[#1a1a2e] line-clamp-2 leading-snug group-hover:text-[#06038D] transition-colors">
           {auction.title}
         </p>
 
-        {/* Current bid */}
-        <div className="flex items-center justify-between">
+        {/* Price row */}
+        <div className="flex items-end justify-between gap-1">
           <div>
-            <p className="text-[10px] text-gray-400">{hasBids ? t("auctionCard.currentBid") : t("auctionCard.startingBid")}</p>
-            <p className="text-sm font-bold text-[#06038D]">HK${currentPrice.toLocaleString()}</p>
+            <p className="text-[9px] text-gray-400 uppercase tracking-wide mb-0.5">
+              {hasBids ? t("auctionCard.currentBid") : t("auctionCard.startingBid")}
+            </p>
+            <p className="text-sm font-bold text-[#06038D] leading-none">HK${currentPrice.toLocaleString()}</p>
           </div>
           {auction.bidCount > 0 && (
-            <div className="flex items-center gap-1 text-gray-400">
-              <TrendingUp className="w-3 h-3" />
-              <span className="text-[10px]">{t("auctionCard.bidCount", { count: auction.bidCount })}</span>
+            <div className="flex items-center gap-0.5 text-gray-400 shrink-0">
+              <TrendingUp className="w-2.5 h-2.5" />
+              <span className="text-[9px]">{auction.bidCount}</span>
             </div>
           )}
         </div>
 
-        {/* Countdown */}
+        {/* Countdown bar */}
         <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg ${
-          isEnded
-            ? 'bg-gray-50'
-            : urgent
-              ? 'bg-red-50'
-              : 'bg-[#06038D]/5'
+          isEnded ? 'bg-gray-50' : urgent ? 'bg-red-50' : 'bg-gray-50'
         }`}>
-          <Clock className={`w-3 h-3 shrink-0 ${
-            isEnded ? 'text-gray-400' : urgent ? 'text-red-500' : 'text-[#06038D]'
+          <Clock className={`w-2.5 h-2.5 shrink-0 ${
+            isEnded ? 'text-gray-300' : urgent ? 'text-red-400' : 'text-gray-400'
           }`} />
-          <span className={`text-[10px] font-bold ${
-            isEnded ? 'text-gray-400' : urgent ? 'text-red-600' : 'text-[#06038D]'
+          <span className={`text-[10px] font-semibold tabular-nums ${
+            isEnded ? 'text-gray-400' : urgent ? 'text-red-500' : 'text-gray-600'
           }`}>
             {countdownText}
           </span>
@@ -189,13 +185,14 @@ export function AuctionCard({ auction }: { auction: any }) {
 // ─── AuctionCardSkeleton ──────────────────────────────────────────────────────
 export function AuctionCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
       <div className="aspect-[3/4] bg-gray-100" />
       <div className="p-3 space-y-2">
-        <div className="h-3 bg-gray-100 rounded w-1/3" />
+        <div className="h-2.5 bg-gray-100 rounded w-1/3" />
         <div className="h-3 bg-gray-100 rounded w-full" />
-        <div className="h-3 bg-gray-100 rounded w-2/3" />
-        <div className="h-8 bg-gray-100 rounded-lg" />
+        <div className="h-3 bg-gray-100 rounded w-3/4" />
+        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="h-7 bg-gray-100 rounded-lg" />
       </div>
     </div>
   );

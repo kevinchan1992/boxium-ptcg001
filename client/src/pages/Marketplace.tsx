@@ -13,6 +13,7 @@ import {
   ShoppingCart, TrendingUp, Zap, Loader2, ArrowUp, Filter, Share2, Copy, Check, Gavel
 } from "lucide-react";
 import { AuctionCard, AuctionCardSkeleton } from "@/components/AuctionCard";
+import { AuctionHero, AuctionHeroSkeleton } from "@/components/AuctionHero";
 import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
 import { toast } from "sonner";
 import {
@@ -496,22 +497,7 @@ export default function Marketplace() {
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">(initParams.sortBy);
   const [allListings, setAllListings] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [bannerIdx, setBannerIdx] = useState(0);
-  const [bannerDir, setBannerDir] = useState<'left' | 'right'>('left');
-  const [bannerAnimating, setBannerAnimating] = useState(false);
-  const [bannerPaused, setBannerPaused] = useState(false);
-  const bannerTouchStartX = useRef<number | null>(null);
-  const bannerResumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const goToBanner = useCallback((nextIdx: number, dir: 'left' | 'right') => {
-    if (bannerAnimating) return;
-    setBannerDir(dir);
-    setBannerAnimating(true);
-    setTimeout(() => {
-      setBannerIdx(nextIdx);
-      setBannerAnimating(false);
-    }, 350);
-  }, [bannerAnimating]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [marketTab, setMarketTab] = useState<'shop' | 'auction'>('shop');
@@ -531,58 +517,19 @@ export default function Marketplace() {
   const { data: auctionData, isLoading: auctionLoading } = trpc.auction.list.useQuery(auctionQueryInput, {
     enabled: marketTab === 'auction',
   });
+  // Hero query — always enabled so the Auction Hall Hero shows on page load
+  const auctionHeroQueryInput = useMemo(() => ({
+    page: 1,
+    pageSize: 4,
+    sortBy: 'ending_soon' as const,
+    status: ['active', 'ending_soon'],
+  }), []);
+  const { data: auctionHeroData, isLoading: auctionHeroLoading } = trpc.auction.list.useQuery(auctionHeroQueryInput, {
+    enabled: true,
+    staleTime: 30_000,
+  });
 
-  // Banners
-  const FALLBACK_BANNERS = useMemo(() => [
-    {
-      id: 1,
-      title: t("marketplace.banner.title1"),
-      subtitle: t("marketplace.banner.subtitle1"),
-      cta: t("marketplace.banner.cta1"),
-      ctaConditions: "[]",
-      ctaSellerType: "all",
-      gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
-      accentColor: "#FEDD00",
-      badge: "BOXIUM",
-      badgeClass: "bg-[#FEDD00] text-[#06038d]",
-      emoji: "🎴",
-    },
-    {
-      id: 2,
-      title: t("marketplace.banner.title2"),
-      subtitle: t("marketplace.banner.subtitle2"),
-      cta: t("marketplace.banner.cta2"),
-      ctaConditions: JSON.stringify(["psa10"]),
-      ctaSellerType: "all",
-      gradient: "from-[#06038d] via-[#1a0a9e] to-[#2d1bb5]",
-      accentColor: "#FEDD00",
-      badge: "PSA 10",
-      badgeClass: "bg-[#FEDD00] text-[#06038d]",
-      emoji: "🏆",
-    },
-    {
-      id: 3,
-      title: t("marketplace.banner.title3"),
-      subtitle: t("marketplace.banner.subtitle3"),
-      cta: t("marketplace.banner.cta3"),
-      ctaConditions: "[]",
-      ctaSellerType: "platform",
-      gradient: "from-[#06038d] via-[#06038d] to-[#1a0a9e]",
-      accentColor: "#FEDD00",
-      badge: t("marketplace.official"),
-      badgeClass: "bg-[#FEDD00] text-[#06038d]",
-      emoji: "✨",
-    },
-  ], []);
 
-  const { data: dbBanners } = trpc.marketplace.getBanners.useQuery();
-  const activeBanners = (dbBanners && dbBanners.length > 0) ? dbBanners : FALLBACK_BANNERS;
-
-  useEffect(() => {
-    if (bannerPaused || activeBanners.length <= 1) return;
-    const t = setInterval(() => goToBanner((bannerIdx + 1) % activeBanners.length, 'left'), 5000);
-    return () => clearInterval(t);
-  }, [bannerPaused, activeBanners.length, bannerIdx, goToBanner]);
 
   // Hot keywords (dynamic)
   const { data: hotKeywordsData } = trpc.marketplace.getHotKeywords.useQuery({ limit: 6, days: 7 });
@@ -744,224 +691,109 @@ export default function Marketplace() {
       description={t("marketplace.pageDescription")}
       keywords={t("marketplace.pageKeywords")}
     />
-    <div className="min-h-screen bg-[#F4F5F7] overflow-x-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
 
-      {/* ── Hero Section ── */}
-      <div className="bg-gradient-to-b from-[#06038D] via-[#0a06b0] to-[#06038D] relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{overflow:'hidden'}}>
-          <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#FEDD00]/5 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-[#FEDD00]/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 pt-7 pb-6 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center md:gap-8">
-            {/* Left: Branding */}
-            <div className="mb-4 md:mb-0 md:shrink-0">
-              <div className="flex items-center gap-3 mb-1.5">
-                <Link href="/">
-                  <img src="/boxium-logo.png" alt="BOXIUM" className="h-9 w-auto object-contain hover:opacity-80 transition-opacity cursor-pointer" />
-                </Link>
-                <div className="h-7 w-px bg-white/20" />
-                <span className="text-[#FEDD00] font-bold text-xl tracking-wide">{t("marketplace.title")}</span>
+      {/* ── Editorial Top Bar ── */}
+      <div className="border-b border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+            {/* Branding */}
+            <div className="flex items-center gap-3 mb-3 sm:mb-0 shrink-0">
+              <Link href="/">
+                <img src="/boxium-logo.png" alt="BOXIUM" className="h-8 w-auto object-contain hover:opacity-80 transition-opacity cursor-pointer" />
+              </Link>
+              <div className="h-6 w-px bg-gray-200" />
+              <div>
+                <span
+                  className="font-bold text-lg text-[#1a1a2e] tracking-tight"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  {t("marketplace.title")}
+                </span>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest leading-none mt-0.5">Pokémon · One Piece · Yu-Gi-Oh!</p>
               </div>
-              <p className="text-white/50 text-xs">
-                Pokémon · One Piece · Yu-Gi-Oh!
-              </p>
             </div>
 
-            {/* Right: Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="flex-1 max-w-xl">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <Input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={t("marketplace.search.placeholder")}
-                    className="pl-12 pr-10 bg-white/10 border border-white/20 text-white placeholder:text-white/50 h-12 rounded-full shadow-lg focus-visible:ring-2 focus-visible:ring-[#FEDD00] text-base w-full"
+                    className="pl-10 pr-8 bg-gray-50 border-gray-200 text-[#1a1a2e] placeholder:text-gray-400 h-10 rounded-full text-sm w-full focus-visible:ring-[#06038D] focus-visible:border-[#06038D]"
                   />
                   {searchInput && (
-                    <button
-                      type="button"
-                      onClick={clearSearch}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      <X className="w-4 h-4" />
+                    <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5">
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-                  <Button
-                  type="submit"
-                  className="shrink-0 bg-[#FEDD00] hover:bg-[#f0cc00] text-[#06038D] font-bold h-12 px-5 rounded-full text-sm shadow-lg"
-                >
+                <Button type="submit" className="shrink-0 bg-[#06038D] hover:bg-[#0804b8] text-white h-10 px-5 rounded-full text-sm font-semibold">
                   {t("common.search")}
                 </Button>
               </div>
-
             </form>
           </div>
         </div>
       </div>
 
-      {/* ── Banner Carousel ── */}
-      <div className="max-w-7xl mx-auto px-4 mt-4">
-        <div
-          className="relative rounded-2xl overflow-hidden shadow-md"
-          onMouseEnter={() => setBannerPaused(true)}
-          onMouseLeave={() => setBannerPaused(false)}
-          onTouchStart={(e) => {
-            bannerTouchStartX.current = e.touches[0].clientX;
-            setBannerPaused(true);
-            if (bannerResumeTimer.current) clearTimeout(bannerResumeTimer.current);
-          }}
-          onTouchEnd={(e) => {
-            if (bannerTouchStartX.current === null) return;
-            const diff = e.changedTouches[0].clientX - bannerTouchStartX.current;
-            if (Math.abs(diff) > 40) {
-              if (diff < 0) {
-                goToBanner((bannerIdx + 1) % activeBanners.length, 'left');
-              } else {
-                goToBanner((bannerIdx - 1 + activeBanners.length) % activeBanners.length, 'right');
-              }
-            }
-            bannerTouchStartX.current = null;
-            if (bannerResumeTimer.current) clearTimeout(bannerResumeTimer.current);
-            bannerResumeTimer.current = setTimeout(() => setBannerPaused(false), 2000);
-          }}
-        >
-          {activeBanners.map((banner: any, i: number) => (
-            <div
-              key={banner.id}
-              className={`relative bg-gradient-to-r ${banner.gradient} ${
-                i === bannerIdx
-                  ? bannerAnimating
-                    ? `block ${bannerDir === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`
-                    : 'block'
-                  : 'hidden'
-              }`}
-              style={banner.imageUrl ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
-            >
-              {/* Dark overlay when image is set */}
-              {banner.imageUrl && <div className="absolute inset-0 bg-black/45" />}
-              <div className="relative px-6 pt-5 pb-10 sm:pt-7 sm:pb-12 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl hidden sm:block">{banner.emoji}</span>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${banner.badgeClass}`}>{banner.badge}</span>
-                    </div>
-                    <h2 className="text-white font-bold text-lg sm:text-xl leading-tight">{banner.title}</h2>
-                    <p className="text-white/70 text-xs sm:text-sm mt-0.5">{banner.subtitle}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    try {
-                      const conditions = JSON.parse(banner.ctaConditions || "[]");
-                      setSelectedConditions(conditions);
-                    } catch { setSelectedConditions([]); }
-                    setSellerType(banner.ctaSellerType ?? "all");
-                    resetAndSearch();
-                  }}
-                  className="shrink-0 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
-                  style={{ backgroundColor: banner.accentColor || "#FEDD00", color: "#06038D" }}
-                >
-                  {banner.cta}
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {activeBanners.length > 1 && (
-            <>
-              <button
-                onClick={() => goToBanner((bannerIdx - 1 + activeBanners.length) % activeBanners.length, 'right')}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => goToBanner((bannerIdx + 1) % activeBanners.length, 'left')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 hidden sm:flex items-center justify-center text-white transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </>
-          )}
+      {/* ── Auction Hall Hero Section ── */}
+      {(auctionHeroLoading || (auctionHeroData && auctionHeroData.listings.length > 0)) && (
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-6">
+          <AuctionHero
+            auctions={auctionHeroData?.listings ?? []}
+            total={auctionHeroData?.total ?? 0}
+            isLoading={auctionHeroLoading}
+            onViewAll={() => setMarketTab('auction')}
+          />
         </div>
-      </div>
+      )}
 
-      {/* ── Market Tab Switcher ── */}
-      <div className="max-w-7xl mx-auto px-4 mt-5">
-        <div className="grid grid-cols-2 gap-3">
-          {/* Shop Tab */}
-          <button
-            onClick={() => setMarketTab('shop')}
-            className={`relative flex items-center gap-3 px-5 py-4 rounded-2xl border-2 transition-all duration-200 text-left overflow-hidden ${
-              marketTab === 'shop'
-                ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
-                : 'border-gray-200 bg-white hover:border-[#06038D]/40 hover:shadow-md'
-            }`}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              marketTab === 'shop' ? 'bg-[#FEDD00]' : 'bg-[#06038D]/10'
-            }`}>
-              <ShoppingBag className={`w-5 h-5 ${marketTab === 'shop' ? 'text-[#06038D]' : 'text-[#06038D]'}`} />
-            </div>
-            <div className="min-w-0">
-              <div className={`font-bold text-sm leading-tight ${
-                marketTab === 'shop' ? 'text-white' : 'text-[#06038D]'
-              }`}>{t("marketplace.tab.shop")}</div>
-              <div className={`text-xs mt-0.5 ${
-                marketTab === 'shop' ? 'text-white/70' : 'text-gray-400'
-              }`}>{t("marketplace.tab.shopSub")}</div>
-            </div>
-            {marketTab === 'shop' && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
-            )}
-          </button>
-
-          {/* Auction Tab */}
-          <button
-            onClick={() => setMarketTab('auction')}
-            className={`relative flex items-center gap-3 px-5 py-4 rounded-2xl border-2 transition-all duration-200 text-left overflow-hidden ${
-              marketTab === 'auction'
-                ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
-                : 'border-gray-200 bg-white hover:border-[#06038D]/40 hover:shadow-md'
-            }`}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              marketTab === 'auction' ? 'bg-[#FEDD00]' : 'bg-orange-50'
-            }`}>
-              <Gavel className={`w-5 h-5 ${marketTab === 'auction' ? 'text-[#06038D]' : 'text-orange-500'}`} />
-            </div>
-            <div className="min-w-0">
-              <div className={`font-bold text-sm leading-tight flex items-center gap-2 ${
-                marketTab === 'auction' ? 'text-white' : 'text-[#06038D]'
-              }`}>
-                {t("marketplace.tab.auction")}
-                {auctionData && auctionData.total > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    marketTab === 'auction' ? 'bg-[#FEDD00] text-[#06038D]' : 'bg-orange-100 text-orange-600'
-                  }`}>
-                    {auctionData.total}
-                  </span>
-                )}
-              </div>
-              <div className={`text-xs mt-0.5 ${
-                marketTab === 'auction' ? 'text-white/70' : 'text-gray-400'
-              }`}>{t("marketplace.tab.auctionSub")}</div>
-            </div>
-            {marketTab === 'auction' && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#FEDD00]" />
-            )}
-          </button>
+      {/* ── Divider + Market Tab Switcher ── */}
+      <div className="border-t border-gray-100 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Auction Tab — shown first / more prominent */}
+            <button
+              onClick={() => setMarketTab('auction')}
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                marketTab === 'auction'
+                  ? 'bg-[#1a1a2e] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-[#1a1a2e] hover:bg-white'
+              }`}
+            >
+              <Gavel className="w-4 h-4" />
+              {t("marketplace.tab.auction")}
+              {(auctionHeroData?.total ?? 0) > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  marketTab === 'auction' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {auctionHeroData?.total}
+                </span>
+              )}
+            </button>
+            {/* Shop Tab */}
+            <button
+              onClick={() => setMarketTab('shop')}
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                marketTab === 'shop'
+                  ? 'bg-[#1a1a2e] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-[#1a1a2e] hover:bg-white'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              {t("marketplace.tab.shop")}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── TCG Series Quick Filter ── */}
       <div className="max-w-7xl mx-auto px-4 mt-4">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {TCG_SERIES.map(s => {
             const isActive = marketTab === 'auction' ? auctionSeries === s.value : tcgSeries === s.value;
             const count = marketTab === 'auction'
@@ -981,41 +813,29 @@ export default function Marketplace() {
                     resetAndSearch();
                   }
                 }}
-                className={`relative flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
                   isActive
-                    ? 'border-[#06038D] bg-[#06038D] shadow-lg shadow-[#06038D]/20'
-                    : 'border-gray-100 bg-white hover:border-[#06038D]/30 hover:shadow-md'
+                    ? 'border-[#1a1a2e] bg-[#1a1a2e] text-white shadow-sm'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-[#1a1a2e]'
                 }`}
               >
                 {s.logo ? (
-                  <div className={`flex items-center justify-center rounded-xl px-3 py-1.5 transition-all ${
-                    isActive ? 'bg-white shadow-sm' : ''
-                  }`}>
-                    <img
-                      src={getProxiedImageUrl(s.logo) ?? undefined}
-                      alt={s.label}
-                      className="h-9 sm:h-10 w-auto object-contain"
-                    />
-                  </div>
+                  <img
+                    src={getProxiedImageUrl(s.logo) ?? undefined}
+                    alt={s.label}
+                    className="h-4 w-auto object-contain"
+                    style={{ filter: isActive ? 'brightness(0) invert(1)' : 'none' }}
+                  />
                 ) : (
-                  <span className={`text-sm font-bold ${
-                    isActive ? 'text-white' : 'text-[#06038D]'
-                  }`}>{t("marketplace.all")}</span>
+                  <span>{t("marketplace.allSeries")}</span>
                 )}
-                <span className={`text-[10px] sm:text-xs font-semibold ${
-                  isActive ? 'text-white/90' : 'text-gray-500'
-                }`}>
-                  {s.value === 'all' ? t("marketplace.allSeries") : s.label}
-                </span>
+                {s.value !== 'all' && <span>{s.label}</span>}
                 {count != null && (
-                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
                     isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                   }`}>
-                    {t("marketplace.itemCount", { count })}
+                    {count}
                   </span>
-                )}
-                {isActive && (
-                  <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FEDD00]" />
                 )}
               </button>
             );
@@ -1078,19 +898,17 @@ export default function Marketplace() {
 
                 {/* Auction grid */}
                 {auctionLoading ? (
-                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                  <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))' }}>
                     {Array.from({ length: 8 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
                   </div>
                 ) : !auctionData || auctionData.listings.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100">
-                    <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
-                      <Gavel className="w-10 h-10 text-[#06038D]/30" />
-                    </div>
-                    <h3 className="text-lg font-bold text-[#06038D] mb-2">{t("marketplace.auction.empty")}</h3>
-                    <p className="text-sm text-gray-500 max-w-xs">{t("marketplace.auction.comingSoon")}</p>
+                  <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <Gavel className="w-12 h-12 text-gray-200 mb-4" />
+                    <p className="text-sm text-gray-400 uppercase tracking-widest">{t("marketplace.auction.empty")}</p>
+                    <p className="text-xs text-gray-300 mt-1">{t("marketplace.auction.comingSoon")}</p>
                   </div>
                 ) : (
-                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                  <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))' }}>
                     {auctionData.listings.map((auction: any) => (
                       <AuctionCard key={auction.id} auction={auction} />
                     ))}
@@ -1179,31 +997,31 @@ export default function Marketplace() {
             {hasActiveFilters && (
               <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 {search && (
-                  <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">
                     {t("marketplace.filter.searchTag", { search })}
                     <button onClick={clearSearch}><X className="w-3 h-3" /></button>
                   </span>
                 )}
                 {tcgSeries !== "all" && (
-                  <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">
                     {TCG_SERIES_LABEL[tcgSeries] ?? tcgSeries}
                     <button onClick={() => { setTcgSeries("all"); resetAndSearch(); }}><X className="w-3 h-3" /></button>
                   </span>
                 )}
                 {selectedConditions.map(c => (
-                  <span key={c} className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span key={c} className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">
                     {CONDITION_SHORT[c as ConditionValue] ?? c}
                     <button onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
                   </span>
                 ))}
                 {sellerType !== "all" && (
-                  <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">
                     {sellerType === "platform" ? t("marketplace.filter.official") : t("marketplace.filter.individualSeller")}
                     <button onClick={() => { setSellerType("all"); resetAndSearch(); }}><X className="w-3 h-3" /></button>
                   </span>
                 )}
                 {(priceMin || priceMax) && (
-                  <span className="inline-flex items-center gap-1 bg-[#06038D]/10 text-[#06038D] text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">
                     HK${priceMin || "0"} - {priceMax || "∞"}
                     <button onClick={() => { setPriceMin(""); setPriceMax(""); resetAndSearch(); }}><X className="w-3 h-3" /></button>
                   </span>
@@ -1220,12 +1038,10 @@ export default function Marketplace() {
                 {Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : allListings.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-gray-100">
-                <div className="w-20 h-20 rounded-full bg-[#06038D]/5 flex items-center justify-center mb-4">
-                  <ShoppingBag className="w-10 h-10 text-[#06038D]/30" />
-                </div>
-                <h3 className="text-lg font-bold text-[#06038D] mb-2">{t("marketplace.shop.emptyTitle")}</h3>
-                <p className="text-sm text-gray-500 max-w-xs">
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <ShoppingBag className="w-12 h-12 text-gray-200 mb-4" />
+                <p className="text-sm text-gray-400 uppercase tracking-widest">{t("marketplace.shop.emptyTitle")}</p>
+                <p className="text-xs text-gray-300 mt-1">
                   {hasActiveFilters ? t("marketplace.shop.adjustFilter") : t("marketplace.shop.comingSoon")}
                 </p>
                 {hasActiveFilters && (
@@ -1272,9 +1088,9 @@ export default function Marketplace() {
       </div>
 
       {/* ── Trust Footer ── */}
-      <div className="bg-white border-t border-gray-100 mt-4">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="border-t border-gray-100 mt-8">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { icon: Shield,      titleKey: "marketplace.trust.buyerProtection",  descKey: "marketplace.trust.buyerProtectionDesc" },
               { icon: TrendingUp,  titleKey: "marketplace.trust.priceTransparency",  descKey: "marketplace.trust.priceTransparencyDesc" },
@@ -1283,13 +1099,13 @@ export default function Marketplace() {
             ].map(item => {
               const Icon = item.icon;
               return (
-                <div key={item.titleKey} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-                  <div className="w-10 h-10 rounded-xl bg-[#06038D]/5 flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-[#06038D]" />
+                <div key={item.titleKey} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="w-4 h-4 text-gray-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#06038D]">{t(item.titleKey)}</p>
-                    <p className="text-xs text-gray-500">{t(item.descKey)}</p>
+                    <p className="text-sm font-semibold text-[#1a1a2e]">{t(item.titleKey)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t(item.descKey)}</p>
                   </div>
                 </div>
               );

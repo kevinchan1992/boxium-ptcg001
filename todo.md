@@ -9758,3 +9758,16 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 掃描所有 Dialog 使用頁面，確認無意外深色背景覆蓋（AdminMarketplace 財務報表 Dialog 保留深色為刻意設計）
 - [x] TypeScript 0 errors
 - [x] 保存 checkpoint
+
+## ✅ Marketplace 頁面「高級雜誌感 Editorial Style」改版
+- [x] 移除深藍色 Hero Banner，改為乾淨白色 Editorial Top Bar（Playfair Display Serif 字體）
+- [x] 新建 AuctionHero 組件：拍賣大廳 Hero Section（大圖 + Serif 標題 + 倒數計時 + 即時出價 + 次要拍品）
+- [x] 重構 AuctionCard：雜誌感設計（移除電競風格，加入 getProxiedImageUrl，優化 badge/price 排版）
+- [x] 重構 Tab Switcher：拍賣優先，改為圓角 pill 設計（黑底白字 active 狀態）
+- [x] 重構 TCG Series Filter：改為橫向 pill 列表（移除高飽和度深藍色大方塊）
+- [x] 移除舊 Banner Carousel 相關 state/refs/logic（bannerIdx/bannerDir/goToBanner 等）
+- [x] 更新 Active Filter 標籤：改為灰色邊框 pill（移除深藍色背景）
+- [x] 更新 Shop/Auction Empty State：極簡雜誌感設計
+- [x] 更新 Trust Footer：移除深藍色背景，改為極簡灰色 icon + 文字
+- [x] 修復 AuctionHero/AuctionCard 路由（/marketplace/auction/:id → /auction/:id）
+- [x] TypeScript 0 errors
