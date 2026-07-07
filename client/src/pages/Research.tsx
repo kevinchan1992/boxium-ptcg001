@@ -244,10 +244,10 @@ export default function Home() {
       </div>
 
       {/* ── Main layout ── */}
-      <div className="relative z-10 min-h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex flex-col">
+      <div className="relative z-10 flex flex-col" style={{ height: 'calc(100dvh - 3.5rem)', overflow: 'hidden' }}>
 
         {/* ── HERO: Asymmetric editorial layout ── */}
-        <div className="flex-1 relative flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-10 md:pt-0 pb-6 md:pb-0 gap-8 md:gap-0">
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-8 md:pt-0 pb-4 md:pb-0 gap-4 md:gap-0">
 
           {/* LEFT: Editorial headline */}
           <div className="md:w-1/2 md:pr-12 flex flex-col justify-center">
@@ -315,20 +315,20 @@ export default function Home() {
           </div>
 
           {/* RIGHT: Card gallery — Desktop: Gallery Wall / Mobile: Lookbook horizontal scroll */}
-          {/* Desktop: full-width gallery wall breaking out of the 50% column */}
-          <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-end justify-end pr-8 xl:pr-16" style={{ width: '55%' }}>
+          {/* Desktop: flex column taking up the right half, vertically centered */}
+          <div className="hidden md:flex md:w-1/2 items-center justify-end pr-4 xl:pr-8 h-full">
             {isLoading ? (
-              <div className="flex items-end gap-8">
+              <div className="flex items-center gap-6">
                 {[0,1,2,3,4].map((i) => (
                   <div key={i} className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ width: i===2 ? '11rem' : '8rem', aspectRatio: '3/4' }} />
+                    style={{ width: i===2 ? '10rem' : '7.5rem', aspectRatio: '3/4' }} />
                 ))}
               </div>
             ) : popularCards.length > 0 ? (
-              <div className="flex items-end gap-6 xl:gap-10 pb-16">
+              <div className="flex items-end gap-5 xl:gap-8">
                 {popularCards.slice(0, 5).map((card: any, i: number) => {
-                  // Bold asymmetric offsets: museum-wall hanging feel
-                  const offsets = ['-4rem', '2.5rem', '0', '3rem', '-3rem'];
+                  // Asymmetric offsets — capped so cards stay within viewport
+                  const offsets = ['-2.5rem', '1.5rem', '0', '2rem', '-2rem'];
                   const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
                   return (
                     <div key={card.id} className="flex flex-col items-center gap-2"
@@ -370,13 +370,13 @@ export default function Home() {
             ) : null}
           </div>
 
-          {/* Mobile: full-width Lookbook horizontal scroll */}
-          <div className="md:hidden w-full -mx-6 sm:-mx-10">
+          {/* Mobile: full-width Lookbook horizontal scroll — flex-1 to fill remaining vertical space */}
+          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-center -mx-6 sm:-mx-10">
             {isLoading ? (
               <div className="flex items-end gap-3 px-6 overflow-hidden">
                 {[0,1,2,3,4].map((i) => (
                   <div key={i} className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ width: i===2 ? '6.5rem' : '5.5rem', aspectRatio: '3/4' }} />
+                    style={{ width: i===2 ? '8rem' : '6.5rem', aspectRatio: '3/4' }} />
                 ))}
               </div>
             ) : popularCards.length > 0 ? (
@@ -403,7 +403,7 @@ export default function Home() {
                     style={{ paddingLeft: '1.5rem', paddingRight: '3rem' }}>
                     {popularCards.map((card: any, i: number) => {
                       const isBig = i % 2 === 0;
-                      const cardW = isBig ? '6.5rem' : '5.5rem';
+                      const cardW = isBig ? '8.5rem' : '7rem';
                       return (
                         <div key={card.id} className="flex-shrink-0 flex flex-col gap-1"
                           style={{ scrollSnapAlign: 'start', width: cardW }}>
@@ -463,8 +463,8 @@ export default function Home() {
 
         {/* ── Bottom editorial footnote ── */}
         <div
-          className="px-6 sm:px-10 md:px-16 py-4 flex items-center justify-between"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+          className="px-6 sm:px-10 md:px-16 py-3 md:py-4 flex-shrink-0 flex items-center justify-between"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
           <p
             className="text-[9px] uppercase tracking-[0.2em]"
