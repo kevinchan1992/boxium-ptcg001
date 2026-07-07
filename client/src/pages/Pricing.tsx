@@ -127,6 +127,8 @@ export default function Pricing() {
     imageUrl: card.imageUrl,
     cardNumber: card.cardNumber || null,
     series: card.series || null,
+    currentPrice: card.currentPrice || null,
+    priceChange7d: card.priceChange7d ?? null,
   }));
 
   const handleCardClick = (cardId: number) => {
@@ -178,7 +180,7 @@ export default function Pricing() {
       <div className="relative z-10 min-h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex flex-col">
 
         {/* HERO: Asymmetric editorial layout */}
-        <div className="flex-1 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-10 md:pt-0 pb-6 md:pb-0 gap-8 md:gap-0">
+        <div className="flex-1 relative flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-10 md:pt-0 pb-6 md:pb-0 gap-8 md:gap-0">
 
           {/* LEFT: Editorial headline */}
           <div className="md:w-1/2 md:pr-12 flex flex-col justify-center">
@@ -239,98 +241,139 @@ export default function Pricing() {
             </div>
           </div>
 
-          {/* RIGHT: Card gallery — Desktop: Masonry offset / Mobile: Lookbook horizontal scroll */}
-          <div className="md:w-1/2 flex items-center justify-center md:justify-end w-full -mx-6 sm:-mx-10 md:mx-0">
+          {/* RIGHT: Card gallery — Desktop: Gallery Wall / Mobile: Lookbook horizontal scroll */}
+          {/* Desktop: full-width gallery wall breaking out of the 50% column */}
+          <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-end justify-end pr-8 xl:pr-16" style={{ width: '55%' }}>
             {isLoading ? (
-              <div className="flex items-end gap-3 overflow-hidden">
-                {[0, 1, 2, 3, 4].map((i) => (
+              <div className="flex items-end gap-8">
+                {[0,1,2,3,4].map((i) => (
                   <div
                     key={i}
                     className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ width: i === 2 ? '9rem' : '7rem', aspectRatio: '3/4' }}
+                    style={{ width: i === 2 ? '11rem' : '8rem', aspectRatio: '3/4' }}
                   />
                 ))}
               </div>
             ) : popularCards.length > 0 ? (
-              <>
-                {/* Desktop: Offset Masonry (first 5 cards) */}
-                <div className="hidden md:flex items-end gap-2 sm:gap-3">
-                  {popularCards.slice(0, 5).map((card, i) => {
-                    const offsets = ['-2rem', '1.5rem', '0', '1.5rem', '-2rem'];
-                    const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
-                    return (
-                      <div
-                        key={card.id}
-                        style={{ transform: `translateY(${offsets[i] || '0'})` }}
-                      >
-                        <HoloCard
-                          card={card}
-                          onClick={() => handleCardClick(card.id)}
-                          size={sizes[i] || 'md'}
-                        />
+              <div className="flex items-end gap-6 xl:gap-10 pb-16">
+                {popularCards.slice(0, 5).map((card, i) => {
+                  const offsets = ['-4rem', '2.5rem', '0', '3rem', '-3rem'];
+                  const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
+                  return (
+                    <div key={card.id} className="flex flex-col items-center gap-2"
+                      style={{ transform: `translateY(${offsets[i] || '0'})` }}>
+                      <HoloCard
+                        card={card}
+                        onClick={() => handleCardClick(card.id)}
+                        size={sizes[i] || 'md'}
+                      />
+                      <div className="flex items-center justify-between w-full px-0.5 gap-2">
+                        {card.cardNumber && (
+                          <span className="text-[8px] uppercase tracking-[0.12em] truncate"
+                            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+                            {card.cardNumber}
+                          </span>
+                        )}
+                        {card.currentPrice ? (
+                          <span className="text-[9px] flex-shrink-0 flex items-center gap-0.5"
+                            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>
+                            {card.currentPrice >= 1000
+                              ? `$${(card.currentPrice/1000).toFixed(1)}k`
+                              : `$${Math.round(card.currentPrice)}`}
+                            {card.priceChange7d !== null && card.priceChange7d !== 0 && (
+                              <span style={{
+                                color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
+                                fontSize: '8px',
+                              }}>
+                                {card.priceChange7d > 0 ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </span>
+                        ) : null}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
 
-                {/* Mobile: Horizontal Lookbook scroll (all 20 cards) */}
+          {/* Mobile: full-width Lookbook horizontal scroll */}
+          <div className="md:hidden w-full -mx-6 sm:-mx-10">
+            {isLoading ? (
+              <div className="flex items-end gap-3 px-6 overflow-hidden">
+                {[0,1,2,3,4].map((i) => (
+                  <div key={i} className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
+                    style={{ width: i===2 ? '6.5rem' : '5.5rem', aspectRatio: '3/4' }} />
+                ))}
+              </div>
+            ) : popularCards.length > 0 ? (
+              <div className="relative">
+                <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
+                  style={{ background: 'linear-gradient(to right, #0d0d0f 0%, transparent 100%)' }} />
+                <div className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
+                  style={{ background: 'linear-gradient(to left, #0d0d0f 0%, transparent 100%)' }} />
                 <div
-                  className="md:hidden w-full"
                   style={{
                     overflowX: 'auto',
                     overflowY: 'visible',
                     scrollSnapType: 'x mandatory',
                     WebkitOverflowScrolling: 'touch',
-                    paddingBottom: '0.5rem',
+                    paddingBottom: '0.75rem',
                     msOverflowStyle: 'none',
                     scrollbarWidth: 'none',
                   }}
                 >
-                  <div
-                    className="flex items-center gap-3"
-                    style={{ paddingLeft: '1.5rem', paddingRight: '1.5rem' }}
-                  >
+                  <div className="flex items-end gap-3"
+                    style={{ paddingLeft: '1.5rem', paddingRight: '3rem' }}>
                     {popularCards.map((card, i) => {
                       const isBig = i % 2 === 0;
+                      const cardW = isBig ? '6.5rem' : '5.5rem';
                       return (
-                        <button
-                          key={card.id}
-                          onClick={() => handleCardClick(card.id)}
-                          className="flex-shrink-0 relative rounded-lg overflow-hidden"
-                          style={{
-                            scrollSnapAlign: 'start',
-                            width: isBig ? '6.5rem' : '5.5rem',
-                            aspectRatio: '3/4',
-                            boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
-                          }}
-                        >
-                          <img
-                            src={getProxiedImageUrl(card.imageUrl) ?? ''}
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          {card.cardNumber && (
-                            <div
-                              className="absolute bottom-0 left-0 right-0 px-1.5 py-1"
-                              style={{
-                                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
-                              }}
-                            >
-                              <p
-                                className="text-[7px] uppercase tracking-[0.1em] truncate text-center"
-                                style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}
-                              >
+                        <div key={card.id} className="flex-shrink-0 flex flex-col gap-1"
+                          style={{ scrollSnapAlign: 'start', width: cardW }}>
+                          <button
+                            onClick={() => handleCardClick(card.id)}
+                            className="relative rounded-lg overflow-hidden w-full"
+                            style={{ aspectRatio: '3/4', boxShadow: '0 6px 24px rgba(0,0,0,0.55)' }}
+                          >
+                            <img
+                              src={getProxiedImageUrl(card.imageUrl) ?? ''}
+                              alt={card.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </button>
+                          <div className="flex items-center justify-between px-0.5">
+                            {card.cardNumber && (
+                              <span className="text-[7px] uppercase tracking-[0.08em] truncate"
+                                style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}>
                                 {card.cardNumber}
-                              </p>
-                            </div>
-                          )}
-                        </button>
+                              </span>
+                            )}
+                            {card.currentPrice ? (
+                              <span className="text-[8px] flex-shrink-0 flex items-center gap-0.5"
+                                style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+                                {card.currentPrice >= 1000
+                                  ? `$${(card.currentPrice/1000).toFixed(1)}k`
+                                  : `$${Math.round(card.currentPrice)}`}
+                                {card.priceChange7d !== null && card.priceChange7d !== 0 && (
+                                  <span style={{
+                                    color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
+                                    fontSize: '7px',
+                                  }}>
+                                    {card.priceChange7d > 0 ? '↑' : '↓'}
+                                  </span>
+                                )}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="text-center py-12" style={{ color: '#444444' }}>
                 <p className="text-sm">{t("pricing.noResults") || "暫無熱門卡牌"}</p>
