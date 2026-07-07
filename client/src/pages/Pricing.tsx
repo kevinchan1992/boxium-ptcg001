@@ -180,7 +180,7 @@ export default function Pricing() {
       <div className="relative z-10 flex flex-col" style={{ height: 'calc(100dvh - 3.5rem)', overflow: 'hidden' }}>
 
         {/* HERO: Asymmetric editorial layout */}
-        <div className="flex-1 min-h-0 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-12 pt-6 md:pt-0 pb-2 md:pb-0 gap-2 md:gap-0">
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-12 pt-8 md:pt-0 pb-4 md:pb-0 gap-0 md:gap-0">
 
           {/* LEFT: Editorial headline */}
           <div className="md:w-[40%] md:pr-8 flex flex-col justify-center">
@@ -297,8 +297,8 @@ export default function Pricing() {
             ) : null}
           </div>
 
-          {/* Mobile: 5-card even row — fills remaining vertical space */}
-          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-end pb-2">
+          {/* Mobile: 5-card even row — sits naturally below search */}
+          <div className="md:hidden mt-6 pb-4">
             {isLoading ? (
               <div className="flex items-end justify-between gap-2 px-1">
                 {[0,1,2,3,4].map((i) => (
