@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,118 @@ import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
 import PageHead from "@/components/PageHead";
 
+// ── Holographic overlay on card hover ──────────────────────────────────────
+function HoloCard({
+  card,
+  onClick,
+  size = "md",
+}: {
+  card: any;
+  onClick: () => void;
+  size?: "sm" | "md" | "lg";
+}) {
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [holoPos, setHoloPos] = useState({ x: 50, y: 50 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = (e.clientX - rect.left) / rect.width;
+    const cy = (e.clientY - rect.top) / rect.height;
+    setTilt({ x: (cy - 0.5) * 18, y: (cx - 0.5) * -18 });
+    setHoloPos({ x: cx * 100, y: cy * 100 });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+    setHoloPos({ x: 50, y: 50 });
+    setIsHovered(false);
+  };
+
+  const widthClass = size === "lg" ? "w-36 sm:w-44" : size === "sm" ? "w-20 sm:w-24" : "w-28 sm:w-32";
+
+  return (
+    <button
+      ref={cardRef}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      className={`group relative ${widthClass} flex-shrink-0`}
+      style={{
+        perspective: '800px',
+        transform: 'translateZ(0)',
+      }}
+    >
+      <div
+        className="relative aspect-[3/4] rounded-lg overflow-hidden"
+        style={{
+          transform: isHovered
+            ? `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1.04)`
+            : 'rotateX(0deg) rotateY(0deg) scale(1)',
+          transition: isHovered ? 'transform 0.08s ease-out' : 'transform 0.4s ease-out',
+          boxShadow: isHovered
+            ? '0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(255,255,255,0.06)'
+            : '0 8px 30px rgba(0,0,0,0.5)',
+        }}
+      >
+        {/* Card image */}
+        <img
+          src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/128x176?text=No+Image"}
+          alt={card.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        {/* Holographic overlay */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `
+                radial-gradient(circle at ${holoPos.x}% ${holoPos.y}%,
+                  rgba(255,255,255,0.15) 0%,
+                  rgba(120,80,255,0.08) 25%,
+                  rgba(0,200,255,0.06) 50%,
+                  rgba(255,180,0,0.05) 75%,
+                  transparent 100%
+                )
+              `,
+              mixBlendMode: 'screen',
+            }}
+          />
+        )}
+        {/* Subtle shine streak */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(
+                ${105 + tilt.y * 2}deg,
+                transparent 30%,
+                rgba(255,255,255,0.06) 50%,
+                transparent 70%
+              )`,
+            }}
+          />
+        )}
+      </div>
+      {/* Gallery label */}
+      {card.cardNumber && (
+        <div className="mt-1.5 text-center">
+          <p
+            className="font-mono text-[9px] uppercase tracking-[0.12em] truncate"
+            style={{ color: '#555555', letterSpacing: '0.1em' }}
+          >
+            {card.cardNumber}
+          </p>
+        </div>
+      )}
+    </button>
+  );
+}
+
 export default function Home() {
   const { t } = useTranslation();
   const searchParams = useSearch();
@@ -17,6 +129,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [, setLocation] = useLocation();
   const [showCameraSheet, setShowCameraSheet] = useState(false);
+
   // Sync search query when URL param changes
   useEffect(() => {
     const q = new URLSearchParams(searchParams).get('q') || '';
@@ -75,99 +188,207 @@ export default function Home() {
         description="搜尋 Pokémon、One Piece、遊戲王等 TCG 卡牌，查看即時市場價格、PSA 10 成交記錄及價格走勢分析。"
         keywords="TCG 卡牌查詢, Pokémon 卡牌價格, PSA 10 價格, BOXIUM TCG"
       />
-      <div className="h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 overflow-hidden pb-14 md:pb-0">
-        {/* Hero Section */}
-        <div className="text-center space-y-2 sm:space-y-5 max-w-3xl w-full">
-          {/* Logo/Brand */}
-          <div className="space-y-1 sm:space-y-3">
-            <Link href="/">
-              <img
-                src="/boxium-logo-white.png"
-                alt="BOXIUM"
-                className="h-24 sm:h-28 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            </Link>
-            <h2 className="text-base sm:text-lg font-semibold text-foreground">{t("research.title")}</h2>
-          </div>
-          {/* Subtitle */}
-          <p className="text-xs sm:text-sm text-muted-foreground px-4">
-            {t("research.searchPlaceholder")}
-          </p>
 
-          {/* Search Box — Mobile: MobileSearchOverlay, Desktop: CardSearchDropdown */}
-          {/* Mobile overlay trigger */}
-          <div className="md:hidden">
-            <MobileSearchOverlay
-              initialQuery={searchQuery}
-              cardNames={randomCardNames}
-              placeholder={t("research.searchPlaceholder")}
-              onSearch={(q) => {
-                setSearchQuery(q);
-                setLocation(`/search?q=${encodeURIComponent(q)}`);
+      {/* ── Noise texture overlay (grain / film feel) ── */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '128px 128px',
+          opacity: 0.6,
+        }}
+      />
+
+      {/* ── Ambient light blobs ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Top-left amber glow */}
+        <div
+          className="absolute"
+          style={{
+            top: '-15%',
+            left: '-10%',
+            width: '50vw',
+            height: '50vw',
+            background: 'radial-gradient(circle, rgba(180,120,20,0.07) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
+        {/* Bottom-right deep violet glow */}
+        <div
+          className="absolute"
+          style={{
+            bottom: '-20%',
+            right: '-10%',
+            width: '55vw',
+            height: '55vw',
+            background: 'radial-gradient(circle, rgba(80,40,160,0.08) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+        {/* Center subtle blue */}
+        <div
+          className="absolute"
+          style={{
+            top: '30%',
+            left: '35%',
+            width: '30vw',
+            height: '30vw',
+            background: 'radial-gradient(circle, rgba(20,60,120,0.05) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+          }}
+        />
+      </div>
+
+      {/* ── Main layout ── */}
+      <div className="relative z-10 min-h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex flex-col">
+
+        {/* ── HERO: Asymmetric editorial layout ── */}
+        <div className="flex-1 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-10 md:pt-0 pb-6 md:pb-0 gap-8 md:gap-0">
+
+          {/* LEFT: Editorial headline */}
+          <div className="md:w-1/2 md:pr-12 flex flex-col justify-center">
+            {/* Eyebrow label */}
+            <p
+              className="text-[9px] uppercase tracking-[0.3em] font-semibold mb-4 md:mb-6"
+              style={{ color: '#666666', fontFamily: 'monospace' }}
+            >
+              B O X I U M &nbsp;&nbsp; R E S E A R C H
+            </p>
+
+            {/* Main headline — Playfair Display */}
+            <h1
+              className="leading-[1.05] mb-5 md:mb-8"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: 'clamp(32px, 5.5vw, 72px)',
+                fontWeight: 700,
+                color: '#FFFFFF',
+                letterSpacing: '-0.02em',
               }}
-              cardLinkPrefix="card"
+            >
+              THE ART OF<br />
+              <span style={{ color: 'rgba(255,255,255,0.45)', fontStyle: 'italic' }}>
+                SPECULATION.
+              </span>
+            </h1>
+
+            {/* Divider rule */}
+            <div
+              className="mb-5 md:mb-8"
+              style={{ width: '40px', height: '1px', background: 'rgba(255,255,255,0.2)' }}
             />
-          </div>
-          {/* Desktop dropdown */}
-          <div className="hidden md:block relative max-w-2xl mx-auto">
-            <CardSearchDropdown
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSubmit={(q) => {
-                if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
-              }}
-              cardLinkPrefix="card"
-              inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary"
-              placeholder=""
-              showCameraButton
-              onCameraClick={() => setShowCameraSheet(true)}
-            />
-            {/* Typing Animation Placeholder (only when input is empty) */}
-            {!searchQuery && randomCardNames.length > 0 && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm z-0">
-                <TypeAnimation
-                  sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                  wrapper="span"
-                  speed={50}
-                  repeat={Infinity}
+
+            {/* Search box — minimal bottom-border style (desktop) */}
+            <div className="hidden md:block">
+              <div className="relative max-w-md">
+                <CardSearchDropdown
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onSubmit={(q) => {
+                    if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
+                  }}
+                  cardLinkPrefix="card"
+                  inputClassName="w-full py-3 text-sm bg-transparent border-0 border-b focus:ring-0 focus:outline-none rounded-none"
+                  placeholder=""
+                  showCameraButton
+                  onCameraClick={() => setShowCameraSheet(true)}
                 />
-              </div>
-            )}
-
-          </div>
-
-          {/* Top Gainers - Daily Price Increase Top 5 */}
-          <div className="flex justify-center gap-3 sm:gap-4 mt-3 sm:mt-12 flex-wrap">
-            {isLoading ? (
-              // 骨架屏：5張卡牌形狀，與實際卡牌尺寸一致，避免版面位移
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="relative w-28 sm:w-32">
-                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted/60 animate-pulse" />
-                </div>
-              ))
-            ) : popularCards.length > 0 ? (
-              popularCards.map((card: any) => (
-                <button
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
-                  className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
-                >
-                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
-                    <img
-                      src={getProxiedImageUrl(card.imageUrl) ?? "https://via.placeholder.com/128x176?text=No+Image"}
-                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                      loading="lazy"
+                {/* Typing Animation Placeholder (only when input is empty) */}
+                {!searchQuery && randomCardNames.length > 0 && (
+                  <div className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-sm z-0" style={{ color: '#444444' }}>
+                    <TypeAnimation
+                      sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
+                      wrapper="span"
+                      speed={50}
+                      repeat={Infinity}
                     />
                   </div>
-                </button>
-              ))
+                )}
+              </div>
+              {/* Search hint */}
+              <p
+                className="mt-2 text-[10px] uppercase tracking-[0.15em]"
+                style={{ color: '#444444', fontFamily: 'monospace' }}
+              >
+                {t("research.searchPlaceholder")}
+              </p>
+            </div>
+
+            {/* Mobile search overlay trigger */}
+            <div className="md:hidden">
+              <MobileSearchOverlay
+                initialQuery={searchQuery}
+                cardNames={randomCardNames}
+                placeholder={t("research.searchPlaceholder")}
+                onSearch={(q) => {
+                  setSearchQuery(q);
+                  setLocation(`/search?q=${encodeURIComponent(q)}`);
+                }}
+                cardLinkPrefix="card"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT: Masonry card gallery */}
+          <div className="md:w-1/2 flex items-center justify-center md:justify-end">
+            {isLoading ? (
+              /* Skeleton */
+              <div className="flex items-end gap-3 sm:gap-4">
+                {[44, 52, 56, 52, 44].map((h, i) => (
+                  <div
+                    key={i}
+                    className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
+                    style={{ width: i === 2 ? '9rem' : '7rem', aspectRatio: '3/4', height: `${h}px` }}
+                  />
+                ))}
+              </div>
+            ) : popularCards.length > 0 ? (
+              /* Offset Masonry gallery — 5 cards with varying vertical offsets */
+              <div className="flex items-end gap-2 sm:gap-3">
+                {popularCards.map((card: any, i: number) => {
+                  // Vertical offset pattern: [up, down, center, down, up]
+                  const offsets = ['-2rem', '1.5rem', '0', '1.5rem', '-2rem'];
+                  const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
+                  return (
+                    <div
+                      key={card.id}
+                      style={{ transform: `translateY(${offsets[i] || '0'})` }}
+                    >
+                      <HoloCard
+                        card={card}
+                        onClick={() => handleCardClick(card.id)}
+                        size={sizes[i] || 'md'}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                <p>{t("research.noResults")}</p>
+              <div className="text-center py-12" style={{ color: '#444444' }}>
+                <p className="text-sm">{t("research.noResults")}</p>
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Bottom editorial footnote ── */}
+        <div
+          className="px-6 sm:px-10 md:px-16 py-4 flex items-center justify-between"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        >
+          <p
+            className="text-[9px] uppercase tracking-[0.2em]"
+            style={{ color: '#333333', fontFamily: 'monospace' }}
+          >
+            TCG MARKET INTELLIGENCE
+          </p>
+          <p
+            className="text-[9px] uppercase tracking-[0.2em]"
+            style={{ color: '#333333', fontFamily: 'monospace' }}
+          >
+            PSA 10 · SNKRDUNK · HKD
+          </p>
         </div>
       </div>
 

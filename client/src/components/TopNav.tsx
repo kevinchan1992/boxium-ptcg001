@@ -1,6 +1,6 @@
 import { useEffect, useState, createContext, useContext, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart, ScrollText } from "lucide-react";
+import { Menu, X, LogOut, User, Bell, Tag, ShoppingBag, LogIn, Package, MessageSquare, CheckCheck, ExternalLink, ShoppingCart, ScrollText, Search, BarChart2, TrendingUp, Award, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -299,28 +299,29 @@ export function TopNav() {
             </AnimatePresence>
 
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
-            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
+            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-0.5">
               {[
-                { href: "/research", label: t("common.research"), emoji: "🔍", tip: t("topnav.tipResearch") },
-                { href: "/pricing", label: t("common.priceComparison"), emoji: "📈", tip: t("topnav.tipPricing") },
-                { href: "/trending", label: "漲幅榜", emoji: "🔥", tip: "PSA 10 漲幅 / 跌幅 / 波動排行" },
-                { href: "/grading", label: t("common.grading"), emoji: "🏅", tip: t("topnav.tipGrading") },
-                { href: "/marketplace", label: t("topnav.marketplace"), emoji: "🛒", tip: t("topnav.tipMarketplace") },
+                { href: "/research", label: t("common.research"), Icon: Search, tip: t("topnav.tipResearch") },
+                { href: "/pricing", label: t("common.priceComparison"), Icon: BarChart2, tip: t("topnav.tipPricing") },
+                { href: "/trending", label: "漲幅榜", Icon: TrendingUp, tip: "PSA 10 漲幅 / 跌幅 / 波動排行" },
+                { href: "/grading", label: t("common.grading"), Icon: Award, tip: t("topnav.tipGrading") },
+                { href: "/marketplace", label: t("topnav.marketplace"), Icon: Store, tip: t("topnav.tipMarketplace") },
               ].map((item) => (
                 <div key={item.href} className="relative group/nav">
                   <Link
                     href={item.href}
-                    className={`relative flex items-center gap-1.5 px-6 py-1.5 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap ${
+                    className={`relative flex items-center gap-1.5 px-5 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
                       isActive(item.href)
-                        ? "text-[#FEDD00] bg-white/10"
-                        : "text-white/75 hover:text-white hover:bg-white/8"
+                        ? "text-white bg-white/10"
+                        : "text-white/50 hover:text-white/85 hover:bg-white/5"
                     }`}
+                    style={{ letterSpacing: '0.02em' }}
                   >
-                    <span className="text-base leading-none">{item.emoji}</span>
+                    <item.Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                     {item.label}
                     {/* Active underline indicator */}
                     {isActive(item.href) && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] rounded-full bg-[#FEDD00]" />
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 h-[1px] rounded-full bg-white/60" />
                     )}
                   </Link>
                   {/* Tooltip */}
@@ -338,9 +339,16 @@ export function TopNav() {
               <motion.button
                 onClick={handleSellClick}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 bg-[#FEDD00] text-[#06038d] text-sm font-bold px-3 py-1.5 rounded-md hover:bg-[#FEDD00]/90 transition-colors whitespace-nowrap"
+                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200 whitespace-nowrap"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#FFFFFF',
+                  background: 'transparent',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
               >
-                <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+                <Tag className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                 {/* Hide label on md~lg to avoid crowding center nav */}
                 <span className="hidden lg:inline">{t("topnav.sellItem")}</span>
               </motion.button>

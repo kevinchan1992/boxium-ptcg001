@@ -1,30 +1,125 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { TypeAnimation } from 'react-type-animation';
 import { getProxiedImageUrl } from "@/lib/utils";
 import PageHead from "@/components/PageHead";
 
+// ── Holographic card ──────────────────────────────────────────────────────
+function HoloCard({
+  card,
+  onClick,
+  size = "md",
+}: {
+  card: any;
+  onClick: () => void;
+  size?: "sm" | "md" | "lg";
+}) {
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [holoPos, setHoloPos] = useState({ x: 50, y: 50 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = (e.clientX - rect.left) / rect.width;
+    const cy = (e.clientY - rect.top) / rect.height;
+    setTilt({ x: (cy - 0.5) * 18, y: (cx - 0.5) * -18 });
+    setHoloPos({ x: cx * 100, y: cy * 100 });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+    setHoloPos({ x: 50, y: 50 });
+    setIsHovered(false);
+  };
+
+  const widthClass = size === "lg" ? "w-36 sm:w-44" : size === "sm" ? "w-20 sm:w-24" : "w-28 sm:w-32";
+
+  return (
+    <button
+      ref={cardRef}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      className={`group relative ${widthClass} flex-shrink-0`}
+      style={{ perspective: '800px', transform: 'translateZ(0)' }}
+    >
+      <div
+        className="relative aspect-[3/4] rounded-lg overflow-hidden"
+        style={{
+          transform: isHovered
+            ? `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(1.04)`
+            : 'rotateX(0deg) rotateY(0deg) scale(1)',
+          transition: isHovered ? 'transform 0.08s ease-out' : 'transform 0.4s ease-out',
+          boxShadow: isHovered
+            ? '0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(255,255,255,0.06)'
+            : '0 8px 30px rgba(0,0,0,0.5)',
+        }}
+      >
+        <img
+          src={getProxiedImageUrl(card.imageUrl) ?? ""}
+          alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at ${holoPos.x}% ${holoPos.y}%,
+                rgba(255,255,255,0.15) 0%,
+                rgba(120,80,255,0.08) 25%,
+                rgba(0,200,255,0.06) 50%,
+                rgba(255,180,0,0.05) 75%,
+                transparent 100%)`,
+              mixBlendMode: 'screen',
+            }}
+          />
+        )}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(${105 + tilt.y * 2}deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%)`,
+            }}
+          />
+        )}
+      </div>
+      {card.cardNumber && (
+        <div className="mt-1.5 text-center">
+          <p
+            className="font-mono text-[9px] uppercase tracking-[0.12em] truncate"
+            style={{ color: '#555555' }}
+          >
+            {card.cardNumber}
+          </p>
+        </div>
+      )}
+    </button>
+  );
+}
+
 export default function Pricing() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
-  // Fetch trending cards (top 5 based on PSA10 price increase)
+
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
     { limit: 5 },
     { retry: 1 }
   );
 
-  // Fetch random card names for placeholder rotation
   const { data: randomCardNames = [] } = trpc.cards.getRandomCardNames.useQuery(
     { count: 10 },
     { retry: 1 }
   );
 
-  // Map trending cards to card format for display
   const popularCards = trendingCards.map((card: any) => ({
     id: card.id,
     name: card.name,
@@ -44,101 +139,178 @@ export default function Pricing() {
         description="查詢 Pokémon、One Piece、遊戲王等 TCG 卡牌的 PSA 10 市場格價，整合 SNKRDUNK 及 eBay 真實交易數據，掌握最新市場行情。"
         keywords="PSA 10 格價, 卡牌市場價格, Pokémon TCG 格價, SNKRDUNK, eBay 卡牌"
       />
-      <div className="min-h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 pb-14 md:pb-0">
-        {/* Hero Section */}
-        <div className="text-center space-y-5 max-w-3xl w-full">
-          {/* Logo/Brand */}
-          <div className="space-y-3">
-            <Link href="/">
-              <img
-                src="/boxium-logo-white.png"
-                alt="BOXIUM"
-                className="h-24 sm:h-28 mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            </Link>
-            <h2 className="text-base sm:text-lg font-semibold text-foreground">{t("pricing.title")}</h2>
-          </div>
 
-          {/* Subtitle */}
-          <p className="text-xs sm:text-sm text-muted-foreground px-4">
-            {t("pricing.subtitle")}
-          </p>
+      {/* Noise texture overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '128px 128px',
+          opacity: 0.6,
+        }}
+      />
 
-          {/* Search Box — Mobile: MobileSearchOverlay, Desktop: CardSearchDropdown */}
-          {/* Mobile overlay trigger */}
-          <div className="md:hidden">
-            <MobileSearchOverlay
-              initialQuery={searchQuery}
-              cardNames={randomCardNames}
-              placeholder={t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
-              onSearch={(q) => {
-                setSearchQuery(q);
-                setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+      {/* Ambient light blobs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div
+          className="absolute"
+          style={{
+            top: '-15%', right: '-10%',
+            width: '50vw', height: '50vw',
+            background: 'radial-gradient(circle, rgba(20,80,160,0.07) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            bottom: '-20%', left: '-10%',
+            width: '55vw', height: '55vw',
+            background: 'radial-gradient(circle, rgba(100,30,120,0.07) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+      </div>
+
+      {/* Main layout */}
+      <div className="relative z-10 min-h-[calc(100dvh-3.5rem-56px)] md:min-h-screen flex flex-col">
+
+        {/* HERO: Asymmetric editorial layout */}
+        <div className="flex-1 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-10 md:pt-0 pb-6 md:pb-0 gap-8 md:gap-0">
+
+          {/* LEFT: Editorial headline */}
+          <div className="md:w-1/2 md:pr-12 flex flex-col justify-center">
+            <p
+              className="text-[9px] uppercase tracking-[0.3em] font-semibold mb-4 md:mb-6"
+              style={{ color: '#666666', fontFamily: 'monospace' }}
+            >
+              B O X I U M &nbsp;&nbsp; P R I C I N G
+            </p>
+
+            <h1
+              className="leading-[1.05] mb-5 md:mb-8"
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: 'clamp(32px, 5.5vw, 72px)',
+                fontWeight: 700,
+                color: '#FFFFFF',
+                letterSpacing: '-0.02em',
               }}
-              cardLinkPrefix="pricing"
+            >
+              MARKET<br />
+              <span style={{ color: 'rgba(255,255,255,0.45)', fontStyle: 'italic' }}>
+                INTELLIGENCE.
+              </span>
+            </h1>
+
+            <div
+              className="mb-5 md:mb-8"
+              style={{ width: '40px', height: '1px', background: 'rgba(255,255,255,0.2)' }}
             />
-          </div>
-          {/* Desktop dropdown */}
-          <div className="hidden md:block relative max-w-2xl mx-auto">
-            <CardSearchDropdown
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSubmit={(q) => {
-                if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
-              }}
-              cardLinkPrefix="pricing"
-              inputClassName="w-full py-5 text-base bg-card border-border rounded-xl focus:ring-2 focus:ring-primary pr-16"
-              placeholder=""
-            />
-            {/* Typing Animation Placeholder (only when input is empty) */}
-            {!searchQuery && randomCardNames.length > 0 && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm z-0">
-                <TypeAnimation
-                  sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                  wrapper="span"
-                  speed={50}
-                  repeat={Infinity}
+
+            {/* Desktop search */}
+            <div className="hidden md:block">
+              <div className="relative max-w-md">
+                <CardSearchDropdown
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onSubmit={(q) => {
+                    if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+                  }}
+                  cardLinkPrefix="pricing"
+                  inputClassName="w-full py-3 text-sm bg-transparent border-0 border-b focus:ring-0 focus:outline-none rounded-none"
+                  placeholder=""
                 />
-              </div>
-            )}
-          </div>
-
-          {/* Top Gainers - Daily Price Increase Top 5 */}
-          <div className="flex justify-center gap-3 sm:gap-4 mt-3 sm:mt-12 flex-wrap">
-            {isLoading ? (
-              // Skeleton: 5 card shapes matching actual card dimensions
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="relative w-28 sm:w-32">
-                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted/60 animate-pulse" />
-                </div>
-              ))
-            ) : popularCards.length > 0 ? (
-              popularCards.map((card) => (
-                <button
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
-                  className="group relative w-28 sm:w-32 transition-transform hover:scale-105"
-                >
-                  <div className="relative aspect-[3/4] rounded-lg overflow-hidden">
-                    <img
-                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} 卡牌圖像${card.series ? ` - ${card.series}` : ''}`}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                      loading="lazy"
+                {!searchQuery && randomCardNames.length > 0 && (
+                  <div className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-sm z-0" style={{ color: '#444444' }}>
+                    <TypeAnimation
+                      sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
+                      wrapper="span"
+                      speed={50}
+                      repeat={Infinity}
                     />
                   </div>
-                </button>
-              ))
+                )}
+              </div>
+              <p
+                className="mt-2 text-[10px] uppercase tracking-[0.15em]"
+                style={{ color: '#444444', fontFamily: 'monospace' }}
+              >
+                {t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
+              </p>
+            </div>
+
+            {/* Mobile search */}
+            <div className="md:hidden">
+              <MobileSearchOverlay
+                initialQuery={searchQuery}
+                cardNames={randomCardNames}
+                placeholder={t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
+                onSearch={(q) => {
+                  setSearchQuery(q);
+                  setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+                }}
+                cardLinkPrefix="pricing"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT: Masonry card gallery */}
+          <div className="md:w-1/2 flex items-center justify-center md:justify-end">
+            {isLoading ? (
+              <div className="flex items-end gap-3 sm:gap-4">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
+                    style={{ width: i === 2 ? '9rem' : '7rem', aspectRatio: '3/4' }}
+                  />
+                ))}
+              </div>
+            ) : popularCards.length > 0 ? (
+              <div className="flex items-end gap-2 sm:gap-3">
+                {popularCards.map((card, i) => {
+                  const offsets = ['-2rem', '1.5rem', '0', '1.5rem', '-2rem'];
+                  const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
+                  return (
+                    <div
+                      key={card.id}
+                      style={{ transform: `translateY(${offsets[i] || '0'})` }}
+                    >
+                      <HoloCard
+                        card={card}
+                        onClick={() => handleCardClick(card.id)}
+                        size={sizes[i] || 'md'}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                <p>{t("pricing.noResults") || "暫無熱門卡牌"}</p>
+              <div className="text-center py-12" style={{ color: '#444444' }}>
+                <p className="text-sm">{t("pricing.noResults") || "暫無熱門卡牌"}</p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Hint Text */}
-          <p className="text-xs text-muted-foreground mt-8">
-            {t("pricing.hint")}
+        {/* Bottom editorial footnote */}
+        <div
+          className="px-6 sm:px-10 md:px-16 py-4 flex items-center justify-between"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        >
+          <p
+            className="text-[9px] uppercase tracking-[0.2em]"
+            style={{ color: '#333333', fontFamily: 'monospace' }}
+          >
+            PSA 10 MARKET DATA
+          </p>
+          <p
+            className="text-[9px] uppercase tracking-[0.2em]"
+            style={{ color: '#333333', fontFamily: 'monospace' }}
+          >
+            SNKRDUNK · HKD
           </p>
         </div>
       </div>
