@@ -144,9 +144,13 @@ export function MobileSearchOverlay({
     const value = inputValue.trim();
     if (value) {
       onSearch(value);
-      setLocation(`/search?q=${encodeURIComponent(value)}`);
+      if (cardLinkPrefix === "pricing") {
+        setLocation(`/pricing/search?q=${encodeURIComponent(value)}`);
+      } else {
+        setLocation(`/search?q=${encodeURIComponent(value)}`);
+      }
     }
-  }, [inputValue, onSearch, setLocation]);
+  }, [inputValue, onSearch, setLocation, cardLinkPrefix]);
 
   const showCarousel = !inputValue && !isFocused && cardNames.length > 0;
 
