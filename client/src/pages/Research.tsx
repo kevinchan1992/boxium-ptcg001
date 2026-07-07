@@ -6,6 +6,7 @@ import { TypeAnimation } from 'react-type-animation';
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
+import { EditorialSearchBox } from "@/components/EditorialSearchBox";
 import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
 import PageHead from "@/components/PageHead";
@@ -279,40 +280,20 @@ export default function Home() {
               style={{ width: '40px', height: '1px', background: 'rgba(255,255,255,0.2)' }}
             />
 
-            {/* Search box — minimal bottom-border style (desktop) */}
-            <div className="hidden md:block">
-              <div className="relative max-w-md">
-                <CardSearchDropdown
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onSubmit={(q) => {
-                    if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
-                  }}
-                  cardLinkPrefix="card"
-                  inputClassName="w-full py-3 text-sm bg-transparent border-0 border-b focus:ring-0 focus:outline-none rounded-none"
-                  placeholder=""
-                  showCameraButton
-                  onCameraClick={() => setShowCameraSheet(true)}
-                />
-                {/* Typing Animation Placeholder (only when input is empty) */}
-                {!searchQuery && randomCardNames.length > 0 && (
-                  <div className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-sm z-0" style={{ color: '#444444' }}>
-                    <TypeAnimation
-                      sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                      wrapper="span"
-                      speed={50}
-                      repeat={Infinity}
-                    />
-                  </div>
-                )}
-              </div>
-              {/* Search hint */}
-              <p
-                className="mt-2 text-[10px] uppercase tracking-[0.15em]"
-                style={{ color: '#444444', fontFamily: 'monospace' }}
-              >
-                {t("research.searchPlaceholder")}
-              </p>
+            {/* Search box — Editorial expandable (desktop) */}
+            <div className="hidden md:block max-w-md">
+              <EditorialSearchBox
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSubmit={(q) => {
+                  if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
+                }}
+                cardLinkPrefix="card"
+                hint={t("research.searchPlaceholder")}
+                showCameraButton
+                onCameraClick={() => setShowCameraSheet(true)}
+                randomCardNames={randomCardNames}
+              />
             </div>
 
             {/* Mobile search overlay trigger */}

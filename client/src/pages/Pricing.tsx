@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { MobileSearchOverlay } from "@/components/MobileSearchOverlay";
+import { EditorialSearchBox } from "@/components/EditorialSearchBox";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
@@ -209,36 +210,18 @@ export default function Pricing() {
               style={{ width: '40px', height: '1px', background: 'rgba(255,255,255,0.2)' }}
             />
 
-            {/* Desktop search */}
-            <div className="hidden md:block">
-              <div className="relative max-w-md">
-                <CardSearchDropdown
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onSubmit={(q) => {
-                    if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
-                  }}
-                  cardLinkPrefix="pricing"
-                  inputClassName="w-full py-3 text-sm bg-transparent border-0 border-b focus:ring-0 focus:outline-none rounded-none"
-                  placeholder=""
-                />
-                {!searchQuery && randomCardNames.length > 0 && (
-                  <div className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-sm z-0" style={{ color: '#444444' }}>
-                    <TypeAnimation
-                      sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                      wrapper="span"
-                      speed={50}
-                      repeat={Infinity}
-                    />
-                  </div>
-                )}
-              </div>
-              <p
-                className="mt-2 text-[10px] uppercase tracking-[0.15em]"
-                style={{ color: '#444444', fontFamily: 'monospace' }}
-              >
-                {t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
-              </p>
+            {/* Desktop search — Editorial expandable */}
+            <div className="hidden md:block max-w-md">
+              <EditorialSearchBox
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSubmit={(q) => {
+                  if (q.trim()) setLocation(`/pricing/search?q=${encodeURIComponent(q)}`);
+                }}
+                cardLinkPrefix="pricing"
+                hint={t("pricing.searchPlaceholder") || "搜尋卡牌名稱..."}
+                randomCardNames={randomCardNames}
+              />
             </div>
 
             {/* Mobile search */}
