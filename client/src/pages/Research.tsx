@@ -11,6 +11,34 @@ import StructuredData from "@/components/StructuredData";
 import { getProxiedImageUrl } from "@/lib/utils";
 import PageHead from "@/components/PageHead";
 
+// ── Collage poster wall layout positions (20 slots, % units relative to container) ──
+const COLLAGE_POSITIONS: Array<{ top: string; left: string; width: string; rotate: string; z?: number }> = [
+  // Row 1 — upper band
+  { top: '3%',  left: '38%', width: '11%', rotate: '-1.5deg', z: 2 },
+  { top: '1%',  left: '50%', width: '14%', rotate: '1deg',    z: 3 },
+  { top: '4%',  left: '65%', width: '10%', rotate: '-0.8deg', z: 1 },
+  { top: '2%',  left: '76%', width: '13%', rotate: '2deg',    z: 2 },
+  { top: '0%',  left: '89%', width: '9%',  rotate: '-1.2deg', z: 1 },
+  // Row 2 — middle band
+  { top: '28%', left: '40%', width: '13%', rotate: '1.5deg',  z: 4 },
+  { top: '25%', left: '54%', width: '16%', rotate: '-1deg',   z: 5 },
+  { top: '30%', left: '71%', width: '11%', rotate: '0.5deg',  z: 3 },
+  { top: '26%', left: '83%', width: '14%', rotate: '-2deg',   z: 4 },
+  { top: '32%', left: '36%', width: '9%',  rotate: '1.8deg',  z: 2 },
+  // Row 3 — lower band
+  { top: '55%', left: '42%', width: '12%', rotate: '-0.5deg', z: 3 },
+  { top: '52%', left: '55%', width: '15%', rotate: '1.2deg',  z: 5 },
+  { top: '57%', left: '71%', width: '10%', rotate: '-1.8deg', z: 2 },
+  { top: '54%', left: '82%', width: '13%', rotate: '0.8deg',  z: 4 },
+  { top: '58%', left: '38%', width: '8%',  rotate: '-1deg',   z: 1 },
+  // Row 4 — bottom accent
+  { top: '74%', left: '44%', width: '11%', rotate: '2deg',    z: 3 },
+  { top: '72%', left: '56%', width: '14%', rotate: '-0.7deg', z: 4 },
+  { top: '76%', left: '71%', width: '10%', rotate: '1.5deg',  z: 2 },
+  { top: '73%', left: '82%', width: '12%', rotate: '-1.5deg', z: 3 },
+  { top: '78%', left: '40%', width: '9%',  rotate: '0.5deg',  z: 1 },
+];
+
 // ── Holographic overlay on card hover ──────────────────────────────────────
 function HoloCard({
   card,
@@ -244,10 +272,13 @@ export default function Home() {
       </div>
 
       {/* ── Main layout ── */}
-      <div className="relative z-10 flex flex-col" style={{ height: 'calc(100dvh - 3.5rem)', overflow: 'hidden' }}>
+      {/* Desktop: h-screen no-scroll / Mobile: min-h-screen allow scroll */}
+      <div className="relative z-10 flex flex-col"
+        style={{ height: 'calc(100dvh - 3.5rem)', overflow: 'hidden' }}
+      >
 
         {/* ── HERO: Asymmetric editorial layout ── */}
-        <div className="flex-1 min-h-0 flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-8 md:pt-0 pb-4 md:pb-0 gap-4 md:gap-0">
+        <div className="flex-1 min-h-0 relative flex flex-col md:flex-row md:items-center px-6 sm:px-10 md:px-16 pt-8 md:pt-0 pb-4 md:pb-0 gap-4 md:gap-0">
 
           {/* LEFT: Editorial headline */}
           <div className="md:w-1/2 md:pr-12 flex flex-col justify-center">
@@ -314,144 +345,152 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT: Card gallery — Desktop: Gallery Wall / Mobile: Lookbook horizontal scroll */}
-          {/* Desktop: flex column taking up the right half, vertically centered */}
-          <div className="hidden md:flex md:w-1/2 items-center justify-end pr-4 xl:pr-8 h-full">
-            {isLoading ? (
-              <div className="flex items-center gap-6">
-                {[0,1,2,3,4].map((i) => (
-                  <div key={i} className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ width: i===2 ? '10rem' : '7.5rem', aspectRatio: '3/4' }} />
-                ))}
-              </div>
-            ) : popularCards.length > 0 ? (
-              <div className="flex items-end gap-5 xl:gap-8">
-                {popularCards.slice(0, 5).map((card: any, i: number) => {
-                  // Asymmetric offsets — capped so cards stay within viewport
-                  const offsets = ['-2.5rem', '1.5rem', '0', '2rem', '-2rem'];
-                  const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
-                  return (
-                    <div key={card.id} className="flex flex-col items-center gap-2"
-                      style={{ transform: `translateY(${offsets[i] || '0'})` }}>
-                      <HoloCard
-                        card={card}
-                        onClick={() => handleCardClick(card.id)}
-                        size={sizes[i] || 'md'}
+          {/* ── DESKTOP: Collage poster wall (absolute positioned, 20 cards) ── */}
+          <div className="hidden md:block absolute inset-0 pointer-events-none">
+            {/* Left text protection gradient */}
+            <div className="absolute left-0 top-0 bottom-0 w-[42%] z-10 pointer-events-none"
+              style={{ background: 'linear-gradient(to right, #0d0d0f 55%, transparent 100%)' }} />
+            {/* Collage container */}
+            <div className="absolute inset-0 pointer-events-auto">
+              {isLoading ? (
+                // Skeleton placeholders
+                <>
+                  {[0,1,2,3,4,5,6,7,8,9].map((i) => (
+                    <div key={i}
+                      className="absolute rounded-lg bg-white/5 animate-pulse"
+                      style={COLLAGE_POSITIONS[i] ? {
+                        top: COLLAGE_POSITIONS[i].top,
+                        left: COLLAGE_POSITIONS[i].left,
+                        width: COLLAGE_POSITIONS[i].width,
+                        aspectRatio: '3/4',
+                        transform: `rotate(${COLLAGE_POSITIONS[i].rotate})`,
+                      } : {}}
+                    />
+                  ))}
+                </>
+              ) : popularCards.slice(0, 20).map((card: any, i: number) => {
+                const pos = COLLAGE_POSITIONS[i % COLLAGE_POSITIONS.length];
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => handleCardClick(card.id)}
+                    className="absolute group"
+                    style={{
+                      top: pos.top,
+                      left: pos.left,
+                      width: pos.width,
+                      zIndex: pos.z ?? 1,
+                      transform: `rotate(${pos.rotate})`,
+                      transition: 'transform 0.25s ease, z-index 0s',
+                    }}
+                  >
+                    <div className="relative w-full overflow-hidden rounded-sm"
+                      style={{ aspectRatio: '3/4', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+                      <img
+                        src={getProxiedImageUrl(card.imageUrl) ?? ''}
+                        alt={card.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
                       />
-                      {/* Gallery label: card number + price */}
-                      <div className="flex items-center justify-between w-full px-0.5 gap-2">
-                        {card.cardNumber && (
-                          <span className="text-[8px] uppercase tracking-[0.12em] truncate"
-                            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
-                            {card.cardNumber}
-                          </span>
-                        )}
-                        {card.currentPrice ? (
-                          <span className="text-[9px] flex-shrink-0 flex items-center gap-0.5"
-                            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>
-                            {card.currentPrice >= 1000
-                              ? `$${(card.currentPrice/1000).toFixed(1)}k`
-                              : `$${Math.round(card.currentPrice)}`}
-                            {card.priceChange7d !== null && card.priceChange7d !== 0 && (
-                              <span style={{
-                                color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
-                                fontSize: '8px',
-                              }}>
-                                {card.priceChange7d > 0 ? '↑' : '↓'}
-                              </span>
-                            )}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          {/* Mobile: full-width Lookbook horizontal scroll — flex-1 to fill remaining vertical space */}
-          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-center -mx-6 sm:-mx-10">
-            {isLoading ? (
-              <div className="flex items-end gap-3 px-6 overflow-hidden">
-                {[0,1,2,3,4].map((i) => (
-                  <div key={i} className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ width: i===2 ? '8rem' : '6.5rem', aspectRatio: '3/4' }} />
-                ))}
-              </div>
-            ) : popularCards.length > 0 ? (
-              <div className="relative">
-                {/* Left edge fade */}
-                <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
-                  style={{ background: 'linear-gradient(to right, #0d0d0f 0%, transparent 100%)' }} />
-                {/* Right edge fade */}
-                <div className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-                  style={{ background: 'linear-gradient(to left, #0d0d0f 0%, transparent 100%)' }} />
-
-                <div
-                  style={{
-                    overflowX: 'auto',
-                    overflowY: 'visible',
-                    scrollSnapType: 'x mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    paddingBottom: '0.75rem',
-                    msOverflowStyle: 'none',
-                    scrollbarWidth: 'none',
-                  }}
-                >
-                  <div className="flex items-end gap-3"
-                    style={{ paddingLeft: '1.5rem', paddingRight: '3rem' }}>
-                    {popularCards.map((card: any, i: number) => {
-                      const isBig = i % 2 === 0;
-                      const cardW = isBig ? '8.5rem' : '7rem';
-                      return (
-                        <div key={card.id} className="flex-shrink-0 flex flex-col gap-1"
-                          style={{ scrollSnapAlign: 'start', width: cardW }}>
-                          <button
-                            onClick={() => handleCardClick(card.id)}
-                            className="relative rounded-lg overflow-hidden w-full"
-                            style={{
-                              aspectRatio: '3/4',
-                              boxShadow: '0 6px 24px rgba(0,0,0,0.55)',
-                            }}
-                          >
-                            <img
-                              src={getProxiedImageUrl(card.imageUrl) ?? ''}
-                              alt={card.name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          </button>
-                          {/* Label row: card number + price */}
-                          <div className="flex items-center justify-between px-0.5">
+                      {/* Micro price tag — bottom edge tape label */}
+                      {card.currentPrice && (
+                        <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1"
+                          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }}>
+                          <div className="flex items-center justify-between">
                             {card.cardNumber && (
-                              <span className="text-[7px] uppercase tracking-[0.08em] truncate"
-                                style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}>
+                              <span className="text-[6px] uppercase tracking-[0.1em] truncate"
+                                style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
                                 {card.cardNumber}
                               </span>
                             )}
-                            {card.currentPrice ? (
-                              <span className="text-[8px] flex-shrink-0 flex items-center gap-0.5"
-                                style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+                            <span className="text-[7px] flex-shrink-0 flex items-center gap-0.5"
+                              style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>
+                              {card.currentPrice >= 1000
+                                ? `$${(card.currentPrice/1000).toFixed(1)}k`
+                                : `$${Math.round(card.currentPrice)}`}
+                              {card.priceChange7d !== null && card.priceChange7d !== 0 && (
+                                <span style={{
+                                  color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
+                                  fontSize: '6px',
+                                }}>
+                                  {card.priceChange7d > 0 ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── MOBILE: Asymmetric dual-column waterfall ── */}
+          <div className="md:hidden w-full px-4 pb-6">
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-3">
+                {[0,1,2,3,4,5].map((i) => (
+                  <div key={i}
+                    className="relative rounded-lg overflow-hidden bg-white/5 animate-pulse"
+                    style={{ aspectRatio: '3/4', marginTop: i % 2 === 1 ? '2rem' : '0' }}
+                  />
+                ))}
+              </div>
+            ) : popularCards.length > 0 ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                {popularCards.map((card: any, i: number) => {
+                  // Alternating column offsets for waterfall effect
+                  const isRightCol = i % 2 === 1;
+                  const offsetMt = isRightCol ? '2.5rem' : '0';
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => handleCardClick(card.id)}
+                      className="relative group text-left"
+                      style={{ marginTop: offsetMt }}
+                    >
+                      <div className="relative w-full overflow-hidden rounded-sm"
+                        style={{ aspectRatio: '3/4', boxShadow: '0 6px 20px rgba(0,0,0,0.6)' }}>
+                        <img
+                          src={getProxiedImageUrl(card.imageUrl) ?? ''}
+                          alt={card.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        {/* Micro tape label */}
+                        {card.currentPrice && (
+                          <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1"
+                            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                            <div className="flex items-center justify-between">
+                              {card.cardNumber && (
+                                <span className="text-[6px] uppercase tracking-[0.08em] truncate"
+                                  style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+                                  {card.cardNumber}
+                                </span>
+                              )}
+                              <span className="text-[7px] flex-shrink-0 flex items-center gap-0.5"
+                                style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace' }}>
                                 {card.currentPrice >= 1000
                                   ? `$${(card.currentPrice/1000).toFixed(1)}k`
                                   : `$${Math.round(card.currentPrice)}`}
                                 {card.priceChange7d !== null && card.priceChange7d !== 0 && (
                                   <span style={{
                                     color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
-                                    fontSize: '7px',
+                                    fontSize: '6px',
                                   }}>
                                     {card.priceChange7d > 0 ? '↑' : '↓'}
                                   </span>
                                 )}
                               </span>
-                            ) : null}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12" style={{ color: '#444444' }}>
