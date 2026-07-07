@@ -586,105 +586,206 @@ export function TopNav() {
         </div>
       </nav>
 
-      {/* Compact dropdown panel — left-aligned to match hamburger button */}
+      {/* ── Editorial Table-of-Contents Drawer ── */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ y: -8, opacity: 0, scale: 0.97 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: -8, opacity: 0, scale: 0.97 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-14 left-4 w-56 bg-black/97 backdrop-blur-md border border-white/15 rounded-xl shadow-2xl z-40"
+            initial={{ x: "-100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "-100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 32, stiffness: 280 }}
+            className="fixed top-0 left-0 bottom-0 z-40 flex flex-col"
+            style={{
+              width: "min(320px, 85vw)",
+              background: "rgba(8,8,10,0.97)",
+              backdropFilter: "blur(20px)",
+              borderRight: "1px solid rgba(255,255,255,0.07)",
+              boxShadow: "8px 0 40px rgba(0,0,0,0.6)",
+            }}
           >
-            <div className="px-2 py-3 space-y-0.5">
-              {navItems.map((item, index) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ x: -16, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.04 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={handleNavClick}
-                    className={`flex items-center text-sm font-medium py-2 px-3 rounded-lg transition-colors ${
-                      isActive(item.href)
-                        ? "text-[#FEDD00] bg-white/5"
-                        : "text-white/70 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {item.label}
-                    {isActive(item.href) && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#FEDD00]" />
-                    )}
-                  </Link>
-                </motion.div>
-              ))}
-
-              {/* Sell link in hamburger menu — no icon */}
-              {showSellButton && (
-              <motion.div
-                initial={{ x: -16, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: navItems.length * 0.04 }}
+            {/* Header strip */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <p style={{ fontFamily: "monospace", fontSize: "8px", letterSpacing: "0.25em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>BOXIUM TCG</p>
+                <p style={{ fontFamily: "monospace", fontSize: "7px", letterSpacing: "0.2em", color: "rgba(255,255,255,0.15)", textTransform: "uppercase", marginTop: "2px" }}>NAVIGATION INDEX</p>
+              </div>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white/30 hover:text-white/70 transition-colors"
               >
-                <button
-                  onClick={() => { handleNavClick(); handleSellClick(); }}
-                  className="w-full flex items-center text-sm font-medium text-[#FEDD00] hover:text-[#FEDD00]/80 hover:bg-white/5 py-2 px-3 rounded-lg transition-colors"
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Nav items — editorial TOC */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-0">
+              {navItems.map((item, index) => {
+                const active = isActive(item.href);
+                const num = String(index + 1).padStart(2, "0");
+                return (
+                  <motion.div
+                    key={item.href}
+                    initial={{ x: -24, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.05 + index * 0.055, type: "spring", damping: 28, stiffness: 260 }}
+                  >
+                    <Link href={item.href} onClick={handleNavClick}>
+                      <div
+                        className="group relative flex items-baseline gap-3 py-3 cursor-pointer"
+                        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                      >
+                        {/* Index number */}
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            letterSpacing: "0.1em",
+                            color: active ? "rgba(254,221,0,0.6)" : "rgba(255,255,255,0.2)",
+                            flexShrink: 0,
+                            width: "20px",
+                            transition: "color 0.2s",
+                          }}
+                        >
+                          {num}
+                        </span>
+
+                        {/* Label */}
+                        <span
+                          className="group-hover:translate-x-1.5 transition-transform duration-200"
+                          style={{
+                            fontFamily: "'Playfair Display', Georgia, serif",
+                            fontSize: "clamp(18px, 4vw, 22px)",
+                            fontWeight: active ? 700 : 400,
+                            letterSpacing: "0.02em",
+                            color: active ? "#FFFFFF" : "rgba(255,255,255,0.55)",
+                            lineHeight: 1.1,
+                            transition: "color 0.2s",
+                          }}
+                        >
+                          {item.label}
+                        </span>
+
+                        {/* ACTIVE badge */}
+                        {active && (
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "7px",
+                              fontWeight: 900,
+                              letterSpacing: "0.15em",
+                              color: "#000",
+                              background: "#FEDD00",
+                              padding: "1px 5px",
+                              borderRadius: "2px",
+                              boxShadow: "0 0 8px rgba(254,221,0,0.5)",
+                              alignSelf: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            CURRENT
+                          </span>
+                        )}
+
+                        {/* Hover underline */}
+                        <span
+                          className="absolute bottom-0 left-8 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          style={{ background: "rgba(255,255,255,0.15)" }}
+                        />
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+
+              {/* Sell item */}
+              {showSellButton && (
+                <motion.div
+                  initial={{ x: -24, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.05 + navItems.length * 0.055, type: "spring", damping: 28, stiffness: 260 }}
                 >
-                  {t("topnav.sellItem")}
-                </button>
-              </motion.div>
+                  <div
+                    className="group relative flex items-baseline gap-3 py-3 cursor-pointer"
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                    onClick={() => { handleNavClick(); handleSellClick(); }}
+                  >
+                    <span style={{ fontFamily: "monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(254,221,0,0.6)", flexShrink: 0, width: "20px" }}>
+                      {String(navItems.length + 1).padStart(2, "0")}
+                    </span>
+                    <span
+                      className="group-hover:translate-x-1.5 transition-transform duration-200"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(18px, 4vw, 22px)", fontWeight: 400, letterSpacing: "0.02em", color: "#FEDD00", lineHeight: 1.1 }}
+                    >
+                      {t("topnav.sellItem")}
+                    </span>
+                    <span className="absolute bottom-0 left-8 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(255,255,255,0.15)" }} />
+                  </div>
+                </motion.div>
               )}
 
               {/* Admin link */}
               {user?.role === "admin" && (
                 <motion.div
-                  initial={{ x: -16, opacity: 0 }}
+                  initial={{ x: -24, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: (navItems.length + 1) * 0.04 }}
+                  transition={{ delay: 0.05 + (navItems.length + 1) * 0.055, type: "spring", damping: 28, stiffness: 260 }}
                 >
-                  <Link
-                    href="/admin"
-                    onClick={handleNavClick}
-                    className="flex items-center text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/5 py-2 px-3 rounded-lg"
-                  >
-                    {t("nav.admin")}
+                  <Link href="/admin" onClick={handleNavClick}>
+                    <div
+                      className="group relative flex items-baseline gap-3 py-3 cursor-pointer"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                    >
+                      <span style={{ fontFamily: "monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,80,80,0.6)", flexShrink: 0, width: "20px" }}>
+                        {String(navItems.length + 2).padStart(2, "0")}
+                      </span>
+                      <span
+                        className="group-hover:translate-x-1.5 transition-transform duration-200"
+                        style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(18px, 4vw, 22px)", fontWeight: 400, letterSpacing: "0.02em", color: "rgba(255,100,100,0.8)", lineHeight: 1.1 }}
+                      >
+                        {t("nav.admin")}
+                      </span>
+                      <span className="absolute bottom-0 left-8 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(255,255,255,0.15)" }} />
+                    </div>
                   </Link>
                 </motion.div>
               )}
-
-              {/* Divider + Language + Login/Register */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: (navItems.length + 2) * 0.04 }}
-                className="pt-2 mt-1 border-t border-white/10 space-y-1.5"
-              >
-                <div className="px-1">
-                  <LanguageSwitcher />
-                </div>
-                {!user && (
-                  <div className="flex gap-1.5 px-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-white border-white/30 hover:bg-white/10 bg-transparent text-xs"
-                      onClick={() => { setLocation("/login"); handleNavClick(); }}
-                    >
-                      {t("topnav.login")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 text-xs"
-                      onClick={() => { setLocation("/register"); handleNavClick(); }}
-                    >
-                      {t("topnav.register")}
-                    </Button>
-                  </div>
-                )}
-              </motion.div>
             </div>
+
+            {/* Footer: Language + Login/Register */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="px-6 pb-6 pt-4 space-y-3"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <div>
+                <LanguageSwitcher />
+              </div>
+              {!user && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-white border-white/20 hover:bg-white/10 bg-transparent text-xs"
+                    onClick={() => { setLocation("/login"); handleNavClick(); }}
+                  >
+                    {t("topnav.login")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-[#FEDD00] text-black hover:bg-[#FEDD00]/90 text-xs font-bold"
+                    onClick={() => { setLocation("/register"); handleNavClick(); }}
+                  >
+                    {t("topnav.register")}
+                  </Button>
+                </div>
+              )}
+              <p style={{ fontFamily: "monospace", fontSize: "7px", letterSpacing: "0.2em", color: "rgba(255,255,255,0.12)", textTransform: "uppercase" }}>
+                © BOXIUM TCG · LUCK IN EVERY BOX
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
