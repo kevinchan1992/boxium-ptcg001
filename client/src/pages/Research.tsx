@@ -123,6 +123,58 @@ function HoloCard({
   );
 }
 
+// ── Mobile card item helper ─────────────────────────────────────────────────
+function MobileCardItem({
+  card,
+  onClick,
+  fixedWidth = false,
+}: {
+  card: any;
+  onClick: () => void;
+  fixedWidth?: boolean;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-1 min-w-0"
+      style={fixedWidth ? { width: 'calc(33.333% - 0.25rem)' } : { flex: 1 }}
+    >
+      <button
+        onClick={onClick}
+        className="relative rounded overflow-hidden w-full"
+        style={{ aspectRatio: '3/4', boxShadow: '0 6px 20px rgba(0,0,0,0.6)' }}
+      >
+        <img
+          src={getProxiedImageUrl(card.imageUrl) ?? ''}
+          alt={card.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </button>
+      <div className="flex flex-col gap-0.5 px-0.5">
+        {card.cardNumber && (
+          <span className="text-[6px] uppercase tracking-[0.08em] truncate block"
+            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+            {card.cardNumber}
+          </span>
+        )}
+        {card.currentPrice ? (
+          <span className="text-[7px] flex items-center gap-0.5"
+            style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+            {card.currentPrice >= 1000
+              ? `$${(card.currentPrice / 1000).toFixed(1)}k`
+              : `$${Math.round(card.currentPrice)}`}
+            {card.priceChange7d !== null && card.priceChange7d !== 0 && (
+              <span style={{ color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A', fontSize: '6px' }}>
+                {card.priceChange7d > 0 ? '↑' : '↓'}
+              </span>
+            )}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const { t } = useTranslation();
   const searchParams = useSearch();
@@ -370,61 +422,38 @@ export default function Home() {
             ) : null}
           </div>
 
-          {/* Mobile: 5-card even row — vertically centered in remaining space */}
-          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-center py-4">
+          {/* Mobile: 5-card two-row (3 top + 2 bottom centered), vertically centered */}
+          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-center gap-3 py-4">
             {isLoading ? (
-              <div className="flex items-end justify-between gap-2 px-1">
-                {[0,1,2,3,4].map((i) => (
-                  <div key={i} className="relative rounded overflow-hidden bg-white/5 animate-pulse flex-shrink-0"
-                    style={{ flex: '1', aspectRatio: '3/4' }} />
-                ))}
-              </div>
+              <>
+                <div className="flex justify-between gap-2 px-1">
+                  {[0,1,2].map((i) => (
+                    <div key={i} className="relative rounded overflow-hidden bg-white/5 animate-pulse flex-1"
+                      style={{ aspectRatio: '3/4' }} />
+                  ))}
+                </div>
+                <div className="flex justify-center gap-2 px-1">
+                  {[3,4].map((i) => (
+                    <div key={i} className="relative rounded overflow-hidden bg-white/5 animate-pulse"
+                      style={{ width: 'calc(33.333% - 0.25rem)', aspectRatio: '3/4' }} />
+                  ))}
+                </div>
+              </>
             ) : popularCards.length > 0 ? (
-              <div className="flex items-end justify-between gap-2 px-1">
-                {popularCards.slice(0, 5).map((card: any, i: number) => {
-                  return (
-                    <div key={card.id} className="flex flex-col gap-1 flex-1 min-w-0">
-                      <button
-                        onClick={() => handleCardClick(card.id)}
-                        className="relative rounded overflow-hidden w-full"
-                        style={{
-                          aspectRatio: '3/4',
-                          boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
-                        }}
-                      >
-                        <img
-                          src={getProxiedImageUrl(card.imageUrl) ?? ''}
-                          alt={card.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </button>
-                      {/* Label: card number + price */}
-                      <div className="flex flex-col gap-0.5 px-0.5">
-                        {card.cardNumber && (
-                          <span className="text-[6px] uppercase tracking-[0.08em] truncate block"
-                            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
-                            {card.cardNumber}
-                          </span>
-                        )}
-                        {card.currentPrice ? (
-                          <span className="text-[7px] flex items-center gap-0.5"
-                            style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
-                            {card.currentPrice >= 1000
-                              ? `$${(card.currentPrice/1000).toFixed(1)}k`
-                              : `$${Math.round(card.currentPrice)}`}
-                            {card.priceChange7d !== null && card.priceChange7d !== 0 && (
-                              <span style={{ color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A', fontSize: '6px' }}>
-                                {card.priceChange7d > 0 ? '↑' : '↓'}
-                              </span>
-                            )}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <>
+                {/* Row 1: cards 0,1,2 */}
+                <div className="flex justify-between gap-2 px-1">
+                  {popularCards.slice(0, 3).map((card: any) => (
+                    <MobileCardItem key={card.id} card={card} onClick={() => handleCardClick(card.id)} />
+                  ))}
+                </div>
+                {/* Row 2: cards 3,4 — same width as row 1 cards, centered */}
+                <div className="flex justify-center gap-2 px-1">
+                  {popularCards.slice(3, 5).map((card: any) => (
+                    <MobileCardItem key={card.id} card={card} onClick={() => handleCardClick(card.id)} fixedWidth />
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="text-center py-8" style={{ color: '#444444' }}>
                 <p className="text-sm">{t("research.noResults")}</p>
