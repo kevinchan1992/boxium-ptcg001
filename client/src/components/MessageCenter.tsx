@@ -413,24 +413,7 @@ export default function MessageCenter() {
 
   return (
     <>
-      {/* FAB */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
-        className={cn(
-          "fixed right-6 z-[9998] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
-          "bg-[#06038D] hover:bg-[#06038D]/90 active:scale-95",
-          open && "ring-2 ring-[#FEDD00] ring-offset-2"
-        )}
-        aria-label={t("messageCenter.title")}
-      >
-        <MessageCircle className="w-6 h-6 text-white" />
-        {totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-[#FEDD00] text-[#06038D] text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow">
-            {totalUnread > 99 ? "99+" : totalUnread}
-          </span>
-        )}
-      </button>
+      {/* FAB removed */}
 
       {/* Panel */}
       {open && (
