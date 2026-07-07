@@ -32,6 +32,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showCollectionSheet, setShowCollectionSheet] = useState(false);
   const ebayRef = useRef<HTMLDivElement>(null);
+  // 3D tilt effect for card image
+  const [tilt, setTilt] = useState({ x: 0, y: 0, glare: 0 });
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 20;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -20;
+    const glare = Math.sqrt(x * x + y * y) / 14;
+    setTilt({ x, y, glare });
+  };
+  const handleCardMouseLeave = () => setTilt({ x: 0, y: 0, glare: 0 });
 
   const cardId = sealedProductId ??
     (sealedParams?.id ? parseInt(sealedParams.id, 10) : null) ??
@@ -508,7 +518,22 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         ),
       }}
     />
-    <div className="min-h-screen bg-background py-4 px-3 sm:py-6 sm:px-4 md:px-6">
+    <div className="min-h-screen relative" style={{ background: '#111215' }}>
+      {/* Blurred artwork background */}
+      {product.imageUrl && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${getProxiedImageUrl(product.imageUrl) ?? ''})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(80px) saturate(0.5) brightness(0.15)',
+            transform: 'scale(1.2)',
+          }}
+        />
+      )}
+      <div className="relative z-10 py-4 px-3 sm:py-6 sm:px-4 md:px-6">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -523,7 +548,15 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_4fr] gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Card Image */}
           <div className="flex justify-center lg:justify-start">
-            <div className="relative w-full lg:sticky lg:top-6 lg:self-start">
+            <div
+              className="relative w-full lg:sticky lg:top-6 lg:self-start cursor-pointer"
+              onMouseMove={handleCardMouseMove}
+              onMouseLeave={handleCardMouseLeave}
+              style={{
+                transform: `perspective(800px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`,
+                transition: tilt.x === 0 && tilt.y === 0 ? 'transform 0.5s ease' : 'transform 0.1s ease',
+              }}
+            >
               {isSealedProduct && (
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/90 text-black text-xs font-bold">
                   <Package className="w-3 h-3" />
@@ -556,15 +589,56 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
           {/* Card Info + Price */}
           <div className="flex flex-col gap-3 sm:gap-4">
-            {/* Title */}
-            <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight mb-1">
+            {/* Title — Magazine Editorial Style */}
+            <div className="relative">
+              {/* Decorative card number watermark */}
+              {!isSealedProduct && 'cardNumber' in product && product.cardNumber && (
+                <span
+                  className="absolute -top-4 -left-2 select-none pointer-events-none"
+                  style={{
+                    fontSize: 'clamp(60px, 12vw, 120px)',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontWeight: 900,
+                    color: 'rgba(255,255,255,0.04)',
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    zIndex: 0,
+                  }}
+                  aria-hidden="true"
+                >
+                  {product.cardNumber}
+                </span>
+              )}
+              {/* Series / type tag */}
+              {(product.series || isSealedProduct) && (
+                <p className="text-[10px] sm:text-xs text-[#FFD600] uppercase tracking-[0.2em] font-semibold mb-2 relative z-10">
+                  {isSealedProduct ? '◆ SEALED PRODUCT' : `◆ ${product.series}`}
+                </p>
+              )}
+              {/* Main title */}
+              <h1
+                className="relative z-10 leading-tight mb-1"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: 'clamp(22px, 3.5vw, 44px)',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  letterSpacing: '-0.01em',
+                }}
+              >
                 {!isSealedProduct && 'cardNumber' in product && product.cardNumber
-                  ? `[${product.cardNumber}] ${product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()}`
+                  ? product.name.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\([^)]*\)/g, '').trim()
                   : product.name}
               </h1>
+              {/* Japanese name */}
               {product.nameJa && (
-                <p className="text-sm text-zinc-400">{product.nameJa}</p>
+                <p className="text-sm text-zinc-400 mt-1 relative z-10" style={{ fontStyle: 'italic' }}>{product.nameJa}</p>
+              )}
+              {/* Card number badge */}
+              {!isSealedProduct && 'cardNumber' in product && product.cardNumber && (
+                <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-mono text-zinc-400 border border-zinc-700/60 bg-zinc-800/40 relative z-10">
+                  {product.cardNumber}
+                </span>
               )}
             </div>
 
@@ -618,14 +692,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
 
 
-            {/* ── Price Reference Card (deep blue, like MarketplaceListing) ── */}
-            <div className="rounded-xl overflow-hidden border border-[#1565C0]/50">
+            {/* ── Price Reference Card (editorial dark fashion) ── */}
+            <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               {/* Card Header */}
-              <div className="bg-[#0D47A1] px-4 py-3 flex items-center justify-between">
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#FFD600]" />
-                  <span className="text-sm font-semibold text-white">
-                    {isSealedProduct ? t("cardDetail.sealedReferencePrice") : `PSA 10 ${t("cardDetail.referencePrice")}`}
+                  <span className="text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: '#999999' }}>
+                    {isSealedProduct ? t("cardDetail.sealedReferencePrice") : `PSA 10 · ${t("cardDetail.referencePrice")}`}
                   </span>
                 </div>
                 {/* Refresh status */}
@@ -640,36 +713,40 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </div>
               </div>
 
-              {/* Price Stats Grid - 3-tier architecture */}
-              <div className="bg-[#0A2472]/80 backdrop-blur-sm">
+              {/* Price Stats Grid - editorial magazine style */}
+              <div>
 
-                {/* 主顯示：近期成交中位數 */}
-                <div className="px-4 pt-4 pb-3 border-b border-[#1565C0]/30">
+                {/* 主顯示：近期成交中位數 — Magazine headline number */}
+                <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600] inline-block" />
-                        <p className="text-[10px] sm:text-xs text-zinc-300 font-semibold tracking-wide">
-                          {isSealedProduct ? t("cardDetail.referenceAvgPrice") : t("cardDetail.recentMedian")}
-                        </p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] mb-3" style={{ color: '#666666' }}>
+                        {isSealedProduct ? t("cardDetail.referenceAvgPrice") : t("cardDetail.recentMedian")}
                         {!isSealedProduct && mainPriceSource !== "N/A" && (
-                          <span className="text-[9px] text-zinc-500 bg-zinc-800/60 px-1.5 py-0.5 rounded-full">
-                            {mainPriceSource}
-                          </span>
+                          <span className="ml-2 normal-case tracking-normal" style={{ color: '#555555' }}>· {mainPriceSource}</span>
                         )}
-                      </div>
+                      </p>
                       {mainPrice !== null ? (
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-[10px] text-zinc-400">HKD</span>
-                          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FFD600] leading-none">
-                            {mainPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs font-light" style={{ color: '#888888' }}>HKD</span>
+                          <span
+                            style={{
+                              fontFamily: "'Playfair Display', Georgia, serif",
+                              fontSize: 'clamp(32px, 5vw, 52px)',
+                              fontWeight: 700,
+                              color: '#FFFFFF',
+                              lineHeight: 1,
+                              letterSpacing: '-0.02em',
+                            }}
+                          >
+                            {mainPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </span>
                         </div>
                       ) : (
-                        <p className="text-xl sm:text-2xl font-bold text-[#FFD600]">N/A</p>
+                        <p className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>N/A</p>
                       )}
                       {mainPriceRecordCount > 0 && (
-                        <p className="text-[9px] text-zinc-500 mt-0.5">
+                        <p className="text-[9px] mt-1.5" style={{ color: '#555555' }}>
                           {isSealedProduct
                             ? t("cardDetail.basedOnRecentWeightedAvg", { n: mainPriceRecordCount })
                             : t("cardDetail.basedOnNRecords", { n: mainPriceRecordCount })
@@ -678,63 +755,63 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                       )}
                     </div>
                     {priceTrend && (
-                      <div className={`flex flex-col items-end gap-0.5 ${priceTrend.isIncrease ? 'text-green-400' : priceTrend.isDecrease ? 'text-red-400' : 'text-zinc-400'}`}>
-                        <div className="flex items-center gap-0.5 text-sm font-bold">
+                      <div className={`flex flex-col items-end gap-0.5 ${priceTrend.isIncrease ? '' : priceTrend.isDecrease ? '' : ''}`}>
+                        <div
+                          className="flex items-center gap-1 text-sm font-semibold"
+                          style={{ color: priceTrend.isIncrease ? '#2ecc71' : priceTrend.isDecrease ? '#8B1A1A' : '#888888' }}
+                        >
                           {priceTrend.isIncrease ? <TrendingUp className="w-4 h-4" /> : priceTrend.isDecrease ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                           <span>{Math.abs(priceTrend.change).toFixed(1)}%</span>
                         </div>
-                        <p className="text-[9px] text-zinc-500">{t("cardDetail.trend7days")}</p>
+                        <p className="text-[9px]" style={{ color: '#555555' }}>{t("cardDetail.trend7days")}</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* 輔助資訊：3 欄小數據 */}
-                <div className="grid grid-cols-3 divide-x divide-[#1565C0]/40">
+                <div className="grid grid-cols-3 divide-x" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', '--tw-divide-opacity': '0.06' } as React.CSSProperties}>
 
                   {/* 小欄 1: 短期加權均價 */}
-                  <div className="px-3 py-3 text-center">
-                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
+                  <div className="px-3 py-4 text-center flex flex-col gap-1">
+                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>
                       {isSealedProduct ? t("cardDetail.latestTrade") : t("cardDetail.weighted7dAvg")}
                     </p>
                     {!isSealedProduct ? (
                       auxPrice !== null ? (
                         <>
-                          <p className="text-[9px] text-zinc-500">HKD</p>
-                          <p className="text-xs sm:text-sm font-semibold text-blue-300 leading-tight">
+                          <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                             {auxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
-                          <p className="text-[8px] text-zinc-600 mt-0.5">{t("cardDetail.nRecords", { n: auxPriceRecordCount })}</p>
+                          <p className="text-[8px]" style={{ color: '#444444' }}>{t("cardDetail.nRecords", { n: auxPriceRecordCount })}</p>
                         </>
                       ) : (
-                        <p className="text-xs font-semibold text-zinc-600">-</p>
+                        <p className="text-sm font-semibold" style={{ color: '#444444' }}>-</p>
                       )
                     ) : (
                       latestTradePrice !== null ? (
                         <>
-                          <p className="text-[9px] text-zinc-500">HKD</p>
-                          <p className="text-xs sm:text-sm font-semibold text-blue-300 leading-tight">
+                          <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                             {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                           {latestTrade?.soldAt && (
-                            <p className="text-[8px] text-zinc-600 mt-0.5">
+                            <p className="text-[8px]" style={{ color: '#444444' }}>
                               {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
                             </p>
                           )}
                         </>
-                      ) : <p className="text-xs font-semibold text-zinc-600">N/A</p>
+                      ) : <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>
                     )}
                   </div>
 
                   {/* 小欄 2: 最近單筆成交 */}
-                  <div className="px-3 py-3 text-center">
-                    <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">
+                  <div className="px-3 py-4 text-center flex flex-col gap-1">
+                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>
                       {isSealedProduct ? t("cardDetail.recentTotalAmount") : t("cardDetail.recentSingle")}
                     </p>
                     {latestTrade !== null ? (
                       <>
-                        <p className="text-[9px] text-zinc-500">HKD</p>
-                        <p className="text-xs sm:text-sm font-semibold text-white leading-tight">
+                        <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                           {isSealedProduct
                             ? parseFloat(latestTrade.price as any).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
                             : (latestTradePrice !== null && !isNaN(latestTradePrice)
@@ -743,47 +820,43 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           }
                         </p>
                         {isSealedProduct && latestTrade.quantity && (
-                          <p className="text-[8px] text-zinc-600 mt-0.5">
+                          <p className="text-[8px]" style={{ color: '#444444' }}>
                             {t("cardDetail.nBoxes", { n: latestTrade.quantity })}
                           </p>
                         )}
                         {latestTrade?.soldAt && (
-                          <p className="text-[8px] text-zinc-600 mt-0.5">
+                          <p className="text-[8px]" style={{ color: '#444444' }}>
                             {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
                           </p>
                         )}
                       </>
                     ) : (
-                      <p className="text-xs font-semibold text-zinc-600">N/A</p>
+                      <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>
                     )}
                   </div>
 
                   {/* 小欄 3: 30 天價格帶 */}
-                  <div className="px-3 py-3 text-center">
+                  <div className="px-3 py-4 text-center flex flex-col gap-1">
                     {!isSealedProduct && p25 !== null && p75 !== null ? (
                       <>
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">{t("cardDetail.priceRange30d")}</p>
-                        <p className="text-[9px] text-zinc-500">HKD</p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-green-400 leading-tight">
+                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>{t("cardDetail.priceRange30d")}</p>
+                        <p className="text-sm font-semibold" style={{ color: '#2ecc71' }}>
                           {p25.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[8px] text-zinc-600">↕</p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-orange-400 leading-tight">
+                        <p className="text-[8px]" style={{ color: '#444444' }}>↕</p>
+                        <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                           {p75.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[8px] text-zinc-600 mt-0.5">P25 / P75</p>
+                        <p className="text-[8px]" style={{ color: '#444444' }}>P25 / P75</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 mb-1">{t("cardDetail.highestTrade")}</p>
+                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>{t("cardDetail.highestTrade")}</p>
                         {maxPrice !== null ? (
-                          <>
-                            <p className="text-[9px] text-zinc-500">HKD</p>
-                            <p className="text-xs sm:text-sm font-semibold text-orange-400 leading-tight">
-                              {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </p>
-                          </>
-                        ) : <p className="text-xs font-semibold text-zinc-600">N/A</p>}
+                          <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
+                            {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                        ) : <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>}
                       </>
                     )}
                   </div>
@@ -791,8 +864,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </div>
 
                 {/* Footer note */}
-                <div className="px-4 py-2 border-t border-[#1565C0]/30">
-                  <p className="text-[10px] text-zinc-500">
+                <div className="px-4 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <p className="text-[9px]" style={{ color: '#444444' }}>
                     {isSealedProduct
                       ? t("cardDetail.sealedPriceNote", { n: mainPriceRecordCount })
                       : t("cardDetail.medianNote", { n: mainPriceRecordCount, source: mainPriceSource })
@@ -806,37 +879,44 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         </div>
 
         {/* ── Price History Table ── */}
-        <div className="rounded-xl overflow-hidden border border-zinc-800 mb-4 sm:mb-6">
-          <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between border-b border-zinc-800">
-            <div className="flex items-center gap-2">
-              <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-              <h3 className="text-sm sm:text-base font-semibold text-white">
-                SNKRDUNK {t("cardDetail.actualPriceHistory")}
+        <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-3">
+              <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
+                SNKRDUNK · {t("cardDetail.actualPriceHistory")}
               </h3>
+              {priceLoading && activeGrade && (
+                <Loader2 className="w-3 h-3 animate-spin" style={{ color: '#666666' }} />
+              )}
             </div>
-            {/* Grade Filter - single cards only */}
+            {/* Grade Filter - single cards only — editorial pill buttons */}
             {!isSealedProduct && (
               <div className="flex flex-wrap gap-1.5 items-center">
-                {priceLoading && activeGrade && (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
-                )}
                 {GRADE_KEYS.map((gradeKey) => {
                   const gradeLabel = gradeKey === "used" ? t("cardDetail.gradeUsed") : gradeKey;
+                  const isActive = activeGrade === gradeKey;
                   return (
                   <button
                     key={gradeKey}
                     onClick={() => setActiveGrade(activeGrade === gradeKey ? null : gradeKey)}
                     disabled={priceLoading}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 border relative ${
-                      activeGrade === gradeKey
-                        ? "bg-[#1565C0] border-[#1976D2] text-white shadow-lg shadow-blue-900/30"
-                        : "bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                    } ${priceLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className="relative text-[10px] font-mono transition-all duration-200"
+                    style={{
+                      padding: '3px 8px',
+                      border: `1px solid ${isActive ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)'}`,
+                      borderRadius: '2px',
+                      color: isActive ? '#FFFFFF' : '#666666',
+                      background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      opacity: priceLoading ? 0.5 : 1,
+                      cursor: priceLoading ? 'not-allowed' : 'pointer',
+                    }}
                   >
-                    {gradeLabel}
-                    {activeGrade === gradeKey && priceLoading && (
-                      <span className="absolute inset-0 rounded-lg bg-[#1565C0]/40 animate-pulse" />
+                    {isActive && priceLoading && (
+                      <span className="absolute inset-0 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
                     )}
+                    {gradeLabel}
                   </button>
                   );
                 })}
@@ -844,168 +924,179 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             )}
           </div>
           {activePriceLoading ? (
-            <div className="flex flex-col items-center justify-center py-10 bg-zinc-900/50 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-[#FFD600]" />
+            <div className="flex flex-col items-center justify-center py-10 gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#555555' }} />
               {activeGrade && (
-                <p className="text-xs text-zinc-500 animate-pulse">
+                <p className="text-[10px] animate-pulse" style={{ color: '#555555' }}>
                   {t("cardDetail.loadingGradeRecords", { grade: activeGrade })}
                 </p>
               )}
             </div>
           ) : activePriceHistory.length > 0 ? (
-            <div className="overflow-y-auto max-h-80 overflow-x-auto transition-opacity duration-300">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
-                  <tr>
-                    <th className="text-left py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
-                      {t("cardDetail.date")}
-                    </th>
-                    <th className="text-center py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
-                      {isSealedProduct ? t("cardDetail.quantity") : t("cardDetail.grade")}
-                    </th>
-                    <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
-                      {t("cardDetail.price")}
-                    </th>
-                    {isSealedProduct && (
-                      <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide whitespace-nowrap">
-                        {t("cardDetail.perBoxPrice")}
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="overflow-y-auto max-h-80 px-4 py-3">
+              {/* Timeline card flow */}
+              <div className="relative">
+                {/* Vertical timeline line */}
+                <div
+                  className="absolute left-[5px] top-2 bottom-2 w-px"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                />
+                <div className="flex flex-col gap-0">
                   {activePriceHistory.map((item, index) => {
                     const displayValue = isSealedProduct ? (item.quantity || '-') : (item.quantity || item.grade);
                     const isEmpty = !displayValue;
+                    const unitPrice = isSealedProduct ? getSealedUnitPrice(item) : null;
+                    const qty = isSealedProduct ? parseQuantity(item.quantity) : 0;
                     return (
-                      <tr key={index} className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${index % 2 === 0 ? 'bg-zinc-900/30' : 'bg-zinc-900/60'}`}>
-                        <td className="py-2.5 px-4 text-zinc-400 text-xs sm:text-sm">
-                          {item.soldAt ? formatDate(item.soldAt) : "N/A"}
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
-                          {isEmpty ? (
-                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-zinc-700/60 text-zinc-500 text-xs">
-                              {isSealedProduct ? '-' : t("cardDetail.usedGrade")}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-[#0D47A1]/60 text-blue-300 text-xs font-medium border border-[#1565C0]/40">
-                              {displayValue}
+                      <div
+                        key={index}
+                        className="relative pl-5 py-2.5 flex items-center justify-between group"
+                        style={{ borderBottom: index < activePriceHistory.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}
+                      >
+                        {/* Timeline dot */}
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border"
+                          style={{
+                            background: '#111215',
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            zIndex: 1,
+                          }}
+                        />
+                        {/* Date */}
+                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#555555' }}>
+                          {item.soldAt ? formatDate(item.soldAt) : 'N/A'}
+                        </span>
+                        {/* Grade / Qty badge */}
+                        <span
+                          className="text-[9px] font-mono mx-2"
+                          style={{
+                            padding: '1px 5px',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            borderRadius: '2px',
+                            color: isEmpty ? '#444444' : '#999999',
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {isEmpty ? (isSealedProduct ? '-' : t("cardDetail.usedGrade")) : displayValue}
+                        </span>
+                        {/* Price */}
+                        <div className="flex flex-col items-end ml-auto">
+                          <span className="text-xs font-semibold" style={{ color: '#E5E5E5' }}>
+                            {formatCurrency(item.price)}
+                          </span>
+                          {isSealedProduct && unitPrice !== null && qty > 1 && (
+                            <span className="text-[9px]" style={{ color: '#2ecc71' }}>
+                              {formatCurrency(unitPrice)}/{t("cardDetail.perBox", "每盒")}
                             </span>
                           )}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-semibold text-[#FFD600] text-xs sm:text-sm">
-                          {formatCurrency(item.price)}
-                        </td>
-                        {isSealedProduct && (
-                          <td className="py-2.5 px-4 text-right text-xs sm:text-sm">
-                            {(() => {
-                              const unitPrice = getSealedUnitPrice(item);
-                              const qty = parseQuantity(item.quantity);
-                              return unitPrice !== null && qty > 1 ? (
-                                <span className="text-green-400 font-medium">
-                                  {formatCurrency(unitPrice)}
-                                </span>
-                              ) : (
-                                <span className="text-zinc-600">—</span>
-                              );
-                            })()}
-                          </td>
-                        )}
-                      </tr>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="py-12 text-center bg-zinc-900/30">
-              <p className="text-zinc-500 text-sm">
+            <div className="py-12 text-center">
+              <p className="text-sm" style={{ color: '#555555' }}>
                 {isSealedProduct ? t("cardDetail.noSealedData") : t("cardDetail.noGradeData")}
               </p>
             </div>
           )}
         </div>
 
-        {/* ── eBay Sold History Table (single cards only) ── */}
+        {/* ── eBay Sold History (single cards only) ── */}
         {!isSealedProduct && (
-          <div className="rounded-xl overflow-hidden border border-zinc-800 mb-4 sm:mb-6">
-            <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <span className="w-1 h-4 rounded-full bg-[#e53238] inline-block" />
-                <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
-                  eBay {t("cardDetail.actualPriceHistory")}
+          <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-3">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
+                  eBay · {t("cardDetail.actualPriceHistory")}
                 </h3>
-                <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                <span
+                  className="text-[9px] font-mono"
+                  style={{
+                    padding: '1px 5px',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '2px',
+                    color: '#666666',
+                    letterSpacing: '0.1em',
+                  }}
+                >
                   PSA 10
                 </span>
               </div>
               {ebayPriceHistory.length > 0 && (
-                <span className="text-xs text-zinc-500">
+                <span className="text-[9px] font-mono" style={{ color: '#555555' }}>
                   {t("cardDetail.nRecords", { n: ebayPriceHistory.length })}
                 </span>
               )}
             </div>
             {ebayHistoryLoading ? (
-              <div className="flex flex-col items-center justify-center py-10 bg-zinc-900/50 gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-[#e53238]" />
+              <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#555555' }} />
               </div>
             ) : ebayPriceHistory.length > 0 ? (
-              <div className="overflow-y-auto max-h-80 overflow-x-auto">
-                <table className="w-full">
-                  <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
-                    <tr>
-                      <th className="text-left py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
-                        {t("cardDetail.date")}
-                      </th>
-                      <th className="text-left py-2.5 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wide hidden sm:table-cell">
-                        {t("cardDetail.title", "商品標題")}
-                      </th>
-                      <th className="text-right py-2.5 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wide">
-                        {t("cardDetail.price")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="overflow-y-auto max-h-80 px-4 py-3">
+                {/* Timeline card flow */}
+                <div className="relative">
+                  <div
+                    className="absolute left-[5px] top-2 bottom-2 w-px"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                  />
+                  <div className="flex flex-col gap-0">
                     {ebayPriceHistory.map((item: any, index: number) => (
-                      <tr key={index} className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${index % 2 === 0 ? 'bg-zinc-900/30' : 'bg-zinc-900/60'}`}>
-                        <td className="py-2.5 px-4 text-zinc-400 text-xs sm:text-sm whitespace-nowrap">
-                          {item.soldAt ? formatDate(item.soldAt) : "N/A"}
-                        </td>
-                        <td className="py-2.5 px-3 text-zinc-400 text-xs hidden sm:table-cell">
+                      <div
+                        key={index}
+                        className="relative pl-5 py-2.5 flex items-center gap-2 group"
+                        style={{ borderBottom: index < ebayPriceHistory.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}
+                      >
+                        {/* Timeline dot */}
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border"
+                          style={{ background: '#111215', borderColor: 'rgba(255,255,255,0.2)', zIndex: 1 }}
+                        />
+                        {/* Date */}
+                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#555555' }}>
+                          {item.soldAt ? formatDate(item.soldAt) : 'N/A'}
+                        </span>
+                        {/* Title */}
+                        <div className="flex-1 min-w-0 hidden sm:block">
                           {item.listingUrl ? (
                             <a
                               href={item.listingUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-zinc-300 hover:text-white hover:underline line-clamp-1 flex items-center gap-1 group"
+                              className="flex items-center gap-1 group/link"
                             >
-                              <span className="line-clamp-1">{item.title || '—'}</span>
-                              <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-blue-400 flex-shrink-0" />
+                              <span className="text-[10px] line-clamp-1 transition-colors" style={{ color: '#666666' }}>
+                                {item.title || '—'}
+                              </span>
+                              <ExternalLink className="w-2.5 h-2.5 flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" style={{ color: '#888888' }} />
                             </a>
                           ) : (
-                            <span className="line-clamp-1">{item.title || '—'}</span>
+                            <span className="text-[10px] line-clamp-1" style={{ color: '#555555' }}>{item.title || '—'}</span>
                           )}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-semibold text-[#e53238] text-xs sm:text-sm whitespace-nowrap">
+                        </div>
+                        {/* Price */}
+                        <span className="text-xs font-semibold ml-auto flex-shrink-0" style={{ color: '#E5E5E5' }}>
                           {formatCurrency(item.price)}
-                        </td>
-                      </tr>
+                        </span>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="py-10 text-center bg-zinc-900/30">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 mb-3">
-                  <span className="text-lg font-bold text-[#e53238]">e</span>
-                </div>
-                <p className="text-zinc-500 text-sm">{t("cardDetail.noEbayData")}</p>
-                <p className="text-zinc-600 text-xs mt-1">{t("cardDetail.ebayDataComingSoon", "eBay 成交記錄將由 GitHub Actions 定期更新")}</p>
+              <div className="py-10 text-center">
+                <p className="text-sm" style={{ color: '#555555' }}>{t("cardDetail.noEbayData")}</p>
+                <p className="text-xs mt-1" style={{ color: '#444444' }}>{t("cardDetail.ebayDataComingSoon", "eBay 成交記錄將由 GitHub Actions 定期更新")}</p>
               </div>
             )}
             {ebayPriceHistory.length > 0 && (
-              <div className="px-4 py-2 border-t border-zinc-800/50">
-                <p className="text-[10px] text-zinc-500">
+              <div className="px-4 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-[9px]" style={{ color: '#444444' }}>
                   {t("cardDetail.ebayDataNote", "eBay PSA 10 已成交記錄，由 GitHub Actions 定期爬取更新")}
                 </p>
               </div>
@@ -1014,7 +1105,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
         )}
 
         {/* ── Price Trend Chart ── */}
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-4 sm:mb-6 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <PriceTrendChart
             cardName={product.name}
             trendData={activeTrendData?.trendData || []}
@@ -1195,7 +1286,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
       {!isSealedProduct && cardId && (
         <SimilarCardsSection cardId={cardId} series={product.series ?? null} setName={product.setName ?? null} cardName={product.name ?? ''} />
       )}
-    </div>
+    </div>{/* closes z-10 wrapper */}
+    </div>{/* closes min-h-screen */}
 
     {/* ── Add to Collection Sheet (prefilled with current card) ── */}
     {!isSealedProduct && (

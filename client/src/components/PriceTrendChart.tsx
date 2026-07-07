@@ -107,17 +107,14 @@ export function PriceTrendChart({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl overflow-hidden border border-zinc-800">
-        <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-            <span className="text-sm font-semibold text-white">
-              {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
-            </span>
-          </div>
+      <div>
+        <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[9px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
+            {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
+          </p>
         </div>
-        <div className="flex items-center justify-center h-64 bg-zinc-900/30">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FFD600]" />
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#555555' }} />
         </div>
       </div>
     );
@@ -125,21 +122,17 @@ export function PriceTrendChart({
 
   if (filteredData.length === 0) {
     return (
-      <div className="rounded-xl overflow-hidden border border-zinc-800">
-        <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block" />
-            <span className="text-sm font-semibold text-white">{t("cardDetail.chartTitle")}</span>
-          </div>
+      <div>
+        <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[9px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>{t("cardDetail.chartTitle")}</p>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 bg-zinc-900/30 gap-3">
-          <TrendingUp className="w-10 h-10 text-zinc-700" />
-          <p className="text-zinc-400 text-sm font-medium">
+        <div className="flex flex-col items-center justify-center h-40 gap-2">
+          <p className="text-sm" style={{ color: '#555555' }}>
             {isSealedProduct
               ? t("cardDetail.noSealedTrendData", "此卡盒暫無成交記錄")
               : t("cardDetail.noPsa10Data", "此卡牌暫無 PSA 10 成交記錄")}
           </p>
-          <p className="text-zinc-600 text-xs">
+          <p className="text-xs" style={{ color: '#444444' }}>
             {isSealedProduct
               ? t("cardDetail.noSealedTrendDataSub", "成交數據將在有新記錄時自動更新")
               : t("cardDetail.noPsa10DataSub", "PSA 10 成交數據將在有新記錄時自動更新")}
@@ -157,44 +150,46 @@ export function PriceTrendChart({
   const yMax = maxVal + padding;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-zinc-800">
-      {/* Header */}
-      <div className="bg-zinc-900 px-4 py-3 border-b border-zinc-800">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-start gap-2">
-            <span className="w-1 h-4 rounded-full bg-[#FFD600] inline-block mt-0.5 shrink-0" />
-            <div>
-              <h3 className="text-sm font-semibold text-white">
-                {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
-              </h3>
-              <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{cardName}</p>
-            </div>
-          </div>
-          {/* Time Range Selector */}
-          <div className="flex items-center gap-1 bg-zinc-800/80 rounded-lg p-1">
-            {timeRangeOptions.map(({ key, label }) => (
+    <div>
+      {/* Header — editorial */}
+      <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div>
+          <p className="text-[9px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
+            {isSealedProduct ? t("cardDetail.sealedChartTitle", "卡盒價格趨勢") : t("cardDetail.chartTitle")}
+          </p>
+        </div>
+        {/* Time Range Selector — editorial pill buttons */}
+        <div className="flex items-center gap-1.5">
+          {timeRangeOptions.map(({ key, label }) => {
+            const isActive = timeRange === key;
+            return (
               <button
                 key={key}
                 onClick={() => setTimeRange(key)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                  timeRange === key
-                    ? "bg-[#1565C0] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
+                className="text-[9px] font-mono transition-all duration-200"
+                style={{
+                  padding: '2px 7px',
+                  border: `1px solid ${isActive ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: '2px',
+                  color: isActive ? '#FFFFFF' : '#555555',
+                  background: isActive ? 'rgba(255,255,255,0.07)' : 'transparent',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
               >
                 {label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Chart Body */}
-      <div className="bg-[#0A1628]/60 p-4">
-        <ResponsiveContainer width="100%" height={260}>
+      {/* Chart Body — minimal glow line */}
+      <div className="px-4 pt-4 pb-2">
+        <ResponsiveContainer width="100%" height={220}>
           <AreaChart
             data={filteredData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            margin={{ top: 12, right: 8, left: 0, bottom: 0 }}
             onMouseMove={(state: any) => {
               if (state?.activePayload?.[0]?.payload?.date) {
                 setActiveDate(state.activePayload[0].payload.date);
@@ -203,85 +198,86 @@ export function PriceTrendChart({
             onMouseLeave={() => setActiveDate(null)}
           >
             <defs>
-              <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#FFD600" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#FFD600" stopOpacity={0} />
+              {/* Gradient fill — soft downward fade */}
+              <linearGradient id="priceGradientEditorial" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.12)" stopOpacity={1} />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" stopOpacity={0} />
               </linearGradient>
+              {/* Glow filter for the line */}
+              <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#1e2a3a"
-              vertical={false}
-            />
+            {/* No CartesianGrid — keep it clean */}
             <XAxis
               dataKey="date"
-              stroke="#374151"
-              tick={{ fill: "#6B7280", fontSize: 9 }}
+              stroke="transparent"
+              tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 8, fontFamily: 'monospace' }}
               tickLine={false}
-              axisLine={{ stroke: "#1e2a3a" }}
+              axisLine={false}
               interval="preserveStartEnd"
               tickFormatter={formatXDate}
             />
             <YAxis
-              stroke="#374151"
-              tick={{ fill: "#6B7280", fontSize: 9 }}
+              stroke="transparent"
+              tick={false}
               tickLine={false}
               axisLine={false}
-              tickFormatter={formatPrice}
               domain={[yMin, yMax]}
-              width={48}
-              tickCount={5}
+              width={0}
             />
             <Tooltip
               content={<CustomTooltip />}
-              cursor={{ stroke: "#FFD600", strokeWidth: 1, strokeDasharray: "4 4" }}
+              cursor={{ stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1 }}
               isAnimationActive={false}
             />
             {activeDate && (
               <ReferenceLine
                 x={activeDate}
-                stroke="#FFD600"
+                stroke="rgba(255,255,255,0.15)"
                 strokeWidth={1}
-                strokeDasharray="4 4"
-                strokeOpacity={0.6}
               />
             )}
             <Area
               type="monotone"
               dataKey="snkrdunkPrice"
-              stroke="#FFD600"
-              strokeWidth={2}
-              fill="url(#priceGradient)"
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth={1.5}
+              fill="url(#priceGradientEditorial)"
               dot={false}
               activeDot={{
-                r: 4,
-                fill: "#FFD600",
-                stroke: "#0A1628",
-                strokeWidth: 2,
+                r: 3,
+                fill: '#FFFFFF',
+                stroke: 'rgba(255,255,255,0.3)',
+                strokeWidth: 4,
               }}
               name={isSealedProduct ? t("priceTrendChart.snkrdunkBox") : t("priceTrendChart.snkrdunkPsa10")}
               isAnimationActive={true}
-              animationDuration={600}
+              animationDuration={800}
+              style={{ filter: 'url(#lineGlow)' }}
             />
           </AreaChart>
         </ResponsiveContainer>
 
-        {/* Stats Footer */}
+        {/* Stats Footer — magazine headline numbers */}
         {stats.snkrdunk.avgPrice > 0 && (
-          <div className="mt-3 pt-3 border-t border-zinc-800/60 grid grid-cols-4 gap-1">
+          <div className="mt-3 pt-3 grid grid-cols-4 gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             {[
-              { label: t("cardDetail.avgPrice", "均價"), amount: stats.snkrdunk.avgPrice, color: "text-[#FFD600]" },
-              { label: t("cardDetail.latestPrice", "最新"), amount: stats.snkrdunk.latestPrice, color: "text-white" },
-              { label: t("cardDetail.minPriceLabel", "最低"), amount: stats.snkrdunk.minPrice, color: "text-green-400" },
-              { label: t("cardDetail.maxPriceLabel", "最高"), amount: stats.snkrdunk.maxPrice, color: "text-red-400" },
-            ].map(({ label, amount, color }) => {
+              { label: t("cardDetail.avgPrice", "均價"), amount: stats.snkrdunk.avgPrice },
+              { label: t("cardDetail.latestPrice", "最新"), amount: stats.snkrdunk.latestPrice },
+              { label: t("cardDetail.minPriceLabel", "最低"), amount: stats.snkrdunk.minPrice },
+              { label: t("cardDetail.maxPriceLabel", "最高"), amount: stats.snkrdunk.maxPrice },
+            ].map(({ label, amount }) => {
               const numAmount = typeof amount === "string" ? parseFloat(amount) : (amount ?? 0);
-              const formatted = numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              const formatted = numAmount.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
               return (
-                <div key={label} className="text-center">
-                  <p className="text-[10px] text-zinc-500 mb-0.5">{label}</p>
-                  <p className="text-[10px] text-zinc-400 font-medium">HKD</p>
-                  <p className={`text-xs font-bold ${color} leading-tight`}>{formatted}</p>
+                <div key={label} className="text-center py-1">
+                  <p className="text-[8px] uppercase tracking-[0.12em] mb-1" style={{ color: '#555555' }}>{label}</p>
+                  <p className="text-xs font-semibold" style={{ color: '#E5E5E5' }}>{formatted}</p>
                 </div>
               );
             })}
