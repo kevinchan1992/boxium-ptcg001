@@ -152,7 +152,7 @@ export default function PricingSearch() {
   const showEmpty = !showSkeleton && !showError && searchResults.length === 0 && !!query;
 
   return (
-    <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8">
+    <div className="min-h-screen py-6 px-4 sm:px-6 md:px-8 pb-[140px] md:pb-6">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
