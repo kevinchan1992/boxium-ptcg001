@@ -297,8 +297,8 @@ export default function Pricing() {
             ) : null}
           </div>
 
-          {/* Mobile: 5-card even row — sits naturally below search */}
-          <div className="md:hidden mt-6 pb-4">
+          {/* Mobile: 5-card even row — vertically centered in remaining space */}
+          <div className="md:hidden flex-1 min-h-0 flex flex-col justify-center py-4">
             {isLoading ? (
               <div className="flex items-end justify-between gap-2 px-1">
                 {[0,1,2,3,4].map((i) => (
@@ -309,10 +309,8 @@ export default function Pricing() {
             ) : popularCards.length > 0 ? (
               <div className="flex items-end justify-between gap-2 px-1">
                 {popularCards.slice(0, 5).map((card, i) => {
-                  const mobileOffsets = ['0', '-0.75rem', '-1.25rem', '-0.75rem', '0'];
                   return (
-                    <div key={card.id} className="flex flex-col gap-1 flex-1 min-w-0"
-                      style={{ transform: `translateY(${mobileOffsets[i]})` }}>
+                    <div key={card.id} className="flex flex-col gap-1 flex-1 min-w-0">
                       <button
                         onClick={() => handleCardClick(card.id)}
                         className="relative rounded overflow-hidden w-full"
