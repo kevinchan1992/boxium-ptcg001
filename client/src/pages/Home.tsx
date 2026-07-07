@@ -735,245 +735,53 @@ export default function Home() {
         keywords="TCG 卡牌, Pokémon 卡牌價格, PSA 10, BOXIUM TCG, 卡牌市集"
       />
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
-        {/* ═══ Hero Section — 100vh Collage Wall ═══ */}
-        <section
-          className="relative overflow-hidden flex flex-col"
-          style={{
-            height: "100dvh",
-            minHeight: "600px",
-            background: "radial-gradient(ellipse at 50% 40%, #0a0a1a 0%, #050508 60%, #000000 100%)",
-          }}
-        >
-          {/* ── Noise texture overlay ── */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E")`,
-              backgroundRepeat: "repeat",
-              backgroundSize: "256px 256px",
-              zIndex: 1,
-            }}
-          />
-
-          {/* ── Editorial crosshair grid (z-index 2) ── */}
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 2, opacity: 0.08 }}>
-            <svg width="100%" height="100%" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-              {/* Horizontal center rule */}
-              <line x1="0" y1="450" x2="1440" y2="450" stroke="white" strokeWidth="0.5" strokeDasharray="4 8"/>
-              {/* Vertical center rule */}
-              <line x1="720" y1="0" x2="720" y2="900" stroke="white" strokeWidth="0.5" strokeDasharray="4 8"/>
-              {/* Corner crosshairs */}
-              <g stroke="white" strokeWidth="1">
-                <line x1="40" y1="30" x2="70" y2="30"/><line x1="55" y1="15" x2="55" y2="45"/>
-                <line x1="1370" y1="30" x2="1400" y2="30"/><line x1="1385" y1="15" x2="1385" y2="45"/>
-                <line x1="40" y1="855" x2="70" y2="855"/><line x1="55" y1="840" x2="55" y2="870"/>
-                <line x1="1370" y1="855" x2="1400" y2="855"/><line x1="1385" y1="840" x2="1385" y2="870"/>
-              </g>
-            </svg>
-          </div>
-
-          {/* ══════════════════════════════════════════════════════
-               BACKGROUND LAYER — small blurred cards, opacity-15
-          ══════════════════════════════════════════════════════ */}
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 3 }}>
-            {/* BG card 1 — Surfing Pikachu Bullet Train */}
-            <div style={{ position:"absolute", top:"5%", left:"2%", width:"9vw", minWidth:"70px", opacity:0.15, filter:"blur(1.2px)", transform:"rotate(-4deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7302799.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(100,140,255,0.12)" }} loading="lazy"/>
-            </div>
-            {/* BG card 2 — Master Key */}
-            <div style={{ position:"absolute", top:"55%", left:"5%", width:"8vw", minWidth:"60px", opacity:0.13, filter:"blur(1px)", transform:"rotate(3deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220901045104-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 15px rgba(100,140,255,0.1)" }} loading="lazy"/>
-            </div>
-            {/* BG card 3 — Lugia LEGEND */}
-            <div style={{ position:"absolute", top:"10%", right:"3%", width:"9vw", minWidth:"70px", opacity:0.15, filter:"blur(1.2px)", transform:"rotate(5deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220901064220-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(100,140,255,0.12)" }} loading="lazy"/>
-            </div>
-            {/* BG card 4 — Mewtwo GX Promo */}
-            <div style={{ position:"absolute", top:"60%", right:"4%", width:"8vw", minWidth:"60px", opacity:0.13, filter:"blur(1px)", transform:"rotate(-3deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220831092420-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 15px rgba(100,140,255,0.1)" }} loading="lazy"/>
-            </div>
-            {/* BG card 5 — Monkey D Luffy L Serial */}
-            <div style={{ position:"absolute", top:"30%", left:"0%", width:"7vw", minWidth:"55px", opacity:0.12, filter:"blur(1.5px)", transform:"rotate(2deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20221107034212-1.webp") ?? ""} alt="" className="w-full rounded-lg" loading="lazy"/>
-            </div>
-            {/* BG card 6 — Shining Mew */}
-            <div style={{ position:"absolute", top:"35%", right:"1%", width:"7vw", minWidth:"55px", opacity:0.12, filter:"blur(1.5px)", transform:"rotate(-2deg)" }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7302949.webp") ?? ""} alt="" className="w-full rounded-lg" loading="lazy"/>
-            </div>
-          </div>
-
-          {/* ══════════════════════════════════════════════════════
-               MIDGROUND LAYER — medium cards, opacity-25, sharp
-          ══════════════════════════════════════════════════════ */}
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 4 }}>
-            {/* MID card 1 — Dark Magician Girl SE */}
-            <div style={{ position:"absolute", top:"8%", left:"12%", width:"14vw", minWidth:"100px", opacity:0.25, transform:"rotate(-3deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.42"; (e.currentTarget as HTMLElement).style.transform="rotate(-3deg) scale(1.04)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.25"; (e.currentTarget as HTMLElement).style.transform="rotate(-3deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7102205.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 22px rgba(100,140,255,0.15), -6px 6px 20px rgba(0,0,0,0.6)" }} loading="lazy"/>
-            </div>
-            {/* MID card 2 — Pikachu 1ED Old Back */}
-            <div style={{ position:"absolute", top:"48%", left:"10%", width:"13vw", minWidth:"90px", opacity:0.25, transform:"rotate(2deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.42"; (e.currentTarget as HTMLElement).style.transform="rotate(2deg) scale(1.04)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.25"; (e.currentTarget as HTMLElement).style.transform="rotate(2deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7302991.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 22px rgba(100,140,255,0.15), 6px 6px 20px rgba(0,0,0,0.6)" }} loading="lazy"/>
-            </div>
-            {/* MID card 3 — Luffy P Championship 2023 */}
-            <div style={{ position:"absolute", top:"6%", right:"14%", width:"14vw", minWidth:"100px", opacity:0.25, transform:"rotate(3deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.42"; (e.currentTarget as HTMLElement).style.transform="rotate(3deg) scale(1.04)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.25"; (e.currentTarget as HTMLElement).style.transform="rotate(3deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20250821113101-1.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 22px rgba(100,140,255,0.15), 6px -6px 20px rgba(0,0,0,0.6)" }} loading="lazy"/>
-            </div>
-            {/* MID card 4 — Cyber Dragon GMR Serial */}
-            <div style={{ position:"absolute", top:"50%", right:"12%", width:"13vw", minWidth:"90px", opacity:0.25, transform:"rotate(-2deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.42"; (e.currentTarget as HTMLElement).style.transform="rotate(-2deg) scale(1.04)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.25"; (e.currentTarget as HTMLElement).style.transform="rotate(-2deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7e272a98-d39b-49cb-bbbb-185de1322fb1.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 22px rgba(100,140,255,0.15), -6px 6px 20px rgba(0,0,0,0.6)" }} loading="lazy"/>
-            </div>
-            {/* MID card 5 — Cal Mewtwo Old Back */}
-            <div style={{ position:"absolute", top:"25%", left:"3%", width:"11vw", minWidth:"80px", opacity:0.22, transform:"rotate(-1deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.22"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220901091323-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(255,200,50,0.1)" }} loading="lazy"/>
-            </div>
-            {/* MID card 6 — The Masked Royal Promo */}
-            <div style={{ position:"absolute", top:"22%", right:"3%", width:"11vw", minWidth:"80px", opacity:0.22, transform:"rotate(1deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.22"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220901073221-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(255,200,50,0.1)" }} loading="lazy"/>
-            </div>
-            {/* MID card 7 — Mew ex 25th Holo */}
-            <div style={{ position:"absolute", bottom:"12%", left:"15%", width:"12vw", minWidth:"85px", opacity:0.22, transform:"rotate(4deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.22"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/pkmn-tcg-25thCD-09.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(100,140,255,0.12)" }} loading="lazy"/>
-            </div>
-            {/* MID card 8 — M Sachiko EX Promo */}
-            <div style={{ position:"absolute", bottom:"10%", right:"15%", width:"12vw", minWidth:"85px", opacity:0.22, transform:"rotate(-4deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.22"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20220901031439-0.webp") ?? ""} alt="" className="w-full rounded-lg" style={{ boxShadow:"0 0 18px rgba(100,140,255,0.12)" }} loading="lazy"/>
-            </div>
-          </div>
-
-          {/* ══════════════════════════════════════════════════════
-               FOREGROUND LAYER — 3 large sharp cards, opacity-40
-               These slightly overlap the center logo edges
-          ══════════════════════════════════════════════════════ */}
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 6 }}>
-            {/* FG card 1 — Surfing Pikachu Bullet Train PSA10 #1, top-left large */}
-            <div style={{ position:"absolute", top:"5%", left:"18%", width:"20vw", minWidth:"130px", maxWidth:"260px", opacity:0.4, transform:"rotate(-2deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.65"; (e.currentTarget as HTMLElement).style.transform="rotate(-2deg) scale(1.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.4"; (e.currentTarget as HTMLElement).style.transform="rotate(-2deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7302799.webp") ?? ""} alt="Surfing Pikachu" className="w-full rounded-xl" style={{ boxShadow:"0 0 30px rgba(255,220,0,0.25), -10px 10px 30px rgba(0,0,0,0.7)" }} loading="lazy"/>
-            </div>
-            {/* FG card 2 — Monkey D Luffy L Serial, top-right large */}
-            <div style={{ position:"absolute", top:"5%", right:"18%", width:"19vw", minWidth:"120px", maxWidth:"240px", opacity:0.4, transform:"rotate(2deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.65"; (e.currentTarget as HTMLElement).style.transform="rotate(2deg) scale(1.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.4"; (e.currentTarget as HTMLElement).style.transform="rotate(2deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20221107034212-1.webp") ?? ""} alt="Monkey D Luffy" className="w-full rounded-xl" style={{ boxShadow:"0 0 30px rgba(220,50,50,0.2), 10px 10px 30px rgba(0,0,0,0.7)" }} loading="lazy"/>
-            </div>
-            {/* FG card 3 — Charizard 1ED e5, bottom-left */}
-            <div style={{ position:"absolute", bottom:"12%", left:"20%", width:"17vw", minWidth:"110px", maxWidth:"220px", opacity:0.38, transform:"rotate(3deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.6"; (e.currentTarget as HTMLElement).style.transform="rotate(3deg) scale(1.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; (e.currentTarget as HTMLElement).style.transform="rotate(3deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/20250728030118-1.webp") ?? ""} alt="Charizard" className="w-full rounded-xl" style={{ boxShadow:"0 0 28px rgba(255,140,0,0.2), 8px -8px 25px rgba(0,0,0,0.65)" }} loading="lazy"/>
-            </div>
-            {/* FG card 4 — Pikachu PCG Gift Box, bottom-right */}
-            <div style={{ position:"absolute", bottom:"12%", right:"20%", width:"16vw", minWidth:"100px", maxWidth:"200px", opacity:0.38, transform:"rotate(-3deg)", transition:"opacity 0.3s, transform 0.3s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity="0.6"; (e.currentTarget as HTMLElement).style.transform="rotate(-3deg) scale(1.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity="0.38"; (e.currentTarget as HTMLElement).style.transform="rotate(-3deg)"; }}>
-              <img src={getProxiedImageUrl("https://cdn.snkrdunk.com/upload_bg_removed/7306806.webp") ?? ""} alt="Pikachu" className="w-full rounded-xl" style={{ boxShadow:"0 0 28px rgba(255,220,0,0.18), -8px -8px 25px rgba(0,0,0,0.65)" }} loading="lazy"/>
-            </div>
-          </div>
-
-          {/* ── Radial vignette from center (light source effect) ── */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: "radial-gradient(ellipse 55% 55% at 50% 48%, transparent 0%, rgba(0,0,0,0.55) 100%)",
-              zIndex: 5,
-            }}
-          />
-
-          {/* ══════════════════════════════════════════════════════
-               FOREGROUND CONTENT — Logo + Stats (z-index 10)
-          ══════════════════════════════════════════════════════ */}
-          <div
-            className="relative flex-1 flex flex-col items-center justify-center px-4"
-            style={{ zIndex: 10, paddingTop: "3.5rem" }}
-          >
-            {/* BOXIUM Logo */}
-            <div
-              className="w-full rounded-2xl"
-              style={{
-                maxWidth: "min(460px, 68vw)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                background: "rgba(0,0,0,0.08)",
-                padding: "clamp(8px, 2vw, 20px)",
-              }}
-            >
+        {/* Hero Section */}
+      <section className="pt-16 md:pt-20 pb-0 overflow-hidden" style={{ backgroundColor: "#06038d" }}>
+        {/* Main hero content — constrained width */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-8 md:pb-12">
+          <div className="flex flex-col items-center text-center space-y-4 md:space-y-8">
+            {/* LOGO - Responsive sizing */}
+            <div className="w-full max-w-[280px] md:max-w-2xl">
               <img
                 src="/boxium-logo.png"
                 alt="BOXIUM Logo"
                 className="w-full h-auto"
-                style={{ filter: "drop-shadow(0 0 24px rgba(254,221,0,0.25))" }}
               />
             </div>
 
-            {/* Stats — glassmorphism boxes */}
-            <div className="grid grid-cols-2 gap-2 md:gap-3 mt-3 md:mt-4 w-full" style={{ maxWidth: "min(400px, 78vw)" }}>
-              <div
-                className="rounded-xl p-2 md:p-3 text-center border"
-                style={{
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  background: "rgba(255,255,255,0.03)",
-                  borderColor: "rgba(255,255,255,0.1)",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-                }}
-              >
-                <div className="text-sm md:text-lg font-bold" style={{ color: "#FEDD00" }}>
+            {/* Content - Responsive text sizes */}
+            <div className="space-y-1.5 md:space-y-3 max-w-3xl px-2">
+              <h1 className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">
+                {t("home.welcome")}
+              </h1>
+              <p className="text-white/80 text-[11px] sm:text-xs md:text-base leading-relaxed">
+                {t("home.description")}
+              </p>
+            </div>
+
+            {/* Key Stats - Responsive layout */}
+            <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
                   {animatedCards.toLocaleString()}+
                 </div>
-                <div className="text-white/60 text-[9px] md:text-[10px] mt-0.5">{t("home.trackedCards")}</div>
+                <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
-              <div
-                className="rounded-xl p-2 md:p-3 text-center border"
-                style={{
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  background: "rgba(255,255,255,0.03)",
-                  borderColor: "rgba(255,255,255,0.1)",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-                }}
-              >
-                <div className="text-sm md:text-lg font-bold" style={{ color: "#FEDD00" }}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
+                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
                   {stats?.totalPriceRecords
                     ? `${Math.round(animatedPriceRecords / 10000)}${t("home.tenThousandUnit")}+`
                     : '—'}
                 </div>
-                <div className="text-white/60 text-[9px] md:text-[10px] mt-0.5">{t("home.priceDataPoints")}</div>
+                <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ── Bottom gradient for nav readability ── */}
-          <div
-            className="absolute bottom-0 left-0 right-0 pointer-events-none"
-            style={{
-              height: "120px",
-              background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)",
-              zIndex: 9,
-            }}
-          />
-
-          {/* Hero Quick Access — glassmorphism bottom nav bar */}
-          <div className="relative" style={{ zIndex: 10 }}>
-            <HeroQuickAccess />
-          </div>
-        </section>
+        {/* Hero Quick Access — full-width, flush to bottom of hero */}
+        <HeroQuickAccess />
+      </section>
 
 
 
