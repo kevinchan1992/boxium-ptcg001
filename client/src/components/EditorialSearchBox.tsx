@@ -1,11 +1,16 @@
 /**
  * EditorialSearchBox
  *
- * A luxury editorial-style search box for Research & Pricing homepages.
- * Features:
- * - Minimal bottom-border style that smoothly expands on focus
- * - When empty + focused: shows "HOT SEARCHES" panel with trending cards
- * - When typing (≥2 chars): delegates to CardSearchDropdown logic for suggestions
+ * Luxury editorial-style search box for Research & Pricing homepages.
+ *
+ * Key behaviours:
+ * 1. TypeAnimation runs as a CSS-overlay (NOT inside input.value) → no overflow
+ * 2. onFocus: clear value + stop carousel (hide overlay)
+ * 3. onBlur (no text): restore carousel
+ * 4. Blinking cursor `|` appended to carousel text
+ * 5. Focus → bottom-border scaleX 0→1 (framer-motion)
+ * 6. Empty+focused → HOT SEARCHES glass panel
+ * 7. Typing ≥2 chars → RESULTS glass panel
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -13,26 +18,99 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Loader2, Camera, TrendingUp, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getProxiedImageUrl } from "@/lib/utils";
-import { TypeAnimation } from "react-type-animation";
 
 interface EditorialSearchBoxProps {
   value: string;
   onChange: (v: string) => void;
   onSubmit: (q: string) => void;
   cardLinkPrefix?: "card" | "pricing";
-  placeholder?: string;
   hint?: string;
   showCameraButton?: boolean;
   onCameraClick?: () => void;
   randomCardNames?: string[];
 }
 
+// ── Blinking cursor component ─────────────────────────────────────────────────
+function BlinkingCursor() {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const id = setInterval(() => setVisible((v) => !v), 530);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span style={{ opacity: visible ? 0.7 : 0, transition: 'opacity 0.1s' }}>|</span>
+  );
+}
+
+// ── Carousel overlay (renders outside <input>) ────────────────────────────────
+function CarouselOverlay({ names }: { names: string[] }) {
+  const [idx, setIdx] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [phase, setPhase] = useState<"typing" | "pause" | "erasing">("typing");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (names.length === 0) return;
+
+    const currentName = names[idx % names.length];
+
+    const tick = () => {
+      if (phase === "typing") {
+        setDisplayText((prev) => {
+          const next = currentName.slice(0, prev.length + 1);
+          if (next === currentName) {
+            timeoutRef.current = setTimeout(() => setPhase("pause"), 2800);
+          } else {
+            timeoutRef.current = setTimeout(tick, 45);
+          }
+          return next;
+        });
+      } else if (phase === "pause") {
+        timeoutRef.current = setTimeout(() => setPhase("erasing"), 0);
+      } else if (phase === "erasing") {
+        setDisplayText((prev) => {
+          const next = prev.slice(0, -1);
+          if (next === "") {
+            setIdx((i) => i + 1);
+            setPhase("typing");
+          } else {
+            timeoutRef.current = setTimeout(tick, 22);
+          }
+          return next;
+        });
+      }
+    };
+
+    timeoutRef.current = setTimeout(tick, phase === "typing" ? 45 : 0);
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [phase, idx, names]);
+
+  if (names.length === 0) return null;
+
+  return (
+    <div
+      className="absolute left-7 top-1/2 -translate-y-1/2 pointer-events-none select-none flex items-center"
+      style={{
+        color: 'rgba(255,255,255,0.22)',
+        fontSize: '14px',
+        letterSpacing: '0.02em',
+        maxWidth: 'calc(100% - 5rem)',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span className="truncate">{displayText}</span>
+      <BlinkingCursor />
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export function EditorialSearchBox({
   value,
   onChange,
   onSubmit,
   cardLinkPrefix = "card",
-  placeholder = "",
   hint,
   showCameraButton = false,
   onCameraClick,
@@ -43,7 +121,6 @@ export function EditorialSearchBox({
   const [isOpen, setIsOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const mousedownOnPanelRef = useRef(false);
 
   // ── Debounce query ────────────────────────────────────────────────────────
@@ -56,38 +133,40 @@ export function EditorialSearchBox({
     return () => clearTimeout(id);
   }, [value, isOpen]);
 
-  // ── tRPC: card search suggestions (when typing) ───────────────────────────
+  // ── tRPC: card search suggestions ────────────────────────────────────────
   const { data: searchData, isFetching: isSearchFetching } = trpc.cards.search.useQuery(
     { query: debouncedQuery, limit: 6 },
     { enabled: isOpen && debouncedQuery.length >= 2, staleTime: 30_000 }
   );
   const suggestions = searchData?.cards ?? [];
 
-  // ── tRPC: hot searches (when focused + empty) ─────────────────────────────
+  // ── tRPC: hot searches ────────────────────────────────────────────────────
   const { data: hotSearchData, isLoading: isHotLoading } = trpc.trending.trending.getBySearches.useQuery(
     { limit: 6 },
     { enabled: isFocused, staleTime: 5 * 60_000 }
   );
   const hotCards = hotSearchData ?? [];
 
-  // ── Panel visibility logic ────────────────────────────────────────────────
-  // Show suggestions panel when typing ≥2 chars
+  // ── Panel visibility ──────────────────────────────────────────────────────
   const showSuggestions = isOpen && debouncedQuery.length >= 2 && suggestions.length > 0;
-  // Show hot searches panel when focused + empty (or < 2 chars)
   const showHotPanel = isFocused && value.trim().length < 2;
   const showAnyPanel = showSuggestions || showHotPanel;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleFocus = useCallback(() => {
+    // Clear value so user can type immediately without leftover text
+    onChange("");
     setIsFocused(true);
-    setIsOpen(true);
-  }, []);
+    setIsOpen(false); // no suggestions yet (value just cleared)
+  }, [onChange]);
 
   const handleBlur = useCallback(() => {
     if (mousedownOnPanelRef.current) return;
     setIsFocused(false);
     setIsOpen(false);
     setDebouncedQuery("");
+    // If user cleared everything, restore carousel by leaving value = ""
+    // (carousel overlay shows when !value && !isFocused)
   }, []);
 
   const handleChange = useCallback(
@@ -135,21 +214,21 @@ export function EditorialSearchBox({
     return `HKD ${price.toLocaleString("zh-HK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       {/* ── Search input row ── */}
       <form onSubmit={handleSubmit}>
-        <motion.div
-          className="relative flex items-center"
-          animate={{ opacity: 1 }}
-          initial={{ opacity: 0.6 }}
-          transition={{ duration: 0.3 }}
-        >
-          {/* Animated bottom border */}
-          <div className="absolute bottom-0 left-0 right-0 h-[1px]" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <div className="relative flex items-center">
+          {/* Static dim bottom border */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-[1px]"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
+          />
+          {/* Animated bright bottom border on focus */}
           <motion.div
             className="absolute bottom-0 left-0 h-[1px] origin-left"
-            style={{ background: 'rgba(255,255,255,0.5)' }}
+            style={{ background: 'rgba(255,255,255,0.55)', right: 0 }}
             animate={{ scaleX: isFocused ? 1 : 0, opacity: isFocused ? 1 : 0 }}
             initial={{ scaleX: 0, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
@@ -157,13 +236,13 @@ export function EditorialSearchBox({
 
           {/* Search icon */}
           <Search
-            className="absolute left-0 w-4 h-4 flex-shrink-0 transition-colors duration-300"
+            className="absolute left-0 w-4 h-4 flex-shrink-0 transition-colors duration-300 z-10"
             strokeWidth={1.5}
-            style={{ color: isFocused ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)' }}
+            style={{ color: isFocused ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.22)' }}
           />
 
-          {/* Input */}
-          <motion.input
+          {/* Actual input — value is always the real user text */}
+          <input
             ref={inputRef}
             type="text"
             value={value}
@@ -171,43 +250,33 @@ export function EditorialSearchBox({
             onFocus={handleFocus}
             onBlur={handleBlur}
             autoComplete="off"
-            className="w-full bg-transparent border-0 outline-none ring-0 text-sm py-3 pl-7 pr-16"
+            spellCheck={false}
+            className="w-full bg-transparent border-0 outline-none ring-0 text-sm py-3 pl-7 pr-16 truncate"
             style={{
               color: '#FFFFFF',
               caretColor: 'rgba(255,255,255,0.7)',
               letterSpacing: '0.02em',
             }}
-            animate={{ width: isFocused ? '100%' : '100%' }}
           />
 
-          {/* Typing animation placeholder (only when empty + not focused) */}
-          {!value && !isFocused && randomCardNames.length > 0 && (
-            <div
-              className="absolute left-7 top-1/2 -translate-y-1/2 pointer-events-none text-sm select-none"
-              style={{ color: '#3a3a3a', letterSpacing: '0.02em' }}
-            >
-              <TypeAnimation
-                sequence={randomCardNames.flatMap((name: string) => [name, 3000])}
-                wrapper="span"
-                speed={50}
-                repeat={Infinity}
-              />
-            </div>
+          {/* Carousel overlay — only when NOT focused AND value is empty */}
+          {!isFocused && !value && randomCardNames.length > 0 && (
+            <CarouselOverlay names={randomCardNames} />
           )}
 
           {/* Right-side controls */}
-          <div className="absolute right-0 flex items-center gap-1">
-            {/* Clear button */}
+          <div className="absolute right-0 flex items-center gap-1 z-10">
+            {/* Clear (×) button */}
             <AnimatePresence>
               {value && (
                 <motion.button
                   type="button"
                   onClick={handleClear}
-                  initial={{ opacity: 0, scale: 0.7 }}
+                  initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.7 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.15 }}
-                  className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+                  className="w-6 h-6 flex items-center justify-center"
                   style={{ color: 'rgba(255,255,255,0.3)' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)'; }}
@@ -227,16 +296,16 @@ export function EditorialSearchBox({
               <button
                 type="button"
                 onClick={onCameraClick}
-                className="w-7 h-7 flex items-center justify-center transition-colors"
-                style={{ color: 'rgba(255,255,255,0.25)' }}
+                className="w-7 h-7 flex items-center justify-center"
+                style={{ color: 'rgba(255,255,255,0.22)' }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.22)'; }}
               >
                 <Camera className="w-4 h-4" strokeWidth={1.5} />
               </button>
             )}
           </div>
-        </motion.div>
+        </div>
       </form>
 
       {/* ── Dropdown panel ── */}
@@ -244,12 +313,12 @@ export function EditorialSearchBox({
         {showAnyPanel && (
           <motion.div
             key="panel"
-            initial={{ opacity: 0, y: -8, scaleY: 0.95 }}
+            initial={{ opacity: 0, y: -10, scaleY: 0.94 }}
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             exit={{ opacity: 0, y: -6, scaleY: 0.97 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: 'top center' }}
-            className="absolute left-0 right-0 top-full mt-3 z-50 overflow-hidden"
+            className="absolute left-0 right-0 top-full mt-3 z-50"
             onMouseDown={() => { mousedownOnPanelRef.current = true; }}
             onMouseUp={() => { setTimeout(() => { mousedownOnPanelRef.current = false; }, 0); }}
           >
@@ -257,34 +326,32 @@ export function EditorialSearchBox({
             <div
               className="rounded-xl overflow-hidden"
               style={{
-                background: 'rgba(14, 14, 16, 0.92)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
+                background: 'rgba(12, 12, 14, 0.94)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
                 border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
+                boxShadow: '0 28px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.025)',
               }}
             >
-              {/* ── HOT SEARCHES panel (when empty) ── */}
+              {/* ── HOT SEARCHES (focused + empty) ── */}
               {showHotPanel && (
                 <div className="p-4">
-                  {/* Panel header */}
                   <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-3 h-3" strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                    <TrendingUp className="w-3 h-3" strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.28)' }} />
                     <span
-                      className="text-[9px] uppercase tracking-[0.25em] font-medium"
-                      style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}
+                      className="text-[9px] uppercase tracking-[0.28em]"
+                      style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}
                     >
                       HOT SEARCHES
                     </span>
                   </div>
 
                   {isHotLoading ? (
-                    /* Skeleton */
-                    <div className="grid grid-cols-3 gap-3">
-                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {[0,1,2,3,4,5].map((i) => (
                         <div key={i} className="flex flex-col gap-2 animate-pulse">
                           <div className="aspect-[3/4] rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                          <div className="h-2 rounded" style={{ background: 'rgba(255,255,255,0.05)', width: '70%' }} />
+                          <div className="h-1.5 rounded" style={{ background: 'rgba(255,255,255,0.04)', width: '60%' }} />
                         </div>
                       ))}
                     </div>
@@ -295,9 +362,8 @@ export function EditorialSearchBox({
                           key={card.id}
                           type="button"
                           onClick={() => handleCardClick(card.id)}
-                          className="group flex flex-col items-center gap-1.5 text-left"
+                          className="flex flex-col items-center gap-1.5 text-left"
                         >
-                          {/* Rank badge + card image */}
                           <div className="relative w-full aspect-[3/4]">
                             <div
                               className="w-full h-full rounded-lg overflow-hidden"
@@ -306,7 +372,7 @@ export function EditorialSearchBox({
                                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                               }}
                               onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.04)';
+                                (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.05)';
                                 (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.6)';
                               }}
                               onMouseLeave={(e) => {
@@ -324,19 +390,19 @@ export function EditorialSearchBox({
                               ) : (
                                 <div
                                   className="w-full h-full flex items-center justify-center text-[9px]"
-                                  style={{ color: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.03)' }}
+                                  style={{ color: 'rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.03)' }}
                                 >
                                   —
                                 </div>
                               )}
                             </div>
-                            {/* Rank number */}
+                            {/* Rank badge */}
                             <div
                               className="absolute top-1 left-1 w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold"
                               style={{
-                                background: i < 3 ? 'rgba(255,200,50,0.15)' : 'rgba(255,255,255,0.06)',
-                                border: `1px solid ${i < 3 ? 'rgba(255,200,50,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                                color: i < 3 ? 'rgba(255,200,50,0.9)' : 'rgba(255,255,255,0.4)',
+                                background: i < 3 ? 'rgba(255,200,50,0.14)' : 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${i < 3 ? 'rgba(255,200,50,0.28)' : 'rgba(255,255,255,0.1)'}`,
+                                color: i < 3 ? 'rgba(255,200,50,0.9)' : 'rgba(255,255,255,0.35)',
                                 fontFamily: 'monospace',
                               }}
                             >
@@ -344,21 +410,18 @@ export function EditorialSearchBox({
                             </div>
                           </div>
 
-                          {/* Card number label */}
                           {card.cardNumber && (
                             <p
                               className="text-[8px] uppercase tracking-[0.1em] truncate w-full text-center"
-                              style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}
+                              style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}
                             >
                               {card.cardNumber}
                             </p>
                           )}
-
-                          {/* Price */}
                           {card.currentPrice ? (
                             <p
-                              className="text-[9px] font-medium w-full text-center"
-                              style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em' }}
+                              className="text-[9px] w-full text-center"
+                              style={{ color: 'rgba(255,255,255,0.5)' }}
                             >
                               {formatPrice(card.currentPrice)}
                             </p>
@@ -367,10 +430,9 @@ export function EditorialSearchBox({
                       ))}
                     </div>
                   ) : (
-                    /* Fallback: no hot data yet */
                     <p
                       className="text-[10px] text-center py-4"
-                      style={{ color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}
+                      style={{ color: 'rgba(255,255,255,0.18)', fontFamily: 'monospace' }}
                     >
                       — NO DATA YET —
                     </p>
@@ -378,15 +440,14 @@ export function EditorialSearchBox({
                 </div>
               )}
 
-              {/* ── SEARCH SUGGESTIONS panel (when typing) ── */}
+              {/* ── SEARCH RESULTS (typing ≥2 chars) ── */}
               {showSuggestions && (
                 <div className="p-4">
-                  {/* Panel header */}
                   <div className="flex items-center gap-2 mb-4">
-                    <Search className="w-3 h-3" strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                    <Search className="w-3 h-3" strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.28)' }} />
                     <span
-                      className="text-[9px] uppercase tracking-[0.25em] font-medium"
-                      style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}
+                      className="text-[9px] uppercase tracking-[0.28em]"
+                      style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}
                     >
                       RESULTS
                     </span>
@@ -398,7 +459,7 @@ export function EditorialSearchBox({
                         key={card.id}
                         type="button"
                         onClick={() => handleCardClick(card.id)}
-                        className="group flex flex-col items-center gap-1.5 text-left"
+                        className="flex flex-col items-center gap-1.5 text-left"
                       >
                         <div
                           className="relative w-full aspect-[3/4] rounded-lg overflow-hidden"
@@ -407,7 +468,7 @@ export function EditorialSearchBox({
                             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.04)';
+                            (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.05)';
                             (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.6)';
                           }}
                           onMouseLeave={(e) => {
@@ -425,7 +486,7 @@ export function EditorialSearchBox({
                           ) : (
                             <div
                               className="w-full h-full flex items-center justify-center text-[9px]"
-                              style={{ color: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.03)' }}
+                              style={{ color: 'rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.03)' }}
                             >
                               —
                             </div>
@@ -435,16 +496,15 @@ export function EditorialSearchBox({
                         {card.cardNumber && (
                           <p
                             className="text-[8px] uppercase tracking-[0.1em] truncate w-full text-center"
-                            style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}
+                            style={{ color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}
                           >
                             {card.cardNumber}
                           </p>
                         )}
-
                         {card.latestPrice ? (
                           <p
-                            className="text-[9px] font-medium w-full text-center"
-                            style={{ color: 'rgba(255,255,255,0.55)' }}
+                            className="text-[9px] w-full text-center"
+                            style={{ color: 'rgba(255,255,255,0.5)' }}
                           >
                             {formatPrice(card.latestPrice)}
                           </p>
@@ -453,24 +513,23 @@ export function EditorialSearchBox({
                     ))}
                   </div>
 
-                  {/* Footer */}
                   <div
                     className="mt-4 pt-3 flex items-center justify-between"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
                   >
                     <span
-                      className="text-[9px] uppercase tracking-[0.15em]"
-                      style={{ color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}
+                      className="text-[9px] uppercase tracking-[0.18em]"
+                      style={{ color: 'rgba(255,255,255,0.18)', fontFamily: 'monospace' }}
                     >
                       TOP 6 RESULTS
                     </span>
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="text-[9px] uppercase tracking-[0.15em] transition-colors"
-                      style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: '0.15em' }}
+                      className="text-[9px] uppercase tracking-[0.18em] transition-colors"
+                      style={{ color: 'rgba(255,255,255,0.38)', fontFamily: 'monospace' }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.8)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.38)'; }}
                     >
                       VIEW ALL →
                     </button>
@@ -482,11 +541,11 @@ export function EditorialSearchBox({
         )}
       </AnimatePresence>
 
-      {/* Hint text */}
+      {/* Hint text below search box */}
       {hint && !isFocused && (
         <p
           className="mt-2 text-[10px] uppercase tracking-[0.15em]"
-          style={{ color: '#444444', fontFamily: 'monospace' }}
+          style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'monospace' }}
         >
           {hint}
         </p>
