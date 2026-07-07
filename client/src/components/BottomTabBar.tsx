@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 
 interface TabItem {
@@ -65,6 +65,37 @@ export function BottomTabBar() {
   const { data: user } = trpc.auth.me.useQuery();
   const { t } = useTranslation();
   const [showCameraSheet, setShowCameraSheet] = useState(false);
+  const [scanButtonVisible, setScanButtonVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hide scan button on scroll down, show on scroll up
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollY.current;
+
+      if (delta > 6) {
+        // Scrolling down — hide
+        setScanButtonVisible(false);
+      } else if (delta < -6) {
+        // Scrolling up — show
+        setScanButtonVisible(true);
+      }
+
+      lastScrollY.current = currentY;
+
+      // Auto-show after user stops scrolling for 2s
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+      scrollTimer.current = setTimeout(() => setScanButtonVisible(true), 2000);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    };
+  }, []);
 
   // Cart count badge
   const { data: cartCount } = trpc.marketplace.getCartCount.useQuery(undefined, {
@@ -90,26 +121,34 @@ export function BottomTabBar() {
   return (
     <>
       {/* Scan Button — shown above nav bar on search/pricing pages (mobile only) */}
-      {showScanButton && (
-        <div
-          className="fixed left-0 right-0 z-40 md:hidden px-4 pb-2"
-          style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}
-        >
-          <button
-            type="button"
-            onClick={() => setShowCameraSheet(true)}
-            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98]"
-            style={{
-              background: "white",
-              color: "#111",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.35)",
+      <AnimatePresence>
+        {showScanButton && (
+          <motion.div
+            className="fixed left-0 right-0 z-40 md:hidden px-4 pb-2"
+            style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}
+            initial={{ y: 0, opacity: 1 }}
+            animate={{
+              y: scanButtonVisible ? 0 : 80,
+              opacity: scanButtonVisible ? 1 : 0,
             }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
           >
-            <Camera className="w-5 h-5" />
-            <span>{t("camera.scanTitle")}</span>
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => setShowCameraSheet(true)}
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98]"
+              style={{
+                background: "white",
+                color: "#111",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.35)",
+              }}
+            >
+              <Camera className="w-5 h-5" />
+              <span>{t("camera.scanTitle")}</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Camera Search Sheet */}
       <CameraSearchSheet
