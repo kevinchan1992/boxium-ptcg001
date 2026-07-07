@@ -137,9 +137,9 @@ export default function Home() {
     setSearchQuery(q);
   }, [searchParams]);
 
-  // Fetch trending cards (top 5 based on PSA10 price increase)
+  // Fetch trending cards (top 20 for mobile lookbook scroll)
   const { data: trendingCards = [], isLoading } = trpc.cards.getTrending.useQuery(
-    { limit: 5 },
+    { limit: 20 },
     { retry: 1 }
   );
 
@@ -307,15 +307,16 @@ export default function Home() {
                   setLocation(`/search?q=${encodeURIComponent(q)}`);
                 }}
                 cardLinkPrefix="card"
+                onCameraClick={() => setShowCameraSheet(true)}
               />
             </div>
           </div>
 
-          {/* RIGHT: Masonry card gallery */}
-          <div className="md:w-1/2 flex items-center justify-center md:justify-end">
+          {/* RIGHT: Card gallery — Desktop: Masonry offset / Mobile: Lookbook horizontal scroll */}
+          <div className="md:w-1/2 flex items-center justify-center md:justify-end w-full -mx-6 sm:-mx-10 md:mx-0 px-0 md:px-0">
             {isLoading ? (
               /* Skeleton */
-              <div className="flex items-end gap-3 sm:gap-4">
+              <div className="flex items-end gap-3 overflow-hidden">
                 {[44, 52, 56, 52, 44].map((h, i) => (
                   <div
                     key={i}
@@ -325,26 +326,88 @@ export default function Home() {
                 ))}
               </div>
             ) : popularCards.length > 0 ? (
-              /* Offset Masonry gallery — 5 cards with varying vertical offsets */
-              <div className="flex items-end gap-2 sm:gap-3">
-                {popularCards.map((card: any, i: number) => {
-                  // Vertical offset pattern: [up, down, center, down, up]
-                  const offsets = ['-2rem', '1.5rem', '0', '1.5rem', '-2rem'];
-                  const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
-                  return (
-                    <div
-                      key={card.id}
-                      style={{ transform: `translateY(${offsets[i] || '0'})` }}
-                    >
-                      <HoloCard
-                        card={card}
-                        onClick={() => handleCardClick(card.id)}
-                        size={sizes[i] || 'md'}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+              <>
+                {/* Desktop: Offset Masonry (first 5 cards) */}
+                <div className="hidden md:flex items-end gap-2 sm:gap-3">
+                  {popularCards.slice(0, 5).map((card: any, i: number) => {
+                    const offsets = ['-2rem', '1.5rem', '0', '1.5rem', '-2rem'];
+                    const sizes: Array<"sm" | "md" | "lg"> = ['sm', 'md', 'lg', 'md', 'sm'];
+                    return (
+                      <div
+                        key={card.id}
+                        style={{ transform: `translateY(${offsets[i] || '0'})` }}
+                      >
+                        <HoloCard
+                          card={card}
+                          onClick={() => handleCardClick(card.id)}
+                          size={sizes[i] || 'md'}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile: Horizontal Lookbook scroll (all 20 cards) */}
+                <div
+                  className="md:hidden w-full"
+                  style={{
+                    overflowX: 'auto',
+                    overflowY: 'visible',
+                    scrollSnapType: 'x mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingBottom: '0.5rem',
+                    /* Hide scrollbar */
+                    msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
+                  }}
+                >
+                  <div
+                    className="flex items-center gap-3"
+                    style={{ paddingLeft: '1.5rem', paddingRight: '1.5rem' }}
+                  >
+                    {popularCards.map((card: any, i: number) => {
+                      // Alternating size: odd index slightly smaller for subtle asymmetry
+                      const isBig = i % 2 === 0;
+                      return (
+                        <button
+                          key={card.id}
+                          onClick={() => handleCardClick(card.id)}
+                          className="flex-shrink-0 relative rounded-lg overflow-hidden"
+                          style={{
+                            scrollSnapAlign: 'start',
+                            width: isBig ? '6.5rem' : '5.5rem',
+                            aspectRatio: '3/4',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <img
+                            src={getProxiedImageUrl(card.imageUrl) ?? ''}
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {/* Card number label */}
+                          {card.cardNumber && (
+                            <div
+                              className="absolute bottom-0 left-0 right-0 px-1.5 py-1"
+                              style={{
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
+                              }}
+                            >
+                              <p
+                                className="text-[7px] uppercase tracking-[0.1em] truncate text-center"
+                                style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}
+                              >
+                                {card.cardNumber}
+                              </p>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="text-center py-12" style={{ color: '#444444' }}>
                 <p className="text-sm">{t("research.noResults")}</p>
