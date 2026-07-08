@@ -9779,3 +9779,16 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] 出價邏輯：最低出價計算、快速出價 chips、條款確認 Dialog、防狙擊機制
 - [x] 即時倒數計時（最後 1 小時紅色警示）、出價記錄預覽
 - [x] 行動裝置支援（min(420px, 100vw)）
+
+## ✅ TCGdex 英文版卡牌整合（2026-07-08）
+
+- [x] 批量匯入 23,323 張英文版 PTCG 卡牌（TCGdex API，language='en'，cardId 前綴 'tcgdex-'）
+- [x] 修復 CSP：在 img-src 加入 https://assets.tcgdex.net
+- [x] 建立 tcgMarketPrices 資料表（TCGPlayer/Cardmarket 市場參考價）
+- [x] 新增 getTcgMarketPrice 後端 procedure
+- [x] 前端 CardDetail.tsx 加入 TCGPlayer/Cardmarket 市場參考價顯示區塊
+- [x] 修正 SNKRDUNK/TCGPlayer 區塊顯示邏輯：改用 isTcgdexCard（cardId.startsWith('tcgdex-')）取代 isEnglishCard（language === 'en'），確保：
+  - 純 TCGdex 卡牌 → 隱藏 SNKRDUNK 區塊，顯示 TCGPlayer/Cardmarket 區塊
+  - 非 TCGdex 卡牌（SNKRDUNK 來源）→ 顯示 SNKRDUNK 區塊，隱藏 TCGPlayer/Cardmarket 區塊
+- [x] 建立 .github/workflows/tcgdex-import.yml（每週三 HKT 17:30 自動同步）
+- [x] 價格同步腳本 scripts/tcgdexPriceSync.mjs 在 Cloud Computer 執行中（84.1% 完成，16,500+ 筆價格已匯入）

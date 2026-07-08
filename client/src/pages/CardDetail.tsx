@@ -216,11 +216,12 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const activeTrendData = isSealedProduct ? sealedTrendData : priceTrendData;
   const activeTrendLoading = isSealedProduct ? sealedTrendLoading : trendLoading;
 
-  // TCGPlayer / Cardmarket market prices (English cards only)
-  const isEnglishCard = !isSealedProduct && (card as any)?.language === 'en';
+  // TCGPlayer / Cardmarket market prices (TCGdex-sourced cards only)
+  // TCGdex cards have cardId starting with 'tcgdex-'; SNKRDUNK cards do not
+  const isTcgdexCard = !isSealedProduct && ((card as any)?.cardId?.startsWith('tcgdex-') ?? false);
   const { data: tcgMarketPrice, isLoading: tcgPriceLoading } = trpc.cards.getTcgMarketPrice.useQuery(
     { cardId: cardId! },
-    { enabled: !!cardId && isEnglishCard, retry: 1 }
+    { enabled: !!cardId && isTcgdexCard, retry: 1 }
   );
 
   if (!cardId) {
@@ -885,8 +886,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
         </div>
 
-        {/* ── Price History Table ── */}
-        <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        {/* ── Price History Table (non-TCGdex cards / SNKRDUNK only) ── */}
+        {!isTcgdexCard && <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-3">
               <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
@@ -1010,9 +1011,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 {isSealedProduct ? t("cardDetail.noSealedData") : t("cardDetail.noGradeData")}
               </p>
             </div>
-          )}
-        </div>
-
+                    )}
+        </div>}
         {/* ── eBay Sold History (single cards only) ── */}
         {!isSealedProduct && (
           <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -1111,8 +1111,8 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
         )}
 
-        {/* ── TCGPlayer / Cardmarket Market Price (English cards only) ── */}
-        {isEnglishCard && (
+        {/* ── TCGPlayer / Cardmarket Market Price (TCGdex-sourced cards only) ── */}
+        {isTcgdexCard && (
           <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center gap-3">
