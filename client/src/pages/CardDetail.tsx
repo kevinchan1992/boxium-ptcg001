@@ -1137,64 +1137,64 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   {/* TCGPlayer */}
-                  {(tcgMarketPrice.tcgplayerLow != null || tcgMarketPrice.tcgplayerMid != null || tcgMarketPrice.tcgplayerMarket != null) && (
+                  {((tcgMarketPrice as any).tcgLow != null || (tcgMarketPrice as any).tcgMid != null || (tcgMarketPrice as any).tcgMarket != null) && (
                     <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>TCGPlayer (USD)</p>
                       <div className="space-y-2">
-                        {tcgMarketPrice.tcgplayerLow != null && (
+                        {(tcgMarketPrice as any).tcgLow != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>Low</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerLow).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgLow).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.tcgplayerMid != null && (
+                        {(tcgMarketPrice as any).tcgMid != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>Mid</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerMid).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgMid).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.tcgplayerMarket != null && (
+                        {(tcgMarketPrice as any).tcgMarket != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>Market</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>${Number(tcgMarketPrice.tcgplayerMarket).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>${Number((tcgMarketPrice as any).tcgMarket).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.tcgplayerHigh != null && (
+                        {(tcgMarketPrice as any).tcgHigh != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>High</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerHigh).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgHigh).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
                   {/* Cardmarket */}
-                  {(tcgMarketPrice.cardmarketAvg != null || tcgMarketPrice.cardmarketTrend != null) && (
+                  {((tcgMarketPrice as any).cmAvg != null || (tcgMarketPrice as any).cmTrend != null) && (
                     <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>Cardmarket (EUR)</p>
                       <div className="space-y-2">
-                        {tcgMarketPrice.cardmarketAvg != null && (
+                        {(tcgMarketPrice as any).cmAvg != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.cardmarketTrend != null && (
+                        {(tcgMarketPrice as any).cmTrend != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>Trend</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>€{Number(tcgMarketPrice.cardmarketTrend).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>€{Number((tcgMarketPrice as any).cmTrend).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.cardmarketAvg7 != null && (
+                        {(tcgMarketPrice as any).cmAvg7 != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>7-day Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg7).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg7).toFixed(2)}</span>
                           </div>
                         )}
-                        {tcgMarketPrice.cardmarketAvg30 != null && (
+                        {(tcgMarketPrice as any).cmAvg30 != null && (
                           <div className="flex justify-between items-center">
                             <span className="text-[11px]" style={{ color: '#888888' }}>30-day Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg30).toFixed(2)}</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg30).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
