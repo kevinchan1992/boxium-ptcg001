@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       total_batches:
-        description: 'Number of parallel jobs (default: 12)'
+        description: 'Number of parallel jobs (default: 20)'
         required: false
         default: '12'
       cards_per_batch:
-        description: 'Max cards per job (default: 4700 → 12×4700=56400 covers all 56K cards)'
+        description: 'Max cards per job (default: 3000 → 12×4700=56400 covers all 56K cards)'
         required: false
         default: '4700'
       headless:
@@ -98,8 +98,8 @@ jobs:
             echo "card_ids=$CARD_IDS" >> "$GITHUB_OUTPUT"
             echo "🎯 Single-card mode: card_ids=$CARD_IDS"
           else
-            TOTAL="${{ github.event.inputs.total_batches || '12' }}"
-            PER_BATCH="${{ github.event.inputs.cards_per_batch || '4700' }}"
+            TOTAL="${{ github.event.inputs.total_batches || '20' }}"
+            PER_BATCH="${{ github.event.inputs.cards_per_batch || '3000' }}"
             echo "single_card_mode=false" >> "$GITHUB_OUTPUT"
             echo "total_batches=$TOTAL" >> "$GITHUB_OUTPUT"
             echo "cards_per_batch=$PER_BATCH" >> "$GITHUB_OUTPUT"
@@ -173,12 +173,12 @@ jobs:
     needs: preflight
     if: needs.preflight.outputs.should_run == 'true' && needs.preflight.outputs.single_card_mode == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 330  # 5.5 hours hard limit (GitHub max is 6h)
+    timeout-minutes: 200  # 5.5 hours hard limit (GitHub max is 6h)
 
     strategy:
       fail-fast: false   # One job failing must NOT cancel the others
       matrix:
-        batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
     steps:
       - name: Checkout repository
