@@ -1,6 +1,9 @@
 name: TCGdex English Card Import
 
 on:
+  schedule:
+    # Every Monday at HKT 04:00 (UTC Sunday 20:00)
+    - cron: '0 20 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -24,13 +27,7 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: |
-          cd scripts
-          npm install mysql2 2>/dev/null || true
-          cd ..
-          npm install mysql2 --prefix . 2>/dev/null || true
-          # Install mysql2 at root level for the script
-          npm install mysql2
+        run: npm install mysql2
 
       - name: Run TCGdex Import
         env:
