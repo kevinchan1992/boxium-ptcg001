@@ -2945,51 +2945,72 @@ async function startServer() {
 
       // Build eBay search keywords from card names
       const keywords = rows.map(row => {
-        // Extract English name: take the part before '[' or use full name
         const rawName = row.name || '';
+        const setNameRaw = (row.setName || '').toUpperCase();
+        const seriesRaw = (row.series || '').toUpperCase();
+        const cardNum = row.cardNumber || '';
+        const langCode = (row.language || 'ja').toLowerCase();
+        const langToken = langTokenMap[langCode] ?? '';
+        const isChinese = langToken === 'CHINESE';
+
+        // Extract English name: take the part before '[' or use full name
         const bracketIdx = rawName.indexOf('[');
         const engName = bracketIdx > 0 ? rawName.slice(0, bracketIdx).trim() : rawName.trim();
         // Remove Japanese/CJK characters and clean up
         const cleanName = engName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
-        const cardNum = row.cardNumber || '';
 
-        // Language token
-        const langCode = (row.language || 'ja').toLowerCase();
-        const langToken = langTokenMap[langCode] ?? '';
+        // Detect special labels: PROMO, MEMBERSHIP, etc.
+        const isPromo = /promo/i.test(setNameRaw) || /promo/i.test(rawName) || /promo/i.test(seriesRaw);
+        const isMembership = /membership/i.test(rawName) || /membership/i.test(setNameRaw);
 
-        // Extract set code from setName (e.g. "SV-P" from "SV-P PROMO")
-        // Also extract promo indicator
-        const setNameRaw = row.setName || '';
-        const isPromo = /promo/i.test(setNameRaw) || /promo/i.test(rawName);
-        const promoToken = isPromo ? 'PROMO' : '';
+        // Build keyword parts in order:
+        // [year?] cleanName cardNum [CHINESE] [PROMO] [MEMBERSHIP] PSA 10
+        const parts: string[] = [];
 
-        // Build keyword: cleanName + cardNum + langToken + promoToken + 'PSA 10'
-        // Avoid duplicating tokens already in cleanName
-        const parts = [cleanName, cardNum];
-        if (langToken && !cleanName.toUpperCase().includes(langToken)) parts.push(langToken);
-        if (promoToken && !cleanName.toUpperCase().includes(promoToken) && !cardNum.toUpperCase().includes(promoToken)) parts.push(promoToken);
+        // Add year if it appears in the card name (e.g. "2025")
+        const yearMatch = rawName.match(/\b(20\d{2})\b/);
+        if (yearMatch) parts.push(yearMatch[1]);
+
+        parts.push(cleanName);
+        if (cardNum) parts.push(cardNum);
+
+        // Language token (CHINESE / KOREAN) — always add for non-Japanese/English
+        if (langToken && !cleanName.toUpperCase().includes(langToken)) {
+          parts.push(langToken);
+        }
+
+        // PROMO token
+        if (isPromo && !cleanName.toUpperCase().includes('PROMO') && !cardNum.toUpperCase().includes('PROMO')) {
+          parts.push('PROMO');
+        }
+
+        // MEMBERSHIP token
+        if (isMembership && !cleanName.toUpperCase().includes('MEMBERSHIP')) {
+          parts.push('MEMBERSHIP');
+        }
+
         parts.push('PSA 10');
         const keyword = parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 
-        // Build filter tokens for title relevance check during ingest
-        // The ingest script should verify that the eBay listing title contains
-        // at least one of these tokens (case-insensitive)
+        // ── filterTokens: used by ebay-ingest to validate title relevance ──
+        // Rule 1: card number MUST appear in title (e.g. "SV-P 003" or "SVP003")
+        // Rule 2: PSA 10 (or PSA10) MUST appear in title
+        // Rule 3 (Chinese cards): title must NOT contain conflicting language words
         const filterTokens: string[] = [];
         if (cardNum) filterTokens.push(cardNum.toLowerCase());
-        if (cleanName) {
-          // Add first word of card name as a required token
-          const firstWord = cleanName.split(/\s+/)[0];
-          if (firstWord && firstWord.length >= 3) filterTokens.push(firstWord.toLowerCase());
-        }
-        if (langToken) filterTokens.push(langToken.toLowerCase());
+        // Also add card number without spaces/dashes for flexible matching
+        const cardNumCompact = cardNum.replace(/[\s-]/g, '').toLowerCase();
+        if (cardNumCompact && cardNumCompact !== cardNum.toLowerCase()) filterTokens.push(cardNumCompact);
 
         return {
           cardId: row.cardId,
           keyword,
           cardNumber: cardNum,
-          filterTokens, // Used by scraper to validate title relevance
+          filterTokens,
           language: row.language || 'ja',
+          isChinese,
           isPromo,
+          isMembership,
         };
       });
 
@@ -3042,18 +3063,42 @@ async function startServer() {
           if (!cardId || !priceHkd || !soldAt) { skipped++; continue; }
 
           // ── Title relevance filter ────────────────────────────────────────────
-          // If filterTokens are provided, verify the listing title contains the
-          // required tokens to prevent cross-card contamination.
-          if (Array.isArray(filterTokens) && filterTokens.length > 0 && title) {
+          // Validates that the eBay listing title matches the target card:
+          // 1. Card number must appear in title (flexible: with/without spaces/dashes)
+          // 2. PSA 10 (or PSA10) must appear in title
+          // 3. For Chinese cards: title must NOT contain conflicting language words
+          if (title) {
             const titleLower = String(title).toLowerCase();
-            const matches = filterTokens.filter(tok => titleLower.includes(tok));
-            const isRelevant = requireAllTokens
-              ? matches.length === filterTokens.length  // ALL must match
-              : matches.length > 0;                      // ANY one must match
-            if (!isRelevant) {
-              console.log(`[ScheduledTask] ebay-ingest: skipped irrelevant listing cardId=${cardId} title="${String(title).slice(0, 80)}" filterTokens=${JSON.stringify(filterTokens)}`);
+
+            // Rule 1: card number check (if filterTokens provided)
+            if (Array.isArray(filterTokens) && filterTokens.length > 0) {
+              // filterTokens contains card number variants (with/without dash/space)
+              // At least ONE variant must appear in the title
+              const cardNumMatch = filterTokens.some(tok => titleLower.includes(tok));
+              if (!cardNumMatch) {
+                console.log(`[ScheduledTask] ebay-ingest: skip (card# mismatch) cardId=${cardId} title="${String(title).slice(0, 80)}"`);
+                skipped++;
+                continue;
+              }
+            }
+
+            // Rule 2: PSA 10 / PSA10 must appear in title
+            const hasPsa10 = /psa\s*10/i.test(titleLower);
+            if (!hasPsa10 && String(grade).toUpperCase() === 'PSA 10') {
+              console.log(`[ScheduledTask] ebay-ingest: skip (no PSA10 in title) cardId=${cardId} title="${String(title).slice(0, 80)}"`);
               skipped++;
               continue;
+            }
+
+            // Rule 3: For Chinese cards, reject listings with conflicting language words
+            const isChinese = record.isChinese === true;
+            if (isChinese) {
+              const conflictLangPattern = /\b(japanese|japan|\bjp\b|english|\ben\b|korean|\bkr\b)\b/i;
+              if (conflictLangPattern.test(titleLower)) {
+                console.log(`[ScheduledTask] ebay-ingest: skip (lang conflict for Chinese card) cardId=${cardId} title="${String(title).slice(0, 80)}"`);
+                skipped++;
+                continue;
+              }
             }
           }
 
