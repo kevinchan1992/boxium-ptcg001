@@ -484,6 +484,13 @@
       "when": 1781061186973,
       "tag": "0070_elite_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "5",
+      "when": 1783504672035,
+      "tag": "0071_curvy_blob",
+      "breakpoints": true
     }
   ]
 }

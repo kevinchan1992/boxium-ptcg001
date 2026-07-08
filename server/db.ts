@@ -3,7 +3,7 @@ import { alias } from "drizzle-orm/mysql-core";
 import { generateCardNumberPatterns, isCardNumberQuery, normalizeCardQuery, isPureSeriesCodeQuery, tokenizeSearchQuery, buildTokenPatterns, buildSeriesPrefixPatterns, scoreCardRelevance } from './utils/cardNumberNormalize';
 import { drizzle } from "drizzle-orm/mysql2";
 import { createPool } from "mysql2";
-import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia, searchTokens } from "../drizzle/schema_new";
+import { users, cards, sealedProducts, priceHistory, watchlist, marketTrends, dataSources, InsertDataSource, firecrawlUsage, systemSettings, InsertSystemSetting, searchStats, InsertSearchStat, scheduleConfig, InsertScheduleConfig, priceUpdateSchedule, trendingCardsCache, InsertTrendingCardsCache, scheduleExecutionHistory, scheduledTasks, disputeMedia, InsertDisputeMedia, DisputeMedia, searchTokens, tcgMarketPrices } from "../drizzle/schema_new";
 import { searchCardIdsByTokens, rebuildTokensForCards, type CardTokenData } from './utils/searchTokenBuilder';
 import { ENV } from './_core/env';
 
@@ -7345,4 +7345,21 @@ export async function getSearchTokenCount(): Promise<number> {
   if (!db) return 0;
   const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(searchTokens);
   return Number(row?.count ?? 0);
+}
+
+// ─── TCG Market Prices (English cards - TCGPlayer / Cardmarket) ───────────────
+
+/**
+ * Get TCGPlayer / Cardmarket market reference prices for an English card.
+ * Returns the latest price record for the given cardId.
+ */
+export async function getTcgMarketPrice(cardId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select()
+    .from(tcgMarketPrices)
+    .where(eq(tcgMarketPrices.cardId, cardId))
+    .orderBy(desc(tcgMarketPrices.updatedAt))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
 }

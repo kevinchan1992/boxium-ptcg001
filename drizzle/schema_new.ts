@@ -2055,3 +2055,43 @@ export const webhookLogs = mysqlTable("webhookLogs", {
 }));
 export type WebhookLog = typeof webhookLogs.$inferSelect;
 export type InsertWebhookLog = typeof webhookLogs.$inferInsert;
+
+/**
+ * TCG Market Prices table - stores English card market reference prices from TCGdex
+ *
+ * This table is intentionally separate from priceHistory because:
+ * - priceHistory stores ACTUAL TRANSACTION records (PSA 10 sold prices with dates)
+ * - tcgMarketPrices stores CURRENT MARKET REFERENCE PRICES (TCGPlayer/Cardmarket listings)
+ *
+ * Price nature:
+ * - TCGPlayer (USD): low / mid / market / high prices for ungraded raw cards
+ * - Cardmarket (EUR): avg / trend / avg7 / avg30 prices for ungraded raw cards
+ *
+ * Updated weekly via TCGdex API sync script.
+ */
+export const tcgMarketPrices = mysqlTable("tcgMarketPrices", {
+  id: int("id").autoincrement().primaryKey(),
+  cardId: int("cardId").notNull(),           // Foreign key to cards table (numeric id)
+  tcgCardId: varchar("tcgCardId", { length: 64 }).notNull(), // TCGdex card id (e.g. "tcgdex-base1-4")
+
+  // TCGPlayer prices (USD)
+  tcgLow: decimal("tcgLow", { precision: 10, scale: 2 }),
+  tcgMid: decimal("tcgMid", { precision: 10, scale: 2 }),
+  tcgHigh: decimal("tcgHigh", { precision: 10, scale: 2 }),
+  tcgMarket: decimal("tcgMarket", { precision: 10, scale: 2 }),
+
+  // Cardmarket prices (EUR)
+  cmAvg: decimal("cmAvg", { precision: 10, scale: 2 }),
+  cmTrend: decimal("cmTrend", { precision: 10, scale: 2 }),
+  cmAvg7: decimal("cmAvg7", { precision: 10, scale: 2 }),
+  cmAvg30: decimal("cmAvg30", { precision: 10, scale: 2 }),
+
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  cardIdIdx: index("tcgmp_cardId_idx").on(table.cardId),
+  tcgCardIdUniq: uniqueIndex("tcgmp_tcgCardId_uniq").on(table.tcgCardId),
+}));
+
+export type TcgMarketPrice = typeof tcgMarketPrices.$inferSelect;
+export type InsertTcgMarketPrice = typeof tcgMarketPrices.$inferInsert;

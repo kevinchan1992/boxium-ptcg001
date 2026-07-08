@@ -846,6 +846,16 @@ export const cardsRouter = router({
           cardCount: Number(s.cardCount),
         }));
       }),
+
+    // Get TCGPlayer / Cardmarket market reference prices for English cards
+    getTcgMarketPrice: publicProcedure
+      .input(z.object({
+        cardId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const price = await db.getTcgMarketPrice(input.cardId);
+        return price;
+      }),
 });
 
 export const pricesRouter = router({

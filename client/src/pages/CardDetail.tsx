@@ -216,6 +216,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
   const activeTrendData = isSealedProduct ? sealedTrendData : priceTrendData;
   const activeTrendLoading = isSealedProduct ? sealedTrendLoading : trendLoading;
 
+  // TCGPlayer / Cardmarket market prices (English cards only)
+  const isEnglishCard = !isSealedProduct && (card as any)?.language === 'en';
+  const { data: tcgMarketPrice, isLoading: tcgPriceLoading } = trpc.cards.getTcgMarketPrice.useQuery(
+    { cardId: cardId! },
+    { enabled: !!cardId && isEnglishCard, retry: 1 }
+  );
+
   if (!cardId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1104,6 +1111,105 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
           </div>
         )}
 
+        {/* ── TCGPlayer / Cardmarket Market Price (English cards only) ── */}
+        {isEnglishCard && (
+          <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-3">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
+                  TCGPlayer / Cardmarket · 市場參考價
+                </h3>
+                {tcgPriceLoading && (
+                  <Loader2 className="w-3 h-3 animate-spin" style={{ color: '#666666' }} />
+                )}
+              </div>
+              <span className="text-[9px] font-mono" style={{ color: '#555555' }}>未分級原版</span>
+            </div>
+            {tcgPriceLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#555555' }} />
+              </div>
+            ) : !tcgMarketPrice ? (
+              <div className="py-8 text-center">
+                <p className="text-sm" style={{ color: '#555555' }}>暫無市場價格資料</p>
+              </div>
+            ) : (
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* TCGPlayer */}
+                  {(tcgMarketPrice.tcgplayerLow != null || tcgMarketPrice.tcgplayerMid != null || tcgMarketPrice.tcgplayerMarket != null) && (
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>TCGPlayer (USD)</p>
+                      <div className="space-y-2">
+                        {tcgMarketPrice.tcgplayerLow != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>Low</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerLow).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.tcgplayerMid != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>Mid</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerMid).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.tcgplayerMarket != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>Market</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>${Number(tcgMarketPrice.tcgplayerMarket).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.tcgplayerHigh != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>High</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number(tcgMarketPrice.tcgplayerHigh).toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Cardmarket */}
+                  {(tcgMarketPrice.cardmarketAvg != null || tcgMarketPrice.cardmarketTrend != null) && (
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>Cardmarket (EUR)</p>
+                      <div className="space-y-2">
+                        {tcgMarketPrice.cardmarketAvg != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>Avg</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.cardmarketTrend != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>Trend</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>€{Number(tcgMarketPrice.cardmarketTrend).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.cardmarketAvg7 != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>7-day Avg</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg7).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {tcgMarketPrice.cardmarketAvg30 != null && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px]" style={{ color: '#888888' }}>30-day Avg</span>
+                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number(tcgMarketPrice.cardmarketAvg30).toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {tcgMarketPrice.updatedAt && (
+                  <p className="text-[9px] mt-3" style={{ color: '#444444' }}>
+                    更新時間：{new Date(tcgMarketPrice.updatedAt).toLocaleDateString('zh-HK')} · 資料來源：TCGdex API · 未分級原版卡市場參考價，非 PSA 鑑定價
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* ── Price Trend Chart ── */}
         <div className="mb-4 sm:mb-6 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <PriceTrendChart
