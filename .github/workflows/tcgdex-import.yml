@@ -1,10 +1,13 @@
 name: TCGdex English Card Import
 
 on:
+  schedule:
+    # Every Monday at HKT 04:00 (UTC Sunday 20:00 )
+    - cron: '0 20 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run (fetch only, no DB write )'
+        description: 'Dry run (fetch only, no DB write)'
         required: false
         default: 'false'
 
@@ -34,4 +37,3 @@ jobs:
           echo "=== TCGdex English PTCG Card Import ==="
           echo "Dry run: $DRY_RUN"
           node scripts/tcgdexImport.mjs
-          
