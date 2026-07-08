@@ -2911,12 +2911,16 @@ async function startServer() {
       if (!db) return res.status(500).json({ error: 'Database not available' });
 
       // Get cards that have SNKRDUNK data sources (active cards worth tracking)
-      // Build eBay search keyword: card name (English part before '[') + card number + 'PSA 10'
+      // Build eBay search keyword: card name (English part before '[') + card number + language + 'PSA 10'
       const rows = await db
         .select({
           cardId: cards.id,
           name: cards.name,
           cardNumber: cards.cardNumber,
+          language: cards.language,
+          setName: cards.setName,
+          series: cards.series,
+          rarity: cards.rarity,
         })
         .from(cards)
         .innerJoin(dataSources, and(
@@ -2928,20 +2932,64 @@ async function startServer() {
         .limit(limit)
         .offset(offset);
 
+      // Language token mapping: map DB language codes to eBay-friendly search tokens
+      const langTokenMap: Record<string, string> = {
+        'zh': 'CHINESE',
+        'zh-TW': 'CHINESE',
+        'zh-CN': 'CHINESE',
+        'cn': 'CHINESE',
+        'ko': 'KOREAN',
+        'en': '',      // English is default, no extra token needed
+        'ja': '',      // Japanese cards don't need explicit lang token
+      };
+
       // Build eBay search keywords from card names
       const keywords = rows.map(row => {
         // Extract English name: take the part before '[' or use full name
         const rawName = row.name || '';
         const bracketIdx = rawName.indexOf('[');
         const engName = bracketIdx > 0 ? rawName.slice(0, bracketIdx).trim() : rawName.trim();
-        // Remove Japanese characters and clean up
+        // Remove Japanese/CJK characters and clean up
         const cleanName = engName.replace(/[\u3000-\u9fff\uff00-\uffef]/g, '').trim();
         const cardNum = row.cardNumber || '';
-        const keyword = `${cleanName} ${cardNum} PSA 10`.trim().replace(/\s+/g, ' ');
+
+        // Language token
+        const langCode = (row.language || 'ja').toLowerCase();
+        const langToken = langTokenMap[langCode] ?? '';
+
+        // Extract set code from setName (e.g. "SV-P" from "SV-P PROMO")
+        // Also extract promo indicator
+        const setNameRaw = row.setName || '';
+        const isPromo = /promo/i.test(setNameRaw) || /promo/i.test(rawName);
+        const promoToken = isPromo ? 'PROMO' : '';
+
+        // Build keyword: cleanName + cardNum + langToken + promoToken + 'PSA 10'
+        // Avoid duplicating tokens already in cleanName
+        const parts = [cleanName, cardNum];
+        if (langToken && !cleanName.toUpperCase().includes(langToken)) parts.push(langToken);
+        if (promoToken && !cleanName.toUpperCase().includes(promoToken) && !cardNum.toUpperCase().includes(promoToken)) parts.push(promoToken);
+        parts.push('PSA 10');
+        const keyword = parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+
+        // Build filter tokens for title relevance check during ingest
+        // The ingest script should verify that the eBay listing title contains
+        // at least one of these tokens (case-insensitive)
+        const filterTokens: string[] = [];
+        if (cardNum) filterTokens.push(cardNum.toLowerCase());
+        if (cleanName) {
+          // Add first word of card name as a required token
+          const firstWord = cleanName.split(/\s+/)[0];
+          if (firstWord && firstWord.length >= 3) filterTokens.push(firstWord.toLowerCase());
+        }
+        if (langToken) filterTokens.push(langToken.toLowerCase());
+
         return {
           cardId: row.cardId,
           keyword,
           cardNumber: cardNum,
+          filterTokens, // Used by scraper to validate title relevance
+          language: row.language || 'ja',
+          isPromo,
         };
       });
 
@@ -2987,9 +3035,27 @@ async function startServer() {
             listingUrl,
             grade = 'PSA 10',
             sourcePosition = 0,
+            filterTokens,   // Optional: array of lowercase tokens that MUST appear in title
+            requireAllTokens = false, // If true, ALL filterTokens must match; otherwise ANY one
           } = record;
 
           if (!cardId || !priceHkd || !soldAt) { skipped++; continue; }
+
+          // ── Title relevance filter ────────────────────────────────────────────
+          // If filterTokens are provided, verify the listing title contains the
+          // required tokens to prevent cross-card contamination.
+          if (Array.isArray(filterTokens) && filterTokens.length > 0 && title) {
+            const titleLower = String(title).toLowerCase();
+            const matches = filterTokens.filter(tok => titleLower.includes(tok));
+            const isRelevant = requireAllTokens
+              ? matches.length === filterTokens.length  // ALL must match
+              : matches.length > 0;                      // ANY one must match
+            if (!isRelevant) {
+              console.log(`[ScheduledTask] ebay-ingest: skipped irrelevant listing cardId=${cardId} title="${String(title).slice(0, 80)}" filterTokens=${JSON.stringify(filterTokens)}`);
+              skipped++;
+              continue;
+            }
+          }
 
           // Convert USD to HKD if needed
           // Convert USD to HKD: 1 USD ≈ 7.8 HKD
