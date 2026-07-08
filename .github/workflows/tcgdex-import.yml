@@ -2,7 +2,7 @@ name: TCGdex English Card Import
 
 on:
   schedule:
-    # Every Wednesday at HKT 17:30 (UTC Sunday 09:30 )
+    # Every Wednesday at HKT 17:30 (UTC Wednesday 09:30 )
     - cron: '30 9 * * 3'
   workflow_dispatch:
     inputs:
