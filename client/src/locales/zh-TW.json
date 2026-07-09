@@ -2468,7 +2468,8 @@
     "viewOrder": "查看訂單",
     "clickToBidAgain": "點擊前往拍賣頁面再次出價",
     "autoCompleteNote": "如未確認收貨，系統將於 {{date}} 自動完成訂單",
-    "tradesTab": "交易記錄"
+    "tradesTab": "交易記錄",
+    "sfAll": "全部"
   },
   "register": {
     "alreadyHaveAccount": "已經有帳號？",

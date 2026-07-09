@@ -1156,7 +1156,7 @@ function ShippingAddressSection() {
               <div className="space-y-3">
                 {/* Type filter */}
                 <div className="flex gap-1.5">
-                  {([['all', t("common.all")], ['station', t("profile.sfStation")], ['locker', t("profile.sfLocker")]] as const).map(([val, label]) => (
+                  {([['all', t("profile.sfAll")], ['station', t("profile.sfStation")], ['locker', t("profile.sfLocker")]] as const).map(([val, label]) => (
                     <button key={val} onClick={() => { setSfPointType(val); setShowSfDropdown(true); }}
                       className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${sfPointType === val ? 'text-white border-transparent' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
                       style={sfPointType === val ? { background: BRAND_BLUE } : {}}>{label}</button>
