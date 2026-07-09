@@ -2461,7 +2461,8 @@
     "viewOrder": "注文を見る",
     "clickToBidAgain": "オークションページで再入札",
     "autoCompleteNote": "未確認の場合、{{date}}に自動完了します",
-    "tradesTab": "取引履歴"
+    "tradesTab": "取引履歴",
+    "sfAll": "すべて"
   },
   "register": {
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",

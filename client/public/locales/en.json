@@ -2467,7 +2467,8 @@
     "viewOrder": "View Order",
     "clickToBidAgain": "Click to bid again on auction page",
     "autoCompleteNote": "If not confirmed, order will auto-complete on {{date}}",
-    "tradesTab": "Trade History"
+    "tradesTab": "Trade History",
+    "sfAll": "All"
   },
   "register": {
     "alreadyHaveAccount": "Already have an account?",
