@@ -27,6 +27,8 @@ import { adminRouter } from "./routers/admin";
 import { marketInsightsRouter } from "./routers/marketInsights";
 import { blogRouter } from "./routers/blog";
 import { profileRouter } from "./routers/profile";
+import { pointsRouter } from "./routers/points";
+import { lootpoolRouter } from "./routers/lootpool";
 
 export const appRouter = router({
   system: systemRouter,
@@ -52,6 +54,8 @@ export const appRouter = router({
   auction: auctionRouter,
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
+  points: pointsRouter,
+  lootpool: lootpoolRouter,
 });
 
 export type AppRouter = typeof appRouter;

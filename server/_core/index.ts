@@ -590,6 +590,37 @@ async function startServer() {
           return res.json({ received: true });
         }
 
+        // ─── Point Top-up 處理 ─────────────────────────────────────────────────
+        if (session.metadata?.type === "point_topup") {
+          const topupUserId = parseInt(session.metadata?.userId ?? "0");
+          const totalPoints = parseInt(session.metadata?.totalPoints ?? "0");
+          if (topupUserId && totalPoints > 0) {
+            try {
+              const { addPoints: _addPoints } = await import("../db/points");
+              await _addPoints({
+                userId: topupUserId,
+                amount: totalPoints,
+                type: "topup",
+                referenceId: session.id, // Stripe session ID 作為冪等鍵
+                note: `Stripe 儲值 HK$${session.metadata?.amount ?? "?"} → ${totalPoints} 點`,
+              });
+              console.log(`[Webhook] point_topup: userId=${topupUserId}, points=${totalPoints}, session=${session.id}`);
+              // 通知用戶
+              const { createNotification: _cn } = await import("../db/notifications");
+              await _cn({
+                userId: topupUserId,
+                type: "system",
+                title: "點數儲值成功 ✅",
+                body: `已成功儲值 ${totalPoints} 點至您的帳戶。`,
+                linkUrl: "/points",
+              }).catch(() => {});
+            } catch (topupErr: any) {
+              console.error("[Webhook] point_topup error:", topupErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
+
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));
