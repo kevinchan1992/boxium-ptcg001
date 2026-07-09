@@ -573,17 +573,16 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
               {product.imageUrl ? (
                 <>
-                  {/* Fixed-height container so both SNKRDUNK and TCGdex images fill the same space */}
+                  {/* Fixed-height container: both SNKRDUNK and TCGdex images fill the same area */}
                   <div
-                    className="w-full rounded-xl overflow-hidden shadow-2xl"
-                    style={{ height: 'clamp(320px, 55vw, 560px)' }}
-                    onClick={() => setLightboxOpen(true)}
+                    className="w-full rounded-xl overflow-hidden shadow-2xl flex items-center justify-center bg-zinc-900/30"
+                    style={{ height: 'clamp(380px, 60vw, 620px)' }}
                   >
                     <ClickableCardImage
                       src={getProxiedImageUrl(product.imageUrl) ?? ""}
                       alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
                       className="w-full h-full"
-                      style={{ objectFit: 'contain', objectPosition: 'center' }}
+                      style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
                       onClick={() => setLightboxOpen(true)}
                     />
                   </div>

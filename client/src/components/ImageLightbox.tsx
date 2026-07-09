@@ -112,7 +112,7 @@ interface ClickableImageProps {
 
 export function ClickableCardImage({ src, alt, className, style, onClick }: ClickableImageProps) {
   return (
-    <div className="relative group cursor-zoom-in" onClick={onClick}>
+    <div className="relative group cursor-zoom-in h-full w-full" onClick={onClick}>
       <img src={src} alt={alt} className={className} style={style} />
       {/* Zoom hint overlay */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl bg-black/20">

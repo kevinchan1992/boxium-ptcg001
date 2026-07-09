@@ -663,15 +663,14 @@ export async function searchCards(query: string, limit: number = 20, offset: num
     ),
   }));
 
-  // Primary sort: relevance score (descending)
-  // Secondary sort: price (descending) for cards with same relevance
+  // Primary sort: price (descending) — cards with higher latestPrice appear first
+  // No-price cards (null/0) go to the end, sorted by relevance among themselves
   cardsWithScore.sort((a, b) => {
-    if (b._relevanceScore !== a._relevanceScore) {
-      return b._relevanceScore - a._relevanceScore;
-    }
-    const priceA = a.latestPrice || 0;
-    const priceB = b.latestPrice || 0;
-    return priceB - priceA;
+    const priceA = a.latestPrice ? Number(a.latestPrice) : -1;
+    const priceB = b.latestPrice ? Number(b.latestPrice) : -1;
+    if (priceA !== priceB) return priceB - priceA;
+    // Secondary sort: relevance score for same-price cards
+    return b._relevanceScore - a._relevanceScore;
   });
 
   // Cache ALL results (not just this page), so subsequent pages are served from memory

@@ -76,10 +76,10 @@ export const productsRouter = router({
         boxType: p.boxType,
       }));
 
-      // Combine and sort by price (highest first)
+      // Combine and sort by price (highest first); no-price items go to end
       const allItems = [...cardItems, ...sealedItems].sort((a, b) => {
-        const priceA = a.latestPrice || 0;
-        const priceB = b.latestPrice || 0;
+        const priceA = a.latestPrice ? Number(a.latestPrice) : -1;
+        const priceB = b.latestPrice ? Number(b.latestPrice) : -1;
         return priceB - priceA;
       });
 
