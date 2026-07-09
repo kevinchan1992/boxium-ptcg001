@@ -9816,33 +9816,10 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] TypeScript 0 errors 確認
 - [x] 儲存 Checkpoint
 
-
 ---
-
-## 🎴 福袋（Loot Pool）系統（2026-07-09）
-
-### 後端
-- [x] 資料庫 Schema：lootPools, lootPoolRewards, lootPoolSlots, userVault, pointTransactions
-- [x] DB helpers：server/db/pools.ts（calcPoolFinancials, createPool, drawSlot, etc.）
-- [x] DB helpers：server/db/points.ts（addPoints, getBalance, getTransactions, etc.）
-- [x] tRPC 路由：server/routers/points.ts
-- [x] tRPC 路由：server/routers/lootpool.ts
-- [x] Stripe webhook：point_topup 處理
-- [x] 路由整合：server/routers.ts
-
-### 前端
-- [x] 頁面：Pools.tsx（福袋列表）
-- [x] 頁面：PoolDetail.tsx（10×10 格子網格）
-- [x] 頁面：Points.tsx（點數儲值）
-- [x] 頁面：Vault.tsx（虛擬倉庫）
-- [x] 頁面：admin/PoolAdmin.tsx（後台管理 + 財務計算器）
-- [x] 元件：UnboxingAnimation.tsx（Three.js WebGL 開箱動畫）
-- [x] 路由：App.tsx 加入新路由
-- [x] 導航：BottomTabBar 加入福袋 tab
-- [x] 導航：Admin 側邊欄加入福袋管理捷徑
-
-### 待辦
-- [ ] 管理後台：回購/出貨申請審核
-- [ ] 管理後台：點數贈送功能
-- [ ] i18n：nav.pools 等翻譯補全
-- [ ] vitest 單元測試補充
+## ✅ 福袋系統前端頁面完成（2026-07-09）
+- [x] 建立 client/src/pages/admin/PoolAdmin.tsx（兩欄佈局、卡片搜尋、彩色等級、即時財務看板）
+- [x] 建立 client/src/pages/Pools.tsx（深色霓虹風格卡池列表）
+- [x] 建立 client/src/pages/PoolDetail.tsx（10x10 格子抽卡介面）
+- [x] 更新 App.tsx 路由（/admin/pools、/pools、/pools/:id）
+- [x] TypeScript 0 errors 確認

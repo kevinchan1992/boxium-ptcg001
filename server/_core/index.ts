@@ -590,37 +590,6 @@ async function startServer() {
           return res.json({ received: true });
         }
 
-        // ─── Point Top-up 處理 ─────────────────────────────────────────────────
-        if (session.metadata?.type === "point_topup") {
-          const topupUserId = parseInt(session.metadata?.userId ?? "0");
-          const totalPoints = parseInt(session.metadata?.totalPoints ?? "0");
-          if (topupUserId && totalPoints > 0) {
-            try {
-              const { addPoints: _addPoints } = await import("../db/points");
-              await _addPoints({
-                userId: topupUserId,
-                amount: totalPoints,
-                type: "topup",
-                referenceId: session.id, // Stripe session ID 作為冪等鍵
-                note: `Stripe 儲值 HK$${session.metadata?.amount ?? "?"} → ${totalPoints} 點`,
-              });
-              console.log(`[Webhook] point_topup: userId=${topupUserId}, points=${totalPoints}, session=${session.id}`);
-              // 通知用戶
-              const { createNotification: _cn } = await import("../db/notifications");
-              await _cn({
-                userId: topupUserId,
-                type: "system",
-                title: "點數儲值成功 ✅",
-                body: `已成功儲值 ${totalPoints} 點至您的帳戶。`,
-                linkUrl: "/points",
-              }).catch(() => {});
-            } catch (topupErr: any) {
-              console.error("[Webhook] point_topup error:", topupErr.message);
-            }
-          }
-          return res.json({ received: true });
-        }
-
         let order: any = null;
         if (orderId) {
           order = await getMarketplaceOrderById(parseInt(orderId));
@@ -3359,12 +3328,10 @@ async function startServer() {
 
     server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    // v14.0: Pre-warm the global price map via process.nextTick to ensure listen callback returns immediately.
-    // process.nextTick defers execution to after the current event loop tick completes,
-    // so the port is fully bound before any async work begins.
-    process.nextTick(() => {
-      preloadGlobalPriceMap().catch(err => console.error('[Server] preloadGlobalPriceMap failed:', err));
-    });
+    // v11.2: Pre-warm the global price map immediately after startup (non-blocking).
+    // Without this, the first search request after cold start waits ~1s for the DB query.
+    // With this, the price map is ready before any user request arrives.
+    preloadGlobalPriceMap().catch(err => console.error('[Server] preloadGlobalPriceMap failed:', err));
     // v13.1: Clear stale /tmp/sitemaps/ on startup to avoid serving dirty cached files
     // from a previous instance. Serverless (Cloud Run) may reuse /tmp across warm restarts.
     try {
@@ -3376,16 +3343,12 @@ async function startServer() {
     } catch (e) {
       console.warn('[Sitemap] Could not clear /tmp/sitemaps/:', e);
     }
-    // v14.0: Defer sitemap pre-generation to 15s after startup (was 5s).
-    // Rationale: Cloud Run health check must pass within ~10s of cold start.
-    // The 5s delay was too short — sitemap DB queries (79k cards) competed with health check DB connections.
-    // 15s gives the health check and first user requests a clear window before sitemap generation starts.
-    // process.nextTick ensures this setTimeout registration itself is non-blocking.
-    process.nextTick(() => {
-      setTimeout(() => {
-        pregenerateSitemaps().catch(err => console.error('[Sitemap] Startup pre-generation failed:', err));
-      }, 15_000); // 15s delay: health check + first user requests get priority
-    });
+    // v12.0: Pre-generate all sitemaps at startup so Google gets sub-100ms responses.
+    // Without this, Cloud Run cold starts cause 15-21s sitemap responses → Google "cannot read sitemap".
+    // Runs in background (non-blocking), completes in ~10-15s after startup.
+    setTimeout(() => {
+      pregenerateSitemaps().catch(err => console.error('[Sitemap] Startup pre-generation failed:', err));
+    }, 5_000); // 5s delay: let DB connections stabilize first
     // v10.0: DISABLED autoResumeOnStartup completely.
     // Root cause: batch update uses ~200MB+ RAM. Combined with base server (~150MB) + schedulers (~50MB),
     // total exceeds Cloud Run's 512MB limit → OOM kill → 503 Service Unavailable.
@@ -3411,14 +3374,12 @@ async function startServer() {
       });
     }, 10_000); // 10s delay for stalled task recovery (lightweight operation)
     
-    // v14.0: DEFER ALL schedulers by 45s (was 30s) to prevent CPU/memory contention during startup.
+    // v10.1: DEFER ALL schedulers by 30s to prevent CPU/memory contention during startup.
     // Cloud Run has 1 vCPU + 512MB RAM. Starting 27 schedulers + cache preloader + auction
     // processors simultaneously causes CPU starvation → health check fails → 503.
-    // 45s gives health check (0-10s), first user requests (10-30s), and sitemap generation (15-25s)
-    // a clear window before any scheduler starts competing for CPU.
-    process.nextTick(() => {
+    // By deferring, the server can respond to user requests immediately after startup.
     setTimeout(async () => {
-      console.log('[Server] Starting deferred schedulers (45s after boot)...');
+      console.log('[Server] Starting deferred schedulers (30s after boot)...');
       try {
         // Dynamic import: only load scheduler modules AFTER server is stable
         const schedulerModule = await import('../priceUpdateScheduler');
@@ -3462,9 +3423,9 @@ async function startServer() {
         }).catch(err => {
           console.error('[Server] Failed to start auction processors:', err);
         });
-            }, 10_000); // Stagger auction processors 10s after schedulers
-    }, 45_000); // 45s delay: health check + first user requests + sitemap get priority
-    }); // end process.nextTick
+      }, 10_000); // Stagger auction processors 10s after schedulers
+    }, 30_000); // 30s delay: let server handle user requests first
+
     // KeepAlive Pinger: self-ping every 4 minutes to prevent Cloud Run idle shutdown.
     // Cloud Run shuts down instances after ~15 minutes of inactivity (min-instances=0).
     // Without this, cold starts cause 15-35s DB query delays on priceHistory (940k+ rows)

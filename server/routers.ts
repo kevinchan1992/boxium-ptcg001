@@ -16,6 +16,7 @@ import { emailRouter } from "./routers/email";
 import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
+import { lootpoolRouter } from "./routers/lootpool";
 import { contactRouter } from "./routers/contact";
 import { marketplaceRouter } from "./routers/marketplace";
 
@@ -27,8 +28,6 @@ import { adminRouter } from "./routers/admin";
 import { marketInsightsRouter } from "./routers/marketInsights";
 import { blogRouter } from "./routers/blog";
 import { profileRouter } from "./routers/profile";
-import { pointsRouter } from "./routers/points";
-import { lootpoolRouter } from "./routers/lootpool";
 
 export const appRouter = router({
   system: systemRouter,
@@ -54,7 +53,6 @@ export const appRouter = router({
   auction: auctionRouter,
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
-  points: pointsRouter,
   lootpool: lootpoolRouter,
 });
 

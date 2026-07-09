@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera, Package } from "lucide-react";
+import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
@@ -42,13 +42,6 @@ const TABS: TabItem[] = [
     labelKey: "nav.grading",
     labelFallback: "Grading",
     matchPaths: ["/grading"],
-  },
-  {
-    path: "/pools",
-    icon: Package,
-    labelKey: "nav.pools",
-    labelFallback: "Pools",
-    matchPaths: ["/pools", "/points", "/vault"],
   },
   {
     path: "/profile",

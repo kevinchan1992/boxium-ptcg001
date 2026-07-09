@@ -7362,9 +7362,3 @@ export async function getTcgMarketPrice(cardId: number) {
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
-
-// ─── Loot Pool Maintenance Mode ──────────────────────────────────────────────
-export async function isLootpoolMaintenanceMode(): Promise<boolean> {
-  const row = await getSystemSetting('lootpool_maintenance_mode');
-  return row?.settingValue === 'true';
-}

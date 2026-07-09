@@ -316,8 +316,8 @@ function SidebarNav({
         })}
       </nav>
 
-      {/* Sidebar Footer — Shortcuts */}
-      <div className="border-t border-white/[0.06] p-2.5 shrink-0 space-y-1.5">
+      {/* Sidebar Footer — Marketplace Shortcut */}
+      <div className="border-t border-white/[0.06] p-2.5 shrink-0">
         <button
           onClick={onMarketplace}
           title={!showLabels ? "商場管理" : undefined}
@@ -330,20 +330,6 @@ function SidebarNav({
           <ShoppingCart className="w-[18px] h-[18px] shrink-0" />
           {showLabels && (
             <span className="text-[13px] font-medium truncate">商場管理</span>
-          )}
-        </button>
-        <button
-          onClick={() => { window.location.href = "/admin/pools"; }}
-          title={!showLabels ? "福袋管理" : undefined}
-          className={cn(
-            "w-full flex items-center gap-2.5 rounded-lg py-2.5 transition-all duration-150",
-            "text-emerald-400 hover:bg-emerald-400/[0.08] border border-emerald-400/20 hover:border-emerald-400/40",
-            !showLabels ? "justify-center px-0" : "px-3"
-          )}
-        >
-          <Package className="w-[18px] h-[18px] shrink-0" />
-          {showLabels && (
-            <span className="text-[13px] font-medium truncate">福袋管理</span>
           )}
         </button>
       </div>

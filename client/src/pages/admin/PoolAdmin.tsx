@@ -1,677 +1,860 @@
 /**
- * PoolAdmin — 福袋卡池管理後台（重構版）
- * 兩欄式佈局：左側輸入區 + 右側 Sticky 財務看板
- * 即時連動計算（無需按鈕）、帶標籤獎品卡片、彩色等級識別
+ * PoolAdmin - 福袋卡池管理後台
+ * 兩欄佈局：左側設定輸入 + 右側即時財務看板
+ * 功能：建立/發布/封存卡池、卡片搜尋綁定、彩色等級識別、智慧隱藏卡計算
  */
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  Plus, Trash2, RefreshCw, TrendingUp, AlertTriangle, CheckCircle,
-  XCircle, Play, Pause, Info
+  Plus, Trash2, Search, X, ChevronDown, ChevronUp,
+  Archive, Rocket, Edit3, Eye, RefreshCw
 } from "lucide-react";
 
-// ─── 型別 ────────────────────────────────────────────────────────────────────
+// ─── 類型定義 ────────────────────────────────────────────────────────────────
 type RewardType = "rainbow" | "gold" | "blue" | "milestone";
 
-type RewardInput = {
-  name: string;
+interface RewardItem {
+  id: string; // 前端臨時 ID
   rewardType: RewardType;
-  effectTier: number;
+  name: string;
+  imageUrl: string;
+  cardId?: number;
   cost: number;
   quantity: number;
-  triggerAt?: number;
-};
+  triggerAt?: number; // milestone 專用：第幾抽觸發
+}
 
-// ─── 等級樣式常數 ─────────────────────────────────────────────────────────────
-const TIER_CONFIG: Record<RewardType, {
-  label: string;
-  emoji: string;
-  badge: string;
-  border: string;
-  headerBg: string;
-  dot: string;
-}> = {
+interface PoolFormData {
+  title: string;
+  description: string;
+  totalSlots: number;
+  pricePoints: number;
+  officialBuybackPoints: number;
+  visibleCardCost: number;
+  miscCost: number;
+  rewards: RewardItem[];
+}
+
+// ─── 等級顏色設定 ─────────────────────────────────────────────────────────────
+const TIER_CONFIG: Record<RewardType, { label: string; badgeClass: string; borderClass: string; headerClass: string }> = {
   rainbow: {
-    label: "Rainbow（超級大賞）",
-    emoji: "🌈",
-    badge: "bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 text-white",
-    border: "border-purple-500/40",
-    headerBg: "bg-gradient-to-r from-purple-900/40 to-pink-900/30",
-    dot: "bg-purple-400",
+    label: "彩虹 Rainbow",
+    badgeClass: "bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 text-white border-0",
+    borderClass: "border-purple-500/40",
+    headerClass: "bg-gradient-to-r from-purple-900/40 to-pink-900/30",
   },
   gold: {
-    label: "Gold（二等賞）",
-    emoji: "🥇",
-    badge: "bg-gradient-to-r from-yellow-500 to-amber-600 text-black",
-    border: "border-yellow-500/40",
-    headerBg: "bg-gradient-to-r from-yellow-900/30 to-amber-900/20",
-    dot: "bg-yellow-400",
+    label: "黃金 Gold",
+    badgeClass: "bg-yellow-500 text-black border-0",
+    borderClass: "border-yellow-500/40",
+    headerClass: "bg-yellow-900/20",
   },
   blue: {
-    label: "Blue（普通暗卡）",
-    emoji: "💙",
-    badge: "bg-gradient-to-r from-blue-500 to-cyan-600 text-white",
-    border: "border-blue-500/40",
-    headerBg: "bg-gradient-to-r from-blue-900/30 to-cyan-900/20",
-    dot: "bg-blue-400",
+    label: "藍色 Blue",
+    badgeClass: "bg-blue-500 text-white border-0",
+    borderClass: "border-blue-500/40",
+    headerClass: "bg-blue-900/20",
   },
   milestone: {
-    label: "Milestone（里程碑）",
-    emoji: "🎯",
-    badge: "bg-gradient-to-r from-green-500 to-emerald-600 text-white",
-    border: "border-green-500/40",
-    headerBg: "bg-gradient-to-r from-green-900/30 to-emerald-900/20",
-    dot: "bg-green-400",
+    label: "里程碑 Milestone",
+    badgeClass: "bg-orange-500 text-white border-0",
+    borderClass: "border-orange-500/40",
+    headerClass: "bg-orange-900/20",
   },
 };
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  draft: { label: "草稿", cls: "bg-zinc-700 text-zinc-300" },
-  active: { label: "進行中", cls: "bg-green-500/20 text-green-400 border border-green-500/30" },
-  sold_out: { label: "已售完", cls: "bg-blue-500/20 text-blue-400" },
-  archived: { label: "已封存", cls: "bg-zinc-600 text-zinc-400" },
-};
+// ─── 深色輸入框 className ─────────────────────────────────────────────────────
+const darkInput =
+  "bg-[#2a2a2a] border-zinc-700 text-white placeholder-zinc-500 " +
+  "focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500";
 
-// ─── Tooltip 說明元件 ─────────────────────────────────────────────────────────
-function Tip({ text }: { text: string }) {
-  return (
-    <span className="group relative inline-flex items-center ml-1 cursor-help">
-      <Info className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-      <span className="absolute left-5 top-0 z-50 hidden group-hover:block w-52 bg-zinc-800 border border-zinc-600 text-zinc-300 text-xs rounded-lg px-3 py-2 shadow-xl leading-relaxed">
-        {text}
-      </span>
-    </span>
-  );
-}
-
-// ─── 即時財務計算（純前端，無需 API 呼叫）────────────────────────────────────
-function calcFinancials(params: {
-  pricePoints: number;
-  visibleCardCost: number;
-  totalSlots: number;
-  miscCost: number;
-  rewards: RewardInput[];
-}) {
-  const { pricePoints, visibleCardCost, totalSlots, miscCost, rewards } = params;
-  const gmv = pricePoints * totalSlots;
-  const visibleCardTotalCost = visibleCardCost * totalSlots;
-  const hiddenRewardsCost = rewards
-    .filter(r => r.rewardType !== "milestone")
-    .reduce((sum, r) => sum + r.cost * r.quantity, 0);
-  const milestoneCost = rewards
-    .filter(r => r.rewardType === "milestone")
-    .reduce((sum, r) => sum + r.cost * r.quantity, 0);
-  const totalCost = visibleCardTotalCost + hiddenRewardsCost + milestoneCost + miscCost;
-  const grossProfit = gmv - totalCost;
-  const grossMargin = gmv > 0 ? (grossProfit / gmv) * 100 : 0;
-  const returnRate = gmv > 0 ? (totalCost / gmv) * 100 : 0;
-  const riskLight = grossMargin >= 25 ? "green" : grossMargin >= 10 ? "yellow" : "red";
-  return { gmv, visibleCardTotalCost, hiddenRewardsCost, milestoneCost, totalCost, grossProfit, grossMargin, returnRate, riskLight };
-}
-
-// ─── 財務看板（右側 Sticky）──────────────────────────────────────────────────
-function FinancialPanel({ fin }: { fin: ReturnType<typeof calcFinancials> }) {
-  const riskCls = fin.riskLight === "green"
-    ? "border-green-500/40 bg-green-500/10 text-green-400"
-    : fin.riskLight === "yellow"
-    ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400"
-    : "border-red-500/40 bg-red-500/10 text-red-400";
-
-  const RiskIcon = fin.riskLight === "green" ? CheckCircle
-    : fin.riskLight === "yellow" ? AlertTriangle : XCircle;
-
-  const riskMsg = fin.riskLight === "green" ? "財務健康，可以發布"
-    : fin.riskLight === "yellow" ? "毛利率偏低，建議調整"
-    : "毛利率過低，無法發布";
-
-  return (
-    <div className="bg-[#1a1a1a] border border-zinc-700/60 rounded-2xl overflow-hidden">
-      {/* 看板標題 */}
-      <div className="bg-zinc-900/80 px-5 py-4 border-b border-zinc-700/60 flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-yellow-400" />
-        <span className="text-white font-semibold text-sm">財務即時看板</span>
-        <span className="ml-auto text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">自動更新</span>
-      </div>
-
-      <div className="p-5 space-y-4">
-        {/* 風控燈號 */}
-        <div className={`rounded-xl border p-3.5 flex items-start gap-3 ${riskCls}`}>
-          <RiskIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="font-bold text-sm">
-              風控：{fin.riskLight === "green" ? "綠燈 ✅" : fin.riskLight === "yellow" ? "黃燈 ⚠️" : "紅燈 ❌"}
-            </div>
-            <div className="text-xs opacity-80 mt-0.5">{riskMsg}</div>
-          </div>
-        </div>
-
-        {/* 核心指標大字 */}
-        <div className="bg-zinc-900 rounded-xl p-4 space-y-3">
-          <div className="flex justify-between items-baseline">
-            <span className="text-zinc-400 text-xs">總收入 (GMV)</span>
-            <span className="text-white font-mono font-bold text-lg">{fin.gmv.toLocaleString()}<span className="text-zinc-400 text-xs ml-1">點</span></span>
-          </div>
-          <div className="flex justify-between items-baseline">
-            <span className="text-zinc-400 text-xs">總成本</span>
-            <span className="text-zinc-300 font-mono font-semibold">−{fin.totalCost.toLocaleString()}<span className="text-zinc-500 text-xs ml-1">點</span></span>
-          </div>
-          <div className="border-t border-zinc-700 pt-3 flex justify-between items-baseline">
-            <span className="text-zinc-300 text-sm font-medium">預估淨利</span>
-            <span className={`font-mono font-black text-xl ${fin.grossProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {fin.grossProfit >= 0 ? "+" : ""}{fin.grossProfit.toLocaleString()}
-              <span className="text-xs font-normal ml-1">點</span>
-            </span>
-          </div>
-        </div>
-
-        {/* 毛利率 + 回報率 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-zinc-900 rounded-xl p-3 text-center">
-            <div className="text-zinc-400 text-[10px] mb-1">毛利率</div>
-            <div className={`font-mono font-bold text-xl ${fin.grossMargin >= 25 ? "text-green-400" : fin.grossMargin >= 10 ? "text-yellow-400" : "text-red-400"}`}>
-              {fin.grossMargin.toFixed(1)}%
-            </div>
-          </div>
-          <div className="bg-zinc-900 rounded-xl p-3 text-center">
-            <div className="text-zinc-400 text-[10px] mb-1">回報率</div>
-            <div className="font-mono font-bold text-xl text-zinc-300">{fin.returnRate.toFixed(1)}%</div>
-          </div>
-        </div>
-
-        {/* 成本明細 */}
-        <div className="space-y-2">
-          <div className="text-zinc-500 text-[10px] uppercase tracking-wider">成本明細</div>
-          {[
-            { label: "可見卡成本", value: fin.visibleCardTotalCost, color: "text-blue-400" },
-            { label: "隱藏獎品成本", value: fin.hiddenRewardsCost, color: "text-purple-400" },
-            { label: "里程碑成本", value: fin.milestoneCost, color: "text-green-400" },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="flex justify-between items-center bg-zinc-900/60 rounded-lg px-3 py-2">
-              <span className="text-zinc-400 text-xs">{label}</span>
-              <span className={`font-mono text-sm font-semibold ${color}`}>{value.toLocaleString()}<span className="text-zinc-500 text-[10px] ml-1">點</span></span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── 獎品卡片 ─────────────────────────────────────────────────────────────────
-function RewardCard({
-  reward, idx, onChange, onRemove
+// ─── 卡片搜尋 Modal ───────────────────────────────────────────────────────────
+function CardSearchModal({
+  open,
+  onClose,
+  onSelect,
 }: {
-  reward: RewardInput;
-  idx: number;
-  onChange: (idx: number, field: keyof RewardInput, value: any) => void;
-  onRemove: (idx: number) => void;
+  open: boolean;
+  onClose: () => void;
+  onSelect: (card: { id: number; name: string; imageUrl: string; cardId: string; setName?: string; rarity?: string }) => void;
 }) {
-  const cfg = TIER_CONFIG[reward.rewardType];
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const handleQueryChange = useCallback((val: string) => {
+    setQuery(val);
+    const t = setTimeout(() => setDebouncedQuery(val), 400);
+    return () => clearTimeout(t);
+  }, []);
+
+  const { data, isFetching } = trpc.cards.search.useQuery(
+    { query: debouncedQuery, limit: 24, cardsOnly: true },
+    { enabled: debouncedQuery.trim().length >= 1 }
+  );
 
   return (
-    <div className={`rounded-xl border ${cfg.border} overflow-hidden`}>
-      {/* 卡片標題列 */}
-      <div className={`${cfg.headerBg} px-4 py-2.5 flex items-center justify-between border-b ${cfg.border}`}>
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-          <span className="text-sm font-semibold text-white">{cfg.emoji} {cfg.label}</span>
-        </div>
-        <button
-          onClick={() => onRemove(idx)}
-          className="text-zinc-500 hover:text-red-400 transition-colors p-1 rounded"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* 欄位區 */}
-      <div className="bg-[#1e1e1e] p-4 space-y-3">
-        {/* 第一行：等級選擇 */}
-        <div>
-          <Label className="text-zinc-400 text-[11px] uppercase tracking-wider mb-1.5 block">獎品等級</Label>
-          <select
-            value={reward.rewardType}
-            onChange={e => onChange(idx, "rewardType", e.target.value as RewardType)}
-            className="w-full bg-[#2a2a2a] border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50 transition-colors"
-          >
-            <option value="rainbow">🌈 Rainbow（超級大賞）</option>
-            <option value="gold">🥇 Gold（二等賞）</option>
-            <option value="blue">💙 Blue（普通暗卡）</option>
-            <option value="milestone">🎯 Milestone（里程碑）</option>
-          </select>
-        </div>
-
-        {/* 第二行：獎品名稱 */}
-        <div>
-          <Label className="text-zinc-400 text-[11px] uppercase tracking-wider mb-1.5 block">
-            獎品名稱
-            <Tip text="請輸入卡片名稱與品項，例如：Lillie PSA10、皮卡丘 AR PSA10" />
-          </Label>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="bg-[#1a1a1a] border-zinc-800 text-white max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-white">搜尋卡片</DialogTitle>
+        </DialogHeader>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <Input
-            value={reward.name}
-            onChange={e => onChange(idx, "name", e.target.value)}
-            placeholder="例：Lillie PSA10"
-            className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
+            className={`pl-9 ${darkInput}`}
+            placeholder="輸入卡片名稱..."
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            autoFocus
           />
         </div>
-
-        {/* 第三行：數量 + 單張成本 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-zinc-400 text-[11px] uppercase tracking-wider mb-1.5 block">
-              配給數量（張）
-              <Tip text="此等級獎品在整個卡池中的總張數" />
-            </Label>
-            <Input
-              type="number"
-              value={reward.quantity}
-              min={1}
-              onChange={e => onChange(idx, "quantity", Number(e.target.value))}
-              className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-            />
+        <div className="flex-1 overflow-y-auto mt-2">
+          {isFetching && (
+            <div className="flex items-center justify-center py-8 text-zinc-400">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              搜尋中...
+            </div>
+          )}
+          {!isFetching && data?.cards && data.cards.length === 0 && debouncedQuery && (
+            <div className="text-center py-8 text-zinc-500">找不到相關卡片</div>
+          )}
+          {!isFetching && !debouncedQuery && (
+            <div className="text-center py-8 text-zinc-500">請輸入卡片名稱開始搜尋</div>
+          )}
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 p-1">
+            {data?.cards?.map((card: any) => (
+              <button
+                key={card.id}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg border border-zinc-800 hover:border-zinc-500 hover:bg-zinc-800/50 transition-all text-left"
+                onClick={() =>
+                  onSelect({
+                    id: card.id,
+                    name: card.name,
+                    imageUrl: card.imageUrl ?? "",
+                    cardId: card.cardId,
+                    setName: card.setName,
+                    rarity: card.rarity,
+                  })
+                }
+              >
+                {card.imageUrl ? (
+                  <img
+                    src={card.imageUrl}
+                    alt={card.name}
+                    className="w-full aspect-[2/3] object-contain rounded"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full aspect-[2/3] bg-zinc-800 rounded flex items-center justify-center text-zinc-600 text-xs">
+                    無圖
+                  </div>
+                )}
+                <span className="text-xs text-zinc-300 text-center leading-tight line-clamp-2">{card.name}</span>
+                {card.rarity && <span className="text-[10px] text-zinc-500">{card.rarity}</span>}
+              </button>
+            ))}
           </div>
-          <div>
-            <Label className="text-zinc-400 text-[11px] uppercase tracking-wider mb-1.5 block">
-              單張成本（點）
-              <Tip text="每張此獎品的採購成本，用於計算財務健康度" />
-            </Label>
-            <Input
-              type="number"
-              value={reward.cost}
-              min={0}
-              onChange={e => onChange(idx, "cost", Number(e.target.value))}
-              className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-            />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── 獎品卡片組件 ─────────────────────────────────────────────────────────────
+function RewardCard({
+  reward,
+  index,
+  onChange,
+  onRemove,
+}: {
+  reward: RewardItem;
+  index: number;
+  onChange: (updated: RewardItem) => void;
+  onRemove: () => void;
+}) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const cfg = TIER_CONFIG[reward.rewardType];
+
+  const handleCardSelect = (card: { id: number; name: string; imageUrl: string }) => {
+    onChange({ ...reward, name: card.name, imageUrl: card.imageUrl, cardId: card.id });
+    setSearchOpen(false);
+  };
+
+  return (
+    <>
+      <CardSearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={handleCardSelect}
+      />
+      <div className={`rounded-xl border ${cfg.borderClass} bg-zinc-900/60 overflow-hidden`}>
+        {/* 卡片標頭 */}
+        <div className={`flex items-center justify-between px-4 py-2.5 ${cfg.headerClass}`}>
+          <div className="flex items-center gap-2">
+            <Badge className={`text-xs px-2 py-0.5 ${cfg.badgeClass}`}>{cfg.label}</Badge>
+            {reward.name && (
+              <span className="text-sm text-zinc-300 truncate max-w-[180px]">{reward.name}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              className="text-zinc-500 hover:text-zinc-300 p-1"
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+            <button
+              className="text-zinc-500 hover:text-red-400 p-1"
+              onClick={onRemove}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* 里程碑專屬：觸發抽數 */}
-        {reward.rewardType === "milestone" && (
-          <div>
-            <Label className="text-zinc-400 text-[11px] uppercase tracking-wider mb-1.5 block">
-              觸發抽數（每 N 抽觸發一次）
-              <Tip text="例如填入 25，代表每抽第 25、50、75、100 格時觸發里程碑獎品" />
-            </Label>
-            <Input
-              type="number"
-              value={reward.triggerAt ?? ""}
-              min={1}
-              onChange={e => onChange(idx, "triggerAt", Number(e.target.value))}
-              placeholder="例：25（每 25 抽觸發一次）"
-              className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-            />
+        {/* 卡片內容 */}
+        {!collapsed && (
+          <div className="p-4 space-y-3">
+            {/* 卡片綁定 */}
+            <div className="flex gap-3">
+              {reward.imageUrl ? (
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={reward.imageUrl}
+                    alt={reward.name}
+                    className="w-16 h-24 object-contain rounded border border-zinc-700"
+                  />
+                  <button
+                    className="absolute -top-1 -right-1 bg-zinc-800 rounded-full p-0.5 text-zinc-400 hover:text-white"
+                    onClick={() => setSearchOpen(true)}
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="w-16 h-24 flex-shrink-0 rounded border-2 border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search className="w-4 h-4" />
+                  <span className="text-[10px]">搜尋卡片</span>
+                </button>
+              )}
+
+              <div className="flex-1 space-y-2">
+                <div>
+                  <Label className="text-xs text-zinc-400 mb-1 block">卡片名稱</Label>
+                  <Input
+                    className={`h-8 text-sm ${darkInput}`}
+                    placeholder="手動輸入或搜尋綁定"
+                    value={reward.name}
+                    onChange={(e) => onChange({ ...reward, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-zinc-400 mb-1 block">圖片 URL（可選）</Label>
+                  <Input
+                    className={`h-8 text-sm ${darkInput}`}
+                    placeholder="https://..."
+                    value={reward.imageUrl}
+                    onChange={(e) => onChange({ ...reward, imageUrl: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 數量 / 成本 / 觸發抽數 */}
+            <div className="grid grid-cols-3 gap-2">
+              {reward.rewardType !== "milestone" && (
+                <div>
+                  <Label className="text-xs text-zinc-400 mb-1 block">
+                    數量 <span className="text-zinc-600">（張）</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    className={`h-8 text-sm ${darkInput}`}
+                    value={reward.quantity}
+                    onChange={(e) => onChange({ ...reward, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                  />
+                </div>
+              )}
+              {reward.rewardType === "milestone" && (
+                <div>
+                  <Label className="text-xs text-zinc-400 mb-1 block">
+                    觸發抽數 <span className="text-zinc-600">（第幾抽）</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    className={`h-8 text-sm ${darkInput}`}
+                    placeholder="例：25"
+                    value={reward.triggerAt ?? ""}
+                    onChange={(e) => onChange({ ...reward, triggerAt: parseInt(e.target.value) || undefined })}
+                  />
+                </div>
+              )}
+              <div>
+                <Label className="text-xs text-zinc-400 mb-1 block">
+                  成本 <span className="text-zinc-600">（HKD）</span>
+                </Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  className={`h-8 text-sm ${darkInput}`}
+                  value={reward.cost}
+                  onChange={(e) => onChange({ ...reward, cost: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              {reward.rewardType !== "milestone" && (
+                <div className="flex flex-col justify-end">
+                  <span className="text-xs text-zinc-500 mb-1">小計成本</span>
+                  <span className="text-sm text-zinc-300 font-mono">
+                    HK${(reward.cost * reward.quantity).toFixed(0)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
-
-        {/* 小計顯示 */}
-        <div className="flex justify-between items-center bg-zinc-900/60 rounded-lg px-3 py-2 mt-1">
-          <span className="text-zinc-500 text-xs">此獎品小計</span>
-          <span className={`font-mono text-sm font-bold ${cfg.dot.replace("bg-", "text-")}`}>
-            {(reward.cost * reward.quantity).toLocaleString()} 點
-          </span>
-        </div>
       </div>
+    </>
+  );
+}
+
+// ─── 財務看板 ─────────────────────────────────────────────────────────────────
+function FinancialDashboard({ form }: { form: PoolFormData }) {
+  const namedQty = form.rewards
+    .filter((r) => r.rewardType !== "milestone")
+    .reduce((s, r) => s + r.quantity, 0);
+  const hiddenCount = Math.max(0, form.totalSlots - namedQty);
+
+  const totalRevenue = form.totalSlots * form.pricePoints;
+  const rewardCost = form.rewards
+    .filter((r) => r.rewardType !== "milestone")
+    .reduce((s, r) => s + r.cost * r.quantity, 0);
+  const milestoneCost = form.rewards
+    .filter((r) => r.rewardType === "milestone")
+    .reduce((s, r) => s + r.cost, 0);
+  const visibleCost = form.visibleCardCost * form.totalSlots;
+  const totalCost = rewardCost + milestoneCost + visibleCost + form.miscCost;
+  const profit = totalRevenue - totalCost;
+  const margin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
+
+  const buybackTotal = form.officialBuybackPoints * hiddenCount;
+
+  const StatRow = ({
+    label,
+    value,
+    sub,
+    color,
+  }: {
+    label: string;
+    value: string;
+    sub?: string;
+    color?: string;
+  }) => (
+    <div className="flex items-center justify-between py-1.5 border-b border-zinc-800/60 last:border-0">
+      <span className="text-sm text-zinc-400">{label}</span>
+      <div className="text-right">
+        <span className={`text-sm font-mono font-medium ${color ?? "text-zinc-200"}`}>{value}</span>
+        {sub && <div className="text-xs text-zinc-600">{sub}</div>}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 space-y-1">
+      <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        即時財務看板
+      </h3>
+
+      {/* 卡池規模 */}
+      <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">卡池規模</div>
+      <StatRow label="總格數" value={`${form.totalSlots} 格`} />
+      <StatRow label="命名獎品格" value={`${namedQty} 格`} />
+      <StatRow
+        label="隱藏卡格（自動計算）"
+        value={`${hiddenCount} 格`}
+        color={hiddenCount < 0 ? "text-red-400" : "text-zinc-200"}
+      />
+      {hiddenCount < 0 && (
+        <div className="text-xs text-red-400 bg-red-900/20 rounded px-2 py-1">
+          ⚠ 獎品數量超過總格數 {Math.abs(hiddenCount)} 格
+        </div>
+      )}
+
+      {/* 收入 */}
+      <div className="text-xs text-zinc-500 uppercase tracking-wider mt-3 mb-1">收入</div>
+      <StatRow
+        label="每格售價"
+        value={`${form.pricePoints} 點`}
+        sub={`HK$${form.pricePoints}`}
+      />
+      <StatRow
+        label="總收入（滿池）"
+        value={`HK$${totalRevenue.toLocaleString()}`}
+        color="text-green-400"
+      />
+
+      {/* 成本 */}
+      <div className="text-xs text-zinc-500 uppercase tracking-wider mt-3 mb-1">成本</div>
+      <StatRow label="命名獎品成本" value={`HK$${rewardCost.toLocaleString()}`} />
+      <StatRow label="里程碑獎品成本" value={`HK$${milestoneCost.toLocaleString()}`} />
+      <StatRow
+        label="可見卡成本"
+        value={`HK$${visibleCost.toLocaleString()}`}
+        sub={`HK$${form.visibleCardCost}/格 × ${form.totalSlots}`}
+      />
+      <StatRow label="雜項成本" value={`HK$${form.miscCost.toLocaleString()}`} />
+      <StatRow
+        label="總成本"
+        value={`HK$${totalCost.toLocaleString()}`}
+        color="text-red-400"
+      />
+
+      {/* 利潤 */}
+      <div className="text-xs text-zinc-500 uppercase tracking-wider mt-3 mb-1">利潤</div>
+      <StatRow
+        label="預期利潤（滿池）"
+        value={`HK$${profit.toLocaleString()}`}
+        color={profit >= 0 ? "text-green-400" : "text-red-400"}
+      />
+      <StatRow
+        label="利潤率"
+        value={`${margin.toFixed(1)}%`}
+        color={margin >= 20 ? "text-green-400" : margin >= 0 ? "text-yellow-400" : "text-red-400"}
+      />
+
+      {/* 回購 */}
+      <div className="text-xs text-zinc-500 uppercase tracking-wider mt-3 mb-1">官方回購</div>
+      <StatRow
+        label="隱藏卡回購點數"
+        value={`${form.officialBuybackPoints} 點/張`}
+      />
+      <StatRow
+        label="總回購成本"
+        value={`HK$${buybackTotal.toLocaleString()}`}
+        sub={`${hiddenCount} 張 × ${form.officialBuybackPoints}`}
+      />
     </div>
   );
 }
 
-// ─── 主頁面 ──────────────────────────────────────────────────────────────────
-export default function PoolAdmin() {
-  const utils = trpc.useUtils();
+// ─── 建立/編輯卡池表單 ────────────────────────────────────────────────────────
+function PoolForm({ onSuccess }: { onSuccess: () => void }) {
+  const [form, setForm] = useState<PoolFormData>({
+    title: "",
+    description: "",
+    totalSlots: 100,
+    pricePoints: 100,
+    officialBuybackPoints: 30,
+    visibleCardCost: 5,
+    miscCost: 0,
+    rewards: [],
+  });
 
-  // 表單狀態
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [pricePoints, setPricePoints] = useState(1550);
-  const [visibleCardCost, setVisibleCardCost] = useState(300);
-  const [buybackPoints, setBuybackPoints] = useState(300);
-  const [totalSlots, setTotalSlots] = useState(100);
-  const [miscCost, setMiscCost] = useState(0);
-  const [generateCover, setGenerateCover] = useState(false);
-  const [rewards, setRewards] = useState<RewardInput[]>([
-    { name: "彩虹閃卡 PSA10", rewardType: "rainbow", effectTier: 1, cost: 8000, quantity: 1 },
-    { name: "金卡 PSA10", rewardType: "gold", effectTier: 2, cost: 2000, quantity: 3 },
-    { name: "藍卡 PSA10", rewardType: "blue", effectTier: 3, cost: 800, quantity: 8 },
-    { name: "里程碑特典", rewardType: "milestone", effectTier: 2, cost: 1500, quantity: 4, triggerAt: 25 },
-  ]);
-
-  // 即時財務計算（useMemo 確保只在依賴變更時重算）
-  const fin = useMemo(() => calcFinancials({
-    pricePoints, visibleCardCost, totalSlots, miscCost, rewards
-  }), [pricePoints, visibleCardCost, totalSlots, miscCost, rewards]);
-
-  // 查詢所有卡池
-  const { data: pools, isLoading } = trpc.lootpool.adminPool.listAll.useQuery();
-
-  // Mutations
   const createMutation = trpc.lootpool.adminPool.create.useMutation({
-    onSuccess: (data) => {
-      toast.success(`卡池已建立 #${data.poolId}（風控：${data.financials.riskLight}）`);
-      utils.lootpool.adminPool.listAll.invalidate();
-    },
-    onError: (e) => toast.error(`建立失敗：${e.message}`),
-  });
-
-  const publishMutation = trpc.lootpool.adminPool.publish.useMutation({
     onSuccess: () => {
-      toast.success("卡池已發布！");
-      utils.lootpool.adminPool.listAll.invalidate();
+      toast.success("卡池建立成功", { description: "已儲存為草稿，可在列表中發布" });
+      onSuccess();
     },
-    onError: (e) => toast.error(`發布失敗：${e.message}`),
+    onError: (err) => toast.error("建立失敗", { description: err.message }),
   });
 
-  const maintenanceMutation = trpc.lootpool.adminPool.setMaintenance.useMutation({
-    onSuccess: () => utils.lootpool.adminPool.listAll.invalidate(),
-  });
+  const updateField = <K extends keyof PoolFormData>(key: K, val: PoolFormData[K]) =>
+    setForm((prev) => ({ ...prev, [key]: val }));
 
-  const handleAddReward = () => {
-    setRewards(prev => [...prev, { name: "", rewardType: "blue", effectTier: 3, cost: 500, quantity: 1 }]);
+  const addReward = (type: RewardType) => {
+    const newReward: RewardItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      rewardType: type,
+      name: "",
+      imageUrl: "",
+      cost: 0,
+      quantity: 1,
+    };
+    setForm((prev) => ({ ...prev, rewards: [...prev.rewards, newReward] }));
   };
 
-  const handleRemoveReward = (idx: number) => {
-    setRewards(prev => prev.filter((_, i) => i !== idx));
-  };
+  const updateReward = (id: string, updated: RewardItem) =>
+    setForm((prev) => ({
+      ...prev,
+      rewards: prev.rewards.map((r) => (r.id === id ? updated : r)),
+    }));
 
-  const handleRewardChange = (idx: number, field: keyof RewardInput, value: any) => {
-    setRewards(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
-  };
+  const removeReward = (id: string) =>
+    setForm((prev) => ({ ...prev, rewards: prev.rewards.filter((r) => r.id !== id) }));
 
-  const handleCreate = async () => {
-    if (!title.trim()) return toast.error("請填寫卡池名稱");
-    if (fin.riskLight === "red") return toast.error("財務風控紅燈，請調整參數後再建立");
-    await createMutation.mutateAsync({
-      title, description: description || undefined,
-      pricePoints, visibleCardCost, buybackPoints,
-      totalSlots, miscCost, rewards, generateCover,
+  const handleSubmit = () => {
+    if (!form.title.trim()) {
+      toast.error("請填寫卡池標題");
+      return;
+    }
+    createMutation.mutate({
+      title: form.title,
+      description: form.description || undefined,
+      totalSlots: form.totalSlots,
+      pricePoints: form.pricePoints,
+      officialBuybackPoints: form.officialBuybackPoints,
+      visibleCardCost: form.visibleCardCost,
+      miscCost: form.miscCost,
+      rewards: form.rewards.map((r) => ({
+        name: r.name || "未命名",
+        rewardType: r.rewardType,
+        cost: r.cost,
+        quantity: r.quantity,
+        triggerAt: r.triggerAt,
+        imageUrl: r.imageUrl || undefined,
+        cardId: r.cardId,
+      })),
     });
   };
 
-  const poolList = Array.isArray(pools) ? pools : [];
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      {/* 頂部標題 */}
-      <div className="border-b border-zinc-800 bg-zinc-900/50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      {/* 左欄：設定輸入 */}
+      <div className="space-y-6">
+        {/* 基本設定 */}
+        <section className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-300 border-b border-zinc-800 pb-2">基本設定</h3>
+
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              🎴 福袋卡池管理
-            </h1>
-            <p className="text-zinc-400 text-xs mt-0.5">建立、發布、管理所有福袋卡池</p>
+            <Label className="text-xs text-zinc-400 mb-1 block">
+              卡池標題 <span className="text-zinc-600">（僅後台顯示，用戶看不到）</span>
+            </Label>
+            <Input
+              className={darkInput}
+              placeholder="例：2025年1月彩虹池 #001"
+              value={form.title}
+              onChange={(e) => updateField("title", e.target.value)}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-              fin.riskLight === "green" ? "bg-green-500/20 text-green-400" :
-              fin.riskLight === "yellow" ? "bg-yellow-500/20 text-yellow-400" :
-              "bg-red-500/20 text-red-400"
-            }`}>
-              {fin.riskLight === "green" ? "✅ 財務健康" : fin.riskLight === "yellow" ? "⚠️ 建議調整" : "❌ 風控紅燈"}
-            </span>
+
+          <div>
+            <Label className="text-xs text-zinc-400 mb-1 block">
+              備注說明 <span className="text-zinc-600">（選填，後台備注用）</span>
+            </Label>
+            <Textarea
+              className={`${darkInput} resize-none`}
+              rows={2}
+              placeholder="內部備注..."
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+            />
           </div>
-        </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs text-zinc-400 mb-1 block">
+                總格數 <span className="text-zinc-600">（1–1000）</span>
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={1000}
+                className={darkInput}
+                value={form.totalSlots}
+                onChange={(e) => updateField("totalSlots", parseInt(e.target.value) || 100)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-zinc-400 mb-1 block">
+                每格售價 <span className="text-zinc-600">（點數，1點=HK$1）</span>
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                className={darkInput}
+                value={form.pricePoints}
+                onChange={(e) => updateField("pricePoints", parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs text-zinc-400 mb-1 block">
+                官方回購點數 <span className="text-zinc-600">（隱藏卡每張）</span>
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                className={darkInput}
+                value={form.officialBuybackPoints}
+                onChange={(e) => updateField("officialBuybackPoints", parseInt(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-zinc-400 mb-1 block">
+                可見卡成本 <span className="text-zinc-600">（HKD/格）</span>
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                className={darkInput}
+                value={form.visibleCardCost}
+                onChange={(e) => updateField("visibleCardCost", parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-zinc-400 mb-1 block">
+                雜項成本 <span className="text-zinc-600">（HKD，一次性）</span>
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                className={darkInput}
+                value={form.miscCost}
+                onChange={(e) => updateField("miscCost", parseFloat(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* 獎品設定 */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-zinc-300">獎品設定</h3>
+            <div className="flex gap-2 flex-wrap">
+              {(["rainbow", "gold", "blue", "milestone"] as RewardType[]).map((type) => {
+                const cfg = TIER_CONFIG[type];
+                return (
+                  <button
+                    key={type}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-all hover:opacity-80 ${cfg.badgeClass}`}
+                    onClick={() => addReward(type)}
+                  >
+                    <Plus className="w-3 h-3 inline mr-1" />
+                    {cfg.label.split(" ")[0]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {form.rewards.length === 0 && (
+            <div className="border-2 border-dashed border-zinc-800 rounded-xl p-8 text-center text-zinc-600">
+              點擊上方按鈕新增獎品等級
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {form.rewards.map((reward, idx) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                index={idx}
+                onChange={(updated) => updateReward(reward.id, updated)}
+                onRemove={() => removeReward(reward.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* 提交按鈕 */}
+        <Button
+          className="w-full bg-zinc-700 hover:bg-zinc-600 text-white"
+          onClick={handleSubmit}
+          disabled={createMutation.isPending}
+        >
+          {createMutation.isPending ? (
+            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />建立中...</>
+          ) : (
+            <>儲存為草稿</>
+          )}
+        </Button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
-
-          {/* ── 左欄：輸入區 ── */}
-          <div className="space-y-5">
-
-            {/* 現有卡池列表 */}
-            <div className="bg-[#1a1a1a] border border-zinc-700/60 rounded-2xl overflow-hidden">
-              <div className="bg-zinc-900/80 px-5 py-3.5 border-b border-zinc-700/60 flex items-center justify-between">
-                <span className="text-white font-semibold text-sm">現有卡池</span>
-                <span className="text-zinc-500 text-xs">{poolList.length} 個</span>
-              </div>
-              <div className="p-4">
-                {isLoading ? (
-                  <div className="flex items-center gap-2 text-zinc-500 text-sm py-4 justify-center">
-                    <RefreshCw className="w-4 h-4 animate-spin" /> 載入中...
-                  </div>
-                ) : poolList.length === 0 ? (
-                  <div className="text-center text-zinc-500 py-6 text-sm">尚無卡池，請在下方建立第一個</div>
-                ) : (
-                  <div className="space-y-2">
-                    {poolList.map((pool: any) => {
-                      const statusCfg = STATUS_BADGE[pool.status] ?? STATUS_BADGE.draft;
-                      return (
-                        <div key={pool.id} className="flex items-center justify-between bg-zinc-900 hover:bg-zinc-800/80 rounded-xl p-3.5 transition-colors">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="min-w-0">
-                              <div className="font-medium text-sm text-white truncate">{pool.title}</div>
-                              <div className="text-xs text-zinc-500 mt-0.5">
-                                {pool.pricePoints?.toLocaleString()} 點/格 · {pool.soldSlots ?? 0}/{pool.totalSlots} 格
-                              </div>
-                            </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusCfg.cls}`}>
-                              {statusCfg.label}
-                            </span>
-                            {pool.maintenanceMode && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30 whitespace-nowrap">
-                                維護中
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                            {pool.status === "draft" && (
-                              <Button
-                                size="sm"
-                                onClick={() => publishMutation.mutate({ poolId: pool.id })}
-                                disabled={publishMutation.isPending}
-                                className="bg-green-600 hover:bg-green-500 text-white text-xs h-7 px-3"
-                              >
-                                <Play className="w-3 h-3 mr-1" /> 發布
-                              </Button>
-                            )}
-                            {pool.status === "active" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => maintenanceMutation.mutate({ poolId: pool.id, maintenance: !pool.maintenanceMode })}
-                                className="text-xs h-7 px-3 border-zinc-600 bg-transparent text-zinc-300 hover:bg-zinc-700"
-                              >
-                                {pool.maintenanceMode ? <Play className="w-3 h-3 mr-1" /> : <Pause className="w-3 h-3 mr-1" />}
-                                {pool.maintenanceMode ? "恢復" : "維護"}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 建立新卡池 */}
-            <div className="bg-[#1a1a1a] border border-zinc-700/60 rounded-2xl overflow-hidden">
-              <div className="bg-zinc-900/80 px-5 py-3.5 border-b border-zinc-700/60 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-yellow-400" />
-                <span className="text-white font-semibold text-sm">建立新卡池</span>
-              </div>
-
-              <div className="p-5 space-y-5">
-                {/* ── 基本資訊 ── */}
-                <div>
-                  <div className="text-zinc-400 text-[10px] uppercase tracking-widest mb-3 font-medium">基本資訊</div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 block">卡池名稱 <span className="text-red-400">*</span></Label>
-                      <Input
-                        value={title}
-                        onChange={e => setTitle(e.target.value)}
-                        placeholder="例：2025 皮卡丘限定福袋"
-                        className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 block">描述（可選）</Label>
-                      <Input
-                        value={description}
-                        onChange={e => setDescription(e.target.value)}
-                        placeholder="卡池說明、特色介紹..."
-                        className="bg-[#2a2a2a] border-zinc-600 text-white placeholder:text-zinc-600 focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="bg-zinc-800" />
-
-                {/* ── 格子參數 ── */}
-                <div>
-                  <div className="text-zinc-400 text-[10px] uppercase tracking-widest mb-3 font-medium">格子參數</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 flex items-center">
-                        格子單價（點）
-                        <Tip text="每個格子的售出價格，即玩家每次抽卡需花費的點數" />
-                      </Label>
-                      <Input
-                        type="number"
-                        value={pricePoints}
-                        onChange={e => setPricePoints(Number(e.target.value))}
-                        className="bg-[#2a2a2a] border-zinc-600 text-white focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 flex items-center">
-                        總格子數
-                        <Tip text="整個卡池的格子總數，即最多可以售出幾格" />
-                      </Label>
-                      <Input
-                        type="number"
-                        value={totalSlots}
-                        onChange={e => setTotalSlots(Number(e.target.value))}
-                        min={10}
-                        max={200}
-                        className="bg-[#2a2a2a] border-zinc-600 text-white focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="bg-zinc-800" />
-
-                {/* ── 成本參數 ── */}
-                <div>
-                  <div className="text-zinc-400 text-[10px] uppercase tracking-widest mb-3 font-medium">成本參數</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 flex items-center">
-                        可見卡成本（點/格）
-                        <Tip text="每格附帶的普通可見卡片採購成本" />
-                      </Label>
-                      <Input
-                        type="number"
-                        value={visibleCardCost}
-                        onChange={e => setVisibleCardCost(Number(e.target.value))}
-                        className="bg-[#2a2a2a] border-zinc-600 text-white focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 flex items-center">
-                        官方回購（點/張）
-                        <Tip text="當玩家抽中不想要時，系統以此價格向玩家回購卡片" />
-                      </Label>
-                      <Input
-                        type="number"
-                        value={buybackPoints}
-                        onChange={e => setBuybackPoints(Number(e.target.value))}
-                        className="bg-[#2a2a2a] border-zinc-600 text-white focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300 text-xs mb-1.5 flex items-center">
-                        雜費（點）
-                        <Tip text="包裝、運費、平台費等其他固定成本" />
-                      </Label>
-                      <Input
-                        type="number"
-                        value={miscCost}
-                        onChange={e => setMiscCost(Number(e.target.value))}
-                        className="bg-[#2a2a2a] border-zinc-600 text-white focus-visible:bg-[#2a2a2a] focus-visible:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="bg-zinc-800" />
-
-                {/* ── 獎品設定 ── */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-zinc-400 text-[10px] uppercase tracking-widest font-medium">獎品設定</div>
-                    <button
-                      onClick={handleAddReward}
-                      className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 px-3 py-1.5 rounded-lg transition-all"
-                    >
-                      <Plus className="w-3 h-3" /> 新增獎品
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {rewards.map((r, idx) => (
-                      <RewardCard
-                        key={idx}
-                        reward={r}
-                        idx={idx}
-                        onChange={handleRewardChange}
-                        onRemove={handleRemoveReward}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <Separator className="bg-zinc-800" />
-
-                {/* AI 封面 + 建立按鈕 */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-zinc-900/60 rounded-xl px-4 py-3">
-                    <Switch checked={generateCover} onCheckedChange={setGenerateCover} />
-                    <div>
-                      <Label className="text-zinc-300 text-sm cursor-pointer">AI 生成封面圖</Label>
-                      <p className="text-zinc-500 text-xs mt-0.5">自動根據卡池名稱生成封面（需額外時間）</p>
-                    </div>
-                  </div>
-
-                  {fin.riskLight === "red" && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center gap-2 text-red-400 text-sm">
-                      <XCircle className="w-4 h-4 flex-shrink-0" />
-                      財務風控紅燈，請調整格子單價或降低成本後再建立
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={handleCreate}
-                    disabled={createMutation.isPending || !title.trim() || fin.riskLight === "red"}
-                    className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-base py-5 rounded-xl disabled:opacity-50"
-                  >
-                    {createMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4 mr-2" />
-                    )}
-                    建立草稿卡池
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── 右欄：Sticky 財務看板 ── */}
-          <div className="xl:sticky xl:top-6">
-            <FinancialPanel fin={fin} />
-          </div>
-        </div>
+      {/* 右欄：財務看板（sticky） */}
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <FinancialDashboard form={form} />
       </div>
     </div>
   );
 }
 
+// ─── 卡池列表 ─────────────────────────────────────────────────────────────────
+function PoolList() {
+  const utils = trpc.useUtils();
+  const { data: pools, isLoading, refetch } = trpc.lootpool.adminPool.list.useQuery();
+
+  const publishMutation = trpc.lootpool.adminPool.publish.useMutation({
+    onSuccess: () => {
+      toast.success("卡池已發布");
+      utils.lootpool.adminPool.list.invalidate();
+    },
+    onError: (err) => toast.error("發布失敗", { description: err.message }),
+  });
+
+  const archiveMutation = trpc.lootpool.adminPool.archive.useMutation({
+    onSuccess: () => {
+      toast.success("卡池已封存");
+      utils.lootpool.adminPool.list.invalidate();
+    },
+    onError: (err) => toast.error("封存失敗", { description: err.message }),
+  });
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      draft: "bg-zinc-700 text-zinc-300",
+      active: "bg-green-700 text-green-200",
+      archived: "bg-zinc-800 text-zinc-500",
+    };
+    const label: Record<string, string> = {
+      draft: "草稿",
+      active: "進行中",
+      archived: "已封存",
+    };
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded-full ${map[status] ?? "bg-zinc-700 text-zinc-300"}`}>
+        {label[status] ?? status}
+      </span>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-zinc-500">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+        載入中...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-zinc-400">{pools?.length ?? 0} 個卡池</span>
+        <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-1" />
+          重新整理
+        </Button>
+      </div>
+
+      {pools?.length === 0 && (
+        <div className="text-center py-12 text-zinc-600">尚無卡池，請在「建立新卡池」分頁建立</div>
+      )}
+
+      {pools?.map((pool: any) => (
+        <div
+          key={pool.id}
+          className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 flex items-center gap-4"
+        >
+          {pool.coverImageUrl ? (
+            <img
+              src={pool.coverImageUrl}
+              alt={pool.title}
+              className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-zinc-800 rounded-lg flex-shrink-0 flex items-center justify-center text-zinc-600 text-xs">
+              無封面
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              {statusBadge(pool.status)}
+              <span className="text-sm font-medium text-white truncate">{pool.title}</span>
+            </div>
+            <div className="text-xs text-zinc-500 space-x-3">
+              <span>共 {pool.totalSlots} 格</span>
+              <span>售價 {pool.pricePoints} 點/格</span>
+              <span>建立於 {new Date(pool.createdAt).toLocaleDateString("zh-TW")}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {pool.status === "draft" && (
+              <Button
+                size="sm"
+                className="bg-green-700 hover:bg-green-600 text-white text-xs"
+                onClick={() => publishMutation.mutate({ poolId: pool.id })}
+                disabled={publishMutation.isPending}
+              >
+                <Rocket className="w-3 h-3 mr-1" />
+                發布
+              </Button>
+            )}
+            {pool.status === "active" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-zinc-700 text-zinc-400 hover:text-white text-xs"
+                onClick={() => archiveMutation.mutate({ poolId: pool.id })}
+                disabled={archiveMutation.isPending}
+              >
+                <Archive className="w-3 h-3 mr-1" />
+                封存
+              </Button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── 主頁面 ───────────────────────────────────────────────────────────────────
+export default function PoolAdmin() {
+  const [tab, setTab] = useState<"list" | "create">("list");
+  const utils = trpc.useUtils();
+
+  const handleCreateSuccess = () => {
+    utils.lootpool.adminPool.list.invalidate();
+    setTab("list");
+  };
+
+  return (
+    <div className="min-h-screen bg-[#111] text-white">
+      {/* 頁首 */}
+      <div className="border-b border-zinc-800 bg-zinc-900/50 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-white">福袋卡池管理</h1>
+            <p className="text-sm text-zinc-500 mt-0.5">建立、設定並發布 BOXIUM 福袋卡池</p>
+          </div>
+          <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+            <button
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                tab === "list" ? "bg-zinc-700 text-white" : "text-zinc-400 hover:text-white"
+              }`}
+              onClick={() => setTab("list")}
+            >
+              <Eye className="w-4 h-4 inline mr-1.5" />
+              卡池列表
+            </button>
+            <button
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                tab === "create" ? "bg-zinc-700 text-white" : "text-zinc-400 hover:text-white"
+              }`}
+              onClick={() => setTab("create")}
+            >
+              <Plus className="w-4 h-4 inline mr-1.5" />
+              建立新卡池
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 內容 */}
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        {tab === "list" && <PoolList />}
+        {tab === "create" && <PoolForm onSuccess={handleCreateSuccess} />}
+      </div>
+    </div>
+  );
+}

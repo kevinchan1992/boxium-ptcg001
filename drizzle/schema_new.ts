@@ -2096,146 +2096,90 @@ export const tcgMarketPrices = mysqlTable("tcgMarketPrices", {
 export type TcgMarketPrice = typeof tcgMarketPrices.$inferSelect;
 export type InsertTcgMarketPrice = typeof tcgMarketPrices.$inferInsert;
 
-// ============================================================
-// LOOT POOL SYSTEM — 智能卡池抽卡系統
-// ============================================================
+// ─── Loot Pool System ────────────────────────────────────────────────────────
 
-/**
- * userPointBalance — 用戶點數餘額表
- */
-export const userPointBalance = mysqlTable("userPointBalance", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().unique(),
-  balance: bigint("balance", { mode: "number" }).notNull().default(0),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ({
-  userIdx: index("upb_userId_idx").on(table.userId),
-}));
-export type UserPointBalance = typeof userPointBalance.$inferSelect;
-export type InsertUserPointBalance = typeof userPointBalance.$inferInsert;
-
-/**
- * pointTransactions — 點數流水帳
- */
-export const pointTransactions = mysqlTable("pointTransactions", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  type: mysqlEnum("pt_type", ["topup", "purchase", "buyback", "refund", "admin_adjust"]).notNull(),
-  amount: bigint("amount", { mode: "number" }).notNull(),
-  balanceAfter: bigint("balanceAfter", { mode: "number" }).notNull(),
-  referenceId: varchar("referenceId", { length: 255 }),
-  note: text("note"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, (table) => ({
-  userTypeIdx: index("pt_userId_type_idx").on(table.userId, table.type),
-  referenceUniq: uniqueIndex("pt_type_reference_uniq").on(table.type, table.referenceId),
-}));
-export type PointTransaction = typeof pointTransactions.$inferSelect;
-export type InsertPointTransaction = typeof pointTransactions.$inferInsert;
-
-/**
- * pools — 卡池主表
- */
 export const pools = mysqlTable("pools", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   coverImageUrl: text("coverImageUrl"),
   totalSlots: int("totalSlots").notNull().default(100),
-  pricePoints: int("pricePoints").notNull(),
+  pricePoints: int("pricePoints").notNull().default(1000),
   officialBuybackPoints: int("officialBuybackPoints").notNull().default(300),
-  visibleCardCost: int("visibleCardCost").notNull().default(350),
-  miscCost: int("miscCost").notNull().default(300),
-  status: mysqlEnum("pool_status", ["draft", "active", "sold_out", "archived"]).notNull().default("draft"),
+  visibleCardCost: int("visibleCardCost").notNull().default(300),
+  miscCost: int("miscCost").notNull().default(0),
+  status: mysqlEnum("pool_status", ["draft", "active", "completed", "archived"]).notNull().default("draft"),
   maintenanceMode: boolean("maintenanceMode").notNull().default(false),
-  maintenanceMessage: text("maintenanceMessage"),
+  maintenanceMessage: varchar("maintenanceMessage", { length: 500 }),
   sortOrder: int("sortOrder").notNull().default(0),
   publishedAt: timestamp("publishedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ({
-  statusIdx: index("pools_status_idx").on(table.status),
-  sortIdx: index("pools_sort_idx").on(table.sortOrder),
-}));
+});
 export type Pool = typeof pools.$inferSelect;
 export type InsertPool = typeof pools.$inferInsert;
 
-/**
- * poolRewards — 卡池獎項配置
- */
 export const poolRewards = mysqlTable("poolRewards", {
   id: int("id").autoincrement().primaryKey(),
   poolId: int("poolId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  rewardType: mysqlEnum("pr_rewardType", ["hidden", "milestone"]).notNull(),
-  effectTier: int("effectTier").notNull().default(3),
-  cost: int("cost").notNull(),
+  rewardType: mysqlEnum("pr_rewardType", ["rainbow", "gold", "blue", "hidden", "milestone"]).notNull().default("hidden"),
+  effectTier: varchar("effectTier", { length: 50 }),
+  cost: int("cost").notNull().default(0),
   quantity: int("quantity").notNull().default(1),
   triggerAt: int("triggerAt"),
   imageUrl: text("imageUrl"),
+  cardId: int("cardId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, (table) => ({
-  poolIdx: index("pr_poolId_idx").on(table.poolId),
-}));
+});
 export type PoolReward = typeof poolRewards.$inferSelect;
 export type InsertPoolReward = typeof poolRewards.$inferInsert;
 
-/**
- * poolSlots — 卡位明細
- */
 export const poolSlots = mysqlTable("poolSlots", {
   id: int("id").autoincrement().primaryKey(),
   poolId: int("poolId").notNull(),
-  slotNumber: int("slotNumber").notNull(),
+  slotIndex: int("slotIndex").notNull(),
+  rewardId: int("rewardId"),
   visibleCardName: varchar("visibleCardName", { length: 255 }),
-  visibleCardImageUrl: text("visibleCardImageUrl"),
-  hiddenRewardId: int("hiddenRewardId").notNull(),
-  hiddenRewardName: varchar("hiddenRewardName", { length: 255 }),
-  hiddenRewardImageUrl: text("hiddenRewardImageUrl"),
-  effectTier: int("effectTier").notNull().default(3),
-  isMilestone: boolean("isMilestone").notNull().default(false),
-  milestoneRewardId: int("milestoneRewardId"),
-  milestoneRewardName: varchar("milestoneRewardName", { length: 255 }),
-  buyerUserId: int("buyerUserId"),
-  purchasedAt: timestamp("purchasedAt"),
+  isDrawn: boolean("isDrawn").notNull().default(false),
+  drawnByUserId: int("drawnByUserId"),
+  drawnAt: timestamp("drawnAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, (table) => ({
-  poolSlotUniq: uniqueIndex("ps_poolId_slotNumber_uniq").on(table.poolId, table.slotNumber),
-  poolBuyerIdx: index("ps_poolId_buyer_idx").on(table.poolId, table.buyerUserId),
-}));
+});
 export type PoolSlot = typeof poolSlots.$inferSelect;
 export type InsertPoolSlot = typeof poolSlots.$inferInsert;
 
-/**
- * userVault — 用戶虛擬倉庫
- */
 export const userVault = mysqlTable("userVault", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  poolSlotId: int("poolSlotId").notNull().unique(),
   poolId: int("poolId").notNull(),
-  poolTitle: varchar("poolTitle", { length: 255 }),
-  cardName: varchar("cardName", { length: 255 }),
-  cardImageUrl: text("cardImageUrl"),
-  effectTier: int("effectTier").notNull().default(3),
-  isMilestone: boolean("isMilestone").notNull().default(false),
-  milestoneCardName: varchar("milestoneCardName", { length: 255 }),
-  milestoneCardImageUrl: text("milestoneCardImageUrl"),
-  status: mysqlEnum("uv_status", [
-    "in_vault",
-    "processing_buyback",
-    "sold_to_official",
-    "shipping_requested",
-    "shipped"
-  ]).notNull().default("in_vault"),
-  buybackPoints: int("buybackPoints"),
-  shippingAddressId: int("shippingAddressId"),
-  shippingTrackingNumber: varchar("shippingTrackingNumber", { length: 128 }),
+  rewardId: int("rewardId").notNull(),
+  slotIndex: int("slotIndex").notNull(),
+  status: mysqlEnum("uv_status", ["pending", "buyback_requested", "buyback_approved", "shipping_requested", "shipped", "completed"]).notNull().default("pending"),
+  shippingAddress: text("shippingAddress"),
+  trackingNumber: varchar("trackingNumber", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ({
-  userStatusIdx: index("uv_userId_status_idx").on(table.userId, table.status),
-  poolSlotUniq: uniqueIndex("uv_poolSlotId_uniq").on(table.poolSlotId),
-}));
+});
 export type UserVault = typeof userVault.$inferSelect;
 export type InsertUserVault = typeof userVault.$inferInsert;
+
+export const userPointBalance = mysqlTable("userPointBalance", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  balance: bigint("balance", { mode: "number" }).notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserPointBalance = typeof userPointBalance.$inferSelect;
+
+export const pointTransactions = mysqlTable("pointTransactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("pt_type", ["topup", "draw", "buyback", "refund", "admin_adjust"]).notNull(),
+  amount: int("amount").notNull(),
+  balanceAfter: bigint("balanceAfter", { mode: "number" }).notNull(),
+  description: varchar("description", { length: 500 }),
+  referenceId: varchar("referenceId", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PointTransaction = typeof pointTransactions.$inferSelect;
