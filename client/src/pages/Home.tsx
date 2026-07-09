@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { BoxiumParticleHero } from "@/components/BoxiumParticleHero";
 import { TrendingUp, Search, BarChart3, Trophy, Facebook, Instagram, User, LogOut, Flame, ChevronRight, ShoppingBag, ScanSearch, LineChart, Award, Store, ArrowRight, MessageSquare, Shield, Zap, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -726,6 +727,8 @@ export default function Home() {
   const animatedCards = useCountUp(stats?.totalCards ?? undefined);
   const animatedPriceRecords = useCountUp(stats?.totalPriceRecords ?? undefined);
 
+
+
   return (
     <>
       <StructuredData data={structuredData} />
@@ -735,49 +738,39 @@ export default function Home() {
         keywords="TCG 卡牌, Pokémon 卡牌價格, PSA 10, BOXIUM TCG, 卡牌市集"
       />
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fa" }}>
-        {/* Hero Section */}
-      <section className="pt-16 md:pt-20 pb-0 overflow-hidden" style={{ backgroundColor: "#06038d" }}>
-        {/* Main hero content — constrained width */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-8 md:pb-12">
-          <div className="flex flex-col items-center text-center space-y-4 md:space-y-8">
-            {/* LOGO - Responsive sizing */}
-            <div className="w-full max-w-[280px] md:max-w-2xl">
-              <img
-                src="/boxium-logo.png"
-                alt="BOXIUM Logo"
-                className="w-full h-auto"
-              />
-            </div>
-
-            {/* Content - Responsive text sizes */}
-            <div className="space-y-1.5 md:space-y-3 max-w-3xl px-2">
-              <h1 className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">
+        {/* Hero Section — Gemini-style particle animation */}
+      <section className="pt-14 md:pt-16 pb-0 overflow-hidden bg-black">
+        <BoxiumParticleHero>
+          {/* Text content overlaid below particle logo */}
+          <div className="flex flex-col items-center text-center space-y-3 md:space-y-5 px-4 w-full">
+            <div className="space-y-1 md:space-y-2 max-w-2xl">
+              <h1 className="text-white text-sm sm:text-base md:text-xl font-bold leading-tight drop-shadow-lg">
                 {t("home.welcome")}
               </h1>
-              <p className="text-white/80 text-[11px] sm:text-xs md:text-base leading-relaxed">
+              <p className="text-white/70 text-[10px] sm:text-xs md:text-sm leading-relaxed">
                 {t("home.description")}
               </p>
             </div>
 
-            {/* Key Stats - Responsive layout */}
-            <div className="grid grid-cols-2 gap-2 md:gap-5 w-full max-w-md px-2">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
+            {/* Key Stats */}
+            <div className="grid grid-cols-2 gap-2 md:gap-4 w-full max-w-xs md:max-w-sm">
+              <div className="bg-white/8 backdrop-blur-sm rounded-lg p-2 md:p-4 border border-white/15 text-center">
+                <div className="text-sm md:text-xl font-bold text-[#FFD700] mb-0.5">
                   {animatedCards.toLocaleString()}+
                 </div>
-                <div className="text-white/80 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
+                <div className="text-white/60 text-[9px] md:text-xs">{t("home.trackedCards")}</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 md:p-5 border border-white/20 text-center">
-                <div className="text-base md:text-2xl font-bold text-[#FEDD00] mb-0.5">
+              <div className="bg-white/8 backdrop-blur-sm rounded-lg p-2 md:p-4 border border-white/15 text-center">
+                <div className="text-sm md:text-xl font-bold text-[#FFD700] mb-0.5">
                   {stats?.totalPriceRecords
                     ? `${Math.round(animatedPriceRecords / 10000)}${t("home.tenThousandUnit")}+`
                     : '—'}
                 </div>
-                <div className="text-white/80 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
+                <div className="text-white/60 text-[9px] md:text-xs">{t("home.priceDataPoints")}</div>
               </div>
             </div>
           </div>
-        </div>
+        </BoxiumParticleHero>
 
         {/* Hero Quick Access — full-width, flush to bottom of hero */}
         <HeroQuickAccess />
