@@ -268,7 +268,7 @@ const adminPoolRouter = router({
     .mutation(async ({ input }) => {
       const pool = await getPoolById(input.poolId);
       if (!pool) throw new TRPCError({ code: "NOT_FOUND" });
-      if ((pool as any).pool_status !== "draft") {
+      if (pool.status !== "draft") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "只有草稿狀態的卡池可以發布" });
       }
 

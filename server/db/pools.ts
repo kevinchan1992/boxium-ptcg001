@@ -14,7 +14,7 @@ export async function getActivePools() {
   return db
     .select()
     .from(pools)
-    .where(sql`pools.pool_status = 'active'`)
+    .where(eq(pools.status, "active"))
     .orderBy(asc(pools.sortOrder));
 }
 
@@ -208,7 +208,7 @@ export async function drawSlot(params: {
   const db = await getDb();
   const pool = await getPoolById(params.poolId);
   if (!pool) throw new Error("卡池不存在");
-  if ((pool as any).pool_status !== "active") throw new Error("卡池目前不開放");
+  if (pool.status !== "active") throw new Error("卡池目前不開放");
   if (pool.maintenanceMode) throw new Error(pool.maintenanceMessage ?? "卡池維護中");
 
   let drawResult!: DrawResult;
