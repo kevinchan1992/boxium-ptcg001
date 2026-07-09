@@ -829,7 +829,8 @@
     "share": "Share",
     "wishlist": "Wishlist",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "all": "All"
   },
   "disclaimerPage": {
     "contactInfo": "For any questions, please contact us: boxium.asia@gmail.com",
