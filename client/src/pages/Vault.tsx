@@ -13,8 +13,8 @@ import { useLocation } from "wouter";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   in_vault: { label: "倉庫中", color: "bg-zinc-700 text-zinc-300" },
-  buyback_requested: { label: "回購申請中", color: "bg-blue-500/20 text-blue-300" },
-  buyback_approved: { label: "回購已批准", color: "bg-green-500/20 text-green-300" },
+  processing_buyback: { label: "回購申請中", color: "bg-blue-500/20 text-blue-300" },
+  sold_to_official: { label: "已回購", color: "bg-green-500/20 text-green-300" },
   shipping_requested: { label: "出貨申請中", color: "bg-yellow-500/20 text-yellow-300" },
   shipped: { label: "已出貨", color: "bg-purple-500/20 text-purple-300" },
 };
@@ -71,7 +71,7 @@ export default function Vault() {
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* 狀態篩選 */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {[undefined, "in_vault", "buyback_requested", "shipping_requested", "shipped"].map((s) => (
+          {[undefined, "in_vault", "processing_buyback", "shipping_requested", "shipped"].map((s) => (
             <button
               key={s ?? "all"}
               onClick={() => setStatusFilter(s)}
@@ -134,7 +134,7 @@ export default function Vault() {
                       </div>
 
                       {/* 操作按鈕 */}
-                      {item.status === "in_vault" && (
+                      {item.status === "in_vault" && item.status !== "processing_buyback" && (
                         <div className="flex gap-1.5">
                           <Button
                             size="sm"

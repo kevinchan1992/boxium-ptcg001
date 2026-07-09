@@ -18,7 +18,7 @@ import {
   requestShipping,
   getPoolSlots,
 } from "../db/pools";
-import { getDb } from "../db";
+import { getDb, setSystemSetting, isLootpoolMaintenanceMode } from "../db";
 import { sql } from "drizzle-orm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -68,7 +68,7 @@ const vaultRouter = router({
   /** 取得用戶虛擬倉庫 */
   list: protectedProcedure
     .input(z.object({
-      status: z.enum(["in_vault", "buyback_requested", "buyback_approved", "shipping_requested", "shipped"]).optional(),
+      status: z.enum(["in_vault", "processing_buyback", "sold_to_official", "shipping_requested", "shipped"]).optional(),
     }))
     .query(async ({ ctx, input }) => {
       return getUserVault(ctx.user.id, input.status);
@@ -313,6 +313,18 @@ const adminPoolRouter = router({
       return { success: true };
     }),
 
+  /** 取得福袋系統全域維護模式狀態 */
+  getMaintenanceMode: adminProcedure.query(async () => {
+    const enabled = await isLootpoolMaintenanceMode();
+    return { enabled };
+  }),
+  /** 設定福袋系統全域維護模式 */
+  setMaintenanceMode: adminProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ input }) => {
+      await setSystemSetting('lootpool_maintenance_mode', input.enabled ? 'true' : 'false', '福袋系統維護模式開關');
+      return { success: true, enabled: input.enabled };
+    }),
   /** 審核回購申請 */
   approveBuyback: adminProcedure
     .input(z.object({ vaultId: z.number() }))

@@ -8308,6 +8308,8 @@ function MaintenanceModeTab() {
   const { data: gradingModeData, isLoading: gradingModeLoading } = trpc.grading.getGradingMaintenanceMode.useQuery();
   // Seller center maintenance
   const { data: sellerModeData, isLoading: sellerModeLoading } = trpc.grading.getSellerCenterMaintenanceMode.useQuery();
+  // Loot pool maintenance
+  const { data: lootpoolModeData, isLoading: lootpoolModeLoading } = trpc.lootpool.adminPool.getMaintenanceMode.useQuery();
   const { data: whitelistData, isLoading: whitelistLoading } = trpc.marketplace.getMarketplaceWhitelist.useQuery();
   const [searchEmail, setSearchEmail] = useState('');
   const [searchResult, setSearchResult] = useState<{ id: number; name: string; email: string } | null | 'not_found'>(null);
@@ -8333,6 +8335,13 @@ function MaintenanceModeTab() {
     onSuccess: (data) => {
       toast.success(data.enabled ? '賣家中心維護模式已開啟' : '賣家中心維護模式已關閉');
       utils.grading.getSellerCenterMaintenanceMode.invalidate();
+    },
+    onError: (e: any) => toast.error(parseApiError(e)),
+  });
+  const toggleLootpoolMaintenanceMutation = trpc.lootpool.adminPool.setMaintenanceMode.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.enabled ? '福袋系統維護模式已開啟' : '福袋系統維護模式已關閉');
+      utils.lootpool.adminPool.getMaintenanceMode.invalidate();
     },
     onError: (e: any) => toast.error(parseApiError(e)),
   });
@@ -8362,6 +8371,7 @@ function MaintenanceModeTab() {
   const isMaintenanceOn = modeData?.enabled ?? false;
   const isGradingMaintenanceOn = gradingModeData?.enabled ?? false;
   const isSellerMaintenanceOn = sellerModeData?.enabled ?? false;
+  const isLootpoolMaintenanceOn = lootpoolModeData?.enabled ?? false;
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
@@ -8440,6 +8450,31 @@ function MaintenanceModeTab() {
         {isSellerMaintenanceOn && (
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
             ⚠️ 賣家中心維護模式已開啟。非管理員用戶將看不到賣家中心頁面及「出售商品」按鈕。
+          </div>
+        )}
+      </div>
+
+      {/* ── 福袋系統維護模式 ── */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">🎴 福袋系統維護模式</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {lootpoolModeLoading ? '載入中...' : isLootpoolMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前福袋系統正常開放'}
+            </p>
+          </div>
+          <Button
+            onClick={() => toggleLootpoolMaintenanceMutation.mutate({ enabled: !isLootpoolMaintenanceOn })}
+            disabled={lootpoolModeLoading || toggleLootpoolMaintenanceMutation.isPending}
+            className={isLootpoolMaintenanceOn ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+          >
+            {toggleLootpoolMaintenanceMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : isLootpoolMaintenanceOn ? <ShieldOff className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+            {isLootpoolMaintenanceOn ? '關閉維護模式' : '開啟維護模式'}
+          </Button>
+        </div>
+        {isLootpoolMaintenanceOn && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+            ⚠️ 福袋系統維護模式已開啟。所有用戶將無法進行抽卡操作，但仍可查看福袋列表和倉庫。
           </div>
         )}
       </div>
