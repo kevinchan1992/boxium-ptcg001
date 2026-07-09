@@ -8362,6 +8362,16 @@ function MaintenanceModeTab() {
   const isMaintenanceOn = modeData?.enabled ?? false;
   const isGradingMaintenanceOn = gradingModeData?.enabled ?? false;
   const isSellerMaintenanceOn = sellerModeData?.enabled ?? false;
+  // Lootpool maintenance
+  const { data: lootModeData, isLoading: lootModeLoading } = trpc.lootpool.adminPool.getMaintenanceMode.useQuery();
+  const isLootMaintenanceOn = lootModeData?.enabled ?? false;
+  const toggleLootMaintenanceMutation = trpc.lootpool.adminPool.setMaintenanceMode.useMutation({
+    onSuccess: () => {
+      toast.success(isLootMaintenanceOn ? '福袋維護模式已關閉' : '福袋維護模式已開啟');
+      utils.lootpool.adminPool.getMaintenanceMode.invalidate();
+    },
+    onError: (e: any) => toast.error(parseApiError(e)),
+  });
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
@@ -8440,6 +8450,31 @@ function MaintenanceModeTab() {
         {isSellerMaintenanceOn && (
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
             ⚠️ 賣家中心維護模式已開啟。非管理員用戶將看不到賣家中心頁面及「出售商品」按鈕。
+          </div>
+        )}
+      </div>
+
+      {/* ── 福袋系統維護模式 ── */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">🎁 福袋系統維護模式</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {lootModeLoading ? '載入中...' : isLootMaintenanceOn ? '🔴 目前已開啟維護模式' : '🟢 目前福袋系統正常開放'}
+            </p>
+          </div>
+          <Button
+            onClick={() => toggleLootMaintenanceMutation.mutate({ enabled: !isLootMaintenanceOn })}
+            disabled={lootModeLoading || toggleLootMaintenanceMutation.isPending}
+            className={isLootMaintenanceOn ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
+          >
+            {toggleLootMaintenanceMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : isLootMaintenanceOn ? <ShieldOff className="w-4 h-4 mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+            {isLootMaintenanceOn ? '關閉維護模式' : '開啟維護模式'}
+          </Button>
+        </div>
+        {isLootMaintenanceOn && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+            ⚠️ 福袋系統維護模式已開啟。非管理員用戶將看不到福袋列表、倉庫頁面及 Pool 按鈕。
           </div>
         )}
       </div>

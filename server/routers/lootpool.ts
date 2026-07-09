@@ -51,6 +51,10 @@ async function adjustPoints(
 }
 
 export const lootpoolRouter = router({
+  checkMaintenanceMode: publicProcedure.query(async () => {
+    const setting = await getSystemSetting("lootpool_maintenance_mode");
+    return { enabled: setting?.settingValue === "true" };
+  }),
   list: publicProcedure.query(async () => {
     const db = await getDbInstance();
     const isMaintenanceMode = await getSystemSetting("lootpool_maintenance_mode");

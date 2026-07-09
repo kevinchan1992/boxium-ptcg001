@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera } from "lucide-react";
+import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera, Gift } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
@@ -50,6 +50,13 @@ const TABS: TabItem[] = [
     labelFallback: "Profile",
     matchPaths: ["/profile", "/orders", "/notifications", "/wishlist"],
   },
+  {
+    path: "/pools",
+    icon: Gift,
+    labelKey: "nav.pools",
+    labelFallback: "Pool",
+    matchPaths: ["/pools", "/vault"],
+  },
 ];
 
 function isTabActive(tab: TabItem, location: string): boolean {
@@ -96,6 +103,12 @@ export function BottomTabBar() {
       if (scrollTimer.current) clearTimeout(scrollTimer.current);
     };
   }, []);
+
+  // Lootpool maintenance mode check
+  const { data: lootMaintenance } = trpc.lootpool.checkMaintenanceMode.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const isLootMaintenance = lootMaintenance?.enabled ?? false;
 
   // Cart count badge
   const { data: cartCount } = trpc.marketplace.getCartCount.useQuery(undefined, {
@@ -164,7 +177,11 @@ export function BottomTabBar() {
         {/* Backdrop blur bar */}
         <div className="bg-black/90 backdrop-blur-md border-t border-white/10" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div className="flex items-stretch h-14">
-            {TABS.map((tab) => {
+            {TABS.filter((tab) => {
+              // 福袋維護模式：非管理員隱藏 Pool tab
+              if (tab.path === '/pools' && isLootMaintenance && user?.role !== 'admin') return false;
+              return true;
+            }).map((tab) => {
               const active = isTabActive(tab, location);
               const Icon = tab.icon;
               const label = t(tab.labelKey, tab.labelFallback);

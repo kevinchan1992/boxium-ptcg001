@@ -96,8 +96,8 @@ export default function Pools() {
     );
   }
 
-  // 維護模式
-  if (data?.maintenanceMode) {
+  // 維護模式（管理員可以繞過）
+  if (data?.maintenanceMode && user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-[#0d0d0d] flex flex-col items-center justify-center gap-4 text-center px-6 pb-20">
         <AlertTriangle className="w-12 h-12 text-yellow-400" />
