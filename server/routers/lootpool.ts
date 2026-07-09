@@ -207,12 +207,12 @@ const adminPoolRouter = router({
 
       // 插入 pool
       const insertResult = await db.execute(sql`
-        INSERT INTO pools (title, description, status, totalSlots, pricePoints,
-          visibleCardCost, visibleCardName, buybackPoints, coverImageUrl,
+        INSERT INTO pools (title, description, totalSlots, pricePoints,
+          visibleCardCost, officialBuybackPoints, coverImageUrl,
           maintenanceMode, createdAt, updatedAt)
         VALUES (
-          ${input.title}, ${descVal}, 'draft', ${input.totalSlots},
-          ${input.pricePoints}, ${input.visibleCardCost}, ${input.visibleCardName},
+          ${input.title}, ${descVal}, ${input.totalSlots},
+          ${input.pricePoints}, ${input.visibleCardCost},
           ${input.buybackPoints}, ${coverImageUrl},
           0, NOW(), NOW()
         )
@@ -223,7 +223,7 @@ const adminPoolRouter = router({
       for (const r of input.rewards) {
         const triggerAtVal = r.triggerAt ?? null;
         await db.execute(sql`
-          INSERT INTO poolRewards (poolId, name, rewardType, effectTier, cost, quantity, triggerAt, createdAt)
+          INSERT INTO poolRewards (poolId, name, pr_rewardType, effectTier, cost, quantity, triggerAt, createdAt)
           VALUES (${poolId}, ${r.name}, ${r.rewardType}, ${r.effectTier}, ${r.cost}, ${r.quantity}, ${triggerAtVal}, NOW())
         `);
       }
@@ -268,7 +268,7 @@ const adminPoolRouter = router({
     .mutation(async ({ input }) => {
       const pool = await getPoolById(input.poolId);
       if (!pool) throw new TRPCError({ code: "NOT_FOUND" });
-      if (pool.status !== "draft") {
+      if ((pool as any).pool_status !== "draft") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "只有草稿狀態的卡池可以發布" });
       }
 
@@ -296,7 +296,7 @@ const adminPoolRouter = router({
       await initializePoolSlots(input.poolId);
 
       const db = await getDb();
-      await db.execute(sql`UPDATE pools SET status = 'active', updatedAt = NOW() WHERE id = ${input.poolId}`);
+      await db.execute(sql`UPDATE pools SET pool_status = 'active', updatedAt = NOW() WHERE id = ${input.poolId}`);
 
       return { success: true, financials: fin };
     }),
