@@ -1260,52 +1260,151 @@ function ShippingAddressSection() {
           <p className="text-sm text-gray-400">{t("profile.addresses.empty.description")}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {addresses.map((addr: any) => (
-            <div key={addr.id} className={`rounded-xl border-2 p-4 transition-all ${addr.isDefault ? "border-blue-600 bg-blue-50/50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900">{addr.label}</span>
-                    {addr.isDefault && (
-                      <Badge className="text-xs" style={{ background: BRAND_BLUE, color: "white" }}>
-                        <Star className="w-2.5 h-2.5 mr-1" /> 預設
-                      </Badge>
+            <div
+              key={addr.id}
+              className="group relative rounded-xl bg-white border transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: addr.isDefault ? BRAND_BLUE : "#E5E7EB",
+                boxShadow: addr.isDefault
+                  ? `0 0 0 1px ${BRAND_BLUE}30, 0 4px 12px -2px ${BRAND_BLUE}15`
+                  : "0 2px 8px -2px rgba(0,0,0,0.06)",
+              }}
+              onMouseEnter={e => {
+                if (!addr.isDefault) {
+                  (e.currentTarget as HTMLElement).style.borderColor = BRAND_BLUE;
+                  (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 1px ${BRAND_BLUE}40, 0 8px 20px -4px ${BRAND_BLUE}20`;
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!addr.isDefault) {
+                  (e.currentTarget as HTMLElement).style.borderColor = "#E5E7EB";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px -2px rgba(0,0,0,0.06)";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                }
+              }}
+            >
+              {/* Top accent bar for default address */}
+              {addr.isDefault && (
+                <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, ${BRAND_BLUE}, ${BRAND_YELLOW})` }} />
+              )}
+
+              <div className="p-4">
+                {/* ── Row 1: Tags + Actions ── */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* Address label badge */}
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                      style={addr.isDefault
+                        ? { background: BRAND_BLUE, color: "white" }
+                        : { background: "#F3F4F6", color: "#374151" }
+                      }
+                    >
+                      {addr.isDefault && <Star className="w-2.5 h-2.5" />}
+                      {addr.label || "地址"}
+                    </span>
+                    {/* Address type badge */}
+                    {addr.addressType === "sf_station" ? (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ background: "#FFF3E0", color: "#E65100", border: "1px solid #FFCC80" }}
+                      >
+                        {addr.sfStationCode?.startsWith('H') ? '🔒 智能櫃' : '📦 順豐自提'}
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE" }}
+                      >
+                        🏠 普通地址
+                      </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700">{addr.recipientName} · {addr.phone}</p>
-                  {addr.addressType === "sf_station" ? (
-                    <div className="mt-0.5">
-                      <p className="text-sm text-gray-500">
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200 mr-1">
-                          {addr.sfStationCode?.startsWith('H') ? '🔒 智能櫃' : '📦 順豐自提站'}
-                        </span>
-                        {addr.sfStationName ? `${addr.sfStationName} ` : ""}
-                        <span className="font-mono text-xs text-gray-600">{addr.sfStationCode}</span>
+                  {/* Action buttons — always visible on mobile, hover-reveal on desktop */}
+                  <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
+                    {!addr.isDefault && (
+                      <Button
+                        size="sm" variant="ghost"
+                        onClick={() => setDefaultMutation.mutate({ id: addr.id })}
+                        className="h-7 px-2 text-xs font-medium hidden sm:flex items-center gap-1"
+                        style={{ color: BRAND_BLUE }}
+                        disabled={setDefaultMutation.isPending}
+                      >
+                        <Check className="w-3 h-3" /> 設預設
+                      </Button>
+                    )}
+                    <Button
+                      size="sm" variant="ghost"
+                      onClick={() => handleEdit(addr)}
+                      className="h-7 w-7 p-0 rounded-lg hover:bg-blue-50 transition-colors"
+                      style={{ color: BRAND_BLUE }}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm" variant="ghost"
+                      onClick={() => deleteMutation.mutate({ id: addr.id })}
+                      className="h-7 w-7 p-0 rounded-lg hover:bg-red-50 transition-colors text-red-400 hover:text-red-600"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ── Row 2: Recipient + Phone (main info) ── */}
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: `${BRAND_BLUE}12` }}>
+                      <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+                    </div>
+                    <span className="font-bold text-gray-900 text-sm truncate">{addr.recipientName}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-500 text-sm shrink-0">
+                    <Phone className="w-3 h-3" />
+                    <span className="font-medium">{addr.phone}</span>
+                  </div>
+                </div>
+
+                {/* ── Row 3: Address detail ── */}
+                {addr.addressType === "sf_station" ? (
+                  <div className="flex items-start gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "#E65100" }} />
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-700 leading-snug">
+                        {addr.sfStationName || ""}
+                        {addr.sfStationCode && (
+                          <span className="ml-1 font-mono text-xs text-gray-400">({addr.sfStationCode})</span>
+                        )}
                       </p>
                       {sfAddressCache[addr.sfStationCode] && (
-                        <p className="text-xs text-gray-400 mt-0.5 pl-1">{sfAddressCache[addr.sfStationCode]}</p>
+                        <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{sfAddressCache[addr.sfStationCode]}</p>
                       )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 mt-0.5">{addr.district ? `${addr.district}，` : ""}{addr.address}，{addr.region}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {!addr.isDefault && (
-                    <Button size="sm" variant="ghost" onClick={() => setDefaultMutation.mutate({ id: addr.id })}
-                      className="h-7 text-xs text-blue-600 hover:bg-blue-50 transition-all duration-150 hover:scale-[1.05] active:scale-95" disabled={setDefaultMutation.isPending}>
-                      <Check className="w-3 h-3 mr-1" /> 設為預設
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(addr)} className="h-7 w-7 p-0 text-blue-500 transition-all duration-150 hover:scale-110 hover:bg-blue-50 hover:text-blue-600 active:scale-90">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate({ id: addr.id })}
-                    className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 transition-all duration-150 hover:scale-110 active:scale-90" disabled={deleteMutation.isPending}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: BRAND_BLUE }} />
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {[addr.district, addr.address, addr.region].filter(Boolean).join("，")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Mobile-only: Set as default button */}
+                {!addr.isDefault && (
+                  <button
+                    className="mt-3 w-full sm:hidden flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                    style={{ borderColor: `${BRAND_BLUE}40`, color: BRAND_BLUE, background: `${BRAND_BLUE}06` }}
+                    onClick={() => setDefaultMutation.mutate({ id: addr.id })}
+                    disabled={setDefaultMutation.isPending}
+                  >
+                    <Check className="w-3 h-3" /> 設為預設地址
+                  </button>
+                )}
               </div>
             </div>
           ))}
