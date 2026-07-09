@@ -48,8 +48,12 @@ export default function SearchResults() {
     }
   );
   
-  // Extract items array from response
-  const searchResults = searchData?.items || [];
+  // Extract items array from response, sorted by price descending (no-price items go to end)
+  const searchResults = (searchData?.items || []).slice().sort((a: any, b: any) => {
+    const priceA = a.latestPrice != null ? Number(a.latestPrice) : -1;
+    const priceB = b.latestPrice != null ? Number(b.latestPrice) : -1;
+    return priceB - priceA;
+  });
   const totalResults = searchData?.total || 0;
   
   // Fuzzy suggestion: only trigger when search is done and returned 0 results

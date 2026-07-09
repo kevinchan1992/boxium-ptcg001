@@ -9792,3 +9792,9 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
   - 非 TCGdex 卡牌（SNKRDUNK 來源）→ 顯示 SNKRDUNK 區塊，隱藏 TCGPlayer/Cardmarket 區塊
 - [x] 建立 .github/workflows/tcgdex-import.yml（每週三 HKT 17:30 自動同步）
 - [x] 價格同步腳本 scripts/tcgdexPriceSync.mjs 在 Cloud Computer 執行中（84.1% 完成，16,500+ 筆價格已匯入）
+
+## 待修正（2026-07-09）
+
+- [x] TCGPlayer/Cardmarket 市場參考價轉換為 HKD 顯示（USD×7.8、EUR×8.5 估算）
+- [x] 卡牌詳細頁圖片大小統一：SNKRDUNK 卡牌圖片太小、TCGdex 卡牌圖片太大，兩者都需填滿左側容器區域（object-fit: contain，高度固定）
+- [x] 搜尋結果排序改為按價格由高到低（純 TCGdex 無價格卡牌不應排到最前）

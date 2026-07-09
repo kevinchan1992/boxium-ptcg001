@@ -573,13 +573,20 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
               {product.imageUrl ? (
                 <>
-                  <ClickableCardImage
-                    src={getProxiedImageUrl(product.imageUrl) ?? ""}
-                    alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
-                    className="w-full rounded-xl shadow-2xl"
-                    style={{ height: "auto" }}
+                  {/* Fixed-height container so both SNKRDUNK and TCGdex images fill the same space */}
+                  <div
+                    className="w-full rounded-xl overflow-hidden shadow-2xl"
+                    style={{ height: 'clamp(320px, 55vw, 560px)' }}
                     onClick={() => setLightboxOpen(true)}
-                  />
+                  >
+                    <ClickableCardImage
+                      src={getProxiedImageUrl(product.imageUrl) ?? ""}
+                      alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
+                      className="w-full h-full"
+                      style={{ objectFit: 'contain', objectPosition: 'center' }}
+                      onClick={() => setLightboxOpen(true)}
+                    />
+                  </div>
                   <ImageLightbox
                     src={getProxiedImageUrl(product.imageUrl) ?? ""}
                     alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
@@ -588,7 +595,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   />
                 </>
               ) : (
-                <div className="w-full aspect-[2/3] bg-zinc-800 rounded-xl flex items-center justify-center">
+                <div className="w-full rounded-xl bg-zinc-800 flex items-center justify-center" style={{ height: 'clamp(320px, 55vw, 560px)' }}>
                   <p className="text-zinc-500 text-sm">{t("home.noImage")}</p>
                 </div>
               )}
@@ -1135,72 +1142,84 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               </div>
             ) : (
               <div className="p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* TCGPlayer */}
-                  {((tcgMarketPrice as any).tcgLow != null || (tcgMarketPrice as any).tcgMid != null || (tcgMarketPrice as any).tcgMarket != null) && (
-                    <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>TCGPlayer (USD)</p>
-                      <div className="space-y-2">
-                        {(tcgMarketPrice as any).tcgLow != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>Low</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgLow).toFixed(2)}</span>
+                {/* Exchange rate constants: USD→HKD ≈ 7.8, EUR→HKD ≈ 8.5 */}
+                {(() => {
+                  const USD_TO_HKD = 7.8;
+                  const EUR_TO_HKD = 8.5;
+                  const p = tcgMarketPrice as any;
+                  const fmtUsd = (v: any) => `HKD ${(Number(v) * USD_TO_HKD).toFixed(0)}`;
+                  const fmtEur = (v: any) => `HKD ${(Number(v) * EUR_TO_HKD).toFixed(0)}`;
+                  return (
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* TCGPlayer */}
+                      {(p.tcgLow != null || p.tcgMid != null || p.tcgMarket != null) && (
+                        <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#666666' }}>TCGPlayer</p>
+                          <p className="text-[9px] mb-3" style={{ color: '#444444' }}>USD → HKD (×{USD_TO_HKD})</p>
+                          <div className="space-y-2">
+                            {p.tcgLow != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>Low</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtUsd(p.tcgLow)}</span>
+                              </div>
+                            )}
+                            {p.tcgMid != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>Mid</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtUsd(p.tcgMid)}</span>
+                              </div>
+                            )}
+                            {p.tcgMarket != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>Market</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>{fmtUsd(p.tcgMarket)}</span>
+                              </div>
+                            )}
+                            {p.tcgHigh != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>High</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtUsd(p.tcgHigh)}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {(tcgMarketPrice as any).tcgMid != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>Mid</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgMid).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {/* Cardmarket */}
+                      {(p.cmAvg != null || p.cmTrend != null) && (
+                        <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#666666' }}>Cardmarket</p>
+                          <p className="text-[9px] mb-3" style={{ color: '#444444' }}>EUR → HKD (×{EUR_TO_HKD})</p>
+                          <div className="space-y-2">
+                            {p.cmAvg != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>Avg</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtEur(p.cmAvg)}</span>
+                              </div>
+                            )}
+                            {p.cmTrend != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>Trend</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>{fmtEur(p.cmTrend)}</span>
+                              </div>
+                            )}
+                            {p.cmAvg7 != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>7-day Avg</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtEur(p.cmAvg7)}</span>
+                              </div>
+                            )}
+                            {p.cmAvg30 != null && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[11px]" style={{ color: '#888888' }}>30-day Avg</span>
+                                <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>{fmtEur(p.cmAvg30)}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {(tcgMarketPrice as any).tcgMarket != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>Market</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>${Number((tcgMarketPrice as any).tcgMarket).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {(tcgMarketPrice as any).tcgHigh != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>High</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>${Number((tcgMarketPrice as any).tcgHigh).toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {/* Cardmarket */}
-                  {((tcgMarketPrice as any).cmAvg != null || (tcgMarketPrice as any).cmTrend != null) && (
-                    <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: '#666666' }}>Cardmarket (EUR)</p>
-                      <div className="space-y-2">
-                        {(tcgMarketPrice as any).cmAvg != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {(tcgMarketPrice as any).cmTrend != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>Trend</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#F5C518' }}>€{Number((tcgMarketPrice as any).cmTrend).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {(tcgMarketPrice as any).cmAvg7 != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>7-day Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg7).toFixed(2)}</span>
-                          </div>
-                        )}
-                        {(tcgMarketPrice as any).cmAvg30 != null && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px]" style={{ color: '#888888' }}>30-day Avg</span>
-                            <span className="text-sm font-mono font-semibold" style={{ color: '#E5E5E5' }}>€{Number((tcgMarketPrice as any).cmAvg30).toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  );
+                })()}
                 {tcgMarketPrice.updatedAt && (
                   <p className="text-[9px] mt-3" style={{ color: '#444444' }}>
                     更新時間：{new Date(tcgMarketPrice.updatedAt).toLocaleDateString('zh-HK')} · 資料來源：TCGdex API · 未分級原版卡市場參考價，非 PSA 鑑定價
