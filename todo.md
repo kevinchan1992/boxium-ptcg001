@@ -9798,3 +9798,20 @@ TypeScript 編譯有 257 個警告，主要是 `any` 類型問題（TS7006）和
 - [x] TCGPlayer/Cardmarket 市場參考價轉換為 HKD 顯示（USD×7.8、EUR×8.5 估算）
 - [x] 卡牌詳細頁圖片大小統一：SNKRDUNK 卡牌圖片太小、TCGdex 卡牌圖片太大，兩者都需填滿左側容器區域（object-fit: contain，高度固定）
 - [x] 搜尋結果排序改為按價格由高到低（純 TCGdex 無價格卡牌不應排到最前）
+
+---
+
+## ✅ Apple App Store 審查被拒修正 — Rate Limiter 優化（2026-07-09）
+
+### 問題根因
+Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，導致 Sign in with Apple 和 Google 登入均返回 `RATE_LIMITED` 錯誤。
+
+### 修正內容
+- [x] 將 `authLimiter` max 從 **10** 提高到 **50**（15分鐘）：應付 Apple 審查團隊併發測試，對暴力破解仍有足夠阻擋力
+- [x] 新增 `oauthInitLimiter`（每分鐘 60 次）：專用於 OAuth initiation 路由（只做重定向，無憑證交換）
+- [x] `GET /api/auth/google` 改用 `oauthInitLimiter`（寬鬆）
+- [x] `GET /api/auth/apple` 改用 `oauthInitLimiter`（寬鬆）
+- [x] `GET /api/auth/google/callback`（Token 交換）維持 `authLimiter`（嚴格）
+- [x] `POST /api/auth/apple/callback`（id_token 驗證 + JWT 簽發）維持 `authLimiter`（嚴格）
+- [x] TypeScript 0 errors 確認
+- [x] 儲存 Checkpoint

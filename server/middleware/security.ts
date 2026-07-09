@@ -397,7 +397,13 @@ function makeLimiter(windowMs: number, max: number, message: string): RateLimitR
   });
 }
 
-export const authLimiter = makeLimiter(15 * 60 * 1000, 10, "Too many authentication attempts. Please try again in 15 minutes.");
+// authLimiter: for password login, register, forgot-password, and OAuth callbacks (credential exchange)
+// Raised from 10→50 to accommodate Apple App Review team (shared IP, multiple reviewers)
+export const authLimiter = makeLimiter(15 * 60 * 1000, 50, "Too many authentication attempts. Please try again in 15 minutes.");
+// oauthInitLimiter: for OAuth initiation routes only (/api/auth/google, /api/auth/apple)
+// These routes do NOT exchange credentials — they only redirect to the OAuth provider.
+// Using a generous per-minute limit to prevent false positives for shared IPs (e.g. Apple reviewers).
+export const oauthInitLimiter = makeLimiter(60 * 1000, 60, "Too many login requests. Please slow down.");
 export const searchLimiter = makeLimiter(60 * 1000, 120, "Search rate limit exceeded. Please slow down.");
 export const aiLimiter = makeLimiter(60 * 1000, 20, "AI generation rate limit exceeded. Please wait a moment.");
 export const orderLimiter = makeLimiter(60 * 1000, 30, "Too many order requests. Please slow down.");

@@ -52,6 +52,7 @@ import {
   securityHeaders,
   trpcRateLimitRouter,
   authLimiter,
+  oauthInitLimiter,
   uploadLimiter,
   validateImageMime,
   validatePaymentProofMime,
@@ -1010,10 +1011,16 @@ async function startServer() {
   // Storage proxy for /manus-storage/* paths
   registerStorageProxy(app);
 
-  // Google OAuth routes — apply auth rate limiter
+  // Google OAuth routes:
+  //   GET /api/auth/google          → oauthInitLimiter (60 req/min) — only redirects to Google, no credential exchange
+  //   GET /api/auth/google/callback → authLimiter (50 req/15min)   — token exchange + JWT signing (sensitive)
+  app.get("/api/auth/google", oauthInitLimiter, (req, res, next) => googleOAuthRouter(req, res, next));
   app.use("/api/auth", authLimiter, googleOAuthRouter);
 
-  // Apple OAuth routes — apply auth rate limiter
+  // Apple OAuth routes:
+  //   GET  /api/auth/apple          → oauthInitLimiter (60 req/min) — only redirects to Apple, no credential exchange
+  //   POST /api/auth/apple/callback → authLimiter (50 req/15min)   — id_token verification + JWT signing (sensitive)
+  app.get("/api/auth/apple", oauthInitLimiter, (req, res, next) => appleOAuthRouter(req, res, next));
   app.use("/api/auth", authLimiter, appleOAuthRouter);
   
   // Apple App Site Association - required for Universal Links (iOS App)
