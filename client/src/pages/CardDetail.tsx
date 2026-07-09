@@ -573,22 +573,21 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
               )}
               {product.imageUrl ? (
                 <>
-                  {/* Fixed-height container: both SNKRDUNK and TCGdex images fill the same area */}
+                  {/* Image container: height auto-fits content; TCGdex images capped to match SNKRDUNK display size */}
                   <div
-                    className="w-full rounded-xl overflow-hidden shadow-2xl flex items-center justify-center bg-zinc-900/30"
-                    style={{ height: 'clamp(380px, 60vw, 620px)' }}
+                    className="w-full rounded-xl overflow-hidden shadow-2xl flex items-center justify-center bg-zinc-900/30 py-4"
                   >
                     <ClickableCardImage
                       src={getProxiedImageUrl(product.imageUrl) ?? ""}
                       alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
-                      className="max-h-full w-auto"
+                      className="block mx-auto"
                       style={{
                         objectFit: 'contain',
-                        objectPosition: 'center',
                         display: 'block',
-                        // TCGdex cards have high-res images that appear too large;
-                        // cap them to ~200px wide to match SNKRDUNK card display size
+                        // TCGdex cards: cap to ~200px wide to match SNKRDUNK card display size
+                        // SNKRDUNK cards: allow up to 100% of container width
                         maxWidth: isTcgdexCard ? '200px' : '100%',
+                        maxHeight: '500px',
                       }}
                       onClick={() => setLightboxOpen(true)}
                     />
