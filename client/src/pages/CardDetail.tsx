@@ -581,7 +581,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     <ClickableCardImage
                       src={getProxiedImageUrl(product.imageUrl) ?? ""}
                       alt={`${product.name}${!isSealedProduct && 'cardNumber' in product && product.cardNumber ? ` ${product.cardNumber}` : ''} ${t("cardDetail.cardImage")}${product.series ? ` - ${product.series}` : ''}`}
-                      className="w-full h-full"
+                      className="max-h-full w-auto max-w-full"
                       style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
                       onClick={() => setLightboxOpen(true)}
                     />

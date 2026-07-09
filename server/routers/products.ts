@@ -27,15 +27,18 @@ export const productsRouter = router({
     }))
     .query(async ({ input }) => {
       // Search cards (always); search sealed products only if not cardsOnly
+      // IMPORTANT: fetch ALL results from each source (limit=9999, offset=0) so we can
+      // merge and sort across both sources before applying pagination.
+      // Both functions use in-memory caches, so this is fast after the first call.
       let cardsResult: { cards: any[]; total: number };
       let sealedResult: { products: any[]; total: number } = { products: [], total: 0 };
       try {
         if (input.cardsOnly) {
-          cardsResult = await db.searchCards(input.query, input.limit, input.offset);
+          cardsResult = await db.searchCards(input.query, 9999, 0);
         } else {
           [cardsResult, sealedResult] = await Promise.all([
-            db.searchCards(input.query, input.limit, input.offset),
-            db.searchSealedProducts(input.query, input.limit, input.offset),
+            db.searchCards(input.query, 9999, 0),
+            db.searchSealedProducts(input.query, 9999, 0),
           ]);
         }
       } catch (err: any) {
@@ -83,9 +86,12 @@ export const productsRouter = router({
         return priceB - priceA;
       });
 
+      // Apply pagination on the merged+sorted result
+      const start = input.offset;
+      const end = input.offset + input.limit;
       return {
-        items: allItems.slice(0, input.limit),
-        cards: cardItems.slice(0, input.limit),
+        items: allItems.slice(start, end),
+        cards: cardItems.slice(start, end),
         total: cardsResult.total + sealedResult.total,
       };
     }),
