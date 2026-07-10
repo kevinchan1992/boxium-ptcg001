@@ -393,7 +393,7 @@ export default function PoolDetail() {
       {/* ─── Hero Console (16:9) ─────────────────────────────────────────── */}
       <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: "56vw" }}>
         {pool.coverImageUrl ? (
-          <img src={pool.coverImageUrl} alt="封面" className="absolute inset-0 w-full h-full object-cover" />
+          <CardImage src={pool.coverImageUrl} alt="封面" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <HeroCover imgs={rewardImgs} theme={theme} />
         )}
@@ -515,26 +515,30 @@ export default function PoolDetail() {
             )}
           </div>
 
-          {/* 手機 8 欄 / 桌面 10 欄，overflow-hidden 防止溢出 */}
-          <div className="grid gap-1 overflow-hidden grid-cols-8 md:grid-cols-10">
-            {sortedSlots.map((slot: any) => (
-              <button
-                key={slot.slotIndex}
-                className="w-full min-w-0 aspect-square text-xs font-mono transition-all duration-150 rounded-sm flex items-center justify-center"
-                style={getSlotStyle(slot.isDrawn, selectedSlot === slot.slotIndex)}
-                onClick={() => handleSlotClick(slot.slotIndex, slot.isDrawn)}
-                disabled={slot.isDrawn || drawing}
-                title={slot.isDrawn ? "已抽取" : `第 ${slot.slotIndex + 1} 格`}
-              >
-                {slot.isDrawn ? (
-                  <span style={{ color: "#cbd5e1" }}>✓</span>
-                ) : selectedSlot === slot.slotIndex ? (
-                  <span className="text-white font-black text-[10px]">★</span>
-                ) : (
-                  <span className="text-[10px] leading-none">{slot.slotIndex + 1}</span>
-                )}
-              </button>
-            ))}
+          {/* 手機 8 欄 / 桌面 10 欄 */}
+          <div className="grid gap-1 grid-cols-8 md:grid-cols-10 w-full">
+            {sortedSlots.map((slot: any) => {
+              const style = getSlotStyle(slot.isDrawn, selectedSlot === slot.slotIndex);
+              return (
+                <div key={slot.slotIndex} className="relative w-full" style={{ paddingTop: "100%" }}>
+                  <button
+                    className="absolute inset-0 text-[10px] font-mono transition-all duration-150 rounded-sm flex items-center justify-center leading-none"
+                    style={style}
+                    onClick={() => handleSlotClick(slot.slotIndex, slot.isDrawn)}
+                    disabled={slot.isDrawn || drawing}
+                    title={slot.isDrawn ? "已抽取" : `第 ${slot.slotIndex + 1} 格`}
+                  >
+                    {slot.isDrawn ? (
+                      <span style={{ color: "#cbd5e1", fontSize: "10px" }}>✓</span>
+                    ) : selectedSlot === slot.slotIndex ? (
+                      <span style={{ color: "#fff", fontSize: "10px" }}>★</span>
+                    ) : (
+                      <span>{slot.slotIndex + 1}</span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           {/* Legend */}
