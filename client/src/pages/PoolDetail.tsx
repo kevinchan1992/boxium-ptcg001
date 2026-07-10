@@ -1,133 +1,246 @@
 /**
- * PoolDetail - 福袋卡池詳情頁
- * 10x10 格子抽卡介面，Three.js 開箱動畫，深色霓虹風格
+ * PoolDetail — 純白玩味潮流風格 (Playful Premium)
+ * 品牌藍高亮 · 高級雜誌感 · 日系 Gacha 機台
  */
 import { useState, useCallback } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  ArrowLeft, Coins, Package, Zap, Lock, Gift,
-  Star, Trophy, Sparkles, ChevronRight
-} from "lucide-react";
+import { ArrowLeft, Coins, Lock, Gift, Star, Trophy, Sparkles, ChevronRight, Package, RotateCcw } from "lucide-react";
 import { BottomTabBar } from "@/components/BottomTabBar";
 
-// ─── 格子狀態顏色 ─────────────────────────────────────────────────────────────
-function getSlotStyle(slot: any, isSelected: boolean) {
-  if (slot.isDrawn) {
-    return "bg-zinc-800/80 border-zinc-700/50 cursor-not-allowed opacity-50";
-  }
-  if (isSelected) {
-    return "bg-purple-600/40 border-purple-400 shadow-[0_0_12px_rgba(139,92,246,0.6)] scale-105 cursor-pointer";
-  }
-  return "bg-zinc-900 border-zinc-700 hover:border-purple-500/60 hover:bg-zinc-800 hover:shadow-[0_0_8px_rgba(139,92,246,0.3)] cursor-pointer transition-all duration-150";
+const BRAND = "#06038D";
+const BRAND_HOVER = "#0805b8";
+
+// ─── Theme helper (reused from PoolCard) ─────────────────────────────────────
+function getTheme(imgs: any[]) {
+  const types = imgs.map((r: any) => r.rewardType);
+  if (types.includes("rainbow")) return {
+    bg: "linear-gradient(160deg,#0d0020 0%,#4c1d95 25%,#7c3aed 50%,#db2777 75%,#f59e0b 100%)",
+    glow: "rgba(167,139,250,0.9)",
+  };
+  if (types.includes("milestone")) return {
+    bg: "linear-gradient(160deg,#1c0700 0%,#9a3412 30%,#ea580c 60%,#fbbf24 100%)",
+    glow: "rgba(251,146,60,0.9)",
+  };
+  if (types.includes("gold")) return {
+    bg: "linear-gradient(160deg,#1c0e00 0%,#78350f 30%,#d97706 60%,#fde68a 100%)",
+    glow: "rgba(252,211,77,0.9)",
+  };
+  return {
+    bg: "linear-gradient(160deg,#020617 0%,#1e3a8a 25%,#1d4ed8 55%,#60a5fa 100%)",
+    glow: "rgba(96,165,250,0.9)",
+  };
 }
 
-// ─── 獎品展示 Dialog ──────────────────────────────────────────────────────────
-function RewardRevealDialog({
-  open,
-  onClose,
-  reward,
-}: {
-  open: boolean;
-  onClose: () => void;
-  reward: any | null;
-}) {
-  const tierConfig: Record<string, { label: string; gradient: string; glow: string }> = {
+// ─── 3D Hero Cover (enlarged 2.5× from PoolCard) ─────────────────────────────
+function HeroCover({ imgs, theme }: { imgs: any[]; theme: ReturnType<typeof getTheme> }) {
+  const [c1, c2, c3] = imgs;
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ background: theme.bg }}>
+      {/* Centre glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: `radial-gradient(ellipse 80% 70% at 50% 55%, ${theme.glow} 0%, transparent 65%)`,
+      }} />
+      {/* Vignette */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "radial-gradient(ellipse 130% 130% at 50% 50%, transparent 45%, rgba(0,0,0,0.45) 100%)",
+      }} />
+      {/* Sparkle particles */}
+      {[...Array(14)].map((_, i) => (
+        <div key={i} className="absolute rounded-full animate-pulse pointer-events-none" style={{
+          width: `${2 + (i % 3) * 1.5}px`,
+          height: `${2 + (i % 3) * 1.5}px`,
+          background: "rgba(255,255,255,0.55)",
+          top: `${8 + (i * 7) % 78}%`,
+          left: `${4 + (i * 11) % 88}%`,
+          animationDelay: `${i * 0.28}s`,
+          animationDuration: `${1.6 + (i % 4) * 0.55}s`,
+        }} />
+      ))}
+
+      {/* Stacked cards — 2.5× scale */}
+      {imgs.length > 0 ? (
+        <div className="absolute inset-0 overflow-hidden">
+          {c3 && (
+            <img src={c3.imageUrl} alt="" draggable={false}
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "130%", width: "auto",
+                top: "-15%", left: "-14%",
+                transform: "rotate(-22deg)",
+                filter: "drop-shadow(0 28px 36px rgba(0,0,0,0.65))",
+                opacity: 0.45, zIndex: 1,
+              }} />
+          )}
+          {c2 && (
+            <img src={c2.imageUrl} alt="" draggable={false}
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "130%", width: "auto",
+                top: "-15%", right: "-14%",
+                transform: "rotate(20deg)",
+                filter: "drop-shadow(0 28px 36px rgba(0,0,0,0.65))",
+                opacity: 0.55, zIndex: 2,
+              }} />
+          )}
+          {c1 && (
+            <img src={c1.imageUrl} alt="" draggable={false}
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "145%", width: "auto",
+                top: "-22%", left: "50%",
+                transform: "translateX(-50%) rotate(-5deg)",
+                filter: [
+                  "drop-shadow(0 40px 28px rgba(0,0,0,0.7))",
+                  `drop-shadow(0 0 40px ${theme.glow})`,
+                  "drop-shadow(0 6px 10px rgba(0,0,0,0.85))",
+                ].join(" "),
+                zIndex: 3,
+              }} />
+          )}
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/40">
+          <span className="text-7xl">🎴</span>
+          <span className="text-xs font-semibold tracking-widest uppercase">Mystery Pool</span>
+        </div>
+      )}
+
+      {/* Bottom fade to white */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+        height: "40%",
+        background: "linear-gradient(to top, rgba(248,250,252,1) 0%, rgba(248,250,252,0.6) 50%, transparent 100%)",
+      }} />
+    </div>
+  );
+}
+
+// ─── Tier badge ───────────────────────────────────────────────────────────────
+function TierBadge({ type }: { type: string }) {
+  const cfg: Record<string, { label: string; style: React.CSSProperties }> = {
     rainbow: {
-      label: "彩虹 Rainbow",
-      gradient: "from-purple-600 via-pink-500 to-yellow-400",
-      glow: "shadow-[0_0_40px_rgba(168,85,247,0.5)]",
+      label: "彩虹 RAINBOW",
+      style: {
+        background: "linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b,#22c55e,#3b82f6,#7c3aed)",
+        backgroundSize: "200% auto",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+        border: "1px solid rgba(124,58,237,0.3)",
+      },
     },
     gold: {
-      label: "黃金 Gold",
-      gradient: "from-yellow-600 to-yellow-400",
-      glow: "shadow-[0_0_40px_rgba(234,179,8,0.5)]",
+      label: "黃金 GOLD",
+      style: {
+        background: "linear-gradient(90deg,#92400e,#d97706,#fbbf24)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+        border: "1px solid rgba(217,119,6,0.3)",
+      },
     },
     blue: {
-      label: "藍色 Blue",
-      gradient: "from-blue-600 to-blue-400",
-      glow: "shadow-[0_0_40px_rgba(59,130,246,0.5)]",
+      label: "藍色 BLUE",
+      style: { color: BRAND, border: `1px solid rgba(6,3,141,0.25)` },
     },
     milestone: {
-      label: "里程碑 Milestone",
-      gradient: "from-orange-600 to-orange-400",
-      glow: "shadow-[0_0_40px_rgba(249,115,22,0.5)]",
-    },
-    hidden: {
-      label: "隱藏卡",
-      gradient: "from-zinc-600 to-zinc-400",
-      glow: "",
+      label: "里程碑",
+      style: { color: "#ea580c", border: "1px solid rgba(234,88,12,0.25)" },
     },
   };
+  const c = cfg[type] ?? { label: type.toUpperCase(), style: { color: "#64748b", border: "1px solid #e2e8f0" } };
+  return (
+    <span className="inline-block text-[10px] font-black tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"
+      style={c.style}>
+      {c.label}
+    </span>
+  );
+}
 
-  const cfg = reward ? (tierConfig[reward.rewardType] ?? tierConfig.hidden) : tierConfig.hidden;
+// ─── Slot grid style ──────────────────────────────────────────────────────────
+function getSlotStyle(isDrawn: boolean, isSelected: boolean): React.CSSProperties {
+  if (isDrawn) return {
+    backgroundColor: "#f1f5f9",
+    border: "1px solid #e2e8f0",
+    cursor: "not-allowed",
+    opacity: 0.5,
+  };
+  if (isSelected) return {
+    backgroundColor: BRAND,
+    border: `1px solid ${BRAND}`,
+    boxShadow: `0 0 15px rgba(6,3,141,0.4)`,
+    transform: "scale(1.08)",
+    color: "#fff",
+  };
+  return {
+    backgroundColor: "#fff",
+    border: "1px solid #e2e8f0",
+    color: "#475569",
+    cursor: "pointer",
+  };
+}
+
+// ─── Reward Reveal Dialog ─────────────────────────────────────────────────────
+function RewardRevealDialog({ open, onClose, reward }: { open: boolean; onClose: () => void; reward: any | null }) {
+  const tierGrad: Record<string, string> = {
+    rainbow: "linear-gradient(135deg,#7c3aed,#ec4899,#f59e0b)",
+    gold: "linear-gradient(135deg,#d97706,#fbbf24)",
+    blue: `linear-gradient(135deg,${BRAND},#3b82f6)`,
+    milestone: "linear-gradient(135deg,#ea580c,#fbbf24)",
+  };
+  const grad = reward ? (tierGrad[reward.rewardType] ?? `linear-gradient(135deg,${BRAND},#7c3aed)`) : `linear-gradient(135deg,${BRAND},#7c3aed)`;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[#0d0d0d] border-zinc-800 text-white max-w-sm mx-auto">
-        <div className="flex flex-col items-center gap-4 py-4">
-          {/* 標題 */}
-          <div className="text-center">
-            <div className="text-xs text-zinc-500 mb-1">你抽到了</div>
+      <DialogContent className="bg-white border-0 shadow-2xl max-w-sm mx-auto rounded-none p-0 overflow-hidden">
+        {/* Top gradient bar */}
+        <div className="h-1 w-full" style={{ background: grad }} />
+        <div className="px-8 pt-8 pb-7 flex flex-col items-center gap-5 text-center">
+          <div>
+            <p className="text-xs tracking-[0.3em] text-slate-400 uppercase mb-2">YOU GOT</p>
             {reward ? (
-              <Badge className={`bg-gradient-to-r ${cfg.gradient} text-white border-0 text-sm px-3 py-1`}>
-                {cfg.label}
-              </Badge>
+              <TierBadge type={reward.rewardType} />
             ) : (
-              <Badge className="bg-zinc-700 text-zinc-300 border-0 text-sm px-3 py-1">
-                隱藏卡
-              </Badge>
+              <span className="text-xs tracking-widest uppercase text-slate-400 border border-slate-200 px-3 py-1 rounded-full">
+                HIDDEN CARD
+              </span>
             )}
           </div>
 
-          {/* 卡片圖片 */}
-          <div className={`relative rounded-xl overflow-hidden ${cfg.glow}`}>
+          <div className="relative">
             {reward?.imageUrl ? (
-              <img
-                src={reward.imageUrl}
-                alt={reward.name}
-                className="w-48 h-auto object-contain"
-              />
+              <img src={reward.imageUrl} alt={reward.name}
+                className="w-44 h-auto object-contain"
+                style={{ filter: `drop-shadow(0 20px 30px rgba(0,0,0,0.15))` }} />
             ) : (
-              <div className="w-48 h-64 bg-zinc-800 rounded-xl flex flex-col items-center justify-center gap-3">
-                <Package className="w-12 h-12 text-zinc-600" />
-                <span className="text-sm text-zinc-500">隱藏卡</span>
-                <span className="text-xs text-zinc-600">將進入虛擬倉庫</span>
+              <div className="w-44 h-60 bg-slate-50 flex flex-col items-center justify-center gap-3 rounded-sm">
+                <Package className="w-10 h-10 text-slate-300" />
+                <span className="text-xs text-slate-400 tracking-wide">隱藏卡已入庫</span>
               </div>
             )}
           </div>
 
-          {/* 卡片名稱 */}
           {reward && (
-            <div className="text-center">
-              <div className="text-lg font-bold text-white">{reward.name}</div>
-            </div>
+            <p className="text-lg font-bold text-slate-900 tracking-tight">{reward.name}</p>
           )}
-
           {!reward && (
-            <div className="text-center">
-              <div className="text-base font-semibold text-zinc-300">隱藏卡已入庫</div>
-              <div className="text-xs text-zinc-500 mt-1">可在虛擬倉庫查看並選擇回購或出貨</div>
-            </div>
+            <p className="text-sm text-slate-500">可在虛擬倉庫查看並選擇回購或出貨</p>
           )}
 
-          {/* 按鈕 */}
-          <div className="flex gap-3 w-full">
-            <Button
-              variant="outline"
-              className="flex-1 border-zinc-700 text-zinc-400 hover:text-white"
-              onClick={onClose}
-            >
+          <div className="flex gap-3 w-full pt-1">
+            <button onClick={onClose}
+              className="flex-1 py-3 border border-slate-200 text-slate-600 text-xs tracking-widest uppercase hover:border-slate-400 transition-colors">
               繼續抽取
-            </Button>
+            </button>
             <Link href="/vault" className="flex-1">
-              <Button className="w-full bg-purple-600 hover:bg-purple-500 text-white">
+              <button className="w-full py-3 text-white text-xs tracking-widest uppercase transition-colors"
+                style={{ backgroundColor: BRAND }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}>
                 查看倉庫
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
@@ -136,7 +249,7 @@ function RewardRevealDialog({
   );
 }
 
-// ─── 主頁面 ───────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PoolDetail() {
   const params = useParams<{ id: string }>();
   const poolId = parseInt(params.id ?? "0");
@@ -145,13 +258,10 @@ export default function PoolDetail() {
   const user = authData;
 
   const { data, isLoading, refetch } = trpc.lootpool.getDetail.useQuery(
-    { poolId },
-    { enabled: !!poolId }
+    { poolId }, { enabled: !!poolId }
   );
-
   const { data: balanceData, refetch: refetchBalance } = trpc.lootpool.myBalance.useQuery(
-    undefined,
-    { enabled: !!user }
+    undefined, { enabled: !!user }
   );
 
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
@@ -174,51 +284,54 @@ export default function PoolDetail() {
     },
   });
 
-  const handleSlotClick = useCallback(
-    (slotIndex: number, isDrawn: boolean) => {
-      if (isDrawn || drawing) return;
-      setSelectedSlot((prev) => (prev === slotIndex ? null : slotIndex));
-    },
-    [drawing]
-  );
+  const handleSlotClick = useCallback((slotIndex: number, isDrawn: boolean) => {
+    if (isDrawn || drawing) return;
+    setSelectedSlot((prev) => (prev === slotIndex ? null : slotIndex));
+  }, [drawing]);
 
-  const handleDraw = () => {
-    if (selectedSlot === null) {
-      toast.error("請先選擇一個格子");
-      return;
-    }
-    if (!user) {
-      toast.error("請先登入");
-      return;
-    }
+  const handleDraw = (count: number = 1) => {
+    if (!user) { toast.error("請先登入"); return; }
     const balance = balanceData?.balance ?? 0;
-    const price = data?.pool?.pricePoints ?? 0;
+    const price = (data?.pool?.pricePoints ?? 0) * count;
     if (balance < price) {
       toast.error("點數不足", { description: `需要 ${price} 點，目前餘額 ${balance} 點` });
       return;
     }
-    setDrawing(true);
-    drawMutation.mutate({ poolId, slotIndex: selectedSlot });
+    if (count === 1) {
+      if (selectedSlot === null) { toast.error("請先選擇一個格子"); return; }
+      setDrawing(true);
+      drawMutation.mutate({ poolId, slotIndex: selectedSlot });
+    } else {
+      // Multi-draw: pick first available slots
+      const available = (data?.slots ?? [])
+        .filter((s: any) => !s.isDrawn)
+        .sort((a: any, b: any) => a.slotIndex - b.slotIndex)
+        .slice(0, count);
+      if (available.length === 0) { toast.error("沒有可用格子"); return; }
+      setDrawing(true);
+      drawMutation.mutate({ poolId, slotIndex: available[0].slotIndex });
+    }
   };
 
+  // ── Loading / Error states ──
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: BRAND, borderTopColor: "transparent" }} />
       </div>
     );
   }
 
   if (!data?.pool) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] flex flex-col items-center justify-center gap-4 pb-20">
-        <Package className="w-12 h-12 text-zinc-600" />
-        <p className="text-zinc-400">卡池不存在或已關閉</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-5 pb-20">
+        <Package className="w-12 h-12 text-slate-300" />
+        <p className="text-slate-400 text-sm tracking-wide">卡池不存在或已關閉</p>
         <Link href="/pools">
-          <Button variant="outline" className="border-zinc-700 text-zinc-400">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <button className="flex items-center gap-2 text-xs tracking-widest uppercase border border-slate-200 px-5 py-2.5 text-slate-600 hover:border-slate-400 transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" />
             返回列表
-          </Button>
+          </button>
         </Link>
         <BottomTabBar />
       </div>
@@ -229,278 +342,323 @@ export default function PoolDetail() {
   const drawnCount = slots.filter((s: any) => s.isDrawn).length;
   const remaining = pool.totalSlots - drawnCount;
   const progress = (drawnCount / pool.totalSlots) * 100;
-
-  // 按 slotIndex 排序
   const sortedSlots = [...slots].sort((a: any, b: any) => a.slotIndex - b.slotIndex);
-
-  // 獎品統計（不含 milestone 和 hidden）
   const namedRewards = rewards.filter((r: any) => r.rewardType !== "hidden" && r.rewardType !== "milestone");
-
-  const tierColors: Record<string, string> = {
-    rainbow: "text-purple-400",
-    gold: "text-yellow-400",
-    blue: "text-blue-400",
-    milestone: "text-orange-400",
-  };
+  const milestoneRewards = rewards.filter((r: any) => r.rewardType === "milestone");
+  const rewardImgs = namedRewards.filter((r: any) => r.imageUrl).slice(0, 3);
+  const theme = getTheme(rewardImgs);
+  const balance = balanceData?.balance ?? 0;
+  const price = pool.pricePoints ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] pb-24">
-      {/* 頁首 */}
-      <div className="sticky top-0 z-30 bg-[#0d0d0d]/90 backdrop-blur-md border-b border-zinc-800/60">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 pb-40">
+
+      {/* ─── Sticky Top Nav ─────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/pools">
-            <button className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors">
+            <button className="flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors">
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">返回</span>
+              <span className="text-xs tracking-widest uppercase">Back</span>
             </button>
           </Link>
-
+          <span className="text-xs tracking-[0.3em] uppercase font-light" style={{ color: BRAND }}>
+            BOXIUM · BLIND BOX
+          </span>
           {user ? (
             <Link href="/points">
-              <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 rounded-full px-3 py-1.5 hover:border-zinc-500 transition-colors cursor-pointer">
-                <Coins className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm font-medium text-white">
-                  {balanceData?.balance?.toLocaleString() ?? "—"}
+              <div className="flex items-center gap-1.5 cursor-pointer group">
+                <Coins className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-sm font-mono font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                  {balance.toLocaleString()}
                 </span>
-                <span className="text-xs text-zinc-500">點</span>
+                <span className="text-xs text-slate-400">pts</span>
               </div>
             </Link>
           ) : (
             <Link href="/login">
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8">
-                <Lock className="w-3 h-3 mr-1" />
+              <button className="flex items-center gap-1.5 text-xs tracking-widest uppercase px-3 py-1.5 text-white transition-colors"
+                style={{ backgroundColor: BRAND }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}>
+                <Lock className="w-3 h-3" />
                 登入
-              </Button>
+              </button>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
-        {/* 封面 + 基本資訊 */}
-        <div className="relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
-          {pool.coverImageUrl ? (
-            <img
-              src={pool.coverImageUrl}
-              alt="卡池封面"
-              className="w-full aspect-[2/1] object-cover"
-            />
-          ) : (
-            <div className="w-full aspect-[2/1] bg-zinc-800 flex items-center justify-center">
-              <Package className="w-12 h-12 text-zinc-600" />
+      {/* ─── Hero Console (16:9) ─────────────────────────────────────────── */}
+      <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: "56vw" }}>
+        {pool.coverImageUrl ? (
+          <img src={pool.coverImageUrl} alt="封面" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <HeroCover imgs={rewardImgs} theme={theme} />
+        )}
+
+        {/* Overlay info — bottom-left */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10"
+          style={{ background: "linear-gradient(to top, rgba(248,250,252,0.98) 0%, rgba(248,250,252,0.7) 40%, transparent 100%)" }}>
+          <div className="max-w-2xl mx-auto flex items-end justify-between">
+            <div>
+              <p className="text-xs tracking-[0.3em] text-slate-400 uppercase font-light mb-1">BLIND BOX</p>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 leading-tight">
+                {pool.name}
+              </h1>
             </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-purple-400 font-medium">BOXIUM 福袋</span>
-                </div>
-                <div className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-yellow-400" />
-                  {pool.pricePoints}
-                  <span className="text-sm font-normal text-zinc-400">點/格</span>
-                </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-slate-900 leading-none">
+                {price.toLocaleString()}
+                <span className="text-sm font-normal text-slate-400 ml-1">pts</span>
               </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-white">{remaining} 格剩餘</div>
-                <div className="text-xs text-zinc-500">共 {pool.totalSlots} 格</div>
-              </div>
+              <div className="text-xs text-slate-400 mt-0.5">{remaining} / {pool.totalSlots} 格剩餘</div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 進度條 */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
-          <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-            <span>抽取進度</span>
-            <span>{drawnCount}/{pool.totalSlots} ({progress.toFixed(0)}%)</span>
+      {/* ─── Main Content ────────────────────────────────────────────────── */}
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-10">
+
+        {/* Progress bar */}
+        <div>
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2 tracking-wide">
+            <span>DRAW PROGRESS</span>
+            <span className="font-mono">{drawnCount}/{pool.totalSlots} ({progress.toFixed(0)}%)</span>
           </div>
-          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${progress}%`, backgroundColor: BRAND }} />
           </div>
         </div>
 
-        {/* 獎品資訊 */}
+        {/* Prize showcase */}
         {namedRewards.length > 0 && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-yellow-400" />
-              獎品一覽
-            </h3>
-            <div className="space-y-2">
-              {namedRewards.map((r: any) => (
-                <div key={r.id} className="flex items-center gap-3">
-                  {r.imageUrl ? (
-                    <img
-                      src={r.imageUrl}
-                      alt={r.name}
-                      className="w-10 h-14 object-contain rounded"
-                    />
-                  ) : (
-                    <div className="w-10 h-14 bg-zinc-800 rounded flex items-center justify-center">
-                      <Star className="w-4 h-4 text-zinc-600" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">{r.name}</div>
-                    <div className={`text-xs ${tierColors[r.rewardType] ?? "text-zinc-400"}`}>
-                      {r.rewardType === "rainbow" && "彩虹"}
-                      {r.rewardType === "gold" && "黃金"}
-                      {r.rewardType === "blue" && "藍色"}
-                      {r.rewardType === "milestone" && "里程碑"}
-                    </div>
-                  </div>
-                  {r.rewardType !== "milestone" && (
-                    <div className="text-xs text-zinc-500">×{r.quantity}</div>
-                  )}
-                  {r.rewardType === "milestone" && r.triggerAt && (
-                    <div className="text-xs text-orange-400">第{r.triggerAt}抽</div>
-                  )}
-                </div>
-              ))}
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <Trophy className="w-4 h-4" style={{ color: BRAND }} />
+              <p className="text-xs tracking-[0.3em] text-slate-400 uppercase font-light">PRIZE SHOWCASE</p>
             </div>
+
+            {/* Group by tier */}
+            {(["rainbow", "gold", "blue"] as const).map((tier) => {
+              const tierRewards = namedRewards.filter((r: any) => r.rewardType === tier);
+              if (tierRewards.length === 0) return null;
+              return (
+                <div key={tier} className="mb-6">
+                  <div className="mb-3">
+                    <TierBadge type={tier} />
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+                    {tierRewards.map((r: any) => (
+                      <div key={r.id} className="flex-shrink-0 bg-white rounded-none"
+                        style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
+                        {r.imageUrl ? (
+                          <img src={r.imageUrl} alt={r.name}
+                            className="w-full aspect-[2/3] object-contain p-2" />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
+                            <Star className="w-6 h-6 text-slate-200" />
+                          </div>
+                        )}
+                        <div className="px-2 pb-3">
+                          <p className="text-xs font-medium text-slate-700 truncate leading-tight">{r.name}</p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">×{r.quantity}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Milestone */}
+            {milestoneRewards.length > 0 && (
+              <div className="mb-4">
+                <div className="mb-3"><TierBadge type="milestone" /></div>
+                <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+                  {milestoneRewards.map((r: any) => (
+                    <div key={r.id} className="flex-shrink-0 bg-white"
+                      style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
+                      {r.imageUrl ? (
+                        <img src={r.imageUrl} alt={r.name} className="w-full aspect-[2/3] object-contain p-2" />
+                      ) : (
+                        <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
+                          <Sparkles className="w-6 h-6 text-slate-200" />
+                        </div>
+                      )}
+                      <div className="px-2 pb-3">
+                        <p className="text-xs font-medium text-slate-700 truncate">{r.name}</p>
+                        {r.triggerAt && <p className="text-[10px] text-orange-400 font-mono mt-0.5">第 {r.triggerAt} 抽</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* 10x10 格子 */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              選擇格子
-            </h3>
+        {/* Slot grid */}
+        <div>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
+              <p className="text-xs tracking-[0.3em] text-slate-400 uppercase font-light">SELECT A SLOT</p>
+            </div>
             {selectedSlot !== null && (
-              <span className="text-xs text-purple-400">
-                已選擇第 {selectedSlot + 1} 格
+              <span className="text-xs font-mono" style={{ color: BRAND }}>
+                # {selectedSlot + 1} SELECTED
               </span>
             )}
           </div>
 
-          {/* 格子網格 */}
-          <div
-            className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${Math.min(10, pool.totalSlots)}, 1fr)` }}
-          >
+          <div className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(10, pool.totalSlots)}, 1fr)` }}>
             {sortedSlots.map((slot: any) => (
               <button
                 key={slot.slotIndex}
-                className={`aspect-square rounded-md border text-xs font-mono transition-all duration-150 ${getSlotStyle(
-                  slot,
-                  selectedSlot === slot.slotIndex
-                )}`}
+                className="aspect-square text-xs font-mono transition-all duration-150 rounded-sm"
+                style={getSlotStyle(slot.isDrawn, selectedSlot === slot.slotIndex)}
                 onClick={() => handleSlotClick(slot.slotIndex, slot.isDrawn)}
                 disabled={slot.isDrawn || drawing}
                 title={slot.isDrawn ? "已抽取" : `第 ${slot.slotIndex + 1} 格`}
               >
                 {slot.isDrawn ? (
-                  <span className="text-zinc-600">✓</span>
+                  <span style={{ color: "#cbd5e1" }}>✓</span>
                 ) : selectedSlot === slot.slotIndex ? (
-                  <span className="text-purple-300">★</span>
+                  <span className="text-white font-black">★</span>
                 ) : (
-                  <span className="text-zinc-600 text-[10px]">{slot.slotIndex + 1}</span>
+                  <span className="text-[10px]">{slot.slotIndex + 1}</span>
                 )}
               </button>
             ))}
           </div>
 
-          {/* 圖例 */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+          {/* Legend */}
+          <div className="flex items-center gap-5 mt-4 text-xs text-slate-400">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-zinc-900 border border-zinc-700" />
+              <div className="w-3 h-3 rounded-sm bg-white border border-slate-200" />
               <span>未抽</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-purple-600/40 border border-purple-400" />
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: BRAND }} />
               <span>已選</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded bg-zinc-800/80 border border-zinc-700/50 opacity-50" />
+              <div className="w-3 h-3 rounded-sm bg-slate-100 border border-slate-200 opacity-50" />
               <span>已抽</span>
             </div>
           </div>
         </div>
 
-        {/* 抽取按鈕 */}
-        <div className="space-y-2">
-          {!user ? (
-            <Link href="/login">
-              <Button className="w-full bg-purple-600 hover:bg-purple-500 text-white h-12 text-base">
-                <Lock className="w-4 h-4 mr-2" />
-                登入後抽取
-              </Button>
-            </Link>
-          ) : (
-            <Button
-              className={`w-full h-12 text-base font-semibold transition-all ${
-                selectedSlot !== null && !drawing
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.4)]"
-                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-              }`}
-              disabled={selectedSlot === null || drawing}
-              onClick={handleDraw}
-            >
-              {drawing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  抽取中...
-                </>
-              ) : selectedSlot !== null ? (
-                <>
-                  <Gift className="w-4 h-4 mr-2" />
-                  抽取第 {selectedSlot + 1} 格（{pool.pricePoints} 點）
-                </>
-              ) : (
-                <>
-                  <Gift className="w-4 h-4 mr-2" />
-                  請先選擇格子
-                </>
-              )}
-            </Button>
-          )}
-
-          {user && (
-            <div className="flex items-center justify-between text-xs text-zinc-500 px-1">
-              <span>
-                餘額：
-                <span className={`font-mono ${(balanceData?.balance ?? 0) >= (pool.pricePoints ?? 0) ? "text-green-400" : "text-red-400"}`}>
-                  {balanceData?.balance?.toLocaleString() ?? 0} 點
-                </span>
-              </span>
-              <Link href="/points">
-                <span className="text-purple-400 hover:text-purple-300 cursor-pointer flex items-center gap-0.5">
-                  儲值點數
-                  <ChevronRight className="w-3 h-3" />
-                </span>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* 規則說明 */}
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-zinc-300 mb-2">抽取規則</h3>
-          <ul className="text-xs text-zinc-500 space-y-1">
-            <li>• 每格需消耗 {pool.pricePoints} 點（HK${pool.pricePoints}）</li>
-            <li>• 抽到命名獎品（彩虹/黃金/藍色）將自動入庫</li>
-            <li>• 隱藏卡可選擇官方回購（{pool.officialBuybackPoints} 點）或實體寄出</li>
-            <li>• 每格只能抽取一次，已抽格子不可重複</li>
-            <li>• 點數消耗後不可退款</li>
+        {/* Rules */}
+        <div className="border-t border-slate-100 pt-8">
+          <p className="text-xs tracking-[0.3em] text-slate-300 uppercase font-light mb-3">RULES</p>
+          <ul className="space-y-1.5">
+            {[
+              `每格消耗 ${price} 點（HK$${price}）`,
+              "抽到命名獎品（彩虹/黃金/藍色）將自動入庫",
+              `隱藏卡可選擇官方回購（${pool.officialBuybackPoints} 點）或實體寄出`,
+              "每格只能抽取一次，已抽格子不可重複",
+              "點數消耗後不可退款",
+            ].map((t, i) => (
+              <li key={i} className="text-xs tracking-wide text-slate-400 leading-relaxed flex gap-2">
+                <span className="text-slate-200 flex-shrink-0">—</span>
+                {t}
+              </li>
+            ))}
           </ul>
         </div>
       </div>
 
-      {/* 獎品展示 Dialog */}
+      {/* ─── Reward Reveal Dialog ────────────────────────────────────────── */}
       <RewardRevealDialog
         open={revealOpen}
         onClose={() => setRevealOpen(false)}
         reward={revealedReward}
       />
+
+      {/* ─── Sticky Bottom Action Drawer ─────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 w-full z-50"
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 -15px 30px rgba(0,0,0,0.04)",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 56px)",
+        }}>
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          {!user ? (
+            <Link href="/login">
+              <button className="w-full py-3.5 text-white text-xs tracking-widest uppercase font-medium transition-colors"
+                style={{ backgroundColor: BRAND }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}>
+                <Lock className="w-3.5 h-3.5 inline mr-2" />
+                登入後抽取
+              </button>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">
+              {/* Balance info */}
+              <div className="flex-shrink-0">
+                <div className="text-xs text-slate-400 leading-none mb-0.5">餘額</div>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-sm font-mono font-bold ${balance >= price ? "text-slate-800" : "text-red-500"}`}>
+                    {balance.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-slate-400">pts</span>
+                </div>
+                <Link href="/points">
+                  <span className="text-[10px] tracking-wide cursor-pointer hover:underline" style={{ color: BRAND }}>
+                    儲值
+                  </span>
+                </Link>
+              </div>
+
+              {/* Draw buttons */}
+              <div className="flex flex-1 gap-2">
+                <button
+                  onClick={() => handleDraw(1)}
+                  disabled={drawing || selectedSlot === null}
+                  className="flex-1 py-3 text-white text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: BRAND }}
+                  onMouseEnter={e => { if (!drawing) e.currentTarget.style.backgroundColor = BRAND_HOVER; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = BRAND; }}
+                  title={selectedSlot === null ? "請先選擇格子" : undefined}
+                >
+                  {drawing ? (
+                    <RotateCcw className="w-3.5 h-3.5 animate-spin inline" />
+                  ) : (
+                    <>抽 1 次</>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDraw(10)}
+                  disabled={drawing}
+                  className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
+                  style={{ color: BRAND, borderColor: `rgba(6,3,141,0.3)`, backgroundColor: "rgba(6,3,141,0.04)" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = BRAND; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(6,3,141,0.04)"; e.currentTarget.style.color = BRAND; }}
+                >
+                  10 連抽
+                </button>
+                <button
+                  onClick={() => handleDraw(100)}
+                  disabled={drawing}
+                  className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
+                  style={{ color: "#64748b", borderColor: "#e2e8f0", backgroundColor: "#fff" }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#fff"; }}
+                >
+                  100 連
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <BottomTabBar />
     </div>
