@@ -294,6 +294,20 @@ export const lootpoolRouter = router({
         return { success: true };
       }),
 
+    delete: adminProcedure
+      .input(z.object({ poolId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDbInstance();
+        const [pool] = await db.select().from(pools).where(eq(pools.id, input.poolId)).limit(1);
+        if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在" });
+        if (pool.status !== "draft") throw new TRPCError({ code: "CONFLICT", message: "只有草稿狀態的卡池可以刪除" });
+        // Delete child records first
+        await db.delete(poolSlots).where(eq(poolSlots.poolId, input.poolId));
+        await db.delete(poolRewards).where(eq(poolRewards.poolId, input.poolId));
+        await db.delete(pools).where(eq(pools.id, input.poolId));
+        return { success: true };
+      }),
+
     getMaintenanceMode: adminProcedure.query(async () => {
       const setting = await getSystemSetting("lootpool_maintenance_mode");
       return { enabled: setting?.settingValue === "true", message: setting?.description ?? "" };
