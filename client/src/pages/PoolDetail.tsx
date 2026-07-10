@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ArrowLeft, Coins, Lock, Star, Trophy, Sparkles, Package, RotateCcw } from "lucide-react";
+import { CardImage } from "@/components/CardImage";
 
 const BRAND = "#06038D";
 const BRAND_HOVER = "#0805b8";
@@ -64,7 +65,7 @@ function HeroCover({ imgs, theme }: { imgs: any[]; theme: ReturnType<typeof getT
       {imgs.length > 0 ? (
         <div className="absolute inset-0 overflow-hidden">
           {c3 && (
-            <img src={c3.imageUrl} alt="" draggable={false}
+            <CardImage src={c3.imageUrl} alt="" draggable={false}
               className="absolute object-contain rounded-sm pointer-events-none"
               style={{
                 height: "130%", width: "auto",
@@ -75,7 +76,7 @@ function HeroCover({ imgs, theme }: { imgs: any[]; theme: ReturnType<typeof getT
               }} />
           )}
           {c2 && (
-            <img src={c2.imageUrl} alt="" draggable={false}
+            <CardImage src={c2.imageUrl} alt="" draggable={false}
               className="absolute object-contain rounded-sm pointer-events-none"
               style={{
                 height: "130%", width: "auto",
@@ -86,7 +87,7 @@ function HeroCover({ imgs, theme }: { imgs: any[]; theme: ReturnType<typeof getT
               }} />
           )}
           {c1 && (
-            <img src={c1.imageUrl} alt="" draggable={false}
+            <CardImage src={c1.imageUrl} alt="" draggable={false}
               className="absolute object-contain rounded-sm pointer-events-none"
               style={{
                 height: "145%", width: "auto",
@@ -211,7 +212,7 @@ function RewardRevealDialog({ open, onClose, reward }: { open: boolean; onClose:
 
           <div className="relative">
             {reward?.imageUrl ? (
-              <img src={reward.imageUrl} alt={reward.name}
+              <CardImage src={reward.imageUrl} alt={reward.name}
                 className="w-44 h-auto object-contain"
                 style={{ filter: `drop-shadow(0 20px 30px rgba(0,0,0,0.15))` }} />
             ) : (
@@ -455,7 +456,7 @@ export default function PoolDetail() {
                       <div key={r.id} className="flex-shrink-0 bg-white rounded-none"
                         style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
                         {r.imageUrl ? (
-                          <img src={r.imageUrl} alt={r.name}
+                          <CardImage src={r.imageUrl} alt={r.name}
                             className="w-full aspect-[2/3] object-contain p-2" />
                         ) : (
                           <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
@@ -482,7 +483,7 @@ export default function PoolDetail() {
                     <div key={r.id} className="flex-shrink-0 bg-white"
                       style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
                       {r.imageUrl ? (
-                        <img src={r.imageUrl} alt={r.name} className="w-full aspect-[2/3] object-contain p-2" />
+                        <CardImage src={r.imageUrl} alt={r.name} className="w-full aspect-[2/3] object-contain p-2" />
                       ) : (
                         <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
                           <Sparkles className="w-6 h-6 text-slate-200" />
@@ -514,12 +515,12 @@ export default function PoolDetail() {
             )}
           </div>
 
-          <div className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${Math.min(10, pool.totalSlots)}, 1fr)` }}>
+          {/* 手機 8 欄 / 桌面 10 欄，overflow-hidden 防止溢出 */}
+          <div className="grid gap-1 overflow-hidden grid-cols-8 md:grid-cols-10">
             {sortedSlots.map((slot: any) => (
               <button
                 key={slot.slotIndex}
-                className="aspect-square text-xs font-mono transition-all duration-150 rounded-sm"
+                className="w-full min-w-0 aspect-square text-xs font-mono transition-all duration-150 rounded-sm flex items-center justify-center"
                 style={getSlotStyle(slot.isDrawn, selectedSlot === slot.slotIndex)}
                 onClick={() => handleSlotClick(slot.slotIndex, slot.isDrawn)}
                 disabled={slot.isDrawn || drawing}
@@ -528,9 +529,9 @@ export default function PoolDetail() {
                 {slot.isDrawn ? (
                   <span style={{ color: "#cbd5e1" }}>✓</span>
                 ) : selectedSlot === slot.slotIndex ? (
-                  <span className="text-white font-black">★</span>
+                  <span className="text-white font-black text-[10px]">★</span>
                 ) : (
-                  <span className="text-[10px]">{slot.slotIndex + 1}</span>
+                  <span className="text-[10px] leading-none">{slot.slotIndex + 1}</span>
                 )}
               </button>
             ))}
