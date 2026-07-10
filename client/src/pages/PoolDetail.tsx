@@ -3,6 +3,7 @@
  * 品牌藍高亮 · 高級雜誌感 · 日系 Gacha 機台
  */
 import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -349,7 +350,8 @@ export default function PoolDetail() {
   const price = pool.pricePoints ?? 0;
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
+    <>
+    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
 
       {/* ─── Sticky Top Nav ─────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100">
@@ -578,21 +580,22 @@ export default function PoolDetail() {
         reward={revealedReward}
       />
 
-      {/* ─── Sticky Bottom Action Drawer ─────────────────────────────────── */}
-      {/* Mobile: sits above BottomTabBar (z-40, 56px). Desktop: BottomTabBar is hidden (md:hidden). */}
-      {/* Drawer: on mobile bottom=56px (above BottomTabBar), on desktop bottom=0 */}
-      <div className="fixed left-0 w-full z-50 bottom-0"
+    </div>
+
+    {/* Sticky Drawer via Portal - bypasses PageTransition overflow-hidden */}
+    {createPortal(
+      <div
+        className="fixed bottom-0 left-0 w-full z-[999]"
         style={{
           background: "rgba(255,255,255,0.95)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          boxShadow: "0 -10px 30px rgba(0,0,0,0.05)",
+          borderTop: "1px solid rgba(226,232,240,0.8)",
+          boxShadow: "0 -15px 30px rgba(0,0,0,0.06)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
-        {/* Inner wrapper: on mobile add 56px bottom margin to clear BottomTabBar */}
-      <div className="max-w-2xl mx-auto px-4 py-3 md:pb-3" style={{ marginBottom: 0 }}>
-        {/* Mobile spacer handled by outer fixed positioning */}
+        <div className="max-w-2xl mx-auto px-4 py-3">
           {!user ? (
             <Link href="/login">
               <button className="w-full py-3.5 text-white text-xs tracking-widest uppercase font-medium transition-colors"
@@ -662,8 +665,9 @@ export default function PoolDetail() {
             </div>
           )}
         </div>
-      </div>
-
-    </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
