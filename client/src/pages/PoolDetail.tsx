@@ -451,7 +451,7 @@ export default function PoolDetail() {
       </div>
 
       {/* ─── Hero Console (16:9) ─────────────────────────────────────────── */}
-      <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: "56vw" }}>
+      <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: "min(56vw, 420px)" }}>
         {pool.coverImageUrl ? (
           <CardImage src={pool.coverImageUrl} alt="封面" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
