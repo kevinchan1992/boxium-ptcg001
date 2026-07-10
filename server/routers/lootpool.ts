@@ -447,6 +447,22 @@ export const lootpoolRouter = router({
         return { success: true };
       }),
 
+    grantPoints: adminProcedure
+      .input(z.object({
+        points: z.number().int().positive(),
+        note: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // 管理員直接將點數入帳到自己的帳戶（測試用）
+        const newBalance = await adjustPoints(
+          ctx.user.id,
+          input.points,
+          "admin_adjust",
+          input.note ?? `[ADMIN 測試] 直接入帳 ${input.points.toLocaleString()} pts`,
+        );
+        return { success: true, newBalance };
+      }),
+
     generateCoverImage: adminProcedure
       .input(z.object({ poolId: z.number() }))
       .mutation(async ({ input }) => {

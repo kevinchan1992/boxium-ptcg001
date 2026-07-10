@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { RotateCcw, ArrowLeft } from "lucide-react";
+import { RotateCcw, ArrowLeft, Zap } from "lucide-react";
 
 // Brand blue: #06038D (BOXIUM LOGO colour)
 const BRAND = "#06038D";
@@ -136,6 +136,32 @@ export default function Points() {
 
   const { data: txData, refetch: refetchTx } =
     trpc.lootpool.myTransactions.useQuery({ limit: 10, offset: 0 }, { enabled: !!user });
+
+  const isAdmin = (user as any)?.role === "admin";
+  const [grantingPkg, setGrantingPkg] = useState<number | null>(null);
+
+  const grantPointsMutation = trpc.lootpool.adminPool.grantPoints.useMutation({
+    onSuccess: (data) => {
+      toast.success(`✅ 已直接入帳！目前餘額：${data.newBalance.toLocaleString()} pts`);
+      setGrantingPkg(null);
+      utils.lootpool.myBalance.invalidate();
+      utils.lootpool.myTransactions.invalidate();
+      setTimeout(() => setShowSuccessModal(true), 300);
+    },
+    onError: (err) => {
+      toast.error("入帳失敗", { description: err.message });
+      setGrantingPkg(null);
+    },
+  });
+
+  const handleAdminGrant = (pkg: typeof PACKAGES[0], idx: number) => {
+    setGrantingPkg(idx);
+    const totalPts = pkg.points + pkg.bonus;
+    grantPointsMutation.mutate({
+      points: totalPts,
+      note: `[ADMIN 測試] ${pkg.label} 套餐 ${totalPts.toLocaleString()} pts`,
+    });
+  };
 
   const createCheckout = trpc.lootpool.createTopupCheckout.useMutation({
     onSuccess: (data) => {
@@ -313,7 +339,7 @@ export default function Points() {
                   {/* CTA Button */}
                   <button
                     onClick={() => handleBuy(pkg, idx)}
-                    disabled={loadingPkg !== null}
+                    disabled={loadingPkg !== null || grantingPkg !== null}
                     className="w-full py-3.5 text-xs tracking-widest uppercase font-medium transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white"
                     style={{ backgroundColor: BRAND }}
                     onMouseEnter={e => { if (loadingPkg === null) e.currentTarget.style.backgroundColor = BRAND_HOVER; }}
@@ -326,6 +352,27 @@ export default function Points() {
                       </span>
                     ) : "PURCHASE"}
                   </button>
+
+                  {/* Admin-only: 直接入帳按鈕 */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleAdminGrant(pkg, idx)}
+                      disabled={grantingPkg !== null || loadingPkg !== null}
+                      className="mt-2 w-full py-2.5 text-xs tracking-widest uppercase font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 border"
+                      style={{
+                        borderColor: "#f59e0b",
+                        color: grantingPkg === idx ? "#92400e" : "#92400e",
+                        backgroundColor: grantingPkg === idx ? "#fef3c7" : "#fffbeb",
+                      }}
+                      title={`[ADMIN 測試] 直接入帳 ${(pkg.points + pkg.bonus).toLocaleString()} pts`}
+                    >
+                      {grantingPkg === idx ? (
+                        <><RotateCcw className="w-3 h-3 animate-spin" /><span>GRANTING...</span></>
+                      ) : (
+                        <><Zap className="w-3 h-3" /><span>ADMIN: GRANT {(pkg.points + pkg.bonus).toLocaleString()} PTS</span></>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
