@@ -651,7 +651,7 @@ export function TopNav() {
                           backgroundClip: "text",
                         }}
                       >
-                        BOXIUM 福袋
+                        BOXIUM 盲盒
                       </span>
                       <span className="absolute bottom-0 left-8 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(168,85,247,0.3)" }} />
                     </div>
