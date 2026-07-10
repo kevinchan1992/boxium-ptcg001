@@ -469,13 +469,13 @@ export default function Home() {
         >
           <p
             className="text-[9px] uppercase tracking-[0.2em]"
-            style={{ color: '#333333', fontFamily: 'monospace' }}
+            style={{ color: '#ffffff', fontFamily: 'monospace' }}
           >
             TCG MARKET INTELLIGENCE
           </p>
           <p
             className="text-[9px] uppercase tracking-[0.2em]"
-            style={{ color: '#333333', fontFamily: 'monospace' }}
+            style={{ color: '#ffffff', fontFamily: 'monospace' }}
           >
             PSA 10 · SNKRDUNK · HKD
           </p>
