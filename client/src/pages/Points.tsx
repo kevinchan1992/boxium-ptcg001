@@ -191,7 +191,7 @@ export default function Points() {
                   MEMBERSHIP
                 </p>
                 <h1 className="text-5xl md:text-6xl font-extralight tracking-widest text-slate-900 uppercase">
-                  {user ? (user.role === "admin" ? "DIAMOND" : "STANDARD") : "GUEST"}
+                  {user ? (user.name || user.email?.split("@")[0] || "MEMBER") : "GUEST"}
                 </h1>
                 <div className="mt-3 flex items-center gap-3">
                   {/* Brand-blue accent line */}
