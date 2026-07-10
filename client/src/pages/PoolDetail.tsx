@@ -453,19 +453,21 @@ export default function PoolDetail() {
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
                     {tierRewards.map((r: any) => (
-                      <div key={r.id} className="flex-shrink-0 bg-white rounded-none"
-                        style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
+                      <div key={r.id} className="flex-shrink-0 rounded-sm overflow-hidden"
+                        style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.10)", width: "150px" }}>
                         {r.imageUrl ? (
                           <CardImage src={r.imageUrl} alt={r.name}
-                            className="w-full aspect-[2/3] object-contain p-2" />
+                            className="w-full aspect-[2/3] object-cover" />
                         ) : (
-                          <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
-                            <Star className="w-6 h-6 text-slate-200" />
+                          <div className="w-full aspect-[2/3] bg-slate-100 flex items-center justify-center">
+                            <Star className="w-6 h-6 text-slate-300" />
                           </div>
                         )}
-                        <div className="px-2 pb-3">
-                          <p className="text-xs font-medium text-slate-700 truncate leading-tight">{r.name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">×{r.quantity}</p>
+                        <div className="px-2 py-2 bg-white">
+                          <p className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">PSA 10</p>
+                          <p className="text-xs font-mono font-bold text-slate-800 mt-0.5 truncate">
+                            {r.psa10Price ?? "—"}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -480,18 +482,21 @@ export default function PoolDetail() {
                 <div className="mb-3"><TierBadge type="milestone" /></div>
                 <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
                   {milestoneRewards.map((r: any) => (
-                    <div key={r.id} className="flex-shrink-0 bg-white"
-                      style={{ boxShadow: "0 15px 40px rgba(0,0,0,0.03)", width: "120px" }}>
+                    <div key={r.id} className="flex-shrink-0 rounded-sm overflow-hidden"
+                      style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.10)", width: "150px" }}>
                       {r.imageUrl ? (
-                        <CardImage src={r.imageUrl} alt={r.name} className="w-full aspect-[2/3] object-contain p-2" />
+                        <CardImage src={r.imageUrl} alt={r.name} className="w-full aspect-[2/3] object-cover" />
                       ) : (
-                        <div className="w-full aspect-[2/3] bg-slate-50 flex items-center justify-center">
-                          <Sparkles className="w-6 h-6 text-slate-200" />
+                        <div className="w-full aspect-[2/3] bg-slate-100 flex items-center justify-center">
+                          <Sparkles className="w-6 h-6 text-slate-300" />
                         </div>
                       )}
-                      <div className="px-2 pb-3">
-                        <p className="text-xs font-medium text-slate-700 truncate">{r.name}</p>
-                        {r.triggerAt && <p className="text-[10px] text-orange-400 font-mono mt-0.5">第 {r.triggerAt} 抽</p>}
+                      <div className="px-2 py-2 bg-white">
+                        {r.triggerAt && <p className="text-[10px] text-orange-400 font-mono">第 {r.triggerAt} 抄</p>}
+                        <p className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">PSA 10</p>
+                        <p className="text-xs font-mono font-bold text-slate-800 mt-0.5 truncate">
+                          {r.psa10Price ?? "—"}
+                        </p>
                       </div>
                     </div>
                   ))}

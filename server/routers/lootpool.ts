@@ -8,8 +8,9 @@ import { getSystemSetting, setSystemSetting } from "../db";
 import { eq, and, sql } from "drizzle-orm";
 import Stripe from "stripe";
 import {
-  pools, poolRewards, poolSlots, userVault, userPointBalance, pointTransactions
+  pools, poolRewards, poolSlots, userVault, userPointBalance, pointTransactions, priceHistory
 } from "../../drizzle/schema_new";
+import { desc } from "drizzle-orm";
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
 }
@@ -92,7 +93,28 @@ export const lootpoolRouter = router({
       if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在" });
       const rewards = await db.select().from(poolRewards).where(eq(poolRewards.poolId, input.poolId));
       const slots = await db.select().from(poolSlots).where(eq(poolSlots.poolId, input.poolId));
-      return { pool, rewards, slots };
+
+      // Fetch PSA 10 reference price for each reward that has a cardId
+      const cardIds = rewards.map((r) => r.cardId).filter((id): id is number => id != null);
+      const psaPriceMap: Record<number, string | null> = {};
+      if (cardIds.length > 0) {
+        for (const cid of cardIds) {
+          const [latest] = await db
+            .select({ price: priceHistory.price, currency: priceHistory.currency })
+            .from(priceHistory)
+            .where(and(eq(priceHistory.cardId, cid), sql`${priceHistory.grade} = 'PSA 10'`, sql`${priceHistory.isSuspectedBulk} = 0`))
+            .orderBy(desc(priceHistory.soldAt))
+            .limit(1);
+          psaPriceMap[cid] = latest ? `${latest.currency} ${Number(latest.price).toLocaleString()}` : null;
+        }
+      }
+
+      const rewardsWithPrice = rewards.map((r) => ({
+        ...r,
+        psa10Price: r.cardId != null ? (psaPriceMap[r.cardId] ?? null) : null,
+      }));
+
+      return { pool, rewards: rewardsWithPrice, slots };
     }),
 
   myBalance: protectedProcedure.query(async ({ ctx }) => {
