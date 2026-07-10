@@ -61,6 +61,8 @@ export function TopNav() {
   const { data: user } = trpc.auth.me.useQuery();
   const { data: sellerCenterAccess } = trpc.grading.getSellerCenterAccess.useQuery(undefined, { staleTime: 60000 });
   const showSellButton = user?.role === 'admin' || sellerCenterAccess?.allowed !== false;
+  const { data: lootModeData } = trpc.lootpool.checkMaintenanceMode.useQuery(undefined, { staleTime: 60000 });
+  const showLootPool = !(lootModeData?.enabled) || user?.role === 'admin';
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
@@ -619,6 +621,43 @@ export function TopNav() {
 
             {/* Nav items — editorial TOC */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-0">
+              {/* BOXIUM 福袋 — 第一項，維護模式開啟時非管理員隱藏 */}
+              {showLootPool && (
+                <motion.div
+                  initial={{ x: -24, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.05, type: "spring", damping: 28, stiffness: 260 }}
+                >
+                  <Link href="/pools" onClick={handleNavClick}>
+                    <div
+                      className="group relative flex items-baseline gap-3 py-3 cursor-pointer"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                    >
+                      <span style={{ fontFamily: "monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(168,85,247,0.7)", flexShrink: 0, width: "20px" }}>
+                        00
+                      </span>
+                      <span
+                        className="group-hover:translate-x-1.5 transition-transform duration-200 animate-rainbow-shift"
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontSize: "clamp(18px, 4vw, 22px)",
+                          fontWeight: 700,
+                          letterSpacing: "0.02em",
+                          lineHeight: 1.1,
+                          background: "linear-gradient(90deg, #a855f7, #ec4899, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)",
+                          backgroundSize: "200% auto",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }}
+                      >
+                        BOXIUM 福袋
+                      </span>
+                      <span className="absolute bottom-0 left-8 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: "rgba(168,85,247,0.3)" }} />
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
               {navItems.map((item, index) => {
                 const active = isActive(item.href);
                 const num = String(index + 1).padStart(2, "0");
