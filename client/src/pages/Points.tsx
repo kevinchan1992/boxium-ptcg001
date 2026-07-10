@@ -4,6 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { RotateCcw, ArrowLeft } from "lucide-react";
 
+// Brand blue: #06038D (BOXIUM LOGO colour)
+const BRAND = "#06038D";
+const BRAND_HOVER = "#0805b8";
+
 // ─── Point packages ──────────────────────────────────────────────────────────
 const PACKAGES = [
   { points: 500,    hkd: 25.10,   bonus: 25,   label: "STARTER",  popular: false },
@@ -30,7 +34,7 @@ function ConfettiParticle({ delay, x, color }: { delay: number; x: number; color
 
 // ─── Success Modal ────────────────────────────────────────────────────────────
 function SuccessModal({ balance, onClose }: { balance: number; onClose: () => void }) {
-  const confettiColors = ["#2563EB", "#7C3AED", "#F59E0B", "#10B981", "#EF4444", "#EC4899"];
+  const confettiColors = [BRAND, "#7C3AED", "#F59E0B", "#10B981", "#EF4444", "#EC4899"];
   const particles = Array.from({ length: 30 }, (_, i) => ({
     id: i,
     delay: Math.random() * 600,
@@ -53,11 +57,15 @@ function SuccessModal({ balance, onClose }: { balance: number; onClose: () => vo
             <ConfettiParticle key={p.id} delay={p.delay} x={p.x} color={p.color} />
           ))}
         </div>
-        <div className="h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+        {/* Top rainbow bar — keep gradient for celebratory feel */}
+        <div className="h-0.5 bg-gradient-to-r from-[#06038D] via-purple-500 to-pink-500" />
         <div className="px-8 pt-10 pb-8 text-center">
           <div
-            className="mx-auto mb-5 w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center"
-            style={{ animation: "check-pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s both" }}
+            className="mx-auto mb-5 w-16 h-16 rounded-full flex items-center justify-center"
+            style={{
+              backgroundColor: BRAND,
+              animation: "check-pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s both",
+            }}
           >
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"
@@ -80,7 +88,10 @@ function SuccessModal({ balance, onClose }: { balance: number; onClose: () => vo
           <div className="flex gap-3" style={{ animation: "fade-up 0.4s ease 0.6s both" }}>
             <button
               onClick={() => { window.location.href = "/pools"; }}
-              className="flex-1 bg-slate-900 hover:bg-blue-600 text-white text-xs tracking-widest uppercase py-3.5 transition-colors duration-300 font-medium"
+              className="flex-1 text-white text-xs tracking-widest uppercase py-3.5 transition-colors duration-300 font-medium"
+              style={{ backgroundColor: BRAND }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}
             >
               OPEN PACKS
             </button>
@@ -183,8 +194,12 @@ export default function Points() {
                   {user ? (user.role === "admin" ? "DIAMOND" : "STANDARD") : "GUEST"}
                 </h1>
                 <div className="mt-3 flex items-center gap-3">
-                  <div className="h-px w-8 bg-blue-600" />
-                  <span className="text-xs tracking-widest text-blue-600 uppercase font-medium">
+                  {/* Brand-blue accent line */}
+                  <div className="h-px w-8" style={{ backgroundColor: BRAND }} />
+                  <span
+                    className="text-xs tracking-widest uppercase font-medium"
+                    style={{ color: BRAND }}
+                  >
                     {user ? user.email : "Not signed in"}
                   </span>
                 </div>
@@ -204,7 +219,10 @@ export default function Points() {
                   <span className="text-sm tracking-widest text-slate-400 uppercase">pts</span>
                   <button
                     onClick={handleRefresh}
-                    className="ml-1 text-slate-300 hover:text-blue-600 transition-colors"
+                    className="ml-1 text-slate-300 transition-colors"
+                    style={{}}
+                    onMouseEnter={e => (e.currentTarget.style.color = BRAND)}
+                    onMouseLeave={e => (e.currentTarget.style.color = "")}
                     title="Refresh balance"
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -238,14 +256,22 @@ export default function Points() {
             {PACKAGES.map((pkg, idx) => (
               <div
                 key={idx}
-                className={`relative bg-white group transition-all duration-300 rounded-none ${
-                  pkg.popular
-                    ? "shadow-[0_4px_40px_rgba(37,99,235,0.10)] ring-1 ring-blue-200"
-                    : "shadow-[0_2px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_50px_rgba(0,0,0,0.08)]"
-                }`}
+                className="relative bg-white group transition-all duration-300 rounded-none"
+                style={pkg.popular ? {
+                  boxShadow: `0 4px 40px rgba(6,3,141,0.10)`,
+                  outline: `1px solid rgba(6,3,141,0.20)`,
+                } : {
+                  boxShadow: "0 2px 30px rgba(0,0,0,0.04)",
+                }}
               >
                 {/* Top accent line */}
-                <div className={`h-0.5 w-full ${pkg.popular ? "bg-blue-600" : "bg-slate-100 group-hover:bg-slate-300 transition-colors duration-300"}`} />
+                <div
+                  className="h-0.5 w-full transition-colors duration-300"
+                  style={pkg.popular
+                    ? { backgroundColor: BRAND }
+                    : { backgroundColor: "#e2e8f0" }
+                  }
+                />
 
                 <div className="p-6 md:p-7">
                   {/* Label row */}
@@ -254,7 +280,10 @@ export default function Points() {
                       {pkg.label}
                     </span>
                     {pkg.popular && (
-                      <span className="text-[10px] tracking-[0.25em] uppercase border border-blue-600 text-blue-600 px-2 py-0.5 font-medium">
+                      <span
+                        className="text-[10px] tracking-[0.25em] uppercase px-2 py-0.5 font-medium"
+                        style={{ border: `1px solid ${BRAND}`, color: BRAND }}
+                      >
                         MOST POPULAR
                       </span>
                     )}
@@ -269,7 +298,7 @@ export default function Points() {
                   </div>
 
                   {/* Bonus */}
-                  <p className="text-xs tracking-wide text-blue-500 font-mono mb-1">
+                  <p className="text-xs tracking-wide font-mono mb-1" style={{ color: BRAND }}>
                     ＋{pkg.bonus.toLocaleString()} bonus pts
                   </p>
 
@@ -285,11 +314,10 @@ export default function Points() {
                   <button
                     onClick={() => handleBuy(pkg, idx)}
                     disabled={loadingPkg !== null}
-                    className={`w-full py-3.5 text-xs tracking-widest uppercase font-medium transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      pkg.popular
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-slate-900 hover:bg-blue-600 text-white"
-                    }`}
+                    className="w-full py-3.5 text-xs tracking-widest uppercase font-medium transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                    style={{ backgroundColor: BRAND }}
+                    onMouseEnter={e => { if (loadingPkg === null) e.currentTarget.style.backgroundColor = BRAND_HOVER; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = BRAND; }}
                   >
                     {loadingPkg === idx ? (
                       <span className="flex items-center justify-center gap-2">
@@ -313,7 +341,10 @@ export default function Points() {
                 {txData.map((tx: any, i: number) => (
                   <div key={i} className="flex items-center justify-between py-4">
                     <div className="flex items-center gap-4">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tx.amount > 0 ? "bg-blue-500" : "bg-slate-300"}`} />
+                      <div
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tx.amount > 0 ? BRAND : "#cbd5e1" }}
+                      />
                       <div>
                         <p className="text-sm text-slate-700 tracking-wide">{tx.note || "—"}</p>
                         <p className="text-xs text-slate-400 tracking-wide mt-0.5">
@@ -322,7 +353,10 @@ export default function Points() {
                       </div>
                     </div>
                     <div className="text-right ml-4 flex-shrink-0">
-                      <p className={`text-sm font-mono font-medium ${tx.amount > 0 ? "text-blue-600" : "text-slate-400"}`}>
+                      <p
+                        className="text-sm font-mono font-medium"
+                        style={{ color: tx.amount > 0 ? BRAND : "#94a3b8" }}
+                      >
                         {tx.amount > 0 ? "+" : ""}{tx.amount.toLocaleString()} pt
                       </p>
                       <p className="text-xs text-slate-300 font-mono mt-0.5">
@@ -355,7 +389,10 @@ export default function Points() {
               {!user && (
                 <button
                   onClick={() => window.location.href = "/login"}
-                  className="self-start bg-slate-900 hover:bg-blue-600 text-white text-xs tracking-widest uppercase px-6 py-3 transition-colors duration-300 font-medium"
+                  className="self-start text-white text-xs tracking-widest uppercase px-6 py-3 transition-colors duration-300 font-medium"
+                  style={{ backgroundColor: BRAND }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}
                 >
                   SIGN IN TO PURCHASE
                 </button>
