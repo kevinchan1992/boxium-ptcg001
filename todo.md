@@ -9823,3 +9823,18 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 建立 client/src/pages/PoolDetail.tsx（10x10 格子抽卡介面）
 - [x] 更新 App.tsx 路由（/admin/pools、/pools、/pools/:id）
 - [x] TypeScript 0 errors 確認
+
+## ✅ Pools 列表頁 + PoolCard 全面重構為 Editorial Premium Style（2026-07-10）
+
+- [x] 重寫 PoolCard.tsx：移除紫色/粉紅按鈕，改為 bg-slate-900 hover:bg-[#06038D]
+- [x] 重寫 PoolCard.tsx：進度條改為 h-1.5 品牌藍填充，加 X/Y Left 標示
+- [x] 重寫 PoolCard.tsx：卡片 border-none，shadow-[0_20px_50px_rgba(0,0,0,0.04)]
+- [x] 重寫 PoolCard.tsx：封面圖滿版頂格，rounded-xl 圓角
+- [x] 重寫 PoolCard.tsx：動態封面改為品牌藍深色系（消滅彩虹漸層）
+- [x] 重寫 PoolCard.tsx：使用 CardImage 代理組件
+- [x] 重寫 Pools.tsx：分類標籤改為底線樣式（border-b-2 border-slate-950），無填色塊
+- [x] 重寫 Pools.tsx：移除 emoji，純文字標籤
+- [x] 重寫 Pools.tsx：網格 grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 max-w-5xl
+- [x] 重寫 Pools.tsx：移除 BottomTabBar（App.tsx 全局掛載）
+- [x] TypeScript 0 errors
+- [x] 保存 checkpoint
