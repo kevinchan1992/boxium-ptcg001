@@ -464,7 +464,7 @@ export default function PoolDetail() {
                           </div>
                         )}
                         <div className="px-2 py-2 bg-white">
-                          <p className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">PSA 10</p>
+                          <p className="text-[10px] font-semibold text-slate-400 tracking-wide">PSA 10 · 參考價格</p>
                           <p className="text-xs font-mono font-bold text-slate-800 mt-0.5 truncate">
                             {r.psa10Price ?? "—"}
                           </p>
@@ -493,7 +493,7 @@ export default function PoolDetail() {
                       )}
                       <div className="px-2 py-2 bg-white">
                         {r.triggerAt && <p className="text-[10px] text-orange-400 font-mono">第 {r.triggerAt} 抄</p>}
-                        <p className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">PSA 10</p>
+                        <p className="text-[10px] font-semibold text-slate-400 tracking-wide">PSA 10 · 參考價格</p>
                         <p className="text-xs font-mono font-bold text-slate-800 mt-0.5 truncate">
                           {r.psa10Price ?? "—"}
                         </p>
