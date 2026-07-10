@@ -267,12 +267,7 @@ export function PoolCard({ pool, showDraftBadge = false }: PoolCardProps) {
         {/* 行動按鈕 — 彩虹流動漸層動畫 */}
         <div className="flex gap-2 pt-0.5">
           <button
-            className="flex-1 py-2.5 text-white rounded-sm text-xs font-bold tracking-wider active:scale-95 animate-rainbow-shift"
-            style={{
-              background:
-                "linear-gradient(90deg, #06038D, #7c3aed, #ec4899, #f59e0b, #10b981, #06038D)",
-              backgroundSize: "300% 100%",
-            }}
+            className="flex-1 py-2.5 bg-slate-900 text-white rounded-sm text-xs font-medium tracking-wider transition-all duration-200 active:scale-95 hover:bg-[#06038D]"
             onClick={(e) => handleDraw(e)}
           >
             抽 1 次
