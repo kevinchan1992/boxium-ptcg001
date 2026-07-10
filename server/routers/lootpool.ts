@@ -219,6 +219,90 @@ export const lootpoolRouter = router({
       return { success: true, reward, slotIndex: input.slotIndex };
     }),
 
+  multiDraw: protectedProcedure
+    .input(z.object({
+      poolId: z.number(),
+      slotIndexes: z.array(z.number()).min(1).max(100),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDbInstance();
+      const [pool] = await db.select().from(pools)
+        .where(and(eq(pools.id, input.poolId), eq(pools.status, "active"))).limit(1);
+      if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在或已關閉" });
+      if (pool.maintenanceMode) throw new TRPCError({ code: "PRECONDITION_FAILED", message: pool.maintenanceMessage ?? "卡池維護中" });
+
+      const count = input.slotIndexes.length;
+      const totalCost = pool.pricePoints * count;
+      const balance = await getPointBalance(ctx.user.id);
+      if (balance < totalCost) throw new TRPCError({ code: "PAYMENT_REQUIRED", message: `點數不足，需要 ${totalCost} 點，目前餘額 ${balance} 點` });
+
+      // Fetch all requested slots
+      const slotsData = await db.select().from(poolSlots)
+        .where(and(
+          eq(poolSlots.poolId, input.poolId),
+          sql`${poolSlots.slotIndex} IN (${sql.join(input.slotIndexes.map(i => sql`${i}`), sql`, `)})`
+        ));
+
+      // Validate none are already drawn
+      const alreadyDrawn = slotsData.filter((s) => s.isDrawn);
+      if (alreadyDrawn.length > 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `格子 ${alreadyDrawn.map(s => s.slotIndex + 1).join(", ")} 已被抽取，請重新選擇`,
+        });
+      }
+      if (slotsData.length !== count) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "部分格子不存在" });
+      }
+
+      // Deduct points once for all draws
+      await adjustPoints(
+        ctx.user.id,
+        -totalCost,
+        "purchase",
+        `${count} 連抽卡池 #${pool.id}（格子 ${input.slotIndexes.map(i => i + 1).join(",")}）`,
+        `pool_${pool.id}_multi_${Date.now()}`
+      );
+
+      // Process each slot
+      const results: Array<{ slotIndex: number; reward: typeof poolRewards.$inferSelect | null }> = [];
+
+      for (const slot of slotsData) {
+        await db.update(poolSlots)
+          .set({ isDrawn: true, drawnByUserId: ctx.user.id, drawnAt: new Date() })
+          .where(eq(poolSlots.id, slot.id));
+
+        let reward: typeof poolRewards.$inferSelect | null = null;
+        if (slot.rewardId) {
+          const [r] = await db.select().from(poolRewards).where(eq(poolRewards.id, slot.rewardId)).limit(1);
+          reward = r ?? null;
+        }
+
+        if (reward) {
+          const effectTierNum = reward.effectTier ? parseInt(reward.effectTier, 10) || 3 : 3;
+          await db.execute(sql`
+            INSERT INTO userVault (userId, poolSlotId, poolId, rewardId, slotIndex, poolTitle, cardName, cardImageUrl, effectTier, uv_status)
+            VALUES (
+              ${ctx.user.id},
+              ${slot.id},
+              ${input.poolId},
+              ${slot.rewardId!},
+              ${slot.slotIndex},
+              ${pool.title ?? null},
+              ${reward.name ?? null},
+              ${reward.imageUrl ?? null},
+              ${effectTierNum},
+              'in_vault'
+            )
+          `);
+        }
+
+        results.push({ slotIndex: slot.slotIndex, reward });
+      }
+
+      return { success: true, results, totalCost };
+    }),
+
   myVault: protectedProcedure
     .input(z.object({ limit: z.number().optional().default(20), offset: z.number().optional().default(0) }))
     .query(async ({ ctx, input }) => {

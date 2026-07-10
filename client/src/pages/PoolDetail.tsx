@@ -265,16 +265,21 @@ export default function PoolDetail() {
     undefined, { enabled: !!user }
   );
 
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  // selectedSlots: Set of slotIndex for multi-select
+  const [selectedSlots, setSelectedSlots] = useState<Set<number>>(new Set());
+  const [multiMode, setMultiMode] = useState<10 | 100 | null>(null); // which multi-draw mode is active
   const [revealOpen, setRevealOpen] = useState(false);
   const [revealedReward, setRevealedReward] = useState<any>(null);
+  const [multiRevealOpen, setMultiRevealOpen] = useState(false);
+  const [multiRevealResults, setMultiRevealResults] = useState<any[]>([]);
   const [drawing, setDrawing] = useState(false);
 
   const drawMutation = trpc.lootpool.draw.useMutation({
     onSuccess: (result) => {
       setRevealedReward(result.reward);
       setRevealOpen(true);
-      setSelectedSlot(null);
+      setSelectedSlots(new Set());
+      setMultiMode(null);
       refetch();
       refetchBalance();
       setDrawing(false);
@@ -285,32 +290,87 @@ export default function PoolDetail() {
     },
   });
 
+  const multiDrawMutation = trpc.lootpool.multiDraw.useMutation({
+    onSuccess: (result) => {
+      setMultiRevealResults(result.results);
+      setMultiRevealOpen(true);
+      setSelectedSlots(new Set());
+      setMultiMode(null);
+      refetch();
+      refetchBalance();
+      setDrawing(false);
+    },
+    onError: (err) => {
+      toast.error("連抽失敗", { description: err.message });
+      setDrawing(false);
+    },
+  });
+
   const handleSlotClick = useCallback((slotIndex: number, isDrawn: boolean) => {
     if (isDrawn || drawing) return;
-    setSelectedSlot((prev) => (prev === slotIndex ? null : slotIndex));
-  }, [drawing]);
+    if (multiMode === null) {
+      // Single draw mode: toggle single selection
+      setSelectedSlots(prev => {
+        const next = new Set(prev);
+        if (next.has(slotIndex)) { next.delete(slotIndex); } else { next.clear(); next.add(slotIndex); }
+        return next;
+      });
+    } else {
+      // Multi-draw mode: toggle up to multiMode slots
+      setSelectedSlots(prev => {
+        const next = new Set(prev);
+        if (next.has(slotIndex)) {
+          next.delete(slotIndex);
+        } else if (next.size < multiMode) {
+          next.add(slotIndex);
+        } else {
+          toast.error(`最多只能選 ${multiMode} 個格子`);
+        }
+        return next;
+      });
+    }
+  }, [drawing, multiMode]);
 
   const handleDraw = (count: number = 1) => {
     if (!user) { toast.error("請先登入"); return; }
     const balance = balanceData?.balance ?? 0;
-    const price = (data?.pool?.pricePoints ?? 0) * count;
-    if (balance < price) {
-      toast.error("點數不足", { description: `需要 ${price} 點，目前餘額 ${balance} 點` });
-      return;
-    }
+    const pricePerSlot = data?.pool?.pricePoints ?? 0;
+
     if (count === 1) {
-      if (selectedSlot === null) { toast.error("請先選擇一個格子"); return; }
+      // Single draw
+      const selectedArr = Array.from(selectedSlots);
+      if (selectedArr.length === 0) { toast.error("請先選擇一個格子"); return; }
+      const slotIndex = selectedArr[0];
+      if (balance < pricePerSlot) {
+        toast.error("點數不足", { description: `需要 ${pricePerSlot} 點，目前餘額 ${balance} 點` });
+        return;
+      }
       setDrawing(true);
-      drawMutation.mutate({ poolId, slotIndex: selectedSlot });
+      drawMutation.mutate({ poolId, slotIndex });
     } else {
-      // Multi-draw: pick first available slots
-      const available = (data?.slots ?? [])
-        .filter((s: any) => !s.isDrawn)
-        .sort((a: any, b: any) => a.slotIndex - b.slotIndex)
-        .slice(0, count);
-      if (available.length === 0) { toast.error("沒有可用格子"); return; }
+      // Multi draw: need exactly count slots selected
+      const selectedArr = Array.from(selectedSlots);
+      if (selectedArr.length !== count) {
+        toast.error(`請選擇 ${count} 個格子`, { description: `目前已選 ${selectedArr.length} 個` });
+        return;
+      }
+      const totalCost = pricePerSlot * count;
+      if (balance < totalCost) {
+        toast.error("點數不足", { description: `需要 ${totalCost} 點，目前餘額 ${balance} 點` });
+        return;
+      }
       setDrawing(true);
-      drawMutation.mutate({ poolId, slotIndex: available[0].slotIndex });
+      multiDrawMutation.mutate({ poolId, slotIndexes: selectedArr });
+    }
+  };
+
+  const handleMultiModeToggle = (mode: 10 | 100) => {
+    if (multiMode === mode) {
+      setMultiMode(null);
+      setSelectedSlots(new Set());
+    } else {
+      setMultiMode(mode);
+      setSelectedSlots(new Set());
     }
   };
 
@@ -511,11 +571,16 @@ export default function PoolDetail() {
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
-              <p className="text-xs tracking-[0.3em] text-slate-400 uppercase font-light">SELECT A SLOT</p>
+              <p className="text-xs tracking-[0.3em] text-slate-400 uppercase font-light">
+                {multiMode ? `SELECT ${multiMode} SLOTS` : "SELECT A SLOT"}
+              </p>
             </div>
-            {selectedSlot !== null && (
+            {selectedSlots.size > 0 && (
               <span className="text-xs font-mono" style={{ color: BRAND }}>
-                # {selectedSlot + 1} SELECTED
+                {multiMode
+                  ? `${selectedSlots.size} / ${multiMode} SELECTED`
+                  : `# ${Array.from(selectedSlots)[0] + 1} SELECTED`
+                }
               </span>
             )}
           </div>
@@ -523,7 +588,8 @@ export default function PoolDetail() {
           {/* 手機 8 欄 / 桌面 10 欄 */}
           <div className="grid gap-1 grid-cols-8 md:grid-cols-10 w-full">
             {sortedSlots.map((slot: any) => {
-              const style = getSlotStyle(slot.isDrawn, selectedSlot === slot.slotIndex);
+              const isSelected = selectedSlots.has(slot.slotIndex);
+              const style = getSlotStyle(slot.isDrawn, isSelected);
               return (
                 <div key={slot.slotIndex} className="relative w-full" style={{ paddingTop: "100%" }}>
                   <button
@@ -535,7 +601,7 @@ export default function PoolDetail() {
                   >
                     {slot.isDrawn ? (
                       <span style={{ color: "#cbd5e1", fontSize: "10px" }}>✓</span>
-                    ) : selectedSlot === slot.slotIndex ? (
+                    ) : isSelected ? (
                       <span style={{ color: "#fff", fontSize: "10px" }}>★</span>
                     ) : (
                       <span>{slot.slotIndex + 1}</span>
@@ -590,6 +656,50 @@ export default function PoolDetail() {
         reward={revealedReward}
       />
 
+      {/* ─── Multi-Draw Results Dialog ───────────────────────────────────── */}
+      <Dialog open={multiRevealOpen} onOpenChange={(v) => !v && setMultiRevealOpen(false)}>
+        <DialogContent className="bg-white border-0 shadow-2xl max-w-lg mx-auto rounded-none p-0 overflow-hidden">
+          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg,${BRAND},#7c3aed,#ec4899,#f59e0b)` }} />
+          <div className="px-6 pt-6 pb-5">
+            <p className="text-xs tracking-[0.3em] text-slate-400 uppercase mb-1">MULTI-DRAW RESULTS</p>
+            <p className="text-lg font-bold text-slate-900 mb-5">{multiRevealResults.length} 張結果</p>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 max-h-80 overflow-y-auto">
+              {multiRevealResults.map((r: any, i: number) => (
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  {r.reward?.imageUrl ? (
+                    <CardImage src={r.reward.imageUrl} alt={r.reward.name}
+                      className="w-full h-auto object-contain"
+                      style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
+                  ) : (
+                    <div className="w-full aspect-[3/4] bg-slate-50 flex items-center justify-center rounded-sm">
+                      <Package className="w-5 h-5 text-slate-300" />
+                    </div>
+                  )}
+                  <span className="text-[9px] text-slate-400 font-mono">#{r.slotIndex + 1}</span>
+                  {r.reward && (
+                    <TierBadge type={r.reward.rewardType} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setMultiRevealOpen(false)}
+                className="flex-1 py-3 border border-slate-200 text-slate-600 text-xs tracking-widest uppercase hover:border-slate-400 transition-colors">
+                繼續抽取
+              </button>
+              <Link href="/vault" className="flex-1">
+                <button className="w-full py-3 text-white text-xs tracking-widest uppercase transition-colors"
+                  style={{ backgroundColor: BRAND }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = BRAND_HOVER)}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = BRAND)}>
+                  查看倉庫
+                </button>
+              </Link>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
 
     {/* Sticky Drawer via Portal - bypasses PageTransition overflow-hidden */}
@@ -636,41 +746,87 @@ export default function PoolDetail() {
 
               {/* Draw buttons */}
               <div className="flex flex-1 gap-2">
-                <button
-                  onClick={() => handleDraw(1)}
-                  disabled={drawing || selectedSlot === null}
-                  className="flex-1 py-3 text-white text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: BRAND }}
-                  onMouseEnter={e => { if (!drawing) e.currentTarget.style.backgroundColor = BRAND_HOVER; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = BRAND; }}
-                  title={selectedSlot === null ? "請先選擇格子" : undefined}
-                >
-                  {drawing ? (
-                    <RotateCcw className="w-3.5 h-3.5 animate-spin inline" />
-                  ) : (
-                    <>抽 1 次</>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleDraw(10)}
-                  disabled={drawing}
-                  className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
-                  style={{ color: BRAND, borderColor: `rgba(6,3,141,0.3)`, backgroundColor: "rgba(6,3,141,0.04)" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = BRAND; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(6,3,141,0.04)"; e.currentTarget.style.color = BRAND; }}
-                >
-                  10 連抽
-                </button>
-                <button
-                  onClick={() => handleDraw(100)}
-                  disabled={drawing}
-                  className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
-                  style={{ color: "#64748b", borderColor: "#e2e8f0", backgroundColor: "#fff" }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#fff"; }}
-                >
-                  100 連
-                </button>
+                {/* 抽 1 次 — only shown when NOT in multi-mode */}
+                {multiMode === null && (
+                  <button
+                    onClick={() => handleDraw(1)}
+                    disabled={drawing || selectedSlots.size === 0}
+                    className="flex-1 py-3 text-white text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: BRAND }}
+                    onMouseEnter={e => { if (!drawing) e.currentTarget.style.backgroundColor = BRAND_HOVER; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = BRAND; }}
+                    title={selectedSlots.size === 0 ? "請先選擇格子" : undefined}
+                  >
+                    {drawing ? (
+                      <RotateCcw className="w-3.5 h-3.5 animate-spin inline" />
+                    ) : (
+                      <>抽 1 次</>
+                    )}
+                  </button>
+                )}
+
+                {/* 10 連抽 — toggle mode, then confirm */}
+                {multiMode !== 100 && (
+                  <button
+                    onClick={() => {
+                      if (multiMode === 10) {
+                        // Already in 10-mode: if 10 selected, execute; else toggle off
+                        if (selectedSlots.size === 10) { handleDraw(10); }
+                        else { handleMultiModeToggle(10); }
+                      } else {
+                        handleMultiModeToggle(10);
+                      }
+                    }}
+                    disabled={drawing}
+                    className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
+                    style={{
+                      color: multiMode === 10 ? "#fff" : BRAND,
+                      borderColor: multiMode === 10 ? BRAND : `rgba(6,3,141,0.3)`,
+                      backgroundColor: multiMode === 10 ? BRAND : "rgba(6,3,141,0.04)",
+                    }}
+                  >
+                    {drawing && multiMode === 10 ? (
+                      <RotateCcw className="w-3.5 h-3.5 animate-spin inline" />
+                    ) : multiMode === 10 ? (
+                      selectedSlots.size === 10
+                        ? <>確認 10 連抽</>
+                        : <>{selectedSlots.size}/10 選中</>
+                    ) : (
+                      <>10 連抽</>
+                    )}
+                  </button>
+                )}
+
+                {/* 100 連 — toggle mode, then confirm */}
+                {multiMode !== 10 && (
+                  <button
+                    onClick={() => {
+                      if (multiMode === 100) {
+                        if (selectedSlots.size === 100) { handleDraw(100); }
+                        else { handleMultiModeToggle(100); }
+                      } else {
+                        handleMultiModeToggle(100);
+                      }
+                    }}
+                    disabled={drawing}
+                    className="flex-1 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 rounded-md border disabled:opacity-40"
+                    style={{
+                      color: multiMode === 100 ? "#fff" : "#64748b",
+                      borderColor: multiMode === 100 ? "#475569" : "#e2e8f0",
+                      backgroundColor: multiMode === 100 ? "#475569" : "#fff",
+                    }}
+                  >
+                    {drawing && multiMode === 100 ? (
+                      <RotateCcw className="w-3.5 h-3.5 animate-spin inline" />
+                    ) : multiMode === 100 ? (
+                      selectedSlots.size === 100
+                        ? <>確認 100 連</>
+                        : <>{selectedSlots.size}/100 選中</>
+                    ) : (
+                      <>100 連</>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
