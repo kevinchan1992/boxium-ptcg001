@@ -546,6 +546,48 @@ async function startServer() {
           }
           return res.json({ received: true });
         }
+        // Handle point topup
+        if (gradingMetaType === "point_topup") {
+          const userId = parseInt(session.metadata?.user_id ?? "0");
+          const points = parseInt(session.metadata?.points ?? "0");
+          if (userId && points > 0) {
+            try {
+              const { getDb: _ptDb } = await import("../db");
+              const { userPointBalance: _upb, pointTransactions: _ptx } = await import("../../drizzle/schema_new");
+              const { sql: _ptSql, eq: _pteq } = await import("drizzle-orm");
+              const _db = await _ptDb();
+              if (_db) {
+                const [row] = await _db.select().from(_upb).where(_pteq(_upb.userId, userId)).limit(1);
+                const current = row?.balance ?? 0;
+                const newBalance = current + points;
+                await _db.execute(_ptSql`
+                  INSERT INTO userPointBalance (userId, balance) VALUES (${userId}, ${newBalance})
+                  ON DUPLICATE KEY UPDATE balance = ${newBalance}
+                `);
+                await _db.insert(_ptx).values({
+                  userId,
+                  type: "topup",
+                  amount: points,
+                  balanceAfter: newBalance,
+                  description: `Stripe 充値 ${points} 點`,
+                  referenceId: session.id,
+                });
+                console.log(`[Webhook] point_topup: userId=${userId}, +${points} pts, newBalance=${newBalance}`);
+                await createNotification({
+                  userId,
+                  type: "system",
+                  title: `點數充値成功 ✅`,
+                  body: `已成功充値 ${points.toLocaleString()} 點，目前餘額 ${newBalance.toLocaleString()} 點。`,
+                  linkUrl: "/points",
+                }).catch(() => {});
+              }
+            } catch (ptErr: any) {
+              console.error(`[Webhook] point_topup error:`, ptErr.message);
+            }
+          }
+          return res.json({ received: true });
+        }
+
         // Handle grading post-payment (pay-after-grading flow)
         if (gradingMetaType === "grading_payment") {
           const submissionId = session.metadata?.submission_id;

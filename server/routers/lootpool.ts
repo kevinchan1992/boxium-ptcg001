@@ -6,9 +6,13 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
 import { getSystemSetting, setSystemSetting } from "../db";
 import { eq, and, sql } from "drizzle-orm";
+import Stripe from "stripe";
 import {
   pools, poolRewards, poolSlots, userVault, userPointBalance, pointTransactions
 } from "../../drizzle/schema_new";
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
+}
 
 async function getDbInstance() {
   const { getDb } = await import("../db");
@@ -95,6 +99,43 @@ export const lootpoolRouter = router({
     const balance = await getPointBalance(ctx.user.id);
     return { balance };
   }),
+
+  createTopupCheckout: protectedProcedure
+    .input(z.object({
+      points: z.number().int().min(100),
+      amountHkd: z.number().positive(),
+      origin: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const stripe = getStripe();
+      const amountCents = Math.round(input.amountHkd * 100);
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{
+          price_data: {
+            currency: "hkd",
+            product_data: {
+              name: `BOXIUM 點數充值 ${input.points.toLocaleString()} 點`,
+              description: `充值後可用於抽取福袋`,
+            },
+            unit_amount: amountCents,
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        customer_email: ctx.user.email ?? undefined,
+        client_reference_id: ctx.user.id.toString(),
+        allow_promotion_codes: true,
+        metadata: {
+          type: "point_topup",
+          user_id: ctx.user.id.toString(),
+          points: input.points.toString(),
+        },
+        success_url: `${input.origin}/points?payment=success`,
+        cancel_url: `${input.origin}/points?payment=cancelled`,
+      });
+      return { checkoutUrl: session.url };
+    }),
 
   myTransactions: protectedProcedure
     .input(z.object({ limit: z.number().optional().default(20), offset: z.number().optional().default(0) }))

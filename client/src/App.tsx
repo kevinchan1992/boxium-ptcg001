@@ -62,6 +62,7 @@ const SetList = lazy(() => import("./pages/SetList"));
 const PoolAdmin = lazy(() => import("./pages/admin/PoolAdmin"));
 const Pools = lazy(() => import("./pages/Pools"));
 const PoolDetail = lazy(() => import("./pages/PoolDetail"));
+const Points = lazy(() => import("./pages/Points"));
 
 // Lazily loaded guard components
 const GradingMaintenanceGuard = lazy(() => import("./components/GradingMaintenanceGuard"));
@@ -213,6 +214,7 @@ function Router() {
             <Route path="/contact" component={Contact} />
             <Route path="/pools" component={Pools} />
             <Route path="/pools/:id" component={PoolDetail} />
+            <Route path="/points" component={Points} />
             <Route path="/unsubscribe" component={Unsubscribe} />
             <Route path={"/404"} component={NotFound} />
             {/* Final fallback route */}
