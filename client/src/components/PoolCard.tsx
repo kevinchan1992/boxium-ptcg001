@@ -264,16 +264,27 @@ export function PoolCard({ pool, showDraftBadge = false }: PoolCardProps) {
           <span className="text-xs font-light text-slate-400 ml-0.5">/ 抽</span>
         </div>
 
-        {/* 行動按鈕 — 深色系，消滅紫色/粉紅 */}
+        {/* 行動按鈕 — 彩虹流動漸層動畫 */}
         <div className="flex gap-2 pt-0.5">
           <button
-            className="flex-1 py-2.5 bg-slate-900 text-white rounded-sm text-xs font-medium tracking-wider transition-all duration-200 active:scale-95 hover:bg-[#06038D]"
+            className="flex-1 py-2.5 text-white rounded-sm text-xs font-bold tracking-wider active:scale-95 animate-rainbow-shift"
+            style={{
+              background:
+                "linear-gradient(90deg, #06038D, #7c3aed, #ec4899, #f59e0b, #10b981, #06038D)",
+              backgroundSize: "300% 100%",
+            }}
             onClick={(e) => handleDraw(e)}
           >
             抽 1 次
           </button>
           <button
-            className="flex-1 py-2.5 bg-slate-900 text-white rounded-sm text-xs font-medium tracking-wider transition-all duration-200 active:scale-95 hover:bg-[#06038D]"
+            className="flex-1 py-2.5 text-white rounded-sm text-xs font-bold tracking-wider active:scale-95 animate-rainbow-shift"
+            style={{
+              background:
+                "linear-gradient(90deg, #ec4899, #f59e0b, #10b981, #06038D, #7c3aed, #ec4899)",
+              backgroundSize: "300% 100%",
+              animationDelay: "0.5s",
+            }}
             onClick={(e) => handleDraw(e, true)}
           >
             10 連
