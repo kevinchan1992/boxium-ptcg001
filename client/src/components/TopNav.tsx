@@ -821,7 +821,7 @@ export function TopNav() {
                   </Button>
                 </div>
               )}
-              <p style={{ fontFamily: "monospace", fontSize: "7px", letterSpacing: "0.2em", color: "rgba(255,255,255,0.12)", textTransform: "uppercase" }}>
+              <p style={{ fontFamily: "monospace", fontSize: "7px", letterSpacing: "0.2em", color: "rgba(255,255,255,1)", textTransform: "uppercase" }}>
                 © BOXIUM TCG · LUCK IN EVERY BOX
               </p>
             </motion.div>
