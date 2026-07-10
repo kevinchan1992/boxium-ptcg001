@@ -91,12 +91,7 @@ export default function Pools() {
               <span className="text-[10px] text-slate-300">×</span>
               <span className="text-[10px] font-black tracking-[0.25em] uppercase text-slate-400">LOOT POOL</span>
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              福袋大廳
-              <span className="ml-2 text-sm font-bold align-middle px-2.5 py-0.5 rounded-full text-white bg-blue-600">
-                {allPools.length} 個開放中
-              </span>
-            </h1>
+
           </div>
 
           {user ? (
@@ -199,33 +194,7 @@ export default function Pools() {
           </div>
         )}
 
-        {/* 點數說明 */}
-        {allPools.length > 0 && (
-          <div className="mt-10 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
-              關於 BOXIUM 點數
-            </h3>
-            <ul className="text-xs text-slate-500 space-y-1.5">
-              {[
-                "HK$1 = 1 點，可用於抽取福袋",
-                "抽到隱藏卡可選擇官方回購（點數）或實體寄出",
-                "點數儲值後不可退款，請確認後再購買",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2">
-                  <span className="text-blue-400 mt-0.5 shrink-0">•</span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <Link href="/points">
-              <button className="mt-4 w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80 border"
-                style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#2563EB" }}>
-                <Coins className="w-3 h-3 inline mr-1.5" />
-                前往儲值點數
-              </button>
-            </Link>
-          </div>
-        )}
+
       </div>
 
       <BottomTabBar />
