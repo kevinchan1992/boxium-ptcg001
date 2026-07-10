@@ -55,10 +55,11 @@ export const lootpoolRouter = router({
     const setting = await getSystemSetting("lootpool_maintenance_mode");
     return { enabled: setting?.settingValue === "true" };
   }),
-  list: publicProcedure.query(async () => {
+  list: publicProcedure.query(async ({ ctx }) => {
     const db = await getDbInstance();
     const isMaintenanceMode = await getSystemSetting("lootpool_maintenance_mode");
-    if (isMaintenanceMode?.settingValue === "true") {
+    const isAdmin = (ctx as any)?.user?.role === 'admin';
+    if (isMaintenanceMode?.settingValue === "true" && !isAdmin) {
       return { pools: [], maintenanceMode: true, maintenanceMessage: isMaintenanceMode.description ?? "福袋系統維護中" };
     }
     const rows = await db.select().from(pools).where(eq(pools.status, "active")).orderBy(pools.sortOrder);
@@ -342,7 +343,7 @@ export const lootpoolRouter = router({
           `);
         }
 
-        await db.update(pools).set({ status: "active", publishedAt: new Date() }).where(eq(pools.id, input.poolId));
+        await db.execute(sql`UPDATE pools SET pool_status = 'active', publishedAt = NOW() WHERE id = ${input.poolId}`);
         return { success: true };
       }),
 
@@ -350,7 +351,7 @@ export const lootpoolRouter = router({
       .input(z.object({ poolId: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDbInstance();
-        await db.update(pools).set({ status: "archived" }).where(eq(pools.id, input.poolId));
+        await db.execute(sql`UPDATE pools SET pool_status = 'archived' WHERE id = ${input.poolId}`);
         return { success: true };
       }),
 

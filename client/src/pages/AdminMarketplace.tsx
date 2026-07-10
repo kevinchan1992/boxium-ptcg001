@@ -8023,6 +8023,7 @@ const sidebarMenuItems: SidebarItem[] = [
   { key: 'audit_logs', label: '審計日誌', icon: ScrollText },
   { key: 'maintenance', label: '維護模式', icon: Shield },
   { key: 'banners', label: '廣告橫幅', icon: ImagePlus },
+  { key: 'lootpools', label: '福袋管理', icon: Package },
 ];
 
 export default function AdminMarketplace() {
@@ -8133,6 +8134,19 @@ export default function AdminMarketplace() {
       case 'audit_logs': return <AuditLogsTab />;
       case 'maintenance': return <MaintenanceModeTab />;
       case 'banners': return <BannersTab />;
+      case 'lootpools': return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="text-5xl">🎁</div>
+          <h2 className="text-xl font-bold text-gray-800">福袋卡池管理</h2>
+          <p className="text-gray-500 text-sm">建立、設定並發布 BOXIUM 福袋卡池</p>
+          <Link href="/admin/pools">
+            <button className="mt-2 px-6 py-3 bg-[#06038d] text-white rounded-xl font-semibold hover:bg-[#06038d]/90 transition-colors flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              前往福袋管理
+            </button>
+          </Link>
+        </div>
+      );
       default: return <ListingsTab onViewOrders={handleViewOrders} />;
     }
   };
