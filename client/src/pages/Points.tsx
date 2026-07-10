@@ -238,7 +238,7 @@ export default function Points() {
             {PACKAGES.map((pkg, idx) => (
               <div
                 key={idx}
-                className={`relative bg-white group transition-all duration-300 ${
+                className={`relative bg-white group transition-all duration-300 rounded-none ${
                   pkg.popular
                     ? "shadow-[0_4px_40px_rgba(37,99,235,0.10)] ring-1 ring-blue-200"
                     : "shadow-[0_2px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_50px_rgba(0,0,0,0.08)]"
@@ -269,8 +269,8 @@ export default function Points() {
                   </div>
 
                   {/* Bonus */}
-                  <p className="text-xs tracking-wide text-blue-500 mb-1">
-                    + {pkg.bonus.toLocaleString()} bonus pts
+                  <p className="text-xs tracking-wide text-blue-500 font-mono mb-1">
+                    ＋{pkg.bonus.toLocaleString()} bonus pts
                   </p>
 
                   {/* Price */}
