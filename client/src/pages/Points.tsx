@@ -220,7 +220,7 @@ export default function Points() {
                       {tx.type === "topup" ? "💳" : tx.type === "draw" ? "🎴" : tx.type === "buyback" ? "💰" : "🔄"}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-900">{tx.description}</p>
+                      <p className="text-sm font-medium text-slate-900">{tx.note}</p>
                       <p className="text-xs text-slate-400">
                         {tx.createdAt ? new Date(tx.createdAt).toLocaleString("zh-HK") : ""}
                       </p>

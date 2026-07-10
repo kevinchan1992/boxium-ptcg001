@@ -2178,7 +2178,7 @@ export const pointTransactions = mysqlTable("pointTransactions", {
   type: mysqlEnum("pt_type", ["topup", "draw", "buyback", "refund", "admin_adjust"]).notNull(),
   amount: int("amount").notNull(),
   balanceAfter: bigint("balanceAfter", { mode: "number" }).notNull(),
-  description: varchar("description", { length: 500 }),
+  note: varchar("note", { length: 500 }),
   referenceId: varchar("referenceId", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

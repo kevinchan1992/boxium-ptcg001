@@ -29,7 +29,7 @@ async function adjustPoints(
   userId: number,
   amount: number,
   type: "topup" | "draw" | "buyback" | "refund" | "admin_adjust",
-  description: string,
+  note: string,
   referenceId?: string
 ) {
   const db = await getDbInstance();
@@ -47,7 +47,7 @@ async function adjustPoints(
     type,
     amount,
     balanceAfter: newBalance,
-    description,
+    note,
     referenceId,
   });
 
