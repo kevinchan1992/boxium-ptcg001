@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index, uniqueIndex, bigint } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, index, uniqueIndex, bigint, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Games table - manages TCG game types
@@ -2152,14 +2152,22 @@ export type InsertPoolSlot = typeof poolSlots.$inferInsert;
 export const userVault = mysqlTable("userVault", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  poolSlotId: int("poolSlotId").notNull(),
   poolId: int("poolId").notNull(),
-  rewardId: int("rewardId").notNull(),
-  slotIndex: int("slotIndex").notNull(),
-  status: mysqlEnum("uv_status", ["pending", "buyback_requested", "buyback_approved", "shipping_requested", "shipped", "completed"]).notNull().default("pending"),
-  shippingAddress: text("shippingAddress"),
-  trackingNumber: varchar("trackingNumber", { length: 100 }),
+  rewardId: int("rewardId").notNull().default(0),
+  slotIndex: int("slotIndex").notNull().default(0),
+  poolTitle: varchar("poolTitle", { length: 255 }),
+  cardName: varchar("cardName", { length: 255 }),
+  cardImageUrl: text("cardImageUrl"),
+  effectTier: int("effectTier").notNull().default(3),
+  isMilestone: tinyint("isMilestone").notNull().default(0),
+  milestoneCardName: varchar("milestoneCardName", { length: 255 }),
+  milestoneCardImageUrl: text("milestoneCardImageUrl"),
+  status: mysqlEnum("uv_status", ["in_vault", "processing_buyback", "sold_to_official", "shipping_requested", "shipped"]).notNull().default("in_vault"),
+  buybackPoints: int("buybackPoints"),
+  shippingAddressId: int("shippingAddressId"),
+  shippingTrackingNumber: varchar("shippingTrackingNumber", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type UserVault = typeof userVault.$inferSelect;
 export type InsertUserVault = typeof userVault.$inferInsert;

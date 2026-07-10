@@ -190,16 +190,29 @@ export const lootpoolRouter = router({
       await adjustPoints(ctx.user.id, -pool.pricePoints, "purchase", `抽取卡池 #${pool.id} 第 ${input.slotIndex + 1} 格`, `pool_${pool.id}_slot_${input.slotIndex}`);
       await db.update(poolSlots).set({ isDrawn: true, drawnByUserId: ctx.user.id, drawnAt: new Date() }).where(eq(poolSlots.id, slot.id));
 
-      let reward = null;
+      let reward: typeof poolRewards.$inferSelect | null = null;
       if (slot.rewardId) {
         const [r] = await db.select().from(poolRewards).where(eq(poolRewards.id, slot.rewardId)).limit(1);
         reward = r ?? null;
       }
 
       if (reward) {
+        // effectTier in poolRewards is varchar (e.g. '1','2','3'); userVault.effectTier is int
+        const effectTierNum = reward.effectTier ? parseInt(reward.effectTier, 10) || 3 : 3;
         await db.execute(sql`
-          INSERT INTO userVault (userId, poolId, rewardId, slotIndex, uv_status)
-          VALUES (${ctx.user.id}, ${input.poolId}, ${slot.rewardId!}, ${input.slotIndex}, 'pending')
+          INSERT INTO userVault (userId, poolSlotId, poolId, rewardId, slotIndex, poolTitle, cardName, cardImageUrl, effectTier, uv_status)
+          VALUES (
+            ${ctx.user.id},
+            ${slot.id},
+            ${input.poolId},
+            ${slot.rewardId!},
+            ${input.slotIndex},
+            ${pool.title ?? null},
+            ${reward.name ?? null},
+            ${reward.imageUrl ?? null},
+            ${effectTierNum},
+            'in_vault'
+          )
         `);
       }
 
