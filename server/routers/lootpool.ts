@@ -118,13 +118,10 @@ export const lootpoolRouter = router({
       }
 
       if (reward) {
-        await db.insert(userVault).values({
-          userId: ctx.user.id,
-          poolId: input.poolId,
-          rewardId: slot.rewardId!,
-          slotIndex: input.slotIndex,
-          status: "pending",
-        });
+        await db.execute(sql`
+          INSERT INTO userVault (userId, poolId, rewardId, slotIndex, uv_status)
+          VALUES (${ctx.user.id}, ${input.poolId}, ${slot.rewardId!}, ${input.slotIndex}, 'pending')
+        `);
       }
 
       return { success: true, reward, slotIndex: input.slotIndex };
@@ -155,7 +152,7 @@ export const lootpoolRouter = router({
         .where(and(eq(userVault.id, input.vaultId), eq(userVault.userId, ctx.user.id))).limit(1);
       if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "倉庫項目不存在" });
       if (item.status !== "pending") throw new TRPCError({ code: "CONFLICT", message: "此項目狀態不允許回購" });
-      await db.update(userVault).set({ status: "buyback_requested" }).where(eq(userVault.id, input.vaultId));
+      await db.execute(sql`UPDATE userVault SET uv_status = 'buyback_requested' WHERE id = ${input.vaultId}`);
       return { success: true };
     }),
 
@@ -167,7 +164,7 @@ export const lootpoolRouter = router({
         .where(and(eq(userVault.id, input.vaultId), eq(userVault.userId, ctx.user.id))).limit(1);
       if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "倉庫項目不存在" });
       if (item.status !== "pending") throw new TRPCError({ code: "CONFLICT", message: "此項目狀態不允許出貨" });
-      await db.update(userVault).set({ status: "shipping_requested", shippingAddress: input.address }).where(eq(userVault.id, input.vaultId));
+      await db.execute(sql`UPDATE userVault SET uv_status = 'shipping_requested', shippingAddress = ${input.address} WHERE id = ${input.vaultId}`);
       return { success: true };
     }),
 
