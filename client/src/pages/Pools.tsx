@@ -1,7 +1,9 @@
 /**
- * Pools — 福袋大廳（Clove/DOPA! 大廠標準）
- * 手機：單欄（全寬大卡片）
- * 桌面：雙欄（max-w-3xl，每張卡片足夠寬大）
+ * Pools — 福袋大廳（Clove 1:1 佈局）
+ *
+ * RWD：
+ *   手機 (<640px)  → 單欄，全寬卡片
+ *   桌面 (≥640px)  → 雙欄，max-w-4xl 居中
  */
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
@@ -12,16 +14,15 @@ import { BottomTabBar } from "@/components/BottomTabBar";
 import { PoolCard } from "@/components/PoolCard";
 
 /* ── 分類 Tab ── */
-const POOL_CATEGORIES = ["hot", "premium", "beginner", "box"] as const;
-type PoolCategoryId = typeof POOL_CATEGORIES[number];
+type PoolCategoryId = "hot" | "premium" | "beginner" | "box";
 type CategoryId = PoolCategoryId | "all";
 
 const CATEGORIES: { id: CategoryId; label: string; emoji: string }[] = [
-  { id: "all",      label: "全部",     emoji: "✦" },
-  { id: "hot",      label: "熱門",     emoji: "🔥" },
-  { id: "premium",  label: "高回報",   emoji: "💎" },
-  { id: "beginner", label: "新手",     emoji: "🔰" },
-  { id: "box",      label: "精選BOX",  emoji: "📦" },
+  { id: "all",      label: "全部",    emoji: "✦"  },
+  { id: "hot",      label: "熱門",    emoji: "🔥" },
+  { id: "premium",  label: "高回報",  emoji: "💎" },
+  { id: "beginner", label: "新手",    emoji: "🔰" },
+  { id: "box",      label: "精選BOX", emoji: "📦" },
 ];
 
 function getPoolCategory(pool: any): PoolCategoryId {
@@ -29,10 +30,10 @@ function getPoolCategory(pool: any): PoolCategoryId {
   const total    = pool.totalSlots  ?? 100;
   const drawn    = pool.drawnCount  ?? 0;
   const fillRate = drawn / Math.max(total, 1);
-  if (fillRate > 0.6)   return "hot";
-  if (price >= 300)     return "premium";
-  if (price <= 80)      return "beginner";
-  if (total >= 5000)    return "box";
+  if (fillRate > 0.6)  return "hot";
+  if (price >= 300)    return "premium";
+  if (price <= 80)     return "beginner";
+  if (total >= 5000)   return "box";
   return "hot";
 }
 
@@ -47,7 +48,9 @@ export default function Pools() {
   const allPools      = data?.pools ?? [];
   const filteredPools = useMemo(() => {
     if (activeCategory === "all") return allPools;
-    return allPools.filter((p: any) => (getPoolCategory(p) as string) === (activeCategory as string));
+    return allPools.filter(
+      (p: any) => (getPoolCategory(p) as string) === (activeCategory as string)
+    );
   }, [allPools, activeCategory]);
 
   /* ── Loading ── */
@@ -63,27 +66,25 @@ export default function Pools() {
   }
 
   /* ── 維護模式 ── */
-  if (data?.maintenanceMode && user?.role !== "admin") {
+  if (data?.maintenanceMode && (user as any)?.role !== "admin") {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 text-center px-6 pb-20">
         <AlertTriangle className="w-12 h-12 text-amber-400" />
         <h2 className="text-xl font-bold text-slate-800">系統維護中</h2>
         <p className="text-slate-500 max-w-sm text-sm">
-          {data.maintenanceMessage ?? "福袋系統正在維護，請稍後再試。"}
+          {(data as any).maintenanceMessage ?? "福袋系統正在維護，請稍後再試。"}
         </p>
         <BottomTabBar />
       </div>
     );
   }
 
-  const pools = allPools;
-
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
 
       {/* ══ 頁首 ══ */}
       <div className="bg-white border-b border-slate-100">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-[10px] font-black tracking-[0.25em] uppercase text-blue-600">BOXIUM</span>
@@ -92,8 +93,8 @@ export default function Pools() {
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">
               福袋大廳
-              <span className="ml-2 text-sm font-bold align-middle px-2 py-0.5 rounded-full text-white bg-blue-600">
-                {pools.length} 個開放中
+              <span className="ml-2 text-sm font-bold align-middle px-2.5 py-0.5 rounded-full text-white bg-blue-600">
+                {allPools.length} 個開放中
               </span>
             </h1>
           </div>
@@ -123,9 +124,11 @@ export default function Pools() {
       </div>
 
       {/* ══ 分類 Tab ══ */}
-      <div className="sticky top-0 z-30 bg-white border-b border-slate-100 overflow-x-auto"
-        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
-        <div className="max-w-3xl mx-auto flex gap-1.5 px-4 py-2.5 min-w-max">
+      <div
+        className="sticky top-0 z-30 bg-white border-b border-slate-100 overflow-x-auto"
+        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+      >
+        <div className="max-w-4xl mx-auto flex gap-1.5 px-4 py-2.5 min-w-max">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             const count = cat.id === "all"
@@ -157,7 +160,7 @@ export default function Pools() {
       </div>
 
       {/* ══ 卡池網格 ══ */}
-      <div className="max-w-3xl mx-auto px-3 py-4 md:px-4 md:py-6">
+      <div className="max-w-4xl mx-auto px-4 py-5">
         {filteredPools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
@@ -177,8 +180,12 @@ export default function Pools() {
             )}
           </div>
         ) : (
-          /* 手機：單欄全寬；桌面（≥640px）：雙欄 */
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-5">
+          /*
+           * Clove RWD 公式：
+           *   手機 (<640px)  → 單欄
+           *   桌面 (≥640px)  → 雙欄
+           */
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
             {filteredPools.map((pool: any) => (
               <PoolCard
                 key={pool.id}
@@ -193,7 +200,7 @@ export default function Pools() {
         )}
 
         {/* 點數說明 */}
-        {pools.length > 0 && (
+        {allPools.length > 0 && (
           <div className="mt-10 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
               關於 BOXIUM 點數
