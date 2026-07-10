@@ -1,7 +1,7 @@
 /**
- * Pools — 福袋大廳 v3
- * 風格：白底日系潮牌電商（Clean × Playful）
- * 品牌主色：BOXIUM 藍 #2563EB + 黃 #FEDD00
+ * Pools — 福袋大廳（Clove/DOPA! 大廠標準）
+ * 手機：單欄（全寬大卡片）
+ * 桌面：雙欄（max-w-3xl，每張卡片足夠寬大）
  */
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
@@ -25,9 +25,9 @@ const CATEGORIES: { id: CategoryId; label: string; emoji: string }[] = [
 ];
 
 function getPoolCategory(pool: any): PoolCategoryId {
-  const price  = pool.pricePoints ?? 0;
-  const total  = pool.totalSlots  ?? 100;
-  const drawn  = pool.drawnCount  ?? 0;
+  const price    = pool.pricePoints ?? 0;
+  const total    = pool.totalSlots  ?? 100;
+  const drawn    = pool.drawnCount  ?? 0;
   const fillRate = drawn / Math.max(total, 1);
   if (fillRate > 0.6)   return "hot";
   if (price >= 300)     return "premium";
@@ -39,9 +39,9 @@ function getPoolCategory(pool: any): PoolCategoryId {
 export default function Pools() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>("all");
 
-  const { data: authData }   = trpc.auth.me.useQuery();
-  const user                 = authData;
-  const { data, isLoading }  = trpc.lootpool.list.useQuery();
+  const { data: authData }    = trpc.auth.me.useQuery();
+  const user                  = authData;
+  const { data, isLoading }   = trpc.lootpool.list.useQuery();
   const { data: balanceData } = trpc.lootpool.myBalance.useQuery(undefined, { enabled: !!user });
 
   const allPools      = data?.pools ?? [];
@@ -81,43 +81,27 @@ export default function Pools() {
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
 
-      {/* ══════════════════════════════════════
-          Hero 頁首（白底品牌風）
-      ══════════════════════════════════════ */}
+      {/* ══ 頁首 ══ */}
       <div className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex items-center justify-between">
-          {/* 左側標題 */}
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span
-                className="text-[10px] font-black tracking-[0.3em] uppercase"
-                style={{ color: "#2563EB" }}
-              >
-                BOXIUM
-              </span>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[10px] font-black tracking-[0.25em] uppercase text-blue-600">BOXIUM</span>
               <span className="text-[10px] text-slate-300">×</span>
-              <span className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-400">
-                LOOT POOL
-              </span>
+              <span className="text-[10px] font-black tracking-[0.25em] uppercase text-slate-400">LOOT POOL</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">
               福袋大廳
-              <span
-                className="ml-2 text-sm font-bold align-middle px-2 py-0.5 rounded-full text-white"
-                style={{ background: "#2563EB" }}
-              >
+              <span className="ml-2 text-sm font-bold align-middle px-2 py-0.5 rounded-full text-white bg-blue-600">
                 {pools.length} 個開放中
               </span>
             </h1>
           </div>
 
-          {/* 右側點數 / 登入 */}
           {user ? (
             <Link href="/points">
-              <div
-                className="flex items-center gap-2 rounded-xl px-3 py-2 cursor-pointer transition-all duration-200 hover:scale-105 border"
-                style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}
-              >
+              <div className="flex items-center gap-2 rounded-xl px-3 py-2 cursor-pointer hover:scale-105 transition-all border"
+                style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}>
                 <Coins className="w-4 h-4 text-amber-500" />
                 <div>
                   <div className="text-sm font-black text-amber-600 leading-none">
@@ -129,11 +113,7 @@ export default function Pools() {
             </Link>
           ) : (
             <Link href="/login">
-              <Button
-                size="sm"
-                className="text-xs h-8 font-bold rounded-full px-4"
-                style={{ background: "#2563EB", color: "white", border: "none" }}
-              >
+              <Button size="sm" className="text-xs h-8 font-bold rounded-full px-4 bg-blue-600 text-white border-none hover:bg-blue-700">
                 <Lock className="w-3 h-3 mr-1" />
                 登入抽卡
               </Button>
@@ -142,14 +122,10 @@ export default function Pools() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          分類 Tab（品牌藍膠囊）
-      ══════════════════════════════════════ */}
-      <div
-        className="sticky top-0 z-30 bg-white border-b border-slate-100 overflow-x-auto"
-        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
-      >
-        <div className="flex gap-1.5 px-4 py-2.5 min-w-max">
+      {/* ══ 分類 Tab ══ */}
+      <div className="sticky top-0 z-30 bg-white border-b border-slate-100 overflow-x-auto"
+        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+        <div className="max-w-3xl mx-auto flex gap-1.5 px-4 py-2.5 min-w-max">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             const count = cat.id === "all"
@@ -159,34 +135,19 @@ export default function Pools() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap"
-                style={
-                  isActive
-                    ? {
-                        background: "#2563EB",
-                        color: "#ffffff",
-                        boxShadow: "0 6px 16px rgba(37,99,235,0.35)",
-                        transform: "scale(1.08)",
-                        transition: "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
-                      }
-                    : {
-                        background: "transparent",
-                        color: "#64748b",
-                        border: "1.5px solid #e2e8f0",
-                        transition: "all 0.2s ease",
-                      }
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300"
+                style={isActive
+                  ? { background: "#2563EB", color: "#fff", boxShadow: "0 6px 16px rgba(37,99,235,0.35)", transform: "scale(1.06)" }
+                  : { background: "transparent", color: "#64748b", border: "1.5px solid #e2e8f0" }
                 }
               >
                 <span>{cat.emoji}</span>
                 <span>{cat.label}</span>
-                <span
-                  className="text-[9px] rounded-full px-1.5 py-0.5 font-bold"
-                  style={
-                    isActive
-                      ? { background: "rgba(255,255,255,0.25)", color: "white" }
-                      : { background: "#f1f5f9", color: "#94a3b8" }
-                  }
-                >
+                <span className="text-[9px] rounded-full px-1.5 py-0.5 font-bold"
+                  style={isActive
+                    ? { background: "rgba(255,255,255,0.25)", color: "white" }
+                    : { background: "#f1f5f9", color: "#94a3b8" }
+                  }>
                   {count}
                 </span>
               </button>
@@ -195,10 +156,8 @@ export default function Pools() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          卡池網格
-      ══════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-3 py-4 md:px-6 md:py-8">
+      {/* ══ 卡池網格 ══ */}
+      <div className="max-w-3xl mx-auto px-3 py-4 md:px-4 md:py-6">
         {filteredPools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
@@ -211,23 +170,24 @@ export default function Pools() {
               {activeCategory === "all" ? "新卡池即將上線，敬請期待" : "請切換其他分類查看"}
             </p>
             {activeCategory !== "all" && (
-              <button
-                onClick={() => setActiveCategory("all")}
-                className="mt-4 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "#2563EB" }}
-              >
+              <button onClick={() => setActiveCategory("all")}
+                className="mt-4 text-xs font-semibold underline underline-offset-2 text-blue-600">
                 查看全部卡池
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-3 lg:gap-6">
+          /* 手機：單欄全寬；桌面（≥640px）：雙欄 */
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-5">
             {filteredPools.map((pool: any) => (
-              <PoolCard key={pool.id} pool={{
-                ...pool,
-                coverImageUrl: pool.coverImageUrl ?? null,
-                drawnCount: pool.drawnCount ?? (pool.totalSlots - (pool.remainingSlots ?? pool.totalSlots)),
-              }} />
+              <PoolCard
+                key={pool.id}
+                pool={{
+                  ...pool,
+                  coverImageUrl: pool.coverImageUrl ?? null,
+                  drawnCount: pool.drawnCount ?? (pool.totalSlots - (pool.remainingSlots ?? pool.totalSlots)),
+                }}
+              />
             ))}
           </div>
         )}
@@ -251,10 +211,8 @@ export default function Pools() {
               ))}
             </ul>
             <Link href="/points">
-              <button
-                className="mt-4 w-full py-2.5 rounded-xl text-xs font-bold transition-all duration-200 hover:opacity-80 border"
-                style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#2563EB" }}
-              >
+              <button className="mt-4 w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80 border"
+                style={{ background: "#EFF6FF", borderColor: "#BFDBFE", color: "#2563EB" }}>
                 <Coins className="w-3 h-3 inline mr-1.5" />
                 前往儲值點數
               </button>
