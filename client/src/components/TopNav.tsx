@@ -621,7 +621,7 @@ export function TopNav() {
 
             {/* Nav items — editorial TOC */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-0">
-              {/* BOXIUM 福袋 — 第一項，維護模式開啟時非管理員隱藏 */}
+              {/* BOXIUM 盲盒 — 第一項，維護模式開啟時非管理員隱藏 */}
               {showLootPool && (
                 <motion.div
                   initial={{ x: -24, opacity: 0 }}

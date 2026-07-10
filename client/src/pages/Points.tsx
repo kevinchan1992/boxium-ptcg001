@@ -167,7 +167,7 @@ export default function Points() {
         {/* ─── Top Nav Bar ─────────────────────────────────────────────── */}
         <div className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between">
           <button
-            onClick={() => navigate(-1 as any)}
+            onClick={() => navigate("/pools")}
             className="flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
