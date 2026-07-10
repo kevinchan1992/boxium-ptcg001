@@ -670,8 +670,9 @@ function RewardSection({
   );
 }
 
-// ─── 建立卡池表單 ─────────────────────────────────────────────────────────────
-function PoolForm({ onSuccess }: { onSuccess: () => void }) {
+// ─── 建立/編輯卡池表單 ────────────────────────────────────────────────────────
+function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () => void; editingPoolId?: number; onCancelEdit?: () => void }) {
+  const isEditing = !!editingPoolId;
   const [form, setForm] = useState<PoolFormData>({
     title: "",
     description: "",
@@ -682,6 +683,40 @@ function PoolForm({ onSuccess }: { onSuccess: () => void }) {
     miscCost: 0,
     rewards: [],
   });
+  const [loadedPoolId, setLoadedPoolId] = useState<number | null>(null);
+
+  // 載入草稿資料
+  const { data: existingData, isLoading: isLoadingExisting } = trpc.lootpool.adminPool.getWithRewards.useQuery(
+    { poolId: editingPoolId! },
+    { enabled: !!editingPoolId }
+  );
+
+  // 將現有資料填入表單
+  useEffect(() => {
+    if (existingData && editingPoolId && loadedPoolId !== editingPoolId) {
+      const { pool, rewards } = existingData;
+      setForm({
+        title: pool.title ?? "",
+        description: pool.description ?? "",
+        totalSlots: pool.totalSlots,
+        pricePoints: pool.pricePoints,
+        officialBuybackPoints: pool.officialBuybackPoints ?? 30,
+        visibleCardCost: pool.visibleCardCost ?? 5,
+        miscCost: pool.miscCost ?? 0,
+        rewards: rewards.map((r: any) => ({
+          id: `existing-${r.id}`,
+          rewardType: r.rewardType as RewardType,
+          name: r.name,
+          imageUrl: r.imageUrl ?? "",
+          cardId: r.cardId ?? undefined,
+          cost: r.cost,
+          quantity: r.quantity,
+          triggerAt: r.triggerAt ?? undefined,
+        })),
+      });
+      setLoadedPoolId(editingPoolId);
+    }
+  }, [existingData, editingPoolId, loadedPoolId]);
 
   const createMutation = trpc.lootpool.adminPool.create.useMutation({
     onSuccess: () => {
@@ -689,6 +724,14 @@ function PoolForm({ onSuccess }: { onSuccess: () => void }) {
       onSuccess();
     },
     onError: (err) => toast.error("建立失敗", { description: err.message }),
+  });
+
+  const updateMutation = trpc.lootpool.adminPool.updateWithRewards.useMutation({
+    onSuccess: () => {
+      toast.success("草稿已更新");
+      onSuccess();
+    },
+    onError: (err) => toast.error("更新失敗", { description: err.message }),
   });
 
   const updateField = <K extends keyof PoolFormData>(key: K, val: PoolFormData[K]) =>
@@ -722,7 +765,7 @@ function PoolForm({ onSuccess }: { onSuccess: () => void }) {
       toast.error("請填寫卡池標題");
       return;
     }
-    createMutation.mutate({
+    const payload = {
       title: form.title,
       description: form.description || undefined,
       totalSlots: form.totalSlots,
@@ -739,13 +782,39 @@ function PoolForm({ onSuccess }: { onSuccess: () => void }) {
         imageUrl: r.imageUrl || undefined,
         cardId: r.cardId,
       })),
-    });
+    };
+    if (isEditing && editingPoolId) {
+      updateMutation.mutate({ poolId: editingPoolId, ...payload });
+      return;
+    }
+    createMutation.mutate(payload);
   };
+
+  if (isEditing && isLoadingExisting) {
+    return (
+      <div className="flex items-center justify-center py-16 text-zinc-500">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+        載入草稿資料中...
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
       {/* 左欄 */}
       <div className="space-y-5">
+        {/* 編輯模式標題 */}
+        {isEditing && (
+          <div className="flex items-center gap-3 bg-blue-950/30 border border-blue-800/40 rounded-xl px-4 py-3">
+            <Edit3 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+            <span className="text-sm text-blue-300 font-medium">正在編輯草稿卡池</span>
+            {onCancelEdit && (
+              <button className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 transition-colors" onClick={onCancelEdit}>
+                取消編輯
+              </button>
+            )}
+          </div>
+        )}
         {/* 基本設定卡片 */}
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
@@ -849,14 +918,16 @@ function PoolForm({ onSuccess }: { onSuccess: () => void }) {
 
         {/* 提交按鈕 */}
         <Button
-          className="w-full bg-zinc-700 hover:bg-zinc-600 text-white hover:scale-[1.01] transition-all"
+          className={`w-full text-white hover:scale-[1.01] transition-all ${
+            isEditing ? "bg-blue-700 hover:bg-blue-600" : "bg-zinc-700 hover:bg-zinc-600"
+          }`}
           onClick={handleSubmit}
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || updateMutation.isPending}
         >
-          {createMutation.isPending ? (
-            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />建立中...</>
+          {(createMutation.isPending || updateMutation.isPending) ? (
+            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />{isEditing ? "更新中..." : "建立中..."}</>
           ) : (
-            <>儲存為草稿</>
+            <>{isEditing ? <><Edit3 className="w-4 h-4 mr-2" />儲存修改</> : "儲存為草稿"}</>
           )}
         </Button>
       </div>
@@ -925,7 +996,7 @@ function DeleteConfirmDialog({
 }
 
 // ─── 卡池列表 ─────────────────────────────────────────────────────────────────
-function PoolList() {
+function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
   const utils = trpc.useUtils();
   const { data: pools, isLoading, refetch } = trpc.lootpool.adminPool.list.useQuery();
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
@@ -1044,6 +1115,15 @@ function PoolList() {
                 <>
                   <Button
                     size="sm"
+                    variant="ghost"
+                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 text-xs h-8 transition-all"
+                    onClick={() => onEdit(pool.id)}
+                  >
+                    <Edit3 className="w-3 h-3 mr-1" />
+                    編輯
+                  </Button>
+                  <Button
+                    size="sm"
                     className="bg-green-700 hover:bg-green-600 text-white text-xs h-8 hover:scale-[1.02] transition-all"
                     onClick={() => publishMutation.mutate({ poolId: pool.id })}
                     disabled={publishMutation.isPending}
@@ -1083,11 +1163,28 @@ function PoolList() {
 
 // ─── 主頁面 ───────────────────────────────────────────────────────────────────
 export default function PoolAdmin() {
-  const [tab, setTab] = useState<"list" | "create">("list");
+  const [tab, setTab] = useState<"list" | "create" | "edit">("list");
+  const [editingPoolId, setEditingPoolId] = useState<number | undefined>(undefined);
   const utils = trpc.useUtils();
 
   const handleCreateSuccess = () => {
     utils.lootpool.adminPool.list.invalidate();
+    setTab("list");
+  };
+
+  const handleEditSuccess = () => {
+    utils.lootpool.adminPool.list.invalidate();
+    setEditingPoolId(undefined);
+    setTab("list");
+  };
+
+  const handleEdit = (poolId: number) => {
+    setEditingPoolId(poolId);
+    setTab("edit");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPoolId(undefined);
     setTab("list");
   };
 
@@ -1108,7 +1205,7 @@ export default function PoolAdmin() {
                   ? "bg-zinc-700 text-white shadow-sm"
                   : "text-zinc-400 hover:text-white"
               }`}
-              onClick={() => setTab("list")}
+              onClick={() => { setTab("list"); setEditingPoolId(undefined); }}
             >
               <Eye className="w-3.5 h-3.5 inline mr-1.5" />
               卡池列表
@@ -1119,19 +1216,32 @@ export default function PoolAdmin() {
                   ? "bg-zinc-700 text-white shadow-sm"
                   : "text-zinc-400 hover:text-white"
               }`}
-              onClick={() => setTab("create")}
+              onClick={() => { setTab("create"); setEditingPoolId(undefined); }}
             >
               <Plus className="w-3.5 h-3.5 inline mr-1.5" />
               建立新卡池
             </button>
+            {tab === "edit" && (
+              <button className="px-4 py-1.5 text-sm rounded-lg font-medium bg-blue-700 text-white shadow-sm">
+                <Edit3 className="w-3.5 h-3.5 inline mr-1.5" />
+                編輯草稿
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* 內容 */}
       <div className="max-w-6xl mx-auto px-6 py-6">
-        {tab === "list" && <PoolList />}
+        {tab === "list" && <PoolList onEdit={handleEdit} />}
         {tab === "create" && <PoolForm onSuccess={handleCreateSuccess} />}
+        {tab === "edit" && editingPoolId && (
+          <PoolForm
+            onSuccess={handleEditSuccess}
+            editingPoolId={editingPoolId}
+            onCancelEdit={handleCancelEdit}
+          />
+        )}
       </div>
     </div>
   );

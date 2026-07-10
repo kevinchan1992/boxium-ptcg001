@@ -247,6 +247,55 @@ export const lootpoolRouter = router({
         return { success: true };
       }),
 
+    updateWithRewards: adminProcedure
+      .input(z.object({
+        poolId: z.number(),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        totalSlots: z.number().min(1).max(1000),
+        pricePoints: z.number().min(1),
+        officialBuybackPoints: z.number().min(0),
+        visibleCardCost: z.number().min(0),
+        miscCost: z.number().min(0).default(0),
+        rewards: z.array(z.object({
+          name: z.string().min(1),
+          rewardType: z.enum(["rainbow", "gold", "blue", "hidden", "milestone"]),
+          cost: z.number().min(0),
+          quantity: z.number().min(1),
+          triggerAt: z.number().optional(),
+          imageUrl: z.string().optional(),
+          cardId: z.number().optional(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDbInstance();
+        const [pool] = await db.select().from(pools).where(eq(pools.id, input.poolId)).limit(1);
+        if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在" });
+        if (pool.status !== "draft") throw new TRPCError({ code: "CONFLICT", message: "只有草稿狀態可以修改" });
+        // Update pool basic fields
+        await db.execute(sql`
+          UPDATE pools SET
+            title = ${input.title},
+            description = ${input.description ?? null},
+            totalSlots = ${input.totalSlots},
+            pricePoints = ${input.pricePoints},
+            officialBuybackPoints = ${input.officialBuybackPoints},
+            visibleCardCost = ${input.visibleCardCost},
+            miscCost = ${input.miscCost}
+          WHERE id = ${input.poolId}
+        `);
+        // Replace all rewards
+        await db.delete(poolRewards).where(eq(poolRewards.poolId, input.poolId));
+        for (const r of input.rewards) {
+          await db.execute(sql`
+            INSERT INTO poolRewards (poolId, name, pr_rewardType, cost, quantity, triggerAt, imageUrl, cardId)
+            VALUES (${input.poolId}, ${r.name}, ${r.rewardType}, ${r.cost}, ${r.quantity},
+                    ${r.triggerAt ?? null}, ${r.imageUrl ?? null}, ${r.cardId ?? null})
+          `);
+        }
+        return { success: true };
+      }),
+
     publish: adminProcedure
       .input(z.object({ poolId: z.number() }))
       .mutation(async ({ input }) => {
