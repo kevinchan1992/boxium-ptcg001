@@ -7,8 +7,7 @@ import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Coins, Lock, Gift, Star, Trophy, Sparkles, ChevronRight, Package, RotateCcw } from "lucide-react";
-import { BottomTabBar } from "@/components/BottomTabBar";
+import { ArrowLeft, Coins, Lock, Star, Trophy, Sparkles, Package, RotateCcw } from "lucide-react";
 
 const BRAND = "#06038D";
 const BRAND_HOVER = "#0805b8";
@@ -333,7 +332,6 @@ export default function PoolDetail() {
             返回列表
           </button>
         </Link>
-        <BottomTabBar />
       </div>
     );
   }
