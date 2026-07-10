@@ -173,7 +173,7 @@ export default function Points() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-xs tracking-widest uppercase">Back</span>
           </button>
-          <span className="text-xs tracking-[0.4em] text-slate-300 uppercase font-light">
+          <span className="text-xs tracking-[0.4em] uppercase font-light" style={{ color: BRAND }}>
             BOXIUM · POINTS
           </span>
           <div className="w-16" />
