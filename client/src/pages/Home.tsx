@@ -791,39 +791,6 @@ export default function Home() {
 
 
 
-      {/* BOXIUM 福袋 Rainbow Entry */}
-      {(!isLootMaintenance || isAdmin) && (
-        <Link href="/pools">
-          <section
-            className="py-3 px-4 cursor-pointer hover:-translate-y-0.5 transition-transform"
-            style={{ backgroundColor: '#0a0a0f' }}
-          >
-            <div className="max-w-6xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span
-                  className="text-xl sm:text-2xl font-extrabold"
-                  style={{
-                    background: 'linear-gradient(90deg, #a855f7, #ec4899, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)',
-                    backgroundSize: '200% auto',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  BOXIUM 福袋
-                </span>
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
-                  style={{ background: 'linear-gradient(90deg, #a855f7, #ec4899)' }}
-                >
-                  NEW
-                </span>
-              </div>
-              <ChevronRight className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.5)' }} />
-            </div>
-          </section>
-        </Link>
-      )}
       {/* Marketplace Marquee Section */}
       <MarketplaceMarquee />
 
