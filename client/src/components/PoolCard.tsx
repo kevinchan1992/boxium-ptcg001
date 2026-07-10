@@ -1,13 +1,9 @@
 /**
- * PoolCard v4 — 潮牌盲盒大廳（視覺衝擊版）
- * - 卡牌區佔 70%，主卡幾乎頂邊框
- * - 強烈 drop-shadow 讓卡牌從白底猛烈跳出
- * - 高飽和電光漸層封面背景
- * - 去除生硬邊框，改用柔和大陰影
- * - 價格 text-2xl font-black 品牌藍
- * - 進度條 h-2.5 加粗
+ * PoolCard — Clove/DOPA! 風格大橫幅卡池卡片
+ * - 上半部：16:9 大橫幅封面（有 coverImageUrl 用圖，無則用 CSS 3D 備用）
+ * - 下半部：點數價格 + 進度條 + 抽1次/10連 按鈕
  */
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Coins } from "lucide-react";
 
 interface RewardImage {
@@ -24,16 +20,16 @@ interface PoolCardProps {
     drawnCount?: number;
     status?: string;
     rewardImages?: RewardImage[];
-    coverImageUrl?: string;
+    coverImageUrl?: string | null;
+    tags?: string[];
   };
   showDraftBadge?: boolean;
   href?: string;
 }
 
-/* ── 高飽和電光漸層主題 ── */
+/* ── 主題色 ── */
 function getTheme(rewardImages: RewardImage[] = []) {
   const types = rewardImages.map((r) => r.rewardType);
-
   if (types.includes("rainbow")) {
     return {
       coverBg: "linear-gradient(140deg, #6d28d9 0%, #ec4899 45%, #2563eb 100%)",
@@ -44,6 +40,8 @@ function getTheme(rewardImages: RewardImage[] = []) {
       hoverBorder: "#7c3aed",
       hoverShadow: "rgba(124,58,237,0.22)",
       priceColor: "#7c3aed",
+      btnDraw: "linear-gradient(135deg,#7c3aed,#ec4899)",
+      btnMulti: "linear-gradient(135deg,#ec4899,#f59e0b)",
     };
   }
   if (types.includes("milestone")) {
@@ -56,6 +54,8 @@ function getTheme(rewardImages: RewardImage[] = []) {
       hoverBorder: "#f97316",
       hoverShadow: "rgba(249,115,22,0.22)",
       priceColor: "#ea580c",
+      btnDraw: "linear-gradient(135deg,#ea580c,#f97316)",
+      btnMulti: "linear-gradient(135deg,#d97706,#b45309)",
     };
   }
   if (types.includes("gold")) {
@@ -68,9 +68,10 @@ function getTheme(rewardImages: RewardImage[] = []) {
       hoverBorder: "#d97706",
       hoverShadow: "rgba(217,119,6,0.22)",
       priceColor: "#b45309",
+      btnDraw: "linear-gradient(135deg,#d97706,#fbbf24)",
+      btnMulti: "linear-gradient(135deg,#b45309,#92400e)",
     };
   }
-  // 預設：BOXIUM 電光藍→紫
   return {
     coverBg: "linear-gradient(140deg, #1d4ed8 0%, #2563eb 35%, #7c3aed 100%)",
     glowColor: "rgba(37,99,235,0.85)",
@@ -80,43 +81,59 @@ function getTheme(rewardImages: RewardImage[] = []) {
     hoverBorder: "#2563eb",
     hoverShadow: "rgba(37,99,235,0.2)",
     priceColor: "#2563eb",
+    btnDraw: "linear-gradient(135deg,#1d4ed8,#2563eb)",
+    btnMulti: "linear-gradient(135deg,#7c3aed,#6d28d9)",
   };
 }
 
-function CardImage({
-  src,
-  style,
-  glowColor,
-  zIndex,
-}: {
-  src: string;
-  style: React.CSSProperties;
-  glowColor: string;
-  zIndex: number;
-}) {
+/* ── CSS 3D 備用封面（無 coverImageUrl 時使用） ── */
+function CSS3DCover({ rewardImages, theme }: { rewardImages: RewardImage[]; theme: ReturnType<typeof getTheme> }) {
+  const [card1, card2, card3] = rewardImages;
   return (
-    <img
-      src={src}
-      alt="card"
-      draggable={false}
-      style={{
-        position: "absolute",
-        userSelect: "none",
-        pointerEvents: "none",
-        /* 強烈立體投影：讓卡牌從白底猛烈跳出 */
-        filter: [
-          `drop-shadow(0 25px 15px rgba(0,0,0,0.35))`,
-          `drop-shadow(0 8px 30px ${glowColor})`,
-          `drop-shadow(0 2px 6px rgba(0,0,0,0.6))`,
-        ].join(" "),
-        zIndex,
-        ...style,
-      }}
-    />
+    <div className="absolute inset-0 overflow-hidden" style={{ background: theme.coverBg }}>
+      {/* 光暈 */}
+      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${theme.glowColor} 0%, transparent 70%)` }} />
+      {/* 粒子 */}
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="absolute rounded-full animate-pulse" style={{
+          width: `${3 + (i % 3) * 2}px`, height: `${3 + (i % 3) * 2}px`,
+          background: "rgba(255,255,255,0.5)",
+          top: `${15 + (i * 13) % 65}%`, left: `${8 + (i * 17) % 80}%`,
+          animationDelay: `${i * 0.5}s`, animationDuration: `${2 + (i % 2)}s`,
+        }} />
+      ))}
+      {/* 3D 卡牌 */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {rewardImages.length > 0 ? (
+          <div className="relative" style={{ width: "60%", aspectRatio: "2/3" }}>
+            {card3 && (
+              <img src={card3.imageUrl} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain rounded-lg"
+                style={{ transform: "rotate(-14deg) translate(-20%, 6%) scale(0.8)", filter: `drop-shadow(0 16px 20px rgba(0,0,0,0.5))`, opacity: 0.55, zIndex: 1 }} />
+            )}
+            {card2 && (
+              <img src={card2.imageUrl} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain rounded-lg"
+                style={{ transform: "rotate(10deg) translate(20%, 6%) scale(0.82)", filter: `drop-shadow(0 16px 20px rgba(0,0,0,0.5))`, opacity: 0.75, zIndex: 2 }} />
+            )}
+            {card1 && (
+              <img src={card1.imageUrl} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain rounded-lg"
+                style={{ transform: "rotate(-3deg) scale(1.06)", filter: `drop-shadow(0 22px 28px rgba(0,0,0,0.6)) drop-shadow(0 0 20px ${theme.glowColor})`, zIndex: 3 }} />
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-white/50">
+            <div className="text-5xl">🎴</div>
+            <span className="text-xs font-medium">神秘卡池</span>
+          </div>
+        )}
+      </div>
+      {/* 底部遮罩 */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.35), transparent)" }} />
+    </div>
   );
 }
 
 export function PoolCard({ pool, showDraftBadge = false, href }: PoolCardProps) {
+  const [, navigate] = useLocation();
   const drawnCount   = pool.drawnCount ?? 0;
   const totalSlots   = pool.totalSlots ?? 100;
   const progress     = Math.min(100, (drawnCount / totalSlots) * 100);
@@ -124,236 +141,117 @@ export function PoolCard({ pool, showDraftBadge = false, href }: PoolCardProps) 
   const rewardImages = pool.rewardImages ?? [];
   const theme        = getTheme(rewardImages);
   const linkHref     = href ?? `/pools/${pool.id}`;
-
-  const [card1, card2, card3] = rewardImages;
+  const hasCover     = !!(pool.coverImageUrl && pool.coverImageUrl.trim());
   const isSoldOut    = remaining <= 0;
   const isAlmostGone = !isSoldOut && remaining <= Math.max(10, totalSlots * 0.05);
+
+  const handleDrawBtn = (e: React.MouseEvent, count: 1 | 10) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/pools/${pool.id}`);
+  };
 
   return (
     <Link href={linkHref}>
       <div
         className="group relative rounded-2xl overflow-hidden cursor-pointer select-none bg-white"
         style={{
-          /* 去除生硬邊框，改用柔和大陰影 */
-          boxShadow: "0 8px 30px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04)",
-          transition: "transform 0.38s cubic-bezier(0.175,0.885,0.32,1.275), box-shadow 0.3s ease",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+          transition: "transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275), box-shadow 0.3s ease",
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLDivElement;
-          el.style.transform = "translateY(-5px) scale(1.03)";
-          el.style.boxShadow = `0 20px 50px ${theme.hoverShadow}, 0 8px 20px rgba(0,0,0,0.08)`;
+          el.style.transform = "translateY(-4px) scale(1.02)";
+          el.style.boxShadow = `0 16px 40px rgba(0,0,0,0.14), 0 0 0 2px ${theme.hoverBorder}50`;
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLDivElement;
-          el.style.transform = "translateY(0) scale(1)";
-          el.style.boxShadow = "0 8px 30px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04)";
+          el.style.transform = "";
+          el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
         }}
       >
-        {/* ══════════════════════════════════
-            封面：高飽和電光漸層 + CSS 3D 卡牌（佔 70%）
-        ══════════════════════════════════ */}
-        <div
-          className="relative overflow-visible"
-          style={{
-            /* 4:3 比例讓封面更高，給卡牌更多空間 */
-            aspectRatio: "3/4",
-            background: theme.coverBg,
-            /* 封面底部圓角去掉，讓資訊欄緊接 */
-            borderRadius: "16px 16px 0 0",
-          }}
-        >
-          {/* 電光感噪點紋理（增加質感） */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle 2px at 12% 18%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 1.5px at 82% 12%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 1px at 58% 72%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 2px at 25% 82%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 1.5px at 90% 58%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 1px at 42% 42%, white 0%, transparent 100%)," +
-                "radial-gradient(circle 1px at 68% 28%, white 0%, transparent 100%)",
-            }}
-          />
+        {/* ══ 封面區（16:9） ══ */}
+        <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
+          {hasCover ? (
+            <img
+              src={pool.coverImageUrl!}
+              alt={pool.title ?? "卡池封面"}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <CSS3DCover rewardImages={rewardImages} theme={theme} />
+          )}
 
-          {/* 底部白色漸層遮罩（過渡到白色資訊欄） */}
-          <div
-            className="absolute bottom-0 left-0 right-0"
-            style={{
-              height: "35%",
-              background: "linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.5) 50%, transparent 100%)",
-            }}
-          />
-
-          {/* ── CSS 3D 卡牌堆疊（主卡幾乎頂邊框） ── */}
-          <div className="absolute inset-0">
-            {/* 第三張（最後方，左傾，半透明） */}
-            {card3 && (
-              <CardImage
-                src={card3.imageUrl}
-                glowColor={theme.glowColor}
-                zIndex={1}
-                style={{
-                  width: "52%",
-                  top: "5%",
-                  left: "-4%",
-                  transform: "rotate(-18deg) scale(0.75)",
-                  opacity: 0.45,
-                }}
-              />
+          {/* 狀態 Badge */}
+          <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1">
+            {showDraftBadge && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-slate-400">草稿</span>
             )}
-
-            {/* 第二張（中間，輕微左傾） */}
-            {card2 && (
-              <CardImage
-                src={card2.imageUrl}
-                glowColor={theme.glowColor}
-                zIndex={2}
-                style={{
-                  width: "58%",
-                  top: "3%",
-                  left: "5%",
-                  transform: "rotate(-9deg) scale(0.86)",
-                  opacity: 0.78,
-                }}
-              />
+            {!showDraftBadge && isSoldOut && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-red-500">已售罄</span>
             )}
-
-            {/* 主卡（最前方，幾乎頂到邊框） */}
-            {card1 && (
-              <CardImage
-                src={card1.imageUrl}
-                glowColor={theme.glowColor}
-                zIndex={3}
-                style={{
-                  /* 主卡放大到 72%，幾乎頂邊框 */
-                  width: "72%",
-                  top: "-2%",
-                  left: "22%",
-                  transform: "rotate(6deg) scale(1.0)",
-                  opacity: 1,
-                  transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1)",
-                }}
-              />
+            {!showDraftBadge && isAlmostGone && !isSoldOut && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: theme.badgeBg }}>即將售罄</span>
             )}
-
-            {/* 無卡牌佔位 */}
-            {rewardImages.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex gap-3 opacity-25">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-xl"
-                      style={{
-                        width: 52, height: 72,
-                        background: "rgba(255,255,255,0.35)",
-                        border: "1.5px solid rgba(255,255,255,0.5)",
-                        transform: `rotate(${(i - 1) * -10}deg) translateY(${i === 1 ? -10 : 5}px)`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            {pool.tags?.map((tag) => (
+              <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                style={{ background: tag === "新著" ? "#ef4444" : tag === "熱門" ? "#f97316" : "#6d28d9" }}>
+                {tag}
+              </span>
+            ))}
           </div>
 
-          {/* ── 左上角 Badge ── */}
-          <div className="absolute top-2.5 left-2.5 z-10">
-            {showDraftBadge ? (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white bg-slate-400 shadow-sm">
-                草稿
-              </span>
-            ) : isSoldOut ? (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white bg-red-500 shadow-sm">
-                已售罄
-              </span>
-            ) : isAlmostGone ? (
-              <span
-                className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
-                style={{ background: theme.badgeBg }}
-              >
-                即將售罄
-              </span>
-            ) : (
-              <span
-                className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
-                style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)" }}
-              >
-                {theme.badgeText}
-              </span>
-            )}
-          </div>
-
-          {/* ── 右上角剩餘格數 ── */}
-          <div className="absolute top-2.5 right-2.5 z-10">
-            <span
-              className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
-              style={{
-                background: "rgba(255,255,255,0.88)",
-                color: "#475569",
-                backdropFilter: "blur(6px)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
+          {/* 右上角剩餘 */}
+          <div className="absolute top-2 right-2 z-10">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+              style={{ background: "rgba(255,255,255,0.88)", color: "#475569", backdropFilter: "blur(6px)" }}>
               剩 {remaining.toLocaleString()}
             </span>
           </div>
         </div>
 
-        {/* ══════════════════════════════════
-            資訊欄：白底、極粗極大藍字價格、加粗進度條
-        ══════════════════════════════════ */}
-        <div className="bg-white px-3 pt-2 pb-3">
-          {/* 卡池名稱 */}
-          {pool.title && (
-            <div className="text-xs font-bold text-slate-600 mb-2 leading-tight line-clamp-1">
-              {pool.title}
-            </div>
-          )}
-
-          {/* 進度條（加粗 h-2.5） */}
-          <div className="mb-2.5">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[10px] text-slate-400 font-medium">
-                剩 {remaining.toLocaleString()} / {totalSlots.toLocaleString()}
+        {/* ══ 資訊欄 ══ */}
+        <div className="bg-white px-2.5 pt-2 pb-2.5 md:px-3 md:pt-2.5 md:pb-3 space-y-2">
+          {/* 進度條 */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] text-slate-400">
+                剩 <span className="text-slate-600 font-semibold">{remaining.toLocaleString()}</span> / {totalSlots.toLocaleString()}
               </span>
-              <span className="text-[10px] font-bold text-slate-400">
-                {progress.toFixed(0)}%
-              </span>
+              <span className="text-[10px] text-slate-400">{(100 - progress).toFixed(0)}% 剩餘</span>
             </div>
-            {/* 加粗進度條 */}
-            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${progress}%`,
-                  background: theme.progressBar,
-                  boxShadow: `0 0 6px ${theme.hoverShadow}`,
-                }}
-              />
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${progress}%`, background: theme.progressBar }} />
             </div>
           </div>
 
-          {/* 價格：極粗極大 */}
+          {/* 價格 */}
           <div className="flex items-baseline gap-1">
-            <Coins
-              className="w-4 h-4 shrink-0"
-              style={{ color: theme.priceColor, marginBottom: 1 }}
-            />
-            <span
-              className="font-black leading-none"
-              style={{
-                color: theme.priceColor,
-                /* 手機 20px，桌面 24px */
-                fontSize: "clamp(18px, 5vw, 24px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <Coins className="w-3.5 h-3.5 shrink-0" style={{ color: theme.priceColor, marginBottom: 1 }} />
+            <span className="font-black leading-none" style={{ color: theme.priceColor, fontSize: "clamp(16px, 4.5vw, 22px)", letterSpacing: "-0.02em" }}>
               {pool.pricePoints.toLocaleString()}
             </span>
-            <span className="text-[11px] text-slate-400 font-semibold">/ 抽</span>
+            <span className="text-[10px] text-slate-400 font-semibold">/ 抽</span>
+          </div>
+
+          {/* 行動按鈕 */}
+          <div className="flex gap-1.5">
+            <button
+              className="flex-1 py-1.5 md:py-2 rounded-xl text-white text-xs md:text-sm font-bold transition-all active:scale-95 hover:opacity-90"
+              style={{ background: theme.btnDraw, boxShadow: `0 3px 10px ${theme.hoverShadow}` }}
+              onClick={(e) => handleDrawBtn(e, 1)}
+            >
+              抽 1 次
+            </button>
+            <button
+              className="flex-1 py-1.5 md:py-2 rounded-xl text-white text-xs md:text-sm font-bold transition-all active:scale-95 hover:opacity-90"
+              style={{ background: theme.btnMulti, boxShadow: `0 3px 10px ${theme.hoverShadow}` }}
+              onClick={(e) => handleDrawBtn(e, 10)}
+            >
+              10 連
+            </button>
           </div>
         </div>
       </div>

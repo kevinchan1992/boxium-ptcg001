@@ -221,9 +221,13 @@ export default function Pools() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-3 lg:gap-6">
             {filteredPools.map((pool: any) => (
-              <PoolCard key={pool.id} pool={pool} />
+              <PoolCard key={pool.id} pool={{
+                ...pool,
+                coverImageUrl: pool.coverImageUrl ?? null,
+                drawnCount: pool.drawnCount ?? (pool.totalSlots - (pool.remainingSlots ?? pool.totalSlots)),
+              }} />
             ))}
           </div>
         )}

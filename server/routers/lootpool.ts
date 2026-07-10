@@ -264,6 +264,7 @@ export const lootpoolRouter = router({
         poolId: z.number(),
         title: z.string().min(1),
         description: z.string().optional(),
+        coverImageUrl: z.string().optional(),
         totalSlots: z.number().min(1).max(1000),
         pricePoints: z.number().min(1),
         officialBuybackPoints: z.number().min(0),
@@ -289,6 +290,7 @@ export const lootpoolRouter = router({
           UPDATE pools SET
             title = ${input.title},
             description = ${input.description ?? null},
+            coverImageUrl = ${input.coverImageUrl ?? null},
             totalSlots = ${input.totalSlots},
             pricePoints = ${input.pricePoints},
             officialBuybackPoints = ${input.officialBuybackPoints},

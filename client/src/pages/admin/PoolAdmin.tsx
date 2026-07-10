@@ -42,6 +42,7 @@ interface RewardItem {
 interface PoolFormData {
   title: string;
   description: string;
+  coverImageUrl: string;
   totalSlots: number;
   pricePoints: number;
   officialBuybackPoints: number;
@@ -676,6 +677,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
   const [form, setForm] = useState<PoolFormData>({
     title: "",
     description: "",
+    coverImageUrl: "",
     totalSlots: 100,
     pricePoints: 100,
     officialBuybackPoints: 30,
@@ -684,6 +686,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
     rewards: [],
   });
   const [loadedPoolId, setLoadedPoolId] = useState<number | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   // 載入草稿資料
   const { data: existingData, isLoading: isLoadingExisting } = trpc.lootpool.adminPool.getWithRewards.useQuery(
@@ -698,6 +701,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
       setForm({
         title: pool.title ?? "",
         description: pool.description ?? "",
+        coverImageUrl: (pool as any).coverImageUrl ?? "",
         totalSlots: pool.totalSlots,
         pricePoints: pool.pricePoints,
         officialBuybackPoints: pool.officialBuybackPoints ?? 30,
@@ -768,6 +772,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
     const payload = {
       title: form.title,
       description: form.description || undefined,
+      coverImageUrl: form.coverImageUrl || undefined,
       totalSlots: form.totalSlots,
       pricePoints: form.pricePoints,
       officialBuybackPoints: form.officialBuybackPoints,
@@ -832,6 +837,57 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
               value={form.title}
               onChange={(e) => updateField("title", e.target.value)}
             />
+          </div>
+
+          {/* 封面橫幅上傳 */}
+          <div>
+            <Label className="text-xs text-zinc-400 mb-1.5 block">
+              封面橫幅圖片 <span className="text-zinc-600 ml-1">（選填，建議 16:9，最大 5MB）</span>
+            </Label>
+            {form.coverImageUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900">
+                <img src={form.coverImageUrl} alt="封面" className="w-full h-32 object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity bg-black/50">
+                  <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                    {coverUploading ? "上傳中..." : "更換圖片"}
+                    <input type="file" accept="image/*" className="hidden" disabled={coverUploading} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); return; }
+                      setCoverUploading(true);
+                      try {
+                        const fd = new FormData(); fd.append("file", file);
+                        const res = await fetch("/api/upload-pool-cover", { method: "POST", body: fd });
+                        const data = await res.json();
+                        if (data.url) { updateField("coverImageUrl", data.url); toast.success("封面已更新"); }
+                        else toast.error("上傳失敗");
+                      } catch { toast.error("上傳失敗"); } finally { setCoverUploading(false); }
+                    }} />
+                  </label>
+                  <button className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition-colors" onClick={() => updateField("coverImageUrl", "")}>移除</button>
+                </div>
+              </div>
+            ) : (
+              <label className={`flex flex-col items-center justify-center w-full h-24 rounded-xl border-2 border-dashed border-zinc-700 hover:border-blue-500/60 hover:bg-blue-950/10 cursor-pointer transition-all ${coverUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="flex flex-col items-center gap-1.5 text-zinc-500 hover:text-blue-400 transition-colors">
+                  {coverUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5" />}
+                  <span className="text-xs">{coverUploading ? "上傳中..." : "點擊上傳封面橫幅"}</span>
+                </div>
+                <input type="file" accept="image/*" className="hidden" disabled={coverUploading} onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) { toast.error("圖片不能超過 5MB"); return; }
+                  setCoverUploading(true);
+                  try {
+                    const fd = new FormData(); fd.append("file", file);
+                    const res = await fetch("/api/upload-pool-cover", { method: "POST", body: fd });
+                    const data = await res.json();
+                    if (data.url) { updateField("coverImageUrl", data.url); toast.success("封面上傳成功！"); }
+                    else toast.error("上傳失敗");
+                  } catch { toast.error("上傳失敗"); } finally { setCoverUploading(false); }
+                }} />
+              </label>
+            )}
           </div>
 
           <div>

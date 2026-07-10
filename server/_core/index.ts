@@ -1407,6 +1407,23 @@ async function startServer() {
     }
   });
 
+  // Pool cover banner upload API
+  app.post("/api/upload-pool-cover", uploadLimiter, upload.single("file"), validateImageMime, async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+      const fileBuffer = req.file.buffer;
+      const mimeType = req.file.mimetype || "image/jpeg";
+      const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
+      const key = `pool-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { storagePut } = await import("../storage");
+      const { url } = await storagePut(key, fileBuffer, mimeType);
+      res.json({ url });
+    } catch (error) {
+      console.error("[PoolCover] Error uploading cover:", error);
+      res.status(500).json({ error: "Failed to upload pool cover" });
+    }
+  });
+
   // ─── OG Image Composer API: returns card image with BOXIUM logo watermark ────────
   app.get("/api/og-image/:cardId", async (req, res) => {
     try {
