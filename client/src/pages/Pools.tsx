@@ -159,19 +159,21 @@ export default function Pools() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap"
                 style={
                   isActive
                     ? {
                         background: "#2563EB",
                         color: "#ffffff",
-                        boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
-                        transform: "scale(1.05)",
+                        boxShadow: "0 6px 16px rgba(37,99,235,0.35)",
+                        transform: "scale(1.08)",
+                        transition: "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
                       }
                     : {
                         background: "transparent",
-                        color: "#94a3b8",
-                        border: "1px solid #e2e8f0",
+                        color: "#64748b",
+                        border: "1.5px solid #e2e8f0",
+                        transition: "all 0.2s ease",
                       }
                 }
               >
