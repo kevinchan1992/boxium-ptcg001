@@ -9838,3 +9838,10 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 重寫 Pools.tsx：移除 BottomTabBar（App.tsx 全局掛載）
 - [x] TypeScript 0 errors
 - [x] 保存 checkpoint
+
+## ✅ AI 封面生成 + 前端卡牌疊加方案（2026-07-10）
+
+- [x] 第一步：修改 PoolCard.tsx — 新增 AICoverWithCards 組件，coverImageUrl 作底層 AI 背景 + 疊加 rewardImages 卡牌（斜向排列 + 3D 投影），無封面圖時維持 DynamicCover
+- [x] 第二步：後端新增 adminPool.generateCoverImage mutation — 呼叫 generateImage() helper，取得 S3 URL 後寫入 pools.coverImageUrl
+- [x] 第三步：PoolAdmin 後台封面區域加入「✨ AI 生成封面」按鈕 — 有 editingPoolId 才可用，loading 狀態顯示旋轉圖示，成功後自動填入 coverImageUrl 預覽
+- [x] TypeScript 0 errors

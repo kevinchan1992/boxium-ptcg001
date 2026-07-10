@@ -10,6 +10,7 @@ import Stripe from "stripe";
 import {
   pools, poolRewards, poolSlots, userVault, userPointBalance, pointTransactions, priceHistory
 } from "../../drizzle/schema_new";
+import { generateImage } from "../_core/imageGeneration";
 import { desc } from "drizzle-orm";
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
@@ -444,6 +445,30 @@ export const lootpoolRouter = router({
       .mutation(async ({ input }) => {
         await setSystemSetting("lootpool_maintenance_mode", input.enabled ? "true" : "false", input.message ?? "");
         return { success: true };
+      }),
+
+    generateCoverImage: adminProcedure
+      .input(z.object({ poolId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDbInstance();
+        const [pool] = await db.select().from(pools).where(eq(pools.id, input.poolId)).limit(1);
+        if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在" });
+
+        // 呼叫內建 AI 生圖 helper
+        // generateImage() 內部已自動將圖片上傳到 S3 並回傳 S3 URL
+        const { url: s3Url } = await generateImage({
+          prompt:
+            "Abstract cyber neon background, dark blue deep purple gradient, holographic texture, glowing particles, luxury gacha gaming aesthetic, 16:9 aspect ratio, no text, no cards, no logos, smooth light streaks, premium dark atmosphere",
+        });
+
+        if (!s3Url) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI 圖片生成失敗，請稍後再試" });
+        }
+
+        // 將 S3 URL 寫入資料庫
+        await db.execute(sql`UPDATE pools SET coverImageUrl = ${s3Url} WHERE id = ${input.poolId}`);
+
+        return { success: true, coverImageUrl: s3Url };
       }),
   }),
 });

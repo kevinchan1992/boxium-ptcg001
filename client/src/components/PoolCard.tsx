@@ -132,6 +132,92 @@ function DynamicCover({ imgs }: { imgs: RewardImage[] }) {
   );
 }
 
+/* ─── AI 背景 + 卡牌疊加封面（有 coverImageUrl 時使用） ─── */
+function AICoverWithCards({ coverImageUrl, imgs }: { coverImageUrl: string; imgs: RewardImage[] }) {
+  const [c1, c2, c3] = imgs;
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* 底層：AI 生成的純背景圖 */}
+      <img
+        src={coverImageUrl}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        loading="lazy"
+      />
+
+      {/* 中心光暈疊加（增強深度感） */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(99,102,241,0.2) 0%, transparent 70%)",
+        }}
+      />
+
+      {/* 中層：真實卡牌動態疊加（斜向排列 + 3D 投影） */}
+      {imgs.length > 0 && (
+        <div className="absolute inset-0 overflow-hidden">
+          {c3 && (
+            <CardImage
+              src={c3.imageUrl}
+              alt=""
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "88%", width: "auto",
+                top: "6%", left: "-6%",
+                transform: "rotate(-20deg)",
+                filter: "drop-shadow(0 16px 24px rgba(0,0,0,0.6))",
+                opacity: 0.35, zIndex: 1,
+              }}
+            />
+          )}
+          {c2 && (
+            <CardImage
+              src={c2.imageUrl}
+              alt=""
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "88%", width: "auto",
+                top: "6%", right: "-6%",
+                transform: "rotate(18deg)",
+                filter: "drop-shadow(0 16px 24px rgba(0,0,0,0.6))",
+                opacity: 0.45, zIndex: 2,
+              }}
+            />
+          )}
+          {c1 && (
+            <CardImage
+              src={c1.imageUrl}
+              alt=""
+              className="absolute object-contain rounded-sm pointer-events-none"
+              style={{
+                height: "115%", width: "auto",
+                top: "-8%", left: "50%",
+                transform: "translateX(-50%) rotate(-4deg)",
+                filter: [
+                  "drop-shadow(0 24px 20px rgba(0,0,0,0.65))",
+                  "drop-shadow(0 0 24px rgba(99,102,241,0.5))",
+                ].join(" "),
+                zIndex: 3,
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* 底部漸層遮罩 → 過渡到白色資訊欄 */}
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: "30%",
+          background:
+            "linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
+        }}
+      />
+    </div>
+  );
+}
+
 /* ─── 主組件 ─── */
 export function PoolCard({ pool, showDraftBadge = false }: PoolCardProps) {
   const [, navigate] = useLocation();
@@ -170,13 +256,10 @@ export function PoolCard({ pool, showDraftBadge = false }: PoolCardProps) {
       {/* ══ 封面（16:9 比例，滿版頂格） ══ */}
       <div className="relative w-full overflow-hidden" style={{ paddingBottom: "56.25%" }}>
         {hasCover ? (
-          <img
-            src={pool.coverImageUrl!}
-            alt={pool.title ?? "卡池封面"}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="lazy"
-          />
+          /* AI 背景 + 卡牌疊加模式 */
+          <AICoverWithCards coverImageUrl={pool.coverImageUrl!} imgs={imgs} />
         ) : (
+          /* 純 CSS 動態封面模式（無封面圖時） */
           <DynamicCover imgs={imgs} />
         )}
 

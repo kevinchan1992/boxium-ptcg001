@@ -687,6 +687,28 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
   });
   const [loadedPoolId, setLoadedPoolId] = useState<number | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const generateCoverMutation = trpc.lootpool.adminPool.generateCoverImage.useMutation({
+    onSuccess: (data) => {
+      updateField("coverImageUrl", data.coverImageUrl);
+      toast.success("✨ AI 封面已生成並儲存！");
+      setAiGenerating(false);
+    },
+    onError: (err) => {
+      toast.error("AI 生成失敗", { description: err.message });
+      setAiGenerating(false);
+    },
+  });
+
+  const handleGenerateCover = () => {
+    if (!editingPoolId) {
+      toast.error("請先儲存草稿再生成封面");
+      return;
+    }
+    setAiGenerating(true);
+    generateCoverMutation.mutate({ poolId: editingPoolId });
+  };
 
   // 載入草稿資料
   const { data: existingData, isLoading: isLoadingExisting } = trpc.lootpool.adminPool.getWithRewards.useQuery(
@@ -841,9 +863,31 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
           {/* 封面橫幅上傳 */}
           <div>
-            <Label className="text-xs text-zinc-400 mb-1.5 block">
-              封面橫幅圖片 <span className="text-zinc-600 ml-1">（選填，建議 16:9，最大 5MB）</span>
-            </Label>
+            <div className="flex items-center justify-between mb-1.5">
+              <Label className="text-xs text-zinc-400">
+                封面橫幅圖片 <span className="text-zinc-600 ml-1">（選填，建議 16:9，最大 5MB）</span>
+              </Label>
+              <button
+                type="button"
+                disabled={aiGenerating || !editingPoolId}
+                onClick={handleGenerateCover}
+                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: aiGenerating
+                    ? "rgba(99,102,241,0.15)"
+                    : "linear-gradient(135deg, #06038D 0%, #7c3aed 100%)",
+                  color: "white",
+                  boxShadow: aiGenerating ? "none" : "0 2px 8px rgba(6,3,141,0.3)",
+                }}
+                title={!editingPoolId ? "請先儲存草稿再生成封面" : "一鍵生成 AI 純背景封面"}
+              >
+                {aiGenerating ? (
+                  <><RefreshCw className="w-3 h-3 animate-spin" /><span>AI 生成中...</span></>
+                ) : (
+                  <><Sparkles className="w-3 h-3" /><span>✨ AI 生成封面</span></>
+                )}
+              </button>
+            </div>
             {form.coverImageUrl ? (
               <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900">
                 <img src={form.coverImageUrl} alt="封面" className="w-full h-32 object-cover" />
