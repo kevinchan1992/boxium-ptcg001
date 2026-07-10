@@ -351,7 +351,7 @@ export default function PoolDetail() {
   const price = pool.pricePoints ?? 0;
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 56px + 80px)' }}>
+    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
 
       {/* ─── Sticky Top Nav ─────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100">
@@ -583,7 +583,7 @@ export default function PoolDetail() {
       {/* ─── Sticky Bottom Action Drawer ─────────────────────────────────── */}
       {/* Mobile: sits above BottomTabBar (z-40, 56px). Desktop: BottomTabBar is hidden (md:hidden). */}
       {/* Drawer: on mobile bottom=56px (above BottomTabBar), on desktop bottom=0 */}
-      <div className="fixed left-0 w-full z-50 bottom-14 md:bottom-0"
+      <div className="fixed left-0 w-full z-50 bottom-0"
         style={{
           background: "rgba(255,255,255,0.95)",
           backdropFilter: "blur(16px)",

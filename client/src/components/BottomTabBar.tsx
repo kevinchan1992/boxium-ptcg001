@@ -116,9 +116,10 @@ export function BottomTabBar() {
     refetchInterval: 60_000,
   });
 
-  // Hide on admin pages and full-screen pages
+  // Hide on admin pages, full-screen pages, and pool detail pages (which have their own sticky drawer)
   const hiddenPaths = ["/admin", "/login", "/register", "/verify-email", "/resend-verification", "/auction/terms"];
-  const shouldHide = hiddenPaths.some((p) => location.startsWith(p));
+  const isPoolDetail = /^\/pools\/\d+/.test(location);
+  const shouldHide = hiddenPaths.some((p) => location.startsWith(p)) || isPoolDetail;
   if (shouldHide) return null;
 
   // Show scan button on search-related pages (mobile only)
