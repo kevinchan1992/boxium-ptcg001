@@ -30,7 +30,7 @@ async function getPointBalance(userId: number): Promise<number> {
 async function adjustPoints(
   userId: number,
   amount: number,
-  type: "topup" | "draw" | "buyback" | "refund" | "admin_adjust",
+  type: "topup" | "purchase" | "buyback" | "refund" | "admin_adjust",
   note: string,
   referenceId?: string
 ) {
@@ -187,7 +187,7 @@ export const lootpoolRouter = router({
       const balance = await getPointBalance(ctx.user.id);
       if (balance < pool.pricePoints) throw new TRPCError({ code: "PAYMENT_REQUIRED", message: "點數不足" });
 
-      await adjustPoints(ctx.user.id, -pool.pricePoints, "draw", `抽取卡池 #${pool.id} 第 ${input.slotIndex + 1} 格`, `pool_${pool.id}_slot_${input.slotIndex}`);
+      await adjustPoints(ctx.user.id, -pool.pricePoints, "purchase", `抽取卡池 #${pool.id} 第 ${input.slotIndex + 1} 格`, `pool_${pool.id}_slot_${input.slotIndex}`);
       await db.update(poolSlots).set({ isDrawn: true, drawnByUserId: ctx.user.id, drawnAt: new Date() }).where(eq(poolSlots.id, slot.id));
 
       let reward = null;

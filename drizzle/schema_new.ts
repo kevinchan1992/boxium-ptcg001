@@ -2175,7 +2175,7 @@ export type UserPointBalance = typeof userPointBalance.$inferSelect;
 export const pointTransactions = mysqlTable("pointTransactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  type: mysqlEnum("pt_type", ["topup", "draw", "buyback", "refund", "admin_adjust"]).notNull(),
+  type: mysqlEnum("pt_type", ["topup", "purchase", "buyback", "refund", "admin_adjust"]).notNull(),
   amount: int("amount").notNull(),
   balanceAfter: bigint("balanceAfter", { mode: "number" }).notNull(),
   note: varchar("note", { length: 500 }),
