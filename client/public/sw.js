@@ -1,22 +1,26 @@
 /**
- * BOXIUM PTCG - Service Worker (穩定版)
+ * BOXIUM PTCG - Service Worker (Stale-Deployment-Safe Version)
  *
  * 設計原則：
- * 1. 絕對不攔截 /api/ 請求 — 讓所有 API 請求直接到達伺服器，不增加任何快取層
- * 2. 只快取靜態資源（JS/CSS/HTML）和 CDN 圖片 — 純前端，不影響後端
- * 3. 圖片快取上限 150 張，超過自動清除最舊的，防止佔用過多裝置空間
- * 4. 所有快取操作都是 try/catch 包裹，失敗時靜默降級
+ * 1. 絕對不攔截 /api/ 請求 — 讓所有 API 請求直接到達伺服器
+ * 2. JS/CSS 靜態資源 → Network First（先去網路，失敗才用快取）
+ *    → 這樣每次部署後，新 hash 的 chunk 一定能從網路取得，不會出現
+ *      "Failed to fetch dynamically imported module" 錯誤
+ * 3. CDN 圖片 → Cache First（7 天，最多 150 張）
+ * 4. HTML 導航 → Network First，離線時降級到 /offline.html
+ * 5. 每次 activate 清除所有舊版快取，確保部署後乾淨啟動
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3'; // ← 每次修改 sw.js 時遞增，強制清除舊快取
 const SHELL_CACHE = `boxium-shell-${CACHE_VERSION}`;
 const IMAGE_CACHE = `boxium-images-${CACHE_VERSION}`;
 
 const MAX_IMAGE_ENTRIES = 150;
-const IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days (reduced from 30)
+const IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// ─── Install: pre-cache only the offline fallback page ──────────────────────
+// ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
+  // Skip waiting immediately so the new SW takes over without waiting for old tabs to close
   event.waitUntil(
     caches.open(SHELL_CACHE)
       .then((cache) => cache.add('/offline.html').catch(() => {}))
@@ -24,7 +28,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ─── Activate: clean up old cache versions ──────────────────────────────────
+// ─── Activate: aggressively clean ALL old caches ─────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
@@ -32,14 +36,17 @@ self.addEventListener('activate', (event) => {
         Promise.all(
           keys
             .filter((key) => key !== SHELL_CACHE && key !== IMAGE_CACHE)
-            .map((key) => caches.delete(key))
+            .map((key) => {
+              console.log('[SW] Deleting old cache:', key);
+              return caches.delete(key);
+            })
         )
       )
       .then(() => self.clients.claim())
   );
 });
 
-// ─── Fetch ──────────────────────────────────────────────────────────────────
+// ─── Fetch ───────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -48,20 +55,18 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // ✅ CRITICAL: Never intercept API calls — pass through directly
-  // This ensures tRPC, auth, webhooks, etc. always reach the server
+  // ✅ CRITICAL: Never intercept API calls
   if (
     url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/api/trpc') ||
     url.pathname.includes('trpc')
   ) {
-    return; // Do not call event.respondWith — browser handles normally
+    return;
   }
 
-  // Skip non-http protocols (chrome-extension, etc.)
+  // Skip non-http protocols
   if (!url.protocol.startsWith('http')) return;
 
-  // ── CDN card images → Cache First (7 days, max 150 entries) ────────────────
+  // ── CDN card images → Cache First (7 days, max 150 entries) ─────────────────
   const isCdnImage = (
     url.hostname.includes('cloudfront.net') ||
     url.hostname.includes('snkrdunk') ||
@@ -75,7 +80,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── HTML navigation → Network First, offline fallback ──────────────────────
+  // ── HTML navigation → Network First, offline fallback ────────────────────────
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -86,9 +91,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── Same-origin static assets (JS/CSS/fonts/images) → Cache First ──────────
+  // ── Same-origin JS/CSS/fonts → Network First (CRITICAL for Vite code-splitting)
+  // We must NOT use Cache First for hashed JS chunks because:
+  // - After a new deploy, new index.html references new chunk hashes
+  // - Old chunks are gone from the server
+  // - Cache First would serve a stale cached chunk that references missing deps
+  // Network First ensures we always get the latest chunk; cache is only a fallback
   if (url.hostname === self.location.hostname) {
-    // Skip dynamic paths — only cache truly static assets
     if (
       url.pathname.startsWith('/api/') ||
       url.pathname === '/' ||
@@ -97,25 +106,31 @@ self.addEventListener('fetch', (event) => {
       return;
     }
 
-    // Only cache files with extensions (JS, CSS, fonts, images)
     if (/\.(js|css|woff2?|ttf|otf|eot|png|jpg|jpeg|webp|svg|ico)(\?.*)?$/.test(url.pathname)) {
       event.respondWith(
-        caches.match(request).then((cached) => {
-          if (cached) return cached;
-          return fetch(request).then((response) => {
+        fetch(request)
+          .then((response) => {
+            // Cache the fresh response for offline fallback
             if (response.ok && response.status === 200) {
               const clone = response.clone();
-              caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone)).catch(() => {});
+              caches.open(SHELL_CACHE)
+                .then((cache) => cache.put(request, clone))
+                .catch(() => {});
             }
             return response;
-          });
-        })
+          })
+          .catch(() =>
+            // Network failed → try cache as last resort
+            caches.match(request).then((cached) =>
+              cached || new Response('', { status: 503 })
+            )
+          )
       );
     }
   }
 });
 
-// ─── CDN Image Handler ───────────────────────────────────────────────────────
+// ─── CDN Image Handler ────────────────────────────────────────────────────────
 async function handleCdnImage(request) {
   try {
     const cache = await caches.open(IMAGE_CACHE);
@@ -142,23 +157,21 @@ async function handleCdnImage(request) {
         });
         await cache.put(request, toStore);
 
-        // Evict oldest if over limit
         const keys = await cache.keys();
         if (keys.length > MAX_IMAGE_ENTRIES) {
           await cache.delete(keys[0]);
         }
       } catch {
-        // Cache write failed — not critical, just return the response
+        // Cache write failed — not critical
       }
     }
     return response;
   } catch {
-    // Network failed and no cache — return empty 503
     return new Response('', { status: 503 });
   }
 }
 
-// ─── Message handler ─────────────────────────────────────────────────────────
+// ─── Message handler ──────────────────────────────────────────────────────────
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
