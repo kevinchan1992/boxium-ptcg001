@@ -5,77 +5,9 @@
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Coins, Package, ChevronRight, Zap, Lock, AlertTriangle } from "lucide-react";
+import { Coins, Zap, Lock, AlertTriangle, Package } from "lucide-react";
 import { BottomTabBar } from "@/components/BottomTabBar";
-
-// 卡池卡片
-function PoolCard({ pool }: { pool: any }) {
-  const drawnCount = pool.drawnCount ?? 0;
-  const totalSlots = pool.totalSlots ?? 100;
-  const progress = Math.min(100, (drawnCount / totalSlots) * 100);
-  const remaining = totalSlots - drawnCount;
-
-  return (
-    <Link href={`/pools/${pool.id}`}>
-      <div className="group relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden cursor-pointer hover:border-zinc-600 transition-all duration-300 hover:shadow-[0_0_24px_rgba(139,92,246,0.15)]">
-        {/* 封面圖 */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-zinc-800">
-          {pool.coverImageUrl ? (
-            <img
-              src={pool.coverImageUrl}
-              alt="卡池封面"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-12 h-12 text-zinc-600" />
-            </div>
-          )}
-          {/* 漸層遮罩 */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
-
-          {/* 剩餘格數 badge */}
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-black/70 text-white border-zinc-700 backdrop-blur-sm text-xs">
-              剩餘 {remaining} 格
-            </Badge>
-          </div>
-        </div>
-
-        {/* 卡池資訊 */}
-        <div className="p-4">
-          {/* 進度條 */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1.5">
-              <span>已抽 {drawnCount}/{totalSlots}</span>
-              <span>{progress.toFixed(0)}%</span>
-            </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          {/* 售價 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Coins className="w-4 h-4 text-yellow-400" />
-              <span className="text-lg font-bold text-white">{pool.pricePoints}</span>
-              <span className="text-xs text-zinc-500">點/格</span>
-            </div>
-            <div className="flex items-center gap-1 text-zinc-400 group-hover:text-purple-400 transition-colors">
-              <span className="text-xs">查看詳情</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
+import { PoolCard } from "@/components/PoolCard";
 
 export default function Pools() {
   const { data: authData } = trpc.auth.me.useQuery();

@@ -62,7 +62,21 @@ export const lootpoolRouter = router({
       return { pools: [], maintenanceMode: true, maintenanceMessage: isMaintenanceMode.description ?? "福袋系統維護中" };
     }
     const rows = await db.select().from(pools).where(eq(pools.status, "active")).orderBy(pools.sortOrder);
-    return { pools: rows, maintenanceMode: false };
+    // 為每個卡池取前 3 張最高等級獎品圖片（用於 PoolCard 3D 卡牌展示）
+    const poolsWithImages = await Promise.all(rows.map(async (pool) => {
+      const topRewards = await db.execute(sql`
+        SELECT imageUrl, pr_rewardType FROM poolRewards
+        WHERE poolId = ${pool.id} AND imageUrl IS NOT NULL AND imageUrl != ''
+        ORDER BY FIELD(pr_rewardType, 'rainbow', 'milestone', 'gold', 'blue', 'hidden') ASC
+        LIMIT 3
+      `);
+      const rewardImages = (topRewards[0] as any[]).map((r: any) => ({
+        imageUrl: r.imageUrl as string,
+        rewardType: r.pr_rewardType as string,
+      }));
+      return { ...pool, rewardImages };
+    }));
+    return { pools: poolsWithImages, maintenanceMode: false };
   }),
 
   getDetail: publicProcedure
