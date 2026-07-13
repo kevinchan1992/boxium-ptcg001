@@ -48,6 +48,8 @@ interface PoolFormData {
   officialBuybackPoints: number;
   visibleCardCost: number;
   miscCost: number;
+  tags: string[];
+  returnRate: number | "";
   rewards: RewardItem[];
 }
 
@@ -683,6 +685,8 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
     officialBuybackPoints: 30,
     visibleCardCost: 5,
     miscCost: 0,
+    tags: [],
+    returnRate: "",
     rewards: [],
   });
   const [loadedPoolId, setLoadedPoolId] = useState<number | null>(null);
@@ -729,6 +733,8 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
         officialBuybackPoints: pool.officialBuybackPoints ?? 30,
         visibleCardCost: pool.visibleCardCost ?? 5,
         miscCost: pool.miscCost ?? 0,
+        tags: (() => { try { return JSON.parse((pool as any).tags ?? "[]") || []; } catch { return []; } })(),
+        returnRate: (pool as any).returnRate ?? "",
         rewards: rewards.map((r: any) => ({
           id: `existing-${r.id}`,
           rewardType: r.rewardType as RewardType,
@@ -800,6 +806,8 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
       officialBuybackPoints: form.officialBuybackPoints,
       visibleCardCost: form.visibleCardCost,
       miscCost: form.miscCost,
+      tags: form.tags.length > 0 ? JSON.stringify(form.tags) : undefined,
+      returnRate: form.returnRate !== "" ? Number(form.returnRate) : undefined,
       rewards: form.rewards.map((r) => ({
         name: r.name || "未命名",
         rewardType: r.rewardType,
@@ -947,6 +955,52 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
             />
           </div>
 
+          {/* 標籤勾選 */}
+          <div>
+            <Label className="text-xs text-zinc-400 mb-2 block">前台標籤 <span className="text-zinc-600 ml-1">（顯示在卡池封面）</span></Label>
+            <div className="flex flex-wrap gap-2">
+              {["限時", "新上架", "高回報", "大賞保證", "BOX 形式", "PSA10", "熱門"].map((tag) => {
+                const selected = form.tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => updateField("tags", selected ? form.tags.filter((t) => t !== tag) : [...form.tags, tag])}
+                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
+                      selected
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-blue-500/60 hover:text-blue-400"
+                    }`}
+                  >
+                    {selected ? "✓ " : ""}{tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 回報率 */}
+          <div>
+            <Label className="text-xs text-zinc-400 mb-1.5 block">
+              總回報率 (%) <span className="text-zinc-600 ml-1">（選填，顯示在封面，例：97）</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={200}
+                className={`${darkInput} w-32`}
+                placeholder="例：97"
+                value={form.returnRate}
+                onChange={(e) => updateField("returnRate", e.target.value === "" ? "" : parseInt(e.target.value) || "")}
+              />
+              <span className="text-zinc-500 text-sm">%</span>
+              {form.returnRate !== "" && Number(form.returnRate) >= 100 && (
+                <span className="text-xs bg-green-900/40 text-green-400 border border-green-700/50 px-2 py-0.5 rounded-full">✓ 保證回本</span>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-zinc-400 mb-1.5 block">總格數</Label>
@@ -1069,7 +1123,7 @@ function DeleteConfirmDialog({
             <AlertDialogTitle className="text-white font-bold">刪除卡池</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="text-zinc-400 pl-13">
-            確定要刪除此草稿卡池嗎？此操作無法復原。
+            確定要删除此卡池嗎？此操作無法復原，所有相關抽卡記錄將一併刪除。
             <span className="block mt-2 font-semibold text-zinc-200">
               「{poolTitle}」
             </span>
@@ -1242,15 +1296,35 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                 </>
               )}
               {pool.status === "active" && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-zinc-700 bg-transparent text-zinc-400 hover:text-white text-xs h-8 hover:scale-[1.02] transition-all"
+                    onClick={() => archiveMutation.mutate({ poolId: pool.id })}
+                    disabled={archiveMutation.isPending}
+                  >
+                    <Archive className="w-3 h-3 mr-1" />
+                    封存
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-500 hover:text-red-400 hover:bg-red-900/20 text-xs h-8 transition-all"
+                    onClick={() => setDeleteTarget({ id: pool.id, title: pool.title })}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+              {pool.status === "archived" && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="border-zinc-700 bg-transparent text-zinc-400 hover:text-white text-xs h-8 hover:scale-[1.02] transition-all"
-                  onClick={() => archiveMutation.mutate({ poolId: pool.id })}
-                  disabled={archiveMutation.isPending}
+                  variant="ghost"
+                  className="text-red-500 hover:text-red-400 hover:bg-red-900/20 text-xs h-8 transition-all"
+                  onClick={() => setDeleteTarget({ id: pool.id, title: pool.title })}
                 >
-                  <Archive className="w-3 h-3 mr-1" />
-                  封存
+                  <Trash2 className="w-3 h-3" />
                 </Button>
               )}
             </div>

@@ -431,6 +431,8 @@ export const lootpoolRouter = router({
         officialBuybackPoints: z.number().min(0),
         visibleCardCost: z.number().min(0),
         miscCost: z.number().min(0).default(0),
+        tags: z.string().optional(), // JSON array string
+        returnRate: z.number().min(0).max(999).optional(),
         rewards: z.array(z.object({
           name: z.string().min(1),
           rewardType: z.enum(["rainbow", "gold", "blue", "hidden", "milestone"]),
@@ -456,7 +458,9 @@ export const lootpoolRouter = router({
             pricePoints = ${input.pricePoints},
             officialBuybackPoints = ${input.officialBuybackPoints},
             visibleCardCost = ${input.visibleCardCost},
-            miscCost = ${input.miscCost}
+            miscCost = ${input.miscCost},
+            tags = ${input.tags ?? null},
+            returnRate = ${input.returnRate ?? null}
           WHERE id = ${input.poolId}
         `);
         // Replace all rewards
@@ -519,12 +523,15 @@ export const lootpoolRouter = router({
       }),
 
     delete: adminProcedure
-      .input(z.object({ poolId: z.number() }))
+      .input(z.object({ poolId: z.number(), force: z.boolean().optional() }))
       .mutation(async ({ input }) => {
         const db = await getDbInstance();
         const [pool] = await db.select().from(pools).where(eq(pools.id, input.poolId)).limit(1);
         if (!pool) throw new TRPCError({ code: "NOT_FOUND", message: "卡池不存在" });
-        if (pool.status !== "draft") throw new TRPCError({ code: "CONFLICT", message: "只有草稿狀態的卡池可以刪除" });
+        // Allow deletion of any status when force=true (admin override)
+        if (!input.force && pool.status === "active") {
+          throw new TRPCError({ code: "CONFLICT", message: "進行中的卡池需要確認才能刪除，請使用強制刪除" });
+        }
         // Delete child records first
         await db.delete(poolSlots).where(eq(poolSlots.poolId, input.poolId));
         await db.delete(poolRewards).where(eq(poolRewards.poolId, input.poolId));

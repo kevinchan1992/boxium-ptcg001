@@ -2113,6 +2113,9 @@ export const pools = mysqlTable("pools", {
   maintenanceMessage: varchar("maintenanceMessage", { length: 500 }),
   sortOrder: int("sortOrder").notNull().default(0),
   publishedAt: timestamp("publishedAt"),
+  tags: text("tags"), // JSON array: ["限時","新上架","高回報","大賞保證","BOX形式"]
+  returnRate: int("returnRate"), // e.g. 97 means 97%
+  freeTrialEnabled: boolean("freeTrialEnabled").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -2191,3 +2194,16 @@ export const pointTransactions = mysqlTable("pointTransactions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type PointTransaction = typeof pointTransactions.$inferSelect;
+
+export const freeTrialDraws = mysqlTable("freeTrialDraws", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  poolId: int("poolId").notNull(),
+  slotIndex: int("slotIndex").notNull(),
+  rewardId: int("rewardId"),
+  rewardName: varchar("rewardName", { length: 255 }),
+  rewardImageUrl: text("rewardImageUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FreeTrialDraw = typeof freeTrialDraws.$inferSelect;
+export type InsertFreeTrialDraw = typeof freeTrialDraws.$inferInsert;

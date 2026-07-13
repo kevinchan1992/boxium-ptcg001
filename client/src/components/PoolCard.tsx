@@ -24,6 +24,7 @@ interface PoolCardProps {
     rewardImages?: RewardImage[];
     coverImageUrl?: string | null;
     tags?: string[];
+    returnRate?: number | null;
   };
   showDraftBadge?: boolean;
 }
@@ -281,16 +282,44 @@ export function PoolCard({ pool, showDraftBadge = false }: PoolCardProps) {
               即將售罄
             </span>
           )}
-          {pool.tags?.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 text-[9px] font-bold tracking-wider text-white rounded-sm"
-              style={{ background: "#06038D" }}
-            >
-              {tag}
-            </span>
-          ))}
+          {pool.tags?.map((tag) => {
+            const tagStyle: Record<string, string> = {
+              "限時": "#b45309",
+              "新上架": "#0369a1",
+              "高回報": "#15803d",
+              "大賞保證": "#7c3aed",
+              "BOX 形式": "#0f172a",
+              "PSA10": "#0f172a",
+              "熱門": "#dc2626",
+            };
+            return (
+              <span
+                key={tag}
+                className="px-2 py-0.5 text-[9px] font-bold tracking-wider text-white rounded-sm"
+                style={{ background: tagStyle[tag] ?? "#06038D" }}
+              >
+                {tag}
+              </span>
+            );
+          })}
         </div>
+
+        {/* 左下角回報率信任指標 */}
+        {pool.returnRate != null && pool.returnRate > 0 && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <span
+              className="px-2.5 py-1 text-[10px] font-bold tracking-wider text-white rounded-sm flex items-center gap-1"
+              style={{
+                background: pool.returnRate >= 100
+                  ? "linear-gradient(135deg, #15803d, #16a34a)"
+                  : "linear-gradient(135deg, #1e3a8a, #06038D)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+              }}
+            >
+              {pool.returnRate >= 100 ? "★ 保證回本" : "★ 回報率"} {pool.returnRate}%
+            </span>
+          </div>
+        )}
 
         {/* 右上角剩餘格數 */}
         <div className="absolute top-3 right-3 z-10">

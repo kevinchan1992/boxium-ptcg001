@@ -233,6 +233,8 @@ export default function Pools() {
                   drawnCount:
                     pool.drawnCount ??
                     pool.totalSlots - (pool.remainingSlots ?? pool.totalSlots),
+                  tags: (() => { try { return JSON.parse(pool.tags ?? "[]"); } catch { return []; } })(),
+                  returnRate: pool.returnRate ?? null,
                 }}
               />
             ))}
