@@ -619,7 +619,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                     fontSize: 'clamp(60px, 12vw, 120px)',
                     fontFamily: "'Playfair Display', Georgia, serif",
                     fontWeight: 900,
-                    color: 'rgba(255,255,255,0.04)',
+                    color: 'rgba(255,255,255,0.02)',
                     lineHeight: 1,
                     letterSpacing: '-0.02em',
                     zIndex: 0,
@@ -740,15 +740,15 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <p className="text-[9px] uppercase tracking-[0.2em] mb-3" style={{ color: '#666666' }}>
+                      <p className="text-[9px] uppercase tracking-[0.2em] mb-3" style={{ color: '#8a99ad' }}>
                         {isSealedProduct ? t("cardDetail.referenceAvgPrice") : t("cardDetail.recentMedian")}
                         {!isSealedProduct && mainPriceSource !== "N/A" && (
-                          <span className="ml-2 normal-case tracking-normal" style={{ color: '#555555' }}>· {mainPriceSource}</span>
+                          <span className="ml-2 normal-case tracking-normal" style={{ color: '#8a99ad' }}>· {mainPriceSource}</span>
                         )}
                       </p>
                       {mainPrice !== null ? (
                         <div className="flex items-baseline gap-2">
-                          <span className="text-xs font-light" style={{ color: '#888888' }}>HKD</span>
+                          <span className="text-xs font-light" style={{ color: '#94a3b8' }}>HKD</span>
                           <span
                             style={{
                               fontFamily: "'Playfair Display', Georgia, serif",
@@ -766,7 +766,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                         <p className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>N/A</p>
                       )}
                       {mainPriceRecordCount > 0 && (
-                        <p className="text-[9px] mt-1.5" style={{ color: '#555555' }}>
+                        <p className="text-[9px] mt-1.5" style={{ color: '#8a99ad' }}>
                           {isSealedProduct
                             ? t("cardDetail.basedOnRecentWeightedAvg", { n: mainPriceRecordCount })
                             : t("cardDetail.basedOnNRecords", { n: mainPriceRecordCount })
@@ -783,7 +783,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           {priceTrend.isIncrease ? <TrendingUp className="w-4 h-4" /> : priceTrend.isDecrease ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                           <span>{Math.abs(priceTrend.change).toFixed(1)}%</span>
                         </div>
-                        <p className="text-[9px]" style={{ color: '#555555' }}>{t("cardDetail.trend7days")}</p>
+                        <p className="text-[9px]" style={{ color: '#8a99ad' }}>{t("cardDetail.trend7days")}</p>
                       </div>
                     )}
                   </div>
@@ -794,7 +794,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
                   {/* 小欄 1: 短期加權均價 */}
                   <div className="px-3 py-4 text-center flex flex-col gap-1">
-                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>
+                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#8a99ad' }}>
                       {isSealedProduct ? t("cardDetail.latestTrade") : t("cardDetail.weighted7dAvg")}
                     </p>
                     {!isSealedProduct ? (
@@ -803,10 +803,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                             {auxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
-                          <p className="text-[8px]" style={{ color: '#444444' }}>{t("cardDetail.nRecords", { n: auxPriceRecordCount })}</p>
+                          <p className="text-[8px]" style={{ color: '#8a99ad' }}>{t("cardDetail.nRecords", { n: auxPriceRecordCount })}</p>
                         </>
                       ) : (
-                        <p className="text-sm font-semibold" style={{ color: '#444444' }}>-</p>
+                        <p className="text-sm font-semibold" style={{ color: '#8a99ad' }}>-</p>
                       )
                     ) : (
                       latestTradePrice !== null ? (
@@ -815,18 +815,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                             {latestTradePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                           {latestTrade?.soldAt && (
-                            <p className="text-[8px]" style={{ color: '#444444' }}>
+                            <p className="text-[8px]" style={{ color: '#8a99ad' }}>
                               {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
                             </p>
                           )}
                         </>
-                      ) : <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>
+                      ) : <p className="text-sm font-semibold" style={{ color: '#8a99ad' }}>N/A</p>
                     )}
                   </div>
 
                   {/* 小欄 2: 最近單筆成交 */}
                   <div className="px-3 py-4 text-center flex flex-col gap-1">
-                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>
+                    <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#8a99ad' }}>
                       {isSealedProduct ? t("cardDetail.recentTotalAmount") : t("cardDetail.recentSingle")}
                     </p>
                     {latestTrade !== null ? (
@@ -840,18 +840,18 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           }
                         </p>
                         {isSealedProduct && latestTrade.quantity && (
-                          <p className="text-[8px]" style={{ color: '#444444' }}>
+                          <p className="text-[8px]" style={{ color: '#8a99ad' }}>
                             {t("cardDetail.nBoxes", { n: latestTrade.quantity })}
                           </p>
                         )}
                         {latestTrade?.soldAt && (
-                          <p className="text-[8px]" style={{ color: '#444444' }}>
+                          <p className="text-[8px]" style={{ color: '#8a99ad' }}>
                             {new Date(latestTrade.soldAt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}
                           </p>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>
+                      <p className="text-sm font-semibold" style={{ color: '#8a99ad' }}>N/A</p>
                     )}
                   </div>
 
@@ -859,24 +859,24 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   <div className="px-3 py-4 text-center flex flex-col gap-1">
                     {!isSealedProduct && p25 !== null && p75 !== null ? (
                       <>
-                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>{t("cardDetail.priceRange30d")}</p>
+                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#8a99ad' }}>{t("cardDetail.priceRange30d")}</p>
                         <p className="text-sm font-semibold" style={{ color: '#2ecc71' }}>
                           {p25.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[8px]" style={{ color: '#444444' }}>↕</p>
+                        <p className="text-[8px]" style={{ color: '#8a99ad' }}>↕</p>
                         <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                           {p75.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
-                        <p className="text-[8px]" style={{ color: '#444444' }}>P25 / P75</p>
+                        <p className="text-[8px]" style={{ color: '#8a99ad' }}>P25 / P75</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#555555' }}>{t("cardDetail.highestTrade")}</p>
+                        <p className="text-[8px] uppercase tracking-[0.15em]" style={{ color: '#8a99ad' }}>{t("cardDetail.highestTrade")}</p>
                         {maxPrice !== null ? (
                           <p className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>
                             {maxPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
-                        ) : <p className="text-sm font-semibold" style={{ color: '#444444' }}>N/A</p>}
+                        ) : <p className="text-sm font-semibold" style={{ color: '#8a99ad' }}>N/A</p>}
                       </>
                     )}
                   </div>
@@ -885,7 +885,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
 
                 {/* Footer note */}
                 <div className="px-4 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                  <p className="text-[9px]" style={{ color: '#444444' }}>
+                  <p className="text-[9px]" style={{ color: '#8a99ad' }}>
                     {isSealedProduct
                       ? t("cardDetail.sealedPriceNote", { n: mainPriceRecordCount })
                       : t("cardDetail.medianNote", { n: mainPriceRecordCount, source: mainPriceSource })
@@ -983,7 +983,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           }}
                         />
                         {/* Date */}
-                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#555555' }}>
+                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#a3b3c2' }}>
                           {item.soldAt ? formatDate(item.soldAt) : 'N/A'}
                         </span>
                         {/* Grade / Qty badge */}
@@ -991,9 +991,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           className="text-[9px] font-mono mx-2"
                           style={{
                             padding: '1px 5px',
-                            border: '1px solid rgba(255,255,255,0.12)',
+                            border: '1px solid rgba(255,255,255,0.2)',
                             borderRadius: '2px',
-                            color: isEmpty ? '#444444' : '#999999',
+                            background: 'rgba(255,255,255,0.08)',
+                            color: isEmpty ? '#8a99ad' : '#cbd5e1',
                             letterSpacing: '0.1em',
                             textTransform: 'uppercase',
                           }}
@@ -1037,9 +1038,10 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                   className="text-[9px] font-mono"
                   style={{
                     padding: '1px 5px',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.2)',
                     borderRadius: '2px',
-                    color: '#666666',
+                    background: 'rgba(255,255,255,0.08)',
+                    color: '#cbd5e1',
                     letterSpacing: '0.1em',
                   }}
                 >
@@ -1047,7 +1049,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                 </span>
               </div>
               {ebayPriceHistory.length > 0 && (
-                <span className="text-[9px] font-mono" style={{ color: '#555555' }}>
+                <span className="text-[9px] font-mono" style={{ color: '#8a99ad' }}>
                   {t("cardDetail.nRecords", { n: ebayPriceHistory.length })}
                 </span>
               )}
@@ -1077,7 +1079,7 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                           style={{ background: '#111215', borderColor: 'rgba(255,255,255,0.2)', zIndex: 1 }}
                         />
                         {/* Date */}
-                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#555555' }}>
+                        <span className="text-[10px] font-mono w-16 flex-shrink-0" style={{ color: '#a3b3c2' }}>
                           {item.soldAt ? formatDate(item.soldAt) : 'N/A'}
                         </span>
                         {/* Title */}
@@ -1089,13 +1091,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 group/link"
                             >
-                              <span className="text-[10px] line-clamp-1 transition-colors" style={{ color: '#666666' }}>
+                              <span className="text-[10px] line-clamp-1 transition-colors" style={{ color: '#8a99ad' }}>
                                 {item.title || '—'}
                               </span>
                               <ExternalLink className="w-2.5 h-2.5 flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" style={{ color: '#888888' }} />
                             </a>
                           ) : (
-                            <span className="text-[10px] line-clamp-1" style={{ color: '#555555' }}>{item.title || '—'}</span>
+                            <span className="text-[10px] line-clamp-1" style={{ color: '#8a99ad' }}>{item.title || '—'}</span>
                           )}
                         </div>
                         {/* Price */}
