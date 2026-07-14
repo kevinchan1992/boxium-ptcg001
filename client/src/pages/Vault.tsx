@@ -247,46 +247,53 @@ export default function Vault() {
     if (!shareStats) return;
     setIsGeneratingShare(true);
     try {
-      // Step 1: Pre-fetch all card images as base64 to avoid CORS issues
-      const cardsWithBase64 = await Promise.all(
-        shareTopCards.map(async (card) => {
-          if (!card.imageUrl) return card;
-          const base64 = await fetchImageAsBase64(card.imageUrl);
-          return { ...card, imageBase64: base64 };
-        })
-      );
-      setShareTopCardsWithBase64(cardsWithBase64);
-
-      // Step 2: Wait for React to re-render with base64 images
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      if (!shareCardRef.current) return;
-
-      // Step 3: Generate PNG
-      const { toPng } = await import("html-to-image");
-      const node = shareCardRef.current;
-      const opts = {
-        width: 1080,
-        height: 1080,
-        pixelRatio: 1,
-        cacheBust: true,
-        skipFonts: true, // avoid Google Fonts CORS SecurityError
-        style: {
-          position: "static",
-          top: "0",
-          left: "0",
-        },
+      // Call server-side Canvas generator — no DOM, no CORS issues
+      const payload = {
+        totalMarketValue: shareStats.totalMarketValue,
+        totalGain: shareStats.totalGain,
+        totalGainPct: shareStats.totalGainPct,
+        totalQuantity: shareStats.totalQuantity,
+        currency: shareStats.currency ?? "HKD",
+        shareUrl,
+        topCards: shareTopCards.map(c => ({
+          cardName: c.cardName,
+          imageUrl: c.imageUrl,
+          grader: c.grader,
+          grade: c.grade,
+          marketPrice: c.marketPrice,
+          unrealizedGainPct: c.unrealizedGainPct,
+        })),
       };
-      const dataUrl = await toPng(node, opts);
+
+      const resp = await fetch("/api/share-card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        throw new Error(errJson.error ?? `HTTP ${resp.status}`);
+      }
+
+      const blob = await resp.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
     } catch (err) {
-      console.error("Share generation failed:", err);
-      toast.error("生成分享圖片失敗，請稍後再試");
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Share generation failed:", msg, err);
+      toast.error(`生成分享圖片失敗: ${msg.slice(0, 60)}`);
     } finally {
       setIsGeneratingShare(false);
     }
-  }, [shareStats, shareTopCards, fetchImageAsBase64]);
+  }, [shareStats, shareTopCards, shareUrl]);
 
   const handleDownloadShare = useCallback(() => {
     if (!shareImageUrl) return;

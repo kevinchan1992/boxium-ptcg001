@@ -3348,6 +3348,26 @@ async function startServer() {
     }
   });
 
+  // ── Share Card Image Generator (server-side canvas) ─────────────────────
+  app.post("/api/share-card", async (req, res) => {
+    try {
+      const { generateShareCard } = await import("../shareCardGenerator");
+      const data = req.body;
+      if (!data || typeof data !== "object") {
+        res.status(400).json({ error: "Invalid request body" });
+        return;
+      }
+      const pngBuffer = await generateShareCard(data);
+      res.set("Content-Type", "image/png");
+      res.set("Content-Length", String(pngBuffer.length));
+      res.set("Cache-Control", "no-store");
+      res.send(pngBuffer);
+    } catch (err) {
+      console.error("[share-card] generation error:", err);
+      res.status(500).json({ error: "Failed to generate share card" });
+    }
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({
