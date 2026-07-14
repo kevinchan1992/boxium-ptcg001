@@ -40,7 +40,7 @@ const TABS: TabItem[] = [
     path: "/vault",
     icon: Vault,
     labelKey: "nav.tcgVault",
-    labelFallback: "Vault",
+    labelFallback: "TCG 倉庫",
     matchPaths: ["/vault"],
   },
   {
