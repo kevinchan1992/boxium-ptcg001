@@ -8,8 +8,9 @@
  *   vip.getAiScanUsage   — get current month AI scan usage
  */
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../\_core/trpc";
 import { TRPCError } from "@trpc/server";
+import Stripe from "stripe";
 
 // VIP plan pricing (HKD)
 export const VIP_PLANS = {
@@ -30,7 +31,6 @@ export const VIP_PLANS = {
 export const FREE_AI_SCAN_LIMIT = 25; // per month for free users
 
 function getStripe() {
-  const Stripe = require("stripe");
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
 }
 
