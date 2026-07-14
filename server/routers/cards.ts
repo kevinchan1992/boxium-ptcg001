@@ -375,11 +375,11 @@ export const cardsRouter = router({
           const db = await _aiDb();
           if (db) {
             const [userRow] = await db
-              .select({ vipPlan: _aiUsers.vipPlan, vipExpiresAt: _aiUsers.vipExpiresAt })
+              .select({ vipPlan: _aiUsers.vipPlan, vipExpiresAt: _aiUsers.vipExpiresAt, role: _aiUsers.role })
               .from(_aiUsers)
               .where(_aiEq(_aiUsers.id, ctx.user.id))
               .limit(1);
-            const vipActive = userRow ? isVipActive(userRow as any) : false;
+            const vipActive = userRow ? isVipActive(userRow) : false;
             if (!vipActive) {
               const now = new Date();
               const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;

@@ -34,8 +34,12 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-02-25.clover" });
 }
 
-/** Check if user is currently VIP (plan != 'none' AND not expired) */
-export function isVipActive(user: { vipPlan: string; vipExpiresAt: Date | null }): boolean {
+/** Check if user is currently VIP (plan != 'none' AND not expired).
+ *  Admin users are always VIP permanently — no expiry check needed.
+ */
+export function isVipActive(user: { vipPlan: string; vipExpiresAt: Date | null; role?: string }): boolean {
+  // Admin accounts have permanent VIP access
+  if (user.role === "admin") return true;
   if (user.vipPlan === "none") return false;
   if (!user.vipExpiresAt) return false;
   return user.vipExpiresAt > new Date();
@@ -55,6 +59,7 @@ export const vipRouter = router({
         vipPlan: users.vipPlan,
         vipExpiresAt: users.vipExpiresAt,
         stripeSubscriptionId: users.stripeSubscriptionId,
+        role: users.role,
       })
       .from(users)
       .where(eq(users.id, ctx.user.id))
@@ -62,7 +67,7 @@ export const vipRouter = router({
 
     if (!user) throw new TRPCError({ code: "NOT_FOUND" });
 
-    const active = isVipActive(user as any);
+    const active = isVipActive(user);
     return {
       isVip: active,
       plan: user.vipPlan,
@@ -209,12 +214,12 @@ export const vipRouter = router({
 
     // Get user VIP status
     const [user] = await db
-      .select({ vipPlan: users.vipPlan, vipExpiresAt: users.vipExpiresAt })
+      .select({ vipPlan: users.vipPlan, vipExpiresAt: users.vipExpiresAt, role: users.role })
       .from(users)
       .where(eq(users.id, ctx.user.id))
       .limit(1);
 
-    const vipActive = user ? isVipActive(user as any) : false;
+    const vipActive = user ? isVipActive(user) : false;
 
     // Get usage count
     const [usage] = await db

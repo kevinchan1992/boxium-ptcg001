@@ -5,7 +5,7 @@
  * - 手機版底部固定升級欄
  */
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -63,6 +63,7 @@ export function VipUpgradeModal({ open, onOpenChange }: VipUpgradeModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg w-full p-0 overflow-hidden rounded-2xl border-0 shadow-2xl max-h-[92vh] flex flex-col">
+        <DialogTitle className="sr-only">升級 VIP 會員</DialogTitle>
 
         {/* ── Header ── */}
         <div
