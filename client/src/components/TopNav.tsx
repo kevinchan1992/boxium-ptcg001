@@ -571,10 +571,37 @@ export function TopNav() {
                   className="min-w-[200px] p-1.5 bg-white border border-[#EAEAEA] rounded-xl"
                   style={{ boxShadow: '0 15px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
                 >
-                  {/* User name header */}
-                  <div className="px-3 py-2.5 mb-1">
-                    <p className="text-[11px] font-semibold text-[#1A1A1A] tracking-wide truncate max-w-[180px]">{user.name || user.email}</p>
-                    <p className="text-[10px] text-[#A0A0A0] mt-0.5 tracking-wider uppercase">{user.role === 'admin' ? 'Administrator' : 'Member'}</p>
+                  {/* User info header */}
+                  <div className="px-3 pt-3 pb-2.5">
+                    {/* Avatar + name row */}
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E8E6E1] to-[#D4D0C8] border border-[#E0DDD6] flex items-center justify-center flex-shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-semibold text-[#1A1A1A] truncate leading-tight">{user.name || '—'}</p>
+                        {user.name && user.email && (
+                          <p className="text-[10px] text-[#909090] truncate mt-0.5 leading-tight">{user.email}</p>
+                        )}
+                        {!user.name && (
+                          <p className="text-[10px] text-[#909090] truncate mt-0.5 leading-tight">{user.email}</p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Role badge */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${
+                      user.role === 'admin'
+                        ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]'
+                        : 'bg-[#F0F9FF] text-[#0369A1] border border-[#BAE6FD]'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        user.role === 'admin' ? 'bg-[#D97706]' : 'bg-[#0284C7]'
+                      }`} />
+                      {user.role === 'admin' ? 'Administrator' : 'Member'}
+                    </span>
                   </div>
                   <div className="border-t border-[#F0F0F0] mb-1" />
                   {/* Profile */}
