@@ -3353,6 +3353,92 @@ async function startServer() {
     }
   });
 
+  // ── Weekly P&L Report ──────────────────────────────────────────────────────
+  app.post("/api/scheduled/weekly-pl-report", async (req, res) => {
+    try {
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!cronSecret || token !== cronSecret) {
+        console.warn('[ScheduledTask] weekly-pl-report: invalid or missing CRON_SECRET token');
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      console.log('[ScheduledTask] weekly-pl-report: starting...');
+      const startTime = Date.now();
+
+      // Get all users with email who have at least one collection item
+      const { getDb } = await import('../db');
+      const { users, userCollections: uc } = await import('../../drizzle/schema_new');
+      const { eq, isNull, and, sql: drizzleSql } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) throw new Error('Database unavailable');
+
+      // Find users with at least 1 active vault item
+      const usersWithVault = await db
+        .selectDistinct({ id: users.id, email: users.email, name: users.name })
+        .from(users)
+        .innerJoin(uc, and(eq(uc.userId, users.id), isNull(uc.tradedAt)))
+        .where(drizzleSql`${users.email} IS NOT NULL AND ${users.email} != ''`)
+        .limit(500);
+
+      // Build week label (e.g. "2026年7月第2週")
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const weekOfMonth = Math.ceil(now.getDate() / 7);
+      const weekLabel = `${year}年${month}月第${weekOfMonth}週`;
+
+      let sent = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+
+      for (const u of usersWithVault) {
+        try {
+          const { getUserCollectionStats } = await import('../collection');
+          const stats = await getUserCollectionStats(u.id);
+
+          // Skip users with no market value data
+          if (stats.totalItems === 0) { skipped++; continue; }
+
+          const { sendWeeklyPLReport } = await import('../emailService');
+          const ok = await sendWeeklyPLReport({
+            email: u.email,
+            userId: u.id,
+            data: {
+              userName: u.name || '卡牌玩家',
+              totalItems: stats.totalItems,
+              totalQuantity: stats.totalQuantity,
+              totalCost: stats.totalCost,
+              totalMarketValue: stats.totalMarketValue,
+              totalGain: stats.totalGain,
+              totalGainPct: stats.totalGainPct,
+              top3Gainers: stats.top3Gainers,
+              top3ByValue: stats.top3ByValue,
+              currency: stats.currency,
+              weekLabel,
+            },
+          });
+          if (ok) sent++; else skipped++;
+        } catch (userErr: any) {
+          errors.push(`user ${u.id}: ${userErr?.message}`);
+        }
+      }
+
+      const durationMs = Date.now() - startTime;
+      console.log(`[ScheduledTask] weekly-pl-report: sent=${sent} skipped=${skipped} errors=${errors.length} in ${durationMs}ms`);
+      return res.json({ ok: true, sent, skipped, errors: errors.slice(0, 10), durationMs });
+    } catch (err: any) {
+      console.error('[ScheduledTask] weekly-pl-report failed:', err?.message);
+      return res.status(500).json({
+        error: err?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined,
+        context: { url: req.url },
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // tRPC API — apply path-based rate limiting
   app.use("/api/trpc", trpcRateLimitRouter);
   // ── Image proxy (bypass CDN hotlink protection) ──

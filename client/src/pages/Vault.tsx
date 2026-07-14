@@ -329,7 +329,14 @@ export default function Vault() {
       utils.profile.getCollection.invalidate();
       utils.profile.getCollectionStats.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      if (e.message.includes("免費會員最多") || e.message.includes("升級 VIP 可無限新增")) {
+        setShowAddDialog(false);
+        setShowVipModal(true);
+      } else {
+        toast.error(e.message);
+      }
+    },
   });
 
   const removeMutation = trpc.profile.removeFromCollection.useMutation({

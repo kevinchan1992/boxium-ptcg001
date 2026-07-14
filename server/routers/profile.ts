@@ -182,6 +182,35 @@ export const profileRouter = router({
         isPublic: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // VIP Vault limit: free users can only add up to 25 cards
+        const FREE_VAULT_LIMIT = 25;
+        const { getDb } = await import("../db");
+        const { users, userCollections: uc } = await import("../../drizzle/schema_new");
+        const { eq, count, and, isNull } = await import("drizzle-orm");
+        const { isVipActive } = await import("./vip");
+        const db = await getDb();
+        if (db) {
+          const [userRow] = await db
+            .select({ vipPlan: users.vipPlan, vipExpiresAt: users.vipExpiresAt, role: users.role })
+            .from(users)
+            .where(eq(users.id, ctx.user.id))
+            .limit(1);
+          const vipActive = userRow ? isVipActive(userRow) : false;
+          if (!vipActive) {
+            const [countRow] = await db
+              .select({ total: count() })
+              .from(uc)
+              .where(and(eq(uc.userId, ctx.user.id), isNull(uc.tradedAt)));
+            const currentCount = countRow?.total ?? 0;
+            if (currentCount >= FREE_VAULT_LIMIT) {
+              const { TRPCError } = await import("@trpc/server");
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: `免費會員最多可新增 ${FREE_VAULT_LIMIT} 張卡牌至 Vault，目前已有 ${currentCount} 張。升級 VIP 可無限新增！`,
+              });
+            }
+          }
+        }
         const { addToCollection } = await import("../collection");
         return addToCollection(ctx.user.id, input);
       }),

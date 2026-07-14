@@ -17,8 +17,9 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
   Camera, Upload, X, RotateCcw, CheckCircle2,
-  Search, ChevronRight, AlertCircle, Zap,
+  Search, ChevronRight, AlertCircle, Zap, Crown,
 } from "lucide-react";
+import { VipUpgradeModal } from "@/components/VipUpgradeModal";
 
 const BLUE = "#06038D";
 const YELLOW = "#FEDD00";
@@ -83,6 +84,9 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
   useEffect(() => { stageRef.current = stage; }, [stage]);
 
   const imageSearchMutation = trpc.cards.searchByImage.useMutation();
+  const { data: user } = trpc.auth.me.useQuery();
+  const { data: aiScanUsage } = trpc.vip.getAiScanUsage.useQuery(undefined, { enabled: !!user });
+  const [showVipModal, setShowVipModal] = useState(false);
 
   // ── Stop camera stream ──────────────────────────────────────
   const stopCamera = useCallback(() => {
@@ -213,12 +217,17 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
           setIdentificationInfo(null);
         }
       }
-    } catch {
+    } catch (err: any) {
       if (progressInterval) clearInterval(progressInterval);
       if (!isAutoScan) {
         setStage("camera");
         setCapturedImage(null);
-        toast.error(t("camera.identifyFailed"));
+        // Check if it's a VIP quota error
+        if (err?.message?.includes("免費會員每月 AI 拍照入庫限") || err?.data?.code === "FORBIDDEN") {
+          setShowVipModal(true);
+        } else {
+          toast.error(t("camera.identifyFailed"));
+        }
       }
     } finally {
       isAnalyzingRef.current = false;
@@ -344,6 +353,7 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
   };
 
   return (
+    <>
     <BottomSheet
       open={open}
       onOpenChange={(o) => { if (!o) handleClose(); }}
@@ -523,6 +533,37 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
             </div>
 
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+
+            {/* AI Scan Usage Badge */}
+            {user && aiScanUsage && (
+              <div className="mx-4 mb-2">
+                {aiScanUsage.isVip ? (
+                  <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl"
+                    style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}20` }}>
+                    <Crown className="w-3 h-3" style={{ color: BLUE }} />
+                    <span className="text-xs font-semibold" style={{ color: BLUE }}>VIP 無限次數拍照識別</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between py-1.5 px-3 rounded-xl"
+                    style={{ background: aiScanUsage.used >= 25 ? "#fef2f2" : "#f9fafb", border: `1px solid ${aiScanUsage.used >= 25 ? "#fecaca" : "#e5e7eb"}` }}>
+                    <div className="flex items-center gap-1.5">
+                      <Camera className="w-3 h-3" style={{ color: aiScanUsage.used >= 25 ? "#ef4444" : "#6b7280" }} />
+                      <span className="text-xs" style={{ color: aiScanUsage.used >= 25 ? "#ef4444" : "#6b7280" }}>
+                        本月已用 <strong>{aiScanUsage.used}</strong> / 25 次
+                      </span>
+                    </div>
+                    {aiScanUsage.used >= 20 && (
+                      <button
+                        onClick={() => setShowVipModal(true)}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: BLUE, color: "white" }}>
+                        升級 VIP
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -707,5 +748,9 @@ export function CameraSearchSheet({ open, onOpenChange, onCardSelect, cardLinkPr
 
       </div>
     </BottomSheet>
+
+    {/* VIP Upgrade Modal */}
+    <VipUpgradeModal open={showVipModal} onOpenChange={setShowVipModal} />
+    </>
   );
 }

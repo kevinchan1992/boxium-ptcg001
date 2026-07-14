@@ -9894,3 +9894,10 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] PriceTrendChart VIP 時間範圍限制（免費: 7d/30d，VIP: 解鎖 90d/all）
 - [x] Profile VIP tab（VipProfileSection 組件）
 - [x] Stripe Live Price ID 設定（月費: price_1Tt20h..., 年費: price_1Tt21N...）
+
+## 新功能 (2026-07-14)
+
+- [x] Vault 25 張卡牌限制：非 VIP 用戶 addToCollection 超過 25 張時拋出錯誤，前端顯示升級提示
+- [x] Research 拍照 25 次限制：確認前端顯示剩餘次數並在超限時提示升級
+- [-] 我的群組功能：已取消
+- [x] 每週 P&L 報告：Heartbeat 排程（每週一 01:00 UTC = 09:00 HKT）、郵件模板、/api/scheduled/weekly-pl-report handler

@@ -1822,3 +1822,141 @@ export async function sendPasswordResetEmail({
     dedupeKey: `password_reset_${userId}_${resetToken}`,
   });
 }
+
+// ─── Weekly P&L Report Email ──────────────────────────────────────────────────
+
+export interface WeeklyPLReportData {
+  userName: string;
+  totalItems: number;
+  totalQuantity: number;
+  totalCost: number;
+  totalMarketValue: number;
+  totalGain: number;
+  totalGainPct: number;
+  top3Gainers: Array<{
+    card: { name: string | null; nameJa: string | null; cardNumber: string | null; series: string | null };
+    grader: string;
+    grade: string | null;
+    quantity: number;
+    purchasePrice: number | null;
+    marketPrice: number | null;
+    unrealizedGain: number | null;
+    unrealizedGainPct: number | null;
+  }>;
+  top3ByValue: Array<{
+    card: { name: string | null; nameJa: string | null; cardNumber: string | null; series: string | null };
+    grader: string;
+    grade: string | null;
+    quantity: number;
+    marketPrice: number | null;
+  }>;
+  currency: string;
+  weekLabel: string; // e.g. "2026年7月第2週"
+}
+
+function buildWeeklyPLReportHtml(data: WeeklyPLReportData): string {
+  const gainColor = data.totalGain >= 0 ? "#16a34a" : "#dc2626";
+  const gainSign = data.totalGain >= 0 ? "+" : "";
+  const gainPctSign = data.totalGainPct >= 0 ? "+" : "";
+
+  function cardRow(item: WeeklyPLReportData["top3Gainers"][0] | WeeklyPLReportData["top3ByValue"][0], showGain: boolean): string {
+    const displayName = item.card.nameJa || item.card.name || "未知卡牌";
+    const gradeLabel = item.grader && item.grade ? `${item.grader} ${item.grade}` : item.grader || "";
+    const gainItem = item as WeeklyPLReportData["top3Gainers"][0];
+    const gainStr = showGain && gainItem.unrealizedGain != null
+      ? `<span style="font-size:12px;font-weight:bold;color:${gainItem.unrealizedGain >= 0 ? "#16a34a" : "#dc2626"};">${gainItem.unrealizedGain >= 0 ? "+" : ""}HK$${gainItem.unrealizedGain.toFixed(0)} (${gainItem.unrealizedGainPct != null ? (gainItem.unrealizedGainPct >= 0 ? "+" : "") + gainItem.unrealizedGainPct.toFixed(1) + "%" : ""})</span>`
+      : item.marketPrice != null ? `<span style="font-size:12px;font-weight:bold;color:${BRAND_BLUE};">HK$${item.marketPrice.toLocaleString()}</span>` : "";
+    return `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#1a1a2e;">${displayName}</p>
+        <p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">${gradeLabel}${item.card.cardNumber ? ` · #${item.card.cardNumber}` : ""}${item.card.series ? ` · ${item.card.series}` : ""}</p>
+      </td>
+      <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f0f0f0;text-align:right;white-space:nowrap;">${gainStr}</td>
+    </tr>`;
+  }
+
+  const top3GainersRows = data.top3Gainers.length > 0
+    ? data.top3Gainers.map(item => cardRow(item, true)).join("")
+    : `<tr><td colspan="2" style="padding:12px 0;text-align:center;color:#9ca3af;font-size:12px;">暫無持倉資料</td></tr>`;
+
+  const top3ByValueRows = data.top3ByValue.length > 0
+    ? data.top3ByValue.map(item => cardRow(item as any, false)).join("")
+    : `<tr><td colspan="2" style="padding:12px 0;text-align:center;color:#9ca3af;font-size:12px;">暫無持倉資料</td></tr>`;
+
+  const body = `
+  <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Hi ${data.userName}，</p>
+  <h2 style="margin:0 0 4px;font-size:20px;font-weight:bold;color:${BRAND_BLUE};">📊 每週 Vault P&L 報告</h2>
+  <p style="margin:0 0 20px;font-size:12px;color:#9ca3af;">${data.weekLabel}</p>
+
+  <!-- Summary Stats -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;border:1.5px solid #e5e7eb;margin-bottom:24px;">
+    <tr>
+      <td style="background:${BRAND_BLUE};padding:12px 20px;" colspan="2">
+        <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;">持倉總覽</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 20px;border-bottom:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:11px;color:#9ca3af;">持倉張數</p>
+        <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#1a1a2e;">${data.totalItems} 張</p>
+      </td>
+      <td style="padding:14px 20px;border-bottom:1px solid #f0f0f0;border-left:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:11px;color:#9ca3af;">總市值</p>
+        <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:${BRAND_BLUE};">HK$${data.totalMarketValue.toLocaleString()}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 20px;">
+        <p style="margin:0;font-size:11px;color:#9ca3af;">總成本</p>
+        <p style="margin:4px 0 0;font-size:16px;font-weight:600;color:#374151;">HK$${data.totalCost.toLocaleString()}</p>
+      </td>
+      <td style="padding:14px 20px;border-left:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:11px;color:#9ca3af;">未實現盈虧</p>
+        <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:${gainColor};">${gainSign}HK$${data.totalGain.toLocaleString()} (${gainPctSign}${data.totalGainPct.toFixed(1)}%)</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Top 3 Gainers -->
+  <h3 style="margin:0 0 12px;font-size:14px;font-weight:bold;color:#1a1a2e;">🏆 本週漲幅前三</h3>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    ${top3GainersRows}
+  </table>
+
+  <!-- Top 3 By Value -->
+  <h3 style="margin:0 0 12px;font-size:14px;font-weight:bold;color:#1a1a2e;">💎 持倉市值前三</h3>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    ${top3ByValueRows}
+  </table>
+
+  ${ctaButton("查看我的 Vault", "https://boxium.asia/vault")}
+
+  <p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
+    每週一自動發送 · 數據僅供參考，不構成投資建議
+  </p>`;
+
+  return wrapHtml(`${data.weekLabel} Vault P&L 報告`, body);
+}
+
+export async function sendWeeklyPLReport({
+  email,
+  userId,
+  data,
+}: {
+  email: string;
+  userId: number;
+  data: WeeklyPLReportData;
+}): Promise<boolean> {
+  const subject = `📊 ${data.weekLabel} · 你的 BOXIUM Vault P&L 報告`;
+  const html = buildWeeklyPLReportHtml(data);
+  const weekKey = data.weekLabel.replace(/[^0-9A-Za-z]/g, "_");
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    emailType: "weekly_pl_report",
+    toUserId: userId,
+    dedupeKey: `weekly_pl_report_${userId}_${weekKey}`,
+  });
+}
