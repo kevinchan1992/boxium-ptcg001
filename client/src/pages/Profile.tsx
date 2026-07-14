@@ -38,7 +38,6 @@ import {
 import { Link, useLocation } from "wouter";
 import { searchSFPointsAsync, validateSFCode, findSFPointByCodeAsync, type SFPoint } from "@/lib/sfStations";
 import { useTranslation } from "react-i18next";
-import { CollectionSection } from "@/components/CollectionSection";
 import { TradeHistorySection } from "@/components/TradeHistorySection";
 import { LazyImage } from "@/components/LazyImage";
 import PageHead from "@/components/PageHead";
@@ -90,10 +89,20 @@ export default function Profile() {
   // 讀取 URL ?tab= 參數以支援從 /orders 重定向過來
   // On mobile, default to 'menu' grid if no tab param; on desktop default to 'info'
   const isMobileDevice = typeof window !== "undefined" && window.innerWidth < 768;
-  const urlTab = typeof window !== "undefined"
+  // /profile?tab=collection is now /vault — redirect backward-compat
+  const rawTab = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("tab") ?? (isMobileDevice ? "menu" : "info")
     : "info";
+  const urlTab = rawTab === "collection" ? "info" : rawTab;
   const [activeSection, setActiveSection] = useState(urlTab);
+
+  // Redirect legacy /profile?tab=collection → /vault
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "collection") {
+      window.location.replace("/vault");
+    }
+  }, []);
 
   // 當 URL ?tab 參數變化時同步更新 activeSection
   useEffect(() => {
@@ -133,7 +142,6 @@ export default function Profile() {
     { id: "offers", icon: <Tag className="w-4 h-4" />, label: t("profile.nav.offers") },
     { id: "auctions", icon: <DollarSign className="w-4 h-4" />, label: t("profile.nav.auctions"), badge: activeBidsCount > 0 ? activeBidsCount : undefined },
     { id: "notifications", icon: <Bell className="w-4 h-4" />, label: t("profile.nav.notifications"), badge: unreadNotifCount > 0 ? unreadNotifCount : undefined },
-    { id: "collection", icon: <Package className="w-4 h-4" />, label: t("profile.tabs.collection") },
     { id: "trades", icon: <ArrowLeftRight className="w-4 h-4" />, label: t("profile.tradesTab") },
   ];
 
@@ -364,7 +372,6 @@ export default function Profile() {
                 {activeSection === "offers" && <EmbeddedOffersSection userId={user.id} />}
                 {activeSection === "auctions" && <MyAuctionsSection bids={myBidsData ?? []} />}
                 {activeSection === "notifications" && <EmbeddedNotificationsSection />}
-                {activeSection === "collection" && <CollectionSection />}
                 {activeSection === "trades" && <TradeHistorySection />}
               </div>
             </div>
