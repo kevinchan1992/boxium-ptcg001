@@ -19,6 +19,7 @@ export interface ShareCardStats {
 export interface ShareCardItem {
   cardName: string;
   imageUrl: string | null;
+  imageBase64: string | null; // pre-fetched base64 data URL to avoid CORS
   grader: string;
   grade: string | null;
   marketPrice: number | null;
@@ -327,8 +328,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               {topCards.slice(0, 3).map((card, idx) => {
                 const rankColors = ["#C9A84C", "#A0A0A0", "#CD7F32"];
                 const rankColor = rankColors[idx] ?? "#C9A84C";
-                const proxiedUrl = getProxied(card.imageUrl);
-
+                                // 優先使用預先轉換的 base64（避免跨域），fallback 到 proxied URL
+                const imgSrc = card.imageBase64 ?? getProxied(card.imageUrl);
                 return (
                   <div
                     key={idx}
@@ -352,11 +353,10 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                         boxShadow: `0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.5) inset`,
                       }}
                     >
-                      {proxiedUrl ? (
+                      {imgSrc ? (
                         <img
-                          src={proxiedUrl}
+                          src={imgSrc}
                           alt={card.cardName}
-                          crossOrigin="anonymous"
                           style={{
                             position: "absolute",
                             inset: 0,

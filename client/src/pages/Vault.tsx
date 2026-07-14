@@ -212,6 +212,7 @@ export default function Vault() {
     return top3.slice(0, 3).map(item => ({
       cardName: item.card?.name ?? "Unknown Card",
       imageUrl: item.card?.imageUrl ?? null,
+      imageBase64: null, // filled in handleGenerateShare before rendering
       grader: item.grader ?? "PSA",
       grade: item.grade ?? null,
       marketPrice: item.marketPrice ?? null,
@@ -219,12 +220,49 @@ export default function Vault() {
     }));
   }, [stats]);
 
+  // Pre-fetch image via server proxy and convert to base64 to avoid CORS
+  const fetchImageAsBase64 = useCallback(async (url: string): Promise<string | null> => {
+    try {
+      const proxyUrl = `/api/img-proxy?url=${encodeURIComponent(url)}`;
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  }, []);
+
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/vault` : "https://boxium.asia";
 
+  // State for top cards with pre-fetched base64 images
+  const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);
+
   const handleGenerateShare = useCallback(async () => {
-    if (!shareStats || !shareCardRef.current) return;
+    if (!shareStats) return;
     setIsGeneratingShare(true);
     try {
+      // Step 1: Pre-fetch all card images as base64 to avoid CORS issues
+      const cardsWithBase64 = await Promise.all(
+        shareTopCards.map(async (card) => {
+          if (!card.imageUrl) return card;
+          const base64 = await fetchImageAsBase64(card.imageUrl);
+          return { ...card, imageBase64: base64 };
+        })
+      );
+      setShareTopCardsWithBase64(cardsWithBase64);
+
+      // Step 2: Wait for React to re-render with base64 images
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      if (!shareCardRef.current) return;
+
+      // Step 3: Generate PNG
       const { toPng } = await import("html-to-image");
       const node = shareCardRef.current;
       const opts = {
@@ -232,18 +270,13 @@ export default function Vault() {
         height: 1080,
         pixelRatio: 1,
         cacheBust: true,
-        // skipFonts: true 避免 html-to-image 嘗試讀取 Google Fonts CSS
-        // 跨域 stylesheet 會觸發 SecurityError 導致整個生成失敗
-        skipFonts: true,
-        // 強制 position static 讓隱藏元素可被正確渲染
+        skipFonts: true, // avoid Google Fonts CORS SecurityError
         style: {
           position: "static",
           top: "0",
           left: "0",
         },
       };
-      // 第一次呼叫觸發圖片快取，第二次才能正確渲染跨域圖片
-      await toPng(node, opts).catch(() => {});
       const dataUrl = await toPng(node, opts);
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
@@ -253,7 +286,7 @@ export default function Vault() {
     } finally {
       setIsGeneratingShare(false);
     }
-  }, [shareStats]);
+  }, [shareStats, shareTopCards, fetchImageAsBase64]);
 
   const handleDownloadShare = useCallback(() => {
     if (!shareImageUrl) return;
@@ -1205,7 +1238,7 @@ export default function Vault() {
         <ShareCard
           ref={shareCardRef}
           stats={shareStats}
-          topCards={shareTopCards}
+          topCards={shareTopCardsWithBase64.length > 0 ? shareTopCardsWithBase64 : shareTopCards}
           userName={user?.name ?? undefined}
           shareUrl={shareUrl}
         />
