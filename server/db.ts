@@ -959,14 +959,27 @@ export async function batchGetLatestPricesByGrades(
       )
       .orderBy(desc(priceHistory.soldAt));
 
-    // For each (cardId, grade), take the first (most recent) record only
+    // For each (cardId, grade), take the first (most recent) record only.
+    // Also build a PSA 10 fallback: if the requested grade has no records,
+    // fall back to PSA 10 price (most common grade in priceHistory).
     const seen = new Set<string>();
+    const psa10Fallback = new Map<number, number>(); // cardId → latest PSA 10 price
     for (const row of rows) {
       if (!row.grade) continue;
       const key = `${row.cardId}:${row.grade}`;
       if (!seen.has(key) && result.has(key)) {
         result.set(key, Number(row.price));
         seen.add(key);
+      }
+      if (row.grade === 'PSA 10' && !psa10Fallback.has(row.cardId)) {
+        psa10Fallback.set(row.cardId, Number(row.price));
+      }
+    }
+    // Apply PSA 10 fallback for any keys still null
+    for (const { cardId, grade } of requests) {
+      const key = `${cardId}:${grade}`;
+      if (result.get(key) == null && psa10Fallback.has(cardId)) {
+        result.set(key, psa10Fallback.get(cardId)!);
       }
     }
   }
@@ -1036,14 +1049,29 @@ export async function batchGetLatestPricesBeforeDate(
       )
       .orderBy(desc(priceHistory.soldAt));
 
-    // For each (cardId, grade), take the first (most recent before cutoff) record
+    // For each (cardId, grade), take the first (most recent before cutoff) record.
+    // Also build a PSA 10 fallback map: if the requested grade has no records,
+    // fall back to PSA 10 price for the same card (most common grade in priceHistory).
     const seen = new Set<string>();
+    const psa10Fallback = new Map<number, number>(); // cardId → latest PSA 10 price before cutoff
     for (const row of rows) {
       if (!row.grade) continue;
       const key = `${row.cardId}:${row.grade}`;
+      // Primary: exact grade match
       if (!seen.has(key) && result.has(key)) {
         result.set(key, Number(row.price));
         seen.add(key);
+      }
+      // Build PSA 10 fallback
+      if (row.grade === 'PSA 10' && !psa10Fallback.has(row.cardId)) {
+        psa10Fallback.set(row.cardId, Number(row.price));
+      }
+    }
+    // Apply PSA 10 fallback for any keys still null
+    for (const { cardId, grade } of requests) {
+      const key = `${cardId}:${grade}`;
+      if (result.get(key) == null && psa10Fallback.has(cardId)) {
+        result.set(key, psa10Fallback.get(cardId)!);
       }
     }
   }

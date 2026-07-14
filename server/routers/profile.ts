@@ -228,6 +228,9 @@ export const profileRouter = router({
         const { getUserCollection, getMarketGrade } = await import("../collection");
         const { batchGetLatestPricesBeforeDate } = await import("../db");
         const items = await getUserCollection(ctx.user.id, { priceMode: "grade" });
+        console.log('[PortfolioTrend] total items:', items.length);
+        console.log('[PortfolioTrend] items with marketPrice:', items.filter((i: any) => i.marketPrice != null).length);
+        console.log('[PortfolioTrend] total marketValue (current):', items.reduce((s: number, i: any) => s + (i.marketPrice ?? 0) * i.quantity, 0));
         if (items.length === 0) return { points: [] };
         const datesWithPurchase = items.filter((i: any) => i.purchasedAt != null);
         if (datesWithPurchase.length === 0) return { points: [] };
@@ -264,6 +267,7 @@ export const profileRouter = router({
           const isCurrentMonth = cur.getFullYear() === now.getFullYear() && cur.getMonth() === now.getMonth();
           if (isCurrentMonth) {
             totalMarketValue = activeItems.reduce((s: number, i: any) => s + (i.marketPrice ?? i.purchasePrice ?? 0) * i.quantity, 0);
+            console.log(`[PortfolioTrend] ${cur.getFullYear()}/${cur.getMonth()+1} (current) activeItems:${activeItems.length} totalMarketValue:${totalMarketValue}`);
           } else {
             // Query historical prices: latest transaction on or before monthEnd for each card+grade
             const historicalPrices = await batchGetLatestPricesBeforeDate(gradeRequests, monthEnd);
