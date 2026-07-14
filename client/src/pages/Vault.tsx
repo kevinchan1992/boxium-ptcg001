@@ -751,17 +751,14 @@ export default function Vault() {
             </div>
           </div>
 
-          {/* Items */}
+          {/* Items — Responsive Grid Layout */}
           {itemsLoading ? (
-            <div className="p-5 space-y-3">
-              {[1,2,3].map(i => (
-                <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="w-10 h-14 rounded-lg flex-shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-3 w-3/4 rounded" />
-                    <Skeleton className="h-3 w-1/2 rounded" />
-                  </div>
-                  <Skeleton className="h-6 w-16 rounded" />
+            <div className="p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {[1,2,3,4,5,6,7,8].map(i => (
+                <div key={i} className="flex flex-col gap-2">
+                  <Skeleton className="w-full rounded-xl" style={{ aspectRatio: "3/4" }} />
+                  <Skeleton className="h-3 w-3/4 rounded" />
+                  <Skeleton className="h-3 w-1/2 rounded" />
                 </div>
               ))}
             </div>
@@ -788,30 +785,38 @@ export default function Vault() {
               )}
             </div>
           ) : (
-            <div>
-              {filteredItems.map((item: any, idx: number) => {
+            <div className="p-4 sm:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {filteredItems.map((item: any) => {
                 const itemGainPct = item.unrealizedGainPct ?? 0;
                 const isGain = itemGainPct >= 0;
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 px-5 py-3.5 group"
+                    className="group relative flex flex-col rounded-2xl overflow-hidden"
                     style={{
-                      borderBottom: idx < filteredItems.length - 1 ? `1px solid ${BORDER}` : "none",
-                      // Hover 微發光邊框效果（透過 CSS transition + box-shadow 實現）
-                      transition: "box-shadow 0.2s ease, background 0.15s ease",
+                      background: BG_CARD,
+                      border: `1px solid ${BORDER}`,
+                      boxShadow: "0 4px 16px -4px rgba(0,0,0,0.06)",
+                      transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(254,221,0,0.03)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "inset 0 0 0 1px rgba(234,179,8,0.12), 0 4px 16px -4px rgba(234,179,8,0.08)";
+                      const el = e.currentTarget as HTMLDivElement;
+                      el.style.transform = "translateY(-4px)";
+                      el.style.boxShadow = "0 15px 30px -5px rgba(234,179,8,0.08), 0 8px 20px -8px rgba(0,0,0,0.10)";
+                      el.style.borderColor = "rgba(234,179,8,0.30)";
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "";
+                      const el = e.currentTarget as HTMLDivElement;
+                      el.style.transform = "";
+                      el.style.boxShadow = "0 4px 16px -4px rgba(0,0,0,0.06)";
+                      el.style.borderColor = BORDER;
                     }}
                   >
-                    {/* Card image with shine overlay */}
-                    <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden relative" style={{ background: "#F5F5F3" }}>
+                    {/* ── Card image (3:4 ratio) ── */}
+                    <div
+                      className="relative w-full overflow-hidden"
+                      style={{ aspectRatio: "3/4", background: "#F0EEE9" }}
+                    >
                       {item.card?.imageUrl ? (
                         <>
                           <LazyImage
@@ -819,66 +824,81 @@ export default function Vault() {
                             alt={item.card?.name ?? ""}
                             className="w-full h-full object-contain"
                           />
-                          {/* 閃卡折射光澤 */}
+                          {/* 閃卡折射光澤 — 對角線半透明漸層 */}
                           <div
                             className="absolute inset-0 pointer-events-none"
-                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
+                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 60%)" }}
                           />
                         </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-4 h-4" style={{ color: TEXT_SEC }} />
+                          <Package className="w-8 h-8 opacity-20" style={{ color: TEXT_PRI }} />
                         </div>
                       )}
-                    </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate leading-tight" style={{ color: TEXT_PRI }}>
-                        {item.card?.name ?? "未知卡牌"}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <GradeBadge grader={item.grader} grade={item.grade} />
-                        {item.quantity > 1 && (
-                          <span className="text-[10px]" style={{ color: TEXT_SEC }}>×{item.quantity}</span>
-                        )}
-                        {item.purchasePrice && (
-                          <span className="text-[10px]" style={{ color: TEXT_SEC }}>
-                            成本 {formatCurrency(item.purchasePrice)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Market value & gain */}
-                    <div className="text-right flex-shrink-0">
-                      {item.marketPrice ? (
-                        <>
-                          <p className="text-sm font-bold tabular-nums" style={{ color: TEXT_PRI, letterSpacing: "-0.02em" }}>
-                            {formatCurrency(item.marketPrice)}
-                          </p>
-                          {item.unrealizedGainPct != null && (
-                            <p
-                              className="text-[11px] font-semibold tabular-nums"
-                              style={{ color: isGain ? SUCCESS : DANGER }}
-                            >
-                              {isGain ? "+" : ""}{itemGainPct.toFixed(1)}%
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-xs" style={{ color: TEXT_SEC }}>—</p>
-                      )}
-                    </div>
-
-                    {/* Delete action */}
-                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Delete button — top-right corner, appears on hover */}
                       <button
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-red-50"
-                        onClick={() => setDeleteId(item.id)}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "rgba(255,255,255,0.90)", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
+                        onClick={e => { e.stopPropagation(); setDeleteId(item.id); }}
+                        title="刪除"
                       >
                         <Trash2 className="w-3.5 h-3.5" style={{ color: "#DC2626" }} />
                       </button>
+
+                      {/* Quantity badge — bottom-left corner */}
+                      {item.quantity > 1 && (
+                        <span
+                          className="absolute bottom-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "rgba(26,26,26,0.75)", color: "#FFFFFF", backdropFilter: "blur(4px)" }}
+                        >
+                          ×{item.quantity}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* ── Info below image ── */}
+                    <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
+                      {/* Row 1: Grade badge + gain% */}
+                      <div className="flex items-center justify-between gap-1">
+                        <GradeBadge grader={item.grader} grade={item.grade} />
+                        {item.unrealizedGainPct != null ? (
+                          <span
+                            className="text-[10px] font-semibold tabular-nums"
+                            style={{ color: isGain ? SUCCESS : DANGER }}
+                          >
+                            {isGain ? "+" : ""}{itemGainPct.toFixed(1)}%
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Row 2: Card name */}
+                      <p
+                        className="text-xs font-semibold leading-snug line-clamp-1"
+                        style={{ color: TEXT_PRI }}
+                        title={item.card?.name ?? ""}
+                      >
+                        {item.card?.name ?? "未知卡牌"}
+                      </p>
+
+                      {/* Row 3: Market value + cost */}
+                      <div className="flex flex-col gap-0.5">
+                        {item.marketPrice ? (
+                          <p
+                            className="text-sm font-bold tabular-nums leading-tight"
+                            style={{ color: TEXT_PRI, fontFamily: "'Courier New', monospace", letterSpacing: "-0.02em" }}
+                          >
+                            {formatCurrency(item.marketPrice)}
+                          </p>
+                        ) : (
+                          <p className="text-xs" style={{ color: TEXT_SEC }}>市值未知</p>
+                        )}
+                        {item.purchasePrice && (
+                          <p className="text-[10px]" style={{ color: TEXT_SEC }}>
+                            成本 {formatCurrency(item.purchasePrice)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
