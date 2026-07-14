@@ -64,6 +64,7 @@ const Pools = lazy(() => import("./pages/Pools"));
 const PoolDetail = lazy(() => import("./pages/PoolDetail"));
 const Points = lazy(() => import("./pages/Points"));
 const Vault = lazy(() => import("./pages/Vault"));
+const WallOfSighs = lazy(() => import("./pages/WallOfSighs"));
 
 // Lazily loaded guard components
 const GradingMaintenanceGuard = lazy(() => import("./components/GradingMaintenanceGuard"));
@@ -125,6 +126,7 @@ function Router() {
             <Route path="/reset-password" component={ResetPassword} />
             <Route path="/profile" component={Profile} />
             <Route path="/vault" component={Vault} />
+            <Route path="/wall-of-sighs" component={WallOfSighs} />
 
             <Route path="/admin">
               <ProtectedAdminRoute>

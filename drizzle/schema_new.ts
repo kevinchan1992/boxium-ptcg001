@@ -2226,3 +2226,65 @@ export const aiScanUsage = mysqlTable("aiScanUsage", {
   userMonthIdx: uniqueIndex("idx_aiScanUsage_userId_yearMonth").on(table.userId, table.yearMonth),
 }));
 export type AiScanUsage = typeof aiScanUsage.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wall of Sighs — 嘆息之牆
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * wallEntries — one row per user who has published their vault to the wall
+ */
+export const wallEntries = mysqlTable("wallEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(), // one entry per user
+  displayName: varchar("displayName", { length: 128 }).notNull(),
+  avatarUrl: text("avatarUrl"),
+  totalValue: bigint("totalValue", { mode: "number" }).notNull().default(0), // in HKD cents
+  topCardId: int("topCardId"), // FK to userCollections.id (most valuable card)
+  topCardName: varchar("topCardName", { length: 255 }),
+  topCardImageUrl: text("topCardImageUrl"),
+  topCardGrade: varchar("topCardGrade", { length: 32 }),
+  topCardGrader: varchar("topCardGrader", { length: 32 }),
+  topCardValue: bigint("topCardValue", { mode: "number" }).default(0),
+  sighs: int("sighs").notNull().default(0),
+  posterUrl: text("posterUrl"), // S3 URL for the generated honour certificate poster
+  isPublic: boolean("isPublic").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: uniqueIndex("idx_wallEntries_userId").on(table.userId),
+  totalValueIdx: index("idx_wallEntries_totalValue").on(table.totalValue),
+  sighsIdx: index("idx_wallEntries_sighs").on(table.sighs),
+}));
+export type WallEntry = typeof wallEntries.$inferSelect;
+export type InsertWallEntry = typeof wallEntries.$inferInsert;
+
+/**
+ * wallComments — comments on a wall entry (login required)
+ */
+export const wallComments = mysqlTable("wallComments", {
+  id: int("id").autoincrement().primaryKey(),
+  entryId: int("entryId").notNull(),
+  userId: int("userId").notNull(),
+  displayName: varchar("displayName", { length: 128 }).notNull(),
+  content: varchar("content", { length: 500 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  entryIdIdx: index("idx_wallComments_entryId").on(table.entryId),
+  userIdIdx: index("idx_wallComments_userId").on(table.userId),
+}));
+export type WallComment = typeof wallComments.$inferSelect;
+export type InsertWallComment = typeof wallComments.$inferInsert;
+
+/**
+ * wallSighs — tracks who sighed on which entry (anti-spam: 1 sigh per user per entry per 24h)
+ */
+export const wallSighLogs = mysqlTable("wallSighLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  entryId: int("entryId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  entryUserIdx: uniqueIndex("idx_wallSighLogs_entry_user").on(table.entryId, table.userId),
+}));
+export type WallSighLog = typeof wallSighLogs.$inferSelect;

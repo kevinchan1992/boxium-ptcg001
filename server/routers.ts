@@ -18,6 +18,7 @@ import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
 import { lootpoolRouter } from "./routers/lootpool";
 import { vipRouter } from "./routers/vip";
+import { wallRouter } from "./routers/wall";
 import { contactRouter } from "./routers/contact";
 import { marketplaceRouter } from "./routers/marketplace";
 
@@ -56,6 +57,7 @@ export const appRouter = router({
   cardInventory: cardInventoryRouter,
   lootpool: lootpoolRouter,
   vip: vipRouter,
+  wall: wallRouter,
 });
 
 export type AppRouter = typeof appRouter;
