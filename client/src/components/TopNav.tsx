@@ -342,16 +342,22 @@ export function TopNav() {
               <motion.button
                 onClick={handleSellClick}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200 whitespace-nowrap"
+                whileHover={{ y: -1 }}
+                className="flex items-center gap-1.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white rounded-full transition-all duration-300 whitespace-nowrap"
                 style={{
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  color: '#FFFFFF',
-                  background: 'transparent',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  padding: '8px 18px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 20px -6px rgba(0,0,0,0.4)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'; }}
               >
-                <Tag className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="flex-shrink-0">
+                  <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
                 {/* Hide label on md~lg to avoid crowding center nav */}
                 <span className="hidden lg:inline">{t("topnav.sellItem")}</span>
               </motion.button>
@@ -546,43 +552,94 @@ export function TopNav() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:text-[#FEDD00] p-2">
-                    <User className="w-5 h-5" />
-                  </Button>
+                  <button className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors duration-200 p-1.5 rounded-lg hover:bg-white/8 outline-none">
+                    {/* Circular avatar */}
+                    <div className="w-7 h-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </div>
+                    {/* Chevron */}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50">
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[160px]">
-                  <DropdownMenuLabel className="truncate max-w-[180px]">{user.name || user.email}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => { setLocation("/profile"); }}>
-                    <User className="w-4 h-4 mr-2" />
-                    {t("topnav.profile")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setLocation("/seller"); }}>
-                    <Tag className="w-4 h-4 mr-2" />
-                    {t("topnav.sellerDashboard")}
-                  </DropdownMenuItem>
+                <DropdownMenuContent
+                  align="end"
+                  className="min-w-[200px] p-1.5 bg-white border border-[#EAEAEA] rounded-xl"
+                  style={{ boxShadow: '0 15px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
+                >
+                  {/* User name header */}
+                  <div className="px-3 py-2.5 mb-1">
+                    <p className="text-[11px] font-semibold text-[#1A1A1A] tracking-wide truncate max-w-[180px]">{user.name || user.email}</p>
+                    <p className="text-[10px] text-[#A0A0A0] mt-0.5 tracking-wider uppercase">{user.role === 'admin' ? 'Administrator' : 'Member'}</p>
+                  </div>
+                  <div className="border-t border-[#F0F0F0] mb-1" />
+                  {/* Profile */}
+                  <button
+                    onClick={() => setLocation("/profile")}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#404040] hover:bg-[#F5F5F3] hover:text-[#1A1A1A] transition-colors duration-200 group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#A0A0A0] group-hover:text-[#404040] transition-colors flex-shrink-0">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span className="text-xs font-medium">{t("topnav.profile")}</span>
+                  </button>
+                  {/* Seller */}
+                  <button
+                    onClick={() => setLocation("/seller")}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#404040] hover:bg-[#F5F5F3] hover:text-[#1A1A1A] transition-colors duration-200 group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#A0A0A0] group-hover:text-[#404040] transition-colors flex-shrink-0">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span className="text-xs font-medium">{t("topnav.sellerDashboard")}</span>
+                  </button>
+                  {/* Admin */}
                   {user.role === "admin" && (
-                    <DropdownMenuItem onClick={() => { setLocation("/admin"); }}>
-                      <span className="w-4 h-4 mr-2 text-red-400">⚙</span>
-                    {t("common.admin")}
-                  </DropdownMenuItem>
+                    <button
+                      onClick={() => setLocation("/admin")}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#404040] hover:bg-[#F5F5F3] hover:text-[#1A1A1A] transition-colors duration-200 group"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#A0A0A0] group-hover:text-[#404040] transition-colors flex-shrink-0">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                      </svg>
+                      <span className="text-xs font-medium">{t("common.admin")}</span>
+                    </button>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t("topnav.logout")}
-                  </DropdownMenuItem>
+                  {/* Divider before logout */}
+                  <div className="border-t border-[#F0F0F0] mt-1 mb-1" />
+                  {/* Logout */}
+                  <button
+                    onClick={() => logoutMutation.mutate()}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#404040] hover:bg-[#FFF5F5] hover:text-[#C0392B] transition-colors duration-200 group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#A0A0A0] group-hover:text-[#C0392B] transition-colors flex-shrink-0">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span className="text-xs font-medium">{t("topnav.logout")}</span>
+                  </button>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:text-[#FEDD00] p-2"
+              <button
+                className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors duration-200 p-1.5 rounded-lg hover:bg-white/8 outline-none"
                 onClick={() => setLocation("/login")}
               >
-                <User className="w-5 h-5" />
-              </Button>
+                <div className="w-7 h-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+              </button>
             )}
 
           </div>

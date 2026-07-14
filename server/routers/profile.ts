@@ -232,11 +232,15 @@ export const profileRouter = router({
         console.log('[PortfolioTrend] items with marketPrice:', items.filter((i: any) => i.marketPrice != null).length);
         console.log('[PortfolioTrend] total marketValue (current):', items.reduce((s: number, i: any) => s + (i.marketPrice ?? 0) * i.quantity, 0));
         if (items.length === 0) return { points: [] };
+        // Determine earliest purchase date (only from items that have one)
         const datesWithPurchase = items.filter((i: any) => i.purchasedAt != null);
-        if (datesWithPurchase.length === 0) return { points: [] };
-        const earliest = datesWithPurchase.reduce((min: Date, i: any) =>
-          i.purchasedAt! < min ? i.purchasedAt! : min, datesWithPurchase[0].purchasedAt!);
+        // Items without purchasedAt are treated as always held — use 3 months ago as fallback start
         const now = new Date();
+        const fallbackStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const earliest = datesWithPurchase.length > 0
+          ? datesWithPurchase.reduce((min: Date, i: any) =>
+              i.purchasedAt! < min ? i.purchasedAt! : min, datesWithPurchase[0].purchasedAt!)
+          : fallbackStart;
         const points: { month: string; cost: number; marketValue: number; gain: number }[] = [];
         const cur = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
 
@@ -254,7 +258,11 @@ export const profileRouter = router({
 
         while (cur <= now) {
           const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59);
-          const activeItems = items.filter((i: any) => i.purchasedAt != null && i.purchasedAt <= monthEnd);
+          // Items without purchasedAt are treated as always held (include in every month)
+          // Items with purchasedAt are only included if purchased on or before monthEnd
+          const activeItems = items.filter((i: any) =>
+            i.purchasedAt == null || i.purchasedAt <= monthEnd
+          );
           if (activeItems.length === 0) {
             cur.setMonth(cur.getMonth() + 1);
             continue;
