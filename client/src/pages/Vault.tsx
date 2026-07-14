@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
+import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { LazyImage } from "@/components/LazyImage";
 import { getProxiedImageUrl } from "@/lib/utils";
 import {
@@ -23,7 +24,7 @@ import {
 import {
   TrendingUp, TrendingDown, Package, DollarSign,
   Plus, Search, Loader2, Star, BarChart3, Wallet,
-  RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp,
+  RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp, Camera,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -176,6 +177,7 @@ export default function Vault() {
   });
   const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null);
   const [showCardPicker, setShowCardPicker] = useState(false);
+  const [showCameraSearch, setShowCameraSearch] = useState(false);
 
   // Reactive ROI calculation
   const currentMarketPrice = selectedCard?.referencePrice != null ? Number(selectedCard.referencePrice) : null;
@@ -1134,14 +1136,31 @@ export default function Vault() {
                   <Edit2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: TEXT_SEC }} />
                 </div>
               ) : (
-                <button
-                  className="w-full py-3.5 rounded-xl border-2 border-dashed text-sm font-semibold transition-colors hover:bg-gray-50 flex items-center justify-center gap-2"
-                  style={{ borderColor: BORDER, color: TEXT_SEC, background: "#F5F5F3" }}
-                  onClick={() => setShowCardPicker(true)}
-                >
-                  <Search className="w-4 h-4" />
-                  搜尋並選擇卡牌
-                </button>
+                <div className="flex gap-2">
+                  {/* Text search button */}
+                  <button
+                    className="flex-1 py-3.5 rounded-xl border-2 border-dashed text-sm font-semibold transition-colors hover:bg-gray-50 flex items-center justify-center gap-2"
+                    style={{ borderColor: BORDER, color: TEXT_SEC, background: "#F5F5F3" }}
+                    onClick={() => setShowCardPicker(true)}
+                  >
+                    <Search className="w-4 h-4" />
+                    搜尋並選擇卡牌
+                  </button>
+                  {/* Camera scan button */}
+                  <button
+                    className="px-4 py-3.5 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-1.5 flex-shrink-0"
+                    style={{
+                      borderColor: BRAND_BLUE,
+                      color: BRAND_BLUE,
+                      background: "rgba(6,3,141,0.04)",
+                    }}
+                    onClick={() => setShowCameraSearch(true)}
+                    title="拍照智能選卡"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span className="hidden sm:inline text-xs tracking-wide">拍照選卡</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -1332,6 +1351,28 @@ export default function Vault() {
         onSelect={(card) => {
           setSelectedCard(card);
           setShowCardPicker(false);
+        }}
+      />
+
+      {/* ── Camera Search Sheet ─────────────────────────────── */}
+      <CameraSearchSheet
+        open={showCameraSearch}
+        onOpenChange={(o) => setShowCameraSearch(o)}
+        onCardSelect={(card) => {
+          setSelectedCard({
+            id: card.id,
+            name: card.name,
+            imageUrl: card.imageUrl,
+            series: card.series,
+            cardNumber: card.cardNumber,
+            rarity: card.rarity,
+            referencePrice: null,
+            productType: "single_card",
+          });
+          setShowCameraSearch(false);
+          // Re-open add dialog if it was closed (camera sheet is a separate overlay)
+          setShowAddDialog(true);
+          toast.success("已識別卡牌，請確認並填寫詳細資料");
         }}
       />
 
