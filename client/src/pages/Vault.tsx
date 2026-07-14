@@ -6,7 +6,7 @@
  * - 2/3 走勢圖 + 1/3 排行榜（Segmented Tab + 羅馬數字）
  * - 高對比輸入框 + 即時 ROI 計算
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -25,7 +25,9 @@ import {
   TrendingUp, TrendingDown, Package, DollarSign,
   Plus, Search, Loader2, Star, BarChart3, Wallet,
   RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp, Camera,
+  Share2, Download, Link2, ImageIcon,
 } from "lucide-react";
+import ShareCard, { type ShareCardStats, type ShareCardItem } from "@/components/ShareCard";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -190,6 +192,81 @@ export default function Vault() {
     return { unrealized, roi };
   }, [currentMarketPrice, purchasePriceNum, addForm.quantity]);
 
+  // ── Share ─────────────────────────────────────────────────
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+
+  const shareStats: ShareCardStats | null = stats ? {
+    totalMarketValue: stats.totalMarketValue,
+    totalGain: stats.totalGain,
+    totalGainPct: stats.totalGainPct,
+    totalCost: stats.totalCost,
+    totalQuantity: stats.totalQuantity ?? 0,
+    currency: "HKD",
+  } : null;
+
+  const shareTopCards: ShareCardItem[] = useMemo(() => {
+    const top3 = stats?.top3ByValue ?? [];
+    return top3.slice(0, 3).map(item => ({
+      cardName: item.card?.name ?? "Unknown Card",
+      imageUrl: item.card?.imageUrl ?? null,
+      grader: item.grader ?? "PSA",
+      grade: item.grade ?? null,
+      marketPrice: item.marketPrice ?? null,
+      unrealizedGainPct: item.unrealizedGainPct ?? null,
+    }));
+  }, [stats]);
+
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/vault` : "https://boxium.asia";
+
+  const handleGenerateShare = useCallback(async () => {
+    if (!shareStats || !shareCardRef.current) return;
+    setIsGeneratingShare(true);
+    try {
+      // Dynamically import html-to-image to avoid SSR issues
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(shareCardRef.current, {
+        width: 1080,
+        height: 1080,
+        pixelRatio: 1,
+        cacheBust: true,
+        skipFonts: false,
+        style: {
+          position: "static",
+          top: "0",
+          left: "0",
+        },
+      });
+      setShareImageUrl(dataUrl);
+      setShowShareModal(true);
+    } catch (err) {
+      console.error("Share generation failed:", err);
+      toast.error("生成分享圖片失敗，請稍後再試");
+    } finally {
+      setIsGeneratingShare(false);
+    }
+  }, [shareStats]);
+
+  const handleDownloadShare = useCallback(() => {
+    if (!shareImageUrl) return;
+    const link = document.createElement("a");
+    link.download = `boxium-vault-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = shareImageUrl;
+    link.click();
+    toast.success("圖片已下載！");
+  }, [shareImageUrl]);
+
+  const handleCopyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("分享連結已複製！");
+    } catch {
+      toast.error("複製失敗，請手動複製連結");
+    }
+  }, [shareUrl]);
+
   // ── Delete ────────────────────────────────────────────────
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -303,16 +380,44 @@ export default function Vault() {
               VAULT
             </span>
           </div>
-          {/* Add button */}
-          <button
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-            style={{ background: TEXT_PRI, color: "#FFFFFF" }}
-            onClick={() => setShowAddDialog(true)}
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">新增卡牌</span>
-            <span className="sm:hidden">新增</span>
-          </button>
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            {/* Share button */}
+            {stats && (
+              <button
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                style={{
+                  background: "#FFFFFF",
+                  color: TEXT_PRI,
+                  border: `1px solid ${BORDER}`,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                  opacity: isGeneratingShare ? 0.7 : 1,
+                }}
+                onClick={handleGenerateShare}
+                disabled={isGeneratingShare}
+                title="生成分享圖片"
+              >
+                {isGeneratingShare ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Share2 className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {isGeneratingShare ? "生成中..." : "分享收藏"}
+                </span>
+              </button>
+            )}
+            {/* Add button */}
+            <button
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
+              style={{ background: TEXT_PRI, color: "#FFFFFF" }}
+              onClick={() => setShowAddDialog(true)}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">新增卡牌</span>
+              <span className="sm:hidden">新增</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1063,7 +1168,23 @@ export default function Vault() {
       </div>
 
       {/* ── Mobile FAB ─────────────────────────────────────── */}
-      <div className="fixed bottom-20 right-4 sm:hidden z-40">
+      <div className="fixed bottom-20 right-4 sm:hidden z-40 flex flex-col gap-2 items-end">
+        {/* Share FAB */}
+        {stats && (
+          <button
+            className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+            style={{ background: "#FFFFFF", border: `1px solid ${BORDER}` }}
+            onClick={handleGenerateShare}
+            disabled={isGeneratingShare}
+          >
+            {isGeneratingShare ? (
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: TEXT_PRI }} />
+            ) : (
+              <Share2 className="w-5 h-5" style={{ color: TEXT_PRI }} />
+            )}
+          </button>
+        )}
+        {/* Add FAB */}
         <button
           className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95"
           style={{ background: TEXT_PRI }}
@@ -1072,6 +1193,111 @@ export default function Vault() {
           <Plus className="w-6 h-6 text-white" />
         </button>
       </div>
+
+      {/* ── Hidden ShareCard Template ──────────────────────── */}
+      {shareStats && (
+        <ShareCard
+          ref={shareCardRef}
+          stats={shareStats}
+          topCards={shareTopCards}
+          userName={user?.name ?? undefined}
+          shareUrl={shareUrl}
+        />
+      )}
+
+      {/* ── Share Preview Modal ────────────────────────────── */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent
+          className="max-w-lg w-full"
+          style={{
+            background: "#FFFFFF",
+            border: `1px solid ${BORDER}`,
+            boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+            borderRadius: "20px",
+            padding: 0,
+            overflow: "hidden",
+          }}
+        >
+          {/* Modal Header */}
+          <div
+            className="flex items-center justify-between px-6 py-4"
+            style={{ borderBottom: `1px solid ${BORDER}` }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: "#F5F5F3" }}
+              >
+                <ImageIcon className="w-4 h-4" style={{ color: TEXT_PRI }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: TEXT_PRI }}>分享收藏</p>
+                <p className="text-[10px]" style={{ color: TEXT_SEC }}>1080×1080 · Instagram / Facebook</p>
+              </div>
+            </div>
+            <button
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100"
+              onClick={() => setShowShareModal(false)}
+            >
+              <X className="w-4 h-4" style={{ color: TEXT_SEC }} />
+            </button>
+          </div>
+
+          {/* Image Preview */}
+          <div className="px-6 py-5">
+            {shareImageUrl && (
+              <div
+                className="w-full rounded-xl overflow-hidden"
+                style={{
+                  border: `1px solid ${BORDER}`,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+                  aspectRatio: "1/1",
+                }}
+              >
+                <img
+                  src={shareImageUrl}
+                  alt="分享圖片預覽"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div
+            className="px-6 pb-6 flex flex-col gap-3"
+          >
+            {/* Download */}
+            <button
+              className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: TEXT_PRI, color: "#FFFFFF" }}
+              onClick={handleDownloadShare}
+            >
+              <Download className="w-4 h-4" />
+              下載圖片
+            </button>
+
+            {/* Copy link */}
+            <button
+              className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
+              style={{
+                background: "#FFFFFF",
+                color: TEXT_PRI,
+                border: `1px solid ${BORDER}`,
+              }}
+              onClick={handleCopyShareLink}
+            >
+              <Link2 className="w-4 h-4" />
+              複製專屬分享連結
+            </button>
+
+            {/* Hint */}
+            <p className="text-center text-[10px]" style={{ color: TEXT_SEC }}>
+              下載後可直接發佈到 Instagram、Facebook 或 WhatsApp
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ══ Add Card Dialog ═══════════════════════════════════ */}
       <Dialog open={showAddDialog} onOpenChange={(o) => {
