@@ -146,12 +146,12 @@ export function VipUpgradeModal({ open, onOpenChange }: VipUpgradeModalProps) {
 
               {/* Yearly card — highlighted */}
               <div className="flex flex-col rounded-xl border-2 border-[#1A1A1A] bg-white overflow-hidden relative shadow-[0_8px_20px_-6px_rgba(0,0,0,0.2)]">
-                {/* 省 34% badge */}
+                {/* 省34% badge */}
                 <div
-                  className="absolute -top-0 right-0 text-[9px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl"
+                  className="absolute top-0 right-0 text-[10px] font-extrabold px-2.5 py-1 rounded-bl-xl rounded-tr-xl leading-tight"
                   style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
                 >
-                  省 34%
+                  省34%
                 </div>
                 <div className="px-4 pt-4 pb-3 flex-1">
                   <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">年費方案</p>

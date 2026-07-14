@@ -53,7 +53,7 @@
     "STRIPE_SECRET_KEY": "sk_test_51T4XA46AywePGaqDHBKl9jTn8qGyDabR2V9D5zznalbZxAc0AVtW2EnDWgP63pTtROKYyquFFxeI45PV5l1iOv2Z00PH5yxpV8",
     "STRIPE_VIP_MONTHLY_PRICE_ID": "price_1Tt20hEFJpV6IgaPbJpLqL59",
     "STRIPE_VIP_YEARLY_PRICE_ID": "price_1Tt21NEFJpV6IgaPgAGaWU9d",
-    "STRIPE_WEBHOOK_SECRET": "whsec_YtvYRql8e4sWyAkJyj47xDMjpQgAGWsb",
+    "STRIPE_WEBHOOK_SECRET": "whsec_ue4n98oiPfzEsbpTVicjREjW9FFQAsC1",
     "SUPABASE_DATABASE_URL": "postgresql://postgres.sagyfroktrfnnhepmvzu:Aa63020887%40%40@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
     "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
     "VITE_ANALYTICS_WEBSITE_ID": "d64e4018-e766-4c4a-ac1d-c1c51bd1a15e",
