@@ -568,17 +568,17 @@ export default function Vault() {
                         className="flex gap-3 rounded-xl p-2"
                         style={{ background: medal.bg, border: `1px solid ${medal.border}` }}
                       >
-                        {/* 卡牌圖片 — w-20 大圖，3:4 比例 */}
+                        {/* 卡牌圖片 — w-20 大圖，3:4 比例，object-cover 撑滿 */}
                         <div
                           className="flex-shrink-0 rounded-lg overflow-hidden relative"
-                          style={{ width: "80px", aspectRatio: "3/4", background: "#F0EEE9" }}
+                          style={{ width: "80px", aspectRatio: "3/4", background: "#E8E6E1" }}
                         >
                           {item.card?.imageUrl ? (
                             <>
                               <LazyImage
                                 src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                                 alt={item.card?.name ?? ""}
-                                className="w-full h-full object-contain"
+                                className="absolute inset-0 w-full h-full object-cover"
                               />
                               <div
                                 className="absolute inset-0 pointer-events-none"
