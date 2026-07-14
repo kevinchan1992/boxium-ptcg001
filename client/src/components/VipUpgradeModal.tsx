@@ -21,8 +21,8 @@ const VIP_FEATURES = [
   { icon: <TrendingUp className="w-3.5 h-3.5" />, title: "長期價格走勢圖", desc: "解鎖 3M / 6M / 1Y / 2Y / Max 長期區間" },
   { icon: <Camera className="w-3.5 h-3.5" />, title: "智能入庫無限次", desc: "免費每月限 25 次，VIP 無限使用" },
   { icon: <Download className="w-3.5 h-3.5" />, title: "CSV 匯出", desc: "完整持倉資料匯出，Excel / Google Sheets 分析" },
-  { icon: <BarChart3 className="w-3.5 h-3.5" />, title: "系列分析", desc: "各系列持倉成本、市值及盈虧比例", comingSoon: true },
-  { icon: <Star className="w-3.5 h-3.5" />, title: "每週 P&L 報告", desc: "每週一自動發送盈虧摘要郵件", comingSoon: true },
+  { icon: <Camera className="w-3.5 h-3.5" />, title: "智能拍照識別", desc: "Research 頁面拍照搜尋，免費每月 25 次，VIP 無限使用" },
+  { icon: <Star className="w-3.5 h-3.5" />, title: "每週 P&L 報告", desc: "每週一自動發送盈虧摘要郵件" },
 ];
 
 interface VipUpgradeModalProps {
@@ -106,7 +106,7 @@ export function VipUpgradeModal({ open, onOpenChange }: VipUpgradeModalProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-semibold text-gray-900">{f.title}</span>
-                      {f.comingSoon && (
+                      {(f as any).comingSoon && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 font-medium leading-none">
                           即將推出
                         </span>

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { trpc } from "@/lib/trpc";
+import { useVip } from "@/hooks/useVip";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -59,6 +60,7 @@ export function TopNav() {
   };
 
   const { data: user } = trpc.auth.me.useQuery();
+  const { isVip: currentUserIsVip } = useVip();
   const { data: sellerCenterAccess } = trpc.grading.getSellerCenterAccess.useQuery(undefined, { staleTime: 60000 });
   const showSellButton = user?.role === 'admin' || sellerCenterAccess?.allowed !== false;
   const { data: lootModeData } = trpc.lootpool.checkMaintenanceMode.useQuery(undefined, { staleTime: 60000 });
@@ -591,17 +593,23 @@ export function TopNav() {
                         )}
                       </div>
                     </div>
-                    {/* Role badge */}
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${
-                      user.role === 'admin'
-                        ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]'
-                        : 'bg-[#F0F9FF] text-[#0369A1] border border-[#BAE6FD]'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        user.role === 'admin' ? 'bg-[#D97706]' : 'bg-[#0284C7]'
-                      }`} />
-                      {user.role === 'admin' ? 'Administrator' : 'Member'}
-                    </span>
+                    {/* Role / VIP badge */}
+                    {user.role === 'admin' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
+                        Administrator
+                      </span>
+                    ) : currentUserIsVip ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase" style={{ background: '#FEDD00', color: '#06038D', border: '1px solid #E6C800' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#06038D' }} />
+                        VIP
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-[#F0F9FF] text-[#0369A1] border border-[#BAE6FD]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
+                        Member
+                      </span>
+                    )}
                   </div>
                   <div className="border-t border-[#F0F0F0] mb-1" />
                   {/* Profile */}
