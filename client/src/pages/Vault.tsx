@@ -977,6 +977,22 @@ export default function Vault() {
                     {totalItems}
                   </span>
                 )}
+                {/* Non-VIP vault quota indicator */}
+                {!isVip && (
+                  <button
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all hover:opacity-80"
+                    style={{
+                      background: totalItems >= 25 ? "#FEE2E2" : "#F5F5F3",
+                      color: totalItems >= 25 ? "#DC2626" : TEXT_SEC,
+                      border: `1px solid ${totalItems >= 25 ? "#FECACA" : BORDER}`,
+                    }}
+                    onClick={() => setShowVipModal(true)}
+                    title="升級 VIP 可無限新增卡牌"
+                  >
+                    <Crown className="w-2.5 h-2.5" />
+                    {totalItems} / 25
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {/* Desktop: filters inline with title */}
