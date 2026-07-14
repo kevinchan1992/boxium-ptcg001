@@ -540,8 +540,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
   ctx.font = "9px Arial, sans-serif";
   ctx.fillStyle = "#6B7280";
   ctx.textAlign = "center";
-  ctx.fillText("揃碼查看完整收藏", qrX + QR_SIZE / 2, qrY + QR_SIZE + 18);
-  ctx.fillText("Scan to View Vault", qrX + QR_SIZE / 2, qrY + QR_SIZE + 32);
+  ctx.fillText("Scan to View Vault", qrX + QR_SIZE / 2, qrY + QR_SIZE + 18);
   ctx.restore();
 
   return canvas.toBuffer("image/png");

@@ -9845,3 +9845,8 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 第二步：後端新增 adminPool.generateCoverImage mutation — 呼叫 generateImage() helper，取得 S3 URL 後寫入 pools.coverImageUrl
 - [x] 第三步：PoolAdmin 後台封面區域加入「✨ AI 生成封面」按鈕 — 有 editingPoolId 才可用，loading 狀態顯示旋轉圖示，成功後自動填入 coverImageUrl 預覽
 - [x] TypeScript 0 errors
+
+## ✅ Share Card Production 修復（2026-07-14）
+- [x] 加入 canvas 到 package.json onlyBuiltDependencies（確保 postinstall 執行）
+- [x] 建立 Dockerfile 安裝 canvas 編譯工具（python3, make, g++, pkg-config）
+- [x] 修復 QR Code 下方中文亂碼 → 改為純英文 "Scan to View Vault"
