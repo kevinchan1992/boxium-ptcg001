@@ -938,17 +938,17 @@ export default function Vault() {
                       el.style.borderColor = BORDER;
                     }}
                   >
-                    {/* ── Card image (3:4 ratio) — 贴邊展示，消除多餘留白 ── */}
+                    {/* ── Card image (3:4 ratio) — object-cover 撑滿容器 ── */}
                     <div
                       className="relative w-full overflow-hidden"
-                      style={{ aspectRatio: "3/4", background: "#F0EEE9", padding: 0 }}
+                      style={{ aspectRatio: "3/4", background: "#E8E6E1", padding: 0 }}
                     >
                       {item.card?.imageUrl ? (
                         <>
                           <LazyImage
                             src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                             alt={item.card?.name ?? ""}
-                            className="w-full h-full object-contain"
+                            className="absolute inset-0 w-full h-full object-cover"
                           />
                           {/* 閃卡折射光澤 — 對角線半透明漸層 */}
                           <div
