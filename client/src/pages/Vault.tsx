@@ -25,7 +25,7 @@ import {
   TrendingUp, TrendingDown, Package, DollarSign,
   Plus, Search, Loader2, Star, BarChart3, Wallet,
   RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp, Camera,
-  Share2, Download, Link2, ImageIcon, Crown, Lock,
+  Share2, Download, Link2, ImageIcon, Crown, Lock, Eye,
 } from "lucide-react";
 import ShareCard, { type ShareCardStats, type ShareCardItem } from "@/components/ShareCard";
 import { VipUpgradeModal } from "@/components/VipUpgradeModal";
@@ -1274,6 +1274,41 @@ export default function Vault() {
                       >
                         <Trash2 className="w-3.5 h-3.5" style={{ color: "#DC2626" }} />
                       </button>
+
+                      {/* Slide-up overlay — quick actions on hover */}
+                      <div
+                        className="absolute inset-x-0 bottom-0 flex gap-2 px-2.5 py-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"
+                        style={{ background: "linear-gradient(to top, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 70%, transparent 100%)", backdropFilter: "blur(4px)" }}
+                      >
+                        <button
+                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                          style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.25)" }}
+                          onClick={e => { e.stopPropagation(); setLocation(`/card/${item.card?.id}`); }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.28)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.15)"; }}
+                        >
+                          <Eye className="w-3 h-3" />
+                          查看詳情
+                        </button>
+                        <button
+                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                          style={{ background: "rgba(254,221,0,0.18)", color: "#FEDD00", border: "1px solid rgba(254,221,0,0.35)" }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/card/${item.card?.id}`;
+                            if (navigator.share) {
+                              navigator.share({ title: item.card?.name ?? "", url }).catch(() => {});
+                            } else {
+                              navigator.clipboard.writeText(url).then(() => toast.success("連結已複製"));
+                            }
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(254,221,0,0.32)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(254,221,0,0.18)"; }}
+                        >
+                          <Share2 className="w-3 h-3" />
+                          分享
+                        </button>
+                      </div>
 
                       {/* Quantity badge — bottom-left corner */}
                       {item.quantity > 1 && (

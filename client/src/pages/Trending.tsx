@@ -558,6 +558,46 @@ export default function TrendingPage() {
                         <div className="absolute top-2 left-2">
                           <RankBadge rank={idx + 1} />
                         </div>
+
+                        {/* Slide-up overlay — quick actions on hover */}
+                        <div
+                          className="absolute inset-x-0 bottom-0 flex gap-2 px-2.5 py-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"
+                          style={{ background: "linear-gradient(to top, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 70%, transparent 100%)", backdropFilter: "blur(4px)" }}
+                        >
+                          <button
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold"
+                            style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.25)" }}
+                            onClick={e => { e.stopPropagation(); window.location.href = `/card/${card.cardId}`; }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.28)"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.15)"; }}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            查看詳情
+                          </button>
+                          <button
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold"
+                            style={{ background: "rgba(254,221,0,0.18)", color: "#FEDD00", border: "1px solid rgba(254,221,0,0.35)" }}
+                            onClick={e => {
+                              e.stopPropagation();
+                              const url = `${window.location.origin}/card/${card.cardId}`;
+                              if (navigator.share) {
+                                navigator.share({ title: card.cardName, url }).catch(() => {});
+                              } else {
+                                navigator.clipboard.writeText(url).then(() => {
+                                  const btn = e.currentTarget as HTMLButtonElement;
+                                  const orig = btn.textContent;
+                                  btn.textContent = "已複製!";
+                                  setTimeout(() => { btn.textContent = orig; }, 1500);
+                                });
+                              }
+                            }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(254,221,0,0.32)"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(254,221,0,0.18)"; }}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            分享
+                          </button>
+                        </div>
                       </div>
 
                       {/* Info below image */}
