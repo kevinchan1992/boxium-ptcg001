@@ -914,13 +914,14 @@ export default function Vault() {
                 return (
                   <div
                     key={item.id}
-                    className="group relative flex flex-col rounded-2xl overflow-hidden"
+                    className="group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer"
                     style={{
                       background: BG_CARD,
                       border: `1px solid ${BORDER}`,
                       boxShadow: "0 4px 16px -4px rgba(0,0,0,0.06)",
                       transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
                     }}
+                    onClick={() => item.card?.id && setLocation(`/card/${item.card.id}`)}
                     onMouseEnter={e => {
                       const el = e.currentTarget as HTMLDivElement;
                       el.style.transform = "translateY(-4px)";
