@@ -496,53 +496,113 @@ export default function TrendingPage() {
             </div>
           ) : (
             <>
-              {/* Table — HTML table for strict column alignment */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{width: '2.5rem'}} />
-                    <col style={{width: '3.5rem'}} />
-                    <col />
-                    <col style={{width: '9rem'}} />
-                    <col style={{width: '1.5rem'}} />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 px-1">#</th>
-                      <th />
-                      <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 pl-3">卡牌</th>
-                      <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider py-2.5 pr-2">
-                        {activeTab === "volatile" ? "波動率" : "漲跌幅"}
-                      </th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeData.map((card, idx) => {
-                      const isVolatility = activeTab === "volatile";
-                      const currentPrice = isVolatility
-                        ? (card as any).avgPrice
-                        : (card as any).latestPrice;
-                      const changeValue = isVolatility
-                        ? (card as any).volatility
-                        : (card as any).priceChange;
-                      return (
-                        <CardRow
-                          key={card.cardId}
-                          rank={idx + 1}
-                          cardId={card.cardId}
-                          cardName={card.cardName}
-                          cardImage={card.cardImage ?? null}
-                          currentPrice={currentPrice}
-                          changeValue={changeValue}
-                          currency={card.currency}
-                          isVolatility={isVolatility}
-                          isFirst={idx === 0}
-                        />
-                      );
-                    })}
-                  </tbody>
-                </table>
+              {/* Grid — 2-col card layout matching Vault style */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                {activeData.map((card, idx) => {
+                  const isVolatility = activeTab === "volatile";
+                  const currentPrice = isVolatility
+                    ? (card as any).avgPrice
+                    : (card as any).latestPrice;
+                  const changeValue = isVolatility
+                    ? (card as any).volatility
+                    : (card as any).priceChange;
+                  const isGain = changeValue >= 0;
+                  const imgSrc = card.cardImage ? getProxiedImageUrl(card.cardImage) : null;
+                  return (
+                    <div
+                      key={card.cardId}
+                      className="group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer bg-white"
+                      style={{
+                        border: "1px solid #EAEAEA",
+                        boxShadow: "0 4px 16px -4px rgba(0,0,0,0.06)",
+                        transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
+                      }}
+                      onClick={() => window.location.href = `/card/${card.cardId}`}
+                      onMouseEnter={e => {
+                        const el = e.currentTarget as HTMLDivElement;
+                        el.style.transform = "translateY(-4px)";
+                        el.style.boxShadow = "0 15px 30px -5px rgba(234,179,8,0.08), 0 8px 20px -8px rgba(0,0,0,0.10)";
+                        el.style.borderColor = "rgba(234,179,8,0.30)";
+                      }}
+                      onMouseLeave={e => {
+                        const el = e.currentTarget as HTMLDivElement;
+                        el.style.transform = "";
+                        el.style.boxShadow = "0 4px 16px -4px rgba(0,0,0,0.06)";
+                        el.style.borderColor = "#EAEAEA";
+                      }}
+                    >
+                      {/* Card image (3:4 ratio) */}
+                      <div
+                        className="relative w-full overflow-hidden"
+                        style={{ aspectRatio: "3/4", background: "#E8E6E1" }}
+                      >
+                        {imgSrc ? (
+                          <>
+                            <img
+                              src={imgSrc}
+                              alt={card.cardName}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                            <div
+                              className="absolute inset-0 pointer-events-none"
+                              style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 60%)" }}
+                            />
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-gray-300 text-[10px]">No img</span>
+                          </div>
+                        )}
+                        {/* Rank badge — top-left */}
+                        <div className="absolute top-2 left-2">
+                          <RankBadge rank={idx + 1} />
+                        </div>
+                      </div>
+
+                      {/* Info below image */}
+                      <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
+                        {/* Row 1: PSA badge + change% */}
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                            style={{ background: "#FEF2F2", color: "#dc2626", border: "1px solid #FECACA" }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                            PSA 10
+                          </span>
+                          <span
+                            className="text-[10px] font-semibold tabular-nums"
+                            style={{ color: isGain ? GAIN_GREEN : LOSS_RED }}
+                          >
+                            {isGain ? "+" : ""}{changeValue.toFixed(1)}%
+                          </span>
+                        </div>
+
+                        {/* Row 2: Card name */}
+                        <p
+                          className="text-xs font-semibold leading-snug line-clamp-2"
+                          style={{ color: "#1A1A1A" }}
+                          title={card.cardName}
+                        >
+                          {card.cardName}
+                        </p>
+
+                        {/* Row 3: Price */}
+                        {currentPrice ? (
+                          <p
+                            className="text-sm font-bold tabular-nums leading-tight"
+                            style={{ color: "#1A1A1A", fontFamily: "'Courier New', monospace", letterSpacing: "-0.02em" }}
+                          >
+                            {formatCurrency(currentPrice, card.currency)}
+                          </p>
+                        ) : (
+                          <p className="text-xs" style={{ color: "#737373" }}>價格未知</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Disclaimer */}
