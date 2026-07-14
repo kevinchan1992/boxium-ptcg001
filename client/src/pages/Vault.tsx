@@ -68,7 +68,13 @@ function GradeBadge({ grader, grade }: { grader: string; grade?: string | null }
         className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
         style={{ background: dot }}
       />
-      {grader?.toUpperCase()}{grade ? ` ${grade}` : ""}
+      {/* Show grade if it already contains grader prefix (e.g. "PSA 10"), otherwise show "grader grade" */}
+      {grade && grade.toUpperCase().startsWith(grader?.toUpperCase() ?? "__NONE__")
+        ? grade
+        : grade
+          ? `${grader?.toUpperCase()} ${grade}`
+          : grader?.toUpperCase()
+      }
     </span>
   );
 }
@@ -140,7 +146,7 @@ export default function Vault() {
 
   const { data: collectionData, isLoading: itemsLoading, refetch: refetchItems } =
     trpc.profile.getCollection.useQuery(
-      { page, sortBy, sortOrder, grader: graderFilter, limit: 20 },
+      { page, sortBy, sortOrder, grader: graderFilter, limit: 20, priceMode: "grade" },
       { enabled: !!user, retry: 1 }
     );
   const { data: trendData } = trpc.profile.getPortfolioTrend.useQuery(
@@ -274,20 +280,25 @@ export default function Vault() {
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           {/* Brand */}
-          <div className="flex items-center gap-2.5">
-            <img
-              src={LOGO_URL}
-              alt="BOXIUM"
-              className="h-7 w-auto object-contain"
-            />
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className="text-xs font-semibold tracking-[0.3em] uppercase"
-                style={{ color: TEXT_SEC }}
-              >
-                VAULT
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
+            {/* BOXIUM in Rib One display font */}
+            <span
+              style={{
+                fontFamily: "'Rib One', serif",
+                fontSize: "22px",
+                color: TEXT_PRI,
+                letterSpacing: "0.02em",
+                lineHeight: 1,
+              }}
+            >
+              BOXIUM
+            </span>
+            <span
+              className="text-[10px] font-bold tracking-[0.3em] uppercase px-1.5 py-0.5 rounded"
+              style={{ color: TEXT_SEC, background: "#F0EDE8", letterSpacing: "0.25em" }}
+            >
+              VAULT
+            </span>
           </div>
           {/* Add button */}
           <button
