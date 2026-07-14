@@ -225,20 +225,26 @@ export default function Vault() {
     if (!shareStats || !shareCardRef.current) return;
     setIsGeneratingShare(true);
     try {
-      // Dynamically import html-to-image to avoid SSR issues
       const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(shareCardRef.current, {
+      const node = shareCardRef.current;
+      const opts = {
         width: 1080,
         height: 1080,
         pixelRatio: 1,
         cacheBust: true,
-        skipFonts: false,
+        // skipFonts: true 避免 html-to-image 嘗試讀取 Google Fonts CSS
+        // 跨域 stylesheet 會觸發 SecurityError 導致整個生成失敗
+        skipFonts: true,
+        // 強制 position static 讓隱藏元素可被正確渲染
         style: {
           position: "static",
           top: "0",
           left: "0",
         },
-      });
+      };
+      // 第一次呼叫觸發圖片快取，第二次才能正確渲染跨域圖片
+      await toPng(node, opts).catch(() => {});
+      const dataUrl = await toPng(node, opts);
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
     } catch (err) {
@@ -1218,6 +1224,8 @@ export default function Vault() {
             overflow: "hidden",
           }}
         >
+          {/* Radix 要求必須有 DialogTitle 以符合無障礙標準 */}
+          <DialogTitle className="sr-only">分享收藏</DialogTitle>
           {/* Modal Header */}
           <div
             className="flex items-center justify-between px-6 py-4"
