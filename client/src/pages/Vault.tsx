@@ -1017,7 +1017,15 @@ export default function Vault() {
                     border: `1px solid ${BORDER}`,
                   }}
                   value={addForm.grader}
-                  onChange={e => setAddForm(f => ({ ...f, grader: e.target.value }))}
+                  onChange={e => {
+                    const newGrader = e.target.value;
+                    setAddForm(f => ({
+                      ...f,
+                      grader: newGrader,
+                      // Clear grade when switching to RAW (ungraded)
+                      grade: newGrader === "RAW" ? "" : f.grade,
+                    }));
+                  }}
                 >
                   <option value="PSA">PSA</option>
                   <option value="CGC">CGC</option>
@@ -1032,17 +1040,22 @@ export default function Vault() {
                 >
                   評級分數
                 </label>
-                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>例：10、9、8</p>
+                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>
+                  {addForm.grader === "RAW" ? "RAW 未評級，無評級分數" : "例：10、9、8"}
+                </p>
                 <input
                   type="text"
-                  placeholder="例：10"
-                  value={addForm.grade}
+                  placeholder={addForm.grader === "RAW" ? "— 不適用 —" : "例：10"}
+                  value={addForm.grader === "RAW" ? "" : addForm.grade}
                   onChange={e => setAddForm(f => ({ ...f, grade: e.target.value }))}
+                  disabled={addForm.grader === "RAW"}
                   className="w-full text-sm rounded-xl px-3 py-2.5 transition-all focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:bg-white placeholder-[#9CA3AF]"
                   style={{
-                    background: "#F5F5F3",
-                    color: TEXT_PRI,
+                    background: addForm.grader === "RAW" ? "#EBEBEB" : "#F5F5F3",
+                    color: addForm.grader === "RAW" ? "#AAAAAA" : TEXT_PRI,
                     border: `1px solid ${BORDER}`,
+                    cursor: addForm.grader === "RAW" ? "not-allowed" : "text",
+                    opacity: addForm.grader === "RAW" ? 0.6 : 1,
                   }}
                 />
               </div>
