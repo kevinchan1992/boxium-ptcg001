@@ -49,17 +49,25 @@ const LOGO_URL   = "/manus-storage/boxium-logo-yellow_5368dfb9.webp";
 
 const ROMAN = ["I", "II", "III"];
 
-// ─── Grade badge ──────────────────────────────────────────────
+// ─── Grade badge (精緻版：白底 + 彩點) ──────────────────────────
 function GradeBadge({ grader, grade }: { grader: string; grade?: string | null }) {
-  const graderColor: Record<string, string> = {
-    PSA: "#dc2626", CGC: "#2563eb", BGS: "#7c3aed", RAW: "#6b7280",
+  const dotColor: Record<string, string> = {
+    PSA: "#dc2626", CGC: "#2563eb", BGS: "#7c3aed", RAW: "#9ca3af",
   };
-  const bg = graderColor[grader?.toUpperCase()] ?? "#6b7280";
+  const dot = dotColor[grader?.toUpperCase()] ?? "#9ca3af";
   return (
     <span
-      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white tracking-wide"
-      style={{ background: bg }}
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wide"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E5E7EB",
+        color: TEXT_PRI,
+      }}
     >
+      <span
+        className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ background: dot }}
+      />
       {grader?.toUpperCase()}{grade ? ` ${grade}` : ""}
     </span>
   );
@@ -75,17 +83,35 @@ function MetricCard({
   return (
     <div
       className="rounded-xl p-4 flex flex-col gap-2 flex-1 min-w-0"
-      style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 4px 20px -2px rgba(0,0,0,0.02)" }}
+      style={{
+        background: BG_CARD,
+        border: `1px solid ${BORDER}`,
+        // 單向朝下環境光投影
+        boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+        // 頂部微弱漸層邊框（懸浮感）
+        backgroundImage: "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(250,249,246,0.4) 100%)",
+      }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TEXT_SEC }}>{label}</span>
+        {/* 小標籤：全大寫 + 拉寬字距 */}
+        <span
+          className="text-[9px] font-semibold uppercase"
+          style={{ color: TEXT_SEC, letterSpacing: "0.2em" }}
+        >
+          {label}
+        </span>
         <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#F5F5F3" }}>
           <Icon className="w-3 h-3" style={{ color: TEXT_SEC }} />
         </div>
       </div>
       <p
         className="text-lg font-bold tabular-nums leading-tight"
-        style={{ color: valueColor ?? TEXT_PRI, fontVariantNumeric: "tabular-nums" }}
+        style={{
+          color: valueColor ?? TEXT_PRI,
+          fontVariantNumeric: "tabular-nums",
+          // 緊湊字距讓金融數字更專業
+          letterSpacing: "-0.025em",
+        }}
       >
         {value}
       </p>
@@ -291,14 +317,31 @@ export default function Vault() {
             {/* Hero stat */}
             <div
               className="rounded-2xl p-6"
-              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 4px 20px -2px rgba(0,0,0,0.02)" }}
+              style={{
+                background: BG_CARD,
+                border: `1px solid ${BORDER}`,
+                // 單向朝下環境光投影
+                boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+                backgroundImage: "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(250,249,246,0.5) 100%)",
+              }}
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] mb-2" style={{ color: TEXT_SEC }}>
-                總市值
+              {/* 小標籤：全大寫 + 拉寬字距 */}
+              <p
+                className="text-[9px] font-semibold uppercase mb-2"
+                style={{ color: TEXT_SEC, letterSpacing: "0.2em" }}
+              >
+                PORTFOLIO VALUE
               </p>
               <p
                 className="text-4xl sm:text-5xl font-bold leading-none tabular-nums"
-                style={{ color: TEXT_PRI, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}
+                style={{
+                  color: TEXT_PRI,
+                  fontVariantNumeric: "tabular-nums",
+                  // 緊湊字距讓大金額數字更專業
+                  letterSpacing: "-0.03em",
+                  // 使用 Playfair Display 襯線體增添奢華感
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
               >
                 {formatCurrency(stats.totalMarketValue)}
               </p>
@@ -360,7 +403,11 @@ export default function Vault() {
           {/* Left 2/3: Trend Chart */}
           <div
             className="lg:col-span-2 rounded-2xl overflow-hidden"
-            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 4px 20px -2px rgba(0,0,0,0.02)" }}
+            style={{
+              background: BG_CARD,
+              border: `1px solid ${BORDER}`,
+              boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+            }}
           >
             <button
               className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-gray-50/50"
@@ -409,12 +456,14 @@ export default function Vault() {
                       <ResponsiveContainer width="100%" height={220}>
                         <AreaChart data={trendData.points} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                           <defs>
+                            {/* 走勢圖：金色到藍色漸層填充 */}
                             <linearGradient id="vaultTrendGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#1A1A1A" stopOpacity={0.12} />
-                              <stop offset="95%" stopColor="#1A1A1A" stopOpacity={0.01} />
+                              <stop offset="0%" stopColor="#FEDD00" stopOpacity={0.18} />
+                              <stop offset="50%" stopColor="#06038d" stopOpacity={0.10} />
+                              <stop offset="100%" stopColor="#06038d" stopOpacity={0.01} />
                             </linearGradient>
                             <linearGradient id="vaultCostGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2} />
+                              <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
                               <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01} />
                             </linearGradient>
                           </defs>
@@ -436,8 +485,9 @@ export default function Vault() {
                           />
                           <Area type="monotone" dataKey="cost" stroke="#94a3b8" strokeWidth={1.5}
                             fill="url(#vaultCostGrad)" dot={false} strokeDasharray="4 2" />
-                          <Area type="monotone" dataKey="marketValue" stroke={TEXT_PRI} strokeWidth={2}
-                            fill="url(#vaultTrendGrad)" dot={{ fill: TEXT_PRI, r: 2.5 }} activeDot={{ r: 4 }} />
+                          {/* 市值線加粗 + 平滑曲線 */}
+                          <Area type="monotone" dataKey="marketValue" stroke={BRAND_BLUE} strokeWidth={2.5}
+                            fill="url(#vaultTrendGrad)" dot={{ fill: BRAND_BLUE, r: 2.5 }} activeDot={{ r: 5, fill: BRAND_BLUE }} />
                         </AreaChart>
                       </ResponsiveContainer>
                       <div className="flex items-center gap-5 mt-3 justify-center">
@@ -475,7 +525,11 @@ export default function Vault() {
           {stats && ((stats.top3Gainers?.length ?? 0) > 0 || (stats.top3ByValue?.length ?? 0) > 0) && (
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 4px 20px -2px rgba(0,0,0,0.02)" }}
+              style={{
+                background: BG_CARD,
+                border: `1px solid ${BORDER}`,
+                boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+              }}
             >
               {/* Segmented tab header */}
               <div className="px-4 pt-4 pb-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -520,13 +574,18 @@ export default function Vault() {
                       >
                         {ROMAN[idx]}
                       </span>
-                      {/* Card thumbnail */}
+                      {/* Card thumbnail with shine overlay */}
                       {item.card?.imageUrl && (
-                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100">
+                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100 relative">
                           <LazyImage
                             src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                             alt={item.card?.name ?? ""}
                             className="w-full h-full object-contain"
+                          />
+                          {/* 閃卡折射光澤 */}
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
                           />
                         </div>
                       )}
@@ -543,7 +602,7 @@ export default function Vault() {
                       </div>
                       {/* Gain */}
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold tabular-nums" style={{ color: SUCCESS }}>
+                        <p className="text-sm font-bold tabular-nums" style={{ color: SUCCESS, letterSpacing: "-0.02em" }}>
                           +{(item.unrealizedGainPct ?? 0).toFixed(1)}%
                         </p>
                         <p className="text-[10px] tabular-nums" style={{ color: TEXT_SEC }}>
@@ -561,11 +620,16 @@ export default function Vault() {
                         {ROMAN[idx]}
                       </span>
                       {item.card?.imageUrl && (
-                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100">
+                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100 relative">
                           <LazyImage
                             src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
                             alt={item.card?.name ?? ""}
                             className="w-full h-full object-contain"
+                          />
+                          {/* 閃卡折射光澤 */}
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
                           />
                         </div>
                       )}
@@ -595,7 +659,11 @@ export default function Vault() {
         {/* ══ Collection List ═══════════════════════════════ */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 4px 20px -2px rgba(0,0,0,0.02)" }}
+          style={{
+            background: BG_CARD,
+            border: `1px solid ${BORDER}`,
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+          }}
         >
           {/* List header */}
           <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -716,17 +784,36 @@ export default function Vault() {
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-gray-50/60 group"
-                    style={{ borderBottom: idx < filteredItems.length - 1 ? `1px solid ${BORDER}` : "none" }}
+                    className="flex items-center gap-3 px-5 py-3.5 group"
+                    style={{
+                      borderBottom: idx < filteredItems.length - 1 ? `1px solid ${BORDER}` : "none",
+                      // Hover 微發光邊框效果（透過 CSS transition + box-shadow 實現）
+                      transition: "box-shadow 0.2s ease, background 0.15s ease",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLDivElement).style.background = "rgba(254,221,0,0.03)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "inset 0 0 0 1px rgba(234,179,8,0.12), 0 4px 16px -4px rgba(234,179,8,0.08)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLDivElement).style.background = "";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "";
+                    }}
                   >
-                    {/* Card image */}
-                    <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden" style={{ background: "#F5F5F3" }}>
+                    {/* Card image with shine overlay */}
+                    <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden relative" style={{ background: "#F5F5F3" }}>
                       {item.card?.imageUrl ? (
-                        <LazyImage
-                          src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
-                          alt={item.card?.name ?? ""}
-                          className="w-full h-full object-contain"
-                        />
+                        <>
+                          <LazyImage
+                            src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
+                            alt={item.card?.name ?? ""}
+                            className="w-full h-full object-contain"
+                          />
+                          {/* 閃卡折射光澤 */}
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
+                          />
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Package className="w-4 h-4" style={{ color: TEXT_SEC }} />
@@ -756,7 +843,7 @@ export default function Vault() {
                     <div className="text-right flex-shrink-0">
                       {item.marketPrice ? (
                         <>
-                          <p className="text-sm font-bold tabular-nums" style={{ color: TEXT_PRI }}>
+                          <p className="text-sm font-bold tabular-nums" style={{ color: TEXT_PRI, letterSpacing: "-0.02em" }}>
                             {formatCurrency(item.marketPrice)}
                           </p>
                           {item.unrealizedGainPct != null && (
