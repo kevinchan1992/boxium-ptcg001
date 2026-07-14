@@ -109,7 +109,25 @@ export const vipRouter = router({
       const stripe = getStripe();
 
       // Get or create Stripe customer
+      // If the stored customer ID belongs to a different Stripe mode (e.g. test vs live),
+      // Stripe will throw resource_missing — in that case we clear it and create a fresh one.
       let customerId = user.stripeCustomerId;
+      if (customerId) {
+        try {
+          await stripe.customers.retrieve(customerId);
+        } catch (err: any) {
+          if (err?.code === 'resource_missing' || err?.statusCode === 404) {
+            // Stale / wrong-mode customer ID — clear it and fall through to create a new one
+            console.warn(`[VIP] Stale Stripe customer ${customerId} not found in current mode, recreating...`);
+            customerId = null;
+            await db.update(users)
+              .set({ stripeCustomerId: null })
+              .where(eq(users.id, ctx.user.id));
+          } else {
+            throw err;
+          }
+        }
+      }
       if (!customerId) {
         const customer = await stripe.customers.create({
           email: user.email,
