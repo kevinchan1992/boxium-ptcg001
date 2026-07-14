@@ -1,10 +1,11 @@
 /**
- * VipUpgradeModal — VIP 升級彈窗
- * 顯示 VIP 功能清單 + 月費/年費方案選擇 + Stripe Checkout 跳轉
+ * VipUpgradeModal — VIP 升級彈窗（重構版）
+ * - 月費/年費卡片各自有獨立 CTA 按鈕，按鈕永遠可見
+ * - 功能列表精簡，避免過長
+ * - 手機版底部固定升級欄
  */
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -16,38 +17,12 @@ const BRAND_BLUE = "#06038d";
 const BRAND_YELLOW = "#FEDD00";
 
 const VIP_FEATURES = [
-  {
-    icon: <TrendingUp className="w-4 h-4" />,
-    title: "持倉走勢圖",
-    desc: "完整時間範圍切換（1M / 3M / 6M / 1Y / ALL），追蹤資產成本與市值變化",
-  },
-  {
-    icon: <TrendingUp className="w-4 h-4" />,
-    title: "長期價格走勢圖",
-    desc: "解鎖 3M / 6M / 1Y / 2Y / Max 長期區間（會員僅限 7 日 / 1 個月），洞察長線趨勢",
-  },
-  {
-    icon: <Camera className="w-4 h-4" />,
-    title: "智能入庫無限次",
-    desc: "拍照自動辨識卡片並入庫，會員每月僅限 25 次，VIP 無限使用",
-  },
-  {
-    icon: <Download className="w-4 h-4" />,
-    title: "CSV 匯出",
-    desc: "將完整持倉資料匯出為 CSV，方便在 Excel 或 Google Sheets 進行自訂分析",
-  },
-  {
-    icon: <BarChart3 className="w-4 h-4" />,
-    title: "系列分析",
-    desc: "按卡片系列分組，一目了然查看各系列持倉成本、市值及盈虧比例",
-    comingSoon: true,
-  },
-  {
-    icon: <Star className="w-4 h-4" />,
-    title: "每週 P&L 報告",
-    desc: "每週一早上自動發送持倉盈虧摘要郵件，包含漲幅前三及跌幅前三卡片",
-    comingSoon: true,
-  },
+  { icon: <TrendingUp className="w-3.5 h-3.5" />, title: "持倉走勢圖", desc: "1M / 3M / 6M / 1Y / ALL 時間範圍切換" },
+  { icon: <TrendingUp className="w-3.5 h-3.5" />, title: "長期價格走勢圖", desc: "解鎖 3M / 6M / 1Y / 2Y / Max 長期區間" },
+  { icon: <Camera className="w-3.5 h-3.5" />, title: "智能入庫無限次", desc: "免費每月限 25 次，VIP 無限使用" },
+  { icon: <Download className="w-3.5 h-3.5" />, title: "CSV 匯出", desc: "完整持倉資料匯出，Excel / Google Sheets 分析" },
+  { icon: <BarChart3 className="w-3.5 h-3.5" />, title: "系列分析", desc: "各系列持倉成本、市值及盈虧比例", comingSoon: true },
+  { icon: <Star className="w-3.5 h-3.5" />, title: "每週 P&L 報告", desc: "每週一自動發送盈虧摘要郵件", comingSoon: true },
 ];
 
 interface VipUpgradeModalProps {
@@ -56,17 +31,15 @@ interface VipUpgradeModalProps {
 }
 
 export function VipUpgradeModal({ open, onOpenChange }: VipUpgradeModalProps) {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [loadingPlan, setLoadingPlan] = useState<"monthly" | "yearly" | null>(null);
   const createCheckout = trpc.vip.createCheckout.useMutation();
 
-  const handleUpgrade = async () => {
-    setIsLoading(true);
+  const handleUpgrade = async (plan: "monthly" | "yearly") => {
+    setLoadingPlan(plan);
     try {
       const origin = window.location.origin;
       const result = await createCheckout.mutateAsync({
-        plan: selectedPlan,
+        plan,
         successUrl: `${origin}/profile?tab=vip&upgraded=1`,
         cancelUrl: `${origin}/vault`,
       });
@@ -83,125 +56,147 @@ export function VipUpgradeModal({ open, onOpenChange }: VipUpgradeModalProps) {
         toast.error(msg);
       }
     } finally {
-      setIsLoading(false);
+      setLoadingPlan(null);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
-        {/* Header */}
+      <DialogContent className="max-w-lg w-full p-0 overflow-hidden rounded-2xl border-0 shadow-2xl max-h-[92vh] flex flex-col">
+
+        {/* ── Header ── */}
         <div
-          className="relative px-6 pt-8 pb-6 text-center"
-          style={{
-            background: `linear-gradient(135deg, ${BRAND_YELLOW} 0%, #FFB800 100%)`,
-          }}
+          className="relative px-6 pt-6 pb-5 text-center flex-shrink-0"
+          style={{ background: `linear-gradient(135deg, ${BRAND_YELLOW} 0%, #FFB800 100%)` }}
         >
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
+            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
           >
             <X className="w-4 h-4 text-black/60" />
           </button>
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+            className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2"
             style={{ background: "rgba(255,255,255,0.3)" }}
           >
-            <Crown className="w-7 h-7" style={{ color: BRAND_BLUE }} />
+            <Crown className="w-6 h-6" style={{ color: BRAND_BLUE }} />
           </div>
-          <h2 className="text-xl font-bold" style={{ color: BRAND_BLUE }}>升級 VIP 會員</h2>
-          <p className="text-sm mt-1" style={{ color: `${BRAND_BLUE}CC` }}>
+          <h2 className="text-lg font-bold" style={{ color: BRAND_BLUE }}>升級 VIP 會員</h2>
+          <p className="text-xs mt-0.5" style={{ color: `${BRAND_BLUE}CC` }}>
             解鎖全部進階功能，提升你的收藏管理體驗
           </p>
         </div>
 
-        {/* Features */}
-        <div className="px-6 py-4 bg-white">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">VIP 專屬功能</p>
-          <div className="space-y-3">
-            {VIP_FEATURES.map((f, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ background: `${BRAND_YELLOW}30`, color: BRAND_BLUE }}
-                >
-                  {f.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-900">{f.title}</span>
-                    {f.comingSoon && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-                        即將推出
-                      </span>
-                    )}
+        {/* ── Scrollable body ── */}
+        <div className="overflow-y-auto flex-1 bg-white">
+
+          {/* Features — compact 2-col grid */}
+          <div className="px-5 pt-4 pb-3">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">VIP 專屬功能</p>
+            <div className="grid grid-cols-1 gap-2">
+              {VIP_FEATURES.map((f, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${BRAND_YELLOW}35`, color: BRAND_BLUE }}
+                  >
+                    {f.icon}
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{f.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-gray-900">{f.title}</span>
+                      {f.comingSoon && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 font-medium leading-none">
+                          即將推出
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400 leading-tight">{f.desc}</p>
+                  </div>
+                  <Check className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
                 </div>
-                <Check className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: "#10B981" }} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── Pricing cards — side by side, each with own CTA ── */}
+          <div className="px-5 pb-5 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+
+              {/* Monthly card */}
+              <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden">
+                <div className="px-4 pt-4 pb-3 flex-1">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">月費方案</p>
+                  <p className="text-2xl font-extrabold leading-none" style={{ color: BRAND_BLUE }}>HK$38</p>
+                  <p className="text-[11px] text-gray-400 mt-1">/ 月</p>
+                </div>
+                <div className="px-3 pb-3">
+                  <button
+                    onClick={() => handleUpgrade("monthly")}
+                    disabled={loadingPlan !== null}
+                    className="w-full py-2.5 rounded-xl border border-[#1A1A1A] bg-white text-[#1A1A1A] hover:bg-[#F5F5F3] text-[11px] font-bold tracking-widest uppercase transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {loadingPlan === "monthly" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : null}
+                    {loadingPlan === "monthly" ? "處理中…" : "月費訂閱"}
+                  </button>
+                </div>
               </div>
-            ))}
+
+              {/* Yearly card — highlighted */}
+              <div className="flex flex-col rounded-xl border-2 border-[#1A1A1A] bg-white overflow-hidden relative shadow-[0_8px_20px_-6px_rgba(0,0,0,0.2)]">
+                {/* 省 34% badge */}
+                <div
+                  className="absolute -top-0 right-0 text-[9px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl"
+                  style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
+                >
+                  省 34%
+                </div>
+                <div className="px-4 pt-4 pb-3 flex-1">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">年費方案</p>
+                  <p className="text-2xl font-extrabold leading-none" style={{ color: BRAND_BLUE }}>HK$25</p>
+                  <p className="text-[11px] text-gray-400 mt-1">/ 月 · 年付 HK$298</p>
+                </div>
+                <div className="px-3 pb-3">
+                  <button
+                    onClick={() => handleUpgrade("yearly")}
+                    disabled={loadingPlan !== null}
+                    className="w-full py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333333] text-[11px] font-bold tracking-widest uppercase transition-all disabled:opacity-50 shadow-[0_8px_20px_-6px_rgba(0,0,0,0.2)] flex items-center justify-center gap-1.5"
+                  >
+                    {loadingPlan === "yearly" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Crown className="w-3.5 h-3.5" />
+                    )}
+                    {loadingPlan === "yearly" ? "處理中…" : "年費訂閱"}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+            <p className="text-center text-[10px] text-gray-400 mt-3">
+              安全付款 · 隨時取消 · 到期前有效
+            </p>
           </div>
         </div>
 
-        {/* Pricing */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-          <div className="grid grid-cols-2 gap-3">
-            {/* Monthly */}
-            <button
-              onClick={() => setSelectedPlan("monthly")}
-              className={`p-4 rounded-xl border-2 text-left transition-all ${
-                selectedPlan === "monthly"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-            >
-              <p className="text-xs text-gray-500 mb-1">月費方案</p>
-              <p className="text-2xl font-bold" style={{ color: BRAND_BLUE }}>HK$38</p>
-              <p className="text-xs text-gray-400">/ 月</p>
-            </button>
-
-            {/* Yearly */}
-            <button
-              onClick={() => setSelectedPlan("yearly")}
-              className={`p-4 rounded-xl border-2 text-left transition-all relative ${
-                selectedPlan === "yearly"
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-            >
-              <div
-                className="absolute -top-2.5 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
-              >
-                省 34%
-              </div>
-              <p className="text-xs text-gray-500 mb-1">年費方案</p>
-              <p className="text-2xl font-bold" style={{ color: BRAND_BLUE }}>HK$25</p>
-              <p className="text-xs text-gray-400">/ 月 · 年付 HK$298</p>
-            </button>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="px-6 pb-6 pt-3 bg-white">
-          <Button
-            className="w-full h-12 text-base font-bold rounded-xl"
-            style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
-            onClick={handleUpgrade}
-            disabled={isLoading}
+        {/* ── Mobile sticky footer CTA (sm and below) ── */}
+        <div className="sm:hidden flex-shrink-0 border-t border-gray-100 bg-white px-4 py-3">
+          <button
+            onClick={() => handleUpgrade("yearly")}
+            disabled={loadingPlan !== null}
+            className="w-full py-3 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333333] text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            {loadingPlan ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Crown className="w-5 h-5 mr-2" />
+              <Crown className="w-4 h-4" />
             )}
-            立即升級 VIP（{selectedPlan === "yearly" ? "年費" : "月費"}）
-          </Button>
-          <p className="text-center text-xs text-gray-400 mt-2">
-            安全付款 · 隨時取消 · 到期前有效
-          </p>
+            {loadingPlan ? "處理中…" : "立即升級 VIP（年費 HK$25/月）"}
+          </button>
         </div>
+
       </DialogContent>
     </Dialog>
   );
