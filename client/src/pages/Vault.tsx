@@ -920,25 +920,36 @@ export default function Vault() {
         if (!o) { setSelectedCard(null); setAddForm({ grader: "PSA", grade: "10", quantity: 1, purchasePrice: "", notes: "" }); }
       }}>
         <DialogContent
-          className="max-w-md rounded-2xl"
-          style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
+          className="max-w-md"
+          style={{
+            background: "#FFFFFF",
+            border: `1px solid ${BORDER}`,
+            boxShadow: "0 20px 50px rgba(0,0,0,0.10)",
+          }}
         >
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold" style={{ color: TEXT_PRI }}>
+          {/* ── Modal Header ── */}
+          <div className="px-6 pt-6 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <h2
+              className="text-lg font-bold pr-8"
+              style={{ color: TEXT_PRI, letterSpacing: "-0.02em" }}
+            >
               新增卡牌到倉庫
-            </DialogTitle>
-          </DialogHeader>
+            </h2>
+            <p className="text-[11px] mt-1" style={{ color: TEXT_SEC }}>
+              搜尋並選擇卡牌，系統將自動帶入當前市場參考價格
+            </p>
+          </div>
 
-          <div className="space-y-5 pt-1">
+          <div className="px-6 py-5 space-y-5">
 
             {/* ── Card picker ── */}
             <div>
-              <label className="block text-xs font-bold mb-1" style={{ color: TEXT_PRI }}>
+              <label
+                className="block uppercase font-bold mb-2"
+                style={{ color: TEXT_SEC, fontSize: "11px", letterSpacing: "0.15em" }}
+              >
                 選擇卡牌 <span style={{ color: DANGER }}>*</span>
               </label>
-              <p className="text-[11px] mb-2" style={{ color: TEXT_SEC }}>
-                搜尋並選擇你要加入倉庫的卡牌，系統將自動帶入當前市場參考價格。
-              </p>
               {selectedCard ? (
                 <div
                   className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors hover:bg-gray-50"
@@ -978,13 +989,22 @@ export default function Vault() {
             </div>
 
             {/* ── Grader & Grade ── */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1" style={{ color: TEXT_PRI }}>評級機構</label>
-                <p className="text-[11px] mb-2" style={{ color: TEXT_SEC }}>選擇卡牌的評級公司</p>
+                <label
+                  className="block uppercase font-bold mb-2"
+                  style={{ color: TEXT_SEC, fontSize: "11px", letterSpacing: "0.15em" }}
+                >
+                  評級機構
+                </label>
+                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>選擇卡牌的評級公司</p>
                 <select
-                  className="w-full text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                  style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
+                  className="w-full text-sm rounded-xl px-3 py-2.5 transition-all focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:bg-white"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: `1px solid ${BORDER}`,
+                  }}
                   value={addForm.grader}
                   onChange={e => setAddForm(f => ({ ...f, grader: e.target.value }))}
                 >
@@ -995,44 +1015,71 @@ export default function Vault() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1" style={{ color: TEXT_PRI }}>評級分數</label>
-                <p className="text-[11px] mb-2" style={{ color: TEXT_SEC }}>例：10、9、8</p>
+                <label
+                  className="block uppercase font-bold mb-2"
+                  style={{ color: TEXT_SEC, fontSize: "11px", letterSpacing: "0.15em" }}
+                >
+                  評級分數
+                </label>
+                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>例：10、9、8</p>
                 <input
                   type="text"
                   placeholder="例：10"
                   value={addForm.grade}
                   onChange={e => setAddForm(f => ({ ...f, grade: e.target.value }))}
-                  className="w-full text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                  style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
+                  className="w-full text-sm rounded-xl px-3 py-2.5 transition-all focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:bg-white placeholder-[#9CA3AF]"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: `1px solid ${BORDER}`,
+                  }}
                 />
               </div>
             </div>
 
             {/* ── Quantity & Purchase price ── */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1" style={{ color: TEXT_PRI }}>數量</label>
-                <p className="text-[11px] mb-2" style={{ color: TEXT_SEC }}>持有張數</p>
+                <label
+                  className="block uppercase font-bold mb-2"
+                  style={{ color: TEXT_SEC, fontSize: "11px", letterSpacing: "0.15em" }}
+                >
+                  數量
+                </label>
+                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>持有張數</p>
                 <input
                   type="number"
                   min={1}
                   max={999}
                   value={addForm.quantity}
                   onChange={e => setAddForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))}
-                  className="w-full text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                  style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
+                  className="w-full text-sm rounded-xl px-3 py-2.5 transition-all focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:bg-white"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: `1px solid ${BORDER}`,
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1" style={{ color: TEXT_PRI }}>購入成本 (HKD)</label>
-                <p className="text-[11px] mb-2" style={{ color: TEXT_SEC }}>你的買入總價（選填）</p>
+                <label
+                  className="block uppercase font-bold mb-2"
+                  style={{ color: TEXT_SEC, fontSize: "11px", letterSpacing: "0.15em" }}
+                >
+                  購入成本 (HKD)
+                </label>
+                <p className="text-[11px] mb-2" style={{ color: "#9CA3AF" }}>你的買入總價（選填）</p>
                 <input
                   type="number"
                   placeholder="例：3,000"
                   value={addForm.purchasePrice}
                   onChange={e => setAddForm(f => ({ ...f, purchasePrice: e.target.value }))}
-                  className="w-full text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                  style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
+                  className="w-full text-sm rounded-xl px-3 py-2.5 transition-all focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:bg-white placeholder-[#9CA3AF]"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: `1px solid ${BORDER}`,
+                  }}
                 />
               </div>
             </div>
@@ -1040,22 +1087,44 @@ export default function Vault() {
             {/* ── Reactive ROI Calculator ── */}
             {roiCalc !== null && (
               <div
-                className="rounded-xl p-4 space-y-2"
-                style={{ background: roiCalc.roi >= 0 ? "#F0FDF4" : "#FEF2F2", border: `1px solid ${roiCalc.roi >= 0 ? "#BBF7D0" : "#FECACA"}` }}
+                className="rounded-xl p-4 space-y-3"
+                style={{
+                  background: roiCalc.roi >= 0 ? "#F0FDF4" : "#FEF2F2",
+                  border: `1px solid ${roiCalc.roi >= 0 ? "#BBF7D0" : "#FECACA"}`,
+                }}
               >
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: roiCalc.roi >= 0 ? SUCCESS : DANGER }}>
+                <p
+                  className="uppercase font-bold"
+                  style={{ color: roiCalc.roi >= 0 ? SUCCESS : DANGER, fontSize: "9px", letterSpacing: "0.2em" }}
+                >
                   即時投資回報預估
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px]" style={{ color: TEXT_SEC }}>未實現盈虧</p>
-                    <p className="text-base font-bold tabular-nums" style={{ color: roiCalc.unrealized >= 0 ? SUCCESS : DANGER }}>
+                    <p
+                      className="uppercase font-semibold mb-1"
+                      style={{ color: TEXT_SEC, fontSize: "9px", letterSpacing: "0.15em" }}
+                    >
+                      未實現盈虧
+                    </p>
+                    <p
+                      className="text-base font-bold tabular-nums"
+                      style={{ color: roiCalc.unrealized >= 0 ? SUCCESS : DANGER, letterSpacing: "-0.02em" }}
+                    >
                       {roiCalc.unrealized >= 0 ? "+" : ""}{formatCurrency(roiCalc.unrealized)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px]" style={{ color: TEXT_SEC }}>投資回報率 (ROI)</p>
-                    <p className="text-base font-bold tabular-nums" style={{ color: roiCalc.roi >= 0 ? SUCCESS : DANGER }}>
+                    <p
+                      className="uppercase font-semibold mb-1"
+                      style={{ color: TEXT_SEC, fontSize: "9px", letterSpacing: "0.15em" }}
+                    >
+                      投資回報率 (ROI)
+                    </p>
+                    <p
+                      className="text-base font-bold tabular-nums"
+                      style={{ color: roiCalc.roi >= 0 ? SUCCESS : DANGER, letterSpacing: "-0.02em" }}
+                    >
                       {roiCalc.roi >= 0 ? "+" : ""}{roiCalc.roi.toFixed(1)}%
                     </p>
                   </div>
@@ -1068,8 +1137,12 @@ export default function Vault() {
 
             {/* ── Submit ── */}
             <button
-              className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ background: TEXT_PRI, color: "#FFFFFF" }}
+              className="w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all hover:bg-[#333333] active:scale-[0.99] disabled:opacity-40 flex items-center justify-center gap-2"
+              style={{
+                background: "#1A1A1A",
+                color: "#FFFFFF",
+                letterSpacing: "0.15em",
+              }}
               onClick={handleAddSubmit}
               disabled={addMutation.isPending || !selectedCard}
             >

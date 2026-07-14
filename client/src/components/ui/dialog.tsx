@@ -79,9 +79,9 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        // Boxium brand overlay: dark semi-transparent with backdrop blur
+        // Boxium brand overlay: stronger blur to prevent text bleed-through
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-md",
         className
       )}
       {...props}
@@ -147,9 +147,10 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-4 right-4 z-10 rounded-full w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#06038D]/30 disabled:pointer-events-none"
+            // 極細優雅的關閉按鈕：無背景，細線 X，hover 時才顯示淡灰底
+            className="absolute top-4 right-4 z-10 rounded-lg w-7 h-7 flex items-center justify-center text-[#9CA3AF] hover:text-[#1A1A1A] hover:bg-[#F5F5F3] transition-all duration-150 focus:outline-none disabled:pointer-events-none"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 stroke-[1.5]" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
