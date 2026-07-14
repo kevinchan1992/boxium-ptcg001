@@ -6,7 +6,7 @@
  *   PSA 10 → 'PSA 10'
  *   PSA 9  → 'PSA 9'
  *   PSA 8  → 'PSA 8' (fallback to PSA 10 if no data)
- *   PSA 7 / PSA 6以下 → fallback to PSA 10
+ *   PSA 7 / PSA 6以下 → 'PSA 8以下' (fallback to PSA 10 if no data)
  *   BGS 10 Black Label / BGS 9.5 / BGS 9 / BGS 8.5以下 → fallback to PSA 10
  *   TAG 10 / TAG 9以下 → fallback to PSA 10
  *   RAW A/B/C/D → 'A'/'B'/'C'/'D'
@@ -22,8 +22,8 @@ const GRADE_TO_PRICE_GRADE: Record<string, string> = {
   "PSA 10": "PSA 10",
   "PSA 9": "PSA 9",
   "PSA 8": "PSA 8",
-  "PSA 7": "PSA 8",
-  "PSA 6以下": "PSA 8",
+  "PSA 7": "PSA 8以下",
+  "PSA 6以下": "PSA 8以下",
   "BGS 10 Black Label": "PSA 10",
   "BGS 9.5": "PSA 10",
   "BGS 9": "PSA 10",

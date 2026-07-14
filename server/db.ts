@@ -924,7 +924,7 @@ export async function batchGetCardPricesByGrades(
  * recent single sale price — used for Vault real-time market value display.
  */
 export async function batchGetLatestPricesByGrades(
-  requests: Array<{ cardId: number; grade: string }>
+  requests: Array<{ cardId: number; grade: string; originalGrade?: string }>
 ): Promise<Map<string, number | null>> {
   const result = new Map<string, number | null>();
   if (requests.length === 0) return result;
@@ -960,10 +960,11 @@ export async function batchGetLatestPricesByGrades(
       .orderBy(desc(priceHistory.soldAt));
 
     // For each (cardId, grade), take the first (most recent) record only.
-    // Also build a PSA 10 fallback: if the requested grade has no records,
-    // fall back to PSA 10 price (most common grade in priceHistory).
+    // Build tiered fallback maps: originalGrade → PSA 10
     const seen = new Set<string>();
     const psa10Fallback = new Map<number, number>(); // cardId → latest PSA 10 price
+    // Build a map of ALL grades per card for originalGrade fallback
+    const allGradePrices = new Map<string, number>(); // `${cardId}:${grade}` → latest price
     for (const row of rows) {
       if (!row.grade) continue;
       const key = `${row.cardId}:${row.grade}`;
@@ -971,14 +972,30 @@ export async function batchGetLatestPricesByGrades(
         result.set(key, Number(row.price));
         seen.add(key);
       }
+      // Track all grade prices for fallback (first = most recent due to ORDER BY soldAt DESC)
+      if (!allGradePrices.has(key)) {
+        allGradePrices.set(key, Number(row.price));
+      }
       if (row.grade === 'PSA 10' && !psa10Fallback.has(row.cardId)) {
         psa10Fallback.set(row.cardId, Number(row.price));
       }
     }
-    // Apply PSA 10 fallback for any keys still null
-    for (const { cardId, grade } of requests) {
+    // Apply tiered fallback for any keys still null:
+    // 1. Try originalGrade (e.g. PSA 7 when mapped grade is PSA 8)
+    // 2. Then PSA 10
+    for (const { cardId, grade, originalGrade } of requests) {
       const key = `${cardId}:${grade}`;
-      if (result.get(key) == null && psa10Fallback.has(cardId)) {
+      if (result.get(key) != null) continue;
+      // Tier 1: try originalGrade if different from mapped grade
+      if (originalGrade && originalGrade !== grade) {
+        const origKey = `${cardId}:${originalGrade}`;
+        if (allGradePrices.has(origKey)) {
+          result.set(key, allGradePrices.get(origKey)!);
+          continue;
+        }
+      }
+      // Tier 2: PSA 10 fallback
+      if (psa10Fallback.has(cardId)) {
         result.set(key, psa10Fallback.get(cardId)!);
       }
     }
