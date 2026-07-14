@@ -6,6 +6,19 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
+export const CRAWLER_UA_REGEX = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/i;
+
+// Paths where Express has dedicated SSR handlers that inject card/listing-specific meta tags.
+// These must NOT be served as the generic SPA index.html when the requester is a crawler.
+// Only include paths that have actual Express SSR route handlers in server/_core/index.ts.
+function isSsrPath(pathname: string): boolean {
+  return (
+    /^\/card\/\d+$/.test(pathname) ||
+    /^\/marketplace\/\d+$/.test(pathname) ||
+    /^\/pricing\/\d+$/.test(pathname)
+  );
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -23,6 +36,12 @@ export async function setupVite(app: Express, server: Server) {
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+    const ua = req.headers["user-agent"] || "";
+
+    // Crawlers on SSR paths: let Express SSR routes handle meta tag injection
+    if (CRAWLER_UA_REGEX.test(ua) && isSsrPath(req.path)) {
+      return next();
+    }
 
     // /pricing/:id has full SSR for all users — let Express routes handle it
     if (/^\/pricing\/\d+$/.test(req.path)) {
@@ -52,8 +71,6 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
-const CRAWLER_UA_REGEX = /facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|vkshare|w3c_validator|embedly|quora|outbrain|semrushbot|ahrefsbot/i;
-
 export function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
@@ -74,17 +91,20 @@ export function serveStatic(app: Express) {
   });
 
   // fall through to index.html if the file doesn't exist
-  // BUT if the request is from a social crawler OR is a dynamic SSR route, pass to Express routes
+  // BUT if the request is from a crawler on an SSR path, pass to Express SSR routes
   app.use("*", (req, res, next) => {
     const ua = req.headers["user-agent"] || "";
-    if (CRAWLER_UA_REGEX.test(ua)) {
-      // Let OG SSR routes handle this
+
+    // Crawlers on SSR paths: let Express SSR routes handle meta tag injection
+    if (CRAWLER_UA_REGEX.test(ua) && isSsrPath(req.path)) {
       return next();
     }
+
     // /pricing/:id has full SSR for all users (not just crawlers) — skip static serving
     if (/^\/pricing\/\d+$/.test(req.path)) {
       return next();
     }
+
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

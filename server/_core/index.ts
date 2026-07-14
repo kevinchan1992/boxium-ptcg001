@@ -1466,6 +1466,10 @@ async function startServer() {
     }
   });
 
+  // ─── Legacy URL redirects (301 permanent) ────────────────────────────────────
+  // /market-price was renamed to /pricing in a previous version
+  app.get("/market-price", (req, res) => res.redirect(301, "/pricing"));
+
   // ─── OG Image Composer API: returns card image with BOXIUM logo watermark ────────
   app.get("/api/og-image/:cardId", async (req, res) => {
     try {
