@@ -1,6 +1,7 @@
 /**
  * ShareCard — 1080×1080 隱藏分享圖片模板
  * 奢華雜誌感「個人資產證書」設計
+ * 完全重構：固定高度區塊分層，防止任何文字重疊
  * 用 html-to-image 渲染為 PNG
  */
 import React from "react";
@@ -40,14 +41,6 @@ function fmtCurrency(val: number, currency = "HKD") {
   return `${currency} ${val.toLocaleString("en-HK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function getProxied(url: string | null) {
-  if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-  }
-  return url;
-}
-
 // ─── Grade dot color ─────────────────────────────────────────
 function gradeDotColor(grader: string) {
   const map: Record<string, string> = {
@@ -58,385 +51,519 @@ function gradeDotColor(grader: string) {
 
 // ─── ShareCard Component ──────────────────────────────────────
 const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
-  ({ stats, topCards, userName, shareUrl, logoBase64 }, ref) => {
+  ({ stats, topCards, userName: _userName, shareUrl, logoBase64 }, ref) => {
     const gainPositive = stats.totalGain >= 0;
     const gainColor = gainPositive ? "#047857" : "#dc2626";
+    const gainBg = gainPositive ? "#ECFDF5" : "#FEF2F2";
+    const gainBorder = gainPositive ? "#A7F3D0" : "#FECACA";
     const currency = stats.currency ?? "HKD";
 
     // Foil shine overlay gradient
     const foilGradient =
       "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 40%, rgba(255,220,100,0.12) 70%, rgba(255,255,255,0) 100%)";
 
+    // ── Base reset styles applied to ALL elements inside the card ──
+    // This prevents any global Tailwind/CSS from leaking in
+    const BASE: React.CSSProperties = {
+      boxSizing: "border-box",
+      margin: 0,
+      padding: 0,
+      border: "none",
+      outline: "none",
+      lineHeight: "normal",
+      fontStyle: "normal",
+      textDecoration: "none",
+      listStyle: "none",
+      WebkitFontSmoothing: "antialiased",
+    };
+
+    const MONO = "'Courier New', 'Courier', monospace";
+    const SANS = "system-ui, -apple-system, Arial, sans-serif";
+    const SERIF = "Georgia, 'Times New Roman', serif";
+
     return (
       <div
         ref={ref}
         id="share-card-template"
         style={{
-          // Fixed 1080×1080 — will be captured by html-to-image
+          ...BASE,
+          // ── Fixed 1080×1080 — captured by html-to-image ──
           width: "1080px",
           height: "1080px",
+          minWidth: "1080px",
+          minHeight: "1080px",
+          maxWidth: "1080px",
+          maxHeight: "1080px",
           position: "absolute",
           top: "-9999px",
           left: "-9999px",
           overflow: "hidden",
-          fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+          display: "block",
+          fontFamily: SERIF,
           background: "#FAF9F6",
-          // Outer border frame
           border: "3px solid #1A1A1A",
-          boxSizing: "border-box",
         }}
       >
         {/* ── Inner gold border frame ── */}
         <div
           style={{
+            ...BASE,
             position: "absolute",
-            inset: "10px",
+            top: "10px",
+            right: "10px",
+            bottom: "10px",
+            left: "10px",
             border: "1px solid #C9A84C",
             pointerEvents: "none",
             zIndex: 10,
           }}
         />
 
-        {/* ── Background texture (subtle diagonal lines) ── */}
+        {/* ── Background diagonal texture ── */}
         <div
           style={{
+            ...BASE,
             position: "absolute",
-            inset: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
             backgroundImage:
               "repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.025) 40px, rgba(201,168,76,0.025) 41px)",
             pointerEvents: "none",
           }}
         />
 
-        {/* ── Content container (padding inside inner border) ── */}
+        {/* ══════════════════════════════════════════════════
+            BLOCK 1 — HEADER  (top: 0, height: 148px)
+        ══════════════════════════════════════════════════ */}
         <div
           style={{
-            position: "relative",
-            zIndex: 1,
-            padding: "52px 64px 44px",
-            height: "100%",
-            boxSizing: "border-box",
-            display: "flex",
-            flexDirection: "column",
+            ...BASE,
+            position: "absolute",
+            top: "28px",
+            left: "60px",
+            right: "60px",
+            height: "148px",
+            display: "block",
           }}
         >
-          {/* ── TOP: Brand Header ── */}
+          {/* Left: Logo + VAULT badge + URLs */}
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              marginBottom: "36px",
+              ...BASE,
+              display: "inline-block",
+              verticalAlign: "top",
+              width: "65%",
             }}
           >
-            {/* Logo + title */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
-                {/* BOXIUM Logo image — 38% larger: 46px → 63px */}
-                <img
-                  src={logoBase64 ?? BOXIUM_LOGO_BASE64}
-                  alt="BOXIUM"
-                  style={{
-                    height: "63px",
-                    width: "auto",
-                    objectFit: "contain",
-                  }}
-                />
-                {/* Black capsule VAULT badge */}
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "800",
-                    letterSpacing: "0.28em",
-                    color: "#FFFFFF",
-                    background: "#1A1A1A",
-                    padding: "5px 12px",
-                    borderRadius: "6px",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
-                    alignSelf: "center",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  VAULT
-                </span>
-              </div>
-              {/* Platform URL —引流文字 */}
-              <p
+            {/* Logo row */}
+            <div
+              style={{
+                ...BASE,
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                marginBottom: "10px",
+              }}
+            >
+              <img
+                src={logoBase64 ?? BOXIUM_LOGO_BASE64}
+                alt="BOXIUM"
                 style={{
-                  fontSize: "10px",
-                  letterSpacing: "0.25em",
-                  color: "#888888",
-                  fontWeight: "600",
-                  fontFamily: "system-ui, -apple-system, sans-serif",
-                  textTransform: "uppercase",
-                  margin: "0 0 6px",
+                  ...BASE,
+                  height: "58px",
+                  width: "auto",
+                  objectFit: "contain",
+                  display: "block",
                 }}
-              >
-                WWW.BOXIUM.ASIA
-              </p>
-              <p
+              />
+              {/* Black capsule VAULT badge */}
+              <span
                 style={{
+                  ...BASE,
+                  display: "inline-block",
                   fontSize: "11px",
-                  letterSpacing: "0.42em",
-                  color: "#C9A84C",
-                  fontWeight: "700",
-                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  fontWeight: "800",
+                  letterSpacing: "0.28em",
+                  color: "#FFFFFF",
+                  background: "#1A1A1A",
+                  padding: "5px 13px",
+                  borderRadius: "6px",
+                  fontFamily: SANS,
                   textTransform: "uppercase",
-                  margin: 0,
+                  lineHeight: "1.4",
                 }}
               >
-                TCG PORTFOLIO CERTIFICATE
-              </p>
+                VAULT
+              </span>
             </div>
 
-            {/* Date stamp */}
-            <div style={{ textAlign: "right" }}>
-              <p
-                style={{
-                  fontSize: "10px",
-                  color: "#9CA3AF",
-                  letterSpacing: "0.1em",
-                  fontFamily: "system-ui, -apple-system, sans-serif",
-                  margin: 0,
-                }}
-              >
-                {new Date().toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
-              </p>
-              {userName && (
-                <p
-                  style={{
-                    fontSize: "11px",
-                    color: "#737373",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
-                    marginTop: "2px",
-                    margin: "2px 0 0",
-                  }}
-                >
-                  {userName}
-                </p>
-              )}
+            {/* Platform URL */}
+            <div
+              style={{
+                ...BASE,
+                fontSize: "10px",
+                letterSpacing: "0.25em",
+                color: "#888888",
+                fontWeight: "600",
+                fontFamily: SANS,
+                textTransform: "uppercase",
+                display: "block",
+                marginBottom: "6px",
+                lineHeight: "1.4",
+              }}
+            >
+              WWW.BOXIUM.ASIA
+            </div>
+
+            {/* Certificate label */}
+            <div
+              style={{
+                ...BASE,
+                fontSize: "11px",
+                letterSpacing: "0.42em",
+                color: "#C9A84C",
+                fontWeight: "700",
+                fontFamily: SANS,
+                textTransform: "uppercase",
+                display: "block",
+                lineHeight: "1.4",
+              }}
+            >
+              TCG PORTFOLIO CERTIFICATE
             </div>
           </div>
 
-          {/* ── Gold divider ── */}
+          {/* Right: Date only (no username) */}
           <div
             style={{
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
-              marginBottom: "36px",
+              ...BASE,
+              display: "inline-block",
+              verticalAlign: "top",
+              width: "35%",
+              textAlign: "right",
             }}
-          />
-
-          {/* ── CENTER: Core Financial Data ── */}
-          <div style={{ marginBottom: "40px" }}>
-            <p
+          >
+            <div
               style={{
-                fontSize: "10px",
-                letterSpacing: "0.3em",
+                ...BASE,
+                fontSize: "11px",
                 color: "#9CA3AF",
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                fontWeight: "600",
-                textTransform: "uppercase",
-                marginBottom: "10px",
-                margin: "0 0 10px",
+                letterSpacing: "0.1em",
+                fontFamily: SANS,
+                lineHeight: "1.5",
+                display: "block",
               }}
             >
-              PORTFOLIO VALUE
-            </p>
+              {new Date().toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" })}
+            </div>
+          </div>
+        </div>
 
-            {/* Big number — 20% larger: 96px → 115px */}
-            <p
+        {/* ── Gold divider after header ── */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "186px",
+            left: "60px",
+            right: "60px",
+            height: "1px",
+            background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
+          }}
+        />
+
+        {/* ══════════════════════════════════════════════════
+            BLOCK 2 — PORTFOLIO VALUE  (top: 198px, height: 270px)
+        ══════════════════════════════════════════════════ */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "198px",
+            left: "60px",
+            right: "60px",
+            height: "270px",
+            display: "block",
+          }}
+        >
+          {/* Label */}
+          <div
+            style={{
+              ...BASE,
+              fontSize: "11px",
+              letterSpacing: "0.35em",
+              color: "#9CA3AF",
+              fontFamily: SANS,
+              fontWeight: "600",
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "12px",
+              lineHeight: "1.4",
+            }}
+          >
+            PORTFOLIO VALUE
+          </div>
+
+          {/* Big number — single line, 72px */}
+          <div
+            style={{
+              ...BASE,
+              fontSize: "72px",
+              fontWeight: "900",
+              letterSpacing: "-0.03em",
+              color: "#1A1A1A",
+              lineHeight: "1",
+              fontFamily: MONO,
+              display: "block",
+              marginBottom: "24px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {fmtCurrency(stats.totalMarketValue, currency)}
+          </div>
+
+          {/* ROI + Profit — single row, 32px */}
+          <div
+            style={{
+              ...BASE,
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+            }}
+          >
+            {/* ROI badge */}
+            <div
               style={{
-                fontSize: "115px",
-                fontWeight: "900",
-                letterSpacing: "-0.04em",
-                color: "#1A1A1A",
-                lineHeight: 1,
-                fontFamily: "'Courier New', 'Courier', monospace",
-                margin: "0 0 16px",
+                ...BASE,
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "8px 20px",
+                borderRadius: "100px",
+                background: gainBg,
+                border: `1px solid ${gainBorder}`,
+                flexShrink: 0,
               }}
             >
-              {fmtCurrency(stats.totalMarketValue, currency)}
-            </p>
+              <span
+                style={{
+                  ...BASE,
+                  fontSize: "32px",
+                  fontWeight: "900",
+                  color: gainColor,
+                  fontFamily: MONO,
+                  letterSpacing: "-0.02em",
+                  lineHeight: "1",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {gainPositive ? "▲" : "▼"} {Math.abs(stats.totalGainPct).toFixed(1)}%
+              </span>
+            </div>
 
-            {/* ROI + Profit row */}
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              {/* ROI badge */}
+            {/* Profit amount */}
+            <div style={{ ...BASE, display: "block" }}>
               <div
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 18px",
-                  borderRadius: "100px",
-                  background: gainPositive ? "#ECFDF5" : "#FEF2F2",
-                  border: `1px solid ${gainPositive ? "#A7F3D0" : "#FECACA"}`,
+                  ...BASE,
+                  fontSize: "32px",
+                  fontWeight: "800",
+                  color: gainColor,
+                  fontFamily: MONO,
+                  lineHeight: "1",
+                  letterSpacing: "-0.01em",
+                  display: "block",
+                  marginBottom: "4px",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <span
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: "900",
-                    color: gainColor,
-                    fontFamily: "'Courier New', monospace",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {gainPositive ? "▲" : "▼"} {Math.abs(stats.totalGainPct).toFixed(1)}%
-                </span>
+                {gainPositive ? "+" : ""}{fmtCurrency(stats.totalGain, currency)}
               </div>
-
-              {/* Profit amount */}
-              <div>
-                <p
-                  style={{
-                    fontSize: "28px",
-                    fontWeight: "800",
-                    color: gainColor,
-                    fontFamily: "'Courier New', monospace",
-                    margin: "0 0 2px",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {gainPositive ? "+" : ""}{fmtCurrency(stats.totalGain, currency)}
-                </p>
-                <p
-                  style={{
-                    fontSize: "10px",
-                    color: "#9CA3AF",
-                    fontFamily: "system-ui, sans-serif",
-                    letterSpacing: "0.1em",
-                    margin: 0,
-                  }}
-                >
-                  UNREALIZED PROFIT · {stats.totalQuantity} CARDS
-                </p>
+              <div
+                style={{
+                  ...BASE,
+                  fontSize: "10px",
+                  color: "#9CA3AF",
+                  fontFamily: SANS,
+                  letterSpacing: "0.1em",
+                  display: "block",
+                  lineHeight: "1.4",
+                }}
+              >
+                UNREALIZED PROFIT · {stats.totalQuantity} CARDS
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ── Gold divider ── */}
+        {/* ── Gold divider after portfolio ── */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "478px",
+            left: "60px",
+            right: "60px",
+            height: "1px",
+            background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
+          }}
+        />
+
+        {/* ══════════════════════════════════════════════════
+            BLOCK 3 — TOP 3 CARDS  (top: 490px, height: 400px)
+        ══════════════════════════════════════════════════ */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "490px",
+            left: "60px",
+            right: "60px",
+            height: "400px",
+            display: "block",
+          }}
+        >
+          {/* Section label */}
           <div
             style={{
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
-              marginBottom: "36px",
+              ...BASE,
+              fontSize: "9px",
+              letterSpacing: "0.35em",
+              color: "#C9A84C",
+              fontFamily: SANS,
+              fontWeight: "700",
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: "16px",
+              lineHeight: "1.4",
             }}
-          />
+          >
+            TOP 3 珍藏 · FINEST HOLDINGS
+          </div>
 
-          {/* ── MIDDLE-BOTTOM: TOP 3 Cards ── */}
-          <div style={{ flex: 1, marginBottom: "32px" }}>
-            <p
-              style={{
-                fontSize: "9px",
-                letterSpacing: "0.35em",
-                color: "#C9A84C",
-                fontFamily: "system-ui, sans-serif",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                marginBottom: "20px",
-                margin: "0 0 20px",
-              }}
-            >
-              TOP 3 珍藏 · FINEST HOLDINGS
-            </p>
+          {/* Cards grid */}
+          <div
+            style={{
+              ...BASE,
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "28px",
+              height: "360px",
+            }}
+          >
+            {Array.from({ length: 3 }).map((_, idx) => {
+              const card = topCards[idx];
+              const rankColors = ["#C9A84C", "#A0A0A0", "#CD7F32"];
+              const rankColor = rankColors[idx] ?? "#C9A84C";
+              const imgSrc = card?.imageBase64 ?? null;
 
-            <div style={{ display: "flex", gap: "24px" }}>
-              {topCards.slice(0, 3).map((card, idx) => {
-                const rankColors = ["#C9A84C", "#A0A0A0", "#CD7F32"];
-                const rankColor = rankColors[idx] ?? "#C9A84C";
-                                // 優先使用預先轉換的 base64（避免跨域），fallback 到 proxied URL
-                const imgSrc = card.imageBase64 ?? getProxied(card.imageUrl);
-                return (
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    ...BASE,
+                    display: "block",
+                    height: "360px",
+                  }}
+                >
+                  {/* Card image container — fixed 220px height */}
                   <div
-                    key={idx}
                     style={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
+                      ...BASE,
+                      position: "relative",
+                      width: "100%",
+                      height: "220px",
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      background: "#E8E6E1",
+                      border: `2px solid ${rankColor}`,
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                      display: "block",
+                      marginBottom: "10px",
                     }}
                   >
-                    {/* Card image container (3:4 ratio) */}
-                    <div
-                      style={{
-                        position: "relative",
-                        width: "100%",
-                        paddingTop: "133.33%", // 3:4 aspect ratio
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        background: "#E8E6E1",
-                        border: `2px solid ${rankColor}`,
-                        boxShadow: `0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.5) inset`,
-                      }}
-                    >
-                      {imgSrc ? (
-                        <img
-                          src={imgSrc}
-                          alt={card.cardName}
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#9CA3AF",
-                            fontSize: "32px",
-                          }}
-                        >
-                          🃏
-                        </div>
-                      )}
-
-                      {/* Foil shine overlay */}
-                      <div
+                    {imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={card?.cardName ?? ""}
                         style={{
+                          ...BASE,
                           position: "absolute",
-                          inset: 0,
-                          background: foilGradient,
-                          pointerEvents: "none",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
                         }}
                       />
-
-                      {/* Rank badge */}
+                    ) : (
                       <div
                         style={{
+                          ...BASE,
                           position: "absolute",
-                          top: "8px",
-                          left: "8px",
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "50%",
-                          background: rankColor,
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "12px",
-                          fontWeight: "900",
-                          color: "#FFFFFF",
-                          fontFamily: "system-ui, sans-serif",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                          color: "#9CA3AF",
+                          fontSize: "32px",
                         }}
                       >
-                        {idx + 1}
+                        🃏
                       </div>
-                    </div>
+                    )}
 
-                    {/* Card info */}
-                    <div>
+                    {/* Foil shine overlay */}
+                    <div
+                      style={{
+                        ...BASE,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: foilGradient,
+                        pointerEvents: "none",
+                      }}
+                    />
+
+                    {/* Rank badge */}
+                    <div
+                      style={{
+                        ...BASE,
+                        position: "absolute",
+                        top: "8px",
+                        left: "8px",
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "50%",
+                        background: rankColor,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "13px",
+                        fontWeight: "900",
+                        color: "#FFFFFF",
+                        fontFamily: SANS,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      {idx + 1}
+                    </div>
+                  </div>
+
+                  {/* Card info — block elements, no overlap */}
+                  {card && (
+                    <div style={{ ...BASE, display: "block" }}>
                       {/* Grade badge */}
                       <div
                         style={{
+                          ...BASE,
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
@@ -449,20 +576,24 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                       >
                         <span
                           style={{
+                            ...BASE,
                             width: "6px",
                             height: "6px",
                             borderRadius: "50%",
                             background: gradeDotColor(card.grader),
                             display: "inline-block",
+                            flexShrink: 0,
                           }}
                         />
                         <span
                           style={{
+                            ...BASE,
                             fontSize: "10px",
                             fontWeight: "700",
                             color: "#1A1A1A",
-                            fontFamily: "system-ui, sans-serif",
+                            fontFamily: SANS,
                             letterSpacing: "0.05em",
+                            lineHeight: "1.4",
                           }}
                         >
                           {card.grade && card.grade.toUpperCase().startsWith(card.grader?.toUpperCase())
@@ -474,160 +605,188 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                       </div>
 
                       {/* Card name */}
-                      <p
+                      <div
                         style={{
-                          fontSize: "14px",
+                          ...BASE,
+                          fontSize: "13px",
                           fontWeight: "700",
                           color: "#1A1A1A",
-                          fontFamily: "system-ui, sans-serif",
-                          lineHeight: 1.3,
-                          marginBottom: "4px",
-                          margin: "0 0 4px",
-                          // Clamp to 2 lines
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
+                          fontFamily: SANS,
+                          lineHeight: "1.35",
+                          display: "-webkit-box" as "block",
+                          marginBottom: "5px",
                           overflow: "hidden",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical" as "vertical",
                         }}
                       >
                         {card.cardName}
-                      </p>
+                      </div>
 
-                      {/* Market value — larger & bolder */}
+                      {/* Market value */}
                       {card.marketPrice != null && (
-                        <p
+                        <div
                           style={{
-                            fontSize: "21px",
+                            ...BASE,
+                            fontSize: "18px",
                             fontWeight: "900",
                             color: "#1A1A1A",
-                            fontFamily: "'Courier New', monospace",
+                            fontFamily: MONO,
                             letterSpacing: "-0.01em",
-                            margin: "0 0 3px",
+                            display: "block",
+                            lineHeight: "1.3",
+                            marginBottom: "3px",
                           }}
                         >
                           {fmtCurrency(card.marketPrice, currency)}
-                        </p>
+                        </div>
                       )}
 
-                      {/* Gain % — larger & bolder */}
+                      {/* Gain % */}
                       {card.unrealizedGainPct != null && (
-                        <p
+                        <div
                           style={{
-                            fontSize: "17px",
+                            ...BASE,
+                            fontSize: "15px",
                             fontWeight: "900",
                             color: card.unrealizedGainPct >= 0 ? "#047857" : "#dc2626",
-                            fontFamily: "system-ui, sans-serif",
-                            margin: 0,
+                            fontFamily: SANS,
+                            display: "block",
+                            lineHeight: "1.3",
                           }}
                         >
                           {card.unrealizedGainPct >= 0 ? "▲" : "▼"}{" "}
                           {Math.abs(card.unrealizedGainPct).toFixed(1)}%
-                        </p>
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-              {/* Fill empty slots if < 3 cards */}
-              {topCards.length < 3 &&
-                Array.from({ length: 3 - topCards.length }).map((_, i) => (
-                  <div key={`empty-${i}`} style={{ flex: 1 }} />
-                ))}
+        {/* ── Gold divider before footer ── */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "900px",
+            left: "60px",
+            right: "60px",
+            height: "1px",
+            background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
+          }}
+        />
+
+        {/* ══════════════════════════════════════════════════
+            BLOCK 4 — FOOTER  (top: 910px, height: 142px)
+        ══════════════════════════════════════════════════ */}
+        <div
+          style={{
+            ...BASE,
+            position: "absolute",
+            top: "910px",
+            left: "60px",
+            right: "60px",
+            height: "142px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* Left: CTA text */}
+          <div style={{ ...BASE, display: "block" }}>
+            <div
+              style={{
+                ...BASE,
+                fontSize: "13px",
+                color: "#4B4B4B",
+                fontFamily: SANS,
+                letterSpacing: "0.05em",
+                display: "block",
+                lineHeight: "1.4",
+                marginBottom: "4px",
+              }}
+            >
+              Create your vault at
+            </div>
+            <div
+              style={{
+                ...BASE,
+                fontSize: "22px",
+                fontWeight: "900",
+                color: "#1A1A1A",
+                fontFamily: SERIF,
+                letterSpacing: "0.02em",
+                display: "block",
+                lineHeight: "1.2",
+                marginBottom: "4px",
+              }}
+            >
+              boxium.asia
+            </div>
+            <div
+              style={{
+                ...BASE,
+                fontSize: "9px",
+                color: "#9CA3AF",
+                fontFamily: SANS,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                display: "block",
+                lineHeight: "1.4",
+              }}
+            >
+              TCG Portfolio Management
             </div>
           </div>
 
-          {/* ── Gold divider ── */}
+          {/* Right: QR Code + label */}
           <div
             style={{
-              height: "1px",
-              background: "linear-gradient(90deg, transparent, #C9A84C 20%, #C9A84C 80%, transparent)",
-              marginBottom: "28px",
+              ...BASE,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "6px",
             }}
-          />
-
-          {/* ── BOTTOM: QR Code + Footer ── */}
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-            {/* Left: Footer text */}
-            <div>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "#4B4B4B",
-                  fontFamily: "system-ui, sans-serif",
-                  letterSpacing: "0.05em",
-                  margin: "0 0 4px",
-                }}
-              >
-                Create your vault at
-              </p>
-              <p
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "900",
-                  color: "#1A1A1A",
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  letterSpacing: "0.02em",
-                  margin: 0,
-                }}
-              >
-                boxium.asia
-              </p>
-              <p
-                style={{
-                  fontSize: "9px",
-                  color: "#9CA3AF",
-                  fontFamily: "system-ui, sans-serif",
-                  letterSpacing: "0.2em",
-                  marginTop: "4px",
-                  margin: "4px 0 0",
-                  textTransform: "uppercase",
-                }}
-              >
-                TCG Portfolio Management
-              </p>
-            </div>
-
-            {/* Right: QR Code */}
+          >
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "6px",
+                ...BASE,
+                padding: "10px",
+                background: "#FFFFFF",
+                border: "1px solid #EAEAEA",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                display: "inline-block",
               }}
             >
-              <div
-                style={{
-                  padding: "10px",
-                  background: "#FFFFFF",
-                  border: "1px solid #EAEAEA",
-                  borderRadius: "8px",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-              >
-                <QRCodeSVG
-                  value={shareUrl}
-                  size={90}
-                  fgColor="#1A1A1A"
-                  bgColor="#FFFFFF"
-                  level="M"
-                />
-              </div>
-              <p
-                style={{
-                  fontSize: "9px",
-                  color: "#6B7280",
-                  fontFamily: "system-ui, sans-serif",
-                  letterSpacing: "0.08em",
-                  textAlign: "center",
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}
-              >
-                掃碼查看完整收藏<br />
-                <span style={{ letterSpacing: "0.05em", fontSize: "8px" }}>Scan to View Vault</span>
-              </p>
+              <QRCodeSVG
+                value={shareUrl}
+                size={100}
+                fgColor="#1A1A1A"
+                bgColor="#FFFFFF"
+                level="M"
+              />
+            </div>
+            <div
+              style={{
+                ...BASE,
+                fontSize: "9px",
+                color: "#6B7280",
+                fontFamily: SANS,
+                letterSpacing: "0.06em",
+                textAlign: "center",
+                display: "block",
+                lineHeight: "1.5",
+              }}
+            >
+              掃碼查看完整收藏
+              <br />
+              <span style={{ fontSize: "8px", letterSpacing: "0.04em" }}>Scan to View Vault</span>
             </div>
           </div>
         </div>

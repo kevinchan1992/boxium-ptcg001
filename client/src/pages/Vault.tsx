@@ -292,9 +292,12 @@ export default function Vault() {
         cacheBust: true,
         skipFonts: true, // avoid Google Fonts CORS SecurityError
         style: {
-          position: "static",
-          top: "0",
-          left: "0",
+          transform: "scale(1)",
+          transformOrigin: "top left",
+          // Reset position so html-to-image captures full 1080x1080
+          position: "absolute",
+          top: "-9999px",
+          left: "-9999px",
         },
       };
       const dataUrl = await toPng(node, opts);
