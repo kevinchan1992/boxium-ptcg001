@@ -31,6 +31,7 @@ interface ShareCardProps {
   topCards: ShareCardItem[];
   userName?: string;
   shareUrl: string;
+  logoBase64?: string | null; // pre-fetched base64 to avoid CORS
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -56,9 +57,9 @@ function gradeDotColor(grader: string) {
 
 // ─── ShareCard Component ──────────────────────────────────────
 const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
-  ({ stats, topCards, userName, shareUrl }, ref) => {
+  ({ stats, topCards, userName, shareUrl, logoBase64 }, ref) => {
     const gainPositive = stats.totalGain >= 0;
-    const gainColor = gainPositive ? "#059669" : "#dc2626";
+    const gainColor = gainPositive ? "#047857" : "#dc2626";
     const currency = stats.currency ?? "HKD";
 
     // Foil shine overlay gradient
@@ -129,29 +130,28 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
           >
             {/* Logo + title */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                {/* BOXIUM wordmark */}
-                <span
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                {/* BOXIUM Logo image */}
+                <img
+                  src={logoBase64 ?? "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-black.webp"}
+                  alt="BOXIUM"
                   style={{
-                    fontSize: "28px",
-                    fontWeight: "900",
-                    letterSpacing: "-0.02em",
-                    color: "#1A1A1A",
-                    fontFamily: "'Playfair Display', Georgia, serif",
+                    height: "46px",
+                    width: "auto",
+                    objectFit: "contain",
                   }}
-                >
-                  BOXIUM
-                </span>
+                />
                 <span
                   style={{
-                    fontSize: "11px",
+                    fontSize: "13px",
                     fontWeight: "700",
-                    letterSpacing: "0.28em",
+                    letterSpacing: "0.32em",
                     color: "#737373",
                     background: "#F0EDE8",
-                    padding: "3px 8px",
+                    padding: "4px 10px",
                     borderRadius: "4px",
                     fontFamily: "system-ui, -apple-system, sans-serif",
+                    alignSelf: "center",
                   }}
                 >
                   VAULT
@@ -159,10 +159,10 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               </div>
               <p
                 style={{
-                  fontSize: "9px",
-                  letterSpacing: "0.35em",
+                  fontSize: "11px",
+                  letterSpacing: "0.42em",
                   color: "#C9A84C",
-                  fontWeight: "600",
+                  fontWeight: "700",
                   fontFamily: "system-ui, -apple-system, sans-serif",
                   textTransform: "uppercase",
                   margin: 0,
@@ -230,7 +230,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
             {/* Big number */}
             <p
               style={{
-                fontSize: "76px",
+                fontSize: "96px",
                 fontWeight: "900",
                 letterSpacing: "-0.04em",
                 color: "#1A1A1A",
@@ -258,8 +258,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               >
                 <span
                   style={{
-                    fontSize: "28px",
-                    fontWeight: "800",
+                    fontSize: "36px",
+                    fontWeight: "900",
                     color: gainColor,
                     fontFamily: "'Courier New', monospace",
                     letterSpacing: "-0.02em",
@@ -273,8 +273,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               <div>
                 <p
                   style={{
-                    fontSize: "22px",
-                    fontWeight: "700",
+                    fontSize: "28px",
+                    fontWeight: "800",
                     color: gainColor,
                     fontFamily: "'Courier New', monospace",
                     margin: "0 0 2px",
@@ -459,8 +459,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                       {/* Card name */}
                       <p
                         style={{
-                          fontSize: "11px",
-                          fontWeight: "600",
+                          fontSize: "14px",
+                          fontWeight: "700",
                           color: "#1A1A1A",
                           fontFamily: "system-ui, sans-serif",
                           lineHeight: 1.3,
@@ -480,8 +480,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                       {card.marketPrice != null && (
                         <p
                           style={{
-                            fontSize: "14px",
-                            fontWeight: "800",
+                            fontSize: "18px",
+                            fontWeight: "900",
                             color: "#1A1A1A",
                             fontFamily: "'Courier New', monospace",
                             letterSpacing: "-0.01em",
@@ -496,9 +496,9 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                       {card.unrealizedGainPct != null && (
                         <p
                           style={{
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            color: card.unrealizedGainPct >= 0 ? "#059669" : "#dc2626",
+                            fontSize: "15px",
+                            fontWeight: "800",
+                            color: card.unrealizedGainPct >= 0 ? "#047857" : "#dc2626",
                             fontFamily: "system-ui, sans-serif",
                             margin: 0,
                           }}
@@ -535,8 +535,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
             <div>
               <p
                 style={{
-                  fontSize: "11px",
-                  color: "#737373",
+                  fontSize: "13px",
+                  color: "#4B4B4B",
                   fontFamily: "system-ui, sans-serif",
                   letterSpacing: "0.05em",
                   margin: "0 0 4px",
@@ -546,8 +546,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               </p>
               <p
                 style={{
-                  fontSize: "16px",
-                  fontWeight: "800",
+                  fontSize: "20px",
+                  fontWeight: "900",
                   color: "#1A1A1A",
                   fontFamily: "'Playfair Display', Georgia, serif",
                   letterSpacing: "0.02em",
@@ -591,7 +591,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               >
                 <QRCodeSVG
                   value={shareUrl}
-                  size={80}
+                  size={90}
                   fgColor="#1A1A1A"
                   bgColor="#FFFFFF"
                   level="M"

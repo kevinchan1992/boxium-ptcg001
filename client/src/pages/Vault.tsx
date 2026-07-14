@@ -242,23 +242,28 @@ export default function Vault() {
 
   // State for top cards with pre-fetched base64 images
   const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);
+  const [shareLogoBase64, setShareLogoBase64] = useState<string | null>(null);
+
+  const BOXIUM_LOGO_URL = "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-black.webp";
 
   const handleGenerateShare = useCallback(async () => {
     if (!shareStats) return;
     setIsGeneratingShare(true);
     try {
-      // Step 1: Pre-fetch all card images as base64 to avoid CORS issues
-      const cardsWithBase64 = await Promise.all(
-        shareTopCards.map(async (card) => {
+      // Step 1: Pre-fetch logo + all card images as base64 to avoid CORS issues
+      const [logoB64, ...cardResults] = await Promise.all([
+        fetchImageAsBase64(BOXIUM_LOGO_URL),
+        ...shareTopCards.map(async (card) => {
           if (!card.imageUrl) return card;
           const base64 = await fetchImageAsBase64(card.imageUrl);
           return { ...card, imageBase64: base64 };
-        })
-      );
-      setShareTopCardsWithBase64(cardsWithBase64);
+        }),
+      ]);
+      setShareLogoBase64(logoB64);
+      setShareTopCardsWithBase64(cardResults as ShareCardItem[]);
 
       // Step 2: Wait for React to re-render with base64 images
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 350));
 
       if (!shareCardRef.current) return;
 
@@ -1241,6 +1246,7 @@ export default function Vault() {
           topCards={shareTopCardsWithBase64.length > 0 ? shareTopCardsWithBase64 : shareTopCards}
           userName={user?.name ?? undefined}
           shareUrl={shareUrl}
+          logoBase64={shareLogoBase64}
         />
       )}
 
