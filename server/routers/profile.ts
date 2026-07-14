@@ -238,10 +238,11 @@ export const profileRouter = router({
         const cur = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
 
         // Build the list of unique (cardId, grade) pairs for historical price lookup
+        // Note: CollectionItem stores cardId under item.card.id (not item.cardId)
         const gradeRequests = items
-          .filter((i: any) => i.cardId)
+          .filter((i: any) => i.card?.id)
           .map((i: any) => ({
-            cardId: i.cardId,
+            cardId: i.card.id,
             grade: getMarketGrade(i.grade ?? ''),
           }))
           .filter((r: any, idx: number, arr: any[]) =>
@@ -268,10 +269,11 @@ export const profileRouter = router({
             const historicalPrices = await batchGetLatestPricesBeforeDate(gradeRequests, monthEnd);
             totalMarketValue = activeItems.reduce((s: number, i: any) => {
               const lookupGrade = getMarketGrade(i.grade ?? '');
-              const key = `${i.cardId}:${lookupGrade}`;
+              // CollectionItem stores cardId under i.card.id
+              const key = `${i.card?.id}:${lookupGrade}`;
               const historicalPrice = historicalPrices.get(key);
-              // Fall back to purchase price if no historical data exists for that month
-              const price = historicalPrice ?? i.purchasePrice ?? 0;
+              // Fall back to current market price, then purchase price if no historical data
+              const price = historicalPrice ?? i.marketPrice ?? i.purchasePrice ?? 0;
               return s + price * i.quantity;
             }, 0);
           }
