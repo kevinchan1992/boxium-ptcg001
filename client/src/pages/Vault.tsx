@@ -677,50 +677,178 @@ export default function Vault() {
           }}
         >
           {/* List header */}
-          <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4" style={{ color: TEXT_SEC }} />
-              <span className="text-sm font-semibold" style={{ color: TEXT_PRI }}>收藏列表</span>
-              {totalItems > 0 && (
-                <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
-                  style={{ background: TEXT_PRI }}
+          <div className="px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+            {/* Top row: title + refresh (always visible) */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4" style={{ color: TEXT_SEC }} />
+                <span className="text-sm font-semibold" style={{ color: TEXT_PRI }}>收藏列表</span>
+                {totalItems > 0 && (
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+                    style={{ background: TEXT_PRI }}
+                  >
+                    {totalItems}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Desktop: filters inline with title */}
+                <div className="hidden sm:flex items-center gap-2">
+                  {/* Sort select */}
+                  <div className="relative group">
+                    <select
+                      className="appearance-none text-xs font-semibold tracking-wider rounded-lg pl-4 pr-9 py-2.5 focus:outline-none cursor-pointer"
+                      style={{
+                        background: "#F5F5F3",
+                        color: TEXT_PRI,
+                        border: "none",
+                        transition: "background 0.2s ease, box-shadow 0.2s ease",
+                      }}
+                      value={sortBy}
+                      onChange={e => { setSortBy(e.target.value as any); setPage(1); }}
+                      onFocus={e => {
+                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
+                      }}
+                      onBlur={e => {
+                        e.currentTarget.style.background = "#F5F5F3";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <option value="createdAt">最新加入</option>
+                      <option value="marketValue">市値排序</option>
+                      <option value="gain">盈號排序</option>
+                      <option value="purchasedAt">購入日期</option>
+                    </select>
+                    {/* Custom chevron */}
+                    <svg
+                      className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
+                      width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="#737373" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </div>
+                  {/* Grader select */}
+                  <div className="relative group">
+                    <select
+                      className="appearance-none text-xs font-semibold tracking-wider rounded-lg pl-4 pr-9 py-2.5 focus:outline-none cursor-pointer"
+                      style={{
+                        background: "#F5F5F3",
+                        color: TEXT_PRI,
+                        border: "none",
+                        transition: "background 0.2s ease, box-shadow 0.2s ease",
+                      }}
+                      value={graderFilter ?? ""}
+                      onChange={e => { setGraderFilter(e.target.value || undefined); setPage(1); }}
+                      onFocus={e => {
+                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
+                      }}
+                      onBlur={e => {
+                        e.currentTarget.style.background = "#F5F5F3";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <option value="">全部</option>
+                      <option value="PSA">PSA</option>
+                      <option value="CGC">CGC</option>
+                      <option value="BGS">BGS</option>
+                      <option value="RAW">RAW</option>
+                    </select>
+                    {/* Custom chevron */}
+                    <svg
+                      className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
+                      width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="#737373" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </div>
+                </div>
+                {/* Refresh button */}
+                <button
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100"
+                  onClick={() => { refetchItems(); refetchStats(); }}
+                  title="重新整理"
                 >
-                  {totalItems}
-                </span>
-              )}
+                  <RefreshCw className="w-3.5 h-3.5" style={{ color: TEXT_SEC }} />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                className="text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-300"
-                style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
-                value={sortBy}
-                onChange={e => { setSortBy(e.target.value as any); setPage(1); }}
-              >
-                <option value="createdAt">最新加入</option>
-                <option value="marketValue">市值排序</option>
-                <option value="gain">盈虧排序</option>
-                <option value="purchasedAt">購入日期</option>
-              </select>
-              <select
-                className="text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-300"
-                style={{ background: "#F5F5F3", color: TEXT_PRI, border: `1px solid ${BORDER}` }}
-                value={graderFilter ?? ""}
-                onChange={e => { setGraderFilter(e.target.value || undefined); setPage(1); }}
-              >
-                <option value="">全部</option>
-                <option value="PSA">PSA</option>
-                <option value="CGC">CGC</option>
-                <option value="BGS">BGS</option>
-                <option value="RAW">RAW</option>
-              </select>
-              <button
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100"
-                onClick={() => { refetchItems(); refetchStats(); }}
-                title="重新整理"
-              >
-                <RefreshCw className="w-3.5 h-3.5" style={{ color: TEXT_SEC }} />
-              </button>
+
+            {/* Mobile: filters as 2-col grid (below title row) */}
+            <div className="sm:hidden mt-3 grid grid-cols-2 gap-2">
+              {/* Sort select */}
+              <div className="relative group">
+                <select
+                  className="appearance-none w-full text-xs font-semibold tracking-wider rounded-lg pl-3.5 pr-8 py-2.5 focus:outline-none cursor-pointer"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: "none",
+                    transition: "background 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                  value={sortBy}
+                  onChange={e => { setSortBy(e.target.value as any); setPage(1); }}
+                  onFocus={e => {
+                    e.currentTarget.style.background = "#FFFFFF";
+                    e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.background = "#F5F5F3";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="createdAt">最新加入</option>
+                  <option value="marketValue">市値排序</option>
+                  <option value="gain">盈號排序</option>
+                  <option value="purchasedAt">購入日期</option>
+                </select>
+                <svg
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
+                  width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="#737373" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </div>
+              {/* Grader select */}
+              <div className="relative group">
+                <select
+                  className="appearance-none w-full text-xs font-semibold tracking-wider rounded-lg pl-3.5 pr-8 py-2.5 focus:outline-none cursor-pointer"
+                  style={{
+                    background: "#F5F5F3",
+                    color: TEXT_PRI,
+                    border: "none",
+                    transition: "background 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                  value={graderFilter ?? ""}
+                  onChange={e => { setGraderFilter(e.target.value || undefined); setPage(1); }}
+                  onFocus={e => {
+                    e.currentTarget.style.background = "#FFFFFF";
+                    e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.background = "#F5F5F3";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="">全部</option>
+                  <option value="PSA">PSA</option>
+                  <option value="CGC">CGC</option>
+                  <option value="BGS">BGS</option>
+                  <option value="RAW">RAW</option>
+                </select>
+                <svg
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
+                  width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="#737373" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </div>
             </div>
           </div>
 
