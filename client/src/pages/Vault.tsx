@@ -283,24 +283,36 @@ export default function Vault() {
       if (!shareCardRef.current) return;
 
       // Step 3: Generate PNG
+      // Temporarily move node to visible area so html-to-image can capture it
       const { toPng } = await import("html-to-image");
       const node = shareCardRef.current;
+
+      // Temporarily make visible for capture
+      const prevStyle = node.getAttribute("style") ?? "";
+      node.style.position = "fixed";
+      node.style.top = "0";
+      node.style.left = "0";
+      node.style.zIndex = "-1";
+      node.style.opacity = "0";
+      node.style.pointerEvents = "none";
+
+      // Small delay to allow browser to paint
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const opts = {
         width: 1080,
         height: 1080,
         pixelRatio: 1,
         cacheBust: true,
         skipFonts: true, // avoid Google Fonts CORS SecurityError
-        style: {
-          transform: "scale(1)",
-          transformOrigin: "top left",
-          // Reset position so html-to-image captures full 1080x1080
-          position: "absolute",
-          top: "-9999px",
-          left: "-9999px",
-        },
       };
-      const dataUrl = await toPng(node, opts);
+      let dataUrl: string;
+      try {
+        dataUrl = await toPng(node, opts);
+      } finally {
+        // Always restore original position
+        node.setAttribute("style", prevStyle);
+      }
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
     } catch (err: unknown) {
