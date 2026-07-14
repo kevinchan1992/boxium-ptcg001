@@ -3315,8 +3315,6 @@ async function startServer() {
       "media.snkrdunk.com",
       // CloudFront (Manus S3 CDN) - blocked by some browsers/CSP
       "cloudfront.net",
-      // Manus static assets CDN (BOXIUM logo and other project assets)
-      "static-assets-cdn.manus.space",
     ];
     let parsedUrl: URL;
     try {

@@ -220,37 +220,19 @@ export default function Vault() {
     }));
   }, [stats]);
 
-  // Convert blob to base64 data URL
-  const blobToBase64 = (blob: Blob): Promise<string | null> =>
-    new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-
-  // Pre-fetch image as base64 to avoid CORS issues during html-to-image rendering
-  // Strategy: try direct fetch first (works for same-origin or CORS-enabled CDNs),
-  // then fall back to server proxy (for snkrdunk CDN which requires Referer header)
+  // Pre-fetch image via server proxy and convert to base64 to avoid CORS
   const fetchImageAsBase64 = useCallback(async (url: string): Promise<string | null> => {
-    // 1. Try direct fetch (no-cors mode won't give us the blob, so try cors first)
-    try {
-      const resp = await fetch(url, { mode: 'cors', cache: 'force-cache' });
-      if (resp.ok) {
-        const blob = await resp.blob();
-        const b64 = await blobToBase64(blob);
-        if (b64) return b64;
-      }
-    } catch {
-      // CORS blocked — fall through to proxy
-    }
-    // 2. Fall back to server proxy
     try {
       const proxyUrl = `/api/img-proxy?url=${encodeURIComponent(url)}`;
       const resp = await fetch(proxyUrl);
       if (!resp.ok) return null;
       const blob = await resp.blob();
-      return blobToBase64(blob);
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
     } catch {
       return null;
     }
@@ -260,66 +242,47 @@ export default function Vault() {
 
   // State for top cards with pre-fetched base64 images
   const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);
-  const [shareLogoBase64, setShareLogoBase64] = useState<string | null>(null);
 
   const handleGenerateShare = useCallback(async () => {
     if (!shareStats) return;
     setIsGeneratingShare(true);
     try {
-      // Step 1: Pre-fetch card images as base64 via proxy to avoid CORS issues
-      // Logo is already embedded as base64 in ShareCard component
-      const cardResults = await Promise.all(
+      // Step 1: Pre-fetch all card images as base64 to avoid CORS issues
+      const cardsWithBase64 = await Promise.all(
         shareTopCards.map(async (card) => {
           if (!card.imageUrl) return card;
           const base64 = await fetchImageAsBase64(card.imageUrl);
           return { ...card, imageBase64: base64 };
         })
       );
-      setShareTopCardsWithBase64(cardResults as ShareCardItem[]);
+      setShareTopCardsWithBase64(cardsWithBase64);
 
       // Step 2: Wait for React to re-render with base64 images
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       if (!shareCardRef.current) return;
 
       // Step 3: Generate PNG
-      // Temporarily move node to visible area so html-to-image can capture it
       const { toPng } = await import("html-to-image");
       const node = shareCardRef.current;
-
-      // Temporarily make visible for capture
-      const prevStyle = node.getAttribute("style") ?? "";
-      node.style.position = "fixed";
-      node.style.top = "0";
-      node.style.left = "0";
-      node.style.zIndex = "-1";
-      node.style.opacity = "0";
-      node.style.pointerEvents = "none";
-
-      // Small delay to allow browser to paint
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       const opts = {
         width: 1080,
         height: 1080,
         pixelRatio: 1,
         cacheBust: true,
         skipFonts: true, // avoid Google Fonts CORS SecurityError
+        style: {
+          position: "static",
+          top: "0",
+          left: "0",
+        },
       };
-      let dataUrl: string;
-      try {
-        dataUrl = await toPng(node, opts);
-      } finally {
-        // Always restore original position
-        node.setAttribute("style", prevStyle);
-      }
+      const dataUrl = await toPng(node, opts);
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
-    } catch (err: unknown) {
-      // Provide a more descriptive error message
-      const errMsg = err instanceof Error ? err.message : String(err);
-      console.error("Share generation failed:", errMsg, err);
-      toast.error(`生成分享圖片失敗: ${errMsg.slice(0, 80)}`);
+    } catch (err) {
+      console.error("Share generation failed:", err);
+      toast.error("生成分享圖片失敗，請稍後再試");
     } finally {
       setIsGeneratingShare(false);
     }
@@ -1278,7 +1241,6 @@ export default function Vault() {
           topCards={shareTopCardsWithBase64.length > 0 ? shareTopCardsWithBase64 : shareTopCards}
           userName={user?.name ?? undefined}
           shareUrl={shareUrl}
-          logoBase64={shareLogoBase64}
         />
       )}
 
