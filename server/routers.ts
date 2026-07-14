@@ -17,6 +17,7 @@ import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
 import { lootpoolRouter } from "./routers/lootpool";
+import { vipRouter } from "./routers/vip";
 import { contactRouter } from "./routers/contact";
 import { marketplaceRouter } from "./routers/marketplace";
 
@@ -54,6 +55,7 @@ export const appRouter = router({
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
   lootpool: lootpoolRouter,
+  vip: vipRouter,
 });
 
 export type AppRouter = typeof appRouter;

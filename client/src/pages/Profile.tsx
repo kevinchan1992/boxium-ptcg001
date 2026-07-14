@@ -41,6 +41,9 @@ import { useTranslation } from "react-i18next";
 import { TradeHistorySection } from "@/components/TradeHistorySection";
 import { LazyImage } from "@/components/LazyImage";
 import PageHead from "@/components/PageHead";
+import { VipUpgradeModal } from "@/components/VipUpgradeModal";
+import { VipProfileSection } from "@/components/VipProfileSection";
+import { useVip } from "@/hooks/useVip";
 
 // ─── Brand tokens ──────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -134,8 +137,12 @@ export default function Profile() {
   const { data: myBidsData } = trpc.auction.myBids.useQuery(undefined, { enabled: !!user });
   const activeBidsCount = (myBidsData ?? []).filter((b: any) => b.status === 'active' || b.status === 'winning').length;
 
+  const { isVip, vipPlan, vipExpiresAt } = useVip();
+  const [showVipModal, setShowVipModal] = useState(false);
+
   const navItems: NavItem[] = [
     { id: "info", icon: <User className="w-4 h-4" />, label: t("profile.tabs.info") },
+    { id: "vip", icon: <Crown className="w-4 h-4" />, label: "VIP 會員" },
     { id: "watchlist", icon: <Heart className="w-4 h-4" />, label: t("profile.tabs.watchlist") },
     { id: "addresses", icon: <MapPin className="w-4 h-4" />, label: t("profile.nav.addresses") },
     { id: "orders", icon: <ShoppingBag className="w-4 h-4" />, label: t("profile.nav.orders"), badge: activeOrdersCount > 0 ? activeOrdersCount : undefined },
@@ -373,12 +380,21 @@ export default function Profile() {
                 {activeSection === "auctions" && <MyAuctionsSection bids={myBidsData ?? []} />}
                 {activeSection === "notifications" && <EmbeddedNotificationsSection />}
                 {activeSection === "trades" && <TradeHistorySection />}
+                {activeSection === "vip" && (
+                  <VipProfileSection
+                    isVip={isVip}
+                    vipPlan={vipPlan}
+                    vipExpiresAt={vipExpiresAt}
+                    onUpgrade={() => setShowVipModal(true)}
+                  />
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+      <VipUpgradeModal open={showVipModal} onOpenChange={setShowVipModal} />
     </>
   );
 }

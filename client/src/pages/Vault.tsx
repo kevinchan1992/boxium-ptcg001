@@ -25,9 +25,11 @@ import {
   TrendingUp, TrendingDown, Package, DollarSign,
   Plus, Search, Loader2, Star, BarChart3, Wallet,
   RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp, Camera,
-  Share2, Download, Link2, ImageIcon,
+  Share2, Download, Link2, ImageIcon, Crown, Lock,
 } from "lucide-react";
 import ShareCard, { type ShareCardStats, type ShareCardItem } from "@/components/ShareCard";
+import { VipUpgradeModal } from "@/components/VipUpgradeModal";
+import { useVip } from "@/hooks/useVip";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -352,6 +354,52 @@ export default function Vault() {
     });
   }
 
+  // ── VIP ─────────────────────────────────────────────────
+  const { isVip } = useVip();
+  const [showVipModal, setShowVipModal] = useState(false);
+  const [vipTrendRange, setVipTrendRange] = useState<"1M" | "3M" | "6M" | "1Y" | "ALL">("ALL");
+
+  // CSV export mutation
+  const csvExportMutation = trpc.profile.exportCollectionCsv.useMutation({
+    onSuccess: (data) => {
+      const blob = new Blob([data.csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = data.filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV 已下載！");
+    },
+    onError: (e) => {
+      if (e.message.includes("VIP")) {
+        setShowVipModal(true);
+      } else {
+        toast.error(e.message);
+      }
+    },
+  });
+
+  // AI scan usage
+  const { data: aiScanUsage } = trpc.vip.getAiScanUsage.useQuery(
+    undefined, { enabled: !!user }
+  );
+
+  // Filtered trend data based on VIP range selection
+  const filteredTrendPoints = useMemo(() => {
+    const points = trendData?.points ?? [];
+    if (!isVip || vipTrendRange === "ALL") return points;
+    const now = new Date();
+    const monthsMap: Record<string, number> = { "1M": 1, "3M": 3, "6M": 6, "1Y": 12 };
+    const months = monthsMap[vipTrendRange] ?? 999;
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
+    return points.filter((p: any) => {
+      const [y, m] = p.month.split("/").map(Number);
+      const d = new Date(y, m - 1, 1);
+      return d >= cutoff;
+    });
+  }, [trendData, isVip, vipTrendRange]);
+
   const gainPct = stats?.totalGainPct ?? 0;
   const gainPositive = gainPct >= 0;
 
@@ -428,6 +476,55 @@ export default function Vault() {
           </div>
           {/* Action buttons */}
           <div className="flex items-center gap-2">
+            {/* VIP badge / upgrade button */}
+            {isVip ? (
+              <span
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+                style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
+              >
+                <Crown className="w-3 h-3" />
+                VIP
+              </span>
+            ) : (
+              <button
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+                style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}
+                onClick={() => setShowVipModal(true)}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                升級 VIP
+              </button>
+            )}
+            {/* CSV export button (VIP only) */}
+            {stats && (
+              <button
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                style={{
+                  background: "#FFFFFF",
+                  color: isVip ? TEXT_PRI : TEXT_SEC,
+                  border: `1px solid ${BORDER}`,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                  opacity: csvExportMutation.isPending ? 0.7 : 1,
+                }}
+                onClick={() => {
+                  if (!isVip) { setShowVipModal(true); return; }
+                  csvExportMutation.mutate();
+                }}
+                disabled={csvExportMutation.isPending}
+                title={isVip ? "匯出 CSV" : "VIP 專屬功能"}
+              >
+                {csvExportMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isVip ? (
+                  <Download className="w-4 h-4" />
+                ) : (
+                  <Lock className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline text-xs">
+                  {csvExportMutation.isPending ? "匯出中..." : "CSV"}
+                </span>
+              </button>
+            )}
             {/* Share button */}
             {stats && (
               <button
@@ -580,14 +677,44 @@ export default function Vault() {
                 <TrendingUp className="w-4 h-4" style={{ color: TEXT_SEC }} />
                 <span className="text-sm font-semibold" style={{ color: TEXT_PRI }}>持倉升値走勢圖</span>
               </div>
-              {gainPositive && stats && (
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style={{ background: "#ECFDF5", color: SUCCESS }}
-                >
-                  +{gainPct.toFixed(1)}%
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {gainPositive && stats && (
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: "#ECFDF5", color: SUCCESS }}
+                  >
+                    +{gainPct.toFixed(1)}%
+                  </span>
+                )}
+                {/* VIP time range selector */}
+                {isVip ? (
+                  <div className="flex items-center gap-0.5">
+                    {(["1M", "3M", "6M", "1Y", "ALL"] as const).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setVipTrendRange(r)}
+                        className="text-[9px] font-mono px-1.5 py-0.5 rounded transition-all"
+                        style={{
+                          background: vipTrendRange === r ? BRAND_BLUE : "transparent",
+                          color: vipTrendRange === r ? "#FFFFFF" : TEXT_SEC,
+                          border: `1px solid ${vipTrendRange === r ? BRAND_BLUE : BORDER}`,
+                        }}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowVipModal(true)}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg transition-all hover:opacity-90"
+                    style={{ background: `${BRAND_YELLOW}40`, color: BRAND_BLUE }}
+                  >
+                    <Lock className="w-3 h-3" />
+                    <span>VIP 解鎖更多時間範圍</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* 圖表內容 */}
@@ -608,10 +735,10 @@ export default function Vault() {
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-xs" style={{ color: TEXT_SEC }}>按月份累計市値</p>
-                    <p className="text-xs font-semibold" style={{ color: TEXT_PRI }}>{trendData.points.length} 個月</p>
+                    <p className="text-xs font-semibold" style={{ color: TEXT_PRI }}>{filteredTrendPoints.length} 個月</p>
                   </div>
                   <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={trendData.points} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                    <AreaChart data={filteredTrendPoints} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="vaultTrendGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#FEDD00" stopOpacity={0.18} />
@@ -1421,19 +1548,32 @@ export default function Vault() {
                     搜尋並選擇卡牌
                   </button>
                   {/* Camera scan button */}
-                  <button
-                    className="px-4 py-3.5 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-1.5 flex-shrink-0"
-                    style={{
-                      borderColor: BRAND_BLUE,
-                      color: BRAND_BLUE,
-                      background: "rgba(6,3,141,0.04)",
-                    }}
-                    onClick={() => setShowCameraSearch(true)}
-                    title="拍照智能選卡"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <span className="hidden sm:inline text-xs tracking-wide">拍照選卡</span>
-                  </button>
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <button
+                      className="px-4 py-3.5 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-1.5 w-full"
+                      style={{
+                        borderColor: BRAND_BLUE,
+                        color: BRAND_BLUE,
+                        background: "rgba(6,3,141,0.04)",
+                      }}
+                      onClick={() => setShowCameraSearch(true)}
+                      title="拍照智能選卡"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span className="hidden sm:inline text-xs tracking-wide">拍照選卡</span>
+                    </button>
+                    {/* AI scan usage counter */}
+                    {aiScanUsage && !isVip && (
+                      <span className="text-[9px] font-semibold" style={{ color: TEXT_SEC }}>
+                        {aiScanUsage.used}/{aiScanUsage.limit} 次
+                      </span>
+                    )}
+                    {isVip && (
+                      <span className="text-[9px] font-bold" style={{ color: BRAND_BLUE }}>
+                        無限次
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -1679,6 +1819,12 @@ export default function Vault() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── VIP Upgrade Modal ──────────────────────────────── */}
+      <VipUpgradeModal
+        open={showVipModal}
+        onOpenChange={setShowVipModal}
+      />
     </div>
   );
 }

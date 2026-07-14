@@ -8,15 +8,16 @@
   "dev_command": "pnpm run dev",
   "env_vars": {
     "DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}",
-    "DRIZZLE_DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}"
+    "DRIZZLE_DATABASE_URL": "mysql://3EnLCdsjufx9mVh.f1fa5d091c5c:KC9IjFp1o7MEQNlo239j@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/Mua4eQ38uVnrovHUJBRepi?ssl={\"rejectUnauthorized\":true}",
+    "MANUS_WEBDEV_PROJECT_ID": "Mua4eQ38uVnrovHUJBRepi"
   },
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663320884517/Mua4eQ38uVnrovHUJBRepi",
-    "access_key_id": "ASIAZV3A2ECZEMIM5DDR",
-    "secret_access_key": "tq6cqXewT7h4EBNNAUrcm4rRQRGIGBYROLj8lehq",
-    "session_token": "IQoJb3JpZ2luX2VjEEIaCXVzLWVhc3QtMSJIMEYCIQDD1lEFfhTOeZZtRwFtaLqh6Qj40mBmZmJqNEQCYhgACwIhAJQteQvW4SxhDPIw9ySuJx0UGc6xkRvXUult9pw1Nej7KvYDCAsQBBoMNjY1Mzg2MDk4ODY2Igxe+pq7KOIqMukp9Ukq0wM9WABuMnnM8Yia1ckxaSvz3G7tLljJic0K86Z69dFlvKmf0iy5ZZ9TSvRs95FvjciH4DDzEpJlfcBZ9cL9OXcWem8AkhqrEKKHbu709W4bc1wH0t5G64g6Cbn26ZofqS7so6Zp27Pon6oG+3zijMSiY3QodBvUy7gAkJTaSoaOQGEzJVHvmYLrdsrpbu2+0LfJAHEQm6JFhG36opAnGLL+lv5TPODSIcy3Lr677HAy4/nRkWeC47ssXPXTaHYiCQiZDcMcPKGl0arLlgyG91+Qh8Q9zlxbhFVq907F8VjQbdQDNXiRCTjyQdVx71UQo+sYQ2ZbOEkeFfzAbDY+bCqUUt4gI2lo3X9sMw0wl1AXv2vtKfHTTilDzVRMlLcuNXcpGDbDh0u0btwq2PSldvTPJMRN0yoQP1Q4kn1/h3/EJ2LAU2xvGTkbd1ieFRQwG9r5zd2VmrqhxEgIwPLn23X19LuXO4btos0K8iWNAZuLWKAnilge4bUup9GXSSgNts3iFeMRi4QK76peyShJVCgV1nOx3TwG/8+T5DmOxS+LmrZuKk/JQ45+CF4kXqwyrBKuxxZFIH4AJoxGXWh8MnxRuRIiWR2kn+sGeY6dsetnf5LXpjDmqdbSBjqcAQlysEdHtXYZ06XWUnK+qBOip7AaXazo+JgQRGQNag5CchZ87gFAzQaEwBgBlFZOcqp+eC2AAHjFemLvHfstP4IbR7lD4NWxnzaUVBd+VbXtbDM3jC4mEvFfY8j8/chQhoiNafIuOy2EnUciolMOX/7q2fqrGutzGIn4599HUT3xa++A+DP4DEnjf9Z7YxLdhdnkDt/hnKvw7yGiOg==",
-    "expiration": "2026-07-14T13:46:14.000Z",
+    "access_key_id": "ASIAZV3A2ECZDFJMPGS2",
+    "secret_access_key": "IDxvKIO5eftrfbpdRySj7Gqg43k+y2YjvwjGBVwB",
+    "session_token": "IQoJb3JpZ2luX2VjEEgaCXVzLWVhc3QtMSJHMEUCICLmqpVX39/bowt+sWGsiAFNdQLeeJb7fvofhyihMzU4AiEA/GUJGsaypMy1UfPOyIeqQw29/xSuudMQjQ4o1izGR7oq9gMIERAEGgw2NjUzODYwOTg4NjYiDDZf7O2fSidTaUbknirTA5GxqLJWhR8N68sbi4VFXaUEK+lJO2q/Lw8AZSw+TZuJaq0jDZsPKMYmyntt+CCf9awwRyO7bvXoCGM+4Xbk6JYAAMTpdZ/D2765ow95j7ur1XpLMI7CDuzIqbd9ytHWtv4J+JBzRVY+I8C7xf5a0UVQeEB6JD9EAsHHIc5nnve2BFa0QZYsuJ7oOHvZmazU2e77lQYUC2ZNzufw0DnvUWJxic4X33USJoiaEh5S4twuUf92EpNKoDvSD83LMSSD5phNh1T63aYXLY1R4mYJNbHEwmA3Zdo9jm3eIM6iGr5NoW54udFW91+zekNsOVYjK/pVtRIcLf9yN1D0eaQJG/dstx9XgB+0uyWyAXNwm7IklMrlGG0drNZzJ7QZjoPT13uv20sC7hL/zP3yEMlO0+gK6Gli8nCnUhUAvJL0gbB6shRpiQt6nJxW0U0pelIz+VAbcyi6s0KSNZwpKEME/LGm+ksNK47/a2vKD89qvTlNQ8DhV6gVyB0jDxEaXLXlqONqiFIPf1TcYypI/haPTi9UvNlJfkBMDNTCWHtSs2D5oGqz2ok+GXdtARM4KPOqv7khDydG8jn8iYsswYcFTQmyA+r7NI2uQdqLCIGSCul9cRPcMNvT19IGOp0BYNi7tfsx/MLm7Z2OXCXCfkQ1HAzdOqgdCOoEx5pQi1iOaC25+OZlUWHJ86RS9y+AgPXuu2LtG1ytCbFPzz7heWRdlQnsh/gPJxnQHXAhEYze/ZIxAxBmRDfjPjC0+JwGdR+37WjMnNK8x54pYteiGkdS13nrrcNX+YOd5q6qIZkaIworZH4hG1RWOnpcs7xMZd5R8XgDGF5QKCPfAw==",
+    "expiration": "2026-07-14T19:48:43.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "boxium-ptcg",
@@ -50,7 +51,9 @@
     "OWNER_NAME": "Lai Jason",
     "OWNER_OPEN_ID": "ELMmqGy2LoxtS3Ea8N9nuY",
     "STRIPE_SECRET_KEY": "sk_test_51T4XA46AywePGaqDHBKl9jTn8qGyDabR2V9D5zznalbZxAc0AVtW2EnDWgP63pTtROKYyquFFxeI45PV5l1iOv2Z00PH5yxpV8",
-    "STRIPE_WEBHOOK_SECRET": "whsec_eq6o2opbA4OIVmM5iHri9dMBmYjO0HZ1",
+    "STRIPE_VIP_MONTHLY_PRICE_ID": "price_1Tt20hEFJpV6IgaPbJpLqL59",
+    "STRIPE_VIP_YEARLY_PRICE_ID": "price_1Tt21NEFJpV6IgaPgAGaWU9d",
+    "STRIPE_WEBHOOK_SECRET": "whsec_YtvYRql8e4sWyAkJyj47xDMjpQgAGWsb",
     "SUPABASE_DATABASE_URL": "postgresql://postgres.sagyfroktrfnnhepmvzu:Aa63020887%40%40@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
     "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
     "VITE_ANALYTICS_WEBSITE_ID": "d64e4018-e766-4c4a-ac1d-c1c51bd1a15e",

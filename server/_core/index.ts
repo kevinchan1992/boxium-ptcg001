@@ -962,6 +962,58 @@ async function startServer() {
         } catch (syncErr: any) {
           console.error(`[Webhook] Error handling transfer.reversed for ${transferId}:`, syncErr?.message);
         }
+      } else if (
+        event.type === "customer.subscription.created" ||
+        event.type === "customer.subscription.updated" ||
+        event.type === "customer.subscription.deleted"
+      ) {
+        // ─── VIP Subscription lifecycle ─────────────────────────────────────
+        const subscription = event.data.object as any;
+        const customerId = subscription.customer as string;
+        const status = subscription.status;
+        const vipPlanMeta = subscription.metadata?.vipPlan as string | undefined;
+        const periodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000)
+          : null;
+        const cancelAtPeriodEnd = subscription.cancel_at_period_end ?? false;
+        console.log(`[Webhook] ${event.type}: customerId=${customerId}, status=${status}, plan=${vipPlanMeta}, periodEnd=${periodEnd?.toISOString()}`);
+        try {
+          const { getDb: _vipDb } = await import("../db");
+          const { users: _vipUsers } = await import("../../drizzle/schema_new");
+          const { eq: _vipEq } = await import("drizzle-orm");
+          const db = await _vipDb();
+          if (db && customerId) {
+            const [targetUser] = await db
+              .select({ id: _vipUsers.id })
+              .from(_vipUsers)
+              .where(_vipEq(_vipUsers.stripeCustomerId, customerId))
+              .limit(1);
+            if (targetUser) {
+              if (status === "active" && !cancelAtPeriodEnd && vipPlanMeta && periodEnd) {
+                await db.update(_vipUsers)
+                  .set({ vipPlan: vipPlanMeta as any, vipExpiresAt: periodEnd, stripeSubscriptionId: subscription.id })
+                  .where(_vipEq(_vipUsers.id, targetUser.id));
+                console.log(`[Webhook] VIP activated for user ${targetUser.id}, plan=${vipPlanMeta}`);
+              } else if (status === "canceled") {
+                await db.update(_vipUsers)
+                  .set({ vipPlan: "none", vipExpiresAt: null, stripeSubscriptionId: null })
+                  .where(_vipEq(_vipUsers.id, targetUser.id));
+                console.log(`[Webhook] VIP canceled for user ${targetUser.id}`);
+              } else if (status === "active" && cancelAtPeriodEnd) {
+                await db.update(_vipUsers)
+                  .set({ stripeSubscriptionId: subscription.id })
+                  .where(_vipEq(_vipUsers.id, targetUser.id));
+                console.log(`[Webhook] VIP set to cancel at period end for user ${targetUser.id}`);
+              }
+              const { invalidateSessionCache: _invalidateVip } = await import("./authenticateSession");
+              _invalidateVip(targetUser.id);
+            } else {
+              console.warn(`[Webhook] No user found for stripeCustomerId=${customerId}`);
+            }
+          }
+        } catch (vipErr: any) {
+          console.error(`[Webhook] Error handling VIP subscription event:`, vipErr?.message);
+        }
       } else if (event.type === "account.updated") {
         // KYC / Stripe Connect onboarding status sync
         const account = event.data.object;

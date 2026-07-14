@@ -73,6 +73,11 @@ export const users = mysqlTable("users", {
   blockReason: text("blockReason"),
   emailVerificationToken: varchar("emailVerificationToken", { length: 128 }), // Token for email verification (null after verified)
   emailVerificationExpiry: timestamp("emailVerificationExpiry"), // Expiry time for the verification token
+  // VIP Subscription
+  vipPlan: mysqlEnum("vipPlan", ["none", "monthly", "yearly"]).default("none").notNull(),
+  vipExpiresAt: timestamp("vipExpiresAt"), // null = not subscribed or expired
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }), // Stripe Customer ID
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }), // Stripe Subscription ID
 });
 
 export type User = typeof users.$inferSelect;
@@ -2207,3 +2212,17 @@ export const freeTrialDraws = mysqlTable("freeTrialDraws", {
 });
 export type FreeTrialDraw = typeof freeTrialDraws.$inferSelect;
 export type InsertFreeTrialDraw = typeof freeTrialDraws.$inferInsert;
+
+/**
+ * AI Scan Usage table - tracks monthly AI image scan usage per user
+ */
+export const aiScanUsage = mysqlTable("aiScanUsage", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  yearMonth: varchar("yearMonth", { length: 7 }).notNull(), // e.g. "2026-07"
+  count: int("count").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userMonthIdx: uniqueIndex("idx_aiScanUsage_userId_yearMonth").on(table.userId, table.yearMonth),
+}));
+export type AiScanUsage = typeof aiScanUsage.$inferSelect;

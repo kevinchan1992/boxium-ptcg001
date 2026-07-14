@@ -9850,3 +9850,47 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 加入 canvas 到 package.json onlyBuiltDependencies（確保 postinstall 執行）
 - [x] 建立 Dockerfile 安裝 canvas 編譯工具（python3, make, g++, pkg-config）
 - [x] 修復 QR Code 下方中文亂碼 → 改為純英文 "Scan to View Vault"
+
+## VIP 收費會員功能（2026-07-14）
+
+### Phase 1: 資料庫 + Stripe 訂閱後端
+- [ ] schema_new.ts: users 表加入 vipPlan, vipExpiresAt, stripeCustomerId, stripeSubscriptionId
+- [ ] schema_new.ts: 新增 aiScanUsage 表（追蹤每用戶每月 AI 掃描次數）
+- [ ] pnpm db:push 推送 schema 變更
+- [ ] server/routers/vip.ts: createCheckout（月費/年費 Stripe Checkout Session）
+- [ ] server/routers/vip.ts: getVipStatus（取得當前用戶 VIP 狀態）
+- [ ] server/routers/vip.ts: cancelSubscription（取消訂閱）
+- [ ] server/_core/index.ts: Stripe Webhook 處理 subscription 事件
+- [ ] server/routers.ts: 加入 vipRouter
+
+### Phase 2: VIP 前端 UI
+- [ ] client/src/hooks/useVip.ts: VIP 狀態 hook
+- [ ] client/src/components/VipUpgradeModal.tsx: 升級彈窗（含功能列表、月費/年費切換）
+- [ ] client/src/components/VipGate.tsx: 功能鎖定包裝元件
+- [ ] Profile 頁面加入 VIP 訂閱管理分頁（顯示狀態、到期日、取消）
+- [ ] Vault header 加入 VIP 皇冠圖示
+
+### Phase 3: VIP 功能實作
+- [ ] Vault 走勢圖加入時間範圍切換（1M/3M/6M/1Y/ALL），免費用戶限 1M
+- [ ] profile router: getPortfolioTrend 支援 range 參數
+- [ ] 卡牌詳情頁長期價格走勢圖時間範圍切換（3M/6M/1Y/2Y/Max），免費用戶限 3M
+- [ ] AI 入庫次數限制：免費用戶每月 25 次，VIP 無限次
+- [ ] cards.searchByImage 改為 protectedProcedure，加入次數檢查
+- [ ] CSV 匯出功能（profile router: exportCollectionCsv）
+- [ ] Vault 頁面加入 CSV 匯出按鈕（VIP 限定）
+
+## VIP 收費會員功能（2026-07-14）
+- [x] 資料庫 schema 加入 vipPlan, vipExpiresAt, stripeCustomerId, stripeSubscriptionId 欄位
+- [x] 建立 aiScanUsage 追蹤表（每月 AI 入庫次數）
+- [x] VIP router（getStatus, createCheckout, cancelSubscription, createPortalSession, getAiScanUsage）
+- [x] Stripe Webhook 處理訂閱事件（created/updated/deleted）
+- [x] AI 入庫次數限制（免費 25 次/月，VIP 無限）
+- [x] CSV 匯出功能（VIP 專屬）
+- [x] VipUpgradeModal 升級彈窗（月費/年費方案選擇）
+- [x] useVip hook（讀取 VIP 狀態）
+- [x] Vault 走勢圖時間範圍選擇器（VIP: 1M/3M/6M/1Y/ALL，免費: 鎖定）
+- [x] Vault Header CSV 匯出按鈕（VIP 專屬）
+- [x] Vault AI 入庫次數顯示（免費用戶顯示 used/limit）
+- [x] PriceTrendChart VIP 時間範圍限制（免費: 7d/30d，VIP: 解鎖 90d/all）
+- [x] Profile VIP tab（VipProfileSection 組件）
+- [x] Stripe Live Price ID 設定（月費: price_1Tt20h..., 年費: price_1Tt21N...）

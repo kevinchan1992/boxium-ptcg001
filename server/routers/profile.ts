@@ -345,4 +345,61 @@ export const profileRouter = router({
         const { getTradesForCollectionItem } = await import("../cardTrades");
         return getTradesForCollectionItem(ctx.user.id, input.collectionId);
       }),
+
+    // ─── VIP: Export collection as CSV ──────────────────────────────────────────
+    exportCollectionCsv: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { isVipActive } = await import("./vip");
+        const { getDb } = await import("../db");
+        const { users } = await import("../../drizzle/schema_new");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const [userRow] = await db
+          .select({ vipPlan: users.vipPlan, vipExpiresAt: users.vipExpiresAt })
+          .from(users)
+          .where(eq(users.id, ctx.user.id))
+          .limit(1);
+
+        if (!userRow || !isVipActive(userRow as any)) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "CSV 匯出為 VIP 專屬功能，請升級 VIP 使用。",
+          });
+        }
+
+        const { getUserCollection } = await import("../collection");
+        const items = await getUserCollection(ctx.user.id, { priceMode: "grade" });
+
+        const headers = [
+          "Card Name", "Card Name (JA)", "Card Number", "Series",
+          "Grade", "Quantity", "Purchase Price (HKD)", "Market Price (HKD)",
+          "Gain/Loss (HKD)", "Gain/Loss %", "Purchased At", "Notes",
+        ];
+
+        const rows = items.map((item: any) => {
+          const cost = (item.purchasePrice ?? 0) * item.quantity;
+          const market = (item.marketPrice ?? 0) * item.quantity;
+          const gain = market - cost;
+          const gainPct = cost > 0 ? ((gain / cost) * 100).toFixed(2) : "N/A";
+          return [
+            item.card?.name ?? "",
+            item.card?.nameJa ?? "",
+            item.card?.cardNumber ?? "",
+            item.card?.series ?? "",
+            item.grade ?? "",
+            item.quantity,
+            (item.purchasePrice ?? 0).toFixed(2),
+            (item.marketPrice ?? 0).toFixed(2),
+            gain.toFixed(2),
+            gainPct,
+            item.purchasedAt ? new Date(item.purchasedAt).toISOString().split("T")[0] : "",
+            (item.notes ?? "").replace(/,/g, ";").replace(/\n/g, " "),
+          ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+        });
+
+        const csv = [headers.map(h => `"${h}"`).join(","), ...rows].join("\n");
+        return { csv, filename: `boxium-vault-${new Date().toISOString().split("T")[0]}.csv` };
+      }),
 });

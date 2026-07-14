@@ -360,11 +360,52 @@ export const cardsRouter = router({
       }),
 
     // 圖片搜尋卡牌
-    searchByImage: publicProcedure
+    searchByImage: protectedProcedure
       .input(z.object({
         image: z.string(), // base64 encoded image
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        // ─── VIP AI scan usage check ─────────────────────────────────────
+        const FREE_LIMIT = 25;
+        try {
+          const { getDb: _aiDb } = await import("../db");
+          const { aiScanUsage: _aiUsage, users: _aiUsers } = await import("../../drizzle/schema_new");
+          const { eq: _aiEq, and: _aiAnd, sql: _aiSql } = await import("drizzle-orm");
+          const { isVipActive } = await import("./vip");
+          const db = await _aiDb();
+          if (db) {
+            const [userRow] = await db
+              .select({ vipPlan: _aiUsers.vipPlan, vipExpiresAt: _aiUsers.vipExpiresAt })
+              .from(_aiUsers)
+              .where(_aiEq(_aiUsers.id, ctx.user.id))
+              .limit(1);
+            const vipActive = userRow ? isVipActive(userRow as any) : false;
+            if (!vipActive) {
+              const now = new Date();
+              const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+              const [usage] = await db
+                .select({ count: _aiUsage.count })
+                .from(_aiUsage)
+                .where(_aiAnd(_aiEq(_aiUsage.userId, ctx.user.id), _aiEq(_aiUsage.yearMonth, yearMonth)))
+                .limit(1);
+              const currentCount = usage?.count ?? 0;
+              if (currentCount >= FREE_LIMIT) {
+                throw new TRPCError({
+                  code: "FORBIDDEN",
+                  message: `免費會員每月 AI 拍照入庫限 ${FREE_LIMIT} 次，本月已用完。升級 VIP 可無限使用。`,
+                });
+              }
+              await db.execute(
+                _aiSql`INSERT INTO aiScanUsage (userId, yearMonth, count) VALUES (${ctx.user.id}, ${yearMonth}, 1)
+                  ON DUPLICATE KEY UPDATE count = count + 1`
+              );
+            }
+          }
+        } catch (usageErr: any) {
+          if (usageErr?.code === 'FORBIDDEN') throw usageErr;
+          console.error('[searchByImage] Usage check error:', usageErr?.message);
+        }
+        // ─── Actual image search ────────────────────────────────────────────
         try {
           const { searchCardByImage } = await import("../imageCardSearch");
           const result = await searchCardByImage(input.image);
