@@ -918,6 +918,159 @@ export async function batchGetCardPricesByGrades(
   return result;
 }
 
+/**
+ * Batch fetch the LATEST single transaction price for multiple (cardId, grade) pairs.
+ * Unlike batchGetCardPricesByGrades which returns an average, this returns the most
+ * recent single sale price — used for Vault real-time market value display.
+ */
+export async function batchGetLatestPricesByGrades(
+  requests: Array<{ cardId: number; grade: string }>
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>();
+  if (requests.length === 0) return result;
+
+  for (const { cardId, grade } of requests) {
+    result.set(`${cardId}:${grade}`, null);
+  }
+
+  const db = await getDb();
+  if (!db) return result;
+
+  const CONN_ERR_CODES = ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
+
+  async function runLatestQuery(dbInst: ReturnType<typeof drizzle>) {
+    const cardIds = Array.from(new Set(requests.map(r => r.cardId)));
+
+    // Fetch all price records for requested cardIds, ordered by soldAt DESC
+    const rows = await dbInst
+      .select({
+        cardId: priceHistory.cardId,
+        grade: priceHistory.grade,
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(
+        and(
+          inArray(priceHistory.cardId, cardIds),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.isSuspectedBulk, false)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
+
+    // For each (cardId, grade), take the first (most recent) record only
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (!row.grade) continue;
+      const key = `${row.cardId}:${row.grade}`;
+      if (!seen.has(key) && result.has(key)) {
+        result.set(key, Number(row.price));
+        seen.add(key);
+      }
+    }
+  }
+
+  try {
+    await runLatestQuery(db);
+  } catch (err: any) {
+    const errCode = err?.code || err?.cause?.code;
+    const isConnErr = CONN_ERR_CODES.includes(errCode);
+    if (isConnErr) {
+      console.warn('[batchGetLatestPricesByGrades] DB connection lost, resetting and retrying...', errCode);
+      resetDb();
+      const db2 = await getDb();
+      if (!db2) return result;
+      try {
+        await runLatestQuery(db2);
+      } catch (retryErr: any) {
+        console.error('[batchGetLatestPricesByGrades] Retry failed:', retryErr?.message);
+      }
+    } else {
+      console.error('[batchGetLatestPricesByGrades] Query error:', err?.message);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * For portfolio trend: given a list of (cardId, grade) pairs and a cutoff date,
+ * return the latest single transaction price for each pair that occurred ON OR BEFORE
+ * the cutoff date. Used to reconstruct historical portfolio value month by month.
+ */
+export async function batchGetLatestPricesBeforeDate(
+  requests: Array<{ cardId: number; grade: string }>,
+  before: Date
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>();
+  if (requests.length === 0) return result;
+
+  for (const { cardId, grade } of requests) {
+    result.set(`${cardId}:${grade}`, null);
+  }
+
+  const db = await getDb();
+  if (!db) return result;
+
+  const CONN_ERR_CODES = ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
+
+  async function runQuery(dbInst: ReturnType<typeof drizzle>) {
+    const cardIds = Array.from(new Set(requests.map(r => r.cardId)));
+
+    const rows = await dbInst
+      .select({
+        cardId: priceHistory.cardId,
+        grade: priceHistory.grade,
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(
+        and(
+          inArray(priceHistory.cardId, cardIds),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.isSuspectedBulk, false),
+          lte(priceHistory.soldAt, before)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
+
+    // For each (cardId, grade), take the first (most recent before cutoff) record
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (!row.grade) continue;
+      const key = `${row.cardId}:${row.grade}`;
+      if (!seen.has(key) && result.has(key)) {
+        result.set(key, Number(row.price));
+        seen.add(key);
+      }
+    }
+  }
+
+  try {
+    await runQuery(db);
+  } catch (err: any) {
+    const errCode = err?.code || err?.cause?.code;
+    const isConnErr = CONN_ERR_CODES.includes(errCode);
+    if (isConnErr) {
+      console.warn('[batchGetLatestPricesBeforeDate] DB connection lost, resetting and retrying...', errCode);
+      resetDb();
+      const db2 = await getDb();
+      if (!db2) return result;
+      try {
+        await runQuery(db2);
+      } catch (retryErr: any) {
+        console.error('[batchGetLatestPricesBeforeDate] Retry failed:', retryErr?.message);
+      }
+    } else {
+      console.error('[batchGetLatestPricesBeforeDate] Query error:', err?.message);
+    }
+  }
+
+  return result;
+}
+
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];

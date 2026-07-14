@@ -225,7 +225,8 @@ export const profileRouter = router({
       }),
     getPortfolioTrend: protectedProcedure
       .query(async ({ ctx }) => {
-        const { getUserCollection } = await import("../collection");
+        const { getUserCollection, getMarketGrade } = await import("../collection");
+        const { batchGetLatestPricesBeforeDate } = await import("../db");
         const items = await getUserCollection(ctx.user.id, { priceMode: "grade" });
         if (items.length === 0) return { points: [] };
         const datesWithPurchase = items.filter((i: any) => i.purchasedAt != null);
@@ -235,11 +236,46 @@ export const profileRouter = router({
         const now = new Date();
         const points: { month: string; cost: number; marketValue: number; gain: number }[] = [];
         const cur = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+
+        // Build the list of unique (cardId, grade) pairs for historical price lookup
+        const gradeRequests = items
+          .filter((i: any) => i.cardId)
+          .map((i: any) => ({
+            cardId: i.cardId,
+            grade: getMarketGrade(i.grade ?? ''),
+          }))
+          .filter((r: any, idx: number, arr: any[]) =>
+            arr.findIndex((x: any) => x.cardId === r.cardId && x.grade === r.grade) === idx
+          );
+
         while (cur <= now) {
           const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59);
           const activeItems = items.filter((i: any) => i.purchasedAt != null && i.purchasedAt <= monthEnd);
+          if (activeItems.length === 0) {
+            cur.setMonth(cur.getMonth() + 1);
+            continue;
+          }
           const totalCost = activeItems.reduce((s: number, i: any) => s + (i.purchasePrice ?? 0) * i.quantity, 0);
-          const totalMarketValue = activeItems.reduce((s: number, i: any) => s + (i.marketPrice ?? i.purchasePrice ?? 0) * i.quantity, 0);
+
+          // For the current month, use the already-fetched latest price
+          // For past months, query historical prices up to monthEnd
+          let totalMarketValue: number;
+          const isCurrentMonth = cur.getFullYear() === now.getFullYear() && cur.getMonth() === now.getMonth();
+          if (isCurrentMonth) {
+            totalMarketValue = activeItems.reduce((s: number, i: any) => s + (i.marketPrice ?? i.purchasePrice ?? 0) * i.quantity, 0);
+          } else {
+            // Query historical prices: latest transaction on or before monthEnd for each card+grade
+            const historicalPrices = await batchGetLatestPricesBeforeDate(gradeRequests, monthEnd);
+            totalMarketValue = activeItems.reduce((s: number, i: any) => {
+              const lookupGrade = getMarketGrade(i.grade ?? '');
+              const key = `${i.cardId}:${lookupGrade}`;
+              const historicalPrice = historicalPrices.get(key);
+              // Fall back to purchase price if no historical data exists for that month
+              const price = historicalPrice ?? i.purchasePrice ?? 0;
+              return s + price * i.quantity;
+            }, 0);
+          }
+
           points.push({
             month: `${cur.getFullYear()}/${String(cur.getMonth() + 1).padStart(2, '0')}`,
             cost: Math.round(totalCost),
