@@ -8,6 +8,13 @@ import type { Canvas, CanvasRenderingContext2D } from "canvas";
 import * as fs from "fs";
 import * as path from "path";
 
+// Register Noto Sans for Unicode triangle support (▲▼)
+try {
+  registerFont("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", { family: "Noto Sans" });
+  registerFont("/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf", { family: "Noto Sans", weight: "bold" });
+  registerFont("/usr/share/fonts/truetype/noto/NotoSans-Black.ttf", { family: "Noto Sans", weight: "900" });
+} catch { /* fonts may already be registered */ }
+
 // ─── Types ────────────────────────────────────────────────────
 export interface ShareCardData {
   totalMarketValue: number;
@@ -33,7 +40,31 @@ function fmtCurrency(val: number, currency = "HKD"): string {
 }
 
 function fmtPct(val: number): string {
+  // Use ASCII arrow to avoid Unicode rendering issues on some canvas builds
   return `${val >= 0 ? "▲" : "▼"} ${Math.abs(val).toFixed(1)}%`;
+}
+
+// Draw a filled triangle (up or down) to replace Unicode ▲▼ which may not render
+function drawTriangle(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, size: number,
+  up: boolean, color: string
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  if (up) {
+    ctx.moveTo(x, y + size);
+    ctx.lineTo(x + size / 2, y);
+    ctx.lineTo(x + size, y + size);
+  } else {
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + size, y);
+    ctx.lineTo(x + size / 2, y + size);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 // Draw rounded rectangle
@@ -177,35 +208,16 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
   ctx.restore();
 
   // ── BLOCK 1: HEADER (top: 28, height: 148) ──────────────────
-  const LOGO_PATH = path.join(process.cwd(), "server", "assets", "boxium-logo-black.png");
-
-  // Try to load logo
-  let logoImg: Awaited<ReturnType<typeof loadImage>> | null = null;
-  try {
-    if (fs.existsSync(LOGO_PATH)) {
-      logoImg = await loadImage(LOGO_PATH);
-    } else if (data.logoBase64) {
-      logoImg = await loadImage(data.logoBase64);
-    }
-  } catch { /* skip */ }
-
   const HEADER_TOP = 38;
-  let logoRight = 60; // track where logo ends for VAULT badge
 
-  if (logoImg) {
-    const logoH = 52;
-    const logoW = Math.round((logoImg.width / logoImg.height) * logoH);
-    ctx.drawImage(logoImg, 60, HEADER_TOP, logoW, logoH);
-    logoRight = 60 + logoW + 14;
-  } else {
-    // Text fallback
-    ctx.save();
-    ctx.font = "bold 36px Georgia, serif";
-    ctx.fillStyle = "#1A1A1A";
-    ctx.fillText("BOXIUM", 60, HEADER_TOP + 38);
-    logoRight = 60 + ctx.measureText("BOXIUM").width + 14;
-    ctx.restore();
-  }
+  // BOXIUM brand text (bold serif, no image to avoid rendering artifacts)
+  ctx.save();
+  ctx.font = "900 38px Georgia, serif";
+  ctx.fillStyle = "#1A1A1A";
+  ctx.textAlign = "left";
+  ctx.fillText("BOXIUM", 60, HEADER_TOP + 40);
+  const logoRight = 60 + ctx.measureText("BOXIUM").width + 14;
+  ctx.restore();
 
   // VAULT black capsule badge
   const vaultText = "VAULT";
@@ -269,22 +281,36 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
   ctx.fillText(fmtCurrency(data.totalMarketValue, currency), 60, PV_TOP + 100);
   ctx.restore();
 
-  // ROI badge
-  const roiText = fmtPct(data.totalGainPct);
+  // ROI badge — draw triangle + number separately to avoid Unicode rendering issues
+  const roiNumText = `${Math.abs(data.totalGainPct).toFixed(1)}%`;
   ctx.save();
   ctx.font = "900 30px 'Courier New', monospace";
-  const roiW = ctx.measureText(roiText).width + 40;
+  // badge width = triangle(18) + gap(8) + number text + padding
+  const roiNumW = ctx.measureText(roiNumText).width;
+  const roiW = 18 + 8 + roiNumW + 48; // 24 left pad + 24 right pad
   const roiH = 52;
   const roiY = PV_TOP + 118;
-  roundRect(ctx, 60, roiY, roiW, roiH, 100);
+  const roiR = roiH / 2; // correct capsule radius — must be <= min(w,h)/2
+  // White base first to block diagonal texture
+  roundRect(ctx, 60, roiY, roiW, roiH, roiR);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fill();
+  // Tinted overlay
+  roundRect(ctx, 60, roiY, roiW, roiH, roiR);
   ctx.fillStyle = gainBg;
   ctx.fill();
   ctx.strokeStyle = gainBorder;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.5;
   ctx.stroke();
+  ctx.restore();
+  // Triangle
+  drawTriangle(ctx, 60 + 20, roiY + 17, 18, gainPositive, gainColor);
+  // Number text
+  ctx.save();
+  ctx.font = "900 30px 'Courier New', monospace";
   ctx.fillStyle = gainColor;
   ctx.textAlign = "left";
-  ctx.fillText(roiText, 60 + 20, roiY + 36);
+  ctx.fillText(roiNumText, 60 + 20 + 18 + 8, roiY + 36);
   ctx.restore();
 
   // Profit amount
@@ -457,13 +483,19 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
       ctx.fillText(fmtCurrency(card.marketPrice, currency), cardX, mvY);
       ctx.restore();
 
-      // Gain %
+      // Gain % — draw triangle + number separately
       if (card.unrealizedGainPct != null) {
+        const gainUp = card.unrealizedGainPct >= 0;
+        const gainClr = gainUp ? "#047857" : "#dc2626";
+        const gainNumStr = `${Math.abs(card.unrealizedGainPct).toFixed(1)}%`;
+        const triSize = 10;
+        const triY = mvY + 22 - triSize; // align baseline
+        drawTriangle(ctx, cardX, triY, triSize, gainUp, gainClr);
         ctx.save();
         ctx.font = "900 15px Arial, sans-serif";
-        ctx.fillStyle = card.unrealizedGainPct >= 0 ? "#047857" : "#dc2626";
+        ctx.fillStyle = gainClr;
         ctx.textAlign = "left";
-        ctx.fillText(fmtPct(card.unrealizedGainPct), cardX, mvY + 22);
+        ctx.fillText(gainNumStr, cardX + triSize + 5, mvY + 22);
         ctx.restore();
       }
     }
