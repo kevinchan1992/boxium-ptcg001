@@ -37,11 +37,11 @@ const TABS: TabItem[] = [
     matchPaths: ["/marketplace", "/auction", "/cart", "/seller"],
   },
   {
-    path: "/profile?tab=collection",
+    path: "/vault",
     icon: Vault,
     labelKey: "nav.tcgVault",
     labelFallback: "Vault",
-    matchPaths: ["/profile"],
+    matchPaths: ["/vault"],
   },
   {
     path: "/profile",
@@ -55,7 +55,7 @@ const TABS: TabItem[] = [
     icon: Gift,
     labelKey: "nav.pools",
     labelFallback: "Pool",
-    matchPaths: ["/pools", "/vault"],
+    matchPaths: ["/pools"],
   },
 ];
 
@@ -195,7 +195,7 @@ export function BottomTabBar() {
                   key={tab.path}
                   className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-highlight-transparent"
                   onClick={() => {
-                    if ((tab.path === "/profile" || tab.path === "/profile?tab=collection") && !user) {
+                    if ((tab.path === "/profile" || tab.path === "/vault") && !user) {
                       setLocation("/login");
                     } else {
                       setLocation(tab.path);

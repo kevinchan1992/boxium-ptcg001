@@ -472,7 +472,7 @@ function HeroQuickAccess() {
   const items = [
     { tag: "SEARCH",  href: "/research",    label: t("home.cardSearch"), desc: cardCountDesc },
     { tag: "PRICING", href: "/pricing",     label: t("home.priceComparison"), desc: priceRecordDesc },
-    { tag: "VAULT",   href: "/profile?tab=collection", label: t("home.tcgVault", "TCG 倉庫"), desc: t("home.tcgVaultDesc", "追蹤持倉走勢與盈虧") },
+    { tag: "VAULT",   href: "/vault", label: t("home.tcgVault", "TCG 倉庫"), desc: t("home.tcgVaultDesc", "追蹤持倉走勢與盈虧") },
     { tag: "MARKET",  href: "/marketplace", label: t("home.marketplace"), desc: t("home.marketplaceDesc2") },
   ];
 
