@@ -554,11 +554,10 @@ export default function Vault() {
                   const rankItems = rankTab === "gain"
                     ? (stats.top3Gainers ?? [])
                     : (stats.top3ByValue ?? []);
-                  // 金銀銅配色
                   const medalColors = [
-                    { bg: "rgba(253,224,71,0.12)", border: "rgba(253,224,71,0.40)", text: "#92400e", dot: "#d97706" },  // 金
-                    { bg: "rgba(226,232,240,0.25)", border: "rgba(148,163,184,0.35)", text: "#475569", dot: "#94a3b8" },  // 銀
-                    { bg: "rgba(234,215,205,0.20)", border: "rgba(180,120,90,0.25)", text: "#78350f", dot: "#b45309" },  // 銅
+                    { bg: "rgba(253,224,71,0.10)", border: "rgba(253,224,71,0.35)", dot: "#d97706", rank: "#92400e" },
+                    { bg: "rgba(226,232,240,0.20)", border: "rgba(148,163,184,0.30)", dot: "#94a3b8", rank: "#475569" },
+                    { bg: "rgba(234,215,205,0.18)", border: "rgba(180,120,90,0.22)", dot: "#b45309", rank: "#78350f" },
                   ];
                   return rankItems.map((item: any, idx: number) => {
                     const medal = medalColors[idx] ?? medalColors[2];
@@ -566,20 +565,13 @@ export default function Vault() {
                     return (
                       <div
                         key={item.id}
-                        className="flex gap-3 rounded-xl p-2.5"
-                        style={{
-                          background: medal.bg,
-                          border: `1px solid ${medal.border}`,
-                        }}
+                        className="flex gap-3 rounded-xl p-2"
+                        style={{ background: medal.bg, border: `1px solid ${medal.border}` }}
                       >
-                        {/* 卡牌圖片 — 3:4 比例大圖 */}
+                        {/* 卡牌圖片 — w-20 大圖，3:4 比例 */}
                         <div
                           className="flex-shrink-0 rounded-lg overflow-hidden relative"
-                          style={{
-                            width: "72px",
-                            aspectRatio: "3/4",
-                            background: "#F0EEE9",
-                          }}
+                          style={{ width: "80px", aspectRatio: "3/4", background: "#F0EEE9" }}
                         >
                           {item.card?.imageUrl ? (
                             <>
@@ -590,7 +582,7 @@ export default function Vault() {
                               />
                               <div
                                 className="absolute inset-0 pointer-events-none"
-                                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 60%)" }}
+                                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)" }}
                               />
                             </>
                           ) : (
@@ -598,18 +590,25 @@ export default function Vault() {
                               <Package className="w-5 h-5 opacity-20" style={{ color: TEXT_PRI }} />
                             </div>
                           )}
-                          {/* 排名徽章 */}
+                          {/* 金銀銅徒章 */}
                           <span
                             className="absolute top-1 left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
-                            style={{ background: medal.dot, color: "#FFFFFF", boxShadow: "0 1px 4px rgba(0,0,0,0.20)" }}
+                            style={{ background: medal.dot, color: "#FFFFFF", boxShadow: "0 1px 4px rgba(0,0,0,0.22)" }}
                           >
                             {idx + 1}
                           </span>
                         </div>
 
-                        {/* 文字資訊 */}
+                        {/* 文字資訊 — 三行排版 */}
                         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                          <div>
+                          {/* 第一行：排名 + 卡牌名 */}
+                          <div className="flex items-start gap-1.5">
+                            <span
+                              className="flex-shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5"
+                              style={{ background: medal.dot, color: "#FFFFFF" }}
+                            >
+                              #{idx + 1}
+                            </span>
                             <p
                               className="text-xs font-semibold leading-snug line-clamp-2"
                               style={{ color: TEXT_PRI }}
@@ -617,35 +616,39 @@ export default function Vault() {
                             >
                               {item.card?.name}
                             </p>
-                            <div className="mt-1">
-                              <GradeBadge grader={item.grader} grade={item.grade} />
-                            </div>
                           </div>
-                          <div className="mt-2">
+
+                          {/* 第二行：鑑定標籤 */}
+                          <div className="mt-1">
+                            <GradeBadge grader={item.grader} grade={item.grade} />
+                          </div>
+
+                          {/* 第三行：市値 + 升値 */}
+                          <div className="mt-1.5">
                             {isGainTab ? (
                               <>
                                 <p
-                                  className="text-base font-black tabular-nums leading-tight"
-                                  style={{ color: SUCCESS, letterSpacing: "-0.03em" }}
+                                  className="text-sm font-black tabular-nums leading-tight"
+                                  style={{ color: "#0F766E", letterSpacing: "-0.03em" }}
                                 >
                                   +{(item.unrealizedGainPct ?? 0).toFixed(1)}%
                                 </p>
-                                <p className="text-[10px] tabular-nums mt-0.5" style={{ color: TEXT_SEC }}>
+                                <p className="text-[10px] font-mono tabular-nums mt-0.5" style={{ color: TEXT_SEC }}>
                                   {formatCurrency(item.unrealizedGain)}
                                 </p>
                               </>
                             ) : (
                               <>
                                 <p
-                                  className="text-sm font-black tabular-nums leading-tight"
-                                  style={{ color: TEXT_PRI, letterSpacing: "-0.02em", fontFamily: "'Courier New', monospace" }}
+                                  className="text-sm font-bold font-mono tabular-nums leading-tight"
+                                  style={{ color: TEXT_PRI, letterSpacing: "-0.02em" }}
                                 >
                                   {formatCurrency(item.marketPrice)}
                                 </p>
                                 {item.unrealizedGainPct != null && (
                                   <p
                                     className="text-[10px] font-semibold tabular-nums mt-0.5"
-                                    style={{ color: (item.unrealizedGainPct ?? 0) >= 0 ? SUCCESS : DANGER }}
+                                    style={{ color: (item.unrealizedGainPct ?? 0) >= 0 ? "#0F766E" : DANGER }}
                                   >
                                     {(item.unrealizedGainPct ?? 0) >= 0 ? "+" : ""}{(item.unrealizedGainPct ?? 0).toFixed(1)}%
                                   </p>
@@ -935,10 +938,10 @@ export default function Vault() {
                       el.style.borderColor = BORDER;
                     }}
                   >
-                    {/* ── Card image (3:4 ratio) ── */}
+                    {/* ── Card image (3:4 ratio) — 贴邊展示，消除多餘留白 ── */}
                     <div
                       className="relative w-full overflow-hidden"
-                      style={{ aspectRatio: "3/4", background: "#F0EEE9" }}
+                      style={{ aspectRatio: "3/4", background: "#F0EEE9", padding: 0 }}
                     >
                       {item.card?.imageUrl ? (
                         <>
