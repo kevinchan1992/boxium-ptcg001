@@ -4,6 +4,7 @@
  * 用 html-to-image 渲染為 PNG
  */
 import React from "react";
+import { BOXIUM_LOGO_BASE64 } from "@/lib/logoBase64";
 import { QRCodeSVG } from "qrcode.react";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -133,7 +134,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
                 {/* BOXIUM Logo image */}
                 <img
-                  src={logoBase64 ?? "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-black.webp"}
+                  src={logoBase64 ?? BOXIUM_LOGO_BASE64}
                   alt="BOXIUM"
                   style={{
                     height: "46px",

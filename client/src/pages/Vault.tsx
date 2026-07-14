@@ -220,19 +220,37 @@ export default function Vault() {
     }));
   }, [stats]);
 
-  // Pre-fetch image via server proxy and convert to base64 to avoid CORS
+  // Convert blob to base64 data URL
+  const blobToBase64 = (blob: Blob): Promise<string | null> =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+
+  // Pre-fetch image as base64 to avoid CORS issues during html-to-image rendering
+  // Strategy: try direct fetch first (works for same-origin or CORS-enabled CDNs),
+  // then fall back to server proxy (for snkrdunk CDN which requires Referer header)
   const fetchImageAsBase64 = useCallback(async (url: string): Promise<string | null> => {
+    // 1. Try direct fetch (no-cors mode won't give us the blob, so try cors first)
+    try {
+      const resp = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const b64 = await blobToBase64(blob);
+        if (b64) return b64;
+      }
+    } catch {
+      // CORS blocked — fall through to proxy
+    }
+    // 2. Fall back to server proxy
     try {
       const proxyUrl = `/api/img-proxy?url=${encodeURIComponent(url)}`;
       const resp = await fetch(proxyUrl);
       if (!resp.ok) return null;
       const blob = await resp.blob();
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      });
+      return blobToBase64(blob);
     } catch {
       return null;
     }
@@ -244,22 +262,19 @@ export default function Vault() {
   const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);
   const [shareLogoBase64, setShareLogoBase64] = useState<string | null>(null);
 
-  const BOXIUM_LOGO_URL = "https://static-assets-cdn.manus.space/webdev-static-assets/Mua4eQ38uVnrovHUJBRepi/boxium-logo-black.webp";
-
   const handleGenerateShare = useCallback(async () => {
     if (!shareStats) return;
     setIsGeneratingShare(true);
     try {
-      // Step 1: Pre-fetch logo + all card images as base64 to avoid CORS issues
-      const [logoB64, ...cardResults] = await Promise.all([
-        fetchImageAsBase64(BOXIUM_LOGO_URL),
-        ...shareTopCards.map(async (card) => {
+      // Step 1: Pre-fetch card images as base64 via proxy to avoid CORS issues
+      // Logo is already embedded as base64 in ShareCard component
+      const cardResults = await Promise.all(
+        shareTopCards.map(async (card) => {
           if (!card.imageUrl) return card;
           const base64 = await fetchImageAsBase64(card.imageUrl);
           return { ...card, imageBase64: base64 };
-        }),
-      ]);
-      setShareLogoBase64(logoB64);
+        })
+      );
       setShareTopCardsWithBase64(cardResults as ShareCardItem[]);
 
       // Step 2: Wait for React to re-render with base64 images
@@ -285,9 +300,11 @@ export default function Vault() {
       const dataUrl = await toPng(node, opts);
       setShareImageUrl(dataUrl);
       setShowShareModal(true);
-    } catch (err) {
-      console.error("Share generation failed:", err);
-      toast.error("生成分享圖片失敗，請稍後再試");
+    } catch (err: unknown) {
+      // Provide a more descriptive error message
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("Share generation failed:", errMsg, err);
+      toast.error(`生成分享圖片失敗: ${errMsg.slice(0, 80)}`);
     } finally {
       setIsGeneratingShare(false);
     }
