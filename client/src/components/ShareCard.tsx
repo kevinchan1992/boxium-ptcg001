@@ -131,33 +131,49 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
           >
             {/* Logo + title */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-                {/* BOXIUM Logo image */}
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
+                {/* BOXIUM Logo image — 38% larger: 46px → 63px */}
                 <img
                   src={logoBase64 ?? BOXIUM_LOGO_BASE64}
                   alt="BOXIUM"
                   style={{
-                    height: "46px",
+                    height: "63px",
                     width: "auto",
                     objectFit: "contain",
                   }}
                 />
+                {/* Black capsule VAULT badge */}
                 <span
                   style={{
-                    fontSize: "13px",
-                    fontWeight: "700",
-                    letterSpacing: "0.32em",
-                    color: "#737373",
-                    background: "#F0EDE8",
-                    padding: "4px 10px",
-                    borderRadius: "4px",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    letterSpacing: "0.28em",
+                    color: "#FFFFFF",
+                    background: "#1A1A1A",
+                    padding: "5px 12px",
+                    borderRadius: "6px",
                     fontFamily: "system-ui, -apple-system, sans-serif",
                     alignSelf: "center",
+                    textTransform: "uppercase",
                   }}
                 >
                   VAULT
                 </span>
               </div>
+              {/* Platform URL —引流文字 */}
+              <p
+                style={{
+                  fontSize: "10px",
+                  letterSpacing: "0.25em",
+                  color: "#888888",
+                  fontWeight: "600",
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  textTransform: "uppercase",
+                  margin: "0 0 6px",
+                }}
+              >
+                WWW.BOXIUM.ASIA
+              </p>
               <p
                 style={{
                   fontSize: "11px",
@@ -228,10 +244,10 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               PORTFOLIO VALUE
             </p>
 
-            {/* Big number */}
+            {/* Big number — 20% larger: 96px → 115px */}
             <p
               style={{
-                fontSize: "96px",
+                fontSize: "115px",
                 fontWeight: "900",
                 letterSpacing: "-0.04em",
                 color: "#1A1A1A",
@@ -477,28 +493,28 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
                         {card.cardName}
                       </p>
 
-                      {/* Market value */}
+                      {/* Market value — larger & bolder */}
                       {card.marketPrice != null && (
                         <p
                           style={{
-                            fontSize: "18px",
+                            fontSize: "21px",
                             fontWeight: "900",
                             color: "#1A1A1A",
                             fontFamily: "'Courier New', monospace",
                             letterSpacing: "-0.01em",
-                            margin: "0 0 2px",
+                            margin: "0 0 3px",
                           }}
                         >
                           {fmtCurrency(card.marketPrice, currency)}
                         </p>
                       )}
 
-                      {/* Gain % */}
+                      {/* Gain % — larger & bolder */}
                       {card.unrealizedGainPct != null && (
                         <p
                           style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
+                            fontSize: "17px",
+                            fontWeight: "900",
                             color: card.unrealizedGainPct >= 0 ? "#047857" : "#dc2626",
                             fontFamily: "system-ui, sans-serif",
                             margin: 0,
@@ -601,14 +617,16 @@ const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               <p
                 style={{
                   fontSize: "9px",
-                  color: "#9CA3AF",
+                  color: "#6B7280",
                   fontFamily: "system-ui, sans-serif",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.08em",
                   textAlign: "center",
                   margin: 0,
+                  lineHeight: 1.5,
                 }}
               >
-                掃碼查看完整收藏
+                掃碼查看完整收藏<br />
+                <span style={{ letterSpacing: "0.05em", fontSize: "8px" }}>Scan to View Vault</span>
               </p>
             </div>
           </div>
