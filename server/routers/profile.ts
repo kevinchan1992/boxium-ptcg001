@@ -223,6 +223,33 @@ export const profileRouter = router({
         const pdfUrl = await generateCollectionPdf(userName, items, stats);
         return { url: pdfUrl };
       }),
+    getPortfolioTrend: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserCollection } = await import("../collection");
+        const items = await getUserCollection(ctx.user.id, { priceMode: "grade" });
+        if (items.length === 0) return { points: [] };
+        const datesWithPurchase = items.filter((i: any) => i.purchasedAt != null);
+        if (datesWithPurchase.length === 0) return { points: [] };
+        const earliest = datesWithPurchase.reduce((min: Date, i: any) =>
+          i.purchasedAt! < min ? i.purchasedAt! : min, datesWithPurchase[0].purchasedAt!);
+        const now = new Date();
+        const points: { month: string; cost: number; marketValue: number; gain: number }[] = [];
+        const cur = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+        while (cur <= now) {
+          const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59);
+          const activeItems = items.filter((i: any) => i.purchasedAt != null && i.purchasedAt <= monthEnd);
+          const totalCost = activeItems.reduce((s: number, i: any) => s + (i.purchasePrice ?? 0) * i.quantity, 0);
+          const totalMarketValue = activeItems.reduce((s: number, i: any) => s + (i.marketPrice ?? i.purchasePrice ?? 0) * i.quantity, 0);
+          points.push({
+            month: `${cur.getFullYear()}/${String(cur.getMonth() + 1).padStart(2, '0')}`,
+            cost: Math.round(totalCost),
+            marketValue: Math.round(totalMarketValue),
+            gain: Math.round(totalMarketValue - totalCost),
+          });
+          cur.setMonth(cur.getMonth() + 1);
+        }
+        return { points };
+      }),
     // ─── Trade (Card-for-Card) procedures ────────────────────────────────────
     createTrade: protectedProcedure
       .input(z.object({

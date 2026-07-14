@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera, Gift } from "lucide-react";
+import { Home, Search, ShoppingBag, Award, User, ShoppingCart, Camera, Gift, Vault } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
@@ -37,11 +37,11 @@ const TABS: TabItem[] = [
     matchPaths: ["/marketplace", "/auction", "/cart", "/seller"],
   },
   {
-    path: "/grading",
-    icon: Award,
-    labelKey: "nav.grading",
-    labelFallback: "Grading",
-    matchPaths: ["/grading"],
+    path: "/profile?tab=collection",
+    icon: Vault,
+    labelKey: "nav.tcgVault",
+    labelFallback: "Vault",
+    matchPaths: ["/profile"],
   },
   {
     path: "/profile",
@@ -195,7 +195,7 @@ export function BottomTabBar() {
                   key={tab.path}
                   className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-highlight-transparent"
                   onClick={() => {
-                    if (tab.path === "/profile" && !user) {
+                    if ((tab.path === "/profile" || tab.path === "/profile?tab=collection") && !user) {
                       setLocation("/login");
                     } else {
                       setLocation(tab.path);

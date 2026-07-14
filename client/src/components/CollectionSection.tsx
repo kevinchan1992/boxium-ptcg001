@@ -59,6 +59,7 @@ const ReactCrop = ReactCropBase as unknown as React.FC<ReactCropProps>;
 import "react-image-crop/dist/ReactCrop.css";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { LazyImage } from "@/components/LazyImage";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 // ─── Brand tokens ─────────────────────────────────────────────
 const BRAND_BLUE = "#06038d";
@@ -813,6 +814,8 @@ export function CollectionSection() {
 
   // View mode: "active" = current holdings, "traded" = traded-away cards
   const [viewMode, setViewMode] = useState<"active" | "traded">("active");
+  const [showTrend, setShowTrend] = useState(false);
+  const { data: trendData } = trpc.profile.getPortfolioTrend.useQuery(undefined, { retry: 1, enabled: showTrend });
 
   // Data
   const { data: stats, isLoading: statsLoading } = trpc.profile.getCollectionStats.useQuery(undefined, { retry: 1 });
@@ -926,6 +929,31 @@ export function CollectionSection() {
 
   return (
     <div className="space-y-5 bg-white rounded-2xl p-4 -mx-1">
+      {/* ── TCG Vault Hero Banner ── */}
+      <div
+        className="rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 -mx-1 -mt-1"
+        style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #1a17c4 100%)` }}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: BRAND_YELLOW }}>
+              <Package className="w-4 h-4" style={{ color: BRAND_BLUE }} />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_YELLOW }}>TCG 倉庫</span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-black text-white leading-tight">我的卡牌投資組合</h2>
+          <p className="text-[11px] text-blue-200 mt-0.5">追蹤持倉市值 · 分析升值走勢 · 管理收藏</p>
+        </div>
+        {stats && totalItems > 0 && (
+          <div className="text-right flex-shrink-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BRAND_YELLOW }}>總市值</p>
+            <p className="text-xl sm:text-2xl font-black text-white tabular-nums leading-tight">{formatCurrency(stats.totalMarketValue)}</p>
+            <p className={`text-xs font-bold tabular-nums mt-0.5 ${gainPositive ? 'text-green-300' : 'text-red-300'}`}>
+              {gainPositive ? '+' : ''}{gainPct.toFixed(1)}%
+            </p>
+          </div>
+        )}
+      </div>
       {/* ── Header ── */}
       <div className="pb-3" style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
         {/* View mode tabs */}
@@ -1050,6 +1078,64 @@ export function CollectionSection() {
               icon={<Package className="w-4 h-4" style={{ color: BRAND_BLUE }} />}
               highlight="blue"
             />
+          </div>
+
+          {/* Portfolio Trend Chart */}
+          <div
+            className="bg-white rounded-2xl overflow-hidden"
+            style={{ border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+          >
+            <button
+              className="w-full flex items-center justify-between px-4 py-3"
+              onClick={() => setShowTrend(v => !v)}
+              style={{ borderBottom: showTrend ? `2px solid ${BRAND_BLUE}` : undefined }}
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND_BLUE }}>持倉升值走勢圖</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {!showTrend && gainPositive && (
+                  <span className="text-xs font-bold text-green-600">+{gainPct.toFixed(1)}%</span>
+                )}
+                {showTrend ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+              </div>
+            </button>
+            {showTrend && (
+              <div className="p-4">
+                {!trendData ? (
+                  <div className="h-40 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: BRAND_BLUE }} />
+                  </div>
+                ) : (trendData.points?.length ?? 0) < 2 ? (
+                  <div className="h-40 flex flex-col items-center justify-center gap-2 text-gray-400">
+                    <Package className="w-8 h-8 opacity-30" />
+                    <p className="text-xs">需要至少 2 張不同日期購入的卡牌才能顯示走勢圖</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <AreaChart data={trendData.points} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={BRAND_BLUE} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={BRAND_BLUE} stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false}
+                        tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} width={40} />
+                      <RechartsTooltip
+                        formatter={(value) => [formatCurrency(Number(value ?? 0)), '市值']}
+                        contentStyle={{ borderRadius: 12, border: `1px solid ${BRAND_BLUE}20`, fontSize: 12 }}
+                      />
+                      <Area type="monotone" dataKey="marketValue" stroke={BRAND_BLUE} strokeWidth={2}
+                        fill="url(#trendGrad)" dot={{ fill: BRAND_BLUE, r: 3 }} activeDot={{ r: 5 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Top 3 Gainers */}
