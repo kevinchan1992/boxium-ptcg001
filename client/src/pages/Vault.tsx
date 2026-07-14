@@ -140,7 +140,8 @@ export default function Vault() {
   const [sortBy, setSortBy] = useState<"marketValue" | "gain" | "purchasedAt" | "createdAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [graderFilter, setGraderFilter] = useState<string | undefined>(undefined);
-  const [showTrend, setShowTrend] = useState(false);
+  // 走勢圖固定展開，不再需要 showTrend toggle state
+  const showTrend = true;
   const [searchQuery, setSearchQuery] = useState("");
   const [rankTab, setRankTab] = useState<"gain" | "value">("gain");
 
@@ -150,7 +151,7 @@ export default function Vault() {
       { enabled: !!user, retry: 1 }
     );
   const { data: trendData } = trpc.profile.getPortfolioTrend.useQuery(
-    undefined, { enabled: !!user && showTrend, retry: 1 }
+    undefined, { enabled: !!user, retry: 1 }
   );
 
   const items = collectionData?.items ?? [];
@@ -411,7 +412,7 @@ export default function Vault() {
         {/* ══ Split Layout: Trend Chart + Rankings ══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* Left 2/3: Trend Chart */}
+          {/* Left 2/3: Trend Chart — 固定展開 */}
           <div
             className="lg:col-span-2 rounded-2xl overflow-hidden"
             style={{
@@ -420,119 +421,93 @@ export default function Vault() {
               boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
             }}
           >
-            <button
-              className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-gray-50/50"
-              onClick={() => setShowTrend(v => !v)}
-            >
+            {/* 標題列 */}
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="flex items-center gap-2.5">
                 <TrendingUp className="w-4 h-4" style={{ color: TEXT_SEC }} />
-                <span className="text-sm font-semibold" style={{ color: TEXT_PRI }}>持倉升值走勢圖</span>
+                <span className="text-sm font-semibold" style={{ color: TEXT_PRI }}>持倉升値走勢圖</span>
               </div>
-              <div className="flex items-center gap-2">
-                {!showTrend && gainPositive && stats && (
-                  <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: "#ECFDF5", color: SUCCESS }}
-                  >
-                    +{gainPct.toFixed(1)}%
-                  </span>
-                )}
-                {showTrend
-                  ? <ChevronUp className="w-4 h-4" style={{ color: TEXT_SEC }} />
-                  : <ChevronDown className="w-4 h-4" style={{ color: TEXT_SEC }} />}
-              </div>
-            </button>
-
-            {showTrend && (
-              <div className="px-5 pb-5">
-                <div style={{ borderTop: `1px solid ${BORDER}` }} className="pt-4">
-                  {!trendData ? (
-                    <div className="h-52 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: TEXT_SEC }} />
-                    </div>
-                  ) : (trendData.points?.length ?? 0) < 2 ? (
-                    <div className="h-52 flex flex-col items-center justify-center gap-3">
-                      <Package className="w-10 h-10 opacity-10" style={{ color: TEXT_PRI }} />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold" style={{ color: TEXT_PRI }}>尚無足夠數據</p>
-                        <p className="text-xs mt-1" style={{ color: TEXT_SEC }}>新增至少 2 張不同日期購入的卡牌，即可查看走勢圖</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between mb-4">
-                        <p className="text-xs" style={{ color: TEXT_SEC }}>按月份累計市值</p>
-                        <p className="text-xs font-semibold" style={{ color: TEXT_PRI }}>{trendData.points.length} 個月</p>
-                      </div>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <AreaChart data={trendData.points} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-                          <defs>
-                            {/* 走勢圖：金色到藍色漸層填充 */}
-                            <linearGradient id="vaultTrendGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#FEDD00" stopOpacity={0.18} />
-                              <stop offset="50%" stopColor="#06038d" stopOpacity={0.10} />
-                              <stop offset="100%" stopColor="#06038d" stopOpacity={0.01} />
-                            </linearGradient>
-                            <linearGradient id="vaultCostGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
-                              <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" />
-                          <XAxis dataKey="month" tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false} />
-                          <YAxis
-                            tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false}
-                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} width={42}
-                          />
-                          <RechartsTooltip
-                            formatter={(value, name) => [
-                              formatCurrency(Number(value ?? 0)),
-                              name === "marketValue" ? "市值" : "成本"
-                            ]}
-                            contentStyle={{
-                              borderRadius: 10, border: `1px solid ${BORDER}`,
-                              fontSize: 12, background: BG_CARD, color: TEXT_PRI,
-                            }}
-                          />
-                          <Area type="monotone" dataKey="cost" stroke="#94a3b8" strokeWidth={1.5}
-                            fill="url(#vaultCostGrad)" dot={false} strokeDasharray="4 2" />
-                          {/* 市值線加粗 + 平滑曲線 */}
-                          <Area type="monotone" dataKey="marketValue" stroke={BRAND_BLUE} strokeWidth={2.5}
-                            fill="url(#vaultTrendGrad)" dot={{ fill: BRAND_BLUE, r: 2.5 }} activeDot={{ r: 5, fill: BRAND_BLUE }} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                      <div className="flex items-center gap-5 mt-3 justify-center">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-0.5 rounded" style={{ background: TEXT_PRI }} />
-                          <span className="text-[10px]" style={{ color: TEXT_SEC }}>市值</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-5 border-t-2 border-dashed" style={{ borderColor: "#94a3b8" }} />
-                          <span className="text-[10px]" style={{ color: TEXT_SEC }}>成本</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!showTrend && (
-              <div className="px-5 pb-5">
-                <div
-                  className="rounded-xl p-4 flex items-center gap-3"
-                  style={{ background: "#F5F5F3" }}
+              {gainPositive && stats && (
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: "#ECFDF5", color: SUCCESS }}
                 >
-                  <TrendingUp className="w-5 h-5 flex-shrink-0" style={{ color: TEXT_SEC }} />
-                  <p className="text-xs" style={{ color: TEXT_SEC }}>
-                    點擊上方展開查看你的投資組合歷史走勢圖
-                  </p>
+                  +{gainPct.toFixed(1)}%
+                </span>
+              )}
+            </div>
+
+            {/* 圖表內容 */}
+            <div className="px-5 py-5">
+              {!trendData ? (
+                <div className="h-52 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: TEXT_SEC }} />
                 </div>
-              </div>
-            )}
+              ) : (trendData.points?.length ?? 0) < 2 ? (
+                <div className="h-52 flex flex-col items-center justify-center gap-3">
+                  <Package className="w-10 h-10 opacity-10" style={{ color: TEXT_PRI }} />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold" style={{ color: TEXT_PRI }}>尚無足夠數據</p>
+                    <p className="text-xs mt-1" style={{ color: TEXT_SEC }}>新增至少 2 張不同日期購入的卡牌，即可查看走勢圖</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs" style={{ color: TEXT_SEC }}>按月份累計市値</p>
+                    <p className="text-xs font-semibold" style={{ color: TEXT_PRI }}>{trendData.points.length} 個月</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <AreaChart data={trendData.points} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="vaultTrendGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#FEDD00" stopOpacity={0.18} />
+                          <stop offset="50%" stopColor="#06038d" stopOpacity={0.10} />
+                          <stop offset="100%" stopColor="#06038d" stopOpacity={0.01} />
+                        </linearGradient>
+                        <linearGradient id="vaultCostGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false} />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false}
+                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} width={42}
+                      />
+                      <RechartsTooltip
+                        formatter={(value, name) => [
+                          formatCurrency(Number(value ?? 0)),
+                          name === "marketValue" ? "市値" : "成本"
+                        ]}
+                        contentStyle={{
+                          borderRadius: 10, border: `1px solid ${BORDER}`,
+                          fontSize: 12, background: BG_CARD, color: TEXT_PRI,
+                        }}
+                      />
+                      <Area type="monotone" dataKey="cost" stroke="#94a3b8" strokeWidth={1.5}
+                        fill="url(#vaultCostGrad)" dot={false} strokeDasharray="4 2" />
+                      <Area type="monotone" dataKey="marketValue" stroke={BRAND_BLUE} strokeWidth={2.5}
+                        fill="url(#vaultTrendGrad)" dot={{ fill: BRAND_BLUE, r: 2.5 }} activeDot={{ r: 5, fill: BRAND_BLUE }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  <div className="flex items-center gap-5 mt-3 justify-center">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-0.5 rounded" style={{ background: TEXT_PRI }} />
+                      <span className="text-[10px]" style={{ color: TEXT_SEC }}>市値</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 border-t-2 border-dashed" style={{ borderColor: "#94a3b8" }} />
+                      <span className="text-[10px]" style={{ color: TEXT_SEC }}>成本</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Right 1/3: Rankings with Segmented Tab */}
+          {/* Right 1/3: Rankings — 橫向大卡片流 */}
           {stats && ((stats.top3Gainers?.length ?? 0) > 0 || (stats.top3ByValue?.length ?? 0) > 0) && (
             <div
               className="rounded-2xl overflow-hidden"
@@ -557,7 +532,7 @@ export default function Vault() {
                     onClick={() => setRankTab("gain")}
                   >
                     <Star className="w-3 h-3 inline mr-1 mb-0.5" />
-                    升值 TOP 3
+                    升値 TOP 3
                   </button>
                   <button
                     className="flex-1 py-1.5 rounded-md text-xs font-semibold transition-all"
@@ -568,100 +543,121 @@ export default function Vault() {
                     onClick={() => setRankTab("value")}
                   >
                     <Wallet className="w-3 h-3 inline mr-1 mb-0.5" />
-                    市值 TOP 3
+                    市値 TOP 3
                   </button>
                 </div>
               </div>
 
-              {/* Rankings list */}
-              <div className="px-4 py-3 space-y-3">
-                {rankTab === "gain"
-                  ? (stats.top3Gainers ?? []).map((item: any, idx: number) => (
-                    <div key={item.id} className="flex items-center gap-3 group">
-                      {/* Roman numeral */}
-                      <span
-                        className="w-6 text-center text-[11px] font-bold flex-shrink-0 select-none"
-                        style={{ color: idx === 0 ? TEXT_PRI : TEXT_SEC, fontVariant: "small-caps" }}
+              {/* Rankings — 橫向大卡片流 */}
+              <div className="p-3 flex flex-col gap-2.5">
+                {(() => {
+                  const rankItems = rankTab === "gain"
+                    ? (stats.top3Gainers ?? [])
+                    : (stats.top3ByValue ?? []);
+                  // 金銀銅配色
+                  const medalColors = [
+                    { bg: "rgba(253,224,71,0.12)", border: "rgba(253,224,71,0.40)", text: "#92400e", dot: "#d97706" },  // 金
+                    { bg: "rgba(226,232,240,0.25)", border: "rgba(148,163,184,0.35)", text: "#475569", dot: "#94a3b8" },  // 銀
+                    { bg: "rgba(234,215,205,0.20)", border: "rgba(180,120,90,0.25)", text: "#78350f", dot: "#b45309" },  // 銅
+                  ];
+                  return rankItems.map((item: any, idx: number) => {
+                    const medal = medalColors[idx] ?? medalColors[2];
+                    const isGainTab = rankTab === "gain";
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex gap-3 rounded-xl p-2.5"
+                        style={{
+                          background: medal.bg,
+                          border: `1px solid ${medal.border}`,
+                        }}
                       >
-                        {ROMAN[idx]}
-                      </span>
-                      {/* Card thumbnail with shine overlay */}
-                      {item.card?.imageUrl && (
-                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100 relative">
-                          <LazyImage
-                            src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
-                            alt={item.card?.name ?? ""}
-                            className="w-full h-full object-contain"
-                          />
-                          {/* 閃卡折射光澤 */}
-                          <div
-                            className="absolute inset-0 pointer-events-none"
-                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
-                          />
-                        </div>
-                      )}
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-xs font-semibold truncate leading-tight"
-                          style={{ color: TEXT_PRI }}
-                          title={item.card?.name}
+                        {/* 卡牌圖片 — 3:4 比例大圖 */}
+                        <div
+                          className="flex-shrink-0 rounded-lg overflow-hidden relative"
+                          style={{
+                            width: "72px",
+                            aspectRatio: "3/4",
+                            background: "#F0EEE9",
+                          }}
                         >
-                          {item.card?.name}
-                        </p>
-                        <GradeBadge grader={item.grader} grade={item.grade} />
-                      </div>
-                      {/* Gain */}
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold tabular-nums" style={{ color: SUCCESS, letterSpacing: "-0.02em" }}>
-                          +{(item.unrealizedGainPct ?? 0).toFixed(1)}%
-                        </p>
-                        <p className="text-[10px] tabular-nums" style={{ color: TEXT_SEC }}>
-                          {formatCurrency(item.unrealizedGain)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                  : (stats.top3ByValue ?? []).map((item: any, idx: number) => (
-                    <div key={item.id} className="flex items-center gap-3 group">
-                      <span
-                        className="w-6 text-center text-[11px] font-bold flex-shrink-0 select-none"
-                        style={{ color: idx === 0 ? TEXT_PRI : TEXT_SEC, fontVariant: "small-caps" }}
-                      >
-                        {ROMAN[idx]}
-                      </span>
-                      {item.card?.imageUrl && (
-                        <div className="flex-shrink-0 w-8 h-11 rounded-md overflow-hidden bg-gray-100 relative">
-                          <LazyImage
-                            src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
-                            alt={item.card?.name ?? ""}
-                            className="w-full h-full object-contain"
-                          />
-                          {/* 閃卡折射光澤 */}
-                          <div
-                            className="absolute inset-0 pointer-events-none"
-                            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)" }}
-                          />
+                          {item.card?.imageUrl ? (
+                            <>
+                              <LazyImage
+                                src={getProxiedImageUrl(item.card.imageUrl) ?? ""}
+                                alt={item.card?.name ?? ""}
+                                className="w-full h-full object-contain"
+                              />
+                              <div
+                                className="absolute inset-0 pointer-events-none"
+                                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 60%)" }}
+                              />
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-5 h-5 opacity-20" style={{ color: TEXT_PRI }} />
+                            </div>
+                          )}
+                          {/* 排名徽章 */}
+                          <span
+                            className="absolute top-1 left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
+                            style={{ background: medal.dot, color: "#FFFFFF", boxShadow: "0 1px 4px rgba(0,0,0,0.20)" }}
+                          >
+                            {idx + 1}
+                          </span>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-xs font-semibold truncate leading-tight"
-                          style={{ color: TEXT_PRI }}
-                          title={item.card?.name}
-                        >
-                          {item.card?.name}
-                        </p>
-                        <GradeBadge grader={item.grader} grade={item.grade} />
+
+                        {/* 文字資訊 */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                          <div>
+                            <p
+                              className="text-xs font-semibold leading-snug line-clamp-2"
+                              style={{ color: TEXT_PRI }}
+                              title={item.card?.name}
+                            >
+                              {item.card?.name}
+                            </p>
+                            <div className="mt-1">
+                              <GradeBadge grader={item.grader} grade={item.grade} />
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            {isGainTab ? (
+                              <>
+                                <p
+                                  className="text-base font-black tabular-nums leading-tight"
+                                  style={{ color: SUCCESS, letterSpacing: "-0.03em" }}
+                                >
+                                  +{(item.unrealizedGainPct ?? 0).toFixed(1)}%
+                                </p>
+                                <p className="text-[10px] tabular-nums mt-0.5" style={{ color: TEXT_SEC }}>
+                                  {formatCurrency(item.unrealizedGain)}
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <p
+                                  className="text-sm font-black tabular-nums leading-tight"
+                                  style={{ color: TEXT_PRI, letterSpacing: "-0.02em", fontFamily: "'Courier New', monospace" }}
+                                >
+                                  {formatCurrency(item.marketPrice)}
+                                </p>
+                                {item.unrealizedGainPct != null && (
+                                  <p
+                                    className="text-[10px] font-semibold tabular-nums mt-0.5"
+                                    style={{ color: (item.unrealizedGainPct ?? 0) >= 0 ? SUCCESS : DANGER }}
+                                  >
+                                    {(item.unrealizedGainPct ?? 0) >= 0 ? "+" : ""}{(item.unrealizedGainPct ?? 0).toFixed(1)}%
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold tabular-nums" style={{ color: TEXT_PRI }}>
-                          {formatCurrency(item.marketPrice)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                }
+                    );
+                  });
+                })()}
               </div>
             </div>
           )}
@@ -700,19 +696,19 @@ export default function Vault() {
                     <select
                       className="appearance-none text-xs font-semibold tracking-wider rounded-lg pl-4 pr-9 py-2.5 focus:outline-none cursor-pointer"
                       style={{
-                        background: "#F5F5F3",
+                        background: "#FFFFFF",
                         color: TEXT_PRI,
-                        border: "none",
-                        transition: "background 0.2s ease, box-shadow 0.2s ease",
+                        border: `1px solid ${BORDER}`,
+                        transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                       }}
                       value={sortBy}
                       onChange={e => { setSortBy(e.target.value as any); setPage(1); }}
                       onFocus={e => {
-                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.borderColor = "#C8C8C8";
                         e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
                       }}
                       onBlur={e => {
-                        e.currentTarget.style.background = "#F5F5F3";
+                        e.currentTarget.style.borderColor = BORDER;
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
@@ -721,7 +717,6 @@ export default function Vault() {
                       <option value="gain">盈號排序</option>
                       <option value="purchasedAt">購入日期</option>
                     </select>
-                    {/* Custom chevron */}
                     <svg
                       className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
                       width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -735,19 +730,19 @@ export default function Vault() {
                     <select
                       className="appearance-none text-xs font-semibold tracking-wider rounded-lg pl-4 pr-9 py-2.5 focus:outline-none cursor-pointer"
                       style={{
-                        background: "#F5F5F3",
+                        background: "#FFFFFF",
                         color: TEXT_PRI,
-                        border: "none",
-                        transition: "background 0.2s ease, box-shadow 0.2s ease",
+                        border: `1px solid ${BORDER}`,
+                        transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                       }}
                       value={graderFilter ?? ""}
                       onChange={e => { setGraderFilter(e.target.value || undefined); setPage(1); }}
                       onFocus={e => {
-                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.borderColor = "#C8C8C8";
                         e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
                       }}
                       onBlur={e => {
-                        e.currentTarget.style.background = "#F5F5F3";
+                        e.currentTarget.style.borderColor = BORDER;
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
@@ -757,7 +752,6 @@ export default function Vault() {
                       <option value="BGS">BGS</option>
                       <option value="RAW">RAW</option>
                     </select>
-                    {/* Custom chevron */}
                     <svg
                       className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-focus-within:rotate-180"
                       width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -785,19 +779,19 @@ export default function Vault() {
                 <select
                   className="appearance-none w-full text-xs font-semibold tracking-wider rounded-lg pl-3.5 pr-8 py-2.5 focus:outline-none cursor-pointer"
                   style={{
-                    background: "#F5F5F3",
+                    background: "#FFFFFF",
                     color: TEXT_PRI,
-                    border: "none",
-                    transition: "background 0.2s ease, box-shadow 0.2s ease",
+                    border: `1px solid ${BORDER}`,
+                    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                   }}
                   value={sortBy}
                   onChange={e => { setSortBy(e.target.value as any); setPage(1); }}
                   onFocus={e => {
-                    e.currentTarget.style.background = "#FFFFFF";
+                    e.currentTarget.style.borderColor = "#C8C8C8";
                     e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
                   }}
                   onBlur={e => {
-                    e.currentTarget.style.background = "#F5F5F3";
+                    e.currentTarget.style.borderColor = BORDER;
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
@@ -819,19 +813,19 @@ export default function Vault() {
                 <select
                   className="appearance-none w-full text-xs font-semibold tracking-wider rounded-lg pl-3.5 pr-8 py-2.5 focus:outline-none cursor-pointer"
                   style={{
-                    background: "#F5F5F3",
+                    background: "#FFFFFF",
                     color: TEXT_PRI,
-                    border: "none",
-                    transition: "background 0.2s ease, box-shadow 0.2s ease",
+                    border: `1px solid ${BORDER}`,
+                    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                   }}
                   value={graderFilter ?? ""}
                   onChange={e => { setGraderFilter(e.target.value || undefined); setPage(1); }}
                   onFocus={e => {
-                    e.currentTarget.style.background = "#FFFFFF";
+                    e.currentTarget.style.borderColor = "#C8C8C8";
                     e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.08)";
                   }}
                   onBlur={e => {
-                    e.currentTarget.style.background = "#F5F5F3";
+                    e.currentTarget.style.borderColor = BORDER;
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
