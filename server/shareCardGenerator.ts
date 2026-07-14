@@ -8,12 +8,33 @@ import type { Canvas, CanvasRenderingContext2D } from "canvas";
 import * as fs from "fs";
 import * as path from "path";
 
-// Register Noto Sans for Unicode triangle support (▲▼)
+// Register Noto Sans (Latin) for Unicode triangle support (▲▼)
 try {
   registerFont("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", { family: "Noto Sans" });
   registerFont("/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf", { family: "Noto Sans", weight: "bold" });
   registerFont("/usr/share/fonts/truetype/noto/NotoSans-Black.ttf", { family: "Noto Sans", weight: "900" });
 } catch { /* fonts may already be registered */ }
+
+// Register Noto Sans CJK for Chinese/Japanese/Korean text rendering
+// fonts-noto-cjk package installs these paths on Debian/Ubuntu
+const CJK_FONT_PATHS = [
+  // Noto Sans CJK TC (Traditional Chinese)
+  "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+  "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+  // Fallback paths for different package versions
+  "/usr/share/fonts/truetype/noto/NotoSansCJKtc-Regular.otf",
+  "/usr/share/fonts/truetype/noto/NotoSansCJKtc-Bold.otf",
+];
+try {
+  // Try to register the first available CJK font (synchronous existsSync from imported fs)
+  if (fs.existsSync("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc")) {
+    registerFont("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", { family: "Noto Sans CJK" });
+    registerFont("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", { family: "Noto Sans CJK", weight: "bold" });
+  } else if (fs.existsSync("/usr/share/fonts/truetype/noto/NotoSansCJKtc-Regular.otf")) {
+    registerFont("/usr/share/fonts/truetype/noto/NotoSansCJKtc-Regular.otf", { family: "Noto Sans CJK" });
+    registerFont("/usr/share/fonts/truetype/noto/NotoSansCJKtc-Bold.otf", { family: "Noto Sans CJK", weight: "bold" });
+  }
+} catch { /* CJK fonts not available in dev environment, will use system fallback */ }
 
 // ─── Types ────────────────────────────────────────────────────
 export interface ShareCardData {
@@ -158,7 +179,7 @@ async function drawQRCode(
     roundRect(ctx, x - 10, y - 10, size + 20, size + 20, 8);
     ctx.fill();
     ctx.fillStyle = "#9CA3AF";
-    ctx.font = "12px Arial";
+    ctx.font = "12px 'Noto Sans CJK', 'Noto Sans', Arial";
     ctx.textAlign = "center";
     ctx.fillText("QR", x + size / 2, y + size / 2);
     ctx.restore();
@@ -212,7 +233,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // BOXIUM brand text (bold serif, no image to avoid rendering artifacts)
   ctx.save();
-  ctx.font = "900 38px Georgia, serif";
+  ctx.font = "900 38px 'Noto Sans CJK', Georgia, serif";
   ctx.fillStyle = "#1A1A1A";
   ctx.textAlign = "left";
   ctx.fillText("BOXIUM", 60, HEADER_TOP + 40);
@@ -222,7 +243,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
   // VAULT black capsule badge
   const vaultText = "VAULT";
   ctx.save();
-  ctx.font = "bold 11px Arial, sans-serif";
+  ctx.font = "bold 11px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   const vaultW = ctx.measureText(vaultText).width + 26;
   const vaultH = 24;
   const vaultY = HEADER_TOP + 14;
@@ -236,7 +257,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // WWW.BOXIUM.ASIA
   ctx.save();
-  ctx.font = "600 10px Arial, sans-serif";
+  ctx.font = "600 10px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#888888";
   ctx.textAlign = "left";
   ctx.fillText("W W W . B O X I U M . A S I A", 60, HEADER_TOP + 76);
@@ -244,7 +265,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // TCG PORTFOLIO CERTIFICATE
   ctx.save();
-  ctx.font = "700 11px Arial, sans-serif";
+  ctx.font = "700 11px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#C9A84C";
   ctx.textAlign = "left";
   ctx.fillText("TCG PORTFOLIO CERTIFICATE", 60, HEADER_TOP + 100);
@@ -253,7 +274,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
   // Date (right side)
   const dateStr = new Date().toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" });
   ctx.save();
-  ctx.font = "11px Arial, sans-serif";
+  ctx.font = "11px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#9CA3AF";
   ctx.textAlign = "right";
   ctx.fillText(dateStr, W - 60, HEADER_TOP + 20);
@@ -267,7 +288,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // Label
   ctx.save();
-  ctx.font = "600 11px Arial, sans-serif";
+  ctx.font = "600 11px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#9CA3AF";
   ctx.textAlign = "left";
   ctx.fillText("PORTFOLIO VALUE", 60, PV_TOP + 16);
@@ -324,7 +345,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // Unrealized profit label
   ctx.save();
-  ctx.font = "10px Arial, sans-serif";
+  ctx.font = "10px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#9CA3AF";
   ctx.textAlign = "left";
   ctx.fillText(`UNREALIZED PROFIT · ${data.totalQuantity} CARDS`, 60 + roiW + 20, roiY + 50);
@@ -342,7 +363,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // Section label
   ctx.save();
-  ctx.font = "700 9px Arial, sans-serif";
+  ctx.font = "700 9px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#C9A84C";
   ctx.textAlign = "left";
   ctx.fillText("TOP 3 珍藏 · FINEST HOLDINGS", 60, CARDS_TOP + 14);
@@ -409,7 +430,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
     ctx.arc(cardX + 22, imgY + 22, 14, 0, Math.PI * 2);
     ctx.fillStyle = rankColor;
     ctx.fill();
-    ctx.font = "bold 13px Arial, sans-serif";
+    ctx.font = "bold 13px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
     ctx.fillStyle = "#FFFFFF";
     ctx.textAlign = "center";
     ctx.fillText(String(i + 1), cardX + 22, imgY + 27);
@@ -423,7 +444,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
       : card.grader?.toUpperCase() ?? "";
     const gradeY = imgY + CARD_IMG_H + 10;
     ctx.save();
-    ctx.font = "700 10px Arial, sans-serif";
+    ctx.font = "700 10px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
     const gradeW = ctx.measureText(gradeText).width + 20;
     roundRect(ctx, cardX, gradeY, gradeW, 20, 4);
     ctx.fillStyle = "#FFFFFF";
@@ -445,7 +466,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
     // Card name (2 lines max)
     const nameY = gradeY + 30;
     ctx.save();
-    ctx.font = "700 13px Arial, sans-serif";
+    ctx.font = "700 13px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
     ctx.fillStyle = "#1A1A1A";
     ctx.textAlign = "left";
     // Simple word wrap
@@ -492,7 +513,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
         const triY = mvY + 22 - triSize; // align baseline
         drawTriangle(ctx, cardX, triY, triSize, gainUp, gainClr);
         ctx.save();
-        ctx.font = "900 15px Arial, sans-serif";
+        ctx.font = "900 15px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
         ctx.fillStyle = gainClr;
         ctx.textAlign = "left";
         ctx.fillText(gainNumStr, cardX + triSize + 5, mvY + 22);
@@ -509,21 +530,21 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // Left: CTA
   ctx.save();
-  ctx.font = "13px Arial, sans-serif";
+  ctx.font = "13px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#4B4B4B";
   ctx.textAlign = "left";
   ctx.fillText("Create your vault at", 60, FOOTER_TOP + 18);
   ctx.restore();
 
   ctx.save();
-  ctx.font = "900 22px Georgia, serif";
+  ctx.font = "900 22px 'Noto Sans CJK', Georgia, serif";
   ctx.fillStyle = "#1A1A1A";
   ctx.textAlign = "left";
   ctx.fillText("boxium.asia", 60, FOOTER_TOP + 48);
   ctx.restore();
 
   ctx.save();
-  ctx.font = "9px Arial, sans-serif";
+  ctx.font = "9px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#9CA3AF";
   ctx.textAlign = "left";
   ctx.fillText("TCG PORTFOLIO MANAGEMENT", 60, FOOTER_TOP + 68);
@@ -537,7 +558,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Buffer> {
 
   // QR label
   ctx.save();
-  ctx.font = "9px Arial, sans-serif";
+  ctx.font = "9px 'Noto Sans CJK', 'Noto Sans', Arial, sans-serif";
   ctx.fillStyle = "#6B7280";
   ctx.textAlign = "center";
   ctx.fillText("Scan to View Vault", qrX + QR_SIZE / 2, qrY + QR_SIZE + 18);

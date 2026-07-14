@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     g++ \
     pkg-config \
+    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
