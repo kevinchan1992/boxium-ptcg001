@@ -88,7 +88,7 @@ export function CardPickerDialog({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
             <Input
               autoFocus
-              className="pl-9 pr-9 h-10 text-sm bg-white/15 border-white/30 text-white placeholder:text-white/40 focus:border-[#FEDD00] focus:bg-white/20"
+              className="pl-9 pr-9 h-10 text-sm bg-white border-white/30 text-gray-900 placeholder:text-gray-400 focus:border-[#FEDD00] focus:bg-white"
               placeholder="輸入卡牌名稱或卡號（例如：pikachu、sv8a）"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
