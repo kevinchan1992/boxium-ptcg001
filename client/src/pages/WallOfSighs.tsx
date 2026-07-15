@@ -251,7 +251,18 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
   const [visible, setVisible] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setTimeout(() => setVisible(true), 30); }, []);
+  useEffect(() => {
+    // Scroll to top and lock body scroll when gallery opens
+    window.scrollTo(0, 0);
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => setVisible(true), 30);
+    return () => {
+      // Restore scroll on close
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, []);
   useEffect(() => { setShimmer(true); const t = setTimeout(() => setShimmer(false), 800); return () => clearTimeout(t); }, [current]);
 
   const prev = () => setCurrent(c => (c - 1 + cards.length) % cards.length);
