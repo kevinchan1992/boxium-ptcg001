@@ -288,24 +288,30 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
   const tiltY = (mousePos.x - 0.5) * -16;
   const card = cards[current];
 
-  // Card visual block (shared between desktop/mobile)
-  const CardVisual = (
+  // Card visual block — desktop uses maxH prop
+  const CardVisual = ({ maxH = "75vh" }: { maxH?: string }) => (
     <div
       ref={imgRef}
-      className="relative cursor-pointer w-full h-full"
-      style={{ perspective: "1000px" }}
+      className="relative cursor-pointer flex items-center justify-center"
+      style={{ perspective: "1000px", maxHeight: maxH, height: "100%", width: "100%" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
     >
       <div
-        className="w-full h-full"
-        style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.12s ease-out", transformStyle: "preserve-3d" }}
+        className="relative"
+        style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.12s ease-out", transformStyle: "preserve-3d", maxHeight: maxH }}
       >
         <SafeCardImg
           src={card.imageUrl}
           alt={card.name ?? ""}
-          className="w-full h-full rounded-2xl object-cover"
-          style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)" }}
+          className="rounded-2xl object-contain block"
+          style={{
+            maxHeight: maxH,
+            maxWidth: "100%",
+            height: "auto",
+            width: "auto",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)"
+          }}
         />
         {/* Aurora foil */}
         <div className="absolute inset-0 rounded-2xl pointer-events-none"
@@ -347,7 +353,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           className="flex-shrink-0 flex items-center justify-center"
           style={{ width: "42%", height: "75vh" }}
         >
-          {CardVisual}
+          <CardVisual maxH="75vh" />
         </div>
 
         {/* Right: info panel — 38% width */}
@@ -395,7 +401,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           style={{ minHeight: 0, maxHeight: "58vh" }}
         >
           <div style={{ height: "100%", maxHeight: "52vh", aspectRatio: "3/4", width: "auto" }}>
-            {CardVisual}
+            <CardVisual maxH="52vh" />
           </div>
         </div>
 
