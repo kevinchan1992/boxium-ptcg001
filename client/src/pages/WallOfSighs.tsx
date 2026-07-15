@@ -273,91 +273,139 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
     setMousePos({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
   };
 
-  const tiltX = (mousePos.y - 0.5) * 18;
-  const tiltY = (mousePos.x - 0.5) * -18;
+  const tiltX = (mousePos.y - 0.5) * 16;
+  const tiltY = (mousePos.x - 0.5) * -16;
   const card = cards[current];
+
+  // Card visual block (shared between desktop/mobile)
+  const CardVisual = (
+    <div
+      ref={imgRef}
+      className="relative cursor-pointer w-full h-full"
+      style={{ perspective: "1000px" }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
+    >
+      <div
+        className="w-full h-full"
+        style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.12s ease-out", transformStyle: "preserve-3d" }}
+      >
+        <SafeCardImg
+          src={card.imageUrl}
+          alt={card.name ?? ""}
+          className="w-full h-full rounded-2xl object-cover"
+          style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)" }}
+        />
+        {/* Aurora foil */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.4) 0%, rgba(100,160,200,0.18) 35%, transparent 65%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.65, transition: "opacity 0.4s ease" }} />
+        {/* Holographic shimmer */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ background: `linear-gradient(${105 + tiltY * 2}deg, transparent 25%, rgba(168,216,234,0.1) 38%, rgba(200,168,234,0.07) 50%, rgba(234,200,168,0.1) 62%, transparent 75%)`, mixBlendMode: "overlay" }} />
+        {/* Gold rune border */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ border: "1px solid rgba(201,168,76,0.35)", boxShadow: "inset 0 0 20px rgba(201,168,76,0.06)" }} />
+      </div>
+    </div>
+  );
 
   return (
     <div
       className="fixed inset-0 z-[1000] overflow-hidden"
-      style={{ background: "rgba(8,10,16,0.97)", backdropFilter: "blur(24px)", opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
+      style={{ background: "rgba(6,8,14,0.98)", backdropFilter: "blur(28px)", opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" }}
       onClick={onClose}
     >
-      {/* Aurora bg */}
+      {/* Aurora ambient bg */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-[500px] h-[500px] rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, rgba(100,180,220,0.6) 0%, transparent 70%)", top: "10%", left: "20%", animation: "auroraFloat 8s ease-in-out infinite" }} />
-        <div className="absolute w-[350px] h-[350px] rounded-full opacity-8"
-          style={{ background: "radial-gradient(circle, rgba(180,140,80,0.5) 0%, transparent 70%)", bottom: "20%", right: "15%", animation: "auroraFloat 10s ease-in-out infinite reverse" }} />
+        <div className="absolute rounded-full"
+          style={{ width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%)", top: "5%", left: "-10%", animation: "auroraFloat 9s ease-in-out infinite", filter: "blur(40px)" }} />
+        <div className="absolute rounded-full"
+          style={{ width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(15,118,110,0.1) 0%, transparent 70%)", bottom: "0%", right: "-5%", animation: "auroraFloat 11s ease-in-out infinite reverse", filter: "blur(50px)" }} />
+        <div className="absolute rounded-full"
+          style={{ width: "30vw", height: "30vw", background: "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)", top: "40%", right: "20%", animation: "auroraFloat 7s ease-in-out infinite", filter: "blur(35px)" }} />
       </div>
 
-      {/* Top bar: counter + close */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2 z-20 pointer-events-none">
-        <div className="text-[10px] text-white/40 tracking-[0.35em] uppercase font-light pointer-events-auto">
-          {current + 1} / {cards.length}
-        </div>
-        <button
-          className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all pointer-events-auto"
-          onClick={e => { e.stopPropagation(); onClose(); }}
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Main content — fills entire screen height, no scroll */}
+      {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center px-4"
-        style={{ paddingTop: '56px', paddingBottom: '16px' }}
+        className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
+        style={{ paddingTop: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card — takes up as much vertical space as possible */}
+        {/* Left: card — 55% width, max 80vh tall */}
         <div
-          ref={imgRef}
-          className="relative cursor-pointer flex-shrink-0"
-          style={{
-            perspective: "1000px",
-            // On mobile: fill available height minus info strip; on desktop: cap at 420px
-            height: "calc(100% - 80px)",
-            maxHeight: "420px",
-            aspectRatio: "3/4",
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{ width: "42%", height: "80vh" }}
         >
-          <div
-            className="w-full h-full"
-            style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.1s ease-out", transformStyle: "preserve-3d" }}
-          >
-            <SafeCardImg
-              src={card.imageUrl}
-              alt={card.name ?? ""}
-              className="w-full h-full rounded-xl object-cover"
-              style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(100,180,220,0.15)" }}
-            />
-            {/* Aurora foil */}
-            <div className="absolute inset-0 rounded-xl pointer-events-none"
-              style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.35) 0%, rgba(100,160,200,0.15) 30%, transparent 60%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.6, transition: "opacity 0.4s ease" }} />
-            {/* Holographic shimmer */}
-            <div className="absolute inset-0 rounded-xl pointer-events-none"
-              style={{ background: `linear-gradient(${105 + tiltY * 2}deg, transparent 30%, rgba(168,216,234,0.08) 40%, rgba(200,168,234,0.06) 50%, rgba(234,200,168,0.08) 60%, transparent 70%)`, mixBlendMode: "overlay" }} />
+          {CardVisual}
+        </div>
+
+        {/* Right: info panel — 45% width */}
+        <div
+          className="flex flex-col justify-center gap-5"
+          style={{ width: "38%", maxHeight: "80vh" }}
+        >
+          {/* Owner */}
+          <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">{ownerName} 的收藏</p>
+          {/* Card name */}
+          {card.name && (
+            <h2 className="text-white/95 font-light tracking-[0.08em] text-xl leading-snug line-clamp-3">{card.name}</h2>
+          )}
+          {/* Grade badge */}
+          {card.grader && card.grade && (
+            <span className="self-start text-[10px] px-3 py-1.5 border border-[#C9A84C]/50 text-[#C9A84C] rounded-full font-light tracking-widest">
+              {card.grader} {card.grade}
+            </span>
+          )}
+          {/* Dot indicators */}
+          {cards.length > 1 && (
+            <div className="flex gap-2 mt-2">
+              {cards.map((_, i) => (
+                <button key={i} onClick={() => setCurrent(i)}
+                  className={`rounded-full transition-all duration-300 ${i === current ? "w-5 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
+              ))}
+            </div>
+          )}
+          {/* Divider */}
+          <div className="h-px bg-white/8" />
+          {/* Keyboard hint */}
+          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase">← → 切換卡牌 · ESC 關閉</p>
+        </div>
+      </div>
+
+      {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
+      <div
+        className="flex md:hidden absolute inset-0 flex-col"
+        style={{ paddingTop: "52px", paddingBottom: "8px" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Card area — fills ~58% of remaining height */}
+        <div
+          className="flex-1 flex items-center justify-center px-8"
+          style={{ minHeight: 0, maxHeight: "58vh" }}
+        >
+          <div style={{ height: "100%", maxHeight: "52vh", aspectRatio: "3/4", width: "auto" }}>
+            {CardVisual}
           </div>
         </div>
 
-        {/* Info strip — compact, always visible at bottom */}
-        <div className="flex-shrink-0 text-center mt-3 w-full max-w-xs">
+        {/* Info strip — compact, fixed height */}
+        <div
+          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pb-2"
+          style={{ maxHeight: "36vh" }}
+        >
           {card.name && (
-            <p className="text-white/90 font-light tracking-[0.1em] text-xs mb-1 line-clamp-2 leading-snug">{card.name}</p>
+            <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
           )}
-          <div className="flex items-center justify-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             {card.grader && card.grade && (
-              <span className="inline-block text-[9px] px-2.5 py-0.5 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
+              <span className="text-[9px] px-2.5 py-0.5 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
                 {card.grader} {card.grade}
               </span>
             )}
-            <span className="text-[9px] text-white/30 tracking-[0.25em] uppercase font-light">{ownerName}</span>
+            <span className="text-[9px] text-white/30 tracking-[0.2em] uppercase font-light">{ownerName}</span>
           </div>
           {cards.length > 1 && (
-            <div className="flex justify-center gap-2 mt-2">
+            <div className="flex gap-2">
               {cards.map((_, i) => (
                 <button key={i} onClick={() => setCurrent(i)}
                   className={`rounded-full transition-all duration-300 ${i === current ? "w-4 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
@@ -367,17 +415,30 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
         </div>
       </div>
 
-      {/* Left / Right nav — vertically centered on card area */}
+      {/* ── Shared: Close button (top-right) ── */}
+      <button
+        className="absolute top-3 right-4 z-30 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
+        onClick={e => { e.stopPropagation(); onClose(); }}
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      {/* ── Shared: Counter (top-left) ── */}
+      <div className="absolute top-4 left-5 z-30 text-[10px] text-white/35 tracking-[0.35em] uppercase font-light">
+        {current + 1} / {cards.length}
+      </div>
+
+      {/* ── Shared: Prev / Next nav ── */}
       {cards.length > 1 && (
         <>
           <button
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-20"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
             onClick={e => { e.stopPropagation(); prev(); }}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-20"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
             onClick={e => { e.stopPropagation(); next(); }}
           >
             <ChevronRight className="w-5 h-5" />
@@ -459,7 +520,7 @@ function StackedCardRelics({
       }}
     >
       {/* Main shrine container — relative, NO overflow-hidden */}
-      <div className="relative w-full" style={{ height: "240px" }}>
+      <div className="relative w-full" style={{ height: "310px" }}>
 
         {/* Layer 0: Basalt noise texture (SVG filter) */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0, opacity: 0.035 }}>
@@ -483,7 +544,7 @@ function StackedCardRelics({
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-700"
           style={{ zIndex: 2, opacity: hovered ? 0.18 : 0.06 }}
-          viewBox="0 0 300 240"
+          viewBox="0 0 300 310"
           preserveAspectRatio="xMidYMid meet"
         >
           {/* Rune 1: top-left — Tiwaz */}
@@ -543,7 +604,7 @@ function StackedCardRelics({
           const c = cfg[i];
           // Responsive: use CSS custom properties via inline style for mobile/desktop
           // We use a single scale and let CSS media query handle it via clamp
-          const cardW = c.isMain ? "clamp(78px, 36%, 108px)" : "clamp(60px, 28%, 88px)";
+          const cardW = c.isMain ? "clamp(100px, 44%, 138px)" : "clamp(76px, 34%, 112px)";
           return (
             <div
               key={i}
