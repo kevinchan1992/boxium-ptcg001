@@ -345,7 +345,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── DESKTOP LAYOUT: outer wrapper from navbar bottom, centers content ── */}
       <div
         className="hidden md:flex fixed inset-x-0 bottom-0 items-center justify-center overflow-hidden"
-        style={{ top: "56px" }}
+        style={{ top: "56px", height: "calc(100vh - 56px)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Inner row: card + info, centered in the available area */}
