@@ -331,12 +331,30 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
         style={{ paddingTop: "0", paddingBottom: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — fills full height with padding */}
+        {/* Left: card — fills full height, no blank space */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "42%", height: "90vh" }}
+          style={{ width: "42%", height: "100%" }}
+          ref={imgRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
         >
-          {CardVisual}
+          <div className="relative" style={{ height: "85vh", aspectRatio: "3/4", cursor: "crosshair" }}>
+            <img
+              src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
+              alt={card.name ?? ''}
+              className="w-full h-full rounded-2xl object-cover"
+              style={{
+                transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+                transition: "transform 0.12s ease-out",
+                boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)"
+              }}
+            />
+            <div className="absolute inset-0 rounded-2xl pointer-events-none"
+              style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.4) 0%, rgba(100,160,200,0.18) 35%, transparent 65%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.65, transition: "opacity 0.4s ease" }} />
+            <div className="absolute inset-0 rounded-2xl pointer-events-none"
+              style={{ border: "1px solid rgba(201,168,76,0.35)", boxShadow: "inset 0 0 20px rgba(201,168,76,0.06)" }} />
+          </div>
         </div>
 
         {/* Right: info panel — 45% width */}
@@ -375,23 +393,34 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
       <div
         className="flex md:hidden absolute inset-0 flex-col"
-        style={{ paddingTop: "12px", paddingBottom: "12px" }}
+        style={{ paddingTop: "8px", paddingBottom: "8px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card area — fills remaining height minus info strip */}
+        {/* Card area — explicit height: 100vh minus info strip (90px) minus padding (16px) */}
         <div
-          className="flex-1 flex items-center justify-center px-8"
-          style={{ minHeight: 0 }}
+          className="flex items-center justify-center px-6"
+          style={{ height: "calc(100vh - 106px)", flexShrink: 0 }}
         >
-          <div style={{ height: "100%", maxHeight: "65vh", aspectRatio: "3/4", width: "auto" }}>
-            {CardVisual}
-          </div>
+          <img
+            src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
+            alt={card.name ?? ''}
+            className="rounded-2xl object-contain"
+            style={{
+              maxHeight: "100%",
+              maxWidth: "100%",
+              height: "auto",
+              width: "auto",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18)",
+              border: "1px solid rgba(201,168,76,0.35)"
+            }}
+            onError={e => { (e.target as HTMLImageElement).src = ''; }}
+          />
         </div>
 
-        {/* Info strip — compact, fixed height */}
+        {/* Info strip — compact fixed 90px */}
         <div
-          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pt-2 pb-2"
-          style={{ maxHeight: "28vh" }}
+          className="flex-shrink-0 flex flex-col items-center gap-1.5 px-6 pt-1 pb-2"
+          style={{ height: "90px" }}
         >
           {card.name && (
             <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
