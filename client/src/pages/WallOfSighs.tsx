@@ -586,15 +586,7 @@ function StackedCardRelics({
               {/* Stone niche shadow */}
               {!c.isMain && <div style={{ position:"absolute", bottom:"-6px", left:"8%", right:"8%", height:"10px", borderRadius:"50%", background:"radial-gradient(ellipse, rgba(0,0,0,0.7) 0%, transparent 70%)", filter:"blur(4px)", zIndex:-1 }} />}
 
-              {/* Golden border — sovereign only */}
-              {c.isMain && (
-                <div className="absolute pointer-events-none" style={{ inset:"-3px", borderRadius:"12px", border:"1.5px solid rgba(212,175,55,0.75)", boxShadow: hovered ? "0 0 32px rgba(212,175,55,0.65), 0 0 14px rgba(212,175,55,0.45), inset 0 0 18px rgba(212,175,55,0.12)" : "0 0 16px rgba(212,175,55,0.38), 0 0 6px rgba(212,175,55,0.22)", transition:"box-shadow 0.6s ease", zIndex:30 }} />
-              )}
 
-              {/* Aurora foil — sovereign only */}
-              {c.isMain && (
-                <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ background:"linear-gradient(135deg, rgba(14,165,233,0.30) 0%, rgba(15,118,110,0.16) 40%, rgba(212,175,55,0.20) 70%, transparent 100%)", opacity: hovered ? 1 : 0.55, mixBlendMode:"screen", transition:"opacity 0.5s ease", zIndex:20 }} />
-              )}
 
               {/* Zoom hint */}
               <div className="absolute inset-0 rounded-lg flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ zIndex:35 }}>
@@ -607,7 +599,16 @@ function StackedCardRelics({
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full h-full block"
-                style={{ objectFit:"cover", background:"none", borderRadius:0, outline:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
+                style={{
+                  objectFit: "cover",
+                  background: "none",
+                  borderRadius: "8px",
+                  outline: "none",
+                  boxShadow: c.isMain
+                    ? `0 0 0 1.5px rgba(212,175,55,0.75), ${hovered ? "0 0 28px rgba(212,175,55,0.65), 0 0 12px rgba(212,175,55,0.45)" : "0 0 14px rgba(212,175,55,0.38), 0 0 5px rgba(212,175,55,0.22)"}, 0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88)`
+                    : "0 10px 28px rgba(0,0,0,0.75)",
+                  transition: "box-shadow 0.6s ease",
+                }}
               />
             </div>
           );
