@@ -1002,42 +1002,61 @@ export default function WallOfSighs() {
               為之嘆息的絕世巨富與神級收藏。
             </p>
 
-            {/* ── Stats + CTA row — flex layout, no absolute positioning ── */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-6">
-              {/* Stats altar */}
-              <div className="flex flex-col sm:flex-row bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
+            {/* ── Stats + CTA — vertical golden ratio layout ── */}
+            <div className="flex flex-col items-center w-full max-w-2xl mx-auto">
+
+              {/* Stats altar — 3 cards horizontal, fixed width per card */}
+              <div className="flex flex-row bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)] w-full max-w-lg">
                 {[
-                  { label: "Wall Total Value", value: <><span className="text-base">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1A1A1A]" },
+                  { label: "Wall Total Value", value: <><span className="text-sm">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1A1A1A]" },
                   { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C]" },
                   { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1A1A1A]" },
                 ].map((stat, i) => (
-                  <div key={i} className="flex items-stretch">
-                    {i > 0 && <div className="w-px bg-[#E8E8E4] hidden sm:block" />}
-                    {i > 0 && <div className="h-px bg-[#E8E8E4] sm:hidden" />}
-                    <div className="px-6 py-4 text-center">
-                      <p className="text-[9px] text-[#BCBCB0] tracking-[0.3em] uppercase mb-1 font-light whitespace-nowrap">{stat.label}</p>
-                      <p className={`text-xl font-light tracking-wide ${stat.color}`}>{stat.value}</p>
-                      <div className="mt-1 h-px w-8 mx-auto bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+                  <div key={i} className="flex items-stretch flex-1 min-w-0">
+                    {i > 0 && <div className="w-px bg-[#E8E8E4] shrink-0" />}
+                    <div className="px-3 py-4 text-center flex-1 min-w-0">
+                      <p className="text-[8px] text-[#BCBCB0] tracking-[0.2em] uppercase mb-1 font-light leading-tight">{stat.label}</p>
+                      <p className={`text-lg font-light tracking-wide truncate ${stat.color}`}>{stat.value}</p>
+                      <div className="mt-1 h-px w-6 mx-auto bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* CTA button — stone relic style */}
+              {/* CTA button — Nordic Altar Stone, centered below stats */}
               <button
                 onClick={() => { if (!user) { setLocation("/login"); return; } setShowPublishModal(true); }}
-                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] text-white text-[11px] font-bold tracking-[0.25em] uppercase rounded-xl
-                  hover:bg-[#2D2D2D] transition-all duration-300
-                  shadow-[0_4px_20px_rgba(0,0,0,0.18)]
-                  hover:shadow-[0_8px_25px_-5px_rgba(14,165,233,0.15),0_6px_20px_rgba(0,0,0,0.2)]
-                  hover:-translate-y-0.5 active:translate-y-0"
+                className="mt-8 flex items-center justify-center gap-3 px-12 py-4 rounded-xl transition-all duration-300 active:translate-y-0"
+                style={{
+                  background: "#111113",
+                  color: "white",
+                  border: "1px solid rgba(212,175,55,0.3)",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.22)",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#1A1A1D";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(212,175,55,0.8)";
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 12px 30px -5px rgba(212,175,55,0.2), 0 6px 20px rgba(0,0,0,0.25)";
+                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#111113";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(212,175,55,0.3)";
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.22)";
+                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                }}
               >
-                {/* Rune arrow SVG */}
-                <svg width="12" height="14" viewBox="0 0 12 14" fill="none" className="shrink-0">
-                  <path d="M6 1L6 11M6 1L2 5M6 1L10 5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M1 13H11" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+                {/* Runic upward sword SVG */}
+                <svg width="11" height="15" viewBox="0 0 11 15" fill="none" className="shrink-0">
+                  <path d="M5.5 13V2M5.5 2L2 5.5M5.5 2L9 5.5" stroke="#D4AF37" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 13.5H9" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" opacity="0.55"/>
+                  <path d="M3.5 11.5H7.5" stroke="#D4AF37" strokeWidth="1" strokeLinecap="round" opacity="0.3"/>
                 </svg>
-                登上神殿石壁
+                <span>登上神殿石壁· CLAIM MY SPOT</span>
               </button>
             </div>
           </div>
