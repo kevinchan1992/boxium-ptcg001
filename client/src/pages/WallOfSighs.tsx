@@ -846,7 +846,7 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
 }
 
 // ── Publish Modal ──────────────────────────────────────────────────────────────
-function PublishModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function PublishModal({ open, onClose, onGoToVault }: { open: boolean; onClose: () => void; onGoToVault: () => void }) {
   const utils = trpc.useUtils();
   const { data: myEntry } = trpc.wall.getMyEntry.useQuery(undefined, { enabled: open });
 
@@ -918,8 +918,8 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
               <p className="text-[10px] text-[#BCBCB0] tracking-[0.25em] uppercase mb-2 font-light">距離神殿</p>
               <p className="text-sm font-light text-[#1A1A1A] mb-4 leading-relaxed">{publishError.message}</p>
               <p className="text-[10px] text-[#BCBCB0] mb-5 font-light leading-relaxed">繼續充實您的 Vault，讓資產突破門檻，登上神殿石壁</p>
-              <Button onClick={onClose} className="w-full bg-[#1A1A1A] text-white hover:bg-[#2A2A2A] text-xs h-10 rounded-xl font-light tracking-widest uppercase">
-                繼續充實 Vault
+              <Button onClick={() => { onClose(); onGoToVault(); }} className="w-full bg-[#1A1A1A] text-white hover:bg-[#2A2A2A] text-xs h-10 rounded-xl font-light tracking-widest uppercase">
+                前往 TCG 倉庫充實收藏
               </Button>
             </div>
           ) : (
@@ -1145,7 +1145,7 @@ export default function WallOfSighs() {
           )}
         </div>
 
-        <PublishModal open={showPublishModal} onClose={() => setShowPublishModal(false)} />
+        <PublishModal open={showPublishModal} onClose={() => setShowPublishModal(false)} onGoToVault={() => setLocation("/vault")} />
       </div>
     </>
   );
