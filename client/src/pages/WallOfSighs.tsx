@@ -251,25 +251,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
   const [visible, setVisible] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll when gallery is open — prevents fixed inset-0 from appearing off-screen
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    const prevPosition = document.body.style.position;
-    const prevTop = document.body.style.top;
-    const scrollY = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    setTimeout(() => setVisible(true), 30);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.position = prevPosition;
-      document.body.style.top = prevTop;
-      document.body.style.width = '';
-      window.scrollTo(0, scrollY);
-    };
-  }, []);
+  useEffect(() => { setTimeout(() => setVisible(true), 30); }, []);
   useEffect(() => { setShimmer(true); const t = setTimeout(() => setShimmer(false), 800); return () => clearTimeout(t); }, [current]);
 
   const prev = () => setCurrent(c => (c - 1 + cards.length) % cards.length);
@@ -329,7 +311,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] overflow-hidden"
+      className="fixed inset-0 z-[1000] overflow-hidden"
       style={{ background: "rgba(6,8,14,0.98)", backdropFilter: "blur(28px)", opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" }}
       onClick={onClose}
     >
@@ -346,33 +328,15 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
         className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
-        style={{ paddingTop: "0", paddingBottom: "0" }}
+        style={{ paddingTop: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — fills full height, no blank space */}
+        {/* Left: card — 55% width, max 80vh tall */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "42%", height: "100%" }}
-          ref={imgRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
+          style={{ width: "42%", height: "80vh" }}
         >
-          <div className="relative" style={{ height: "85vh", aspectRatio: "3/4", cursor: "crosshair" }}>
-            <img
-              src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
-              alt={card.name ?? ''}
-              className="w-full h-full rounded-2xl object-cover"
-              style={{
-                transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
-                transition: "transform 0.12s ease-out",
-                boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)"
-              }}
-            />
-            <div className="absolute inset-0 rounded-2xl pointer-events-none"
-              style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.4) 0%, rgba(100,160,200,0.18) 35%, transparent 65%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.65, transition: "opacity 0.4s ease" }} />
-            <div className="absolute inset-0 rounded-2xl pointer-events-none"
-              style={{ border: "1px solid rgba(201,168,76,0.35)", boxShadow: "inset 0 0 20px rgba(201,168,76,0.06)" }} />
-          </div>
+          {CardVisual}
         </div>
 
         {/* Right: info panel — 45% width */}
@@ -411,34 +375,23 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
       <div
         className="flex md:hidden absolute inset-0 flex-col"
-        style={{ paddingTop: "0", paddingBottom: "0" }}
+        style={{ paddingTop: "52px", paddingBottom: "8px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card area — flex-1 fills all space above the info strip */}
+        {/* Card area — fills ~58% of remaining height */}
         <div
           className="flex-1 flex items-center justify-center px-8"
-          style={{ minHeight: 0 }}
+          style={{ minHeight: 0, maxHeight: "58vh" }}
         >
-          <img
-            src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
-            alt={card.name ?? ''}
-            className="rounded-2xl object-contain"
-            style={{
-              maxHeight: "calc(100dvh - 100px)",
-              maxWidth: "100%",
-              height: "auto",
-              width: "auto",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18)",
-              border: "1px solid rgba(201,168,76,0.35)"
-            }}
-            onError={e => { (e.target as HTMLImageElement).src = ''; }}
-          />
+          <div style={{ height: "100%", maxHeight: "52vh", aspectRatio: "3/4", width: "auto" }}>
+            {CardVisual}
+          </div>
         </div>
 
-        {/* Info strip — compact fixed 90px at bottom */}
+        {/* Info strip — compact, fixed height */}
         <div
-          className="flex-shrink-0 flex flex-col items-center gap-1.5 px-6 pt-2 pb-4"
-          style={{ height: "90px" }}
+          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pb-2"
+          style={{ maxHeight: "36vh" }}
         >
           {card.name && (
             <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
@@ -464,18 +417,14 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
       {/* ── Shared: Close button (top-right) ── */}
       <button
-        className="absolute z-[10000] w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
-        style={{ top: "max(16px, env(safe-area-inset-top, 16px))", right: "16px" }}
+        className="absolute top-3 right-4 z-30 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
         onClick={e => { e.stopPropagation(); onClose(); }}
       >
-        <X className="w-5 h-5" />
+        <X className="w-4 h-4" />
       </button>
 
       {/* ── Shared: Counter (top-left) ── */}
-      <div
-        className="absolute z-[10000] text-[10px] text-white/35 tracking-[0.35em] uppercase font-light"
-        style={{ top: "max(20px, env(safe-area-inset-top, 20px))", left: "20px" }}
-      >
+      <div className="absolute top-4 left-5 z-30 text-[10px] text-white/35 tracking-[0.35em] uppercase font-light">
         {current + 1} / {cards.length}
       </div>
 
