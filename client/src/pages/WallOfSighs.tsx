@@ -311,22 +311,12 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
   return (
     <div
-      className="fixed inset-0 z-[9999]"
-      style={{
-        background: "rgba(6,8,14,0.98)",
-        backdropFilter: "blur(28px)",
-        opacity: visible ? 1 : 0,
-        transition: "opacity 0.35s ease",
-        width: "100vw",
-        height: "100dvh",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className="fixed inset-0 z-[1000] overflow-hidden"
+      style={{ background: "rgba(6,8,14,0.98)", backdropFilter: "blur(28px)", opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" }}
       onClick={onClose}
     >
       {/* Aurora ambient bg */}
-      <div className="absolute inset-0 pointer-events-none" style={{ overflow: "hidden" }}>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute rounded-full"
           style={{ width: "60vw", height: "60vw", background: "radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%)", top: "5%", left: "-10%", animation: "auroraFloat 9s ease-in-out infinite", filter: "blur(40px)" }} />
         <div className="absolute rounded-full"
@@ -335,89 +325,40 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           style={{ width: "30vw", height: "30vw", background: "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)", top: "40%", right: "20%", animation: "auroraFloat 7s ease-in-out infinite", filter: "blur(35px)" }} />
       </div>
 
-      {/* ── Top bar: counter + close (shared, always visible) ── */}
-      <div
-        className="flex-shrink-0 flex items-center justify-between px-5 z-10"
-        style={{ height: "52px" }}
-        onClick={e => e.stopPropagation()}
-      >
-        <span className="text-[10px] text-white/35 tracking-[0.35em] uppercase font-light">
-          {current + 1} / {cards.length}
-        </span>
-        <button
-          className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
-          onClick={e => { e.stopPropagation(); onClose(); }}
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
       {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
-        className="hidden md:flex flex-1 items-center justify-center gap-12 px-16 pb-6"
-        style={{ minHeight: 0, overflow: "hidden" }}
+        className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
+        style={{ paddingTop: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — 55% width, max 75vh */}
+        {/* Left: card — 55% width, max 80vh tall */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "55%", maxHeight: "75vh", height: "75vh" }}
+          style={{ width: "42%", height: "80vh" }}
         >
-          <div
-            ref={imgRef}
-            className="relative cursor-pointer"
-            style={{ height: "100%", maxHeight: "75vh", perspective: "1000px" }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
-          >
-            <div
-              style={{ height: "100%", transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.12s ease-out", transformStyle: "preserve-3d" }}
-            >
-              <img
-                src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
-                alt={card.name ?? ""}
-                className="rounded-2xl object-contain"
-                style={{
-                  maxHeight: "75vh",
-                  maxWidth: "100%",
-                  height: "auto",
-                  width: "auto",
-                  display: "block",
-                  boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18), 0 0 30px rgba(201,168,76,0.1)",
-                }}
-                onError={e => { (e.target as HTMLImageElement).src = ''; }}
-              />
-              {/* Aurora foil */}
-              <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.4) 0%, rgba(100,160,200,0.18) 35%, transparent 65%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.65, transition: "opacity 0.4s ease" }} />
-              <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                style={{ background: `linear-gradient(${105 + tiltY * 2}deg, transparent 25%, rgba(168,216,234,0.1) 38%, rgba(200,168,234,0.07) 50%, rgba(234,200,168,0.1) 62%, transparent 75%)`, mixBlendMode: "overlay" }} />
-              <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                style={{ border: "1px solid rgba(201,168,76,0.35)", boxShadow: "inset 0 0 20px rgba(201,168,76,0.06)" }} />
-            </div>
-          </div>
+          {CardVisual}
         </div>
 
-        {/* Right: info panel — 45% width, max 75vh */}
+        {/* Right: info panel — 45% width */}
         <div
           className="flex flex-col justify-center gap-5"
-          style={{ width: "45%", maxHeight: "75vh", overflow: "hidden" }}
+          style={{ width: "38%", maxHeight: "80vh" }}
         >
           {/* Owner */}
-          <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light flex-shrink-0">{ownerName} 的收藏</p>
+          <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">{ownerName} 的收藏</p>
           {/* Card name */}
           {card.name && (
-            <h2 className="text-white/95 font-light tracking-[0.08em] text-xl leading-snug line-clamp-3 flex-shrink-0">{card.name}</h2>
+            <h2 className="text-white/95 font-light tracking-[0.08em] text-xl leading-snug line-clamp-3">{card.name}</h2>
           )}
           {/* Grade badge */}
           {card.grader && card.grade && (
-            <span className="self-start text-[10px] px-3 py-1.5 border border-[#C9A84C]/50 text-[#C9A84C] rounded-full font-light tracking-widest flex-shrink-0">
+            <span className="self-start text-[10px] px-3 py-1.5 border border-[#C9A84C]/50 text-[#C9A84C] rounded-full font-light tracking-widest">
               {card.grader} {card.grade}
             </span>
           )}
           {/* Dot indicators */}
           {cards.length > 1 && (
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex gap-2 mt-2">
               {cards.map((_, i) => (
                 <button key={i} onClick={() => setCurrent(i)}
                   className={`rounded-full transition-all duration-300 ${i === current ? "w-5 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
@@ -425,44 +366,32 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
             </div>
           )}
           {/* Divider */}
-          <div className="h-px bg-white/8 flex-shrink-0" />
+          <div className="h-px bg-white/8" />
           {/* Keyboard hint */}
-          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase flex-shrink-0">← → 切換卡牌 · ESC 關閉</p>
+          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase">← → 切換卡牌 · ESC 關閉</p>
         </div>
       </div>
 
-      {/* ── MOBILE LAYOUT: top card | bottom info ── */}
+      {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
       <div
-        className="flex md:hidden flex-1 flex-col"
-        style={{ minHeight: 0, overflow: "hidden" }}
+        className="flex md:hidden absolute inset-0 flex-col"
+        style={{ paddingTop: "52px", paddingBottom: "8px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card area — 55% of remaining height */}
+        {/* Card area — fills ~58% of remaining height */}
         <div
-          className="flex items-center justify-center px-8"
-          style={{ flex: "0 0 55%", minHeight: 0, overflow: "hidden" }}
+          className="flex-1 flex items-center justify-center px-8"
+          style={{ minHeight: 0, maxHeight: "58vh" }}
         >
-          <img
-            src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
-            alt={card.name ?? ''}
-            className="rounded-2xl object-contain"
-            style={{
-              maxHeight: "45vh",
-              maxWidth: "100%",
-              height: "auto",
-              width: "auto",
-              display: "block",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.85), 0 0 80px rgba(14,165,233,0.18)",
-              border: "1px solid rgba(201,168,76,0.35)"
-            }}
-            onError={e => { (e.target as HTMLImageElement).src = ''; }}
-          />
+          <div style={{ height: "100%", maxHeight: "52vh", aspectRatio: "3/4", width: "auto" }}>
+            {CardVisual}
+          </div>
         </div>
 
-        {/* Info strip — 45% of remaining height */}
+        {/* Info strip — compact, fixed height */}
         <div
-          className="flex flex-col items-center justify-center gap-2 px-6 pb-4"
-          style={{ flex: "0 0 45%", minHeight: 0, overflow: "hidden" }}
+          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pb-2"
+          style={{ maxHeight: "36vh" }}
         >
           {card.name && (
             <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
@@ -484,6 +413,19 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Shared: Close button (top-right) ── */}
+      <button
+        className="absolute top-3 right-4 z-30 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
+        onClick={e => { e.stopPropagation(); onClose(); }}
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      {/* ── Shared: Counter (top-left) ── */}
+      <div className="absolute top-4 left-5 z-30 text-[10px] text-white/35 tracking-[0.35em] uppercase font-light">
+        {current + 1} / {cards.length}
       </div>
 
       {/* ── Shared: Prev / Next nav ── */}
