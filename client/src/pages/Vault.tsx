@@ -240,7 +240,9 @@ export default function Vault() {
     }
   }, []);
 
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/vault` : "https://boxium.asia";
+  const shareUrl = typeof window !== "undefined" && user?.id
+    ? `${window.location.origin}/share/vault/${user.id}`
+    : typeof window !== "undefined" ? `${window.location.origin}/vault` : "https://boxium.asia";
 
   // State for top cards with pre-fetched base64 images
   const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);

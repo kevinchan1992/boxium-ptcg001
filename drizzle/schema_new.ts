@@ -78,6 +78,7 @@ export const users = mysqlTable("users", {
   vipExpiresAt: timestamp("vipExpiresAt"), // null = not subscribed or expired
   stripeCustomerId: varchar("stripeCustomerId", { length: 128 }), // Stripe Customer ID
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }), // Stripe Subscription ID
+  vaultShareImageUrl: text("vaultShareImageUrl"), // S3 URL of the last generated vault share poster image
 });
 
 export type User = typeof users.$inferSelect;

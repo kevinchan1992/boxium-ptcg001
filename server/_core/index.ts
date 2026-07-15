@@ -3496,6 +3496,28 @@ async function startServer() {
         return;
       }
       const pngBuffer = await generateShareCard(data);
+
+      // Upload to S3 and save URL in DB for OG image sharing
+      try {
+        const { authenticateSession } = await import("./authenticateSession");
+        const user = await authenticateSession(req);
+        if (user) {
+          const { storagePut } = await import("../storage");
+          const { getDb } = await import("../db");
+          const { users: usersTable } = await import("../../drizzle/schema_new");
+          const { eq } = await import("drizzle-orm");
+          const s3Key = `vault-share/${user.id}-${Date.now()}.png`;
+          const { url: s3Url } = await storagePut(s3Key, pngBuffer, "image/png");
+          const db = await getDb();
+          if (db) {
+            await db.update(usersTable).set({ vaultShareImageUrl: s3Url } as Record<string, unknown>).where(eq(usersTable.id, user.id));
+          }
+        }
+      } catch (uploadErr) {
+        // Non-fatal: still return the image even if S3 upload fails
+        console.warn("[share-card] S3 upload failed (non-fatal):", uploadErr);
+      }
+
       res.set("Content-Type", "image/png");
       res.set("Content-Length", String(pngBuffer.length));
       res.set("Cache-Control", "no-store");
@@ -3503,6 +3525,64 @@ async function startServer() {
     } catch (err) {
       console.error("[share-card] generation error:", err);
       res.status(500).json({ error: "Failed to generate share card" });
+    }
+  });
+
+  // ── Vault OG Share Page (for WhatsApp/Facebook/Instagram link previews) ────
+  // GET /share/vault/:userId - returns HTML with OG meta tags, then redirects to /vault
+  app.get("/share/vault/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (!userId || isNaN(userId)) {
+        res.redirect("/vault");
+        return;
+      }
+      const { getDb } = await import("../db");
+      const { users: usersTable } = await import("../../drizzle/schema_new");
+      const { eq } = await import("drizzle-orm");
+      const db = await getDb();
+      let ogImageUrl = "https://boxium.asia/og-default.png";
+      let userName = "TCG Collector";
+      if (db) {
+        const rows = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+        if (rows.length > 0) {
+          const row = rows[0] as { name: string | null; vaultShareImageUrl?: string | null };
+          if (row.vaultShareImageUrl) ogImageUrl = row.vaultShareImageUrl;
+          if (row.name) userName = row.name;
+        }
+      }
+      const title = `${userName} 的 TCG 倉庫 · BOXIUM`;
+      const description = `查看 ${userName} 在 BOXIUM TCG 倉庫的卡牌收藏與市場價值。`;
+      const vaultUrl = `https://boxium.asia/vault`;
+      res.set("Content-Type", "text/html; charset=utf-8");
+      res.set("Cache-Control", "public, max-age=300"); // 5 min cache
+      res.send(`<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:image" content="${ogImageUrl}" />
+  <meta property="og:image:width" content="1080" />
+  <meta property="og:image:height" content="1080" />
+  <meta property="og:url" content="${vaultUrl}" />
+  <meta property="og:site_name" content="BOXIUM TCG" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${ogImageUrl}" />
+  <meta http-equiv="refresh" content="0; url=${vaultUrl}" />
+</head>
+<body>
+  <p>正在轉跳到 BOXIUM TCG 倉庫頁面… <a href="${vaultUrl}">點此前往</a></p>
+  <script>window.location.replace('${vaultUrl}');</script>
+</body>
+</html>`);
+    } catch (err) {
+      console.error("[share/vault] error:", err);
+      res.redirect("/vault");
     }
   });
 
