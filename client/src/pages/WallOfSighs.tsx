@@ -411,20 +411,20 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
       <div
         className="flex md:hidden absolute inset-0 flex-col"
-        style={{ paddingTop: "8px", paddingBottom: "8px" }}
+        style={{ paddingTop: "0", paddingBottom: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card area — explicit height: 100vh minus info strip (90px) minus padding (16px) */}
+        {/* Card area — flex-1 fills all space above the info strip */}
         <div
-          className="flex items-center justify-center px-6"
-          style={{ height: "calc(100vh - 106px)", flexShrink: 0 }}
+          className="flex-1 flex items-center justify-center px-8"
+          style={{ minHeight: 0 }}
         >
           <img
             src={card.imageUrl ? (card.imageUrl.includes('snkrdunk') ? `/api/img-proxy?url=${encodeURIComponent(card.imageUrl)}` : card.imageUrl) : ''}
             alt={card.name ?? ''}
             className="rounded-2xl object-contain"
             style={{
-              maxHeight: "100%",
+              maxHeight: "calc(100dvh - 100px)",
               maxWidth: "100%",
               height: "auto",
               width: "auto",
@@ -435,9 +435,9 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           />
         </div>
 
-        {/* Info strip — compact fixed 90px */}
+        {/* Info strip — compact fixed 90px at bottom */}
         <div
-          className="flex-shrink-0 flex flex-col items-center gap-1.5 px-6 pt-1 pb-2"
+          className="flex-shrink-0 flex flex-col items-center gap-1.5 px-6 pt-2 pb-4"
           style={{ height: "90px" }}
         >
           {card.name && (
@@ -464,14 +464,18 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
       {/* ── Shared: Close button (top-right) ── */}
       <button
-        className="absolute top-3 right-4 z-30 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
+        className="absolute z-[10000] w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all"
+        style={{ top: "max(16px, env(safe-area-inset-top, 16px))", right: "16px" }}
         onClick={e => { e.stopPropagation(); onClose(); }}
       >
-        <X className="w-4 h-4" />
+        <X className="w-5 h-5" />
       </button>
 
       {/* ── Shared: Counter (top-left) ── */}
-      <div className="absolute top-4 left-5 z-30 text-[10px] text-white/35 tracking-[0.35em] uppercase font-light">
+      <div
+        className="absolute z-[10000] text-[10px] text-white/35 tracking-[0.35em] uppercase font-light"
+        style={{ top: "max(20px, env(safe-area-inset-top, 20px))", left: "20px" }}
+      >
         {current + 1} / {cards.length}
       </div>
 
