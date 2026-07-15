@@ -339,21 +339,21 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
         className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
-        style={{ paddingTop: "0" }}
+        style={{ paddingBottom: "80px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — 55% width, max 80vh tall */}
+        {/* Left: card — 42% width, max 75vh tall */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "42%", height: "80vh" }}
+          style={{ width: "42%", height: "75vh" }}
         >
           {CardVisual}
         </div>
 
-        {/* Right: info panel — 45% width */}
+        {/* Right: info panel — 38% width */}
         <div
           className="flex flex-col justify-center gap-5"
-          style={{ width: "38%", maxHeight: "80vh" }}
+          style={{ width: "38%", maxHeight: "75vh" }}
         >
           {/* Owner */}
           <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">{ownerName} 的收藏</p>
