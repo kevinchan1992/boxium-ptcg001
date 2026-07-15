@@ -791,7 +791,7 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
           {/* Name + sigh count row */}
           <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
             <div className="min-w-0 flex-1">
-              <p className="font-light text-[#1A1A1A] text-sm tracking-[0.06em] truncate">{entry.displayName}</p>
+              <p className="font-medium text-[#1C1C1E] text-sm tracking-[0.06em] truncate">{entry.displayName}</p>
     
             </div>
             <div className="flex items-center gap-1 text-[#C9A84C] shrink-0">
@@ -802,8 +802,8 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
 
           {/* Value — runic inscription */}
           <div className="my-3 py-2.5 border-t border-b border-[#EEEEE8]">
-            <p className="text-[9px] text-[#BCBCB0] tracking-[0.3em] uppercase mb-0.5 font-light">Total Value</p>
-            <p className="text-lg font-light text-[#1A1A1A] tracking-[0.04em] truncate">{formatHKD(entry.totalValueHKD)}</p>
+            <p className="text-[9px] text-[#4A4A50] tracking-[0.3em] uppercase mb-0.5 font-medium">Total Value</p>
+            <p className="text-lg font-medium text-[#1C1C1E] tracking-[0.04em] truncate">{formatHKD(entry.totalValueHKD)}</p>
             <div className="mt-1 h-px w-14 bg-gradient-to-r from-[#C9A84C]/60 to-transparent" />
           </div>
 
@@ -1048,14 +1048,14 @@ export default function WallOfSighs() {
               {/* Stats altar — 3 cards horizontal, fixed width per card */}
               <div className="flex flex-row bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)] w-full max-w-lg">
                 {[
-                  { label: "Wall Total Value", value: <><span className="text-sm">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1A1A1A]" },
-                  { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C]" },
-                  { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1A1A1A]" },
+                  { label: "Wall Total Value", value: <><span className="text-sm">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1C1C1E] font-medium" },
+                  { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C] font-medium" },
+                  { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1C1C1E] font-medium" },
                 ].map((stat, i) => (
                   <div key={i} className="flex items-stretch flex-1 min-w-0">
                     {i > 0 && <div className="w-px bg-[#E8E8E4] shrink-0" />}
                     <div className="px-3 py-4 text-center flex-1 min-w-0">
-                      <p className="text-[8px] text-[#BCBCB0] tracking-[0.2em] uppercase mb-1 font-light leading-tight">{stat.label}</p>
+                      <p className="text-[8px] text-[#4A4A50] tracking-[0.2em] uppercase mb-1 font-medium leading-tight">{stat.label}</p>
                       <p className={`text-lg font-light tracking-wide truncate ${stat.color}`}>{stat.value}</p>
                       <div className="mt-1 h-px w-6 mx-auto bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
                     </div>
@@ -1106,8 +1106,8 @@ export default function WallOfSighs() {
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-[9px] text-[#BCBCB0] tracking-[0.35em] uppercase mb-0.5 font-light">Sanctuary</p>
-              <h2 className="text-sm font-light text-[#1A1A1A] tracking-[0.2em] uppercase">殿堂排行 · {entries.length}</h2>
+              <p className="text-[9px] text-[#4A4A50] tracking-[0.35em] uppercase mb-0.5 font-medium">Sanctuary</p>
+              <h2 className="text-sm font-medium text-[#1C1C1E] tracking-[0.2em] uppercase">殿堂排行 · {entries.length}</h2>
             </div>
             <div className="flex gap-0.5 bg-white border border-[#E8E8E4] rounded-xl p-1 shadow-sm">
               {(["totalValue", "sighs", "createdAt"] as const).map(s => (
