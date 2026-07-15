@@ -311,7 +311,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] overflow-hidden"
+      className="fixed inset-0 z-[9999] overflow-hidden"
       style={{ background: "rgba(6,8,14,0.98)", backdropFilter: "blur(28px)", opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" }}
       onClick={onClose}
     >
@@ -328,13 +328,13 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
         className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
-        style={{ paddingTop: "0" }}
+        style={{ paddingTop: "0", paddingBottom: "0" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — 55% width, max 80vh tall */}
+        {/* Left: card — fills full height with padding */}
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "42%", height: "80vh" }}
+          style={{ width: "42%", height: "90vh" }}
         >
           {CardVisual}
         </div>
@@ -375,23 +375,23 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── MOBILE LAYOUT: top card | bottom info — fully one-page ── */}
       <div
         className="flex md:hidden absolute inset-0 flex-col"
-        style={{ paddingTop: "52px", paddingBottom: "8px" }}
+        style={{ paddingTop: "12px", paddingBottom: "12px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Card area — fills ~58% of remaining height */}
+        {/* Card area — fills remaining height minus info strip */}
         <div
           className="flex-1 flex items-center justify-center px-8"
-          style={{ minHeight: 0, maxHeight: "58vh" }}
+          style={{ minHeight: 0 }}
         >
-          <div style={{ height: "100%", maxHeight: "52vh", aspectRatio: "3/4", width: "auto" }}>
+          <div style={{ height: "100%", maxHeight: "65vh", aspectRatio: "3/4", width: "auto" }}>
             {CardVisual}
           </div>
         </div>
 
         {/* Info strip — compact, fixed height */}
         <div
-          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pb-2"
-          style={{ maxHeight: "36vh" }}
+          className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pt-2 pb-2"
+          style={{ maxHeight: "28vh" }}
         >
           {card.name && (
             <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
