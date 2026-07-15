@@ -572,6 +572,7 @@ function StackedCardRelics({
               className="absolute cursor-zoom-in group/relic"
               style={{
                 width: cardW,
+                aspectRatio: "3/4",
                 left: c.leftPct,
                 top: "50%",
                 transform: `translate(-50%, -50%) translateY(${c.translateY}px) perspective(800px) rotateY(${c.rotateY}deg) rotate(${c.rotate}deg) scale(${c.scale})`,
@@ -605,8 +606,8 @@ function StackedCardRelics({
               <SafeCardImg
                 src={card.imageUrl}
                 alt={card.name ?? ""}
-                className="w-full block"
-                style={{ aspectRatio:"3/4", objectFit:"contain", background:"none", borderRadius:0, outline:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
+                className="w-full h-full block"
+                style={{ objectFit:"cover", background:"none", borderRadius:0, outline:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
               />
             </div>
           );
