@@ -65,6 +65,7 @@ export function TopNav() {
   const showSellButton = user?.role === 'admin' || sellerCenterAccess?.allowed !== false;
   const { data: lootModeData } = trpc.lootpool.checkMaintenanceMode.useQuery(undefined, { staleTime: 60000 });
   const showLootPool = !(lootModeData?.enabled) || user?.role === 'admin';
+  const { data: cardStats } = trpc.cards.getStats.useQuery(undefined, { staleTime: 60 * 60 * 1000 }); // refresh hourly
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
@@ -307,7 +308,7 @@ export function TopNav() {
             {/* Center nav — desktop/tablet only (md+), absolutely centered */}
             <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-0.5">
               {[
-                { href: "/research", label: t("common.research"), Icon: Search, tip: t("topnav.tipResearch") },
+                { href: "/research", label: t("common.research"), Icon: Search, tip: cardStats?.totalCards ? `搜尋 ${(cardStats.totalCards / 10000).toFixed(1)}萬+ 張卡牌的市場行情` : t("topnav.tipResearch") },
                 { href: "/pricing", label: t("common.priceComparison"), Icon: BarChart2, tip: t("topnav.tipPricing") },
                 { href: "/vault", label: t("nav.tcgVault", "TCG 倉庫"), Icon: Vault, tip: t("topnav.tipVault", "追蹤持倉走勢與盈虧") },
                 { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "歎息之牆"), Icon: Award, tip: "諸神殿堂 · 頂尖卡牌收藏排行" },
