@@ -1,7 +1,7 @@
 /**
  * wallPosterGenerator.ts
  * Generates a 1080×1350 "Honour Certificate" poster for Wall of Sighs entries.
- * Design: Obsidian Stone Altar — dark basalt background, golden rune border, glowing gold typography.
+ * Design: Nordic White Sanctuary — alabaster marble background, champagne gold typography, dawn-light glow.
  */
 import { createCanvas, loadImage, registerFont } from "canvas";
 import type { CanvasRenderingContext2D } from "canvas";
@@ -9,7 +9,6 @@ import * as fs from "fs";
 import * as path from "path";
 
 // ── Font Registration ─────────────────────────────────────────────────────────
-// Rib One for BOXIUM.TCG header (download if not present)
 const RIB_ONE_PATH = "/tmp/RibOne-Regular.ttf";
 const RIB_ONE_URL = "https://fonts.gstatic.com/s/ribone/v7/2sDcZGJLip7W2J7v7wQZZTAhWvA.ttf";
 
@@ -21,7 +20,7 @@ async function ensureRibOneFont() {
         const buf = Buffer.from(await resp.arrayBuffer());
         fs.writeFileSync(RIB_ONE_PATH, buf);
       }
-    } catch { /* skip if download fails */ }
+    } catch { /* skip */ }
   }
   if (fs.existsSync(RIB_ONE_PATH)) {
     try { registerFont(RIB_ONE_PATH, { family: "Rib One" }); } catch { /* already registered */ }
@@ -59,27 +58,18 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
+// Warm gold divider line
 function drawGoldDivider(ctx: CanvasRenderingContext2D, y: number, x1 = 80, x2 = 1000) {
   const grad = ctx.createLinearGradient(x1, y, x2, y);
   grad.addColorStop(0, "transparent");
-  grad.addColorStop(0.12, "rgba(212,175,55,0.8)");
-  grad.addColorStop(0.5, "#D4AF37");
-  grad.addColorStop(0.88, "rgba(212,175,55,0.8)");
+  grad.addColorStop(0.12, "rgba(180,145,50,0.5)");
+  grad.addColorStop(0.5, "rgba(180,145,50,0.85)");
+  grad.addColorStop(0.88, "rgba(180,145,50,0.5)");
   grad.addColorStop(1, "transparent");
   ctx.save();
   ctx.strokeStyle = grad;
   ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x1, y);
-  ctx.lineTo(x2, y);
-  ctx.stroke();
-  // thin inner glow line
-  ctx.strokeStyle = "rgba(255,220,100,0.15)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(x1, y);
-  ctx.lineTo(x2, y);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
   ctx.restore();
 }
 
@@ -106,40 +96,38 @@ async function fetchImage(url: string) {
 async function drawQRCode(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
   try {
     const QRCode = await import("qrcode");
-    const dataUrl = await QRCode.toDataURL(text, { width: size, margin: 1, color: { dark: "#1A1A1A", light: "#FFFFFF" } });
+    const dataUrl = await QRCode.toDataURL(text, { width: size, margin: 1, color: { dark: "#2A2010", light: "#FDFAF4" } });
     const img = await loadImage(dataUrl);
-    // Gold frame around QR
     ctx.save();
-    ctx.strokeStyle = "rgba(212,175,55,0.7)";
-    ctx.lineWidth = 2;
-    roundRect(ctx, x - 10, y - 10, size + 20, size + 20, 8);
-    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "rgba(180,145,50,0.6)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x - 8, y - 8, size + 16, size + 16, 8);
+    ctx.fillStyle = "#FDFAF4";
     ctx.fill();
     ctx.stroke();
     ctx.restore();
     ctx.drawImage(img, x, y, size, size);
   } catch {
     ctx.save();
-    ctx.fillStyle = "#1E1E22";
-    roundRect(ctx, x - 10, y - 10, size + 20, size + 20, 8);
+    ctx.fillStyle = "#F0EBE0";
+    roundRect(ctx, x - 8, y - 8, size + 16, size + 16, 8);
     ctx.fill();
     ctx.restore();
   }
 }
 
-// Draw a glowing rune symbol (Elder Futhark style) at position
+// Nordic rune — Tiwaz (victory/honour) — drawn in antique gold on white
 function drawRune(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, opacity: number) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(size / 60, size / 60);
-  ctx.strokeStyle = `rgba(212,175,55,${opacity})`;
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = `rgba(160,125,40,${opacity})`;
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.shadowColor = `rgba(212,175,55,${opacity * 0.8})`;
-  ctx.shadowBlur = 8;
+  ctx.shadowColor = `rgba(200,165,60,${opacity * 0.5})`;
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  // Tiwaz rune: ↑ with crossbars
   ctx.moveTo(0, 30); ctx.lineTo(30, -30); ctx.lineTo(60, 30);
   ctx.moveTo(10, 5); ctx.lineTo(50, 5);
   ctx.stroke();
@@ -150,13 +138,12 @@ function drawOthalaRune(ctx: CanvasRenderingContext2D, x: number, y: number, siz
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(size / 60, size / 60);
-  ctx.strokeStyle = `rgba(14,165,233,${opacity})`;
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = `rgba(140,110,35,${opacity})`;
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
-  ctx.shadowColor = `rgba(14,165,233,${opacity * 0.8})`;
-  ctx.shadowBlur = 8;
+  ctx.shadowColor = `rgba(180,145,50,${opacity * 0.5})`;
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  // Othala: diamond with legs
   ctx.moveTo(30, 0); ctx.lineTo(60, 30); ctx.lineTo(30, 60); ctx.lineTo(0, 30); ctx.closePath();
   ctx.moveTo(0, 30); ctx.lineTo(-10, 55);
   ctx.moveTo(60, 30); ctx.lineTo(70, 55);
@@ -184,265 +171,291 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
-  // ── 1. Background: Deep Obsidian Stone ───────────────────────────────────────
-  // Base dark fill
-  ctx.fillStyle = "#0D0D10";
+  // ── 1. Background: Nordic White Marble ──────────────────────────────────────
+  // Base warm white
+  ctx.fillStyle = "#FDFAF4";
   ctx.fillRect(0, 0, W, H);
 
-  // Aurora radial gradient overlay
-  const auroraGrad = ctx.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, W * 0.7);
-  auroraGrad.addColorStop(0, "rgba(20,184,166,0.13)");
-  auroraGrad.addColorStop(0.4, "rgba(14,165,233,0.08)");
-  auroraGrad.addColorStop(1, "rgba(13,13,16,0)");
-  ctx.fillStyle = auroraGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Subtle stone texture (fine grid)
+  // Subtle marble vein lines (diagonal, very faint)
   ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.025)";
+  ctx.strokeStyle = "rgba(180,160,120,0.07)";
+  ctx.lineWidth = 1.5;
+  for (let i = -H; i < W + H; i += 55) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + H * 0.4, H);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(160,140,100,0.04)";
   ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 36) {
+  for (let i = -H; i < W + H; i += 88) {
+    ctx.beginPath();
+    ctx.moveTo(i + 20, 0);
+    ctx.lineTo(i + H * 0.35, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Dawn glow: warm gold + ice blue radial overlay at center
+  const dawnGrad = ctx.createRadialGradient(W / 2, H * 0.38, 0, W / 2, H * 0.38, W * 0.65);
+  dawnGrad.addColorStop(0, "rgba(255,230,140,0.18)");
+  dawnGrad.addColorStop(0.3, "rgba(200,175,100,0.08)");
+  dawnGrad.addColorStop(0.6, "rgba(180,210,240,0.06)");
+  dawnGrad.addColorStop(1, "rgba(253,250,244,0)");
+  ctx.fillStyle = dawnGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle noise texture (fine dot grid)
+  ctx.save();
+  ctx.strokeStyle = "rgba(160,140,100,0.04)";
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 28) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
   }
-  for (let y = 0; y < H; y += 36) {
+  for (let y = 0; y < H; y += 28) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
   ctx.restore();
 
-  // ── 2. Double Gold Border ────────────────────────────────────────────────────
+  // ── 2. Double Antique Gold Border ───────────────────────────────────────────
   // Outer border
   ctx.save();
-  const outerBorderGrad = ctx.createLinearGradient(0, 0, W, H);
-  outerBorderGrad.addColorStop(0, "#8B6914");
-  outerBorderGrad.addColorStop(0.3, "#D4AF37");
-  outerBorderGrad.addColorStop(0.5, "#F5D060");
-  outerBorderGrad.addColorStop(0.7, "#D4AF37");
-  outerBorderGrad.addColorStop(1, "#8B6914");
-  ctx.strokeStyle = outerBorderGrad;
-  ctx.lineWidth = 3;
-  roundRect(ctx, 18, 18, W - 36, H - 36, 18);
+  const outerGrad = ctx.createLinearGradient(0, 0, W, H);
+  outerGrad.addColorStop(0, "#8B6914");
+  outerGrad.addColorStop(0.3, "#C9A84C");
+  outerGrad.addColorStop(0.5, "#E8C96A");
+  outerGrad.addColorStop(0.7, "#C9A84C");
+  outerGrad.addColorStop(1, "#8B6914");
+  ctx.strokeStyle = outerGrad;
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, 20, 20, W - 40, H - 40, 16);
   ctx.stroke();
   ctx.restore();
 
-  // Inner border (thinner)
+  // Inner border (hairline)
   ctx.save();
-  ctx.strokeStyle = "rgba(212,175,55,0.35)";
+  ctx.strokeStyle = "rgba(180,145,50,0.30)";
   ctx.lineWidth = 1;
-  roundRect(ctx, 30, 30, W - 60, H - 60, 14);
+  roundRect(ctx, 32, 32, W - 64, H - 64, 12);
   ctx.stroke();
   ctx.restore();
 
-  // ── 3. Corner Runes ──────────────────────────────────────────────────────────
-  drawRune(ctx, 38, 38, 44, 0.55);
-  // top-right: mirror
-  ctx.save(); ctx.translate(W - 38, 38); ctx.scale(-1, 1); drawRune(ctx, 0, 0, 44, 0.55); ctx.restore();
-  drawOthalaRune(ctx, 38, H - 90, 44, 0.45);
-  ctx.save(); ctx.translate(W - 38, H - 90); ctx.scale(-1, 1); drawOthalaRune(ctx, 0, 0, 44, 0.45); ctx.restore();
+  // ── 3. Corner Runes ─────────────────────────────────────────────────────────
+  drawRune(ctx, 40, 40, 42, 0.50);
+  ctx.save(); ctx.translate(W - 40, 40); ctx.scale(-1, 1); drawRune(ctx, 0, 0, 42, 0.50); ctx.restore();
+  drawOthalaRune(ctx, 40, H - 88, 42, 0.40);
+  ctx.save(); ctx.translate(W - 40, H - 88); ctx.scale(-1, 1); drawOthalaRune(ctx, 0, 0, 42, 0.40); ctx.restore();
 
-  // ── 4. Header: BOXIUM · TCG (Rib One) ────────────────────────────────────────
+  // ── 4. Header: BOXIUM · TCG ─────────────────────────────────────────────────
   ctx.save();
   const ribOneAvailable = fs.existsSync(RIB_ONE_PATH);
-  ctx.font = `bold 32px ${ribOneAvailable ? "'Rib One', " : ""}${CJK_FONT}`;
+  ctx.font = `bold 30px ${ribOneAvailable ? "'Rib One', " : ""}${CJK_FONT}`;
   ctx.textAlign = "center";
-  // Gold gradient text simulation via shadow glow
-  ctx.shadowColor = "rgba(212,175,55,0.6)";
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = "#D4AF37";
+  ctx.fillStyle = "#8B6914";
   ctx.fillText("BOXIUM · TCG", W / 2, 92);
   ctx.restore();
 
   drawGoldDivider(ctx, 116);
 
-  // ── 5. Title: 嘆息之牆 ────────────────────────────────────────────────────────
+  // ── 5. Title: 嘆息之牆 ──────────────────────────────────────────────────────
   ctx.save();
-  ctx.shadowColor = "rgba(212,175,55,0.4)";
-  ctx.shadowBlur = 20;
-  ctx.fillStyle = "#F0E6C8";
-  ctx.font = `bold 58px ${CJK_FONT}`;
+  ctx.fillStyle = "#2A1F0A";
+  ctx.font = `bold 56px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText("嘆息之牆", W / 2, 192);
+  ctx.shadowColor = "rgba(180,145,50,0.20)";
+  ctx.shadowBlur = 14;
+  ctx.fillText("嘆息之牆", W / 2, 190);
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = "rgba(180,160,100,0.7)";
-  ctx.font = `16px ${CJK_FONT}`;
-  ctx.textAlign = "center";
-  ctx.fillText("THE WALL OF SIGHS  ·  HONOUR CERTIFICATE", W / 2, 228);
-  ctx.restore();
-
-  drawGoldDivider(ctx, 255);
-
-  // ── 6. Recipient ─────────────────────────────────────────────────────────────
-  ctx.save();
-  ctx.fillStyle = "rgba(160,140,80,0.8)";
-  ctx.font = `15px ${CJK_FONT}`;
-  ctx.textAlign = "center";
-  ctx.fillText("茲 證 明", W / 2, 300);
-  ctx.restore();
-
-  // Giant glowing gold name
-  ctx.save();
-  const nameGrad = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
-  nameGrad.addColorStop(0, "#C9A84C");
-  nameGrad.addColorStop(0.4, "#F5D060");
-  nameGrad.addColorStop(0.6, "#FFE88A");
-  nameGrad.addColorStop(1, "#C9A84C");
-  ctx.fillStyle = nameGrad;
-  ctx.shadowColor = "rgba(212,175,55,0.7)";
-  ctx.shadowBlur = 28;
-  ctx.font = `bold 52px ${CJK_FONT}`;
-  ctx.textAlign = "center";
-  const name = data.displayName.length > 14 ? data.displayName.slice(0, 14) + "…" : data.displayName;
-  ctx.fillText(name, W / 2, 368);
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = "rgba(140,120,70,0.75)";
-  ctx.font = `15px ${CJK_FONT}`;
-  ctx.textAlign = "center";
-  ctx.fillText("此生有幸，得瞻神蹟", W / 2, 400);
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = "rgba(160,140,80,0.6)";
+  ctx.fillStyle = "rgba(120,95,40,0.65)";
   ctx.font = `14px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText("已成功登上嘆息之牆，令全網 TCG 玩家為之嘆息", W / 2, 428);
+  ctx.fillText("THE WALL OF SIGHS  ·  HONOUR CERTIFICATE", W / 2, 224);
   ctx.restore();
 
-  drawGoldDivider(ctx, 452);
+  drawGoldDivider(ctx, 250);
 
-  // ── 7. Total Value ────────────────────────────────────────────────────────────
+  // ── 6. Recipient ────────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.fillStyle = "rgba(100,80,35,0.65)";
+  ctx.font = `14px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  ctx.fillText("茲 證 明", W / 2, 296);
+  ctx.restore();
+
+  // Name — champagne gold with emboss shadow (gold foil on stone)
+  ctx.save();
+  const nameGrad = ctx.createLinearGradient(W / 2 - 220, 0, W / 2 + 220, 0);
+  nameGrad.addColorStop(0, "#8B6914");
+  nameGrad.addColorStop(0.3, "#C9A84C");
+  nameGrad.addColorStop(0.5, "#E8C96A");
+  nameGrad.addColorStop(0.7, "#C9A84C");
+  nameGrad.addColorStop(1, "#8B6914");
+  ctx.fillStyle = nameGrad;
+  // Emboss: dark shadow below, light highlight above
+  ctx.shadowColor = "rgba(60,40,10,0.35)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+  ctx.font = `bold 54px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  const name = data.displayName.length > 14 ? data.displayName.slice(0, 14) + "…" : data.displayName;
+  ctx.fillText(name, W / 2, 366);
+  // Highlight pass
+  ctx.shadowColor = "rgba(255,240,160,0.6)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = -1;
+  ctx.fillText(name, W / 2, 366);
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "rgba(100,80,35,0.60)";
+  ctx.font = `14px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  ctx.fillText("此生有幸，得瞻神蹟", W / 2, 398);
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "rgba(120,95,40,0.50)";
+  ctx.font = `13px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  ctx.fillText("已成功登上嘆息之牆，令全網 TCG 玩家為之嘆息", W / 2, 424);
+  ctx.restore();
+
+  drawGoldDivider(ctx, 448);
+
+  // ── 7. Total Value ───────────────────────────────────────────────────────────
   const valueStr = `HKD ${data.totalValueHKD.toLocaleString("en-HK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   ctx.save();
-  ctx.fillStyle = "rgba(140,120,70,0.7)";
-  ctx.font = `13px ${CJK_FONT}`;
+  ctx.fillStyle = "rgba(100,80,35,0.55)";
+  ctx.font = `12px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText("VAULT TOTAL VALUE", W / 2, 492);
+  ctx.fillText("VAULT TOTAL VALUE", W / 2, 488);
   ctx.restore();
 
   ctx.save();
-  ctx.shadowColor = "rgba(255,255,255,0.15)";
+  ctx.fillStyle = "#1A1208";
+  ctx.font = `bold 58px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  ctx.shadowColor = "rgba(180,145,50,0.15)";
   ctx.shadowBlur = 8;
-  ctx.fillStyle = "#F0E6C8";
-  ctx.font = `bold 60px ${CJK_FONT}`;
-  ctx.textAlign = "center";
-  ctx.fillText(valueStr, W / 2, 564);
+  ctx.fillText(valueStr, W / 2, 558);
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = "#C9A84C";
-  ctx.shadowColor = "rgba(212,175,55,0.5)";
-  ctx.shadowBlur = 10;
-  ctx.font = `bold 20px ${CJK_FONT}`;
+  const sigGrad = ctx.createLinearGradient(W / 2 - 80, 0, W / 2 + 80, 0);
+  sigGrad.addColorStop(0, "#8B6914");
+  sigGrad.addColorStop(0.5, "#C9A84C");
+  sigGrad.addColorStop(1, "#8B6914");
+  ctx.fillStyle = sigGrad;
+  ctx.font = `bold 18px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText(`${data.sighs.toLocaleString()} 次嘆息`, W / 2, 600);
+  ctx.fillText(`${data.sighs.toLocaleString()} 次嘆息`, W / 2, 592);
   ctx.restore();
 
-  drawGoldDivider(ctx, 626);
+  drawGoldDivider(ctx, 618);
 
-  // ── 8. Crown Jewel Card ───────────────────────────────────────────────────────
-  let cardBottomY = 650;
+  // ── 8. Crown Jewel Card ──────────────────────────────────────────────────────
+  let cardBottomY = 640;
   if (data.topCardImageUrl) {
     const cardImg = await fetchImage(data.topCardImageUrl);
     if (cardImg) {
-      const cardW = 250, cardH = 350;
+      // Maintain 3:4 aspect ratio — never stretch
+      const cardW = 240;
+      const cardH = Math.round(cardW * 4 / 3); // = 320
       const cardX = (W - cardW) / 2;
-      const cardY = 650;
+      const cardY = 640;
 
-      // Deep 3D shadow
+      // Warm stone niche shadow behind card
       ctx.save();
-      ctx.shadowColor = "rgba(212,175,55,0.4)";
-      ctx.shadowBlur = 55;
-      ctx.shadowOffsetY = 18;
-      ctx.fillStyle = "rgba(0,0,0,0.01)";
-      roundRect(ctx, cardX, cardY, cardW, cardH, 14);
-      ctx.fill();
-      ctx.restore();
-
-      // Dark shadow layer
-      ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,0.9)";
+      ctx.shadowColor = "rgba(100,80,30,0.25)";
       ctx.shadowBlur = 40;
-      ctx.shadowOffsetY = 14;
+      ctx.shadowOffsetY = 16;
       ctx.fillStyle = "rgba(0,0,0,0.01)";
-      roundRect(ctx, cardX + 6, cardY + 10, cardW - 12, cardH, 14);
+      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
       ctx.fill();
       ctx.restore();
 
-      // Card image clipped with rounded corners
+      // Card image — clipped to exact 3:4 ratio, no stretch
       ctx.save();
-      roundRect(ctx, cardX, cardY, cardW, cardH, 14);
+      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
       ctx.clip();
-      ctx.drawImage(cardImg, cardX, cardY, cardW, cardH);
+      // Draw image maintaining aspect ratio (object-contain equivalent)
+      const srcRatio = cardImg.width / cardImg.height;
+      const dstRatio = cardW / cardH;
+      let drawX = cardX, drawY = cardY, drawW = cardW, drawH = cardH;
+      if (srcRatio > dstRatio) {
+        // image is wider — letterbox top/bottom
+        drawH = cardW / srcRatio;
+        drawY = cardY + (cardH - drawH) / 2;
+      } else {
+        // image is taller — pillarbox left/right
+        drawW = cardH * srcRatio;
+        drawX = cardX + (cardW - drawW) / 2;
+      }
+      ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
       ctx.restore();
 
-      // PSA 10 gold border
+      // Antique gold border around card
       ctx.save();
       const cardBorderGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
       cardBorderGrad.addColorStop(0, "#8B6914");
-      cardBorderGrad.addColorStop(0.25, "#D4AF37");
-      cardBorderGrad.addColorStop(0.5, "#F5D060");
-      cardBorderGrad.addColorStop(0.75, "#D4AF37");
+      cardBorderGrad.addColorStop(0.25, "#C9A84C");
+      cardBorderGrad.addColorStop(0.5, "#E8C96A");
+      cardBorderGrad.addColorStop(0.75, "#C9A84C");
       cardBorderGrad.addColorStop(1, "#8B6914");
       ctx.strokeStyle = cardBorderGrad;
-      ctx.lineWidth = 3;
-      roundRect(ctx, cardX, cardY, cardW, cardH, 14);
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
       ctx.stroke();
       ctx.restore();
 
-      // Inner gold glow border
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,220,100,0.35)";
-      ctx.lineWidth = 1;
-      roundRect(ctx, cardX + 4, cardY + 4, cardW - 8, cardH - 8, 11);
-      ctx.stroke();
-      ctx.restore();
-
-      cardBottomY = cardY + cardH + 20;
+      cardBottomY = cardY + cardH + 18;
     }
   }
 
   // Card info
   if (data.topCardName) {
     ctx.save();
-    ctx.fillStyle = "rgba(140,120,70,0.7)";
-    ctx.font = `12px ${CJK_FONT}`;
+    ctx.fillStyle = "rgba(100,80,35,0.55)";
+    ctx.font = `11px ${CJK_FONT}`;
     ctx.textAlign = "center";
     ctx.fillText("CROWN JEWEL", W / 2, cardBottomY + 8);
     ctx.restore();
 
     ctx.save();
-    ctx.fillStyle = "#E8D8A0";
-    ctx.font = `bold 22px ${CJK_FONT}`;
+    ctx.fillStyle = "#2A1F0A";
+    ctx.font = `bold 20px ${CJK_FONT}`;
     ctx.textAlign = "center";
-    const cardName = data.topCardName.length > 26 ? data.topCardName.slice(0, 26) + "…" : data.topCardName;
-    ctx.fillText(cardName, W / 2, cardBottomY + 40);
+    const cardName = data.topCardName.length > 28 ? data.topCardName.slice(0, 28) + "…" : data.topCardName;
+    ctx.fillText(cardName, W / 2, cardBottomY + 36);
     ctx.restore();
 
     if (data.topCardGrader && data.topCardGrade) {
       ctx.save();
-      ctx.fillStyle = "#C9A84C";
-      ctx.shadowColor = "rgba(212,175,55,0.5)";
-      ctx.shadowBlur = 8;
-      ctx.font = `bold 16px ${CJK_FONT}`;
+      const gradeGrad = ctx.createLinearGradient(W / 2 - 60, 0, W / 2 + 60, 0);
+      gradeGrad.addColorStop(0, "#8B6914"); gradeGrad.addColorStop(0.5, "#C9A84C"); gradeGrad.addColorStop(1, "#8B6914");
+      ctx.fillStyle = gradeGrad;
+      ctx.font = `bold 15px ${CJK_FONT}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${data.topCardGrader} ${data.topCardGrade}`, W / 2, cardBottomY + 66);
+      ctx.fillText(`${data.topCardGrader} ${data.topCardGrade}`, W / 2, cardBottomY + 60);
       ctx.restore();
     }
 
     if (data.topCardValueHKD && data.topCardValueHKD > 0) {
       ctx.save();
-      ctx.fillStyle = "#F0E6C8";
-      ctx.font = `bold 20px ${CJK_FONT}`;
+      ctx.fillStyle = "#3A2A10";
+      ctx.font = `bold 18px ${CJK_FONT}`;
       ctx.textAlign = "center";
-      ctx.fillText(`HKD ${data.topCardValueHKD.toLocaleString("en-HK", { minimumFractionDigits: 2 })}`, W / 2, cardBottomY + 94);
+      ctx.fillText(`HKD ${data.topCardValueHKD.toLocaleString("en-HK", { minimumFractionDigits: 2 })}`, W / 2, cardBottomY + 86);
       ctx.restore();
     }
   }
 
-  // ── 9. Footer ─────────────────────────────────────────────────────────────────
+  // ── 9. Footer ────────────────────────────────────────────────────────────────
   const footerY = H - 148;
   drawGoldDivider(ctx, footerY);
 
@@ -454,27 +467,25 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
 
   // Footer text (left side)
   ctx.save();
-  ctx.fillStyle = "#D4AF37";
-  ctx.shadowColor = "rgba(212,175,55,0.4)";
-  ctx.shadowBlur = 8;
-  ctx.font = `bold 17px ${CJK_FONT}`;
+  ctx.fillStyle = "#8B6914";
+  ctx.font = `bold 16px ${CJK_FONT}`;
   ctx.textAlign = "left";
-  ctx.fillText("boxium.asia", 80, footerY + 46);
+  ctx.fillText("boxium.asia", 80, footerY + 44);
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = "rgba(140,120,70,0.7)";
-  ctx.font = `13px ${CJK_FONT}`;
+  ctx.fillStyle = "rgba(100,80,35,0.60)";
+  ctx.font = `12px ${CJK_FONT}`;
   ctx.textAlign = "left";
-  ctx.fillText("嘆息之牆 · Wall of Sighs", 80, footerY + 70);
-  ctx.fillText("諸神殿堂管理處", 80, footerY + 90);
+  ctx.fillText("嘆息之牆 · Wall of Sighs", 80, footerY + 66);
+  ctx.fillText("諸神殿堂管理處", 80, footerY + 86);
   ctx.restore();
 
   // Date (center bottom)
   const dateStr = new Date().toLocaleDateString("zh-HK", { year: "numeric", month: "long", day: "numeric" });
   ctx.save();
-  ctx.fillStyle = "rgba(120,100,60,0.6)";
-  ctx.font = `12px ${CJK_FONT}`;
+  ctx.fillStyle = "rgba(100,80,35,0.45)";
+  ctx.font = `11px ${CJK_FONT}`;
   ctx.textAlign = "center";
   ctx.fillText(dateStr, W / 2, H - 28);
   ctx.restore();

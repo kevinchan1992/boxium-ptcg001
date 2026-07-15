@@ -532,9 +532,9 @@ function StackedCardRelics({
       onMouseLeave={() => setHovered(false)}
       className="relative"
       style={{
-        // Alabaster stone niche background
-        background: "linear-gradient(180deg, #F5F2EB 0%, #EDE8DC 60%, #E4DDD0 100%)",
-        boxShadow: "inset 0 6px 20px rgba(0,0,0,0.12), inset 0 -4px 12px rgba(0,0,0,0.07), inset 4px 0 12px rgba(0,0,0,0.05), inset -4px 0 12px rgba(0,0,0,0.05)",
+        // Nordic White Sanctuary — alabaster stone niche
+        background: "linear-gradient(180deg, #F8F5EE 0%, #EDE8DC 60%, #E4DDD0 100%)",
+        boxShadow: "inset 0 8px 28px rgba(0,0,0,0.10), inset 0 -4px 14px rgba(0,0,0,0.07), inset 5px 0 14px rgba(0,0,0,0.04), inset -5px 0 14px rgba(0,0,0,0.04)",
       }}
     >
       {/* Alabaster marble vein texture */}
@@ -597,13 +597,14 @@ function StackedCardRelics({
                 }}
               />
 
-              {/* Card image — clean, no border, overflow clipped by parent */}
+              {/* Card image — object-contain to preserve 3:4 ratio, no stretch */}
               <SafeCardImg
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full h-full block"
                 style={{
-                  objectFit: "cover",
+                  objectFit: "contain",
+                  objectPosition: "center",
                   background: "none",
                   outline: "none",
                   display: "block",
