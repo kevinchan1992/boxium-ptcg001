@@ -393,6 +393,16 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   // Fetch all images in parallel
   const cardImages = await Promise.all(cardUrls.map(url => fetchImage(url)));
 
+  // Card values aligned with cardUrls index (0=top1, 1=card2, ...)
+  const cardValues = [
+    data.topCardValueHKD,
+    data.card2ValueHKD,
+    data.card3ValueHKD,
+    data.card4ValueHKD,
+    data.card5ValueHKD,
+  ];
+  const topLabels = ["TOP 1", "TOP 2", "TOP 3", "TOP 4", "TOP 5"];
+
   // Draw back-to-front (highest z last = drawn on top)
   const drawOrder = [...fanCfg.map((c, i) => ({ ...c, i }))];
   drawOrder.sort((a, b) => a.z - b.z);
@@ -404,6 +414,8 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
     const ch = Math.round(BASE_CARD_H * cfg.scale);
     const cx = fanCenterX + cfg.offsetX;
     const cy = fanCenterY + cfg.offsetY;
+    const labelAlpha = cfg.scale >= 1 ? 1 : 0.75;
+    const labelSize = cfg.scale >= 1 ? 13 : 11;
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -456,34 +468,14 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
 
-    ctx.restore();
-  }
+    // ── TOP label + price: drawn INSIDE translate/rotate context so they follow the card ──
+    // Reset filter for text rendering
+    (ctx as unknown as { filter: string }).filter = "none";
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
-  // ── 8b. TOP 1-5 labels + individual prices below/above each card ─────────────────
-  const cardValues = [
-    data.topCardValueHKD,
-    data.card2ValueHKD,
-    data.card3ValueHKD,
-    data.card4ValueHKD,
-    data.card5ValueHKD,
-  ];
-  const topLabels = ["TOP 1", "TOP 2", "TOP 3", "TOP 4", "TOP 5"];
-
-  for (let i = 0; i < fanCfg.length; i++) {
-    const cfg = fanCfg[i];
-    const cw = Math.round(BASE_CARD_W * cfg.scale);
-    const ch = Math.round(BASE_CARD_H * cfg.scale);
-    const cx = fanCenterX + cfg.offsetX;
-    const cy = fanCenterY + cfg.offsetY;
-    const cardTopY = cy - ch / 2;
-    const cardBotY = cy + ch / 2;
-    const labelAlpha = cfg.scale >= 1 ? 1 : 0.75;
-    const labelSize = cfg.scale >= 1 ? 13 : 11;
-
-    // TOP label above card
-    ctx.save();
-    ctx.translate(cx, cardTopY - 14);
-    ctx.rotate(cfg.rotate * Math.PI / 180);
+    // TOP label above card (relative to card center: y = -ch/2 - 18)
     const labelGrad = ctx.createLinearGradient(-30, 0, 30, 0);
     labelGrad.addColorStop(0, `rgba(139,105,20,${labelAlpha})`);
     labelGrad.addColorStop(0.5, `rgba(201,168,76,${labelAlpha})`);
@@ -491,33 +483,26 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
     ctx.fillStyle = labelGrad;
     ctx.font = `bold ${labelSize}px ${CJK_FONT}`;
     ctx.textAlign = "center";
-    ctx.fillText(topLabels[i], 0, 0);
-    ctx.restore();
+    ctx.fillText(topLabels[cfg.i], 0, -(ch / 2) - 18);
 
-    // Price below card
-    const val = cardValues[i];
+    // Price below card (relative to card center: y = ch/2 + 20 for MV, +36 for price)
+    const val = cardValues[cfg.i];
     if (val && val > 0) {
       // MV label
-      ctx.save();
-      ctx.translate(cx, cardBotY + 16);
-      ctx.rotate(cfg.rotate * Math.PI / 180);
       ctx.fillStyle = `rgba(139,105,20,${labelAlpha * 0.7})`;
       ctx.font = `${cfg.scale >= 1 ? 10 : 9}px ${CJK_FONT}`;
       ctx.textAlign = "center";
-      ctx.fillText("MV", 0, 0);
-      ctx.restore();
+      ctx.fillText("MV", 0, ch / 2 + 18);
 
       // Price value
-      ctx.save();
-      ctx.translate(cx, cardBotY + 32);
-      ctx.rotate(cfg.rotate * Math.PI / 180);
       ctx.fillStyle = `rgba(42,31,10,${labelAlpha})`;
       ctx.font = `bold ${cfg.scale >= 1 ? 13 : 11}px ${CJK_FONT}`;
       ctx.textAlign = "center";
       const priceStr = `HKD ${val.toLocaleString("en-HK", { maximumFractionDigits: 0 })}`;
-      ctx.fillText(priceStr, 0, 0);
-      ctx.restore();
+      ctx.fillText(priceStr, 0, ch / 2 + 34);
     }
+
+    ctx.restore();
   }
 
   // ── 9. Footer ────────────────────────────────────────────────────────────────
