@@ -28,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -195,7 +196,7 @@ export function AdminVipDashboard() {
       </div>
 
       {/* Executive Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <StatCard
           icon={<Users className="w-5 h-5" />}
           label="總 VIP 會員數"
@@ -229,6 +230,15 @@ export function AdminVipDashboard() {
             ? `扣款失敗 ${stats.failedPayments} · 即將到期 ${stats.expiringSoon}`
             : undefined}
           accent="red"
+        />
+        <StatCard
+          icon={<DollarSign className="w-5 h-5" />}
+          label="總累計收益"
+          value={statsLoading ? "—" : `HKD ${stats?.totalRevenue?.toLocaleString("zh-HK", { minimumFractionDigits: 0 }) ?? 0}`}
+          sub={stats
+            ? `月費 ${stats.totalMonthlyUsers} 人 · 年費 ${stats.totalYearlyUsers} 人`
+            : undefined}
+          accent="gold"
         />
       </div>
 

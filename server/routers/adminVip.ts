@@ -32,8 +32,8 @@ export const adminVipRouter = router({
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // All active VIP users (non-admin, non-none, not expired)
-    const allVipUsers = await db
+    // All VIP users ever (including expired) for total revenue calculation
+    const allVipUsersEver = await db
       .select({
         id: users.id,
         vipPlan: users.vipPlan,
@@ -49,6 +49,7 @@ export const adminVipRouter = router({
           ne(users.role, "admin")
         )
       );
+    const allVipUsers = allVipUsersEver;
 
     // Filter to currently active (not expired)
     const activeVips = allVipUsers.filter(u => u.vipExpiresAt && u.vipExpiresAt > now);
@@ -97,6 +98,13 @@ export const adminVipRouter = router({
       // Stripe unavailable — use local data only
     }
 
+    // Total cumulative revenue: sum all VIP users' plan amounts
+    // Monthly users: HKD 38 each, Yearly users: HKD 298 each
+    const totalMonthlyUsers = allVipUsersEver.filter(u => u.vipPlan === "monthly").length;
+    const totalYearlyUsers = allVipUsersEver.filter(u => u.vipPlan === "yearly").length;
+    const totalRevenue = (totalMonthlyUsers * (MONTHLY_AMOUNT_CENTS / 100)) +
+                         (totalYearlyUsers * (YEARLY_AMOUNT_CENTS / 100));
+
     return {
       totalVips,
       monthlyCount,
@@ -109,6 +117,9 @@ export const adminVipRouter = router({
       pendingAttention: failedPayments + expiringSoon,
       growthPct,
       newThisMonth,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      totalMonthlyUsers,
+      totalYearlyUsers,
     };
   }),
 
