@@ -868,7 +868,8 @@ function PublishModal({ open, onClose, onGoToVault }: { open: boolean; onClose: 
   });
 
   const publishError = publishMutation.error;
-  const isShortfall = publishError?.data?.code === "FORBIDDEN";
+  // Treat both FORBIDDEN (below HKD 5,000) and BAD_REQUEST (empty vault) as shortfall
+  const isShortfall = publishError?.data?.code === "FORBIDDEN" || publishError?.data?.code === "BAD_REQUEST";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
