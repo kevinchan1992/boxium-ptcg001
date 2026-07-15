@@ -154,6 +154,7 @@ export function TopNav() {
     { href: "/pricing", label: t("common.priceComparison") },
     { href: "/trending", label: "TCG 漲幅榜" },
     { href: "/vault", label: t("nav.tcgVault", "TCG 倉庫") },
+    { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "嘆息之牆") },
     { href: "/marketplace", label: t("topnav.marketplace") },
     { href: "/grading", label: t("common.grading") },
     { href: "/blog", label: t("common.blog") },
