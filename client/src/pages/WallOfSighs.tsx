@@ -29,6 +29,17 @@ const QUICK_COMMENTS = [
 // SVG placeholder for broken/missing card images
 const CARD_PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%23F0EFE8' rx='8'/%3E%3Crect x='1' y='1' width='198' height='278' fill='none' stroke='%23D8D4C8' stroke-width='1' rx='7'/%3E%3Ccircle cx='100' cy='120' r='28' fill='%23E8E4D8'/%3E%3Cpath d='M88 120 L100 108 L112 120 L108 132 L92 132 Z' fill='%23C9A84C' opacity='0.5'/%3E%3Ctext x='100' y='175' text-anchor='middle' font-family='sans-serif' font-size='11' fill='%23A09880'%3ENo Image%3C/text%3E%3C/svg%3E`;
 
+// Proxy CDN URLs that have hotlink protection (e.g. cdn.snkrdunk.com)
+function proxyImageUrl(url?: string | null): string {
+  if (!url) return CARD_PLACEHOLDER_SVG;
+  // Route snkrdunk CDN images through the backend proxy to bypass hotlink protection
+  const needsProxy = url.includes('snkrdunk.com') || url.includes('cdn.snkrdunk');
+  if (needsProxy) {
+    return `/api/img-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 function formatHKD(val: number) {
   return `HKD ${val.toLocaleString("en-HK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
@@ -45,10 +56,10 @@ function SafeCardImg({
   className?: string;
   style?: React.CSSProperties;
 }) {
-  const [imgSrc, setImgSrc] = useState(src || CARD_PLACEHOLDER_SVG);
+  const [imgSrc, setImgSrc] = useState(() => proxyImageUrl(src));
 
   useEffect(() => {
-    setImgSrc(src || CARD_PLACEHOLDER_SVG);
+    setImgSrc(proxyImageUrl(src));
   }, [src]);
 
   return (
@@ -602,11 +613,7 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
           <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-light text-[#1A1A1A] text-sm tracking-[0.06em] truncate">{entry.displayName}</p>
-              {entry.topCardGrader && entry.topCardGrade && (
-                <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-[#FFF8E7] text-[#C9A84C] border border-[#C9A84C]/25 rounded-full font-light tracking-wide truncate max-w-full">
-                  {entry.topCardGrader} {entry.topCardGrade}
-                </span>
-              )}
+    
             </div>
             <div className="flex items-center gap-1 text-[#C9A84C] shrink-0">
               <Wind className="w-3 h-3" />
