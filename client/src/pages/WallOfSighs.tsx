@@ -597,13 +597,13 @@ function StackedCardRelics({
                 }}
               />
 
-              {/* Card image — object-contain to preserve 3:4 ratio, no stretch */}
+              {/* Card image — cover fills the 3:4 container */}
               <SafeCardImg
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full h-full block"
                 style={{
-                  objectFit: "contain",
+                  objectFit: "cover",
                   objectPosition: "center",
                   background: "none",
                   outline: "none",
