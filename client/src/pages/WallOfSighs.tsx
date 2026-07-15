@@ -279,7 +279,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center"
+      className="fixed inset-0 z-[1000] overflow-hidden"
       style={{ background: "rgba(8,10,16,0.97)", backdropFilter: "blur(24px)", opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
       onClick={onClose}
     >
@@ -291,32 +291,49 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           style={{ background: "radial-gradient(circle, rgba(180,140,80,0.5) 0%, transparent 70%)", bottom: "20%", right: "15%", animation: "auroraFloat 10s ease-in-out infinite reverse" }} />
       </div>
 
-      <button className="absolute top-5 right-5 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10" onClick={onClose}>
-        <X className="w-4 h-4" />
-      </button>
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] text-white/40 tracking-[0.35em] uppercase font-light z-10">
-        {current + 1} / {cards.length}
+      {/* Top bar: counter + close */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2 z-20 pointer-events-none">
+        <div className="text-[10px] text-white/40 tracking-[0.35em] uppercase font-light pointer-events-auto">
+          {current + 1} / {cards.length}
+        </div>
+        <button
+          className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all pointer-events-auto"
+          onClick={e => { e.stopPropagation(); onClose(); }}
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
-      {cards.length > 1 && (
-        <>
-          <button className="absolute left-4 md:left-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
-            onClick={e => { e.stopPropagation(); prev(); }}>
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button className="absolute right-4 md:right-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
-            onClick={e => { e.stopPropagation(); next(); }}>
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </>
-      )}
-
-      <div className="relative flex flex-col items-center gap-6 px-16" onClick={e => e.stopPropagation()}>
-        <div ref={imgRef} className="relative cursor-pointer" style={{ perspective: "1000px", width: "min(300px, 75vw)" }}
-          onMouseMove={handleMouseMove} onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}>
-          <div style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.1s ease-out", transformStyle: "preserve-3d" }}>
-            <SafeCardImg src={card.imageUrl} alt={card.name ?? ""} className="w-full rounded-xl"
-              style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(100,180,220,0.15)" }} />
+      {/* Main content — fills entire screen height, no scroll */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center px-4"
+        style={{ paddingTop: '56px', paddingBottom: '16px' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Card — takes up as much vertical space as possible */}
+        <div
+          ref={imgRef}
+          className="relative cursor-pointer flex-shrink-0"
+          style={{
+            perspective: "1000px",
+            // On mobile: fill available height minus info strip; on desktop: cap at 420px
+            height: "calc(100% - 80px)",
+            maxHeight: "420px",
+            aspectRatio: "3/4",
+          }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
+        >
+          <div
+            className="w-full h-full"
+            style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.1s ease-out", transformStyle: "preserve-3d" }}
+          >
+            <SafeCardImg
+              src={card.imageUrl}
+              alt={card.name ?? ""}
+              className="w-full h-full rounded-xl object-cover"
+              style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(100,180,220,0.15)" }}
+            />
             {/* Aurora foil */}
             <div className="absolute inset-0 rounded-xl pointer-events-none"
               style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.35) 0%, rgba(100,160,200,0.15) 30%, transparent 60%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.6, transition: "opacity 0.4s ease" }} />
@@ -326,25 +343,47 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           </div>
         </div>
 
-        <div className="text-center">
-          {card.name && <p className="text-white/90 font-light tracking-[0.15em] text-sm mb-1 line-clamp-2">{card.name}</p>}
-          {card.grader && card.grade && (
-            <span className="inline-block text-[10px] px-3 py-1 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
-              {card.grader} {card.grade}
-            </span>
+        {/* Info strip — compact, always visible at bottom */}
+        <div className="flex-shrink-0 text-center mt-3 w-full max-w-xs">
+          {card.name && (
+            <p className="text-white/90 font-light tracking-[0.1em] text-xs mb-1 line-clamp-2 leading-snug">{card.name}</p>
           )}
-          <p className="mt-3 text-[10px] text-white/30 tracking-[0.3em] uppercase font-light">{ownerName} 的收藏</p>
-        </div>
-
-        {cards.length > 1 && (
-          <div className="flex gap-2">
-            {cards.map((_, i) => (
-              <button key={i} onClick={() => setCurrent(i)}
-                className={`rounded-full transition-all duration-300 ${i === current ? "w-4 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
-            ))}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {card.grader && card.grade && (
+              <span className="inline-block text-[9px] px-2.5 py-0.5 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
+                {card.grader} {card.grade}
+              </span>
+            )}
+            <span className="text-[9px] text-white/30 tracking-[0.25em] uppercase font-light">{ownerName}</span>
           </div>
-        )}
+          {cards.length > 1 && (
+            <div className="flex justify-center gap-2 mt-2">
+              {cards.map((_, i) => (
+                <button key={i} onClick={() => setCurrent(i)}
+                  className={`rounded-full transition-all duration-300 ${i === current ? "w-4 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Left / Right nav — vertically centered on card area */}
+      {cards.length > 1 && (
+        <>
+          <button
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-20"
+            onClick={e => { e.stopPropagation(); prev(); }}
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-20"
+            onClick={e => { e.stopPropagation(); next(); }}
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -936,6 +975,9 @@ export default function WallOfSighs() {
   const { data: wallData, isLoading } = trpc.wall.getWall.useQuery({ limit: 50, offset: 0, sortBy });
   const entries = wallData?.entries ?? [];
 
+  const [pageVisible, setPageVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setPageVisible(true), 80); return () => clearTimeout(t); }, []);
+
   return (
     <>
       <style>{`
@@ -953,9 +995,29 @@ export default function WallOfSighs() {
           33%       { transform: translate(30px, -20px) scale(1.05); }
           66%       { transform: translate(-20px, 15px) scale(0.97); }
         }
+        @keyframes sanctuaryReveal {
+          0%   { opacity: 0; transform: translateY(24px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes runeReveal {
+          0%   { opacity: 0; stroke-dashoffset: 200; }
+          100% { opacity: 1; stroke-dashoffset: 0; }
+        }
+        @keyframes stoneReveal {
+          0%   { opacity: 0; }
+          100% { opacity: 1; }
+        }
       `}</style>
 
-      <div className="min-h-screen bg-[#F5F5F3]" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <div
+        className="min-h-screen bg-[#F5F5F3]"
+        style={{
+          fontFamily: "'Montserrat', sans-serif",
+          opacity: pageVisible ? 1 : 0,
+          transform: pageVisible ? 'translateY(0)' : 'translateY(12px)',
+          transition: 'opacity 0.9s cubic-bezier(0.4,0,0.2,1), transform 0.9s cubic-bezier(0.4,0,0.2,1)',
+        }}
+      >
 
         {/* ── Hero ─────────────────────────────────────────────── */}
         <div className="relative overflow-hidden bg-[#F3F4F6] border-b border-[#E8E8E4]">
