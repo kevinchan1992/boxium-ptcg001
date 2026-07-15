@@ -1,11 +1,12 @@
 /**
- * WallOfSighs.tsx — 嘆息之牆 · Nordic Sanctuary Style
+ * WallOfSighs.tsx — 嘆息之牆 · Nordic Sanctuary Style (v4)
  *
- * Features:
- * - Ice crystal particle burst on sigh click (Canvas overlay)
- * - Sacred Nordic audio via Web Audio API (no external files)
- * - Fullscreen card gallery lightbox with aurora shimmer effect
- * - Marble shrine containers, stacked card relics, glacier slide comments
+ * Fixes:
+ * - Broken images: proper onError fallback placeholder (no browser broken icon)
+ * - Text overflow: line-clamp, truncate, overflow-hidden on all containers
+ * - Button layout: flex row on desktop, stacked on mobile — no absolute positioning
+ * - 3D shrine: inset shadow on stone base, cards with drop shadow float above
+ * - Stacked cards: up to 3 cards with rotation + z-index + proper sizing
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
@@ -25,8 +26,41 @@ const QUICK_COMMENTS = [
   "這輩子是沒機會了",
 ];
 
+// SVG placeholder for broken/missing card images
+const CARD_PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%23F0EFE8' rx='8'/%3E%3Crect x='1' y='1' width='198' height='278' fill='none' stroke='%23D8D4C8' stroke-width='1' rx='7'/%3E%3Ccircle cx='100' cy='120' r='28' fill='%23E8E4D8'/%3E%3Cpath d='M88 120 L100 108 L112 120 L108 132 L92 132 Z' fill='%23C9A84C' opacity='0.5'/%3E%3Ctext x='100' y='175' text-anchor='middle' font-family='sans-serif' font-size='11' fill='%23A09880'%3ENo Image%3C/text%3E%3C/svg%3E`;
+
 function formatHKD(val: number) {
   return `HKD ${val.toLocaleString("en-HK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+// ── Safe Image component (never shows broken icon) ────────────────────────────
+function SafeCardImg({
+  src,
+  alt,
+  className,
+  style,
+}: {
+  src?: string | null;
+  alt?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const [imgSrc, setImgSrc] = useState(src || CARD_PLACEHOLDER_SVG);
+
+  useEffect(() => {
+    setImgSrc(src || CARD_PLACEHOLDER_SVG);
+  }, [src]);
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt ?? ""}
+      className={className}
+      style={style}
+      onError={() => setImgSrc(CARD_PLACEHOLDER_SVG)}
+      loading="lazy"
+    />
+  );
 }
 
 // ── Sacred Audio Engine (Web Audio API — no external files) ───────────────────
@@ -37,28 +71,19 @@ function useSacredAudio() {
     if (!ctxRef.current || ctxRef.current.state === "closed") {
       ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    if (ctxRef.current.state === "suspended") {
-      ctxRef.current.resume();
-    }
+    if (ctxRef.current.state === "suspended") ctxRef.current.resume();
     return ctxRef.current;
   }, []);
 
-  /** Play a layered Nordic sigh tone:
-   *  1. High crystal bell (sine, 880Hz → 1760Hz sweep, short)
-   *  2. Mid resonant hum (triangle, 220Hz, slow fade)
-   *  3. Sub-bass breath (sine, 55Hz, very soft)
-   */
   const playSighSound = useCallback(() => {
     try {
       const ctx = getCtx();
       const now = ctx.currentTime;
-
-      // Master gain
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.18, now);
       master.connect(ctx.destination);
 
-      // ── Layer 1: Crystal bell sweep ──────────────────────────
+      // Crystal bell sweep
       const bell = ctx.createOscillator();
       const bellGain = ctx.createGain();
       bell.type = "sine";
@@ -68,26 +93,10 @@ function useSacredAudio() {
       bellGain.gain.setValueAtTime(0, now);
       bellGain.gain.linearRampToValueAtTime(0.7, now + 0.02);
       bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-      bell.connect(bellGain);
-      bellGain.connect(master);
-      bell.start(now);
-      bell.stop(now + 0.95);
+      bell.connect(bellGain); bellGain.connect(master);
+      bell.start(now); bell.stop(now + 0.95);
 
-      // ── Layer 2: Harmonic overtone (5th above) ───────────────
-      const overtone = ctx.createOscillator();
-      const overtoneGain = ctx.createGain();
-      overtone.type = "sine";
-      overtone.frequency.setValueAtTime(1320, now);
-      overtone.frequency.exponentialRampToValueAtTime(2640, now + 0.06);
-      overtoneGain.gain.setValueAtTime(0, now);
-      overtoneGain.gain.linearRampToValueAtTime(0.25, now + 0.03);
-      overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-      overtone.connect(overtoneGain);
-      overtoneGain.connect(master);
-      overtone.start(now);
-      overtone.stop(now + 0.65);
-
-      // ── Layer 3: Resonant Nordic hum ────────────────────────
+      // Nordic hum
       const hum = ctx.createOscillator();
       const humGain = ctx.createGain();
       hum.type = "triangle";
@@ -95,14 +104,11 @@ function useSacredAudio() {
       hum.frequency.linearRampToValueAtTime(196, now + 1.2);
       humGain.gain.setValueAtTime(0, now);
       humGain.gain.linearRampToValueAtTime(0.3, now + 0.15);
-      humGain.gain.setValueAtTime(0.3, now + 0.6);
       humGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
-      hum.connect(humGain);
-      humGain.connect(master);
-      hum.start(now);
-      hum.stop(now + 1.85);
+      hum.connect(humGain); humGain.connect(master);
+      hum.start(now); hum.stop(now + 1.85);
 
-      // ── Layer 4: Sub-bass breath ─────────────────────────────
+      // Sub-bass breath
       const sub = ctx.createOscillator();
       const subGain = ctx.createGain();
       sub.type = "sine";
@@ -110,32 +116,9 @@ function useSacredAudio() {
       subGain.gain.setValueAtTime(0, now);
       subGain.gain.linearRampToValueAtTime(0.15, now + 0.3);
       subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
-      sub.connect(subGain);
-      subGain.connect(master);
-      sub.start(now);
-      sub.stop(now + 1.55);
-
-      // ── Layer 5: Ice shimmer noise burst ────────────────────
-      const bufferSize = ctx.sampleRate * 0.12;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = "highpass";
-      noiseFilter.frequency.value = 4000;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.12, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      noise.connect(noiseFilter);
-      noiseFilter.connect(noiseGain);
-      noiseGain.connect(master);
-      noise.start(now);
-
-    } catch (e) {
-      // Audio not supported — silently ignore
-    }
+      sub.connect(subGain); subGain.connect(master);
+      sub.start(now); sub.stop(now + 1.55);
+    } catch (_) {}
   }, [getCtx]);
 
   return { playSighSound };
@@ -143,13 +126,9 @@ function useSacredAudio() {
 
 // ── Ice Crystal Particle System ───────────────────────────────────────────────
 interface Particle {
-  x: number; y: number;
-  vx: number; vy: number;
-  life: number; maxLife: number;
-  size: number;
-  color: string;
-  rotation: number;
-  rotSpeed: number;
+  x: number; y: number; vx: number; vy: number;
+  life: number; maxLife: number; size: number;
+  color: string; rotation: number; rotSpeed: number;
   shape: "crystal" | "shard" | "dot";
 }
 
@@ -158,136 +137,67 @@ function useIceParticles() {
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
 
-  // Create canvas once
   useEffect(() => {
     const canvas = document.createElement("canvas");
-    canvas.style.cssText = `
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 9999;
-    `;
+    canvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;";
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
     canvasRef.current = canvas;
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      canvas.remove();
-      cancelAnimationFrame(animRef.current);
-    };
+    const onResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener("resize", onResize);
+    return () => { window.removeEventListener("resize", onResize); canvas.remove(); cancelAnimationFrame(animRef.current); };
   }, []);
 
-  const drawCrystal = (ctx: CanvasRenderingContext2D, p: Particle) => {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rotation);
-    ctx.globalAlpha = p.life / p.maxLife;
-
-    if (p.shape === "crystal") {
-      // 6-pointed snowflake
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth = p.size * 0.15;
-      for (let i = 0; i < 6; i++) {
-        ctx.save();
-        ctx.rotate((i * Math.PI) / 3);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(0, -p.size);
-        // Branch
-        ctx.moveTo(0, -p.size * 0.5);
-        ctx.lineTo(p.size * 0.25, -p.size * 0.7);
-        ctx.moveTo(0, -p.size * 0.5);
-        ctx.lineTo(-p.size * 0.25, -p.size * 0.7);
-        ctx.stroke();
-        ctx.restore();
-      }
-    } else if (p.shape === "shard") {
-      // Diamond shard
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.moveTo(0, -p.size);
-      ctx.lineTo(p.size * 0.4, 0);
-      ctx.lineTo(0, p.size * 0.6);
-      ctx.lineTo(-p.size * 0.4, 0);
-      ctx.closePath();
-      ctx.fill();
-    } else {
-      // Glowing dot
-      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
-      grad.addColorStop(0, p.color);
-      grad.addColorStop(1, "transparent");
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  };
-
-  const spawnBurst = useCallback((clientX: number, clientY: number) => {
-    const colors = [
-      "rgba(200,230,255,0.95)",
-      "rgba(168,216,234,0.9)",
-      "rgba(220,240,255,0.85)",
-      "rgba(255,255,255,0.95)",
-      "rgba(180,210,240,0.9)",
-      "rgba(201,168,76,0.8)",   // gold accent
-    ];
-
-    const newParticles: Particle[] = [];
-    const count = 32;
-
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+  const spawnBurst = useCallback((cx: number, cy: number) => {
+    const colors = ["rgba(200,230,255,0.95)","rgba(168,216,234,0.9)","rgba(220,240,255,0.85)","rgba(255,255,255,0.95)","rgba(201,168,76,0.8)"];
+    const newP: Particle[] = [];
+    for (let i = 0; i < 32; i++) {
+      const angle = (i / 32) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
       const speed = 2.5 + Math.random() * 5;
       const shape: Particle["shape"] = i % 3 === 0 ? "crystal" : i % 3 === 1 ? "shard" : "dot";
-      newParticles.push({
-        x: clientX, y: clientY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1.5,
-        life: 1,
-        maxLife: 0.7 + Math.random() * 0.8,
-        size: shape === "crystal" ? 6 + Math.random() * 8 : 3 + Math.random() * 6,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.15,
-        shape,
-      });
+      newP.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1.5,
+        life: 1, maxLife: 0.7 + Math.random() * 0.8, size: shape === "crystal" ? 6 + Math.random() * 8 : 3 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)], rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.15, shape });
     }
-    particlesRef.current.push(...newParticles);
+    particlesRef.current.push(...newP);
 
-    // Start animation loop if not running
-    const animate = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particlesRef.current = particlesRef.current.filter(p => p.life > 0.01);
-
-      for (const p of particlesRef.current) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.12; // gravity
-        p.vx *= 0.97; // air resistance
-        p.life -= 0.022;
-        p.rotation += p.rotSpeed;
-        drawCrystal(ctx, p);
+    const draw = (ctx: CanvasRenderingContext2D, p: Particle) => {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); ctx.globalAlpha = p.life / p.maxLife;
+      if (p.shape === "crystal") {
+        ctx.strokeStyle = p.color; ctx.lineWidth = p.size * 0.15;
+        for (let i = 0; i < 6; i++) {
+          ctx.save(); ctx.rotate((i * Math.PI) / 3);
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -p.size);
+          ctx.moveTo(0, -p.size * 0.5); ctx.lineTo(p.size * 0.25, -p.size * 0.7);
+          ctx.moveTo(0, -p.size * 0.5); ctx.lineTo(-p.size * 0.25, -p.size * 0.7);
+          ctx.stroke(); ctx.restore();
+        }
+      } else if (p.shape === "shard") {
+        ctx.fillStyle = p.color; ctx.beginPath();
+        ctx.moveTo(0, -p.size); ctx.lineTo(p.size * 0.4, 0); ctx.lineTo(0, p.size * 0.6); ctx.lineTo(-p.size * 0.4, 0);
+        ctx.closePath(); ctx.fill();
+      } else {
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
+        g.addColorStop(0, p.color); g.addColorStop(1, "transparent");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill();
       }
-
-      if (particlesRef.current.length > 0) {
-        animRef.current = requestAnimationFrame(animate);
-      }
+      ctx.restore();
     };
 
+    const animate = () => {
+      const canvas = canvasRef.current; if (!canvas) return;
+      const ctx = canvas.getContext("2d"); if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particlesRef.current = particlesRef.current.filter(p => p.life > 0.01);
+      for (const p of particlesRef.current) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.vx *= 0.97;
+        p.life -= 0.022; p.rotation += p.rotSpeed;
+        draw(ctx, p);
+      }
+      if (particlesRef.current.length > 0) animRef.current = requestAnimationFrame(animate);
+    };
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
   }, []);
@@ -315,235 +225,111 @@ function AnimatedCounter({ value, duration = 1800 }: { value: number; duration?:
 
 // ── Fullscreen Card Gallery ────────────────────────────────────────────────────
 interface GalleryCard {
-  imageUrl: string;
+  imageUrl?: string | null;
   name?: string | null;
   grade?: string | null;
   grader?: string | null;
 }
 
-function CardGallery({
-  cards,
-  initialIndex,
-  ownerName,
-  onClose,
-}: {
-  cards: GalleryCard[];
-  initialIndex: number;
-  ownerName: string;
-  onClose: () => void;
+function CardGallery({ cards, initialIndex, ownerName, onClose }: {
+  cards: GalleryCard[]; initialIndex: number; ownerName: string; onClose: () => void;
 }) {
   const [current, setCurrent] = useState(initialIndex);
   const [shimmer, setShimmer] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-  const [entering, setEntering] = useState(true);
+  const [visible, setVisible] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setEntering(false), 50);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Trigger shimmer on card change
-  useEffect(() => {
-    setShimmer(true);
-    const t = setTimeout(() => setShimmer(false), 800);
-    return () => clearTimeout(t);
-  }, [current]);
+  useEffect(() => { setTimeout(() => setVisible(true), 30); }, []);
+  useEffect(() => { setShimmer(true); const t = setTimeout(() => setShimmer(false), 800); return () => clearTimeout(t); }, [current]);
 
   const prev = () => setCurrent(c => (c - 1 + cards.length) % cards.length);
   const next = () => setCurrent(c => (c + 1) % cards.length);
 
-  // Keyboard navigation
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const h = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prev();
       else if (e.key === "ArrowRight") next();
       else if (e.key === "Escape") onClose();
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, []);
 
-  // Mouse tilt effect
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = imgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setMousePos({
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
-    });
+    const r = imgRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setMousePos({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
   };
 
-  const card = cards[current];
   const tiltX = (mousePos.y - 0.5) * 18;
   const tiltY = (mousePos.x - 0.5) * -18;
-  const shimmerX = mousePos.x * 100;
-  const shimmerY = mousePos.y * 100;
+  const card = cards[current];
 
   return (
     <div
       className="fixed inset-0 z-[1000] flex items-center justify-center"
-      style={{
-        background: "rgba(10,12,18,0.96)",
-        backdropFilter: "blur(20px)",
-        opacity: entering ? 0 : 1,
-        transition: "opacity 0.3s ease",
-      }}
+      style={{ background: "rgba(8,10,16,0.97)", backdropFilter: "blur(24px)", opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
       onClick={onClose}
     >
-      {/* Ambient aurora background */}
+      {/* Aurora bg */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute w-[600px] h-[600px] rounded-full opacity-10"
-          style={{
-            background: "radial-gradient(circle, rgba(100,180,220,0.6) 0%, transparent 70%)",
-            top: "10%", left: "20%",
-            animation: "auroraFloat 8s ease-in-out infinite",
-          }}
-        />
-        <div
-          className="absolute w-[400px] h-[400px] rounded-full opacity-8"
-          style={{
-            background: "radial-gradient(circle, rgba(180,140,80,0.5) 0%, transparent 70%)",
-            bottom: "20%", right: "15%",
-            animation: "auroraFloat 10s ease-in-out infinite reverse",
-          }}
-        />
+        <div className="absolute w-[500px] h-[500px] rounded-full opacity-10"
+          style={{ background: "radial-gradient(circle, rgba(100,180,220,0.6) 0%, transparent 70%)", top: "10%", left: "20%", animation: "auroraFloat 8s ease-in-out infinite" }} />
+        <div className="absolute w-[350px] h-[350px] rounded-full opacity-8"
+          style={{ background: "radial-gradient(circle, rgba(180,140,80,0.5) 0%, transparent 70%)", bottom: "20%", right: "15%", animation: "auroraFloat 10s ease-in-out infinite reverse" }} />
       </div>
 
-      {/* Close button */}
-      <button
-        className="absolute top-5 right-5 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
-        onClick={onClose}
-      >
+      <button className="absolute top-5 right-5 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10" onClick={onClose}>
         <X className="w-4 h-4" />
       </button>
-
-      {/* Card counter */}
       <div className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] text-white/40 tracking-[0.35em] uppercase font-light z-10">
         {current + 1} / {cards.length}
       </div>
 
-      {/* Prev / Next */}
       {cards.length > 1 && (
         <>
-          <button
-            className="absolute left-4 md:left-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
-            onClick={e => { e.stopPropagation(); prev(); }}
-          >
+          <button className="absolute left-4 md:left-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
+            onClick={e => { e.stopPropagation(); prev(); }}>
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button
-            className="absolute right-4 md:right-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
-            onClick={e => { e.stopPropagation(); next(); }}
-          >
+          <button className="absolute right-4 md:right-8 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all z-10"
+            onClick={e => { e.stopPropagation(); next(); }}>
             <ChevronRight className="w-5 h-5" />
           </button>
         </>
       )}
 
-      {/* Card display */}
-      <div
-        className="relative flex flex-col items-center gap-6 px-16"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* 3D tilt card */}
-        <div
-          ref={imgRef}
-          className="relative cursor-pointer"
-          style={{
-            perspective: "1000px",
-            width: "min(280px, 72vw)",
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}
-        >
-          <div
-            style={{
-              transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
-              transition: "transform 0.1s ease-out",
-              transformStyle: "preserve-3d",
-            }}
-          >
-            {/* Card image */}
-            <img
-              src={card.imageUrl}
-              alt={card.name ?? ""}
-              className="w-full rounded-xl"
-              style={{
-                boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(100,180,220,0.15)",
-              }}
-            />
-
-            {/* Aurora foil overlay — moves with mouse */}
-            <div
-              className="absolute inset-0 rounded-xl pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at ${shimmerX}% ${shimmerY}%, rgba(168,216,234,0.35) 0%, rgba(100,160,200,0.15) 30%, transparent 60%)`,
-                mixBlendMode: "screen",
-                opacity: shimmer ? 1 : 0.6,
-                transition: "opacity 0.4s ease",
-              }}
-            />
-
-            {/* Rainbow holographic shimmer */}
-            <div
-              className="absolute inset-0 rounded-xl pointer-events-none"
-              style={{
-                background: `linear-gradient(${105 + tiltY * 2}deg, 
-                  transparent 30%,
-                  rgba(168,216,234,0.08) 40%,
-                  rgba(200,168,234,0.06) 50%,
-                  rgba(234,200,168,0.08) 60%,
-                  transparent 70%
-                )`,
-                mixBlendMode: "overlay",
-              }}
-            />
-
-            {/* Edge glow */}
-            {shimmer && (
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none"
-                style={{
-                  boxShadow: "inset 0 0 30px rgba(168,216,234,0.3)",
-                  animation: "shimmerPulse 0.8s ease-out forwards",
-                }}
-              />
-            )}
+      <div className="relative flex flex-col items-center gap-6 px-16" onClick={e => e.stopPropagation()}>
+        <div ref={imgRef} className="relative cursor-pointer" style={{ perspective: "1000px", width: "min(300px, 75vw)" }}
+          onMouseMove={handleMouseMove} onMouseLeave={() => setMousePos({ x: 0.5, y: 0.5 })}>
+          <div style={{ transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`, transition: "transform 0.1s ease-out", transformStyle: "preserve-3d" }}>
+            <SafeCardImg src={card.imageUrl} alt={card.name ?? ""} className="w-full rounded-xl"
+              style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(100,180,220,0.15)" }} />
+            {/* Aurora foil */}
+            <div className="absolute inset-0 rounded-xl pointer-events-none"
+              style={{ background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(168,216,234,0.35) 0%, rgba(100,160,200,0.15) 30%, transparent 60%)`, mixBlendMode: "screen", opacity: shimmer ? 1 : 0.6, transition: "opacity 0.4s ease" }} />
+            {/* Holographic shimmer */}
+            <div className="absolute inset-0 rounded-xl pointer-events-none"
+              style={{ background: `linear-gradient(${105 + tiltY * 2}deg, transparent 30%, rgba(168,216,234,0.08) 40%, rgba(200,168,234,0.06) 50%, rgba(234,200,168,0.08) 60%, transparent 70%)`, mixBlendMode: "overlay" }} />
           </div>
         </div>
 
-        {/* Card info */}
         <div className="text-center">
-          {card.name && (
-            <p className="text-white/90 font-light tracking-[0.15em] text-sm mb-1">
-              {card.name}
-            </p>
-          )}
+          {card.name && <p className="text-white/90 font-light tracking-[0.15em] text-sm mb-1 line-clamp-2">{card.name}</p>}
           {card.grader && card.grade && (
             <span className="inline-block text-[10px] px-3 py-1 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
               {card.grader} {card.grade}
             </span>
           )}
-          <p className="mt-3 text-[10px] text-white/30 tracking-[0.3em] uppercase font-light">
-            {ownerName} 的收藏
-          </p>
+          <p className="mt-3 text-[10px] text-white/30 tracking-[0.3em] uppercase font-light">{ownerName} 的收藏</p>
         </div>
 
-        {/* Dot indicators */}
         {cards.length > 1 && (
           <div className="flex gap-2">
             {cards.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === current
-                    ? "w-4 h-1.5 bg-[#C9A84C]"
-                    : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"
-                }`}
-              />
+              <button key={i} onClick={() => setCurrent(i)}
+                className={`rounded-full transition-all duration-300 ${i === current ? "w-4 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
             ))}
           </div>
         )}
@@ -552,98 +338,93 @@ function CardGallery({
   );
 }
 
-// ── Stacked Card Relics (clickable) ───────────────────────────────────────────
+// ── Stacked Card Relics — 3D floating shrine display ──────────────────────────
 function StackedCardRelics({
   cards,
   onCardClick,
 }: {
-  cards: Array<{ imageUrl?: string | null; name?: string | null; grade?: string | null; grader?: string | null }>;
+  cards: GalleryCard[];
   onCardClick: (index: number) => void;
 }) {
-  const displayCards = cards.slice(0, 3).filter(c => c.imageUrl);
+  const validCards = cards.filter(c => c != null).slice(0, 3);
 
-  if (displayCards.length === 0) {
+  if (validCards.length === 0) {
     return (
-      <div className="h-52 flex items-center justify-center">
-        <Crown className="w-14 h-14 text-[#C9A84C]/20" />
-      </div>
-    );
-  }
-
-  const CardImg = ({ card, className, style, idx }: {
-    card: typeof displayCards[0]; className: string; style?: React.CSSProperties; idx: number;
-  }) => (
-    <div
-      className={`relative group/card cursor-zoom-in ${className}`}
-      style={style}
-      onClick={e => { e.stopPropagation(); onCardClick(idx); }}
-    >
-      {/* Ice-blue foil overlay */}
-      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#A8D8EA]/25 via-[#E8F4FF]/10 to-[#B8C8E8]/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 z-10 pointer-events-none" />
-      {/* Zoom hint */}
-      <div className="absolute inset-0 rounded-lg flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
-        <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-          <ZoomIn className="w-3.5 h-3.5 text-white" />
-        </div>
-      </div>
-      <img
-        src={card.imageUrl!}
-        alt={card.name ?? ""}
-        className="w-full rounded-lg transition-transform duration-500 group-hover/card:scale-105"
-      />
-    </div>
-  );
-
-  if (displayCards.length === 1) {
-    return (
-      <div className="h-52 flex items-center justify-center px-6">
-        <CardImg card={displayCards[0]} className="w-28 shadow-[0_8px_24px_rgba(0,0,0,0.18)]" idx={0} />
-      </div>
-    );
-  }
-
-  if (displayCards.length === 2) {
-    return (
-      <div className="h-52 flex items-center justify-center">
-        <div className="relative w-44 h-40">
-          <CardImg
-            card={displayCards[1]}
-            className="absolute left-0 top-2 w-28"
-            style={{ transform: "rotate(-6deg)", transformOrigin: "bottom right", boxShadow: "0 6px 18px rgba(0,0,0,0.15)" }}
-            idx={1}
-          />
-          <CardImg
-            card={displayCards[0]}
-            className="absolute right-0 top-0 w-28 z-10"
-            style={{ transform: "rotate(4deg)", transformOrigin: "bottom left", boxShadow: "0 10px 28px rgba(0,0,0,0.22)" }}
-            idx={0}
-          />
+      <div className="h-56 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 opacity-30">
+          <Crown className="w-10 h-10 text-[#C9A84C]" />
+          <p className="text-[10px] text-[#9A9A8A] tracking-[0.25em] uppercase font-light">No Cards</p>
         </div>
       </div>
     );
   }
+
+  // Configurations for 1, 2, 3 cards
+  const configs = {
+    1: [{ rotate: 0, x: 0, z: 10, scale: 1, brightness: 1 }],
+    2: [
+      { rotate: -7, x: -18, z: 5, scale: 0.9, brightness: 0.88 },
+      { rotate: 5, x: 18, z: 10, scale: 1, brightness: 1 },
+    ],
+    3: [
+      { rotate: -10, x: -22, z: 5, scale: 0.85, brightness: 0.82 },
+      { rotate: 0, x: 0, z: 20, scale: 1, brightness: 1 },
+      { rotate: 10, x: 22, z: 5, scale: 0.85, brightness: 0.82 },
+    ],
+  };
+
+  const cfg = configs[validCards.length as 1 | 2 | 3];
 
   return (
-    <div className="h-52 flex items-center justify-center">
-      <div className="relative w-52 h-44">
-        <CardImg
-          card={displayCards[2]}
-          className="absolute left-0 top-4 w-24"
-          style={{ transform: "rotate(-10deg)", transformOrigin: "bottom", boxShadow: "0 5px 15px rgba(0,0,0,0.13)" }}
-          idx={2}
-        />
-        <CardImg
-          card={displayCards[0]}
-          className="absolute left-1/2 -translate-x-1/2 top-0 w-28 z-20"
-          style={{ boxShadow: "0 12px 32px rgba(0,0,0,0.25)" }}
-          idx={0}
-        />
-        <CardImg
-          card={displayCards[1]}
-          className="absolute right-0 top-4 w-24 z-10"
-          style={{ transform: "rotate(10deg)", transformOrigin: "bottom", boxShadow: "0 5px 15px rgba(0,0,0,0.13)" }}
-          idx={1}
-        />
+    <div className="relative h-56 flex items-center justify-center overflow-visible">
+      {/* Inset shadow base — the "niche" */}
+      <div className="absolute inset-0 rounded-t-xl"
+        style={{ boxShadow: "inset 0 4px 16px rgba(0,0,0,0.07), inset 0 1px 4px rgba(0,0,0,0.04)" }} />
+
+      {/* Cards container */}
+      <div className="relative flex items-end justify-center" style={{ width: "100%", height: "100%", paddingBottom: "12px" }}>
+        {validCards.map((card, i) => {
+          const c = cfg[i];
+          const isCenter = validCards.length === 3 ? i === 1 : i === validCards.length - 1;
+          return (
+            <div
+              key={i}
+              className="absolute bottom-3 cursor-zoom-in group/relic"
+              style={{
+                width: "clamp(80px, 38%, 110px)",
+                transform: `translateX(${c.x}px) rotate(${c.rotate}deg) scale(${c.scale})`,
+                zIndex: c.z,
+                transformOrigin: "bottom center",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                filter: `brightness(${c.brightness})`,
+              }}
+              onClick={e => { e.stopPropagation(); onCardClick(i); }}
+            >
+              {/* Foil overlay */}
+              <div className="absolute inset-0 rounded-lg z-10 pointer-events-none opacity-0 group-hover/relic:opacity-100 transition-opacity duration-400"
+                style={{ background: "linear-gradient(135deg, rgba(200,230,255,0.28) 0%, rgba(255,255,255,0) 70%)", mixBlendMode: "screen" }} />
+              {/* Zoom hint */}
+              <div className="absolute inset-0 rounded-lg z-20 flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                  <ZoomIn className="w-3 h-3 text-white" />
+                </div>
+              </div>
+              <SafeCardImg
+                src={card.imageUrl}
+                alt={card.name ?? ""}
+                className="w-full rounded-lg"
+                style={{
+                  boxShadow: isCenter
+                    ? "0 12px 28px -6px rgba(0,0,0,0.32), 0 4px 10px -2px rgba(0,0,0,0.18)"
+                    : "0 6px 16px -4px rgba(0,0,0,0.22)",
+                  display: "block",
+                  aspectRatio: "3/4",
+                  objectFit: "cover",
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -675,13 +456,13 @@ function CommentSection({ entryId, entryName }: { entryId: number; entryName: st
           <div className="mb-4">
             <Textarea
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={e => setComment(e.target.value)}
               placeholder={`留言給 ${entryName}…`}
               className="bg-[#F8F8F6] border-[#E8E8E6] text-xs text-[#1A1A1A] placeholder:text-[#BCBCB0] resize-none min-h-[64px] rounded-lg font-light"
               maxLength={500}
             />
             <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
-              {QUICK_COMMENTS.map((q) => (
+              {QUICK_COMMENTS.map(q => (
                 <button key={q} onClick={() => setComment(q)}
                   className="text-[10px] px-2.5 py-1 bg-[#F3F3F0] hover:bg-[#EAEAE6] text-[#7A7A6A] rounded-full transition-colors font-light tracking-wide border border-[#E8E8E4]">
                   {q}
@@ -706,16 +487,16 @@ function CommentSection({ entryId, entryName }: { entryId: number; entryName: st
           <p className="text-[10px] text-[#BCBCB0] text-center py-3 tracking-widest">— 尚無留言 —</p>
         ) : (
           <div className="space-y-2.5">
-            {comments.map((c) => (
+            {comments.map(c => (
               <div key={c.id} className="flex items-start gap-2 group">
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-medium text-[#4A4A3A] mr-2 tracking-wide">{c.displayName}</span>
-                  <span className="text-xs text-[#5A5A4A] font-light">{c.content}</span>
+                  <span className="text-xs text-[#5A5A4A] font-light break-words">{c.content}</span>
                   <span className="text-[10px] text-[#BCBCB0] ml-2 font-light">{new Date(c.createdAt).toLocaleDateString("zh-HK")}</span>
                 </div>
                 {user && (user.id === c.userId || user.role === "admin") && (
                   <button onClick={() => deleteMutation.mutate({ commentId: c.id })}
-                    className="opacity-0 group-hover:opacity-100 text-[#BCBCB0] hover:text-red-400 transition-all">
+                    className="opacity-0 group-hover:opacity-100 text-[#BCBCB0] hover:text-red-400 transition-all shrink-0">
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -751,7 +532,6 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
 
   const handleSigh = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!user) { setLocation("/login"); return; }
-    // Trigger particles + audio
     spawnBurst(e.clientX, e.clientY);
     playSighSound();
     sighMutation.mutate({ entryId: entry.id });
@@ -767,47 +547,50 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
     }
   };
 
-  // Build top-3 cards
+  // Build top-3 cards array
   const topCards: GalleryCard[] = [];
   if (entry.topCardImageUrl) topCards.push({ imageUrl: entry.topCardImageUrl, name: entry.topCardName, grade: entry.topCardGrade, grader: entry.topCardGrader });
   if (entry.card2ImageUrl) topCards.push({ imageUrl: entry.card2ImageUrl, name: entry.card2Name, grade: entry.card2Grade, grader: entry.card2Grader });
   if (entry.card3ImageUrl) topCards.push({ imageUrl: entry.card3ImageUrl, name: entry.card3Name, grade: entry.card3Grade, grader: entry.card3Grader });
 
   const rankLabel = rank <= 3 ? ["Ⅰ", "Ⅱ", "Ⅲ"][rank - 1] : `${rank}`;
-  const rankGold = rank === 1 ? "text-[#C9A84C] border-[#C9A84C]/40"
-    : rank === 2 ? "text-[#9A9A9A] border-[#9A9A9A]/40"
-    : rank === 3 ? "text-[#A07040] border-[#A07040]/40"
+  const rankColor = rank === 1 ? "text-[#C9A84C] border-[#C9A84C]/50"
+    : rank === 2 ? "text-[#9A9A9A] border-[#9A9A9A]/50"
+    : rank === 3 ? "text-[#A07040] border-[#A07040]/50"
     : "text-[#BCBCB0] border-[#BCBCB0]/30";
 
   return (
     <>
       <div
-        className={`relative bg-white rounded-2xl overflow-hidden transition-all duration-500 group
-          border border-[#E8E8E4]
+        className={`relative bg-white rounded-2xl overflow-hidden border border-[#E5E7EB] transition-all duration-500
           shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]
-          hover:shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]
-          hover:-translate-y-0.5
-          ${glowing ? "shadow-[0_0_0_3px_rgba(168,216,234,0.4),0_8px_40px_rgba(168,216,234,0.25)]" : ""}
+          hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+          hover:-translate-y-1
+          ${glowing ? "shadow-[0_0_0_3px_rgba(168,216,234,0.5),0_8px_40px_rgba(168,216,234,0.3)]" : ""}
         `}
-        style={{
-          transition: glowing
-            ? "box-shadow 0.1s ease-out, transform 0.3s ease"
-            : "box-shadow 0.8s ease-out, transform 0.3s ease",
-        }}
       >
         {/* Rank badge */}
-        <div className={`absolute top-3 left-3 z-20 w-7 h-7 rounded-full border flex items-center justify-center text-[11px] font-light tracking-wider bg-white/90 backdrop-blur-sm ${rankGold}`}>
+        <div className={`absolute top-3 left-3 z-30 w-7 h-7 rounded-full border flex items-center justify-center text-[11px] font-light tracking-wider bg-white/90 backdrop-blur-sm ${rankColor}`}>
           {rankLabel}
         </div>
 
-        {/* Stone display base */}
-        <div className="relative bg-gradient-to-b from-[#F5F5F3] to-[#EEEEEB] pt-4 pb-2 px-4">
-          <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
-            style={{ backgroundImage: "repeating-linear-gradient(90deg, #6A6A5A 0px, #6A6A5A 1px, transparent 1px, transparent 28px)" }} />
-          <StackedCardRelics cards={topCards} onCardClick={(idx) => setGalleryIndex(idx)} />
+        {/* Stone display base — the shrine niche */}
+        <div
+          className="relative overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, #F2F1EE 0%, #ECEAE5 100%)",
+            boxShadow: "inset 0 4px 12px rgba(0,0,0,0.06), inset 0 1px 2px rgba(0,0,0,0.02)",
+          }}
+        >
+          {/* Stone wall texture lines */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            style={{ backgroundImage: "repeating-linear-gradient(90deg, #4A4A3A 0px, #4A4A3A 1px, transparent 1px, transparent 28px)" }} />
+
+          <StackedCardRelics cards={topCards} onCardClick={idx => setGalleryIndex(idx)} />
+
           {/* Gallery hint */}
           {topCards.length > 0 && (
-            <p className="text-center text-[9px] text-[#BCBCB0] tracking-[0.2em] uppercase font-light pb-1">
+            <p className="text-center text-[9px] text-[#BCBCB0] tracking-[0.2em] uppercase font-light pb-2">
               點擊卡牌放大欣賞
             </p>
           )}
@@ -815,16 +598,17 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
 
         {/* Marble body */}
         <div className="p-4">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <div className="min-w-0">
-              <p className="font-light text-[#1A1A1A] text-sm tracking-[0.08em] truncate">{entry.displayName}</p>
+          {/* Name + sigh count row */}
+          <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+            <div className="min-w-0 flex-1">
+              <p className="font-light text-[#1A1A1A] text-sm tracking-[0.06em] truncate">{entry.displayName}</p>
               {entry.topCardGrader && entry.topCardGrade && (
-                <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-[#FFF8E7] text-[#C9A84C] border border-[#C9A84C]/25 rounded-full font-light tracking-wide">
+                <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-[#FFF8E7] text-[#C9A84C] border border-[#C9A84C]/25 rounded-full font-light tracking-wide truncate max-w-full">
                   {entry.topCardGrader} {entry.topCardGrade}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1 text-[#C9A84C] shrink-0 mt-0.5">
+            <div className="flex items-center gap-1 text-[#C9A84C] shrink-0">
               <Wind className="w-3 h-3" />
               <span className="text-xs font-light tracking-wider">{entry.sighs.toLocaleString()}</span>
             </div>
@@ -833,8 +617,8 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
           {/* Value — runic inscription */}
           <div className="my-3 py-2.5 border-t border-b border-[#EEEEE8]">
             <p className="text-[9px] text-[#BCBCB0] tracking-[0.3em] uppercase mb-0.5 font-light">Total Value</p>
-            <p className="text-lg font-light text-[#1A1A1A] tracking-[0.05em]">{formatHKD(entry.totalValueHKD)}</p>
-            <div className="mt-1 h-px w-16 bg-gradient-to-r from-[#C9A84C]/60 to-transparent" />
+            <p className="text-lg font-light text-[#1A1A1A] tracking-[0.04em] truncate">{formatHKD(entry.totalValueHKD)}</p>
+            <div className="mt-1 h-px w-14 bg-gradient-to-r from-[#C9A84C]/60 to-transparent" />
           </div>
 
           {/* Action buttons */}
@@ -842,24 +626,23 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
             <button
               onClick={handleSigh}
               disabled={sighMutation.isPending}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#E8E8E4] hover:border-[#C9A84C]/40 hover:bg-[#FFF8E7]/50 text-[#4A4A3A] text-[11px] font-light tracking-[0.12em] rounded-full transition-all duration-300 uppercase active:scale-95"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#E8E8E4] hover:border-[#C9A84C]/50 hover:bg-[#FFF8E7]/60 text-[#4A4A3A] text-[11px] font-light tracking-[0.12em] rounded-full transition-all duration-300 uppercase active:scale-95 min-w-0"
             >
               {sighMutation.isPending
-                ? <Loader2 className="w-3 h-3 animate-spin" />
-                : <Wind className="w-3 h-3 text-[#C9A84C]" />
-              }
-              Sigh
+                ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                : <Wind className="w-3 h-3 text-[#C9A84C] shrink-0" />}
+              <span className="truncate">Sigh</span>
             </button>
             <button
               onClick={() => setShowComments(!showComments)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#E8E8E4] hover:border-[#8A9AAA]/40 hover:bg-[#F5F8FA]/50 text-[#4A4A3A] text-[11px] font-light tracking-[0.12em] rounded-full transition-all duration-300 uppercase"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#E8E8E4] hover:border-[#8A9AAA]/40 hover:bg-[#F5F8FA]/50 text-[#4A4A3A] text-[11px] font-light tracking-[0.1em] rounded-full transition-all duration-300 uppercase min-w-0"
             >
-              <MessageCircle className="w-3 h-3 text-[#8A9AAA]" />
-              {showComments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              <MessageCircle className="w-3 h-3 text-[#8A9AAA] shrink-0" />
+              {showComments ? <ChevronUp className="w-3 h-3 shrink-0" /> : <ChevronDown className="w-3 h-3 shrink-0" />}
             </button>
             <button
               onClick={handleShare}
-              className="p-2 border border-[#E8E8E4] hover:border-[#BCBCB0] text-[#BCBCB0] hover:text-[#4A4A3A] rounded-full transition-all duration-300"
+              className="p-2 border border-[#E8E8E4] hover:border-[#BCBCB0] text-[#BCBCB0] hover:text-[#4A4A3A] rounded-full transition-all duration-300 shrink-0"
             >
               <Share2 className="w-3.5 h-3.5" />
             </button>
@@ -869,14 +652,8 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
         </div>
       </div>
 
-      {/* Fullscreen gallery */}
       {galleryIndex !== null && topCards.length > 0 && (
-        <CardGallery
-          cards={topCards}
-          initialIndex={galleryIndex}
-          ownerName={entry.displayName}
-          onClose={() => setGalleryIndex(null)}
-        />
+        <CardGallery cards={topCards} initialIndex={galleryIndex} ownerName={entry.displayName} onClose={() => setGalleryIndex(null)} />
       )}
     </>
   );
@@ -897,12 +674,7 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
     },
   });
   const unpublishMutation = trpc.wall.unpublish.useMutation({
-    onSuccess: () => {
-      utils.wall.getWall.invalidate();
-      utils.wall.getMyEntry.invalidate();
-      toast.success("已從嘆息之牆撤除");
-      onClose();
-    },
+    onSuccess: () => { utils.wall.getWall.invalidate(); utils.wall.getMyEntry.invalidate(); toast.success("已從嘆息之牆撤除"); onClose(); },
   });
   const posterMutation = trpc.wall.generatePoster.useMutation({
     onSuccess: (data) => { window.open(data.posterUrl, "_blank"); toast.success("榮譽證書已生成！"); },
@@ -911,7 +683,6 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
 
   const publishError = publishMutation.error;
   const isShortfall = publishError?.data?.code === "FORBIDDEN";
-  const shortfallMsg = publishError?.message ?? "";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -923,9 +694,7 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/40 to-transparent" />
           <p className="text-[10px] text-[#C9A84C] tracking-[0.4em] uppercase mb-3 font-light">Nordic Sanctuary</p>
-          <h2 className="text-2xl text-white tracking-[0.25em] uppercase font-light mb-1" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-            嘆息之牆
-          </h2>
+          <h2 className="text-2xl text-white tracking-[0.25em] uppercase mb-1 font-light" style={{ fontFamily: "'Montserrat', sans-serif" }}>嘆息之牆</h2>
           <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">The Wall of Sighs</p>
         </div>
         <div className="p-6">
@@ -961,7 +730,7 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
                 <Wind className="w-5 h-5 text-red-300" />
               </div>
               <p className="text-[10px] text-[#BCBCB0] tracking-[0.25em] uppercase mb-2 font-light">距離神殿</p>
-              <p className="text-sm font-light text-[#1A1A1A] mb-4 leading-relaxed">{shortfallMsg}</p>
+              <p className="text-sm font-light text-[#1A1A1A] mb-4 leading-relaxed">{publishError.message}</p>
               <p className="text-[10px] text-[#BCBCB0] mb-5 font-light leading-relaxed">繼續充實您的 Vault，讓資產突破門檻，登上神殿石壁</p>
               <Button onClick={onClose} className="w-full bg-[#1A1A1A] text-white hover:bg-[#2A2A2A] text-xs h-10 rounded-xl font-light tracking-widest uppercase">
                 繼續充實 Vault
@@ -984,19 +753,6 @@ function PublishModal({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// ── Stone Wall Background ──────────────────────────────────────────────────────
-function StoneWallBg() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.028]"
-        style={{ backgroundImage: "repeating-linear-gradient(90deg, #4A4A3A 0px, #4A4A3A 1px, transparent 1px, transparent 80px)" }} />
-      <div className="absolute inset-0 opacity-[0.018]"
-        style={{ backgroundImage: "repeating-linear-gradient(0deg, #4A4A3A 0px, #4A4A3A 1px, transparent 1px, transparent 120px)" }} />
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#F0F0EE]/60 to-transparent" />
-    </div>
   );
 }
 
@@ -1028,75 +784,93 @@ export default function WallOfSighs() {
           33%       { transform: translate(30px, -20px) scale(1.05); }
           66%       { transform: translate(-20px, 15px) scale(0.97); }
         }
-        @keyframes shimmerPulse {
-          0%   { opacity: 1; }
-          100% { opacity: 0; }
-        }
       `}</style>
 
       <div className="min-h-screen bg-[#F5F5F3]" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
         {/* ── Hero ─────────────────────────────────────────────── */}
         <div className="relative overflow-hidden bg-[#F3F4F6] border-b border-[#E8E8E4]">
-          <StoneWallBg />
-          <div className="relative max-w-4xl mx-auto px-4 py-20 md:py-28 text-center">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#C9A84C]/50" />
+          {/* Stone wall bg texture */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 opacity-[0.028]"
+              style={{ backgroundImage: "repeating-linear-gradient(90deg, #4A4A3A 0px, #4A4A3A 1px, transparent 1px, transparent 80px)" }} />
+            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#F0F0EE]/60 to-transparent" />
+          </div>
+
+          <div className="relative max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
+            {/* Rune ornament */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#C9A84C]/50" />
               <div className="w-1 h-1 rounded-full bg-[#C9A84C]/60" />
               <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]" />
               <div className="w-1 h-1 rounded-full bg-[#C9A84C]/60" />
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#C9A84C]/50" />
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#C9A84C]/50" />
             </div>
+
             <p className="text-[10px] text-[#C9A84C] tracking-[0.5em] uppercase mb-3 font-light"
               style={{ animation: "runeGlow 3s ease-in-out infinite" }}>
               Nordic Sanctuary · BOXIUM PTCG
             </p>
-            <h1 className="text-5xl md:text-7xl text-[#1A1A1A] tracking-[0.25em] uppercase mb-3 font-light leading-none">
+            <h1 className="text-5xl md:text-7xl text-[#1A1A1A] tracking-[0.22em] uppercase mb-2 font-light leading-none">
               嘆息之牆
             </h1>
             <p className="text-[11px] md:text-xs text-[#9A9A8A] tracking-[0.45em] uppercase mb-2 font-light">
               THE WALL OF SIGHS
             </p>
-            <div className="flex items-center justify-center gap-4 my-7">
-              <div className="h-px w-20 bg-gradient-to-r from-transparent to-[#C9A84C]/70" />
+
+            <div className="flex items-center justify-center gap-4 my-6">
+              <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#C9A84C]/70" />
               <div className="flex gap-1.5">
                 <div className="w-1 h-1 rounded-full bg-[#C9A84C]/50" />
                 <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]" />
                 <div className="w-1 h-1 rounded-full bg-[#C9A84C]/50" />
               </div>
-              <div className="h-px w-20 bg-gradient-to-l from-transparent to-[#C9A84C]/70" />
+              <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#C9A84C]/70" />
             </div>
-            <p className="text-[#7A7A6A] text-sm font-light tracking-[0.08em] max-w-md mx-auto mb-12 leading-loose">
+
+            <p className="text-[#7A7A6A] text-sm font-light tracking-[0.06em] max-w-md mx-auto mb-10 leading-loose">
               凡人止步。此牆只記載令全網 TCG 玩家<br className="hidden md:block" />
               為之嘆息的絕世巨富與神級收藏。
             </p>
 
-            {/* Stats altar */}
-            <div className="inline-flex flex-col sm:flex-row gap-0 bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)] mb-10">
-              {[
-                { label: "Wall Total Value", value: <><span className="text-base">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1A1A1A]" },
-                { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C]" },
-                { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1A1A1A]" },
-              ].map((stat, i) => (
-                <div key={i} className="flex items-stretch">
-                  {i > 0 && <div className="w-px bg-[#E8E8E4] hidden sm:block" />}
-                  {i > 0 && <div className="h-px bg-[#E8E8E4] sm:hidden" />}
-                  <div className="px-8 py-5 text-center">
-                    <p className="text-[9px] text-[#BCBCB0] tracking-[0.35em] uppercase mb-1.5 font-light">{stat.label}</p>
-                    <p className={`text-xl md:text-2xl font-light tracking-wide ${stat.color}`}>{stat.value}</p>
-                    <div className="mt-1.5 h-px w-10 mx-auto bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+            {/* ── Stats + CTA row — flex layout, no absolute positioning ── */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-6">
+              {/* Stats altar */}
+              <div className="flex flex-col sm:flex-row bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
+                {[
+                  { label: "Wall Total Value", value: <><span className="text-base">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1A1A1A]" },
+                  { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C]" },
+                  { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1A1A1A]" },
+                ].map((stat, i) => (
+                  <div key={i} className="flex items-stretch">
+                    {i > 0 && <div className="w-px bg-[#E8E8E4] hidden sm:block" />}
+                    {i > 0 && <div className="h-px bg-[#E8E8E4] sm:hidden" />}
+                    <div className="px-6 py-4 text-center">
+                      <p className="text-[9px] text-[#BCBCB0] tracking-[0.3em] uppercase mb-1 font-light whitespace-nowrap">{stat.label}</p>
+                      <p className={`text-xl font-light tracking-wide ${stat.color}`}>{stat.value}</p>
+                      <div className="mt-1 h-px w-8 mx-auto bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <button
-              onClick={() => { if (!user) { setLocation("/login"); return; } setShowPublishModal(true); }}
-              className="inline-flex items-center gap-3 px-8 py-3.5 bg-[#1A1A1A] text-white text-[11px] font-light tracking-[0.3em] uppercase rounded-full hover:bg-[#2A2A2A] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_28px_rgba(0,0,0,0.2)]"
-            >
-              <Wind className="w-3.5 h-3.5 text-[#C9A84C]" />
-              登上神殿石壁
-            </button>
+              {/* CTA button — stone relic style */}
+              <button
+                onClick={() => { if (!user) { setLocation("/login"); return; } setShowPublishModal(true); }}
+                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] text-white text-[11px] font-bold tracking-[0.25em] uppercase rounded-xl
+                  hover:bg-[#2D2D2D] transition-all duration-300
+                  shadow-[0_4px_20px_rgba(0,0,0,0.18)]
+                  hover:shadow-[0_8px_25px_-5px_rgba(14,165,233,0.15),0_6px_20px_rgba(0,0,0,0.2)]
+                  hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {/* Rune arrow SVG */}
+                <svg width="12" height="14" viewBox="0 0 12 14" fill="none" className="shrink-0">
+                  <path d="M6 1L6 11M6 1L2 5M6 1L10 5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M1 13H11" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+                </svg>
+                登上神殿石壁
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1108,7 +882,7 @@ export default function WallOfSighs() {
               <h2 className="text-sm font-light text-[#1A1A1A] tracking-[0.2em] uppercase">殿堂排行 · {entries.length}</h2>
             </div>
             <div className="flex gap-0.5 bg-white border border-[#E8E8E4] rounded-xl p-1 shadow-sm">
-              {(["totalValue", "sighs", "createdAt"] as const).map((s) => (
+              {(["totalValue", "sighs", "createdAt"] as const).map(s => (
                 <button key={s} onClick={() => setSortBy(s)}
                   className={`px-3 py-1.5 text-[10px] font-light tracking-widest rounded-lg transition-all uppercase ${
                     sortBy === s ? "bg-[#1A1A1A] text-white shadow-sm" : "text-[#9A9A8A] hover:text-[#1A1A1A]"
@@ -1136,7 +910,7 @@ export default function WallOfSighs() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {entries.map((entry) => (
+              {entries.map(entry => (
                 <WallCard key={entry.id} entry={entry} rank={entry.rank} />
               ))}
             </div>
