@@ -357,7 +357,7 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.fillStyle = sigGrad;
   ctx.font = `bold 18px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText(`${data.sighs.toLocaleString()} 次嘆息`, W / 2, 592);
+  ctx.fillText(`為之驚歎 ~ ${data.sighs.toLocaleString()} 次`, W / 2, 592);
   ctx.restore();
 
   drawGoldDivider(ctx, 618);
