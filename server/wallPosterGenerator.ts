@@ -468,44 +468,51 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
 
-    // ── TOP label + price: drawn INSIDE translate/rotate context so they follow the card ──
-    // Reset filter for text rendering
-    (ctx as unknown as { filter: string }).filter = "none";
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-
-    // TOP label above card (relative to card center: y = -ch/2 - 18)
-    const labelGrad = ctx.createLinearGradient(-30, 0, 30, 0);
-    labelGrad.addColorStop(0, `rgba(139,105,20,${labelAlpha})`);
-    labelGrad.addColorStop(0.5, `rgba(201,168,76,${labelAlpha})`);
-    labelGrad.addColorStop(1, `rgba(139,105,20,${labelAlpha})`);
-    ctx.fillStyle = labelGrad;
-    ctx.font = `bold ${labelSize}px ${CJK_FONT}`;
-    ctx.textAlign = "center";
-    ctx.fillText(topLabels[cfg.i], 0, -(ch / 2) - 18);
-
-    // Price below card (relative to card center: y = ch/2 + 20 for MV, +36 for price)
-    const val = cardValues[cfg.i];
-    if (val && val > 0) {
-      // MV label
-      ctx.fillStyle = `rgba(139,105,20,${labelAlpha * 0.7})`;
-      ctx.font = `${cfg.scale >= 1 ? 10 : 9}px ${CJK_FONT}`;
-      ctx.textAlign = "center";
-      ctx.fillText("MV", 0, ch / 2 + 18);
-
-      // Price value
-      ctx.fillStyle = `rgba(42,31,10,${labelAlpha})`;
-      ctx.font = `bold ${cfg.scale >= 1 ? 13 : 11}px ${CJK_FONT}`;
-      ctx.textAlign = "center";
-      const priceStr = `HKD ${val.toLocaleString("en-HK", { maximumFractionDigits: 0 })}`;
-      ctx.fillText(priceStr, 0, ch / 2 + 34);
-    }
-
     ctx.restore();
   }
 
-  // ── 9. Footer ────────────────────────────────────────────────────────────────
+  // ── 9. Crown Jewel text block ─────────────────────────────────────────────
+  // Positioned between card fan and footer divider
+  const crownJewelY = fanCenterY + BASE_CARD_H / 2 * fanCfg[0].scale + 44;
+
+  // "CROWN JEWEL" label
+  ctx.save();
+  ctx.fillStyle = "rgba(139,105,20,0.65)";
+  ctx.font = `10px ${CJK_FONT}`;
+  ctx.textAlign = "center";
+  (ctx as unknown as { letterSpacing: string }).letterSpacing = "2px";
+  ctx.fillText("CROWN JEWEL", W / 2, crownJewelY);
+  ctx.restore();
+
+  // Quote text (multi-line wrap)
+  const quoteText = "\u300c\u9019\u662f\u7531\u6975\u81f4\u71b1\u611b\u8207\u7d55\u5c0d\u5be6\u529b\u923d\u5c31\u7684\u50b3\u5947\u4e4b\u7246\u3002\u4e94\u5f35\u795e\u7d1a\u5361\u724c\u5728\u6b64\u4ea4\u5f59\uff0c\u5176\u8000\u773c\u7684\u5149\u8292\u5c07\u6c38\u9060\u93f8\u523b\u65bc TCG \u6536\u85cf\u53f2\u518a\u4e4b\u4e2d\u3002\u300d";
+  const quoteMaxWidth = W - 200;
+  const quoteLineHeight = 26;
+  const quoteFontSize = 16;
+  ctx.save();
+  ctx.font = `${quoteFontSize}px ${CJK_FONT}`;
+  ctx.fillStyle = "rgba(60,45,20,0.75)";
+  ctx.textAlign = "center";
+
+  // Word-wrap the quote text
+  const words = quoteText.split("");
+  let line = "";
+  let quoteLineY = crownJewelY + 24;
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > quoteMaxWidth && n > 0) {
+      ctx.fillText(line, W / 2, quoteLineY);
+      line = words[n];
+      quoteLineY += quoteLineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, W / 2, quoteLineY);
+  ctx.restore();
+
+  // ── 10. Footer ────────────────────────────────────────────────────────────────
   const footerY = H - 148;
   drawGoldDivider(ctx, footerY);
 
