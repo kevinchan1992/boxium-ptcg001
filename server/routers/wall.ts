@@ -381,6 +381,10 @@ export const wallRouter = router({
       topCardGrade: entry.topCardGrade ?? undefined,
       topCardGrader: entry.topCardGrader ?? undefined,
       topCardValueHKD: (entry.topCardValue ?? 0) / 100,
+      card2ImageUrl: entry.card2ImageUrl ?? undefined,
+      card3ImageUrl: entry.card3ImageUrl ?? undefined,
+      card4ImageUrl: entry.card4ImageUrl ?? undefined,
+      card5ImageUrl: entry.card5ImageUrl ?? undefined,
       wallUrl: "https://boxium.asia/wall-of-sighs",
     });
 

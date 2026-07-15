@@ -161,6 +161,10 @@ export interface WallPosterData {
   topCardGrade?: string;
   topCardGrader?: string;
   topCardValueHKD?: number;
+  card2ImageUrl?: string;
+  card3ImageUrl?: string;
+  card4ImageUrl?: string;
+  card5ImageUrl?: string;
   wallUrl: string;
 }
 
@@ -358,64 +362,104 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
 
   drawGoldDivider(ctx, 618);
 
-  // ── 8. Crown Jewel Card ──────────────────────────────────────────────────────
-  let cardBottomY = 640;
-  if (data.topCardImageUrl) {
-    const cardImg = await fetchImage(data.topCardImageUrl);
-    if (cardImg) {
-      // Maintain 3:4 aspect ratio — never stretch
-      const cardW = 240;
-      const cardH = Math.round(cardW * 4 / 3); // = 320
-      const cardX = (W - cardW) / 2;
-      const cardY = 640;
+  // ── 8. Top 5 Cards — 3D Fan Array (Nordic White Sanctuary) ─────────────────
+  // Collect up to 5 card image URLs
+  const cardUrls = [
+    data.topCardImageUrl,
+    data.card2ImageUrl,
+    data.card3ImageUrl,
+    data.card4ImageUrl,
+    data.card5ImageUrl,
+  ].filter(Boolean) as string[];
 
-      // Warm stone niche shadow behind card
+  // Fan layout configs: [0]=center, [1]=left-inner, [2]=right-inner, [3]=left-outer, [4]=right-outer
+  // All positions relative to poster center X=540
+  type FanCfg = { offsetX: number; offsetY: number; rotate: number; scale: number; brightness: number; blur: number; z: number };
+  const fanAll: FanCfg[] = [
+    { offsetX: 0,    offsetY: -14, rotate: 0,   scale: 1.25, brightness: 1,    blur: 0,   z: 5 },
+    { offsetX: -190, offsetY: 10,  rotate: -11, scale: 1.00, brightness: 0.85, blur: 0,   z: 4 },
+    { offsetX:  190, offsetY: 10,  rotate:  11, scale: 1.00, brightness: 0.85, blur: 0,   z: 4 },
+    { offsetX: -360, offsetY: 24,  rotate: -22, scale: 0.80, brightness: 0.60, blur: 0.8, z: 3 },
+    { offsetX:  360, offsetY: 24,  rotate:  22, scale: 0.80, brightness: 0.60, blur: 0.8, z: 3 },
+  ];
+  const fanCfg = fanAll.slice(0, cardUrls.length);
+
+  // Base card size (enlarged ~25% vs previous 240px)
+  const BASE_CARD_W = 300;
+  const BASE_CARD_H = Math.round(BASE_CARD_W * 4 / 3); // 400
+  const fanCenterX = W / 2;
+  const fanCenterY = 640 + BASE_CARD_H / 2 + 10;
+
+  // Fetch all images in parallel
+  const cardImages = await Promise.all(cardUrls.map(url => fetchImage(url)));
+
+  // Draw back-to-front (highest z last = drawn on top)
+  const drawOrder = [...fanCfg.map((c, i) => ({ ...c, i }))];
+  drawOrder.sort((a, b) => a.z - b.z);
+
+  for (const cfg of drawOrder) {
+    const img = cardImages[cfg.i];
+    if (!img) continue;
+    const cw = Math.round(BASE_CARD_W * cfg.scale);
+    const ch = Math.round(BASE_CARD_H * cfg.scale);
+    const cx = fanCenterX + cfg.offsetX;
+    const cy = fanCenterY + cfg.offsetY;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(cfg.rotate * Math.PI / 180);
+    const ctxAny = ctx as unknown as { filter: string };
+    if (cfg.blur > 0) {
+      ctxAny.filter = `blur(${cfg.blur}px) brightness(${cfg.brightness})`;
+    } else {
+      ctxAny.filter = `brightness(${cfg.brightness})`;
+    }
+
+    // Ambient glow behind card (only for center card)
+    if (cfg.i === 0) {
       ctx.save();
-      ctx.shadowColor = "rgba(100,80,30,0.25)";
-      ctx.shadowBlur = 40;
-      ctx.shadowOffsetY = 16;
-      ctx.fillStyle = "rgba(0,0,0,0.01)";
-      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
+      (ctx as unknown as { filter: string }).filter = "none";
+      const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, cw * 0.9);
+      glowGrad.addColorStop(0, "rgba(212,175,55,0.45)");
+      glowGrad.addColorStop(0.5, "rgba(200,165,50,0.18)");
+      glowGrad.addColorStop(1, "transparent");
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, cw * 0.9, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-
-      // Card image — clipped to exact 3:4 ratio, no stretch
-      ctx.save();
-      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
-      ctx.clip();
-      // Draw image maintaining aspect ratio (object-contain equivalent)
-      const srcRatio = cardImg.width / cardImg.height;
-      const dstRatio = cardW / cardH;
-      let drawX = cardX, drawY = cardY, drawW = cardW, drawH = cardH;
-      if (srcRatio > dstRatio) {
-        // image is wider — letterbox top/bottom
-        drawH = cardW / srcRatio;
-        drawY = cardY + (cardH - drawH) / 2;
-      } else {
-        // image is taller — pillarbox left/right
-        drawW = cardH * srcRatio;
-        drawX = cardX + (cardW - drawW) / 2;
-      }
-      ctx.drawImage(cardImg, drawX, drawY, drawW, drawH);
-      ctx.restore();
-
-      // Antique gold border around card
-      ctx.save();
-      const cardBorderGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-      cardBorderGrad.addColorStop(0, "#8B6914");
-      cardBorderGrad.addColorStop(0.25, "#C9A84C");
-      cardBorderGrad.addColorStop(0.5, "#E8C96A");
-      cardBorderGrad.addColorStop(0.75, "#C9A84C");
-      cardBorderGrad.addColorStop(1, "#8B6914");
-      ctx.strokeStyle = cardBorderGrad;
-      ctx.lineWidth = 2.5;
-      roundRect(ctx, cardX, cardY, cardW, cardH, 12);
-      ctx.stroke();
-      ctx.restore();
-
-      cardBottomY = cardY + cardH + 18;
+      // Re-apply filter for card draw
+      (ctx as unknown as { filter: string }).filter = `brightness(${cfg.brightness})`;
     }
+
+    // Drop shadow
+    ctx.shadowColor = "rgba(80,60,20,0.30)";
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 10;
+
+    // Clip to card shape and draw image (no border)
+    ctx.save();
+    roundRect(ctx, -cw / 2, -ch / 2, cw, ch, 10);
+    ctx.clip();
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    // object-contain: preserve aspect ratio
+    const srcRatio = img.width / img.height;
+    const dstRatio = cw / ch;
+    let dw = cw, dh = ch, dx = -cw / 2, dy = -ch / 2;
+    if (srcRatio > dstRatio) {
+      dh = cw / srcRatio; dy = -dh / 2;
+    } else {
+      dw = ch * srcRatio; dx = -dw / 2;
+    }
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+
+    ctx.restore();
   }
+
+  const cardBottomY = fanCenterY + BASE_CARD_H / 2 + 22;
 
   // Card info
   if (data.topCardName) {
