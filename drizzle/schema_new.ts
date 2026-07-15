@@ -2251,21 +2251,25 @@ export const wallEntries = mysqlTable("wallEntries", {
   card2ImageUrl: text("card2ImageUrl"),
   card2Grade: varchar("card2Grade", { length: 32 }),
   card2Grader: varchar("card2Grader", { length: 32 }),
+  card2Value: bigint("card2Value", { mode: "number" }).default(0),
   // 3rd most valuable card
   card3Name: varchar("card3Name", { length: 255 }),
   card3ImageUrl: text("card3ImageUrl"),
   card3Grade: varchar("card3Grade", { length: 32 }),
   card3Grader: varchar("card3Grader", { length: 32 }),
+  card3Value: bigint("card3Value", { mode: "number" }).default(0),
   // 4th most valuable card
   card4Name: varchar("card4Name", { length: 255 }),
   card4ImageUrl: text("card4ImageUrl"),
   card4Grade: varchar("card4Grade", { length: 32 }),
   card4Grader: varchar("card4Grader", { length: 32 }),
+  card4Value: bigint("card4Value", { mode: "number" }).default(0),
   // 5th most valuable card
   card5Name: varchar("card5Name", { length: 255 }),
   card5ImageUrl: text("card5ImageUrl"),
   card5Grade: varchar("card5Grade", { length: 32 }),
   card5Grader: varchar("card5Grader", { length: 32 }),
+  card5Value: bigint("card5Value", { mode: "number" }).default(0),
   sighs: int("sighs").notNull().default(0),
   posterUrl: text("posterUrl"), // S3 URL for the generated honour certificate poster
   isPublic: boolean("isPublic").notNull().default(true),

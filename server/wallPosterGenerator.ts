@@ -162,9 +162,13 @@ export interface WallPosterData {
   topCardGrader?: string;
   topCardValueHKD?: number;
   card2ImageUrl?: string;
+  card2ValueHKD?: number;
   card3ImageUrl?: string;
+  card3ValueHKD?: number;
   card4ImageUrl?: string;
+  card4ValueHKD?: number;
   card5ImageUrl?: string;
+  card5ValueHKD?: number;
   wallUrl: string;
 }
 
@@ -244,11 +248,7 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.stroke();
   ctx.restore();
 
-  // ── 3. Corner Runes ─────────────────────────────────────────────────────────
-  drawRune(ctx, 40, 40, 42, 0.50);
-  ctx.save(); ctx.translate(W - 40, 40); ctx.scale(-1, 1); drawRune(ctx, 0, 0, 42, 0.50); ctx.restore();
-  drawOthalaRune(ctx, 40, H - 88, 42, 0.40);
-  ctx.save(); ctx.translate(W - 40, H - 88); ctx.scale(-1, 1); drawOthalaRune(ctx, 0, 0, 42, 0.40); ctx.restore();
+  // ── 3. Corner Runes — REMOVED (clean minimal corners) ─────────────────────
 
   // ── 4. Header: BOXIUM · TCG ─────────────────────────────────────────────────
   ctx.save();
@@ -459,42 +459,63 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
     ctx.restore();
   }
 
-  const cardBottomY = fanCenterY + BASE_CARD_H / 2 + 22;
+  // ── 8b. TOP 1-5 labels + individual prices below/above each card ─────────────────
+  const cardValues = [
+    data.topCardValueHKD,
+    data.card2ValueHKD,
+    data.card3ValueHKD,
+    data.card4ValueHKD,
+    data.card5ValueHKD,
+  ];
+  const topLabels = ["TOP 1", "TOP 2", "TOP 3", "TOP 4", "TOP 5"];
 
-  // Card info
-  if (data.topCardName) {
+  for (let i = 0; i < fanCfg.length; i++) {
+    const cfg = fanCfg[i];
+    const cw = Math.round(BASE_CARD_W * cfg.scale);
+    const ch = Math.round(BASE_CARD_H * cfg.scale);
+    const cx = fanCenterX + cfg.offsetX;
+    const cy = fanCenterY + cfg.offsetY;
+    const cardTopY = cy - ch / 2;
+    const cardBotY = cy + ch / 2;
+    const labelAlpha = cfg.scale >= 1 ? 1 : 0.75;
+    const labelSize = cfg.scale >= 1 ? 13 : 11;
+
+    // TOP label above card
     ctx.save();
-    ctx.fillStyle = "rgba(100,80,35,0.55)";
-    ctx.font = `11px ${CJK_FONT}`;
+    ctx.translate(cx, cardTopY - 14);
+    ctx.rotate(cfg.rotate * Math.PI / 180);
+    const labelGrad = ctx.createLinearGradient(-30, 0, 30, 0);
+    labelGrad.addColorStop(0, `rgba(139,105,20,${labelAlpha})`);
+    labelGrad.addColorStop(0.5, `rgba(201,168,76,${labelAlpha})`);
+    labelGrad.addColorStop(1, `rgba(139,105,20,${labelAlpha})`);
+    ctx.fillStyle = labelGrad;
+    ctx.font = `bold ${labelSize}px ${CJK_FONT}`;
     ctx.textAlign = "center";
-    ctx.fillText("CROWN JEWEL", W / 2, cardBottomY + 8);
+    ctx.fillText(topLabels[i], 0, 0);
     ctx.restore();
 
-    ctx.save();
-    ctx.fillStyle = "#2A1F0A";
-    ctx.font = `bold 20px ${CJK_FONT}`;
-    ctx.textAlign = "center";
-    const cardName = data.topCardName.length > 28 ? data.topCardName.slice(0, 28) + "…" : data.topCardName;
-    ctx.fillText(cardName, W / 2, cardBottomY + 36);
-    ctx.restore();
-
-    if (data.topCardGrader && data.topCardGrade) {
+    // Price below card
+    const val = cardValues[i];
+    if (val && val > 0) {
+      // MV label
       ctx.save();
-      const gradeGrad = ctx.createLinearGradient(W / 2 - 60, 0, W / 2 + 60, 0);
-      gradeGrad.addColorStop(0, "#8B6914"); gradeGrad.addColorStop(0.5, "#C9A84C"); gradeGrad.addColorStop(1, "#8B6914");
-      ctx.fillStyle = gradeGrad;
-      ctx.font = `bold 15px ${CJK_FONT}`;
+      ctx.translate(cx, cardBotY + 16);
+      ctx.rotate(cfg.rotate * Math.PI / 180);
+      ctx.fillStyle = `rgba(139,105,20,${labelAlpha * 0.7})`;
+      ctx.font = `${cfg.scale >= 1 ? 10 : 9}px ${CJK_FONT}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${data.topCardGrader} ${data.topCardGrade}`, W / 2, cardBottomY + 60);
+      ctx.fillText("MV", 0, 0);
       ctx.restore();
-    }
 
-    if (data.topCardValueHKD && data.topCardValueHKD > 0) {
+      // Price value
       ctx.save();
-      ctx.fillStyle = "#3A2A10";
-      ctx.font = `bold 18px ${CJK_FONT}`;
+      ctx.translate(cx, cardBotY + 32);
+      ctx.rotate(cfg.rotate * Math.PI / 180);
+      ctx.fillStyle = `rgba(42,31,10,${labelAlpha})`;
+      ctx.font = `bold ${cfg.scale >= 1 ? 13 : 11}px ${CJK_FONT}`;
       ctx.textAlign = "center";
-      ctx.fillText(`HKD ${data.topCardValueHKD.toLocaleString("en-HK", { minimumFractionDigits: 2 })}`, W / 2, cardBottomY + 86);
+      const priceStr = `HKD ${val.toLocaleString("en-HK", { maximumFractionDigits: 0 })}`;
+      ctx.fillText(priceStr, 0, 0);
       ctx.restore();
     }
   }
