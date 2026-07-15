@@ -526,7 +526,7 @@ function StackedCardRelics({
       }}
     >
       {/* Main shrine container */}
-      <div className="relative w-full" style={{ height: "330px" }}>
+      <div className="relative w-full" style={{ height: "420px" }}>
 
         {/* Layer 0: Basalt noise texture */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0, opacity: 0.035 }}>
@@ -565,7 +565,7 @@ function StackedCardRelics({
         {[...cfg].reverse().map((c, ri) => {
           const i = cfg.length - 1 - ri; // original index
           const card = altarCards[i];
-          const cardW = c.isMain ? "clamp(96px, 40%, 128px)" : c.z === 20 ? "clamp(76px, 32%, 104px)" : "clamp(60px, 26%, 86px)";
+          const cardW = c.isMain ? "clamp(144px, 60%, 192px)" : c.z === 20 ? "clamp(114px, 48%, 156px)" : "clamp(90px, 39%, 129px)";
           return (
             <div
               key={i}
@@ -606,7 +606,7 @@ function StackedCardRelics({
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full rounded-lg block"
-                style={{ aspectRatio:"3/4", objectFit:"contain", background:"transparent", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
+                style={{ aspectRatio:"3/4", objectFit:"contain", background:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
               />
             </div>
           );
