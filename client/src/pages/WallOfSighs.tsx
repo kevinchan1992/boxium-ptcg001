@@ -339,7 +339,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
       {/* ── DESKTOP LAYOUT: left card | right info ── */}
       <div
         className="hidden md:flex absolute inset-0 items-center justify-center gap-12 px-16"
-        style={{ paddingBottom: "80px" }}
+        style={{ paddingTop: "56px" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Left: card — 42% width, max 75vh tall */}
