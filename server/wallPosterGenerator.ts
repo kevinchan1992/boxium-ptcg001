@@ -268,14 +268,14 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.textAlign = "center";
   ctx.shadowColor = "rgba(180,145,50,0.20)";
   ctx.shadowBlur = 14;
-  ctx.fillText("嘆息之牆", W / 2, 190);
+  ctx.fillText("歎息之牆", W / 2, 190);
   ctx.restore();
 
   ctx.save();
   ctx.fillStyle = "rgba(120,95,40,0.65)";
   ctx.font = `14px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText("THE WALL OF SIGHS  ·  HONOUR CERTIFICATE", W / 2, 224);
+  ctx.fillText("THE WALL OF WOW  ·  HONOUR CERTIFICATE", W / 2, 224);
   ctx.restore();
 
   drawGoldDivider(ctx, 250);
@@ -325,7 +325,7 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.fillStyle = "rgba(120,95,40,0.50)";
   ctx.font = `13px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText("已成功登上嘆息之牆，令全網 TCG 玩家為之嘆息", W / 2, 424);
+  ctx.fillText("已成功登上歎息之牆，令全網 TCG 玩家為之歎息", W / 2, 424);
   ctx.restore();
 
   drawGoldDivider(ctx, 448);
@@ -357,7 +357,7 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.fillStyle = sigGrad;
   ctx.font = `bold 18px ${CJK_FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText(`為之驚歎 ~ ${data.sighs.toLocaleString()} 次`, W / 2, 592);
+  ctx.fillText(`${data.sighs.toLocaleString()} 次驚歎`, W / 2, 592);
   ctx.restore();
 
   drawGoldDivider(ctx, 618);
