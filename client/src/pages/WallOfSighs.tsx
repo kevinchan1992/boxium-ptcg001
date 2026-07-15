@@ -521,12 +521,12 @@ function StackedCardRelics({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: "radial-gradient(circle at 50% 28%, rgba(15,118,110,0.18) 0%, rgba(14,165,233,0.12) 35%, rgba(9,9,11,1) 80%)",
+        background: "#09090B",
         boxShadow: "inset 0 4px 22px rgba(0,0,0,0.9), inset 0 -2px 8px rgba(0,0,0,0.6)",
       }}
     >
       {/* Main shrine container */}
-      <div className="relative w-full" style={{ height: "420px" }}>
+      <div className="relative w-full" style={{ height: "420px", background: "radial-gradient(circle at 50% 28%, rgba(15,118,110,0.18) 0%, rgba(14,165,233,0.12) 35%, rgba(9,9,11,1) 80%)" }}>
 
         {/* Layer 0: Basalt noise texture */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0, opacity: 0.035 }}>
