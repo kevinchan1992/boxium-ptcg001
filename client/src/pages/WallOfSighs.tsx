@@ -1,5 +1,5 @@
 /**
- * WallOfSighs.tsx — 嘆息之牆 · Nordic Sanctuary Style (v4)
+ * WallOfSighs.tsx — 歎息之牆 · Nordic Sanctuary Style (v4)
  *
  * Fixes:
  * - Broken images: proper onError fallback placeholder (no browser broken icon)
@@ -738,7 +738,7 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
   const handleShare = () => {
     const url = `https://boxium.asia/wall-of-sighs`;
     if (navigator.share) {
-      navigator.share({ title: `${entry.displayName} 的嘆息之牆`, url }).catch(() => {});
+      navigator.share({ title: `${entry.displayName} 的歎息之牆`, url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
       toast.success("連結已複製！");
@@ -855,12 +855,12 @@ function PublishModal({ open, onClose, onGoToVault }: { open: boolean; onClose: 
       utils.wall.getWall.invalidate();
       utils.wall.getStats.invalidate();
       utils.wall.getMyEntry.invalidate();
-      toast.success("恭喜！您已登上嘆息之牆！");
+      toast.success("恭喜！您已登上歎息之牆！");
       onClose();
     },
   });
   const unpublishMutation = trpc.wall.unpublish.useMutation({
-    onSuccess: () => { utils.wall.getWall.invalidate(); utils.wall.getMyEntry.invalidate(); toast.success("已從嘆息之牆撤除"); onClose(); },
+    onSuccess: () => { utils.wall.getWall.invalidate(); utils.wall.getMyEntry.invalidate(); toast.success("已從歎息之牆撤除"); onClose(); },
   });
   const posterMutation = trpc.wall.generatePoster.useMutation({
     onSuccess: (data) => { window.open(data.posterUrl, "_blank"); toast.success("榮譽證書已生成！"); },
@@ -874,14 +874,14 @@ function PublishModal({ open, onClose, onGoToVault }: { open: boolean; onClose: 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-sm bg-white rounded-2xl border border-[#E8E8E4] p-0 overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.12)]">
-        <DialogTitle className="sr-only">發佈到嘆息之牆</DialogTitle>
+        <DialogTitle className="sr-only">發佈到歎息之牆</DialogTitle>
         <div className="relative bg-[#1A1A1A] px-6 py-8 text-center overflow-hidden">
           <div className="absolute inset-0 opacity-[0.06]"
             style={{ backgroundImage: "repeating-linear-gradient(90deg, #FFFFFF 0px, #FFFFFF 1px, transparent 1px, transparent 32px)" }} />
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/40 to-transparent" />
           <p className="text-[10px] text-[#C9A84C] tracking-[0.4em] uppercase mb-3 font-light">Nordic Sanctuary</p>
-          <h2 className="text-2xl text-white tracking-[0.25em] uppercase mb-1 font-light" style={{ fontFamily: "'Montserrat', sans-serif" }}>嘆息之牆</h2>
+          <h2 className="text-2xl text-white tracking-[0.25em] uppercase mb-1 font-light" style={{ fontFamily: "'Montserrat', sans-serif" }}>歎息之牆</h2>
           <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">The Wall of Sighs</p>
         </div>
         <div className="p-6">
@@ -929,7 +929,7 @@ function PublishModal({ open, onClose, onGoToVault }: { open: boolean; onClose: 
               <p className="text-3xl font-light text-[#1A1A1A] tracking-wide mb-0.5">HKD 5,000</p>
               <div className="mx-auto mb-4 h-px w-10 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
               <p className="text-xs text-[#9A9A8A] mb-6 font-light leading-relaxed tracking-wide">
-                系統將自動計算您的 Vault 總市值。<br />達標後即可登上嘆息之牆，<br />讓全網玩家為您嘆息。
+                系統將自動計算您的 Vault 總市值。<br />達標後即可登上歎息之牆，<br />讓全網玩家為您嘆息。
               </p>
               <Button onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}
                 className="w-full bg-[#1A1A1A] text-white hover:bg-[#2A2A2A] text-sm h-11 rounded-xl font-light tracking-[0.2em] uppercase">
@@ -1022,7 +1022,7 @@ export default function WallOfSighs() {
               Nordic Sanctuary · BOXIUM PTCG
             </p>
             <h1 className="text-5xl md:text-7xl text-[#1A1A1A] tracking-[0.22em] uppercase mb-2 font-light leading-none">
-              嘆息之牆
+              歎息之牆
             </h1>
             <p className="text-[11px] md:text-xs text-[#9A9A8A] tracking-[0.45em] uppercase mb-2 font-light">
               THE WALL OF SIGHS

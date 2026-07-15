@@ -154,7 +154,7 @@ export function TopNav() {
     { href: "/pricing", label: t("common.priceComparison") },
     { href: "/trending", label: "TCG 漲幅榜" },
     { href: "/vault", label: t("nav.tcgVault", "TCG 倉庫") },
-    { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "嘆息之牆") },
+    { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "歎息之牆") },
     { href: "/marketplace", label: t("topnav.marketplace") },
     { href: "/grading", label: t("common.grading") },
     { href: "/blog", label: t("common.blog") },
@@ -310,7 +310,7 @@ export function TopNav() {
                 { href: "/research", label: t("common.research"), Icon: Search, tip: t("topnav.tipResearch") },
                 { href: "/pricing", label: t("common.priceComparison"), Icon: BarChart2, tip: t("topnav.tipPricing") },
                 { href: "/vault", label: t("nav.tcgVault", "TCG 倉庫"), Icon: Vault, tip: t("topnav.tipVault", "追蹤持倉走勢與盈虧") },
-                { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "嘆息之牆"), Icon: Award, tip: "諸神殿堂 · 頂尖卡牌收藏排行" },
+                { href: "/wall-of-sighs", label: t("nav.wallOfSighs", "歎息之牆"), Icon: Award, tip: "諸神殿堂 · 頂尖卡牌收藏排行" },
                 { href: "/marketplace", label: t("topnav.marketplace"), Icon: Store, tip: t("topnav.tipMarketplace") },
               ].map((item) => (
                 <div key={item.href} className="relative group/nav">

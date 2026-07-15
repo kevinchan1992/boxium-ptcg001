@@ -534,7 +534,7 @@ export async function generateWallPoster(data: WallPosterData): Promise<Buffer> 
   ctx.fillStyle = "rgba(100,80,35,0.60)";
   ctx.font = `12px ${CJK_FONT}`;
   ctx.textAlign = "left";
-  ctx.fillText("嘆息之牆 · Wall of Sighs", 80, footerY + 66);
+  ctx.fillText("歎息之牆 · Wall of Sighs", 80, footerY + 66);
   ctx.fillText("諸神殿堂管理處", 80, footerY + 86);
   ctx.restore();
 
