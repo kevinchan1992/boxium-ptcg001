@@ -568,6 +568,7 @@ function StackedCardRelics({
               className="absolute cursor-zoom-in group/relic"
               style={{
                 width: cardW,
+                aspectRatio: "3/4",
                 left: c.leftPct,
                 top: "50%",
                 transform: `translate(-50%, -50%) translateY(${c.translateY}px) rotate(${c.rotate}deg) scale(${c.scale})`,
@@ -575,6 +576,8 @@ function StackedCardRelics({
                 transformOrigin: "center bottom",
                 transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease",
                 filter: `brightness(${c.brightness}) blur(${c.blur}px)`,
+                borderRadius: "6px",
+                overflow: "hidden",
               }}
               onClick={e => { e.stopPropagation(); onCardClick(i); }}
             >
@@ -594,21 +597,16 @@ function StackedCardRelics({
                 }}
               />
 
-              {/* Card image — clean, no border */}
+              {/* Card image — clean, no border, overflow clipped by parent */}
               <SafeCardImg
                 src={card.imageUrl}
                 alt={card.name ?? ""}
-                className="w-full block"
+                className="w-full h-full block"
                 style={{
-                  aspectRatio: "3/4",
                   objectFit: "cover",
-                  borderRadius: "6px",
                   background: "none",
                   outline: "none",
-                  boxShadow: c.isMain
-                    ? "0 20px 50px rgba(0,0,0,0.30), 0 8px 20px rgba(0,0,0,0.20)"
-                    : "0 10px 30px rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.14)",
-                  transition: "box-shadow 0.4s ease",
+                  display: "block",
                 }}
               />
 
