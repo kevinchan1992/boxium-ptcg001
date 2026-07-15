@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Database, TrendingUp, FileText,
   HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical,
   Settings, ShoppingCart, PanelLeftClose, PanelLeft, Menu, X,
-  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight, Package
+  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight, Package, Crown
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -24,6 +24,7 @@ import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import AdminQuickPublish from "@/components/AdminQuickPublish";
 import AdminCardInventory from "@/components/AdminCardInventory";
 import AdminSealedProducts from "@/components/AdminSealedProducts";
+import { AdminVipDashboard } from "@/pages/admin/AdminVipDashboard";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,7 @@ const SECTIONS: SectionDef[] = [
     icon: <BookOpen className="w-[18px] h-[18px]" />,
     tabs: [
       { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
+      { id: "vip-subscriptions", label: "VIP 訂閱管理", icon: <Crown className="w-4 h-4" /> },
     ],
   },
   {
@@ -161,6 +163,7 @@ function TabContent({ tabId }: { tabId: string }) {
     case "messages": return <AdminMessages />;
     case "security": return <AdminSecurityMonitor />;
     case "card-inventory": return <AdminCardInventory />;
+    case "vip-subscriptions": return <AdminVipDashboard />;
     default: return <AdminDashboard />;
   }
 }

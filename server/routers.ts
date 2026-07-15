@@ -27,6 +27,7 @@ import { productsRouter } from "./routers/products";
 import { authRouter } from "./routers/auth";
 import { cardsRouter, pricesRouter, watchlistRouter, trendingRouter } from "./routers/cards";
 import { adminRouter } from "./routers/admin";
+import { adminVipRouter } from "./routers/adminVip";
 import { marketInsightsRouter } from "./routers/marketInsights";
 import { blogRouter } from "./routers/blog";
 import { profileRouter } from "./routers/profile";
@@ -43,6 +44,7 @@ export const appRouter = router({
   cards: cardsRouter,
   prices: pricesRouter,
   admin: adminRouter,
+  adminVip: adminVipRouter,
   watchlist: watchlistRouter,
   templates: templatesRouter,
   marketInsights: marketInsightsRouter,
