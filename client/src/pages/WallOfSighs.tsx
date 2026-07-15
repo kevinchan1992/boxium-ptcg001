@@ -342,50 +342,47 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
           style={{ width: "30vw", height: "30vw", background: "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)", top: "40%", right: "20%", animation: "auroraFloat 7s ease-in-out infinite", filter: "blur(35px)" }} />
       </div>
 
-      {/* ── DESKTOP LAYOUT: left card | right info ── */}
+      {/* ── DESKTOP LAYOUT: outer wrapper from navbar bottom, centers content ── */}
       <div
-        className="hidden md:flex absolute left-0 right-0 bottom-0 items-center justify-center gap-12 px-16"
+        className="hidden md:flex fixed inset-x-0 bottom-0 items-center justify-center overflow-hidden"
         style={{ top: "56px" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Left: card — 42% width, max 75vh tall */}
-        <div
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: "42%", height: "75vh" }}
-        >
-          <CardVisual maxH="75vh" />
-        </div>
+        {/* Inner row: card + info, centered in the available area */}
+        <div className="flex flex-row items-center justify-center w-full max-w-6xl px-16 gap-12">
+          {/* Left: card */}
+          <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "42%" }}>
+            <CardVisual maxH="75vh" />
+          </div>
 
-        {/* Right: info panel — 38% width */}
-        <div
-          className="flex flex-col justify-center gap-5"
-          style={{ width: "38%", maxHeight: "75vh" }}
-        >
-          {/* Owner */}
-          <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">{ownerName} 的收藏</p>
-          {/* Card name */}
-          {card.name && (
-            <h2 className="text-white/95 font-light tracking-[0.08em] text-xl leading-snug line-clamp-3">{card.name}</h2>
-          )}
-          {/* Grade badge */}
-          {card.grader && card.grade && (
-            <span className="self-start text-[10px] px-3 py-1.5 border border-[#C9A84C]/50 text-[#C9A84C] rounded-full font-light tracking-widest">
-              {card.grader} {card.grade}
-            </span>
-          )}
-          {/* Dot indicators */}
-          {cards.length > 1 && (
-            <div className="flex gap-2 mt-2">
-              {cards.map((_, i) => (
-                <button key={i} onClick={() => setCurrent(i)}
-                  className={`rounded-full transition-all duration-300 ${i === current ? "w-5 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
-              ))}
-            </div>
-          )}
-          {/* Divider */}
-          <div className="h-px bg-white/8" />
-          {/* Keyboard hint */}
-          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase">← → 切換卡牌 · ESC 關閉</p>
+          {/* Right: info panel */}
+          <div className="flex flex-col justify-center gap-5" style={{ width: "38%", maxHeight: "75vh" }}>
+            {/* Owner */}
+            <p className="text-[10px] text-white/30 tracking-[0.35em] uppercase font-light">{ownerName} 的收藏</p>
+            {/* Card name */}
+            {card.name && (
+              <h2 className="text-white/95 font-light tracking-[0.08em] text-xl leading-snug line-clamp-3">{card.name}</h2>
+            )}
+            {/* Grade badge */}
+            {card.grader && card.grade && (
+              <span className="self-start text-[10px] px-3 py-1.5 border border-[#C9A84C]/50 text-[#C9A84C] rounded-full font-light tracking-widest">
+                {card.grader} {card.grade}
+              </span>
+            )}
+            {/* Dot indicators */}
+            {cards.length > 1 && (
+              <div className="flex gap-2 mt-2">
+                {cards.map((_, i) => (
+                  <button key={i} onClick={() => setCurrent(i)}
+                    className={`rounded-full transition-all duration-300 ${i === current ? "w-5 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"}`} />
+                ))}
+              </div>
+            )}
+            {/* Divider */}
+            <div className="h-px bg-white/8" />
+            {/* Keyboard hint */}
+            <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase">← → 切換卡牌 · ESC 關閉</p>
+          </div>
         </div>
       </div>
 
