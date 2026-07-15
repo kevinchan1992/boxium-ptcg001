@@ -521,12 +521,12 @@ function StackedCardRelics({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: "#09090B",
+        background: "radial-gradient(circle at 50% 28%, rgba(15,118,110,0.18) 0%, rgba(14,165,233,0.12) 35%, rgba(9,9,11,1) 80%)",
         boxShadow: "inset 0 4px 22px rgba(0,0,0,0.9), inset 0 -2px 8px rgba(0,0,0,0.6)",
       }}
     >
       {/* Main shrine container */}
-      <div className="relative w-full" style={{ height: "420px", background: "radial-gradient(circle at 50% 28%, rgba(15,118,110,0.18) 0%, rgba(14,165,233,0.12) 35%, rgba(9,9,11,1) 80%)" }}>
+      <div className="relative w-full" style={{ height: "420px" }}>
 
         {/* Layer 0: Basalt noise texture */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0, opacity: 0.035 }}>
@@ -605,8 +605,8 @@ function StackedCardRelics({
               <SafeCardImg
                 src={card.imageUrl}
                 alt={card.name ?? ""}
-                className="w-full rounded-lg block"
-                style={{ aspectRatio:"3/4", objectFit:"contain", background:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
+                className="w-full block"
+                style={{ aspectRatio:"3/4", objectFit:"contain", background:"none", borderRadius:0, outline:"none", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
               />
             </div>
           );
