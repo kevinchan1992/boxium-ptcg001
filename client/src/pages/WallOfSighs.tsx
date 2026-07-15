@@ -408,12 +408,9 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
             <p className="text-white/90 font-light tracking-[0.08em] text-sm text-center line-clamp-2 leading-snug">{card.name}</p>
           )}
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            {card.grader && card.grade && (
-              <span className="text-[9px] px-2.5 py-0.5 border border-[#C9A84C]/40 text-[#C9A84C] rounded-full font-light tracking-widest">
-                {card.grader} {card.grade}
-              </span>
-            )}
-            <span className="text-[9px] text-white/30 tracking-[0.2em] uppercase font-light">{ownerName}</span>
+            <span className="text-[9px] px-2.5 py-0.5 border border-white/20 text-white/50 rounded-full font-light tracking-widest">
+              {ownerName}
+            </span>
           </div>
           {cards.length > 1 && (
             <div className="flex gap-2">
