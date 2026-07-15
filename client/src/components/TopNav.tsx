@@ -65,7 +65,7 @@ export function TopNav() {
   const showSellButton = user?.role === 'admin' || sellerCenterAccess?.allowed !== false;
   const { data: lootModeData } = trpc.lootpool.checkMaintenanceMode.useQuery(undefined, { staleTime: 60000 });
   const showLootPool = !(lootModeData?.enabled) || user?.role === 'admin';
-  const { data: cardStats } = trpc.cards.getStats.useQuery(undefined, { staleTime: 60 * 60 * 1000 }); // refresh hourly
+  const { data: cardStats } = trpc.cards.getStats.useQuery(undefined, { staleTime: 7 * 24 * 60 * 60 * 1000 }); // refresh weekly
   const utils = trpc.useUtils();
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
