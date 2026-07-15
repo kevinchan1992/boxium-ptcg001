@@ -251,7 +251,25 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
   const [visible, setVisible] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setTimeout(() => setVisible(true), 30); }, []);
+  // Lock body scroll when gallery is open — prevents fixed inset-0 from appearing off-screen
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const prevTop = document.body.style.top;
+    const scrollY = window.scrollY;
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    setTimeout(() => setVisible(true), 30);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.top = prevTop;
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
   useEffect(() => { setShimmer(true); const t = setTimeout(() => setShimmer(false), 800); return () => clearTimeout(t); }, [current]);
 
   const prev = () => setCurrent(c => (c - 1 + cards.length) % cards.length);
