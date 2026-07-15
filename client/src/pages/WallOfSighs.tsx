@@ -481,15 +481,16 @@ function StackedCardRelics({
   onCardClick: (index: number) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const mainCards = cards.filter(c => c != null).slice(0, 3);
-  const extraCards = cards.filter(c => c != null).slice(3);
+  // Show up to 5 cards in the altar layout
+  const altarCards = cards.filter(c => c != null).slice(0, 5);
+  const extraCards = cards.filter(c => c != null).slice(5);
 
-  if (mainCards.length === 0) {
+  if (altarCards.length === 0) {
     return (
       <div
         className="flex items-center justify-center"
         style={{
-          height: "240px",
+          height: "300px",
           background: "radial-gradient(circle at 50% 30%, rgba(15,118,110,0.12) 0%, rgba(14,165,233,0.08) 40%, #09090B 100%)",
           boxShadow: "inset 0 4px 20px rgba(0,0,0,0.8)",
         }}
@@ -502,24 +503,18 @@ function StackedCardRelics({
     );
   }
 
-  type CardCfg = { leftPct: string; rotate: number; translateY: number; scaleMobile: number; scaleDesktop: number; brightness: number; blur: number; z: number; isMain: boolean };
-
-  const cfgMap: Record<number, CardCfg[]> = {
-    1: [
-      { leftPct: "50%", rotate: 0, translateY: -10, scaleMobile: 1.0, scaleDesktop: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
-    ],
-    2: [
-      { leftPct: "30%", rotate: -10, translateY: 10, scaleMobile: 0.82, scaleDesktop: 0.88, brightness: 0.65, blur: 0.5, z: 10, isMain: false },
-      { leftPct: "58%", rotate: 0, translateY: -10, scaleMobile: 1.0, scaleDesktop: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
-    ],
-    3: [
-      { leftPct: "22%", rotate: -12, translateY: 12, scaleMobile: 0.75, scaleDesktop: 0.85, brightness: 0.62, blur: 0.8, z: 10, isMain: false },
-      { leftPct: "50%", rotate: 0, translateY: -10, scaleMobile: 1.0, scaleDesktop: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
-      { leftPct: "78%", rotate: 12, translateY: 16, scaleMobile: 0.72, scaleDesktop: 0.82, brightness: 0.52, blur: 1.2, z: 10, isMain: false },
-    ],
-  };
-
-  const cfg = cfgMap[mainCards.length] ?? cfgMap[1];
+  // 5-card 3D fan layout config
+  // Index 0 = main (center), 1 = left-inner, 2 = right-inner, 3 = left-outer, 4 = right-outer
+  // Cards are ordered by value: [0]=most valuable (center), [1]=2nd (left), [2]=3rd (right), [3]=4th (far-left), [4]=5th (far-right)
+  type AltarCfg = { leftPct: string; rotate: number; translateY: number; scale: number; brightness: number; blur: number; z: number; isMain: boolean; rotateY: number };
+  const allCfg: AltarCfg[] = [
+    { leftPct: "50%",  rotate: 0,   translateY: -14, scale: 1.22, brightness: 1,    blur: 0,   z: 30, isMain: true,  rotateY: 0   }, // #1 center sovereign
+    { leftPct: "32%",  rotate: -10, translateY: 8,   scale: 0.95, brightness: 0.80, blur: 0,   z: 20, isMain: false, rotateY: 12  }, // #2 left-inner
+    { leftPct: "68%",  rotate: 10,  translateY: 8,   scale: 0.95, brightness: 0.80, blur: 0,   z: 20, isMain: false, rotateY: -12 }, // #3 right-inner
+    { leftPct: "14%",  rotate: -20, translateY: 22,  scale: 0.76, brightness: 0.50, blur: 0.5, z: 10, isMain: false, rotateY: 22  }, // #4 far-left
+    { leftPct: "86%",  rotate: 20,  translateY: 22,  scale: 0.76, brightness: 0.50, blur: 0.5, z: 10, isMain: false, rotateY: -22 }, // #5 far-right
+  ];
+  const cfg = allCfg.slice(0, altarCards.length);
 
   return (
     <div
@@ -530,92 +525,47 @@ function StackedCardRelics({
         boxShadow: "inset 0 4px 22px rgba(0,0,0,0.9), inset 0 -2px 8px rgba(0,0,0,0.6)",
       }}
     >
-      {/* Main shrine container — relative, NO overflow-hidden */}
-      <div className="relative w-full" style={{ height: "310px" }}>
+      {/* Main shrine container */}
+      <div className="relative w-full" style={{ height: "330px" }}>
 
-        {/* Layer 0: Basalt noise texture (SVG filter) */}
+        {/* Layer 0: Basalt noise texture */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0, opacity: 0.035 }}>
-          <filter id="basalt-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#basalt-noise)" fill="white" />
+          <defs>
+            <filter id="basalt-noise-altar">
+              <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+              <feColorMatrix type="saturate" values="0" />
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" filter="url(#basalt-noise-altar)" fill="white" />
         </svg>
 
-        {/* Layer 1: Vertical stone joint lines */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 60px)",
-            zIndex: 1,
-          }}
-        />
+        {/* Layer 1: Stone joint lines */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 60px)", zIndex: 1 }} />
 
-        {/* Layer 2: Elder Futhark rune overlay — awakens on hover */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-700"
-          style={{ zIndex: 2, opacity: hovered ? 0.18 : 0.06 }}
-          viewBox="0 0 300 310"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          {/* Rune 1: top-left — Tiwaz */}
-          <g transform="translate(18, 20) scale(0.45)" stroke="#C9A84C" strokeWidth="2" fill="none" strokeLinecap="round">
-            <path d="M 20 80 L 50 20 L 80 80 M 35 55 L 65 55" />
-          </g>
-          {/* Rune 2: top-right — Algiz */}
-          <g transform="translate(238, 18) scale(0.45)" stroke="#C9A84C" strokeWidth="2" fill="none" strokeLinecap="round">
-            <path d="M 50 80 L 50 30 M 50 30 L 25 10 M 50 30 L 75 10" />
-          </g>
-          {/* Rune 3: bottom-left — Sowilo */}
-          <g transform="translate(14, 155) scale(0.38)" stroke="rgba(14,165,233,0.9)" strokeWidth="2" fill="none" strokeLinecap="round">
-            <path d="M 65 10 L 35 10 L 65 50 L 35 50 L 65 90" />
-          </g>
-          {/* Rune 4: bottom-right — Othala */}
-          <g transform="translate(236, 152) scale(0.38)" stroke="rgba(14,165,233,0.9)" strokeWidth="2" fill="none" strokeLinecap="round">
-            <path d="M 50 15 L 75 45 L 50 75 L 25 45 Z M 25 45 L 15 70 M 75 45 L 85 70" />
-          </g>
-          {/* Constellation lines — center geometric */}
+        {/* Layer 2: Rune overlay */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-700" style={{ zIndex: 2, opacity: hovered ? 0.18 : 0.06 }} viewBox="0 0 300 330" preserveAspectRatio="xMidYMid meet">
+          <g transform="translate(18, 20) scale(0.45)" stroke="#C9A84C" strokeWidth="2" fill="none" strokeLinecap="round"><path d="M 20 80 L 50 20 L 80 80 M 35 55 L 65 55" /></g>
+          <g transform="translate(238, 18) scale(0.45)" stroke="#C9A84C" strokeWidth="2" fill="none" strokeLinecap="round"><path d="M 50 80 L 50 30 M 50 30 L 25 10 M 50 30 L 75 10" /></g>
+          <g transform="translate(14, 155) scale(0.38)" stroke="rgba(14,165,233,0.9)" strokeWidth="2" fill="none" strokeLinecap="round"><path d="M 65 10 L 35 10 L 65 50 L 35 50 L 65 90" /></g>
+          <g transform="translate(236, 152) scale(0.38)" stroke="rgba(14,165,233,0.9)" strokeWidth="2" fill="none" strokeLinecap="round"><path d="M 50 15 L 75 45 L 50 75 L 25 45 Z M 25 45 L 15 70 M 75 45 L 85 70" /></g>
           <g stroke="rgba(201,168,76,0.5)" strokeWidth="0.8" fill="none">
-            <line x1="150" y1="20" x2="150" y2="220" strokeDasharray="3 8" />
-            <line x1="30" y1="120" x2="270" y2="120" strokeDasharray="3 8" />
-            <circle cx="150" cy="120" r="28" strokeDasharray="4 6" />
-            <circle cx="150" cy="120" r="52" strokeDasharray="2 10" opacity="0.5" />
+            <line x1="150" y1="20" x2="150" y2="240" strokeDasharray="3 8" />
+            <line x1="30" y1="130" x2="270" y2="130" strokeDasharray="3 8" />
+            <circle cx="150" cy="130" r="28" strokeDasharray="4 6" />
+            <circle cx="150" cy="130" r="52" strokeDasharray="2 10" opacity="0.5" />
           </g>
         </svg>
 
-        {/* Layer 3: Aurora radial glow — breathing */}
-        <div
-          className="absolute rounded-full pointer-events-none transition-all duration-1000"
-          style={{
-            width: "200px", height: "200px",
-            left: "50%", top: "38%",
-            transform: "translate(-50%, -50%)",
-            background: "radial-gradient(circle, rgba(14,165,233,0.85) 0%, rgba(15,118,110,0.4) 40%, transparent 70%)",
-            opacity: hovered ? 0.22 : 0.1,
-            filter: "blur(50px)",
-            zIndex: 3,
-          }}
-        />
-        {/* Gold altar glow */}
-        <div
-          className="absolute rounded-full pointer-events-none transition-all duration-1200"
-          style={{
-            width: "160px", height: "110px",
-            left: "50%", top: "58%",
-            transform: "translate(-50%, -50%)",
-            background: "radial-gradient(ellipse, rgba(201,168,76,0.7) 0%, transparent 70%)",
-            opacity: hovered ? 0.16 : 0.07,
-            filter: "blur(38px)",
-            zIndex: 3,
-          }}
-        />
+        {/* Layer 3: Aurora glow */}
+        <div className="absolute rounded-full pointer-events-none transition-all duration-1000" style={{ width:"220px", height:"220px", left:"50%", top:"42%", transform:"translate(-50%,-50%)", background:"radial-gradient(circle, rgba(14,165,233,0.85) 0%, rgba(15,118,110,0.4) 40%, transparent 70%)", opacity: hovered ? 0.25 : 0.12, filter:"blur(55px)", zIndex:3 }} />
+        {/* Gold sovereign halo */}
+        <div className="absolute rounded-full pointer-events-none transition-all duration-1200" style={{ width:"180px", height:"180px", left:"50%", top:"42%", transform:"translate(-50%,-50%)", background:"radial-gradient(circle, rgba(212,175,55,0.7) 0%, rgba(201,168,76,0.3) 45%, transparent 70%)", opacity: hovered ? 0.55 : 0.30, filter:"blur(35px)", zIndex:3 }} />
 
-        {/* Layer 4: The Cards */}
-        {mainCards.map((card, i) => {
-          const c = cfg[i];
-          // Responsive: use CSS custom properties via inline style for mobile/desktop
-          // We use a single scale and let CSS media query handle it via clamp
-          const cardW = c.isMain ? "clamp(100px, 44%, 138px)" : "clamp(76px, 34%, 112px)";
+        {/* Layer 4: Cards — rendered back-to-front by z-index (outer first, sovereign last) */}
+        {[...cfg].reverse().map((c, ri) => {
+          const i = cfg.length - 1 - ri; // original index
+          const card = altarCards[i];
+          const cardW = c.isMain ? "clamp(96px, 40%, 128px)" : c.z === 20 ? "clamp(76px, 32%, 104px)" : "clamp(60px, 26%, 86px)";
           return (
             <div
               key={i}
@@ -624,51 +574,29 @@ function StackedCardRelics({
                 width: cardW,
                 left: c.leftPct,
                 top: "50%",
-                transform: `translate(-50%, -50%) translateY(${c.translateY}px) rotate(${c.rotate}deg)`,
-                zIndex: c.z + 4,
-                transformOrigin: "center center",
+                transform: `translate(-50%, -50%) translateY(${c.translateY}px) perspective(800px) rotateY(${c.rotateY}deg) rotate(${c.rotate}deg) scale(${c.scale})`,
+                zIndex: c.z,
+                transformOrigin: "center bottom",
                 transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease",
                 filter: `brightness(${c.brightness}) blur(${c.blur}px)`,
               }}
               onClick={e => { e.stopPropagation(); onCardClick(i); }}
             >
-              {/* Gold rune border — main card only */}
+              {/* Stone niche shadow */}
+              {!c.isMain && <div style={{ position:"absolute", bottom:"-6px", left:"8%", right:"8%", height:"10px", borderRadius:"50%", background:"radial-gradient(ellipse, rgba(0,0,0,0.7) 0%, transparent 70%)", filter:"blur(4px)", zIndex:-1 }} />}
+
+              {/* Golden border — sovereign only */}
               {c.isMain && (
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    inset: "-2px",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(201,168,76,0.45)",
-                    boxShadow: hovered
-                      ? "0 0 16px rgba(201,168,76,0.35), 0 0 6px rgba(201,168,76,0.2), inset 0 0 10px rgba(201,168,76,0.08)"
-                      : "0 0 6px rgba(201,168,76,0.15)",
-                    opacity: hovered ? 1 : 0.65,
-                    transition: "box-shadow 0.6s ease, opacity 0.6s ease",
-                    zIndex: 30,
-                  }}
-                />
+                <div className="absolute pointer-events-none" style={{ inset:"-3px", borderRadius:"12px", border:"1.5px solid rgba(212,175,55,0.75)", boxShadow: hovered ? "0 0 32px rgba(212,175,55,0.65), 0 0 14px rgba(212,175,55,0.45), inset 0 0 18px rgba(212,175,55,0.12)" : "0 0 16px rgba(212,175,55,0.38), 0 0 6px rgba(212,175,55,0.22)", transition:"box-shadow 0.6s ease", zIndex:30 }} />
               )}
 
-              {/* Aurora foil — main card */}
+              {/* Aurora foil — sovereign only */}
               {c.isMain && (
-                <div
-                  className="absolute inset-0 rounded-lg pointer-events-none"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(14,165,233,0.32) 0%, rgba(15,118,110,0.18) 40%, rgba(234,179,8,0.14) 70%, rgba(255,255,255,0) 100%)",
-                    opacity: hovered ? 1 : 0.5,
-                    mixBlendMode: "screen",
-                    transition: "opacity 0.5s ease",
-                    zIndex: 20,
-                  }}
-                />
+                <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ background:"linear-gradient(135deg, rgba(14,165,233,0.30) 0%, rgba(15,118,110,0.16) 40%, rgba(212,175,55,0.20) 70%, transparent 100%)", opacity: hovered ? 1 : 0.55, mixBlendMode:"screen", transition:"opacity 0.5s ease", zIndex:20 }} />
               )}
 
               {/* Zoom hint */}
-              <div
-                className="absolute inset-0 rounded-lg flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{ zIndex: 35 }}
-              >
+              <div className="absolute inset-0 rounded-lg flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ zIndex:35 }}>
                 <div className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm border border-white/25 flex items-center justify-center">
                   <ZoomIn className="w-3 h-3 text-white" />
                 </div>
@@ -678,44 +606,22 @@ function StackedCardRelics({
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full rounded-lg block"
-                style={{
-                  aspectRatio: "3/4",
-                  objectFit: "cover",
-                  boxShadow: c.isMain
-                    ? "0 22px 48px rgba(0,0,0,0.85), 0 8px 20px rgba(0,0,0,0.6)"
-                    : "0 8px 24px rgba(0,0,0,0.6)",
-                }}
+                style={{ aspectRatio:"3/4", objectFit:"cover", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
               />
             </div>
           );
         })}
 
         {/* Bottom gradient fade */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none"
-          style={{ background: "linear-gradient(to top, rgba(9,9,11,0.75) 0%, transparent 100%)", zIndex: 28 }}
-        />
+        <div className="absolute bottom-0 left-0 right-0 h-14 pointer-events-none" style={{ background:"linear-gradient(to top, rgba(9,9,11,0.85) 0%, transparent 100%)", zIndex:28 }} />
       </div>
 
-      {/* Extra cards thumbnail strip */}
+      {/* Extra cards thumbnail strip (cards beyond index 4) */}
       {extraCards.length > 0 && (
-        <div
-          className="flex justify-center gap-2 px-4 py-2"
-          style={{ background: "#09090B", borderTop: "1px solid rgba(255,255,255,0.06)" }}
-        >
+        <div className="flex justify-center gap-2 px-4 py-2" style={{ background:"#09090B", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
           {extraCards.map((card, i) => (
-            <div
-              key={i}
-              className="cursor-zoom-in rounded-md overflow-hidden border border-white/10 hover:border-[#C9A84C]/50 transition-colors"
-              style={{ width: "34px", opacity: 0.65 }}
-              onClick={e => { e.stopPropagation(); onCardClick(mainCards.length + i); }}
-            >
-              <SafeCardImg
-                src={card.imageUrl}
-                alt={card.name ?? ""}
-                className="w-full block"
-                style={{ aspectRatio: "3/4", objectFit: "cover" }}
-              />
+            <div key={i} className="cursor-zoom-in rounded-md overflow-hidden border border-white/10 hover:border-[#C9A84C]/50 transition-colors" style={{ width:"34px", opacity:0.65 }} onClick={e => { e.stopPropagation(); onCardClick(altarCards.length + i); }}>
+              <SafeCardImg src={card.imageUrl} alt={card.name ?? ""} className="w-full block" style={{ aspectRatio:"3/4", objectFit:"cover" }} />
             </div>
           ))}
         </div>
