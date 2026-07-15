@@ -349,7 +349,7 @@ function CardGallery({ cards, initialIndex, ownerName, onClose }: {
   );
 }
 
-// ── Stacked Card Relics — Divine Monolith Shrine ─────────────────────────────
+// ── Stacked Card Relics — Divine Monolith Shrine (v2 — fixed visibility) ───────────────
 function StackedCardRelics({
   cards,
   onCardClick,
@@ -358,12 +358,16 @@ function StackedCardRelics({
   onCardClick: (index: number) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const validCards = cards.filter(c => c != null).slice(0, 3);
+  // Show top 3 as main stack; extras as thumbnail strip
+  const mainCards = cards.filter(c => c != null).slice(0, 3);
+  const extraCards = cards.filter(c => c != null).slice(3);
 
-  if (validCards.length === 0) {
+  if (mainCards.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center"
-        style={{ background: "linear-gradient(180deg, #18181B 0%, #09090B 100%)", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.8)" }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: "240px", background: "linear-gradient(180deg, #18181B 0%, #09090B 100%)", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.8)" }}
+      >
         <div className="flex flex-col items-center gap-3 opacity-25">
           <Crown className="w-10 h-10 text-[#C9A84C]" />
           <p className="text-[10px] text-[#9A9A8A] tracking-[0.25em] uppercase font-light">No Cards</p>
@@ -372,115 +376,138 @@ function StackedCardRelics({
     );
   }
 
-  // Card layout configs: [left/back, center/front, right/back]
-  // For 1 card: just center. For 2: left+center. For 3: left+center+right.
-  type CardCfg = { rotate: number; translateX: number; translateY: number; scale: number; brightness: number; blur: number; z: number; isMain: boolean };
+  // Position configs per card count
+  // Each card: left% (from left edge of container), rotate, translateY, scale, brightness, blur, z, isMain
+  type CardCfg = { leftPct: string; rotate: number; translateY: number; scale: number; brightness: number; blur: number; z: number; isMain: boolean };
+
   const cfgMap: Record<number, CardCfg[]> = {
     1: [
-      { rotate: 0, translateX: 0, translateY: -10, scale: 1.08, brightness: 1, blur: 0, z: 20, isMain: true },
+      { leftPct: "50%", rotate: 0, translateY: -8, scale: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
     ],
     2: [
-      { rotate: -12, translateX: -20, translateY: 12, scale: 0.92, brightness: 0.65, blur: 0.8, z: 5, isMain: false },
-      { rotate: 0, translateX: 0, translateY: -10, scale: 1.08, brightness: 1, blur: 0, z: 20, isMain: true },
+      { leftPct: "28%", rotate: -10, translateY: 10, scale: 0.88, brightness: 0.65, blur: 0.5, z: 10, isMain: false },
+      { leftPct: "50%", rotate: 0, translateY: -8, scale: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
     ],
     3: [
-      { rotate: -12, translateX: -24, translateY: 12, scale: 0.92, brightness: 0.65, blur: 0.8, z: 5, isMain: false },
-      { rotate: 0, translateX: 0, translateY: -10, scale: 1.08, brightness: 1, blur: 0, z: 20, isMain: true },
-      { rotate: 12, translateX: 24, translateY: 16, scale: 0.88, brightness: 0.55, blur: 1.2, z: 5, isMain: false },
+      { leftPct: "22%", rotate: -12, translateY: 12, scale: 0.85, brightness: 0.6, blur: 0.8, z: 10, isMain: false },
+      { leftPct: "50%", rotate: 0, translateY: -8, scale: 1.05, brightness: 1, blur: 0, z: 20, isMain: true },
+      { leftPct: "78%", rotate: 12, translateY: 16, scale: 0.82, brightness: 0.5, blur: 1.2, z: 10, isMain: false },
     ],
   };
 
-  const cfg = cfgMap[validCards.length] ?? cfgMap[1];
-  // For 2 cards: index 0=left, 1=center(main)
-  // For 3 cards: index 0=left, 1=center(main), 2=right
+  const cfg = cfgMap[mainCards.length] ?? cfgMap[1];
+  // Card width in px — fixed so percentage left positions are predictable
+  const CARD_W = 88; // px for side cards
+  const MAIN_W = 108; // px for main card
 
   return (
     <div
-      className="relative overflow-hidden"
       style={{
-        height: "260px",
         background: "linear-gradient(180deg, #1C1C1F 0%, #09090B 100%)",
-        boxShadow: "inset 0 4px 20px rgba(0,0,0,0.85), inset 0 -2px 8px rgba(0,0,0,0.5)",
+        boxShadow: "inset 0 4px 20px rgba(0,0,0,0.85)",
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Stone wall texture */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{ backgroundImage: "repeating-linear-gradient(90deg, #FFFFFF 0px, #FFFFFF 1px, transparent 1px, transparent 32px)" }} />
-
-      {/* Ambient aurora glow behind main card */}
+      {/* Main shrine area — relative container, NO overflow-hidden so rotated cards show */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none transition-all duration-1000"
-        style={{
-          width: "160px", height: "160px",
-          top: "30%",
-          background: "radial-gradient(circle, rgba(14,165,233,1) 0%, transparent 70%)",
-          opacity: hovered ? 0.18 : 0.09,
-          filter: "blur(40px)",
-        }}
-      />
-      {/* Secondary gold glow */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none transition-all duration-1200"
-        style={{
-          width: "120px", height: "80px",
-          top: "50%",
-          background: "radial-gradient(circle, rgba(201,168,76,1) 0%, transparent 70%)",
-          opacity: hovered ? 0.12 : 0.05,
-          filter: "blur(30px)",
-        }}
-      />
+        className="relative w-full"
+        style={{ height: "240px" }}
+      >
+        {/* Stone wall vertical lines texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 32px)",
+            zIndex: 0,
+          }}
+        />
 
-      {/* Cards */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ paddingBottom: "8px" }}>
-        {validCards.map((card, i) => {
+        {/* Ambient aurora glow — behind cards */}
+        <div
+          className="absolute rounded-full pointer-events-none transition-all duration-1000"
+          style={{
+            width: "180px", height: "180px",
+            left: "50%", top: "40%",
+            transform: "translate(-50%, -50%)",
+            background: "radial-gradient(circle, rgba(14,165,233,0.9) 0%, transparent 70%)",
+            opacity: hovered ? 0.2 : 0.1,
+            filter: "blur(45px)",
+            zIndex: 1,
+          }}
+        />
+        {/* Gold glow */}
+        <div
+          className="absolute rounded-full pointer-events-none transition-all duration-1200"
+          style={{
+            width: "140px", height: "100px",
+            left: "50%", top: "55%",
+            transform: "translate(-50%, -50%)",
+            background: "radial-gradient(circle, rgba(201,168,76,0.8) 0%, transparent 70%)",
+            opacity: hovered ? 0.14 : 0.06,
+            filter: "blur(35px)",
+            zIndex: 1,
+          }}
+        />
+
+        {/* Cards — positioned with left% + translateX(-50%) so they center on their anchor point */}
+        {mainCards.map((card, i) => {
           const c = cfg[i];
+          const w = c.isMain ? MAIN_W : CARD_W;
           return (
             <div
               key={i}
               className="absolute cursor-zoom-in group/relic"
               style={{
-                width: c.isMain ? "clamp(90px, 42%, 120px)" : "clamp(72px, 34%, 100px)",
-                transform: `translateX(${c.translateX}px) translateY(${c.translateY}px) rotate(${c.rotate}deg) scale(${c.scale})`,
+                width: `${w}px`,
+                left: c.leftPct,
+                top: "50%",
+                transform: `translate(-50%, -50%) translateY(${c.translateY}px) rotate(${c.rotate}deg) scale(${c.scale})`,
                 zIndex: c.z,
-                transformOrigin: "bottom center",
+                transformOrigin: "center center",
                 transition: "transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease",
                 filter: `brightness(${c.brightness}) blur(${c.blur}px)`,
               }}
               onClick={e => { e.stopPropagation(); onCardClick(i); }}
             >
-              {/* Rune border on main card */}
+              {/* Gold rune border on main card */}
               {c.isMain && (
                 <div
-                  className="absolute -inset-[2px] rounded-[10px] pointer-events-none z-30 transition-opacity duration-500"
+                  className="absolute pointer-events-none"
                   style={{
-                    background: "transparent",
-                    border: "1px solid rgba(201,168,76,0.35)",
+                    inset: "-2px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(201,168,76,0.4)",
                     boxShadow: hovered
-                      ? "0 0 12px rgba(201,168,76,0.25), inset 0 0 8px rgba(201,168,76,0.1)"
-                      : "0 0 4px rgba(201,168,76,0.1)",
-                    opacity: hovered ? 1 : 0.6,
+                      ? "0 0 14px rgba(201,168,76,0.3), inset 0 0 10px rgba(201,168,76,0.1)"
+                      : "0 0 6px rgba(201,168,76,0.12)",
+                    opacity: hovered ? 1 : 0.7,
                     transition: "box-shadow 0.5s ease, opacity 0.5s ease",
+                    zIndex: 30,
                   }}
                 />
               )}
 
-              {/* Foil aurora overlay on main card */}
+              {/* Aurora foil overlay on main card */}
               {c.isMain && (
                 <div
-                  className="absolute inset-0 rounded-lg z-20 pointer-events-none transition-opacity duration-500"
+                  className="absolute inset-0 rounded-lg pointer-events-none"
                   style={{
-                    background: "linear-gradient(135deg, rgba(14,165,233,0.28) 0%, rgba(234,179,8,0.12) 50%, rgba(255,255,255,0) 100%)",
-                    opacity: hovered ? 0.9 : 0.5,
+                    background: "linear-gradient(135deg, rgba(14,165,233,0.3) 0%, rgba(234,179,8,0.14) 55%, rgba(255,255,255,0) 100%)",
+                    opacity: hovered ? 0.95 : 0.55,
                     mixBlendMode: "screen",
+                    transition: "opacity 0.5s ease",
+                    zIndex: 20,
                   }}
                 />
               )}
 
-              {/* Hover zoom hint */}
-              <div className="absolute inset-0 rounded-lg z-30 flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+              {/* Zoom hint on hover */}
+              <div
+                className="absolute inset-0 rounded-lg flex items-center justify-center opacity-0 group-hover/relic:opacity-100 transition-opacity duration-300 pointer-events-none"
+                style={{ zIndex: 30 }}
+              >
+                <div className="w-8 h-8 rounded-full bg-black/55 backdrop-blur-sm border border-white/25 flex items-center justify-center">
                   <ZoomIn className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
@@ -493,18 +520,44 @@ function StackedCardRelics({
                   aspectRatio: "3/4",
                   objectFit: "cover",
                   boxShadow: c.isMain
-                    ? "0 20px 40px rgba(0,0,0,0.75), 0 8px 16px rgba(0,0,0,0.5)"
-                    : "0 8px 20px rgba(0,0,0,0.5)",
+                    ? "0 20px 44px rgba(0,0,0,0.8), 0 8px 18px rgba(0,0,0,0.55)"
+                    : "0 8px 22px rgba(0,0,0,0.55)",
                 }}
               />
             </div>
           );
         })}
+
+        {/* Bottom gradient fade */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none"
+          style={{ background: "linear-gradient(to top, rgba(9,9,11,0.7) 0%, transparent 100%)", zIndex: 25 }}
+        />
       </div>
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-        style={{ background: "linear-gradient(to top, rgba(9,9,11,0.6) 0%, transparent 100%)" }} />
+      {/* Extra cards thumbnail strip (4th, 5th card etc.) */}
+      {extraCards.length > 0 && (
+        <div
+          className="flex justify-center gap-2 px-4 py-2"
+          style={{ background: "#09090B", borderTop: "1px solid rgba(255,255,255,0.05)" }}
+        >
+          {extraCards.map((card, i) => (
+            <div
+              key={i}
+              className="cursor-zoom-in rounded-md overflow-hidden border border-white/10 hover:border-[#C9A84C]/40 transition-colors"
+              style={{ width: "36px", opacity: 0.7 }}
+              onClick={e => { e.stopPropagation(); onCardClick(mainCards.length + i); }}
+            >
+              <SafeCardImg
+                src={card.imageUrl}
+                alt={card.name ?? ""}
+                className="w-full block"
+                style={{ aspectRatio: "3/4", objectFit: "cover" }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
