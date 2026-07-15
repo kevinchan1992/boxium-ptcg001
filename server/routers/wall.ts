@@ -157,6 +157,9 @@ export const wallRouter = router({
       .where(eq(wallEntries.userId, ctx.user.id))
       .limit(1);
 
+    const card2 = stats.top3ByValue[1] ?? null;
+    const card3 = stats.top3ByValue[2] ?? null;
+
     const entryData = {
       displayName,
       totalValue: totalValueCents,
@@ -165,6 +168,14 @@ export const wallRouter = router({
       topCardGrade: topCard?.grade ?? null,
       topCardGrader: topCard?.grader ?? null,
       topCardValue: topCard?.marketPrice ? Math.round(topCard.marketPrice * (topCard.quantity ?? 1) * 100) : 0,
+      card2Name: card2?.card?.name ?? null,
+      card2ImageUrl: card2?.card?.imageUrl ?? null,
+      card2Grade: card2?.grade ?? null,
+      card2Grader: card2?.grader ?? null,
+      card3Name: card3?.card?.name ?? null,
+      card3ImageUrl: card3?.card?.imageUrl ?? null,
+      card3Grade: card3?.grade ?? null,
+      card3Grader: card3?.grader ?? null,
       isPublic: true,
     };
 
