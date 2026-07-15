@@ -1538,15 +1538,15 @@ export default function Vault() {
         if (!o) { setSelectedCard(null); setAddForm({ grader: "PSA", grade: "10", quantity: 1, purchasePrice: "", notes: "" }); }
       }}>
         <DialogContent
-          className="max-w-md"
+          className="max-w-md flex flex-col p-0 gap-0 max-h-[90vh] sm:max-h-[85vh] rounded-2xl"
           style={{
             background: "#FFFFFF",
             border: `1px solid ${BORDER}`,
-            boxShadow: "0 20px 50px rgba(0,0,0,0.10)",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
           }}
         >
-          {/* ── Modal Header ── */}
-          <div className="px-6 pt-6 pb-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+          {/* ── Modal Header (sticky) ── */}
+          <div className="px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${BORDER}` }}>
             <h2
               className="text-lg font-bold pr-8"
               style={{ color: TEXT_PRI, letterSpacing: "-0.02em" }}
@@ -1558,7 +1558,8 @@ export default function Vault() {
             </p>
           </div>
 
-          <div className="px-6 py-5 space-y-5">
+          {/* ── Scrollable Body ── */}
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
             {/* ── Card picker ── */}
             <div>
@@ -1796,7 +1797,10 @@ export default function Vault() {
               </div>
             )}
 
-            {/* ── Submit ── */}
+          </div>
+
+          {/* ── Sticky Footer ── */}
+          <div className="flex-shrink-0 px-6 pb-5 pt-4" style={{ borderTop: `1px solid ${BORDER}`, background: "#FFFFFF" }}>
             <button
               className="w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all hover:bg-[#333333] active:scale-[0.99] disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
