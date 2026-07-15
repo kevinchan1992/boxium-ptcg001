@@ -606,7 +606,7 @@ function StackedCardRelics({
                 src={card.imageUrl}
                 alt={card.name ?? ""}
                 className="w-full rounded-lg block"
-                style={{ aspectRatio:"3/4", objectFit:"cover", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
+                style={{ aspectRatio:"3/4", objectFit:"contain", background:"transparent", boxShadow: c.isMain ? "0 28px 55px -10px rgba(212,175,55,0.35), 0 22px 48px rgba(0,0,0,0.88), 0 8px 22px rgba(0,0,0,0.7)" : "0 10px 28px rgba(0,0,0,0.75)" }}
               />
             </div>
           );
@@ -621,7 +621,7 @@ function StackedCardRelics({
         <div className="flex justify-center gap-2 px-4 py-2" style={{ background:"#09090B", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
           {extraCards.map((card, i) => (
             <div key={i} className="cursor-zoom-in rounded-md overflow-hidden border border-white/10 hover:border-[#C9A84C]/50 transition-colors" style={{ width:"34px", opacity:0.65 }} onClick={e => { e.stopPropagation(); onCardClick(altarCards.length + i); }}>
-              <SafeCardImg src={card.imageUrl} alt={card.name ?? ""} className="w-full block" style={{ aspectRatio:"3/4", objectFit:"cover" }} />
+              <SafeCardImg src={card.imageUrl} alt={card.name ?? ""} className="w-full block" style={{ aspectRatio:"3/4", objectFit:"contain", background:"transparent" }} />
             </div>
           ))}
         </div>
@@ -747,11 +747,13 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
     }
   };
 
-  // Build top-3 cards array
+  // Build top-5 cards array
   const topCards: GalleryCard[] = [];
   if (entry.topCardImageUrl) topCards.push({ imageUrl: entry.topCardImageUrl, name: entry.topCardName, grade: entry.topCardGrade, grader: entry.topCardGrader });
   if (entry.card2ImageUrl) topCards.push({ imageUrl: entry.card2ImageUrl, name: entry.card2Name, grade: entry.card2Grade, grader: entry.card2Grader });
   if (entry.card3ImageUrl) topCards.push({ imageUrl: entry.card3ImageUrl, name: entry.card3Name, grade: entry.card3Grade, grader: entry.card3Grader });
+  if (entry.card4ImageUrl) topCards.push({ imageUrl: entry.card4ImageUrl, name: entry.card4Name, grade: entry.card4Grade, grader: entry.card4Grader });
+  if (entry.card5ImageUrl) topCards.push({ imageUrl: entry.card5ImageUrl, name: entry.card5Name, grade: entry.card5Grade, grader: entry.card5Grader });
 
   const rankLabel = rank <= 3 ? ["Ⅰ", "Ⅱ", "Ⅲ"][rank - 1] : `${rank}`;
   const rankColor = rank === 1 ? "text-[#C9A84C] border-[#C9A84C]/50"

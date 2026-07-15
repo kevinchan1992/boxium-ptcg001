@@ -157,8 +157,11 @@ export const wallRouter = router({
       .where(eq(wallEntries.userId, ctx.user.id))
       .limit(1);
 
-    const card2 = stats.top3ByValue[1] ?? null;
-    const card3 = stats.top3ByValue[2] ?? null;
+    const top5 = stats.top5ByValue ?? stats.top3ByValue;
+    const card2 = top5[1] ?? null;
+    const card3 = top5[2] ?? null;
+    const card4 = top5[3] ?? null;
+    const card5 = top5[4] ?? null;
 
     const entryData = {
       displayName,
@@ -176,6 +179,14 @@ export const wallRouter = router({
       card3ImageUrl: card3?.card?.imageUrl ?? null,
       card3Grade: card3?.grade ?? null,
       card3Grader: card3?.grader ?? null,
+      card4Name: card4?.card?.name ?? null,
+      card4ImageUrl: card4?.card?.imageUrl ?? null,
+      card4Grade: card4?.grade ?? null,
+      card4Grader: card4?.grader ?? null,
+      card5Name: card5?.card?.name ?? null,
+      card5ImageUrl: card5?.card?.imageUrl ?? null,
+      card5Grade: card5?.grade ?? null,
+      card5Grader: card5?.grader ?? null,
       isPublic: true,
     };
 

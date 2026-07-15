@@ -2256,6 +2256,16 @@ export const wallEntries = mysqlTable("wallEntries", {
   card3ImageUrl: text("card3ImageUrl"),
   card3Grade: varchar("card3Grade", { length: 32 }),
   card3Grader: varchar("card3Grader", { length: 32 }),
+  // 4th most valuable card
+  card4Name: varchar("card4Name", { length: 255 }),
+  card4ImageUrl: text("card4ImageUrl"),
+  card4Grade: varchar("card4Grade", { length: 32 }),
+  card4Grader: varchar("card4Grader", { length: 32 }),
+  // 5th most valuable card
+  card5Name: varchar("card5Name", { length: 255 }),
+  card5ImageUrl: text("card5ImageUrl"),
+  card5Grade: varchar("card5Grade", { length: 32 }),
+  card5Grader: varchar("card5Grader", { length: 32 }),
   sighs: int("sighs").notNull().default(0),
   posterUrl: text("posterUrl"), // S3 URL for the generated honour certificate poster
   isPublic: boolean("isPublic").notNull().default(true),
