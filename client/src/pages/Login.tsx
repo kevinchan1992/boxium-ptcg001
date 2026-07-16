@@ -352,7 +352,7 @@ export default function Login() {
                 src="/boxium-logo.png"
                 alt="BOXIUM"
                 className="w-28 h-auto"
-                style={{ filter: "brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg)" }}
+
               />
             </div>
           </div>
