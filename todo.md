@@ -9901,3 +9901,16 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] Research 拍照 25 次限制：確認前端顯示剩餘次數並在超限時提示升級
 - [-] 我的群組功能：已取消
 - [x] 每週 P&L 報告：Heartbeat 排程（每週一 01:00 UTC = 09:00 HKT）、郵件模板、/api/scheduled/weekly-pl-report handler
+
+## ✅ Profile 個人中心重構為高級現代雜誌海報風格（2026-07-16）
+
+- [x] Banner 背景改為 BOXIUM 官方深寶藍 `#06038D`，底部加 `border-b-2 border-[#FEDD00]` 黃色分割線
+- [x] Banner 右側加入半透明 `COLLECTOR` 巨型浮水印字體（`text-white/10 font-black tracking-[0.25em]`）
+- [x] 頭像改為鮮黃色方框 + 4px 純黑硬邊陰影（Block Shadow），去除圓角
+- [x] Admin 標籤改為直角矩形吊牌（`bg-[#06038D] border border-[#FEDD00] text-[#FEDD00] font-mono tracking-widest rounded-none`）
+- [x] 左側選單去除圓角和陰影，選中狀態改為 `text-[#06038D] font-bold` + 左側 `border-l-4 border-[#FEDD00]` 黃色指引線
+- [x] 右側內容卡片去除圓角和陰影，改為 `border border-zinc-200/80`
+- [x] 卡片小標題圖標改為 `text-[#06038D]`
+- [x] 編輯/儲存/修改密碼按鈕改為 `bg-[#06038D] text-[#FEDD00] hover:opacity-90`
+- [x] Mobile 選單格子圖標改為深藍底黃色圖標
+- [x] 保存 checkpoint
