@@ -1166,6 +1166,84 @@ export async function batchGetLatestPricesBeforeDate(
   return result;
 }
 
+/**
+ * For portfolio trend: fetch ALL historical prices for a set of (cardId, grade) pairs
+ * in a SINGLE query, returning a map keyed by "cardId:grade" → sorted array of { price, soldAt }.
+ * The caller can then do in-memory lookups for each month cutoff date without extra DB round-trips.
+ * This replaces the N-per-month batchGetLatestPricesBeforeDate pattern in getPortfolioTrend.
+ */
+export async function batchGetAllHistoricalPrices(
+  requests: Array<{ cardId: number; grade: string }>
+): Promise<Map<string, Array<{ price: number; soldAt: Date }>>> {
+  const result = new Map<string, Array<{ price: number; soldAt: Date }>>();
+  if (requests.length === 0) return result;
+
+  const db = await getDb();
+  if (!db) return result;
+
+  const cardIds = Array.from(new Set(requests.map(r => r.cardId)));
+
+  try {
+    const rows = await db
+      .select({
+        cardId: priceHistory.cardId,
+        grade: priceHistory.grade,
+        price: priceHistory.price,
+        soldAt: priceHistory.soldAt,
+      })
+      .from(priceHistory)
+      .where(
+        and(
+          inArray(priceHistory.cardId, cardIds),
+          eq(priceHistory.source, 'snkrdunk'),
+          eq(priceHistory.isSuspectedBulk, false)
+        )
+      )
+      .orderBy(desc(priceHistory.soldAt));
+
+    for (const row of rows) {
+      if (!row.grade || !row.soldAt) continue;
+      const key = `${row.cardId}:${row.grade}`;
+      if (!result.has(key)) result.set(key, []);
+      result.get(key)!.push({ price: Number(row.price), soldAt: row.soldAt });
+    }
+    // Also build PSA 10 fallback entries for non-PSA10 grades
+    for (const { cardId, grade } of requests) {
+      if (grade === 'PSA 10') continue;
+      const key = `${cardId}:${grade}`;
+      if (!result.has(key) || result.get(key)!.length === 0) {
+        const psa10Key = `${cardId}:PSA 10`;
+        const psa10Prices = result.get(psa10Key);
+        if (psa10Prices && psa10Prices.length > 0) {
+          result.set(key, psa10Prices);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('[batchGetAllHistoricalPrices] Query error:', err?.message);
+  }
+
+  return result;
+}
+
+/**
+ * Helper: given a pre-fetched historical prices map and a cutoff date,
+ * return the latest price for each (cardId, grade) on or before the cutoff.
+ */
+export function getLatestPriceBeforeDate(
+  allPrices: Map<string, Array<{ price: number; soldAt: Date }>>,
+  cardId: number,
+  grade: string,
+  before: Date
+): number | null {
+  const key = `${cardId}:${grade}`;
+  const records = allPrices.get(key);
+  if (!records || records.length === 0) return null;
+  // Records are sorted DESC by soldAt, so find the first one <= before
+  const match = records.find(r => r.soldAt <= before);
+  return match ? match.price : null;
+}
+
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];

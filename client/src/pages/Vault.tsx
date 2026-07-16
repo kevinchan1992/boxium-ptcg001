@@ -6,7 +6,7 @@
  * - 2/3 走勢圖 + 1/3 排行榜（Segmented Tab + 羅馬數字）
  * - 高對比輸入框 + 即時 ROI 計算
  */
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -14,22 +14,24 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardPickerDialog, type SelectedCard } from "@/components/CardPickerDialog";
-import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { LazyImage } from "@/components/LazyImage";
 import { getProxiedImageUrl } from "@/lib/utils";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer,
-} from "recharts";
+
+// ── Lazy-loaded heavy components (not needed on initial render) ──
+const CameraSearchSheet = lazy(() =>
+  import("@/components/CameraSearchSheet").then(m => ({ default: m.CameraSearchSheet }))
+);
+
+// Lazy recharts wrapper — only loaded when trend data is available
+const VaultTrendChart = lazy(() => import("@/components/VaultTrendChart"));
 import {
   TrendingUp, TrendingDown, Package, DollarSign,
   Plus, Search, Loader2, Star, BarChart3, Wallet,
   RefreshCw, Layers, X, Edit2, Trash2, ChevronDown, ChevronUp, Camera,
   Share2, Download, Link2, ImageIcon, Crown, Lock, Eye,
 } from "lucide-react";
-import ShareCard, { type ShareCardStats, type ShareCardItem } from "@/components/ShareCard";
+import type { ShareCardStats, ShareCardItem } from "@/components/ShareCard";
 import { VipUpgradeModal } from "@/components/VipUpgradeModal";
-import { useVip } from "@/hooks/useVip";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -195,7 +197,6 @@ export default function Vault() {
   }, [currentMarketPrice, purchasePriceNum, addForm.quantity]);
 
   // ── Share ─────────────────────────────────────────────────
-  const shareCardRef = useRef<HTMLDivElement>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
@@ -243,9 +244,6 @@ export default function Vault() {
   const shareUrl = typeof window !== "undefined" && user?.id
     ? `${window.location.origin}/share/vault/${user.id}`
     : typeof window !== "undefined" ? `${window.location.origin}/vault` : "https://boxium.asia";
-
-  // State for top cards with pre-fetched base64 images
-  const [shareTopCardsWithBase64, setShareTopCardsWithBase64] = useState<ShareCardItem[]>([]);
 
   const handleGenerateShare = useCallback(async () => {
     if (!shareStats) return;
@@ -363,8 +361,15 @@ export default function Vault() {
     });
   }
 
-  // ── VIP ─────────────────────────────────────────────────
-  const { isVip } = useVip();
+  // ── VIP (derived from already-fetched user, no extra auth query) ──────────
+  const isVip = useMemo(() => {
+    if (!user) return false;
+    const u = user as any;
+    if (u.role === 'admin') return true;
+    if (!u.vipPlan || u.vipPlan === 'none') return false;
+    if (!u.vipExpiresAt) return false;
+    return new Date(u.vipExpiresAt) > new Date();
+  }, [user]);
   const [showVipModal, setShowVipModal] = useState(false);
   const [vipTrendRange, setVipTrendRange] = useState<"1M" | "3M" | "6M" | "1Y" | "ALL">("ALL");
 
@@ -746,41 +751,16 @@ export default function Vault() {
                     <p className="text-xs" style={{ color: TEXT_SEC }}>按月份累計市値</p>
                     <p className="text-xs font-semibold" style={{ color: TEXT_PRI }}>{filteredTrendPoints.length} 個月</p>
                   </div>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={filteredTrendPoints} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="vaultTrendGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FEDD00" stopOpacity={0.18} />
-                          <stop offset="50%" stopColor="#06038d" stopOpacity={0.10} />
-                          <stop offset="100%" stopColor="#06038d" stopOpacity={0.01} />
-                        </linearGradient>
-                        <linearGradient id="vaultCostGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" />
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false} />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: TEXT_SEC }} tickLine={false} axisLine={false}
-                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} width={42}
-                      />
-                      <RechartsTooltip
-                        formatter={(value, name) => [
-                          formatCurrency(Number(value ?? 0)),
-                          name === "marketValue" ? "市値" : "成本"
-                        ]}
-                        contentStyle={{
-                          borderRadius: 10, border: `1px solid ${BORDER}`,
-                          fontSize: 12, background: BG_CARD, color: TEXT_PRI,
-                        }}
-                      />
-                      <Area type="monotone" dataKey="cost" stroke="#94a3b8" strokeWidth={1.5}
-                        fill="url(#vaultCostGrad)" dot={false} strokeDasharray="4 2" />
-                      <Area type="monotone" dataKey="marketValue" stroke={BRAND_BLUE} strokeWidth={2.5}
-                        fill="url(#vaultTrendGrad)" dot={{ fill: BRAND_BLUE, r: 2.5 }} activeDot={{ r: 5, fill: BRAND_BLUE }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<div className="h-[220px] flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin opacity-30" /></div>}>
+                    <VaultTrendChart
+                      data={filteredTrendPoints}
+                      brandBlue={BRAND_BLUE}
+                      bgCard={BG_CARD}
+                      textPri={TEXT_PRI}
+                      textSec={TEXT_SEC}
+                      border={BORDER}
+                    />
+                  </Suspense>
                   <div className="flex items-center gap-5 mt-3 justify-center">
                     <div className="flex items-center gap-1.5">
                       <div className="w-5 h-0.5 rounded" style={{ background: TEXT_PRI }} />
@@ -1427,16 +1407,7 @@ export default function Vault() {
         </button>
       </div>
 
-      {/* ── Hidden ShareCard Template ──────────────────────── */}
-      {shareStats && (
-        <ShareCard
-          ref={shareCardRef}
-          stats={shareStats}
-          topCards={shareTopCardsWithBase64.length > 0 ? shareTopCardsWithBase64 : shareTopCards}
-          userName={user?.name ?? undefined}
-          shareUrl={shareUrl}
-        />
-      )}
+      {/* ShareCard DOM template removed — share generation is server-side via /api/share-card */}
 
       {/* ── Share Preview Modal ────────────────────────────── */}
       <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
@@ -1832,27 +1803,30 @@ export default function Vault() {
         }}
       />
 
-      {/* ── Camera Search Sheet ─────────────────────────────── */}
-      <CameraSearchSheet
-        open={showCameraSearch}
-        onOpenChange={(o) => setShowCameraSearch(o)}
-        onCardSelect={(card) => {
-          setSelectedCard({
-            id: card.id,
-            name: card.name,
-            imageUrl: card.imageUrl,
-            series: card.series,
-            cardNumber: card.cardNumber,
-            rarity: card.rarity,
-            referencePrice: null,
-            productType: "single_card",
-          });
-          setShowCameraSearch(false);
-          // Re-open add dialog if it was closed (camera sheet is a separate overlay)
-          setShowAddDialog(true);
-          toast.success("已識別卡牌，請確認並填寫詳細資料");
-        }}
-      />
+      {/* ── Camera Search Sheet (lazy-loaded) ─────────────────────────────── */}
+      {showCameraSearch && (
+        <Suspense fallback={null}>
+          <CameraSearchSheet
+            open={showCameraSearch}
+            onOpenChange={(o) => setShowCameraSearch(o)}
+            onCardSelect={(card) => {
+              setSelectedCard({
+                id: card.id,
+                name: card.name,
+                imageUrl: card.imageUrl,
+                series: card.series,
+                cardNumber: card.cardNumber,
+                rarity: card.rarity,
+                referencePrice: null,
+                productType: "single_card",
+              });
+              setShowCameraSearch(false);
+              setShowAddDialog(true);
+              toast.success("已識別卡牌，請確認並填寫詳細資料");
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* ── Delete confirm ──────────────────────────────────── */}
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>

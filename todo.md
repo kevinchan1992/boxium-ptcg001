@@ -9914,3 +9914,28 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 編輯/儲存/修改密碼按鈕改為 `bg-[#06038D] text-[#FEDD00] hover:opacity-90`
 - [x] Mobile 選單格子圖標改為深藍底黃色圖標
 - [x] 保存 checkpoint
+
+## 🚀 Vault 頁面效能優化（2026-07-16）
+
+- [ ] 後端：getCollection 改為真正的 DB 分頁（目前是取全部再 slice，大 vault 很慢）
+- [ ] 後端：getCollectionStats 加入 per-user 緩存（TTL 2 分鐘，避免每次載入都重算）
+- [ ] 後端：getPortfolioTrend 加入 per-user 緩存（TTL 30 分鐘，圖表數據不需要即時）
+- [ ] 後端：getPortfolioTrend 的 batchGetLatestPricesBeforeDate 在 while 循環中重複調用 DB（N 個月 × 1 次 DB 查詢），改為一次性批量查詢所有月份
+- [ ] 前端：Vault 中的 recharts 圖表改為動態 import（lazy load），減少初始 bundle
+- [ ] 前端：CameraSearchSheet 改為動態 import（只在點擊相機按鈕時才載入）
+- [ ] 前端：Vault 中 useVip 重複調用 trpc.auth.me，改為從已有的 user 數據派生
+- [ ] 前端：Vite manualChunks 分割 vendor 庫（react/trpc/shadcn），縮小主 bundle
+
+## ✅ Vault 頁面效能優化（2026-07-16）
+
+- [x] 診斷根本原因：getUserCollection 每次翻頁重新查詢所有卡牌 + priceHistory 無 LIMIT；getPortfolioTrend N+1 查詢；前端重複 auth hook；recharts/CameraSearchSheet 阻塞初始 bundle
+- [x] 後端：collection.ts 加入 per-user 緩存（TTL 2 分鐘，max 200 users），getUserCollectionStats 重用緩存
+- [x] 後端：addToCollection / updateCollectionItem / removeFromCollection / createCardTrade / deleteCardTrade 加入 invalidateCollectionCache 緩存失效
+- [x] 後端：getPortfolioTrend 改為 batchGetAllHistoricalPrices 一次性批量查詢（N+1 → 1 次 DB 查詢）
+- [x] 後端：db.ts 新增 batchGetAllHistoricalPrices 和 getLatestPriceBeforeDate 函數
+- [x] 前端：Vault.tsx 移除 useVip hook（改為從 user 派生，節省 1 次 auth.me 查詢）
+- [x] 前端：CameraSearchSheet 改為 lazy + Suspense（只在點擊相機時載入）
+- [x] 前端：recharts 圖表抽取為 VaultTrendChart 組件並 lazy-load
+- [x] 前端：移除隱藏的 ShareCard DOM 掛載（server-side 已處理）
+- [x] TypeScript 類型檢查通過（0 errors）
+- [x] 部署 checkpoint

@@ -17,6 +17,37 @@ import { getDb, batchGetCardPricesByGrades, batchGetLatestPricesByGrades, resetD
 import { userCollections, cards } from "../drizzle/schema_new";
 import { eq, and, desc, sql, isNull } from "drizzle-orm";
 
+// ─── Per-user collection cache (TTL 2 min, max 200 users) ─────────────────────
+// Caches the full getUserCollection result keyed by userId.
+// Invalidated on any write: add / update / remove / trade.
+type CollectionCacheEntry = { items: CollectionItem[]; fetchedAt: number };
+const _collectionCache = new Map<number, CollectionCacheEntry>();
+const COLLECTION_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const COLLECTION_CACHE_MAX = 200;
+
+function getCollectionCache(userId: number): CollectionItem[] | null {
+  const entry = _collectionCache.get(userId);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > COLLECTION_CACHE_TTL_MS) {
+    _collectionCache.delete(userId);
+    return null;
+  }
+  return entry.items;
+}
+
+function setCollectionCache(userId: number, items: CollectionItem[]): void {
+  if (_collectionCache.size >= COLLECTION_CACHE_MAX) {
+    const oldestKey = _collectionCache.keys().next().value;
+    if (oldestKey !== undefined) _collectionCache.delete(oldestKey);
+  }
+  _collectionCache.set(userId, { items, fetchedAt: Date.now() });
+}
+
+/** Invalidate the per-user collection cache (call after any write mutation). */
+export function invalidateCollectionCache(userId: number): void {
+  _collectionCache.delete(userId);
+}
+
 // ─── Grade to priceHistory.grade mapping ───────────────────────────────────────
 const GRADE_TO_PRICE_GRADE: Record<string, string> = {
   "PSA 10": "PSA 10",
@@ -176,8 +207,45 @@ export async function getUserCollection(
     series?: string;
     priceMode?: "psa10" | "grade"; // psa10 = always show PSA 10 price, grade = show grade-matched price
     showTraded?: boolean; // if true, return only traded-away items; if false/undefined, return active items
+    skipCache?: boolean; // bypass cache (used by CSV export, PDF export, etc.)
   }
 ): Promise<CollectionItem[]> {
+  // ── Cache hit (only for default active-items, grade-mode, no extra filters) ──
+  // We cache the full sorted-by-createdAt list and apply in-memory sort/filter on top.
+  // This avoids repeated DB + priceHistory queries on every page flip or stats reload.
+  const isCacheable =
+    !options?.showTraded &&
+    !options?.skipCache &&
+    (options?.priceMode ?? "psa10") === "grade" &&
+    !options?.grader &&
+    !options?.series;
+
+  if (isCacheable) {
+    const cached = getCollectionCache(userId);
+    if (cached) {
+      // Apply sort/filter on the cached list
+      let items = [...cached];
+      if (options?.grader) items = items.filter((i) => i.grader === options.grader);
+      if (options?.series) items = items.filter((i) => i.card.series === options.series);
+      const order = options?.sortOrder === "asc" ? 1 : -1;
+      switch (options?.sortBy) {
+        case "marketValue":
+          items.sort((a, b) => order * ((a.marketPrice ?? 0) - (b.marketPrice ?? 0)));
+          break;
+        case "gain":
+          items.sort((a, b) => order * ((a.unrealizedGainPct ?? -Infinity) - (b.unrealizedGainPct ?? -Infinity)));
+          break;
+        case "purchasedAt":
+          items.sort((a, b) => order * ((a.purchasedAt?.getTime() ?? 0) - (b.purchasedAt?.getTime() ?? 0)));
+          break;
+        case "createdAt":
+        default:
+          items.sort((a, b) => order * (a.createdAt.getTime() - b.createdAt.getTime()));
+          break;
+      }
+      return items;
+    }
+  }
   // Helper to run the main SELECT (used for retry after reconnect)
   async function fetchRows(dbInst: any) {
     return dbInst
@@ -286,6 +354,11 @@ export async function getUserCollection(
       break;
   }
 
+  // Store in cache if cacheable (always use grade mode for cache)
+  if (isCacheable) {
+    setCollectionCache(userId, items);
+  }
+
   return items;
 }
 
@@ -293,6 +366,7 @@ export async function getUserCollection(
  * Get collection statistics for a user
  */
 export async function getUserCollectionStats(userId: number): Promise<CollectionStats> {
+  // Reuse cached collection data if available (avoids double DB query on Vault load)
   const items = await getUserCollection(userId, { priceMode: "grade" });
 
   const totalItems = items.length;
@@ -364,6 +438,7 @@ export async function addToCollection(
     isPublic: data.isPublic ?? false,
   });
 
+  invalidateCollectionCache(userId);
   return { success: true };
 }
 
@@ -413,6 +488,7 @@ export async function updateCollectionItem(
     .set(updateData)
     .where(and(eq(userCollections.id, itemId), eq(userCollections.userId, userId)));
 
+  invalidateCollectionCache(userId);
   return { success: true };
 }
 
@@ -437,5 +513,6 @@ export async function removeFromCollection(userId: number, itemId: number) {
     .delete(userCollections)
     .where(and(eq(userCollections.id, itemId), eq(userCollections.userId, userId)));
 
+  invalidateCollectionCache(userId);
   return { success: true };
 }

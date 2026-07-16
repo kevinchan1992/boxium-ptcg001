@@ -5,6 +5,7 @@
 import { getDb } from "./db";
 import { cardTrades, cardTradeItems, userCollections, cards } from "../drizzle/schema_new";
 import { eq, and, desc, inArray } from "drizzle-orm";
+import { invalidateCollectionCache } from "./collection";
 
 export interface TradeItemInput {
   direction: "in" | "out";
@@ -101,6 +102,7 @@ export async function createCardTrade(userId: number, input: CreateTradeInput) {
     });
   }
 
+  invalidateCollectionCache(userId);
   return { tradeId, createdCollectionIds };
 }
 
@@ -207,6 +209,7 @@ export async function deleteCardTrade(userId: number, tradeId: number) {
   await db.delete(cardTradeItems).where(eq(cardTradeItems.tradeId, tradeId));
   await db.delete(cardTrades).where(eq(cardTrades.id, tradeId));
 
+  invalidateCollectionCache(userId);
   return { success: true };
 }
 
