@@ -336,25 +336,29 @@ export default function Login() {
             style={{ background: "#FEDD00" }}
           />
 
-          {/* Tilted card visual */}
+          {/* Geometric brand box */}
           <div
-            className="relative z-10 mb-10"
-            style={{ transform: "rotate(12deg)" }}
+            className="relative z-10 mb-10 border-2 w-64 h-64 flex flex-col justify-center items-center p-6 mx-auto"
+            style={{ borderColor: "#FEDD00" }}
           >
-            <div
-              className="w-40 h-56 rounded-sm flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #FEDD00 0%, #e6c800 100%)",
-                boxShadow: "8px 8px 0px rgba(0,0,0,0.4), 0 20px 60px rgba(0,0,0,0.5)",
-              }}
+            {/* Corner accents */}
+            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2" style={{ borderColor: "#FEDD00" }} />
+            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2" style={{ borderColor: "#FEDD00" }} />
+            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2" style={{ borderColor: "#FEDD00" }} />
+            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2" style={{ borderColor: "#FEDD00" }} />
+            {/* Brand text */}
+            <p
+              className="text-4xl font-black tracking-[0.3em] uppercase text-white mb-3"
             >
-              <img
-                src="/boxium-logo.png"
-                alt="BOXIUM"
-                className="w-28 h-auto"
-                style={{ filter: "brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg)" }}
-              />
-            </div>
+              BOXIUM
+            </p>
+            <div className="w-10 h-px mb-3" style={{ background: "#FEDD00" }} />
+            <p
+              className="text-xs font-mono tracking-[0.25em] uppercase"
+              style={{ color: "#FEDD00" }}
+            >
+              EST. 2026
+            </p>
           </div>
 
           {/* Magazine tagline */}
