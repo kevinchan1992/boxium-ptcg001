@@ -13,41 +13,6 @@ let _pool: any | null = null;
 let _dbHealthy = true;
 let _lastHealthCheck = 0;
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Circuit Breaker: prevents DB query avalanche during TiDB PD server timeouts.
-// After CIRCUIT_BREAKER_THRESHOLD consecutive failures, all DB queries are
-// rejected immediately for CIRCUIT_BREAKER_RESET_MS (5 minutes), giving TiDB
-// time to recover without being hammered by retries.
-// ═══════════════════════════════════════════════════════════════════════════════
-let _circuitBreakerFailures = 0;
-let _circuitBreakerOpenAt = 0;
-const CIRCUIT_BREAKER_THRESHOLD = 5;   // open after 5 consecutive failures
-const CIRCUIT_BREAKER_RESET_MS = 5 * 60 * 1000; // stay open for 5 minutes
-
-export function recordDbSuccess() {
-  _circuitBreakerFailures = 0;
-}
-
-export function recordDbFailure() {
-  _circuitBreakerFailures++;
-  if (_circuitBreakerFailures >= CIRCUIT_BREAKER_THRESHOLD && _circuitBreakerOpenAt === 0) {
-    _circuitBreakerOpenAt = Date.now();
-    console.warn(`[CircuitBreaker] OPEN — ${_circuitBreakerFailures} consecutive DB failures. Blocking queries for ${CIRCUIT_BREAKER_RESET_MS / 1000}s to protect TiDB.`);
-  }
-}
-
-export function isCircuitBreakerOpen(): boolean {
-  if (_circuitBreakerOpenAt === 0) return false;
-  if (Date.now() - _circuitBreakerOpenAt > CIRCUIT_BREAKER_RESET_MS) {
-    // Half-open: allow one probe
-    _circuitBreakerOpenAt = 0;
-    _circuitBreakerFailures = 0;
-    console.log('[CircuitBreaker] HALF-OPEN — allowing probe query');
-    return false;
-  }
-  return true;
-}
-
 // Reset DB instance so it will be recreated on next getDb() call
 export function resetDb() {
   console.log('[Database] Resetting DB instance for reconnection...');
@@ -56,22 +21,18 @@ export function resetDb() {
   _dbHealthy = false;
 }
 
-// Periodic health check: ping DB every 10 minutes to detect stale connections early
-// v12.0: extended from 4min to 10min to reduce TiDB RU consumption from keep-alive pings
+// Periodic health check: ping DB every 4 minutes to detect stale connections early
 setInterval(async () => {
   if (!_pool) return;
-  if (isCircuitBreakerOpen()) return; // Skip health check when circuit breaker is open
   try {
     await _pool.promise().query('SELECT 1');
     _dbHealthy = true;
     _lastHealthCheck = Date.now();
-    recordDbSuccess();
   } catch (err: any) {
     console.warn('[Database] Health check failed, resetting pool:', err?.code || err?.message);
-    recordDbFailure();
     resetDb();
   }
-}, 10 * 60 * 1000); // every 10 minutes (v12.0: reduced from 4min)
+}, 4 * 60 * 1000); // every 4 minutes
 
 // In-memory cache for trending cards (refreshed daily, TTL 30 minutes for safety)
 type TrendingCardResult = {
@@ -81,7 +42,7 @@ type TrendingCardResult = {
   priceChange: number; priceChangeFormatted: string;
 };
 const _trendingCache = new Map<string, { data: TrendingCardResult[]; fetchedAt: number }>();
-const TRENDING_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours (v12.0: extended from 30min; trending cards change slowly)
+const TRENDING_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 /** Invalidate the in-memory trending cache (called after calculateAndCacheTrendingCards) */
 export function invalidateTrendingCache() {
@@ -93,8 +54,8 @@ export function invalidateTrendingCache() {
 // Pagination is done in-memory by slicing the cached array, so page 2+ never hits the DB.
 type SearchCacheEntry = { allCards: any[]; total: number; fetchedAt: number };
 const _searchCache = new Map<string, SearchCacheEntry>();
-const SEARCH_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes (v12.0: extended from 5min to reduce DB queries)
-const SEARCH_CACHE_MAX = 50; // v12.0: increased from 30 to cache more queries in memory
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SEARCH_CACHE_MAX = 30; // v10.0: reduced from 100 to save memory on Cloud Run (512MB limit)
 
 function getSearchCacheKey(query: string): string {
   return query.toLowerCase().trim();
@@ -130,7 +91,7 @@ export function invalidateSearchCache() {
 // ═══════════════════════════════════════════════════════════════════════════════
 let _globalPriceMap: Map<number, number> | null = null;
 let _globalPriceMapFetchedAt = 0;
-const GLOBAL_PRICE_MAP_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours (v12.0: extended from 20min to reduce TiDB RU consumption; GROUP BY query scans 3.6M rows, 4h TTL = 6x/day vs 72x/day)
+const GLOBAL_PRICE_MAP_TTL_MS = 20 * 60 * 1000; // 20 minutes (v11.1: extended from 10min; GROUP BY query ~1s, less frequent refresh reduces DB load)
 let _globalPriceMapLoading: Promise<Map<number, number>> | null = null;
 
 /**
@@ -237,7 +198,7 @@ type PriceStatsEntry = {
   fetchedAt: number;
 };
 const _priceStatsCache = new Map<string, PriceStatsEntry>();
-const PRICE_STATS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (v12.0: extended from 5min to reduce per-card priceHistory queries)
+const PRICE_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const PRICE_STATS_CACHE_MAX = 500;
 
 function getPriceStatsCacheKey(cardId: number, source?: string, grade?: string): string {
@@ -293,11 +254,11 @@ export async function getDb() {
         timezone: HK_TIMEZONE,
         supportBigNumbers: true,
         bigNumberStrings: false,
-        connectionLimit: 5, // v12.0: reduced from 10 to 5 — fewer connections = less PD pressure during TiDB Serverless throttling
+        connectionLimit: 10, // Enough for batch update (max 3) + user queries
         waitForConnections: true,
-        queueLimit: 20, // v12.0: reduced from 50 to 20 to fail fast instead of queuing during PD timeout
+        queueLimit: 50, // Limit queue to prevent unbounded waiting during cold starts
         enableKeepAlive: true,
-        keepAliveInitialDelay: 30000, // v12.0: increased from 10s to 30s to reduce keep-alive overhead
+        keepAliveInitialDelay: 10000,
         connectTimeout: 10000, // 10s connection timeout (default is 10s, explicit for clarity)
         // Note: mysql2 does not have acquireTimeout; we use Promise.race in withDbTimeout below
         // Ensure boolean JS values are cast to 1/0 for MySQL tinyint(1) columns
@@ -331,14 +292,8 @@ export async function getDb() {
 
 // Card queries
 
-/** Wrap a DB query with a timeout + circuit breaker. Throws if the query takes longer than timeoutMs.
- * Circuit breaker: after 5 consecutive failures, blocks all queries for 5 minutes to protect TiDB.
- */
+/** Wrap a DB query with a timeout. Throws if the query takes longer than timeoutMs. */
 async function withDbTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
-  // Circuit breaker check: if open, reject immediately without hitting DB
-  if (isCircuitBreakerOpen()) {
-    throw new Error(`[CircuitBreaker] DB queries blocked — TiDB recovering from PD timeout. Retry in a moment.`);
-  }
   let timer: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error(`[DB Timeout] ${label} exceeded ${timeoutMs}ms`)), timeoutMs);
@@ -346,14 +301,9 @@ async function withDbTimeout<T>(promise: Promise<T>, timeoutMs: number, label: s
   try {
     const result = await Promise.race([promise, timeoutPromise]);
     clearTimeout(timer!);
-    recordDbSuccess(); // Reset circuit breaker on success
     return result;
-  } catch (err: any) {
+  } catch (err) {
     clearTimeout(timer!);
-    // Record failure for circuit breaker (PD timeout, connection errors)
-    const isPdTimeout = err?.message?.includes('PD server timeout') || err?.errno === 9001 ||
-      err?.message?.includes('DB Timeout') || err?.code === 'PROTOCOL_CONNECTION_LOST';
-    if (isPdTimeout) recordDbFailure();
     throw err;
   }
 }
@@ -1166,84 +1116,6 @@ export async function batchGetLatestPricesBeforeDate(
   return result;
 }
 
-/**
- * For portfolio trend: fetch ALL historical prices for a set of (cardId, grade) pairs
- * in a SINGLE query, returning a map keyed by "cardId:grade" → sorted array of { price, soldAt }.
- * The caller can then do in-memory lookups for each month cutoff date without extra DB round-trips.
- * This replaces the N-per-month batchGetLatestPricesBeforeDate pattern in getPortfolioTrend.
- */
-export async function batchGetAllHistoricalPrices(
-  requests: Array<{ cardId: number; grade: string }>
-): Promise<Map<string, Array<{ price: number; soldAt: Date }>>> {
-  const result = new Map<string, Array<{ price: number; soldAt: Date }>>();
-  if (requests.length === 0) return result;
-
-  const db = await getDb();
-  if (!db) return result;
-
-  const cardIds = Array.from(new Set(requests.map(r => r.cardId)));
-
-  try {
-    const rows = await db
-      .select({
-        cardId: priceHistory.cardId,
-        grade: priceHistory.grade,
-        price: priceHistory.price,
-        soldAt: priceHistory.soldAt,
-      })
-      .from(priceHistory)
-      .where(
-        and(
-          inArray(priceHistory.cardId, cardIds),
-          eq(priceHistory.source, 'snkrdunk'),
-          eq(priceHistory.isSuspectedBulk, false)
-        )
-      )
-      .orderBy(desc(priceHistory.soldAt));
-
-    for (const row of rows) {
-      if (!row.grade || !row.soldAt) continue;
-      const key = `${row.cardId}:${row.grade}`;
-      if (!result.has(key)) result.set(key, []);
-      result.get(key)!.push({ price: Number(row.price), soldAt: row.soldAt });
-    }
-    // Also build PSA 10 fallback entries for non-PSA10 grades
-    for (const { cardId, grade } of requests) {
-      if (grade === 'PSA 10') continue;
-      const key = `${cardId}:${grade}`;
-      if (!result.has(key) || result.get(key)!.length === 0) {
-        const psa10Key = `${cardId}:PSA 10`;
-        const psa10Prices = result.get(psa10Key);
-        if (psa10Prices && psa10Prices.length > 0) {
-          result.set(key, psa10Prices);
-        }
-      }
-    }
-  } catch (err: any) {
-    console.error('[batchGetAllHistoricalPrices] Query error:', err?.message);
-  }
-
-  return result;
-}
-
-/**
- * Helper: given a pre-fetched historical prices map and a cutoff date,
- * return the latest price for each (cardId, grade) on or before the cutoff.
- */
-export function getLatestPriceBeforeDate(
-  allPrices: Map<string, Array<{ price: number; soldAt: Date }>>,
-  cardId: number,
-  grade: string,
-  before: Date
-): number | null {
-  const key = `${cardId}:${grade}`;
-  const records = allPrices.get(key);
-  if (!records || records.length === 0) return null;
-  // Records are sorted DESC by soldAt, so find the first one <= before
-  const match = records.find(r => r.soldAt <= before);
-  return match ? match.price : null;
-}
-
 export async function getAllCards() {
   const db = await getDb();
   if (!db) return [];
@@ -1257,7 +1129,7 @@ let _statsCacheCardCount: number | null = null;
 let _statsCacheCardCountExpiry = 0;
 let _statsCachePriceCount: number | null = null;
 let _statsCachePriceCountExpiry = 0;
-const STATS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours (v12.0: extended from 60min; total card count changes only during batch imports)
+const STATS_CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes (v11.2: extended from 5min; COUNT(*) on TiDB ~1.6s, card count rarely changes)
 
 export async function getTotalCardCount() {
   const now = Date.now();

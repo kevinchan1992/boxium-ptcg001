@@ -155,9 +155,9 @@ export default function Profile() {
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="h-48 border-b-2 border-[#FEDD00]" style={{ background: '#06038D' }} />
+        <div className="h-48" style={{ background: BRAND_BLUE }} />
         <div className="max-w-6xl mx-auto px-4 -mt-16 pb-12 space-y-4">
-          <Skeleton className="h-32 w-32" />
+          <Skeleton className="h-32 w-32 rounded-full" />
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
         </div>
@@ -195,34 +195,27 @@ export default function Profile() {
       title={user?.name ? `${user.name} ${t("profile.seoTitle")}` : t("profile.seoTitleDefault")}
       description={t("profile.seoDescription")}
     />
-    <div className="min-h-screen bg-white text-gray-900">
-      {/* ── Hero Banner — Editorial Magazine Style ── */}
-      <div className="relative overflow-hidden border-b-2 border-[#FEDD00]" style={{ background: '#06038D' }}>
-        {/* Watermark COLLECTOR text */}
-        <div className="absolute inset-0 flex items-center justify-end pr-4 md:pr-10 pointer-events-none select-none overflow-hidden">
-          <span className="text-white/10 font-black uppercase tracking-[0.25em] text-[5rem] lg:text-[8rem] leading-none whitespace-nowrap">COLLECTOR</span>
-        </div>
-        <div className="relative max-w-6xl mx-auto px-4 pt-4 pb-5">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* ── Hero Banner (Mobile-first compact design) ── */}
+      <div className="relative" style={{ background: `linear-gradient(135deg, ${BRAND_BLUE} 0%, #0a06b5 100%)` }}>
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: BRAND_YELLOW }} />
+        <div className="max-w-6xl mx-auto px-4 pt-4 pb-5">
           {/* Mobile: compact horizontal layout */}
           <div className="flex items-center gap-4 md:hidden">
-            {/* Avatar — editorial tag style */}
-            <div className="relative flex-shrink-0">
-              <div
-                className="w-14 h-14 flex items-center justify-center border border-[#FEDD00] p-0.5"
-                style={{ boxShadow: '4px 4px 0px #000000' }}
-              >
-                <div className="w-full h-full flex items-center justify-center" style={{ background: '#FEDD00' }}>
-                  <User className="w-7 h-7" style={{ color: '#06038D' }} />
-                </div>
-              </div>
+            {/* Avatar */}
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center border-2 shadow-lg flex-shrink-0"
+              style={{ background: BRAND_YELLOW, borderColor: "rgba(255,255,255,0.6)" }}
+            >
+              <User className="w-7 h-7" style={{ color: BRAND_BLUE }} />
             </div>
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-white tracking-wide truncate">{user.name || t("profile.user")}</h1>
+                <h1 className="text-lg font-bold text-white truncate">{user.name || t("profile.user")}</h1>
                 {isAdmin && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 tracking-widest rounded-none flex-shrink-0 border border-[#FEDD00]" style={{ background: '#06038D', color: '#FEDD00' }}>
-                    Admin
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+                    <Crown className="w-2.5 h-2.5" />Admin
                   </span>
                 )}
               </div>
@@ -232,7 +225,7 @@ export default function Profile() {
               </p>
             </div>
           </div>
-          {/* Desktop: editorial layout */}
+          {/* Desktop: original layout */}
           <div className="hidden md:block">
             <div className="mb-5">
               <Link href="/">
@@ -240,23 +233,18 @@ export default function Profile() {
               </Link>
             </div>
             <div className="flex flex-row items-end gap-6">
-              {/* Avatar — editorial block shadow tag */}
-              <div className="relative flex-shrink-0">
-                <div
-                  className="w-28 h-28 flex items-center justify-center border border-[#FEDD00] p-1"
-                  style={{ boxShadow: '4px 4px 0px #000000' }}
-                >
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: '#FEDD00' }}>
-                    <User className="w-14 h-14" style={{ color: '#06038D' }} />
-                  </div>
-                </div>
+              <div
+                className="w-28 h-28 rounded-full flex items-center justify-center border-4 shadow-xl flex-shrink-0"
+                style={{ background: BRAND_YELLOW, borderColor: "white" }}
+              >
+                <User className="w-14 h-14" style={{ color: BRAND_BLUE }} />
               </div>
               <div className="text-left pb-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-white tracking-wide">{user.name || t("profile.user")}</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-3xl font-bold text-white">{user.name || t("profile.user")}</h1>
                   {isAdmin && (
-                    <span className="inline-flex items-center text-xs font-mono font-bold px-3 py-0.5 tracking-widest rounded-none border border-[#FEDD00]" style={{ background: '#06038D', color: '#FEDD00' }}>
-                      Admin
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
+                      <Crown className="w-3 h-3" />Admin
                     </span>
                   )}
                 </div>
@@ -279,8 +267,8 @@ export default function Profile() {
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setActiveSection('menu')}
-                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 bg-white border border-zinc-200 active:scale-95 transition-transform"
-                style={{ color: '#06038D' }}
+                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm active:scale-95 transition-transform"
+                style={{ color: BRAND_BLUE }}
               >
                 <ChevronRight className="w-3.5 h-3.5 rotate-180" />
                 {t("common.back")}
@@ -291,9 +279,11 @@ export default function Profile() {
             </div>
           )}
 
+          {/* Welcome card removed */}
+
           {/* Menu grid — shown when no section selected */}
           {activeSection === 'menu' && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {navItems.map((item) => (
                 <button
                   key={item.id}
@@ -302,19 +292,19 @@ export default function Profile() {
                     const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
                     window.history.pushState({ tab: item.id }, '', url);
                   }}
-                  className="flex items-center gap-3 px-4 py-3.5 bg-white border border-zinc-200/80 active:scale-95 transition-transform text-left h-[68px]"
+                  className="flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform text-left h-[68px]"
                 >
-                  {/* Icon square — editorial */}
-                  <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: '#06038D' }}>
-                    <span style={{ color: '#FEDD00' }}>
-                      {React.cloneElement(item.icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
+                  {/* Icon circle */}
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${BRAND_BLUE}12` }}>
+                    <span style={{ color: BRAND_BLUE }}>
+                      {React.cloneElement(item.icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-gray-800 truncate">{item.label}</span>
                       {item.badge && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 flex-shrink-0" style={{ background: '#06038D', color: '#FEDD00' }}>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: '#ef4444', color: 'white' }}>
                           {item.badge > 9 ? '9+' : item.badge}
                         </span>
                       )}
@@ -328,9 +318,9 @@ export default function Profile() {
         </div>
 
         <div className={`flex gap-6 ${activeSection === 'menu' ? 'hidden md:flex' : 'flex'}`}>
-          {/* ── Left sidebar nav (desktop) — Editorial flat style ── */}
+          {/* ── Left sidebar nav (desktop) ── */}
           <aside className="hidden md:flex flex-col w-52 flex-shrink-0">
-            <nav className="bg-white border border-zinc-200/80 overflow-hidden sticky top-4">
+            <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-4">
               {navItems.map((item, idx) => (
                 <button
                   key={item.id}
@@ -339,26 +329,25 @@ export default function Profile() {
                     const url = item.id === 'info' ? '/profile' : `/profile?tab=${item.id}`;
                     window.history.pushState({ tab: item.id }, '', url);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm transition-all text-left group relative ${
-                    idx !== 0 ? "border-t border-zinc-100" : ""
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-all text-left group relative ${
+                    idx !== 0 ? "border-t border-gray-50" : ""
                   } ${
                     activeSection === item.id
-                      ? "font-bold"
-                      : "font-medium text-gray-700 hover:bg-zinc-50 hover:text-gray-900"
+                      ? "text-white"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   }`}
-                  style={activeSection === item.id ? { color: '#06038D' } : {}}
+                  style={activeSection === item.id ? { background: BRAND_BLUE } : {}}
                 >
-                  {/* Active indicator — yellow left bar */}
-                  {activeSection === item.id ? (
-                    <span className="absolute left-0 top-0 bottom-0 border-l-4 border-[#FEDD00]" />
-                  ) : null}
-                  <span className={activeSection === item.id ? "" : "text-gray-400 group-hover:text-gray-600"}
-                    style={activeSection === item.id ? { color: '#06038D' } : {}}>
+                  {/* Active indicator bar */}
+                  {activeSection === item.id && (
+                    <span className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full" style={{ background: BRAND_YELLOW }} />
+                  )}
+                  <span className={activeSection === item.id ? "text-white" : "text-gray-400 group-hover:text-gray-600"}>
                     {item.icon}
                   </span>
                   <span className="flex-1">{item.label}</span>
                   {item.badge && (
-                    <span className="text-xs font-bold px-1.5 py-0.5" style={{ background: '#06038D', color: '#FEDD00' }}>
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: BRAND_YELLOW, color: BRAND_BLUE }}>
                       {item.badge}
                     </span>
                   )}
@@ -370,12 +359,12 @@ export default function Profile() {
             </nav>
           </aside>
 
-          {/* ── Right content area — Editorial card style ── */}
+          {/* ── Right content area ── */}
           <div className="flex-1 min-w-0">
-            <div className="bg-white border border-zinc-200/80 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Section header */}
-              <div className="px-6 py-4 border-b border-zinc-200/80 flex items-center gap-3">
-                <span style={{ color: '#06038D' }}>
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3" style={{ background: `${BRAND_BLUE}06` }}>
+                <span style={{ color: BRAND_BLUE }}>
                   {navItems.find(n => n.id === activeSection)?.icon}
                 </span>
                 <h2 className="font-bold text-gray-900">
@@ -524,8 +513,9 @@ function ChangePasswordDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          className="font-bold hover:opacity-90 transition-opacity"
-          style={{ background: '#06038D', color: '#FEDD00' }}
+          variant="outline"
+          className="font-semibold border-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
         >
           <Lock className="w-4 h-4 mr-1.5" /> {t("profile.changePassword")}
         </Button>
@@ -626,33 +616,36 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
   ];
   return (
     <div className="space-y-4">
-      {/* ── Editable Profile Block — Editorial card ── */}
-      <div className="bg-white border border-zinc-200/80 overflow-hidden">
+      {/* ── Editable Profile Block (iOS-style list rows) ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
         {/* Section header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/80">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4" style={{ color: '#06038D' }} />
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+              <User className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+            </div>
             <span className="text-sm font-bold text-gray-900">{t("profile.profileInfo")}</span>
           </div>
           {!isEditing ? (
             <button
               onClick={() => { setEditName(user.name || ""); const p = parsePhonePrefix(user.phone || ""); setPhonePrefix(p.prefix); setPhoneNumber(p.number); setIsEditing(true); }}
-              className="flex items-center gap-1 text-xs font-bold px-3 py-1 transition-opacity hover:opacity-90"
-              style={{ background: '#06038D', color: '#FEDD00' }}
+              className="flex items-center gap-1 text-sm font-semibold transition-colors"
+              style={{ color: BRAND_BLUE }}
             >
-              <Edit2 className="w-3 h-3" />{t("common.edit")}
+              <Edit2 className="w-3.5 h-3.5" />{t("common.edit")}
             </button>
           ) : (
             <div className="flex gap-2">
               <button
                 onClick={() => updateProfile.mutate({ name: editName || undefined, phone: editPhone || null, origin: window.location.origin })}
                 disabled={updateProfile.isPending}
-                className="flex items-center gap-1 text-xs font-bold px-3 py-1 hover:opacity-90"
-                style={{ background: '#06038D', color: '#FEDD00' }}
+                className="flex items-center gap-1 text-sm font-semibold"
+                style={{ color: BRAND_BLUE }}
               >
-                <Save className="w-3 h-3" />{updateProfile.isPending ? t("common.saving") : t("common.save")}
+                <Save className="w-3.5 h-3.5" />{updateProfile.isPending ? t("common.saving") : t("common.save")}
               </button>
-              <button onClick={() => setIsEditing(false)} className="text-xs font-medium text-gray-500 px-2">{t("profile.addresses.cancel")}</button>
+              <span className="text-gray-300">|</span>
+              <button onClick={() => setIsEditing(false)} className="text-sm font-medium text-gray-500">{t("profile.addresses.cancel")}</button>
             </div>
           )}
         </div>
@@ -728,14 +721,16 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
         </div>
       </div>
 
-      {/* ── Read-only Account Info — Editorial card ── */}
-      <div className="bg-white border border-zinc-200/80 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200/80">
-          <Shield className="w-4 h-4" style={{ color: '#06038D' }} />
+      {/* ── Read-only Account Info (iOS-style) ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+            <Shield className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+          </div>
           <span className="text-sm font-bold text-gray-900">{t("profile.info.title")}</span>
         </div>
         {readonlyFields.map(({ icon: Icon, label, value }, idx) => (
-          <div key={label} className={`flex items-center px-4 py-3.5 ${idx < readonlyFields.length - 1 ? "border-b border-zinc-100" : ""}`}>
+          <div key={label} className={`flex items-center px-4 py-3.5 ${idx < readonlyFields.length - 1 ? "border-b border-gray-50" : ""}`}>
             <div className="flex items-center gap-2 w-28 flex-shrink-0">
               <Icon className="w-3.5 h-3.5 text-gray-400" />
               <span className="text-sm text-gray-500 truncate">{label}</span>
@@ -745,10 +740,12 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
         ))}
       </div>
 
-      {/* ── Security — Editorial card ── */}
-      <div className="bg-white border border-zinc-200/80 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200/80">
-          <Lock className="w-4 h-4" style={{ color: '#06038D' }} />
+      {/* ── Security ── */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BRAND_BLUE}15` }}>
+            <Lock className="w-3.5 h-3.5" style={{ color: BRAND_BLUE }} />
+          </div>
           <span className="text-sm font-bold text-gray-900">{t("profile.security.title")}</span>
         </div>
         <div className="px-4 py-3">
@@ -757,7 +754,7 @@ function InfoSection({ user, locale }: { user: any; locale: string }) {
       </div>
 
       {/* ── Danger Zone: Delete Account ── */}
-      <div className="overflow-hidden" style={{ border: "1.5px solid #fecaca", background: "#fff5f5" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1.5px solid #fecaca", background: "#fff5f5" }}>
         <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "#fecaca" }}>
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#fee2e2" }}>
             <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />

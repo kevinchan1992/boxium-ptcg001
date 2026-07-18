@@ -817,7 +817,7 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
               {sighMutation.isPending
                 ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
                 : <Wind className="w-3 h-3 text-[#C9A84C] shrink-0" />}
-              <span className="truncate">Sigh</span>
+              <span className="truncate">Wow!</span>
             </button>
             <button
               onClick={() => setShowComments(!showComments)}
@@ -1025,7 +1025,7 @@ export default function WallOfSighs() {
               歎息之牆
             </h1>
             <p className="text-[11px] md:text-xs text-[#9A9A8A] tracking-[0.45em] uppercase mb-2 font-light">
-              THE WALL OF SIGHS
+              THE WALL OF WOW!
             </p>
 
             <div className="flex items-center justify-center gap-4 my-6">
@@ -1050,7 +1050,7 @@ export default function WallOfSighs() {
               <div className="flex flex-row bg-white border border-[#E8E8E4] rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.05)] w-full max-w-lg">
                 {[
                   { label: "Wall Total Value", value: <><span className="text-sm">HKD </span><AnimatedCounter value={Math.round(statsData?.totalValueHKD ?? 0)} /></>, color: "text-[#1C1C1E] font-medium" },
-                  { label: "Total Sighs", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C] font-medium" },
+                  { label: "Total Wow", value: <AnimatedCounter value={statsData?.totalSighs ?? 0} />, color: "text-[#C9A84C] font-medium" },
                   { label: "On The Wall", value: <AnimatedCounter value={statsData?.entryCount ?? 0} />, color: "text-[#1C1C1E] font-medium" },
                 ].map((stat, i) => (
                   <div key={i} className="flex items-stretch flex-1 min-w-0">
