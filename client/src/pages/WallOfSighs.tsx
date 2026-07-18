@@ -132,7 +132,55 @@ function useSacredAudio() {
     } catch (_) {}
   }, [getCtx]);
 
-  return { playSighSound };
+  /** Cheerful ascending arpeggio for Wow! button */
+  const playWowSound = useCallback(() => {
+    try {
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.22, now);
+      master.connect(ctx.destination);
+
+      // Bright pop punch
+      const pop = ctx.createOscillator();
+      const popGain = ctx.createGain();
+      pop.type = "square";
+      pop.frequency.setValueAtTime(400, now);
+      pop.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+      popGain.gain.setValueAtTime(0.5, now);
+      popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      pop.connect(popGain); popGain.connect(master);
+      pop.start(now); pop.stop(now + 0.13);
+
+      // Ascending sparkle arpeggio: C5 E5 G5 C6
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.07);
+        gain.gain.setValueAtTime(0, now + i * 0.07);
+        gain.gain.linearRampToValueAtTime(0.55, now + i * 0.07 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.35);
+        osc.connect(gain); gain.connect(master);
+        osc.start(now + i * 0.07); osc.stop(now + i * 0.07 + 0.38);
+      });
+
+      // Golden shimmer overtone
+      const shimmer = ctx.createOscillator();
+      const shimmerGain = ctx.createGain();
+      shimmer.type = "triangle";
+      shimmer.frequency.setValueAtTime(2093, now + 0.18);
+      shimmer.frequency.linearRampToValueAtTime(2637, now + 0.45);
+      shimmerGain.gain.setValueAtTime(0, now + 0.18);
+      shimmerGain.gain.linearRampToValueAtTime(0.25, now + 0.22);
+      shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+      shimmer.connect(shimmerGain); shimmerGain.connect(master);
+      shimmer.start(now + 0.18); shimmer.stop(now + 0.75);
+    } catch (_) {}
+  }, [getCtx]);
+
+  return { playSighSound, playWowSound };
 }
 
 // ── Ice Crystal Particle System ───────────────────────────────────────────────
@@ -140,7 +188,7 @@ interface Particle {
   x: number; y: number; vx: number; vy: number;
   life: number; maxLife: number; size: number;
   color: string; rotation: number; rotSpeed: number;
-  shape: "crystal" | "shard" | "dot";
+  shape: "crystal" | "shard" | "dot" | "star" | "ring" | "spark";
 }
 
 function useIceParticles() {
@@ -213,7 +261,115 @@ function useIceParticles() {
     animRef.current = requestAnimationFrame(animate);
   }, []);
 
-  return { spawnBurst };
+  /** Wow! burst — gold stars, rainbow sparks, ring shockwave */
+  const spawnWowBurst = useCallback((cx: number, cy: number) => {
+    const goldColors = [
+      "rgba(255,215,0,0.95)", "rgba(255,180,0,0.9)", "rgba(255,240,100,0.9)",
+      "rgba(255,255,255,0.98)", "rgba(255,140,0,0.85)", "rgba(220,20,60,0.8)",
+      "rgba(0,191,255,0.85)", "rgba(50,205,50,0.8)", "rgba(255,105,180,0.85)",
+    ];
+    const newP: Particle[] = [];
+
+    // 1. Shockwave ring
+    newP.push({ x: cx, y: cy, vx: 0, vy: 0,
+      life: 1, maxLife: 0.55, size: 4,
+      color: "rgba(255,215,0,0.7)", rotation: 0, rotSpeed: 0, shape: "ring" });
+
+    // 2. Gold stars (8 directions)
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const speed = 4 + Math.random() * 4;
+      newP.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+        life: 1, maxLife: 0.9 + Math.random() * 0.4, size: 7 + Math.random() * 6,
+        color: goldColors[Math.floor(Math.random() * 3)], rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.18, shape: "star" });
+    }
+
+    // 3. Rainbow sparks (24 particles)
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const speed = 3 + Math.random() * 6;
+      newP.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2.5,
+        life: 1, maxLife: 0.6 + Math.random() * 0.7, size: 3 + Math.random() * 5,
+        color: goldColors[Math.floor(Math.random() * goldColors.length)],
+        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.2, shape: "spark" });
+    }
+
+    // 4. Confetti shards (16 pieces)
+    for (let i = 0; i < 16; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 5;
+      newP.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 3,
+        life: 1, maxLife: 0.8 + Math.random() * 0.6, size: 4 + Math.random() * 7,
+        color: goldColors[3 + Math.floor(Math.random() * 6)],
+        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.25, shape: "shard" });
+    }
+
+    particlesRef.current.push(...newP);
+
+    const drawWow = (ctx2d: CanvasRenderingContext2D, p: Particle) => {
+      const alpha = Math.max(0, p.life / p.maxLife);
+      ctx2d.save(); ctx2d.globalAlpha = alpha;
+      if (p.shape === "ring") {
+        // Expanding shockwave ring
+        const progress = 1 - alpha;
+        const radius = 8 + progress * 60;
+        ctx2d.strokeStyle = p.color;
+        ctx2d.lineWidth = 3 * alpha;
+        ctx2d.beginPath(); ctx2d.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx2d.stroke();
+      } else if (p.shape === "star") {
+        ctx2d.translate(p.x, p.y); ctx2d.rotate(p.rotation);
+        ctx2d.fillStyle = p.color;
+        ctx2d.shadowColor = p.color; ctx2d.shadowBlur = 8;
+        ctx2d.beginPath();
+        const spikes = 5, outer = p.size, inner = p.size * 0.42;
+        for (let j = 0; j < spikes * 2; j++) {
+          const r = j % 2 === 0 ? outer : inner;
+          const a = (j / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+          j === 0 ? ctx2d.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+                  : ctx2d.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx2d.closePath(); ctx2d.fill();
+      } else if (p.shape === "spark") {
+        ctx2d.translate(p.x, p.y); ctx2d.rotate(p.rotation);
+        ctx2d.strokeStyle = p.color; ctx2d.lineWidth = p.size * 0.3;
+        ctx2d.shadowColor = p.color; ctx2d.shadowBlur = 6;
+        ctx2d.beginPath(); ctx2d.moveTo(0, -p.size); ctx2d.lineTo(0, p.size);
+        ctx2d.moveTo(-p.size * 0.3, 0); ctx2d.lineTo(p.size * 0.3, 0);
+        ctx2d.stroke();
+      } else {
+        // shard fallback
+        ctx2d.translate(p.x, p.y); ctx2d.rotate(p.rotation);
+        ctx2d.fillStyle = p.color;
+        ctx2d.beginPath();
+        ctx2d.moveTo(0, -p.size); ctx2d.lineTo(p.size * 0.4, 0);
+        ctx2d.lineTo(0, p.size * 0.6); ctx2d.lineTo(-p.size * 0.4, 0);
+        ctx2d.closePath(); ctx2d.fill();
+      }
+      ctx2d.restore();
+    };
+
+    const animateWow = () => {
+      const canvas = canvasRef.current; if (!canvas) return;
+      const ctx2d = canvas.getContext("2d"); if (!ctx2d) return;
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      particlesRef.current = particlesRef.current.filter(p => p.life > 0.01);
+      for (const p of particlesRef.current) {
+        if (p.shape !== "ring") {
+          p.x += p.vx; p.y += p.vy;
+          p.vy += 0.15; p.vx *= 0.96;
+          p.rotation += p.rotSpeed;
+        }
+        p.life -= p.shape === "ring" ? 0.028 : 0.018;
+        drawWow(ctx2d, p);
+      }
+      if (particlesRef.current.length > 0) animRef.current = requestAnimationFrame(animateWow);
+    };
+    cancelAnimationFrame(animRef.current);
+    animRef.current = requestAnimationFrame(animateWow);
+  }, []);
+
+  return { spawnBurst, spawnWowBurst };
 }
 
 // ── Animated Counter ───────────────────────────────────────────────────────────
@@ -715,23 +871,23 @@ function WallCard({ entry, rank }: { entry: any; rank: number }) {
   const [glowing, setGlowing] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const utils = trpc.useUtils();
-  const { playSighSound } = useSacredAudio();
-  const { spawnBurst } = useIceParticles();
+  const { playSighSound, playWowSound } = useSacredAudio();
+  const { spawnBurst, spawnWowBurst } = useIceParticles();
 
   const sighMutation = trpc.wall.sigh.useMutation({
     onSuccess: (data) => {
       utils.wall.getWall.invalidate();
       setGlowing(true);
       setTimeout(() => setGlowing(false), 1400);
-      toast.success(`已嘆息 · ${data.sighs.toLocaleString()} 次`);
+      toast.success(`嘆息了！✨ ${data.sighs.toLocaleString()} 人說 Wow!`);
     },
     onError: (e) => toast.error(e.message),
   });
 
   const handleSigh = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!user) { setLocation("/login"); return; }
-    spawnBurst(e.clientX, e.clientY);
-    playSighSound();
+    spawnWowBurst(e.clientX, e.clientY);
+    playWowSound();
     sighMutation.mutate({ entryId: entry.id });
   };
 
