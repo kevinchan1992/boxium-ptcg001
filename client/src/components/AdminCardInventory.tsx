@@ -8,6 +8,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, ChevronDown, X, ImageOff,
-  Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera, SlidersHorizontal,
+  Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera, SlidersHorizontal, AlertTriangle,
 } from "lucide-react";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { getProxiedImageUrl } from "@/lib/utils";
@@ -1816,7 +1821,7 @@ export default function AdminCardInventory() {
   const [showBatchSell, setShowBatchSell] = useState(false);
   const [editItem, setEditItem] = useState<CardInventoryItem | null>(null);
   const [sellItem, setSellItem] = useState<CardInventoryItem | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; cardName: string } | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "holding" | "sold">("all");
   const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "card" | "sealed">("all");
@@ -1835,12 +1840,13 @@ export default function AdminCardInventory() {
 
   const deleteMutation = trpc.cardInventory.delete.useMutation({
     onSuccess: () => {
-      toast.success("已刪除記錄");
+      const name = deleteConfirm?.cardName;
       utils.cardInventory.list.invalidate();
       utils.cardInventory.monthlySummary.invalidate();
       setDeleteConfirm(null);
+      toast.success("記錄已刪除", { description: name ? `「${name}」已從清單中移除` : "記錄已成功刪除" });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error("刪除失敗", { description: e.message }),
   });
 
   const cacheImagesToS3Mutation = trpc.cardInventory.cacheImagesToS3.useMutation({
@@ -2142,7 +2148,7 @@ export default function AdminCardInventory() {
                       <Button variant="ghost" size="icon" onClick={() => { setEditItem(item as CardInventoryItem); setShowBuyForm(true); }} className="h-8 w-8">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(item.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ id: item.id, cardName: item.cardName })} className="h-8 w-8 text-destructive hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -2264,7 +2270,7 @@ export default function AdminCardInventory() {
                             </Button>
                             <Button
                               variant="ghost" size="icon"
-                              onClick={() => setDeleteConfirm(item.id)}
+                              onClick={() => setDeleteConfirm({ id: item.id, cardName: item.cardName })}
                               className="h-7 w-7 text-slate-300 hover:text-red-500"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -2421,24 +2427,36 @@ export default function AdminCardInventory() {
       )}
 
       {/* Delete Confirm */}
-      <Dialog open={deleteConfirm !== null} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>確認刪除</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground py-2">此操作無法復原，確定要刪除這筆記錄嗎？</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>取消</Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteConfirm !== null && deleteMutation.mutate({ id: deleteConfirm })}
+      <AlertDialog open={deleteConfirm !== null} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <span className="text-slate-900">確認刪除記錄</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 pl-11">
+              此操作無法復原。記錄刪除後將永久從資料庫中移除。
+              {deleteConfirm?.cardName && (
+                <span className="block mt-2 font-semibold text-slate-800">
+                  「{deleteConfirm.cardName}」
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-200 text-slate-700 hover:bg-slate-50">取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirm && deleteMutation.mutate({ id: deleteConfirm.id })}
               disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
             >
               {deleteMutation.isPending ? "刪除中..." : "確認刪除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
