@@ -9901,3 +9901,12 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] Research 拍照 25 次限制：確認前端顯示剩餘次數並在超限時提示升級
 - [-] 我的群組功能：已取消
 - [x] 每週 P&L 報告：Heartbeat 排程（每週一 01:00 UTC = 09:00 HKT）、郵件模板、/api/scheduled/weekly-pl-report handler
+
+## 公司買取/賣出記錄功能（2026-07-21）
+- [x] 在 schema_new.ts 中新增 companyCardInventory 資料表（與 cardInventory 結構相同，無 userId）
+- [x] 執行 db:push 推送 migration（直接用 SQL 建表）
+- [x] 新增 server/routers/companyCardInventory.ts（複製 cardInventory.ts 邏輯，使用 companyCardInventory 表）
+- [x] 在 server/routers.ts 中掛載 companyCardInventory router
+- [x] 新增 client/src/components/AdminCompanyCardInventory.tsx（複製 AdminCardInventory.tsx）
+- [x] 在 Admin.tsx 左側導航「財務記錄」下新增「公司買取賣出記錄」入口
+- [x] 在 Admin.tsx 的 renderSection 中加入 case "company-inventory"

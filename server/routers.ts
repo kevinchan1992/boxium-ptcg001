@@ -16,6 +16,7 @@ import { emailRouter } from "./routers/email";
 import { blogAiRouter } from "./blogAiProcedures";
 import { securityRouter } from "./routers/security";
 import { cardInventoryRouter } from "./routers/cardInventory";
+import { companyCardInventoryRouter } from "./routers/companyCardInventory";
 import { lootpoolRouter } from "./routers/lootpool";
 import { vipRouter } from "./routers/vip";
 import { wallRouter } from "./routers/wall";
@@ -57,6 +58,7 @@ export const appRouter = router({
   auction: auctionRouter,
   grading: gradingRouter,
   cardInventory: cardInventoryRouter,
+  companyCardInventory: companyCardInventoryRouter,
   lootpool: lootpoolRouter,
   vip: vipRouter,
   wall: wallRouter,

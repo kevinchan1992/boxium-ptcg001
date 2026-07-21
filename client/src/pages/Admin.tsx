@@ -23,6 +23,7 @@ import { ContentWorkflowCenter } from "@/components/ContentWorkflowCenter";
 import AdminSecurityMonitor from "@/components/AdminSecurityMonitor";
 import AdminQuickPublish from "@/components/AdminQuickPublish";
 import AdminCardInventory from "@/components/AdminCardInventory";
+import AdminCompanyCardInventory from "@/components/AdminCompanyCardInventory";
 import AdminSealedProducts from "@/components/AdminSealedProducts";
 import { AdminVipDashboard } from "@/pages/admin/AdminVipDashboard";
 import { useTranslation } from "react-i18next";
@@ -94,6 +95,7 @@ const SECTIONS: SectionDef[] = [
     icon: <BookOpen className="w-[18px] h-[18px]" />,
     tabs: [
       { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
+      { id: "company-inventory", label: "公司買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
       { id: "vip-subscriptions", label: "VIP 訂閱管理", icon: <Crown className="w-4 h-4" /> },
     ],
   },
@@ -163,6 +165,7 @@ function TabContent({ tabId }: { tabId: string }) {
     case "messages": return <AdminMessages />;
     case "security": return <AdminSecurityMonitor />;
     case "card-inventory": return <AdminCardInventory />;
+    case "company-inventory": return <AdminCompanyCardInventory />;
     case "vip-subscriptions": return <AdminVipDashboard />;
     default: return <AdminDashboard />;
   }
