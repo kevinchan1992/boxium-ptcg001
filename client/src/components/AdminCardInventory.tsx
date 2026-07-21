@@ -1171,12 +1171,12 @@ function BuyFormDialog({
     cardName: editItem?.cardName ?? "",
     cardSet: editItem?.cardSet ?? "",
     cardNumber: editItem?.cardNumber ?? "",
-    grade: editItem?.grade ?? "__none__",
+    grade: editItem?.grade || "__none__",
     gradeCustom: "",
     buyPriceCurrency: editItem?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: editItem?.buyPriceOriginal ?? "",
     buyDate: editItem?.buyDate ? new Date(editItem.buyDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    buySource: editItem?.buySource ?? "__none__",
+    buySource: editItem?.buySource || "__none__",
     buySourceCustom: "",
     notes: editItem?.notes ?? "",
     imageUrl: editItem?.imageUrl ?? "",
@@ -2374,6 +2374,7 @@ export default function AdminCardInventory() {
       {/* Buy Form Dialog */}
       {showBuyForm && (
         <BuyFormDialog
+          key={editItem?.id ?? 'new'}
           open={showBuyForm}
           onClose={() => { setShowBuyForm(false); setEditItem(null); }}
           editItem={editItem}
