@@ -7560,3 +7560,103 @@ export async function getTcgMarketPrice(cardId: number) {
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
+
+// ─── AI 智能拆單：按價格範圍查找卡牌/卡盒 ────────────────────────────────────
+
+/**
+ * 查找最近成交價格在指定範圍內的卡牌和封裝產品，用於 AI 拆單功能。
+ * 返回每個產品的最新成交均價（HKD），按價格接近程度排序。
+ * @param targetPrice 目標金額（HKD）
+ * @param tolerance 允許的誤差比例（預設 0.5 = ±50%）
+ * @param limit 最多返回多少個候選
+ */
+export async function getProductsByPriceRange(
+  targetPrice: number,
+  tolerance: number = 0.5,
+  limit: number = 30
+): Promise<Array<{
+  id: number;
+  productType: 'single_card' | 'sealed_product';
+  name: string;
+  nameJa: string | null;
+  imageUrl: string | null;
+  series: string | null;
+  setName: string | null;
+  avgPrice: number;
+  priceCount: number;
+  latestSoldAt: Date | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const minPrice = targetPrice * (1 - tolerance);
+  const maxPrice = targetPrice * (1 + tolerance);
+
+  // Query recent price history for both single cards and sealed products
+  // Only use snkrdunk source (most reliable HKD prices), last 90 days
+  const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+  const rows = await db
+    .select({
+      cardId: priceHistory.cardId,
+      productType: priceHistory.productType,
+      avgPrice: sql<number>`AVG(CAST(${priceHistory.price} AS DECIMAL(10,2)))`,
+      priceCount: sql<number>`COUNT(*)`,
+      latestSoldAt: sql<Date>`MAX(${priceHistory.soldAt})`,
+    })
+    .from(priceHistory)
+    .where(
+      and(
+        eq(priceHistory.source, 'snkrdunk'),
+        eq(priceHistory.isSuspectedBulk, false),
+        gte(priceHistory.soldAt, cutoffDate),
+        gte(priceHistory.price, String(minPrice)),
+        lte(priceHistory.price, String(maxPrice)),
+      )
+    )
+    .groupBy(priceHistory.cardId, priceHistory.productType)
+    .orderBy(sql`ABS(AVG(CAST(${priceHistory.price} AS DECIMAL(10,2))) - ${targetPrice})`)
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  // Separate card IDs and sealed product IDs
+  const cardIds = rows.filter(r => r.productType === 'single_card').map(r => r.cardId);
+  const sealedIds = rows.filter(r => r.productType === 'sealed_product').map(r => r.cardId);
+
+  type CardDetail = { id: number; name: string; nameJa: string | null; imageUrl: string | null; series: string | null; setName: string | null };
+
+  // Fetch product details in parallel
+  const [cardDetails, sealedDetails]: [CardDetail[], CardDetail[]] = await Promise.all([
+    cardIds.length > 0
+      ? db.select({ id: cards.id, name: cards.name, nameJa: cards.nameJa, imageUrl: cards.imageUrl, series: cards.series, setName: cards.setName })
+          .from(cards).where(inArray(cards.id, cardIds)) as Promise<CardDetail[]>
+      : Promise.resolve([] as CardDetail[]),
+    sealedIds.length > 0
+      ? db.select({ id: sealedProducts.id, name: sealedProducts.name, nameJa: sealedProducts.nameJa, imageUrl: sealedProducts.imageUrl, series: sealedProducts.series, setName: sealedProducts.setName })
+          .from(sealedProducts).where(inArray(sealedProducts.id, sealedIds)) as Promise<CardDetail[]>
+      : Promise.resolve([] as CardDetail[]),
+  ]);
+
+  const cardMap = new Map(cardDetails.map(c => [c.id, c]));
+  const sealedMap = new Map(sealedDetails.map(s => [s.id, s]));
+
+  return rows
+    .map(row => {
+      const detail = row.productType === 'single_card' ? cardMap.get(row.cardId) : sealedMap.get(row.cardId);
+      if (!detail) return null;
+      return {
+        id: row.cardId,
+        productType: row.productType as 'single_card' | 'sealed_product',
+        name: detail.name,
+        nameJa: detail.nameJa ?? null,
+        imageUrl: detail.imageUrl ?? null,
+        series: detail.series ?? null,
+        setName: detail.setName ?? null,
+        avgPrice: Number(row.avgPrice),
+        priceCount: Number(row.priceCount),
+        latestSoldAt: row.latestSoldAt,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+}

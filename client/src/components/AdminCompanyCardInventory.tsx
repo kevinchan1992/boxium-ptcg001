@@ -20,9 +20,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
-  Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera,
+  Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera, Sparkles,
 } from "lucide-react";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
+import { ClaimFormReviewDialog } from "@/components/ClaimFormReviewDialog";
 import { getProxiedImageUrl } from "@/lib/utils";
 import { LazyImage } from "@/components/LazyImage";
 
@@ -1763,6 +1764,7 @@ export default function AdminCompanyCardInventory() {
   const [showBuyForm, setShowBuyForm] = useState(false);
   const [showBatchForm, setShowBatchForm] = useState(false);
   const [showBatchSell, setShowBatchSell] = useState(false);
+  const [showClaimForm, setShowClaimForm] = useState(false);
   const [editItem, setEditItem] = useState<CardInventoryItem | null>(null);
   const [sellItem, setSellItem] = useState<CardInventoryItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -1951,6 +1953,14 @@ export default function AdminCompanyCardInventory() {
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
             {cacheImagesToS3Mutation.isPending ? "上傳中..." : "快取圖片"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowClaimForm(true)}
+            className="gap-2 border-purple-500 text-purple-400 hover:bg-purple-500/10"
+            title="上傳 Claim Form PDF，AI 自動從卡牌庫智能匹配並建立買取記錄"
+          >
+            <Sparkles className="w-4 h-4" />AI 智能拆單
           </Button>
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
@@ -2378,6 +2388,15 @@ export default function AdminCompanyCardInventory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* AI 智能拆單 Dialog */}
+      <ClaimFormReviewDialog
+        open={showClaimForm}
+        onOpenChange={setShowClaimForm}
+        onImported={() => {
+          utils.companyCardInventory.list.invalidate();
+          utils.companyCardInventory.monthlySummary.invalidate();
+        }}
+      />
     </div>
   );
 }

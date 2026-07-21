@@ -9910,3 +9910,12 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 新增 client/src/components/AdminCompanyCardInventory.tsx（複製 AdminCardInventory.tsx）
 - [x] 在 Admin.tsx 左側導航「財務記錄」下新增「公司買取賣出記錄」入口
 - [x] 在 Admin.tsx 的 renderSection 中加入 case "company-inventory"
+
+## AI 智能拆單功能（2026-07-21）
+- [ ] 在 db.ts 中新增 getProductsByPriceRange 函數（從 priceHistory 中查找指定價格範圍的卡牌/卡盒）
+- [ ] 安裝 pdf-parse 套件用於 PDF 文字提取
+- [ ] 新增 server/services/claimFormParser.ts（PDF 解析 + AI 拆單邏輯）
+- [ ] 在 server/routers/companyCardInventory.ts 中新增 analyzeClaimForm procedure（接收 PDF 上傳，返回拆單建議）
+- [ ] 在 AdminCompanyCardInventory.tsx 中新增「分析文件」按鈕
+- [ ] 建立 ClaimFormReviewDialog.tsx 覆核介面（顯示 AI 建議拆單結果，支援修改後批量匯入）
+- [ ] 測試驗證並部署
