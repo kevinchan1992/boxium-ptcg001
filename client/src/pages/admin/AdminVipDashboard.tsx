@@ -59,7 +59,7 @@ function StatCard({
     red: "bg-red-500/20 text-red-400",
   };
   const valueColor = {
-    blue: "text-white",
+    blue: "text-slate-900",
     gold: "text-[#D4AF37]",
     green: "text-emerald-300",
     red: "text-red-300",
@@ -67,17 +67,17 @@ function StatCard({
 
   return (
     <div
-      className={`rounded-xl border ${borderMap[accent]} bg-zinc-900/70 backdrop-blur-sm p-5 flex flex-col gap-3`}
+      className={`rounded-xl border ${borderMap[accent]} bg-white/70 backdrop-blur-sm p-5 flex flex-col gap-3`}
       style={{ boxShadow: "0 2px 20px 0 rgba(0,0,0,0.3)" }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold tracking-widest uppercase text-zinc-400">{label}</span>
+        <span className="text-[11px] font-semibold tracking-widest uppercase text-slate-500">{label}</span>
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg[accent]}`}>
           {icon}
         </div>
       </div>
       <div className={`text-3xl font-bold tracking-tight ${valueColor[accent]}`}>{value}</div>
-      {sub && <div className="text-xs text-zinc-500">{sub}</div>}
+      {sub && <div className="text-xs text-slate-400">{sub}</div>}
     </div>
   );
 }
@@ -178,17 +178,17 @@ export function AdminVipDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-700 flex items-center gap-2">
             <Crown className="w-5 h-5 text-yellow-400" />
             VIP 訂閱與財務管理
           </h2>
-          <p className="text-sm text-zinc-400 mt-0.5">即時訂閱數據與會員管理</p>
+          <p className="text-sm text-slate-500 mt-0.5">即時訂閱數據與會員管理</p>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => { refetchStats(); utils.adminVip.getSubscriptions.invalidate(); }}
-          className="gap-2 bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+          className="gap-2 bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-200 hover:text-slate-900"
         >
           <RefreshCw className="w-4 h-4" />
           刷新數據
@@ -243,9 +243,9 @@ export function AdminVipDashboard() {
       </div>
 
       {/* Filters + Table */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm overflow-hidden">
         {/* Filter Bar */}
-        <div className="p-4 border-b border-zinc-800 flex flex-wrap gap-3 items-center">
+        <div className="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
           <div className="flex-1 min-w-[200px] flex gap-2">
             <input
               type="text"
@@ -253,7 +253,7 @@ export function AdminVipDashboard() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="flex-1 h-9 px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+              className="flex-1 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
             />
             <button
               onClick={handleSearch}
@@ -265,7 +265,7 @@ export function AdminVipDashboard() {
           <select
             value={planFilter}
             onChange={(e) => { setPlanFilter(e.target.value as any); setPage(1); }}
-            className="h-9 px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm focus:outline-none focus:border-zinc-500 cursor-pointer"
+            className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-sm focus:outline-none focus:border-zinc-500 cursor-pointer"
           >
             <option value="all">全部方案</option>
             <option value="monthly">月費方案</option>
@@ -274,7 +274,7 @@ export function AdminVipDashboard() {
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as any); setPage(1); }}
-            className="h-9 px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm focus:outline-none focus:border-zinc-500 cursor-pointer"
+            className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-sm focus:outline-none focus:border-zinc-500 cursor-pointer"
           >
             <option value="all">全部狀態</option>
             <option value="active">已付款</option>
@@ -286,14 +286,14 @@ export function AdminVipDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-zinc-800/50">
-                <th className="text-left py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">用戶</th>
-                <th className="text-left py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">方案</th>
-                <th className="text-left py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">狀態</th>
-                <th className="text-right py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">金額</th>
-                <th className="text-left py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider hidden md:table-cell">開始訂閱</th>
-                <th className="text-left py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">到期日</th>
-                <th className="text-right py-3 px-4 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">操作</th>
+              <tr className="bg-slate-50/50">
+                <th className="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">用戶</th>
+                <th className="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">方案</th>
+                <th className="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">狀態</th>
+                <th className="text-right py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">金額</th>
+                <th className="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">開始訂閱</th>
+                <th className="text-left py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">到期日</th>
+                <th className="text-right py-3 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
@@ -302,35 +302,35 @@ export function AdminVipDashboard() {
                   <tr key={i}>
                     {Array.from({ length: 7 }).map((_, j) => (
                       <td key={j} className="py-3 px-4">
-                        <div className="h-4 bg-zinc-800 rounded animate-pulse" />
+                        <div className="h-4 bg-slate-50 rounded animate-pulse" />
                       </td>
                     ))}
                   </tr>
                 ))
               ) : subs?.items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-zinc-500">
+                  <td colSpan={7} className="py-16 text-center text-slate-400">
                     <Crown className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     <p>暫無 VIP 訂閱記錄</p>
                   </td>
                 </tr>
               ) : (
                 subs?.items.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-zinc-800/30 transition-colors">
+                  <tr key={sub.id} className="hover:bg-slate-50/30 transition-colors">
                     {/* User */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
                         <Avatar className="w-8 h-8 shrink-0">
                           <AvatarImage src={sub.avatarUrl ?? undefined} />
-                          <AvatarFallback className="text-xs bg-zinc-700 text-zinc-300">
+                          <AvatarFallback className="text-xs bg-slate-200 text-slate-400">
                             {(sub.displayName || sub.name || "?")[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <div className="font-medium text-zinc-100 truncate max-w-[120px]">
+                          <div className="font-medium text-slate-700 truncate max-w-[120px]">
                             {sub.displayName || sub.name}
                           </div>
-                          <div className="text-xs text-zinc-500 truncate max-w-[140px]">{sub.email}</div>
+                          <div className="text-xs text-slate-400 truncate max-w-[140px]">{sub.email}</div>
                         </div>
                       </div>
                     </td>
@@ -343,14 +343,14 @@ export function AdminVipDashboard() {
                       <StatusBadge status={sub.status} />
                     </td>
                     {/* Amount */}
-                    <td className="py-3 px-4 text-right font-mono text-zinc-200 font-medium">
+                    <td className="py-3 px-4 text-right font-mono text-slate-600 font-medium">
                       HKD {sub.amountHkd}
-                      <span className="text-zinc-500 font-normal text-xs">
+                      <span className="text-slate-400 font-normal text-xs">
                         /{sub.vipPlan === "monthly" ? "月" : "年"}
                       </span>
                     </td>
                     {/* Subscribed At */}
-                    <td className="py-3 px-4 text-zinc-400 hidden md:table-cell">
+                    <td className="py-3 px-4 text-slate-500 hidden md:table-cell">
                       {formatDate(sub.subscribedAt)}
                     </td>
                     {/* Expires At */}
@@ -361,7 +361,7 @@ export function AdminVipDashboard() {
                             ? "text-red-400 font-medium"
                             : new Date(sub.vipExpiresAt) < new Date(Date.now() + 7 * 86400000)
                             ? "text-yellow-400 font-medium"
-                            : "text-zinc-300"
+                            : "text-slate-400"
                         }>
                           {formatDate(sub.vipExpiresAt)}
                         </span>
@@ -399,20 +399,20 @@ export function AdminVipDashboard() {
 
         {/* Pagination */}
         {subs && subs.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
-            <span className="text-xs text-zinc-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+            <span className="text-xs text-slate-400">
               共 {subs.total} 筆　第 {subs.page} / {subs.totalPages} 頁
             </span>
             <div className="flex gap-1">
               <button
-                className="h-7 w-7 flex items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-600 disabled:opacity-30 transition-colors"
                 disabled={page <= 1}
                 onClick={() => setPage(p => p - 1)}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
-                className="h-7 w-7 flex items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-600 disabled:opacity-30 transition-colors"
                 disabled={page >= subs.totalPages}
                 onClick={() => setPage(p => p + 1)}
               >
@@ -425,15 +425,15 @@ export function AdminVipDashboard() {
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+        <AlertDialogContent className="bg-white border-slate-200">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-400">
               <Ban className="w-5 h-5" />
               確認取消訂閱
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3 text-zinc-400">
+            <AlertDialogDescription className="space-y-3 text-slate-500">
               <p>
-                即將取消 <strong className="text-zinc-200">{cancelTarget?.name}</strong> 的 VIP 訂閱。
+                即將取消 <strong className="text-slate-600">{cancelTarget?.name}</strong> 的 VIP 訂閱。
               </p>
               <div className="flex flex-col gap-2 mt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -444,7 +444,7 @@ export function AdminVipDashboard() {
                     onChange={() => setCancelImmediately(false)}
                     className="accent-blue-500"
                   />
-                  <span className="text-sm text-zinc-300">
+                  <span className="text-sm text-slate-400">
                     <strong>到期後取消</strong>（推薦）— 保留至當前付費週期結束
                   </span>
                 </label>
@@ -464,7 +464,7 @@ export function AdminVipDashboard() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700">取消</AlertDialogCancel>
+            <AlertDialogCancel className="bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-200">取消</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {

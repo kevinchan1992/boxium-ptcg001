@@ -20,7 +20,7 @@ import {
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   sent: { label: "已發送", color: "bg-green-900/40 text-green-400", icon: <CheckCircle className="w-3 h-3" /> },
   failed: { label: "發送失敗", color: "bg-red-900/40 text-red-400", icon: <XCircle className="w-3 h-3" /> },
-  skipped: { label: "已跳過(退訂)", color: "bg-gray-800 text-gray-300", icon: <MinusCircle className="w-3 h-3" /> },
+  skipped: { label: "已跳過(退訂)", color: "bg-slate-50 text-slate-400", icon: <MinusCircle className="w-3 h-3" /> },
 };
 
 const EMAIL_TYPES = [
@@ -40,11 +40,11 @@ function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-[#1a1a2e] border border-white/10 rounded-lg shadow-lg p-3 text-xs">
-      <p className="font-semibold text-gray-200 mb-1">{label}</p>
+      <p className="font-semibold text-slate-600 mb-1">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full inline-block" style={{ background: entry.color }} />
-          <span className="text-gray-400">{entry.name}：</span>
+          <span className="text-slate-500">{entry.name}：</span>
           <span className="font-bold" style={{ color: entry.color }}>{entry.value}</span>
         </div>
       ))}
@@ -113,10 +113,10 @@ export default function AdminEmailLogs() {
               <div className="text-xs text-red-400/70">發送失敗</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800/40 border-gray-700/40">
+          <Card className="bg-slate-50/40 border-slate-200/40">
             <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-gray-300">{stats.skipped}</div>
-              <div className="text-xs text-gray-400">退訂跳過</div>
+              <div className="text-2xl font-bold text-slate-400">{stats.skipped}</div>
+              <div className="text-xs text-slate-500">退訂跳過</div>
             </CardContent>
           </Card>
           <Card className="bg-purple-950/40 border-purple-800/40">
@@ -138,12 +138,12 @@ export default function AdminEmailLogs() {
         </CardHeader>
         <CardContent>
           {!chartData ? (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               載入圖表中...
             </div>
           ) : !hasChartData ? (
-            <div className="h-48 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
+            <div className="h-48 flex flex-col items-center justify-center text-slate-500 text-sm gap-2">
               <TrendingUp className="w-8 h-8 opacity-30" />
               <span>尚無電郵發送記錄</span>
             </div>
@@ -279,22 +279,22 @@ export default function AdminEmailLogs() {
             <table className="w-full text-sm">
               <thead className="bg-white/[0.03] border-b border-white/[0.06]">
                 <tr>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">時間</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">收件人</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">主旨</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">類型</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium hidden xl:table-cell">DedupeKey</th>
-                  <th className="text-left px-3 py-2 text-xs text-gray-400 font-medium">狀態</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium">時間</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium">收件人</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium">主旨</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium">類型</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium hidden xl:table-cell">DedupeKey</th>
+                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium">狀態</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">載入中...</td>
+                    <td colSpan={6} className="text-center py-8 text-slate-500">載入中...</td>
                   </tr>
                 ) : !data?.logs.length ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">
+                    <td colSpan={6} className="text-center py-8 text-slate-500">
                       <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
                       <div>沒有符合條件的電郵記錄</div>
                     </td>
@@ -304,7 +304,7 @@ export default function AdminEmailLogs() {
                     const statusInfo = STATUS_LABELS[log.status] ?? STATUS_LABELS.sent;
                     return (
                       <tr key={log.id} className="border-b last:border-0 hover:bg-white/[0.03] transition-colors">
-                        <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
+                        <td className="px-3 py-2 text-xs text-slate-500 whitespace-nowrap">
                           {new Date(log.sentAt).toLocaleString("zh-HK", {
                             timeZone: "Asia/Hong_Kong",
                             year: "2-digit",
@@ -336,11 +336,11 @@ export default function AdminEmailLogs() {
                         </td>
                         <td className="px-3 py-2 hidden xl:table-cell">
                           {log.dedupeKey ? (
-                            <div className="max-w-[200px] truncate font-mono text-xs text-gray-400" title={log.dedupeKey}>
+                            <div className="max-w-[200px] truncate font-mono text-xs text-slate-500" title={log.dedupeKey}>
                               {log.dedupeKey}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-300">—</span>
+                            <span className="text-xs text-slate-400">—</span>
                           )}
                         </td>
                         <td className="px-3 py-2">
@@ -359,7 +359,7 @@ export default function AdminEmailLogs() {
 
           {/* Pagination */}
           {data && data.total > PAGE_SIZE && (
-            <div className="flex items-center justify-between text-sm text-gray-400">
+            <div className="flex items-center justify-between text-sm text-slate-500">
               <span>共 {data.total} 筆，第 {page}/{totalPages} 頁</span>
               <div className="flex gap-1">
                 <Button

@@ -75,23 +75,23 @@ function ScheduleHealthStats() {
         <div className="space-y-3">
           <h3 className="text-slate-900 font-medium text-sm sm:text-base">SNKRDUNK 批量更新</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">總執行次數</p>
               <p className="text-slate-900 text-lg font-semibold">{stats.snkrdunk.totalExecutions}</p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">成功率</p>
               <p className={`text-lg font-semibold ${getSuccessRateColor(stats.snkrdunk.successRate)}`}>
                 {stats.snkrdunk.successRate.toFixed(1)}%
               </p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">平均執行時間</p>
               <p className="text-slate-900 text-lg font-semibold">
                 {formatDuration(stats.snkrdunk.averageExecutionTime)}
               </p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">失敗次數</p>
               <p className="text-red-400 text-lg font-semibold">{stats.snkrdunk.failureCount}</p>
             </div>
@@ -99,7 +99,7 @@ function ScheduleHealthStats() {
           
           {/* 失敗原因統計 */}
           {stats.snkrdunk.failureReasons.length > 0 && (
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-2">失敗原因統計（Top 5）</p>
               <ul className="space-y-1">
                 {stats.snkrdunk.failureReasons.map((reason, index) => (
@@ -117,23 +117,23 @@ function ScheduleHealthStats() {
         <div className="space-y-3">
           <h3 className="text-slate-900 font-medium text-sm sm:text-base">Trending 計算</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">總執行次數</p>
               <p className="text-slate-900 text-lg font-semibold">{stats.trending.totalExecutions}</p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">成功率</p>
               <p className={`text-lg font-semibold ${getSuccessRateColor(stats.trending.successRate)}`}>
                 {stats.trending.successRate.toFixed(1)}%
               </p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">平均執行時間</p>
               <p className="text-slate-900 text-lg font-semibold">
                 {formatDuration(stats.trending.averageExecutionTime)}
               </p>
             </div>
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-1">失敗次數</p>
               <p className="text-red-400 text-lg font-semibold">{stats.trending.failureCount}</p>
             </div>
@@ -141,7 +141,7 @@ function ScheduleHealthStats() {
           
           {/* 失敗原因統計 */}
           {stats.trending.failureReasons.length > 0 && (
-            <div className="bg-gray-800 p-3 rounded-lg">
+            <div className="bg-slate-50 p-3 rounded-lg">
               <p className="text-slate-500 text-xs mb-2">失敗原因統計（Top 5）</p>
               <ul className="space-y-1">
                 {stats.trending.failureReasons.map((reason, index) => (
@@ -258,7 +258,7 @@ function ExecutionHistory() {
           {(history as any).snkrdunk && (history as any).snkrdunk.length > 0 ? (
             <div className="space-y-2">
               {(history as any).snkrdunk.map((record: any) => (
-                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                <div key={record.id} className="p-3 lg:p-4 bg-slate-50 rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
                       {getStatusText(record.status)}
@@ -291,7 +291,7 @@ function ExecutionHistory() {
               ))}
             </div>
           ) : (
-            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-slate-50 rounded-lg">
               尚無執行記錄
             </div>
           )}
@@ -302,7 +302,7 @@ function ExecutionHistory() {
           {history.trending && history.trending.length > 0 ? (
             <div className="space-y-2">
               {history.trending.map((record: any) => (
-                <div key={record.id} className="p-3 lg:p-4 bg-gray-800 rounded-lg space-y-2">
+                <div key={record.id} className="p-3 lg:p-4 bg-slate-50 rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
                       {getStatusText(record.status)}
@@ -327,7 +327,7 @@ function ExecutionHistory() {
               ))}
             </div>
           ) : (
-            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-slate-50 rounded-lg">
               尚無執行記錄
             </div>
           )}
@@ -472,7 +472,7 @@ export function AdminScheduleManagement() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* SNKRDUNK 排程設定 */}
-          <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
+          <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             {/* 更新模式切換 */}
             <div className="space-y-2">
               <Label className="text-slate-900 font-medium text-sm sm:text-base">SNKRDUNK 批量更新模式</Label>
@@ -700,7 +700,7 @@ export function AdminScheduleManagement() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowErrorDetails(!showErrorDetails)}
-                  className="w-full justify-between text-red-300 hover:text-red-200 hover:bg-red-900/30"
+                  className="w-full justify-between text-red-300 hover:text-red-200 hover:bg-red-50"
                 >
                   <span className="flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" />
@@ -717,7 +717,7 @@ export function AdminScheduleManagement() {
                   <div className="space-y-2 mt-2">
                     <div className="max-h-60 overflow-y-auto space-y-2">
                       {progress.errors.map((error, index) => (
-                        <div key={index} className="p-3 bg-gray-800 rounded text-xs">
+                        <div key={index} className="p-3 bg-slate-50 rounded text-xs">
                           <div className="flex items-start gap-2">
                             <AlertCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 space-y-1">
@@ -874,8 +874,8 @@ function GitHubActionsGuide() {
               <p className="text-green-300 text-sm font-medium">Workflow 已就緒</p>
               <p className="text-green-400/80 text-xs mt-1">
                 兩個 workflow 均已就緒：<br/>
-                <code className="bg-gray-800 px-1 rounded">snkrdunk-batch-update.yml</code> — 每日 01:00 HKT 更新價格歷史<br/>
-                <code className="bg-gray-800 px-1 rounded">snkrdunk-listings-batch-update.yml</code> — 每 2 天更新在售商品
+                <code className="bg-slate-50 px-1 rounded">snkrdunk-batch-update.yml</code> — 每日 01:00 HKT 更新價格歷史<br/>
+                <code className="bg-slate-50 px-1 rounded">snkrdunk-listings-batch-update.yml</code> — 每 2 天更新在售商品
               </p>
             </div>
           </div>
@@ -898,8 +898,8 @@ function GitHubActionsGuide() {
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-slate-900 text-xs flex items-center justify-center font-bold">2</span>
                 <div>
                   <p className="font-medium text-slate-900">新增 Secret：DATABASE_URL</p>
-                  <p className="text-slate-500 text-xs mt-1">點擊 <strong>New repository secret</strong>，名稱填 <code className="bg-gray-800 px-1 rounded">DATABASE_URL</code>，值填入 MySQL 連接字串</p>
-                  <p className="text-yellow-400 text-xs mt-1">⚠️ 連接字串格式：<code className="bg-gray-800 px-1 rounded">mysql://用戶名:密碼@主機:埠/資料庫名</code></p>
+                  <p className="text-slate-500 text-xs mt-1">點擊 <strong>New repository secret</strong>，名稱填 <code className="bg-slate-50 px-1 rounded">DATABASE_URL</code>，值填入 MySQL 連接字串</p>
+                  <p className="text-yellow-400 text-xs mt-1">⚠️ 連接字串格式：<code className="bg-slate-50 px-1 rounded">mysql://用戶名:密碼@主機:埠/資料庫名</code></p>
                 </div>
               </li>
               <li className="flex gap-3">
@@ -920,7 +920,7 @@ function GitHubActionsGuide() {
             </p>
 
             {/* Price History Workflow */}
-            <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+            <div className="p-3 bg-slate-50 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-blue-300">價格歷史更新</span>
                 {priceUpdateStatus && (
@@ -940,7 +940,7 @@ function GitHubActionsGuide() {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border-blue-700 text-xs h-8 justify-start"
+                className="w-full bg-blue-50 hover:bg-blue-800/50 text-blue-300 border-blue-700 text-xs h-8 justify-start"
                 disabled={triggerWorkflow.isPending}
                 onClick={() => triggerWorkflow.mutate({ workflow: 'snkrdunk-batch-update' })}
               >
@@ -954,7 +954,7 @@ function GitHubActionsGuide() {
             </div>
 
             {/* Listings Workflow */}
-            <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+            <div className="p-3 bg-slate-50 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-purple-300">在售商品更新</span>
                 {listingsUpdateStatus && (
@@ -1004,7 +1004,7 @@ function GitHubActionsGuide() {
           </div>
 
           {/* 技術說明 */}
-          <div className="p-3 bg-gray-800 rounded-lg space-y-2">
+          <div className="p-3 bg-slate-50 rounded-lg space-y-2">
             <p className="text-slate-500 text-xs font-medium">技術說明</p>
             <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
               <li>腳本位置：<code className="bg-slate-200 px-1 rounded">scripts/githubActionsBatchUpdate.mjs</code></li>

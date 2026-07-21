@@ -165,17 +165,17 @@ export function AdminSFStationUpdate() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h3 className="text-white font-bold text-lg flex items-center gap-2">
+          <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
             <MapPin className="w-5 h-5 text-[#FEDD00]" />
             順豐站點資料管理
           </h3>
-          <p className="text-gray-400 text-sm mt-1">上傳 CSV 文件更新順豐站和智能櫃列表</p>
+          <p className="text-slate-500 text-sm mt-1">上傳 CSV 文件更新順豐站和智能櫃列表</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-400" onClick={() => downloadTemplate("stations")}>
+          <Button variant="outline" size="sm" className="border-slate-300 text-slate-400 hover:text-slate-900 hover:border-gray-400" onClick={() => downloadTemplate("stations")}>
             <Download className="w-4 h-4 mr-1.5" />順豐站模板
           </Button>
-          <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-400" onClick={() => downloadTemplate("lockers")}>
+          <Button variant="outline" size="sm" className="border-slate-300 text-slate-400 hover:text-slate-900 hover:border-gray-400" onClick={() => downloadTemplate("lockers")}>
             <Download className="w-4 h-4 mr-1.5" />智能櫃模板
           </Button>
         </div>
@@ -183,47 +183,47 @@ export function AdminSFStationUpdate() {
 
       {/* Current Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
+        <div className="bg-[#1a1a2e] rounded-xl p-4 border border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-xs">現有順豐站</p>
-              <p className="text-white font-bold text-xl">{SF_STATIONS.length}</p>
+              <p className="text-slate-500 text-xs">現有順豐站</p>
+              <p className="text-slate-900 font-bold text-xl">{SF_STATIONS.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
+        <div className="bg-[#1a1a2e] rounded-xl p-4 border border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
               <Package className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-xs">現有智能櫃</p>
-              <p className="text-white font-bold text-xl">{SF_LOCKERS.length}</p>
+              <p className="text-slate-500 text-xs">現有智能櫃</p>
+              <p className="text-slate-900 font-bold text-xl">{SF_LOCKERS.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* CSV Format Guide */}
-      <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
-        <p className="text-gray-300 text-sm font-medium mb-2">CSV 格式說明</p>
+      <div className="bg-[#1a1a2e] rounded-xl p-4 border border-slate-200">
+        <p className="text-slate-400 text-sm font-medium mb-2">CSV 格式說明</p>
         <div className="bg-slate-100 rounded-lg p-3 font-mono text-xs text-green-400">
           <p>code,name,district,address,region</p>
-          <p className="text-gray-500"># 順豐站（code 格式：852XXX）</p>
+          <p className="text-slate-400"># 順豐站（code 格式：852XXX）</p>
           <p>852FTL,順豐站 上水,上水,"香港新界北區上水彩園路...",新界</p>
-          <p className="text-gray-500"># 智能櫃（code 格式：H852XXXXP）</p>
+          <p className="text-slate-400"># 智能櫃（code 格式：H852XXXXP）</p>
           <p>H852001P,順豐智能櫃 中環,中環,"香港中環...",香港島</p>
         </div>
-        <p className="text-gray-500 text-xs mt-2">系統自動根據 code 前綴區分順豐站（852）和智能櫃（H852）</p>
+        <p className="text-slate-400 text-xs mt-2">系統自動根據 code 前綴區分順豐站（852）和智能櫃（H852）</p>
       </div>
 
       {/* Upload Area */}
       <div
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-          isDragging ? "border-[#FEDD00] bg-[#FEDD00]/5" : "border-gray-600 hover:border-gray-400"
+          isDragging ? "border-[#FEDD00] bg-[#FEDD00]/5" : "border-slate-300 hover:border-gray-400"
         }`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
@@ -237,9 +237,9 @@ export function AdminSFStationUpdate() {
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
-        <Upload className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-        <p className="text-gray-300 font-medium">拖放 CSV 文件到此處，或點擊選擇文件</p>
-        <p className="text-gray-500 text-sm mt-1">支援 .csv 和 .txt 格式，UTF-8 編碼</p>
+        <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+        <p className="text-slate-400 font-medium">拖放 CSV 文件到此處，或點擊選擇文件</p>
+        <p className="text-slate-400 text-sm mt-1">支援 .csv 和 .txt 格式，UTF-8 編碼</p>
         {fileName && <p className="text-[#FEDD00] text-sm mt-2 font-medium">已選擇：{fileName}</p>}
       </div>
 
@@ -248,23 +248,23 @@ export function AdminSFStationUpdate() {
         <div className="space-y-4">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="bg-[#1a1a2e] rounded-xl p-3 border border-gray-700 text-center">
-              <p className="text-gray-400 text-xs">總站點數</p>
-              <p className="text-white font-bold text-xl sm:text-2xl">{parseResult.stations.length}</p>
+            <div className="bg-[#1a1a2e] rounded-xl p-3 border border-slate-200 text-center">
+              <p className="text-slate-500 text-xs">總站點數</p>
+              <p className="text-slate-900 font-bold text-xl sm:text-2xl">{parseResult.stations.length}</p>
             </div>
             <div className="bg-[#1a1a2e] rounded-xl p-3 border border-blue-700/50 text-center">
               <p className="text-blue-400 text-xs">順豐站</p>
-              <p className="text-white font-bold text-xl sm:text-2xl">{stationCount}</p>
+              <p className="text-slate-900 font-bold text-xl sm:text-2xl">{stationCount}</p>
             </div>
             <div className="bg-[#1a1a2e] rounded-xl p-3 border border-amber-700/50 text-center">
               <p className="text-amber-400 text-xs">智能櫃</p>
-              <p className="text-white font-bold text-xl sm:text-2xl">{lockerCount}</p>
+              <p className="text-slate-900 font-bold text-xl sm:text-2xl">{lockerCount}</p>
             </div>
           </div>
 
           {/* Errors */}
           {parseResult.errors.length > 0 && (
-            <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4">
+            <div className="bg-red-50 border border-red-700/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="w-4 h-4 text-red-400" />
                 <p className="text-red-400 font-medium text-sm">{parseResult.errors.length} 個解析錯誤</p>
@@ -279,9 +279,9 @@ export function AdminSFStationUpdate() {
 
           {/* Preview */}
           {parseResult.stations.length > 0 && (
-            <div className="bg-[#1a1a2e] rounded-xl border border-gray-700 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-                <p className="text-gray-300 text-sm font-medium">預覽（前 10 筆）</p>
+            <div className="bg-[#1a1a2e] rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                <p className="text-slate-400 text-sm font-medium">預覽（前 10 筆）</p>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle className="w-4 h-4 text-green-400" />
                   <span className="text-green-400 text-xs">{parseResult.stations.length} 筆資料就緒</span>
@@ -290,17 +290,17 @@ export function AdminSFStationUpdate() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="px-3 py-2 text-left text-gray-400">類型</th>
-                      <th className="px-3 py-2 text-left text-gray-400">編號</th>
-                      <th className="px-3 py-2 text-left text-gray-400">名稱</th>
-                      <th className="px-3 py-2 text-left text-gray-400">地區</th>
-                      <th className="px-3 py-2 text-left text-gray-400">地址</th>
+                    <tr className="border-b border-slate-200">
+                      <th className="px-3 py-2 text-left text-slate-500">類型</th>
+                      <th className="px-3 py-2 text-left text-slate-500">編號</th>
+                      <th className="px-3 py-2 text-left text-slate-500">名稱</th>
+                      <th className="px-3 py-2 text-left text-slate-500">地區</th>
+                      <th className="px-3 py-2 text-left text-slate-500">地址</th>
                     </tr>
                   </thead>
                   <tbody>
                     {parseResult.stations.slice(0, 10).map((s, i) => (
-                      <tr key={i} className="border-b border-gray-800 hover:bg-white/5">
+                      <tr key={i} className="border-b border-slate-200 hover:bg-white/5">
                         <td className="px-3 py-2">
                           <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                             s.type === "locker" ? "bg-amber-900/40 text-amber-300" : "bg-blue-900/40 text-blue-300"
@@ -308,10 +308,10 @@ export function AdminSFStationUpdate() {
                             {s.type === "locker" ? "智能櫃" : "順豐站"}
                           </span>
                         </td>
-                        <td className="px-3 py-2 font-mono text-gray-300">{s.code}</td>
-                        <td className="px-3 py-2 text-gray-300">{s.name}</td>
-                        <td className="px-3 py-2 text-gray-400">{s.district}</td>
-                        <td className="px-3 py-2 text-gray-500 max-w-[200px] truncate">{s.address}</td>
+                        <td className="px-3 py-2 font-mono text-slate-400">{s.code}</td>
+                        <td className="px-3 py-2 text-slate-400">{s.name}</td>
+                        <td className="px-3 py-2 text-slate-500">{s.district}</td>
+                        <td className="px-3 py-2 text-slate-400 max-w-[200px] truncate">{s.address}</td>
                       </tr>
                     ))}
                   </tbody>

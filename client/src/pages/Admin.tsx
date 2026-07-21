@@ -575,7 +575,7 @@ export default function Admin() {
               onClick={() => setProfileOpen(v => !v)}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-[#06038D] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+              <div className="w-7 h-7 rounded-full bg-[#06038D] flex items-center justify-center text-slate-900 text-[11px] font-bold shrink-0">
                 {user?.name?.charAt(0)?.toUpperCase() ?? "A"}
               </div>
               <span className="hidden sm:block text-[13px] font-medium text-[#0F172A] max-w-[100px] truncate">

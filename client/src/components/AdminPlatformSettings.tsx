@@ -63,11 +63,11 @@ function SettingField({
           type="number" min={min} max={max} step={step}
           value={value}
           onChange={e => onChange(e.target.value)}
-          className={`bg-gray-700 border-gray-600 text-white focus:border-yellow-500 ${prefix ? "pl-10" : ""} ${suffix ? "pr-14" : ""}`}
+          className={`bg-slate-200 border-slate-300 text-slate-900 focus:border-yellow-500 ${prefix ? "pl-10" : ""} ${suffix ? "pr-14" : ""}`}
         />
         {suffix && <span className="absolute right-3 text-slate-500 text-sm pointer-events-none">{suffix}</span>}
       </div>
-      {hint && <p className="text-xs text-gray-500">{hint}</p>}
+      {hint && <p className="text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }
@@ -238,7 +238,7 @@ export default function AdminPlatformSettings() {
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-yellow-400" />
         <div>
-          <h2 className="text-xl font-bold text-white">平台設定</h2>
+          <h2 className="text-xl font-bold text-slate-900">平台設定</h2>
           <p className="text-sm text-slate-500">管理平台費率及其他系統設定</p>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function AdminPlatformSettings() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Percent className="w-5 h-5 text-yellow-400" />
-              <CardTitle className="text-white text-lg">平台交易費率（三級制）</CardTitle>
+              <CardTitle className="text-slate-900 text-lg">平台交易費率（三級制）</CardTitle>
             </div>
             {!isLoading && settings && (
               <div className="flex gap-2">
@@ -288,7 +288,7 @@ export default function AdminPlatformSettings() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-gray-800/60 rounded-xl p-4 border border-yellow-900/40">
+                <div className="bg-slate-50/60 rounded-xl p-4 border border-yellow-900/40">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
                       <span className="text-yellow-400 text-xs font-bold">1</span>
@@ -299,19 +299,19 @@ export default function AdminPlatformSettings() {
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">成交金額上限（HKD）</Label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">HK$</span>
                         <Input type="number" min="1" step="100" value={tiers.tier1Max}
                           onChange={e => updateTier("tier1Max", e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pl-10 focus:border-yellow-500" />
+                          className="bg-slate-200 border-slate-300 text-slate-900 pl-10 focus:border-yellow-500" />
                       </div>
-                      <p className="text-xs text-gray-500">HK$1 至此金額</p>
+                      <p className="text-xs text-slate-400">HK$1 至此金額</p>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier1Rate}
                           onChange={e => updateTier("tier1Rate", e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-yellow-500" />
+                          className="bg-slate-200 border-slate-300 text-slate-900 pr-8 focus:border-yellow-500" />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
@@ -322,7 +322,7 @@ export default function AdminPlatformSettings() {
                   <ChevronRight className="w-4 h-4 text-gray-600 rotate-90" />
                 </div>
 
-                <div className="bg-gray-800/60 rounded-xl p-4 border border-blue-900/40">
+                <div className="bg-slate-50/60 rounded-xl p-4 border border-blue-900/40">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/50 flex items-center justify-center">
                       <span className="text-blue-400 text-xs font-bold">2</span>
@@ -333,19 +333,19 @@ export default function AdminPlatformSettings() {
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">成交金額上限（HKD）</Label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">HK$</span>
                         <Input type="number" min="1" step="100" value={tiers.tier2Max}
                           onChange={e => updateTier("tier2Max", e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pl-10 focus:border-blue-500" />
+                          className="bg-slate-200 border-slate-300 text-slate-900 pl-10 focus:border-blue-500" />
                       </div>
-                      <p className="text-xs text-gray-500">超過第一級至此金額</p>
+                      <p className="text-xs text-slate-400">超過第一級至此金額</p>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier2Rate}
                           onChange={e => updateTier("tier2Rate", e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-blue-500" />
+                          className="bg-slate-200 border-slate-300 text-slate-900 pr-8 focus:border-blue-500" />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
@@ -356,7 +356,7 @@ export default function AdminPlatformSettings() {
                   <ChevronRight className="w-4 h-4 text-gray-600 rotate-90" />
                 </div>
 
-                <div className="bg-gray-800/60 rounded-xl p-4 border border-green-900/40">
+                <div className="bg-slate-50/60 rounded-xl p-4 border border-green-900/40">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
                       <span className="text-green-400 text-xs font-bold">3</span>
@@ -366,17 +366,17 @@ export default function AdminPlatformSettings() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">適用範圍</Label>
-                      <div className="bg-gray-700/50 border border-gray-600 rounded-md px-3 py-2 text-slate-500 text-sm">
+                      <div className="bg-slate-200/50 border border-slate-300 rounded-md px-3 py-2 text-slate-500 text-sm">
                         超過 HK${(parseFloat(tiers.tier2Max) || 10000).toLocaleString()} 以上
                       </div>
-                      <p className="text-xs text-gray-500">無上限</p>
+                      <p className="text-xs text-slate-400">無上限</p>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier3Rate}
                           onChange={e => updateTier("tier3Rate", e.target.value)}
-                          className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-green-500" />
+                          className="bg-slate-200 border-slate-300 text-slate-900 pr-8 focus:border-green-500" />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
@@ -395,11 +395,11 @@ export default function AdminPlatformSettings() {
                     )}
                   </Button>
                   <Button onClick={handleCancel} variant="outline"
-                    className="border-gray-600 text-slate-400 hover:bg-gray-700">取消</Button>
+                    className="border-slate-300 text-slate-400 hover:bg-slate-200">取消</Button>
                 </div>
               )}
 
-              <Separator className="bg-gray-700" />
+              <Separator className="bg-slate-200" />
 
               <div className="space-y-3">
                 <p className="text-sm text-slate-500 font-medium">費率預覽計算</p>
@@ -412,9 +412,9 @@ export default function AdminPlatformSettings() {
                     const tierLabel = amount <= t1Max ? "第一級" : amount <= t2Max ? "第二級" : "第三級";
                     const tierColor = amount <= t1Max ? "text-yellow-400" : amount <= t2Max ? "text-blue-400" : "text-green-400";
                     return (
-                      <div key={amount} className="bg-gray-800 rounded-lg p-3 text-center">
+                      <div key={amount} className="bg-slate-50 rounded-lg p-3 text-center">
                         <p className={`text-xs mb-0.5 font-medium ${tierColor}`}>{tierLabel}</p>
-                        <p className="text-xs text-gray-500 mb-1">成交 HK${amount.toLocaleString()}</p>
+                        <p className="text-xs text-slate-400 mb-1">成交 HK${amount.toLocaleString()}</p>
                         <p className="text-yellow-400 text-sm font-semibold">費 HK${fee.toLocaleString()}</p>
                         <p className="text-green-400 text-xs">賣家收 HK${sellerReceives.toLocaleString()}</p>
                       </div>
@@ -432,7 +432,7 @@ export default function AdminPlatformSettings() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-purple-400" />
-            <CardTitle className="text-white text-lg">更多設定</CardTitle>
+            <CardTitle className="text-slate-900 text-lg">更多設定</CardTitle>
           </div>
           <CardDescription className="text-slate-500">
             訂單時限、商品出價、購物車、SLA 等系統行為設定。修改後即時生效，無需重啟服務。
@@ -462,7 +462,7 @@ export default function AdminPlatformSettings() {
                   <Truck className="w-4 h-4 text-blue-400" />
                   <h3 className="text-sm font-semibold text-blue-300">訂單生命週期</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <SettingField
                     label="出貨後自動完成天數"
                     hint="賣家出貨後，買家 N 天內未確認收貨，訂單自動完成"
@@ -487,7 +487,7 @@ export default function AdminPlatformSettings() {
                   <MessageSquare className="w-4 h-4 text-yellow-400" />
                   <h3 className="text-sm font-semibold text-yellow-300">出價設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingField
                     label="每商品每買家每日最多出價次數"
                     hint="同一商品 24 小時內，同一買家最多出價 N 次"
@@ -511,7 +511,7 @@ export default function AdminPlatformSettings() {
                   <Tag className="w-4 h-4 text-green-400" />
                   <h3 className="text-sm font-semibold text-green-300">商品上架設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-1 gap-4">
                   <SettingField
                     label="最低出售金額"
                     hint="賣家上架商品的最低定價限制"
@@ -528,7 +528,7 @@ export default function AdminPlatformSettings() {
                   <ShoppingCart className="w-4 h-4 text-orange-400" />
                   <h3 className="text-sm font-semibold text-orange-300">購物車設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingField
                     label="購物車商品保留天數"
                     hint="商品加入購物車後保留 N 天，到期自動移除"
@@ -552,7 +552,7 @@ export default function AdminPlatformSettings() {
                   <Shield className="w-4 h-4 text-red-400" />
                   <h3 className="text-sm font-semibold text-red-300">SLA 時限設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <SettingField
                     label="Alipay 審核 SLA"
                     hint="Alipay 付款憑證審核時限"
@@ -581,7 +581,7 @@ export default function AdminPlatformSettings() {
               {isMoreEditing && (
                 <div className="flex gap-3 pt-1">
                   <Button onClick={handleMoreSave} disabled={updateMoreMutation.isPending}
-                    className="bg-purple-600 hover:bg-purple-500 text-white font-semibold">
+                    className="bg-purple-600 hover:bg-purple-500 text-slate-900 font-semibold">
                     {updateMoreMutation.isPending ? (
                       <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />儲存中...</>
                     ) : (
@@ -589,7 +589,7 @@ export default function AdminPlatformSettings() {
                     )}
                   </Button>
                   <Button onClick={handleMoreCancel} variant="outline"
-                    className="border-gray-600 text-slate-400 hover:bg-gray-700">取消</Button>
+                    className="border-slate-300 text-slate-400 hover:bg-slate-200">取消</Button>
                 </div>
               )}
             </>

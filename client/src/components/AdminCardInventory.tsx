@@ -199,12 +199,12 @@ function CardSearchModal({
         <div className="bg-primary px-5 pt-5 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-white text-xl font-bold">{title}</h2>
+              <h2 className="text-slate-900 text-xl font-bold">{title}</h2>
               <p className="text-blue-200 text-xs mt-0.5">搜索並選擇對應的卡牌，系統將自動關聯市場數據</p>
             </div>
             <button
               onClick={onClose}
-              className="text-white/70 hover:text-white transition-colors p-1 rounded"
+              className="text-slate-900/70 hover:text-slate-900 transition-colors p-1 rounded"
             >
               <X className="w-5 h-5" />
             </button>
@@ -216,12 +216,12 @@ function CardSearchModal({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="輸入卡牌名稱、日文名或卡號..."
-              className="w-full h-11 pl-10 pr-10 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="w-full h-11 pl-10 pr-10 rounded-lg bg-white/10 border border-white/20 text-slate-900 placeholder:text-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-white/40"
               onKeyDown={handleKeyDown}
             />
             {query && (
               <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-slate-900"
                 onClick={() => setQuery("")}
               >
                 <X className="w-4 h-4" />
@@ -260,12 +260,12 @@ function CardSearchModal({
               <div className="w-16 h-[88px] flex-shrink-0 rounded-lg overflow-hidden bg-muted shadow">
                 {card.imageUrl
                   ? <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-gray-400" /></div>
+                  : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-slate-500" /></div>
                 }
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-primary text-base leading-snug line-clamp-2">{card.name}</div>
-                {card.nameJa && <div className="text-xs text-gray-500 truncate mt-0.5">{card.nameJa}</div>}
+                {card.nameJa && <div className="text-xs text-slate-400 truncate mt-0.5">{card.nameJa}</div>}
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {card.cardNumber && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground font-mono">
@@ -280,7 +280,7 @@ function CardSearchModal({
             </button>
           ))}
           {query.length >= 2 && !isFetching && results.length > 0 && (
-            <div className="px-5 py-3 text-xs text-gray-400 text-center border-t">
+            <div className="px-5 py-3 text-xs text-slate-500 text-center border-t">
               顯示 {results.length} 個結果
             </div>
           )}
@@ -473,7 +473,7 @@ function BatchSellDialog({
       <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
         {/* Green header */}
         <div className="bg-green-700 px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
-          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+          <DialogTitle className="text-slate-900 text-lg font-semibold flex items-center gap-2">
             <TrendingDown className="w-5 h-5" />
             批量賣出記錄
           </DialogTitle>
@@ -657,7 +657,7 @@ function BatchSellDialog({
           <Button
             onClick={handleSubmit}
             disabled={batchSellMutation.isPending || rows.length === 0}
-            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white gap-2"
+            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-slate-900 gap-2"
           >
             <TrendingDown className="w-4 h-4" />
             {batchSellMutation.isPending ? "儲存中..." : `確認賣出 ${rows.length} 筆`}
@@ -811,7 +811,7 @@ function BatchBuyDialog({
       <DialogContent bottomSheet className="sm:max-w-3xl overflow-hidden">
         {/* Blue header */}
         <div className="bg-primary px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
-          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2 flex-1">
+          <DialogTitle className="text-slate-900 text-lg font-semibold flex items-center gap-2 flex-1">
             <Layers className="w-5 h-5" />
             批量買取記錄
             {scanCount > 0 && (
@@ -823,7 +823,7 @@ function BatchBuyDialog({
           <button
             type="button"
             onClick={() => setBatchCameraOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-slate-900 text-xs font-semibold transition-colors flex-shrink-0"
           >
             <Camera className="w-4 h-4" />
             相機掃描
@@ -1262,7 +1262,7 @@ function BuyFormDialog({
       <DialogContent bottomSheet className="sm:max-w-lg overflow-hidden">
         {/* Blue header */}
         <div className="bg-primary px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
-          <DialogTitle className="text-white text-lg font-semibold">
+          <DialogTitle className="text-slate-900 text-lg font-semibold">
             {isEdit ? "編輯買取記錄" : "新增買取記錄"}
           </DialogTitle>
         </div>
@@ -1580,7 +1580,7 @@ function SellDialog({
       <DialogContent bottomSheet className="sm:max-w-md overflow-hidden">
         {/* Green header */}
         <div className="bg-green-700 px-5 py-4 flex items-center gap-3 rounded-t-2xl sm:rounded-t-xl">
-          <DialogTitle className="text-white text-lg font-semibold flex items-center gap-2">
+          <DialogTitle className="text-slate-900 text-lg font-semibold flex items-center gap-2">
             <TrendingDown className="w-5 h-5" />
             記錄賣出
           </DialogTitle>
@@ -1664,7 +1664,7 @@ function SellDialog({
           <Button
             onClick={handleSubmit}
             disabled={updateMutation.isPending}
-            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-slate-900"
           >
             {updateMutation.isPending ? "儲存中..." : "確認賣出"}
           </Button>
@@ -1684,14 +1684,14 @@ function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMont
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-primary text-white">
+        <Card className="bg-primary text-slate-900">
           <CardContent className="pt-4 pb-3">
             <p className="text-xs opacity-80">年度總買取</p>
             <p className="text-lg font-bold">{formatHkd(data.yearTotal.totalBuyHkd)}</p>
             <p className="text-xs opacity-70">{data.yearTotal.buyCount} 筆</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-600 text-white">
+        <Card className="bg-green-600 text-slate-900">
           <CardContent className="pt-4 pb-3">
             <p className="text-xs opacity-80">年度總賣出</p>
             <p className="text-lg font-bold">{formatHkd(data.yearTotal.totalSellHkd)}</p>
@@ -1960,7 +1960,7 @@ export default function AdminCardInventory() {
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
             size="sm"
-            className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-slate-900 shadow-sm"
           >
             <Plus className="w-4 h-4" />新增買取
           </Button>

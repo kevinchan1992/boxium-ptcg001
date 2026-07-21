@@ -55,7 +55,7 @@ const EVENT_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 function EventBadge({ type }: { type: string }) {
-  const cfg = EVENT_BADGE[type] ?? { label: type, className: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+  const cfg = EVENT_BADGE[type] ?? { label: type, className: "bg-gray-500/20 text-slate-500 border-gray-500/30" };
   return (
     <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full border", cfg.className)}>
       {cfg.label}
@@ -96,8 +96,8 @@ function StatsCards({ stats, alertActive }: { stats: any; alertActive: boolean }
           <Card key={c.label} className="bg-white/[0.03] border-white/[0.08]">
             <CardContent className="p-4">
               <div className={cn("mb-2", c.color)}>{c.icon}</div>
-              <div className="text-2xl font-bold text-white">{c.value.toLocaleString()}</div>
-              <div className="text-[11px] text-gray-400 mt-0.5 leading-tight">{c.label}</div>
+              <div className="text-2xl font-bold text-slate-900">{c.value.toLocaleString()}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5 leading-tight">{c.label}</div>
             </CardContent>
           </Card>
         ))}
@@ -139,7 +139,7 @@ function BlockIpDialog({
             <Label htmlFor="block-reason">封鎖原因</Label>
             <Input id="block-reason" placeholder="例如：惡意爬蟲、暴力登入..." value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1.5" />
           </div>
-          <p className="text-xs text-gray-500">封鎖記錄將儲存到資料庫，伺服器重啟後仍然有效。</p>
+          <p className="text-xs text-slate-400">封鎖記錄將儲存到資料庫，伺服器重啟後仍然有效。</p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>取消</Button>
@@ -156,7 +156,7 @@ function BlockIpDialog({
 function Pagination({ page, total, limit, onPage }: { page: number; total: number; limit: number; onPage: (p: number) => void }) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06] text-xs text-gray-400">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06] text-xs text-slate-500">
       <span>共 {total.toLocaleString()} 筆，第 {page}/{totalPages} 頁</span>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled={page <= 1} onClick={() => onPage(page - 1)}>
@@ -264,7 +264,7 @@ export default function AdminSecurityMonitor() {
             <Shield className="w-5 h-5 text-red-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
               安全監控
               {alertActive && (
                 <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] animate-pulse">
@@ -272,7 +272,7 @@ export default function AdminSecurityMonitor() {
                 </Badge>
               )}
             </h1>
-            <p className="text-sm text-gray-400">Rate Limiting · Bot Detection · IP 封鎖管理（持久化）</p>
+            <p className="text-sm text-slate-500">Rate Limiting · Bot Detection · IP 封鎖管理（持久化）</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -323,18 +323,18 @@ export default function AdminSecurityMonitor() {
           <Card className="bg-white/[0.02] border-white/[0.08]">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle className="text-sm font-medium text-gray-300">即時安全事件（記憶體快取，最多 500 筆）</CardTitle>
-                <p className="text-xs text-gray-500 mt-0.5">伺服器重啟後清空；完整歷史請查「資料庫記錄」標籤</p>
+                <CardTitle className="text-sm font-medium text-slate-400">即時安全事件（記憶體快取，最多 500 筆）</CardTitle>
+                <p className="text-xs text-slate-400 mt-0.5">伺服器重啟後清空；完整歷史請查「資料庫記錄」標籤</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">顯示：</span>
+                <span className="text-xs text-slate-400">顯示：</span>
                 {[50, 100, 200].map((n) => (
                   <button
                     key={n}
                     onClick={() => setLogLimit(n)}
                     className={cn(
                       "text-xs px-2 py-0.5 rounded transition-colors",
-                      logLimit === n ? "bg-[#06038d] text-white" : "text-gray-400 hover:text-gray-200"
+                      logLimit === n ? "bg-[#06038d] text-slate-900" : "text-slate-500 hover:text-slate-600"
                     )}
                   >
                     {n}
@@ -347,27 +347,27 @@ export default function AdminSecurityMonitor() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
-                      <TableHead className="text-gray-400 text-xs w-36">時間</TableHead>
-                      <TableHead className="text-gray-400 text-xs">類型</TableHead>
-                      <TableHead className="text-gray-400 text-xs">IP</TableHead>
-                      <TableHead className="text-gray-400 text-xs">路徑</TableHead>
-                      <TableHead className="text-gray-400 text-xs">原因</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-36">時間</TableHead>
+                      <TableHead className="text-slate-500 text-xs">類型</TableHead>
+                      <TableHead className="text-slate-500 text-xs">IP</TableHead>
+                      <TableHead className="text-slate-500 text-xs">路徑</TableHead>
+                      <TableHead className="text-slate-500 text-xs">原因</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logQuery.isLoading ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                     ) : (logQuery.data ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">暫無安全事件記錄</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">暫無安全事件記錄</TableCell></TableRow>
                     ) : (logQuery.data ?? []).map((event: any, i: number) => (
                       <TableRow key={event.id ?? i} className="border-white/[0.04] hover:bg-white/[0.02]">
-                        <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                        <TableCell className="text-xs text-slate-500 font-mono whitespace-nowrap">
                           {formatTs(event.timestamp ?? event.ts ?? event.createdAt)}
                         </TableCell>
                         <TableCell><EventBadge type={event.type} /></TableCell>
-                        <TableCell className="text-xs text-gray-300 font-mono">{event.ip}</TableCell>
-                        <TableCell className="text-xs text-gray-400 max-w-[200px] truncate" title={event.path}>{event.path}</TableCell>
-                        <TableCell className="text-xs text-gray-500 max-w-[240px] truncate" title={event.reason}>{event.reason}</TableCell>
+                        <TableCell className="text-xs text-slate-400 font-mono">{event.ip}</TableCell>
+                        <TableCell className="text-xs text-slate-500 max-w-[200px] truncate" title={event.path}>{event.path}</TableCell>
+                        <TableCell className="text-xs text-slate-400 max-w-[240px] truncate" title={event.reason}>{event.reason}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -381,35 +381,35 @@ export default function AdminSecurityMonitor() {
         <TabsContent value="db">
           <Card className="bg-white/[0.02] border-white/[0.08]">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-300">資料庫安全記錄（持久化，伺服器重啟後仍保留）</CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">所有事件均寫入資料庫，此處顯示完整歷史記錄</p>
+              <CardTitle className="text-sm font-medium text-slate-400">資料庫安全記錄（持久化，伺服器重啟後仍保留）</CardTitle>
+              <p className="text-xs text-slate-400 mt-0.5">所有事件均寫入資料庫，此處顯示完整歷史記錄</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
-                      <TableHead className="text-gray-400 text-xs w-36">時間</TableHead>
-                      <TableHead className="text-gray-400 text-xs">類型</TableHead>
-                      <TableHead className="text-gray-400 text-xs">IP</TableHead>
-                      <TableHead className="text-gray-400 text-xs">路徑</TableHead>
-                      <TableHead className="text-gray-400 text-xs">原因</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-36">時間</TableHead>
+                      <TableHead className="text-slate-500 text-xs">類型</TableHead>
+                      <TableHead className="text-slate-500 text-xs">IP</TableHead>
+                      <TableHead className="text-slate-500 text-xs">路徑</TableHead>
+                      <TableHead className="text-slate-500 text-xs">原因</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dbLogQuery.isLoading ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                     ) : (dbLogQuery.data?.events ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">資料庫暫無安全事件記錄</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">資料庫暫無安全事件記錄</TableCell></TableRow>
                     ) : (dbLogQuery.data?.events ?? []).map((event: any) => (
                       <TableRow key={event.id} className="border-white/[0.04] hover:bg-white/[0.02]">
-                        <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                        <TableCell className="text-xs text-slate-500 font-mono whitespace-nowrap">
                           {formatTs(event.createdAt)}
                         </TableCell>
                         <TableCell><EventBadge type={event.type} /></TableCell>
-                        <TableCell className="text-xs text-gray-300 font-mono">{event.ip}</TableCell>
-                        <TableCell className="text-xs text-gray-400 max-w-[200px] truncate" title={event.path ?? ""}>{event.path}</TableCell>
-                        <TableCell className="text-xs text-gray-500 max-w-[240px] truncate" title={event.reason ?? ""}>{event.reason}</TableCell>
+                        <TableCell className="text-xs text-slate-400 font-mono">{event.ip}</TableCell>
+                        <TableCell className="text-xs text-slate-500 max-w-[200px] truncate" title={event.path ?? ""}>{event.path}</TableCell>
+                        <TableCell className="text-xs text-slate-400 max-w-[240px] truncate" title={event.reason ?? ""}>{event.reason}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -431,37 +431,37 @@ export default function AdminSecurityMonitor() {
         <TabsContent value="blocked">
           <Card className="bg-white/[0.02] border-white/[0.08]">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-300">
+              <CardTitle className="text-sm font-medium text-slate-400">
                 已封鎖 IP（資料庫持久化）
                 <Badge variant="outline" className="ml-2 text-xs">
                   {(dbBlockedQuery.data ?? []).length} 個
                 </Badge>
               </CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">封鎖記錄儲存在資料庫，伺服器重啟後仍然有效</p>
+              <p className="text-xs text-slate-400 mt-0.5">封鎖記錄儲存在資料庫，伺服器重啟後仍然有效</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
-                      <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
-                      <TableHead className="text-gray-400 text-xs">封鎖原因</TableHead>
-                      <TableHead className="text-gray-400 text-xs">封鎖者</TableHead>
-                      <TableHead className="text-gray-400 text-xs w-36">封鎖時間</TableHead>
-                      <TableHead className="text-gray-400 text-xs w-20">操作</TableHead>
+                      <TableHead className="text-slate-500 text-xs">IP 地址</TableHead>
+                      <TableHead className="text-slate-500 text-xs">封鎖原因</TableHead>
+                      <TableHead className="text-slate-500 text-xs">封鎖者</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-36">封鎖時間</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-20">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dbBlockedQuery.isLoading ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                     ) : (dbBlockedQuery.data ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">目前沒有被封鎖的 IP</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center text-slate-400 py-8">目前沒有被封鎖的 IP</TableCell></TableRow>
                     ) : (dbBlockedQuery.data ?? []).map((item: any) => (
                       <TableRow key={item.ip} className="border-white/[0.04] hover:bg-white/[0.02]">
                         <TableCell className="text-sm text-red-300 font-mono">{item.ip}</TableCell>
-                        <TableCell className="text-xs text-gray-400 max-w-[240px] truncate" title={item.reason}>{item.reason}</TableCell>
-                        <TableCell className="text-xs text-gray-500">{item.blockedBy ?? "admin"}</TableCell>
-                        <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                        <TableCell className="text-xs text-slate-500 max-w-[240px] truncate" title={item.reason}>{item.reason}</TableCell>
+                        <TableCell className="text-xs text-slate-400">{item.blockedBy ?? "admin"}</TableCell>
+                        <TableCell className="text-xs text-slate-500 font-mono whitespace-nowrap">
                           {formatTs(item.blockedAt)}
                         </TableCell>
                         <TableCell>
@@ -489,27 +489,27 @@ export default function AdminSecurityMonitor() {
         <TabsContent value="useragents">
           <Card className="bg-white/[0.02] border-white/[0.08]">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-300">可疑 User-Agent 排行（即時）</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-400">可疑 User-Agent 排行（即時）</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
-                      <TableHead className="text-gray-400 text-xs">#</TableHead>
-                      <TableHead className="text-gray-400 text-xs">User-Agent</TableHead>
-                      <TableHead className="text-gray-400 text-xs w-24">觸發次數</TableHead>
+                      <TableHead className="text-slate-500 text-xs">#</TableHead>
+                      <TableHead className="text-slate-500 text-xs">User-Agent</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-24">觸發次數</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {userAgentsQuery.isLoading ? (
-                      <TableRow><TableCell colSpan={3} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={3} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                     ) : (userAgentsQuery.data ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={3} className="text-center text-gray-500 py-8">暫無可疑 User-Agent 記錄</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={3} className="text-center text-slate-400 py-8">暫無可疑 User-Agent 記錄</TableCell></TableRow>
                     ) : (userAgentsQuery.data ?? []).map((item: any, i: number) => (
                       <TableRow key={i} className="border-white/[0.04] hover:bg-white/[0.02]">
-                        <TableCell className="text-xs text-gray-500 w-8">{i + 1}</TableCell>
-                        <TableCell className="text-xs text-gray-300 font-mono max-w-[400px] truncate" title={item.ua}>
+                        <TableCell className="text-xs text-slate-400 w-8">{i + 1}</TableCell>
+                        <TableCell className="text-xs text-slate-400 font-mono max-w-[400px] truncate" title={item.ua}>
                           {item.ua || "(空白)"}
                         </TableCell>
                         <TableCell>
@@ -533,35 +533,35 @@ export default function AdminSecurityMonitor() {
             {(rlQuery.data?.topIps ?? []).length > 0 && (
               <Card className="bg-white/[0.02] border-white/[0.08]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
                     <Zap className="w-4 h-4 text-yellow-400" />
                     高頻限流 IP 排行（前 20 名）
                   </CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">觸發限流次數最多的 IP，可判斷是否為真實攻擊行為</p>
+                  <p className="text-xs text-slate-400 mt-0.5">觸發限流次數最多的 IP，可判斷是否為真實攻擊行為</p>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-white/[0.06] hover:bg-transparent">
-                          <TableHead className="text-gray-400 text-xs">#</TableHead>
-                          <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
-                          <TableHead className="text-gray-400 text-xs w-28">觸發次數</TableHead>
-                          <TableHead className="text-gray-400 text-xs w-36">最後時間</TableHead>
-                          <TableHead className="text-gray-400 text-xs w-24">操作</TableHead>
+                          <TableHead className="text-slate-500 text-xs">#</TableHead>
+                          <TableHead className="text-slate-500 text-xs">IP 地址</TableHead>
+                          <TableHead className="text-slate-500 text-xs w-28">觸發次數</TableHead>
+                          <TableHead className="text-slate-500 text-xs w-36">最後時間</TableHead>
+                          <TableHead className="text-slate-500 text-xs w-24">操作</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {(rlQuery.data?.topIps ?? []).map((item: any, i: number) => (
                           <TableRow key={item.ip} className="border-white/[0.04] hover:bg-white/[0.02]">
-                            <TableCell className="text-xs text-gray-500">{i + 1}</TableCell>
+                            <TableCell className="text-xs text-slate-400">{i + 1}</TableCell>
                             <TableCell className="text-sm text-yellow-300 font-mono">{item.ip}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className={`text-xs border-yellow-500/30 ${item.hitCount >= 50 ? 'text-red-400 border-red-500/30' : item.hitCount >= 20 ? 'text-orange-400 border-orange-500/30' : 'text-yellow-400'}`}>
                                 {item.hitCount} 次
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                            <TableCell className="text-xs text-slate-500 font-mono whitespace-nowrap">
                               {item.lastSeen ? formatTs(item.lastSeen) : '-'}
                             </TableCell>
                             <TableCell>
@@ -588,33 +588,33 @@ export default function AdminSecurityMonitor() {
             {/* Rate Limit Event Log */}
             <Card className="bg-white/[0.02] border-white/[0.08]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300">限流觸發記錄（資料庫持久化）</CardTitle>
-                <p className="text-xs text-gray-500 mt-0.5">所有 RATE_LIMITED 事件，可判斷是否為真實攻擊行為而非正常用戶被誤封</p>
+                <CardTitle className="text-sm font-medium text-slate-400">限流觸發記錄（資料庫持久化）</CardTitle>
+                <p className="text-xs text-slate-400 mt-0.5">所有 RATE_LIMITED 事件，可判斷是否為真實攻擊行為而非正常用戶被誤封</p>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-white/[0.06] hover:bg-transparent">
-                        <TableHead className="text-gray-400 text-xs w-36">時間</TableHead>
-                        <TableHead className="text-gray-400 text-xs">IP</TableHead>
-                        <TableHead className="text-gray-400 text-xs">路徑</TableHead>
-                        <TableHead className="text-gray-400 text-xs">原因</TableHead>
+                        <TableHead className="text-slate-500 text-xs w-36">時間</TableHead>
+                        <TableHead className="text-slate-500 text-xs">IP</TableHead>
+                        <TableHead className="text-slate-500 text-xs">路徑</TableHead>
+                        <TableHead className="text-slate-500 text-xs">原因</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {rlQuery.isLoading ? (
-                        <TableRow><TableCell colSpan={4} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                       ) : (rlQuery.data?.events ?? []).length === 0 ? (
-                        <TableRow><TableCell colSpan={4} className="text-center text-gray-500 py-8">暫無限流觸發記錄</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="text-center text-slate-400 py-8">暫無限流觸發記錄</TableCell></TableRow>
                       ) : (rlQuery.data?.events ?? []).map((event: any) => (
                         <TableRow key={event.id} className="border-white/[0.04] hover:bg-white/[0.02]">
-                          <TableCell className="text-xs text-gray-400 font-mono whitespace-nowrap">
+                          <TableCell className="text-xs text-slate-500 font-mono whitespace-nowrap">
                             {formatTs(event.createdAt)}
                           </TableCell>
                           <TableCell className="text-xs text-yellow-300 font-mono">{event.ip}</TableCell>
-                          <TableCell className="text-xs text-gray-400 max-w-[200px] truncate" title={event.path ?? ''}>{event.path}</TableCell>
-                          <TableCell className="text-xs text-gray-500 max-w-[240px] truncate" title={event.reason ?? ''}>{event.reason}</TableCell>
+                          <TableCell className="text-xs text-slate-500 max-w-[200px] truncate" title={event.path ?? ''}>{event.path}</TableCell>
+                          <TableCell className="text-xs text-slate-400 max-w-[240px] truncate" title={event.reason ?? ''}>{event.reason}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -639,20 +639,20 @@ export default function AdminSecurityMonitor() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-green-400" />
                     管理員 IP 白名單
                     <Badge variant="outline" className="ml-1 text-xs text-green-400 border-green-500/30">
                       {(whitelistQuery.data ?? []).length} 個
                     </Badge>
                   </CardTitle>
-                  <p className="text-xs text-gray-500 mt-0.5">白名單內的 IP 將豁免所有請求限流。已持久化到資料庫，伺服器重啟後自動載入。</p>
+                  <p className="text-xs text-slate-400 mt-0.5">白名單內的 IP 將豁免所有請求限流。已持久化到資料庫，伺服器重啟後自動載入。</p>
                 </div>
                 <Button
                   size="sm"
                   onClick={() => whitelistMyIpMutation.mutate()}
                   disabled={whitelistMyIpMutation.isPending}
-                  className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                  className="gap-1.5 bg-green-600 hover:bg-green-700 text-slate-900"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   {whitelistMyIpMutation.isPending ? '處理中...' : '將我的 IP 加入白名單'}
@@ -664,19 +664,19 @@ export default function AdminSecurityMonitor() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/[0.06] hover:bg-transparent">
-                      <TableHead className="text-gray-400 text-xs">IP 地址</TableHead>
-                      <TableHead className="text-gray-400 text-xs">添加者</TableHead>
-                      <TableHead className="text-gray-400 text-xs">添加時間</TableHead>
-                      <TableHead className="text-gray-400 text-xs w-24">操作</TableHead>
+                      <TableHead className="text-slate-500 text-xs">IP 地址</TableHead>
+                      <TableHead className="text-slate-500 text-xs">添加者</TableHead>
+                      <TableHead className="text-slate-500 text-xs">添加時間</TableHead>
+                      <TableHead className="text-slate-500 text-xs w-24">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {whitelistQuery.isLoading ? (
-                      <TableRow><TableCell colSpan={3} className="text-center text-gray-500 py-8">載入中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={3} className="text-center text-slate-400 py-8">載入中...</TableCell></TableRow>
                     ) : (whitelistQuery.data ?? []).length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={3} className="text-center py-8">
-                          <div className="text-gray-500 text-sm">白名單為空</div>
+                          <div className="text-slate-400 text-sm">白名單為空</div>
                           <div className="text-gray-600 text-xs mt-1">點擊「將我的 IP 加入白名單」以豁免限流</div>
                         </TableCell>
                       </TableRow>
@@ -687,8 +687,8 @@ export default function AdminSecurityMonitor() {
                       return (
                         <TableRow key={ip} className="border-white/[0.04] hover:bg-white/[0.02]">
                           <TableCell className="text-sm text-green-300 font-mono">{ip}</TableCell>
-                          <TableCell className="text-xs text-gray-400">{addedBy}</TableCell>
-                          <TableCell className="text-xs text-gray-400">{addedAt}</TableCell>
+                          <TableCell className="text-xs text-slate-500">{addedBy}</TableCell>
+                          <TableCell className="text-xs text-slate-500">{addedAt}</TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"

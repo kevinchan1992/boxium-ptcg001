@@ -166,7 +166,7 @@ function FailureDetailsDialog({
                         <div key={key} className="bg-slate-50 rounded-lg p-3">
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-red-300 text-xs font-mono flex-1 break-all">{key}</p>
-                            <Badge className="bg-red-900/50 text-red-400 border-red-800 shrink-0">
+                            <Badge className="bg-red-50 text-red-400 border-red-800 shrink-0">
                               {group.count}次
                             </Badge>
                           </div>
@@ -196,7 +196,7 @@ function FailureDetailsDialog({
               </>
             )}
 
-            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3">
+            <div className="bg-blue-50 border border-blue-800 rounded-lg p-3">
               <p className="text-blue-300 text-xs">
                 <strong>常見失敗原因：</strong>
                 <br />• <strong>HTTP 429</strong>：SNKRDUNK API 限流，系統會自動重試
@@ -387,7 +387,7 @@ export function AdminTaskHistory() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-red-800 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    className="border-red-800 text-red-400 hover:text-red-300 hover:bg-red-50"
                     disabled={cleanOldRecordsMutation.isPending}
                   >
                     {cleanOldRecordsMutation.isPending ? (
@@ -504,7 +504,7 @@ export function AdminTaskHistory() {
                           {task.status === "failed" && task.processedItems > 0 && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8 w-8 p-0" title="從上次進度恢復">
+                                <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-blue-50 h-8 w-8 p-0" title="從上次進度恢復">
                                   <RotateCcw className="w-4 h-4" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -530,7 +530,7 @@ export function AdminTaskHistory() {
                           {(task.status === "completed" || task.status === "failed") && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 w-8 p-0">
+                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-50 h-8 w-8 p-0">
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </AlertDialogTrigger>

@@ -88,11 +88,14 @@ function Router() {
     window.scrollTo(0, 0);
   }, [location]);
 
+  // Admin routes should NOT show the public TopNav
+  const isAdminRoute = location.startsWith('/admin');
+
   return (
     <PageWrapper>
-      <TopNav />
-      {user && <MessageCenter />}
-      <div className="pt-14 pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0">
+      {!isAdminRoute && <TopNav />}
+      {user && !isAdminRoute && <MessageCenter />}
+      <div className={isAdminRoute ? undefined : "pt-14 pb-[calc(56px+env(safe-area-inset-bottom,0px))] md:pb-0"}>
         <PageTransition>
         <Suspense fallback={<PageLoader />}>
           <Switch>

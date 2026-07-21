@@ -385,6 +385,37 @@
   color: var(--adm-text-primary);
 }
 
+/* ── Force light mode on Dialog/Sheet/AlertDialog portals (rendered outside .admin-shell) ── */
+/* These portals are appended to <body>, so we target them via [data-radix-*] or [role=dialog] */
+body:has(.admin-shell) [role="dialog"],
+body:has(.admin-shell) [data-radix-dialog-content],
+body:has(.admin-shell) [data-radix-alert-dialog-content],
+body:has(.admin-shell) [data-radix-sheet-content],
+body:has(.admin-shell) [data-radix-drawer-content] {
+  color-scheme: light;
+  --background:          oklch(0.99 0 0);
+  --foreground:          oklch(0.09 0.01 260);
+  --card:                oklch(1 0 0);
+  --card-foreground:     oklch(0.09 0.01 260);
+  --popover:             oklch(1 0 0);
+  --popover-foreground:  oklch(0.09 0.01 260);
+  --primary:             oklch(0.49 0.22 264);
+  --primary-foreground:  oklch(1 0 0);
+  --secondary:           oklch(0.96 0.005 240);
+  --secondary-foreground: oklch(0.09 0.01 260);
+  --muted:               oklch(0.97 0.003 240);
+  --muted-foreground:    oklch(0.44 0.01 240);
+  --accent:              oklch(0.96 0.005 240);
+  --accent-foreground:   oklch(0.09 0.01 260);
+  --destructive:         oklch(0.58 0.22 28);
+  --destructive-foreground: oklch(1 0 0);
+  --border:              oklch(0.9 0.005 240);
+  --input:               oklch(0.9 0.005 240);
+  --ring:                oklch(0.49 0.22 264);
+  background-color: oklch(1 0 0);
+  color: oklch(0.09 0.01 260);
+}
+
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 .admin-shell .adm-sidebar {
   background: var(--adm-bg-sidebar);

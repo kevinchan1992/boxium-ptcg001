@@ -134,7 +134,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
       </span>
     );
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-gray-400">
+      <span className="inline-flex items-center gap-0.5 text-xs text-slate-500">
         <Minus className="w-3 h-3" />0%
       </span>
     );
@@ -148,23 +148,23 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
         onOpenChange(v);
       }}
       title={
-        <span className="flex items-center gap-2 text-white">
+        <span className="flex items-center gap-2 text-slate-900">
           <BarChart3 className="w-5 h-5 text-[#FEDD00]" />
           插入卡牌市場數據
         </span>
       }
       description={t("cardSelectionDialog.searchDescription")}
-      className="bg-zinc-900 border-zinc-800 text-white sm:max-w-3xl"
+      className="bg-white border-slate-200 text-slate-900 sm:max-w-3xl"
     >
       <div className="flex flex-col gap-3">
         {/* Search Input */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("cardSelectionDialog.searchPlaceholder")}
-            className="pl-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+            className="pl-10 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
           />
         </div>
 
@@ -175,7 +175,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
               <Badge variant="secondary" className="bg-[#FEDD00]/20 text-[#FEDD00] border-[#FEDD00]/30">
                 {t("cardSelection.selected")} {selectedCardIds.length} 張卡牌
               </Badge>
-              <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="text-xs text-slate-500 flex items-center gap-1">
                 <Info className="w-3 h-3" />
                 插入時將包含完整的價格統計和成交數據
               </span>
@@ -185,7 +185,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                 variant="outline"
                 size="sm"
                 onClick={handlePreview}
-                className="border-zinc-700 text-white hover:bg-zinc-800 flex-1"
+                className="border-slate-200 text-slate-900 hover:bg-slate-50 flex-1"
               >
                 <BarChart3 className="w-4 h-4 mr-1" />
                 預覽數據
@@ -194,7 +194,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedCardIds([])}
-                className="border-zinc-700 text-gray-400 hover:bg-zinc-800 flex-1"
+                className="border-slate-200 text-slate-500 hover:bg-slate-50 flex-1"
               >
                 {t("common.clear")}選擇
               </Button>
@@ -208,12 +208,12 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
           {showPreview ? (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">{t("cardSelectionDialog.dataPreview")}</h3>
+                <h3 className="text-base font-semibold text-slate-900">{t("cardSelectionDialog.dataPreview")}</h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowPreview(false)}
-                  className="text-gray-400 hover:text-white text-xs"
+                  className="text-slate-500 hover:text-slate-900 text-xs"
                 >
                   ← 返回搜尋
                 </Button>
@@ -222,11 +222,11 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
               {isLoadingDetails ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
-                  <span className="ml-3 text-gray-400 text-sm">{t("cardSelectionDialog.fetchingData")}</span>
+                  <span className="ml-3 text-slate-500 text-sm">{t("cardSelectionDialog.fetchingData")}</span>
                 </div>
               ) : cardDetails && cardDetails.length > 0 ? (
                 cardDetails.map((card: any) => (
-                  <div key={card.id} className="bg-zinc-800 rounded-lg border border-zinc-700 overflow-hidden">
+                  <div key={card.id} className="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
                     {/* Card header */}
                     <div className="flex gap-3 p-3">
                       {card.imageUrl && (
@@ -235,10 +235,10 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-white leading-tight">{card.name}</h4>
+                        <h4 className="text-sm font-semibold text-slate-900 leading-tight">{card.name}</h4>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {card.cardNumber && (
-                            <Badge variant="outline" className="border-zinc-600 text-gray-300 text-[10px] px-1.5 py-0">
+                            <Badge variant="outline" className="border-slate-300 text-slate-400 text-[10px] px-1.5 py-0">
                               {card.cardNumber}
                             </Badge>
                           )}
@@ -249,43 +249,43 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                           )}
                         </div>
                         {card.nameJa && (
-                          <div className="text-xs text-gray-400 mt-1 leading-tight">{card.nameJa}</div>
+                          <div className="text-xs text-slate-500 mt-1 leading-tight">{card.nameJa}</div>
                         )}
                       </div>
                     </div>
 
                     {/* Price Statistics — stacked vertically on all sizes for clarity */}
-                    <div className="border-t border-zinc-700">
+                    <div className="border-t border-slate-200">
                       {/* PSA10 */}
-                      <div className="p-3 border-b border-zinc-700">
+                      <div className="p-3 border-b border-slate-200">
                         <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1">
                           <BarChart3 className="w-3 h-3" />PSA10 鑑定卡
                         </div>
                         {card.psa10Stats && card.psa10Stats.totalVolume > 0 ? (
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">{t("cardSelectionDialog.avgPrice")}</span>
-                              <span className="text-white font-medium">HKD${Math.round(card.psa10Stats.avgPrice).toLocaleString()}</span>
+                              <span className="text-slate-500">{t("cardSelectionDialog.avgPrice")}</span>
+                              <span className="text-slate-900 font-medium">HKD${Math.round(card.psa10Stats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
-                              <span className="text-gray-400 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
-                              <span className="text-white text-right break-all">HKD${Math.round(card.psa10Stats.minPrice).toLocaleString()} ~ HKD${Math.round(card.psa10Stats.maxPrice).toLocaleString()}</span>
+                              <span className="text-slate-500 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
+                              <span className="text-slate-900 text-right break-all">HKD${Math.round(card.psa10Stats.minPrice).toLocaleString()} ~ HKD${Math.round(card.psa10Stats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">7天變化</span>
+                              <span className="text-slate-500">7天變化</span>
                               <PriceChangeBadge change={card.psa10Stats.priceChange7d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">30天變化</span>
+                              <span className="text-slate-500">30天變化</span>
                               <PriceChangeBadge change={card.psa10Stats.priceChange30d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">{t("cardSelectionDialog.volume")}</span>
-                              <span className="text-white">{card.psa10Stats.totalVolume} 筆</span>
+                              <span className="text-slate-500">{t("cardSelectionDialog.volume")}</span>
+                              <span className="text-slate-900">{card.psa10Stats.totalVolume} 筆</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-xs text-gray-500 italic">{t("cardSelectionDialog.noTransactions")}</div>
+                          <div className="text-xs text-slate-400 italic">{t("cardSelectionDialog.noTransactions")}</div>
                         )}
                       </div>
 
@@ -297,46 +297,46 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         {card.usedStats && card.usedStats.totalVolume > 0 ? (
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">{t("cardSelectionDialog.avgPrice")}</span>
-                              <span className="text-white font-medium">HKD${Math.round(card.usedStats.avgPrice).toLocaleString()}</span>
+                              <span className="text-slate-500">{t("cardSelectionDialog.avgPrice")}</span>
+                              <span className="text-slate-900 font-medium">HKD${Math.round(card.usedStats.avgPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs gap-2">
-                              <span className="text-gray-400 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
-                              <span className="text-white text-right break-all">HKD${Math.round(card.usedStats.minPrice).toLocaleString()} ~ HKD${Math.round(card.usedStats.maxPrice).toLocaleString()}</span>
+                              <span className="text-slate-500 flex-shrink-0">{t("cardSelectionDialog.priceRange")}</span>
+                              <span className="text-slate-900 text-right break-all">HKD${Math.round(card.usedStats.minPrice).toLocaleString()} ~ HKD${Math.round(card.usedStats.maxPrice).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">7天變化</span>
+                              <span className="text-slate-500">7天變化</span>
                               <PriceChangeBadge change={card.usedStats.priceChange7d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">30天變化</span>
+                              <span className="text-slate-500">30天變化</span>
                               <PriceChangeBadge change={card.usedStats.priceChange30d} />
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">{t("cardSelectionDialog.volume")}</span>
-                              <span className="text-white">{card.usedStats.totalVolume} 筆</span>
+                              <span className="text-slate-500">{t("cardSelectionDialog.volume")}</span>
+                              <span className="text-slate-900">{card.usedStats.totalVolume} 筆</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-xs text-gray-500 italic">{t("cardSelectionDialog.noTransactions")}</div>
+                          <div className="text-xs text-slate-400 italic">{t("cardSelectionDialog.noTransactions")}</div>
                         )}
                       </div>
                     </div>
 
                     {/* Peak Price */}
                     {card.peakPrice > 0 && (
-                      <div className="px-3 py-2 bg-zinc-800/50 border-t border-zinc-700 flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-gray-400">🏆 歷史最高價</span>
+                      <div className="px-3 py-2 bg-slate-50/50 border-t border-slate-200 flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-slate-500">🏆 歷史最高價</span>
                         <span className="text-sm font-semibold text-[#FEDD00]">HKD${Math.round(card.peakPrice).toLocaleString()}</span>
                         {card.peakDate && (
-                          <span className="text-xs text-gray-500">({new Date(card.peakDate).toLocaleDateString('zh-TW')})</span>
+                          <span className="text-xs text-slate-400">({new Date(card.peakDate).toLocaleDateString('zh-TW')})</span>
                         )}
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.failedToFetchCardData")}</div>
+                <div className="text-center py-10 text-slate-500 text-sm">{t("cardSelectionDialog.failedToFetchCardData")}</div>
               )}
             </div>
           ) : (
@@ -347,14 +347,14 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   <Loader2 className="w-7 h-7 animate-spin text-[#FEDD00]" />
                 </div>
               ) : debouncedQuery.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.enterSearchKeyword")}</div>
+                <div className="text-center py-10 text-slate-500 text-sm">{t("cardSelectionDialog.enterSearchKeyword")}</div>
               ) : cards && cards.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                   {cards.map((card) => (
                     <div
                       key={card.id}
-                      className={`relative bg-zinc-800 rounded-lg border-2 transition-all cursor-pointer hover:border-[#FEDD00]/50 ${
-                        selectedCardIds.includes(card.id) ? 'border-[#FEDD00] ring-2 ring-[#FEDD00]/30' : 'border-zinc-700'
+                      className={`relative bg-slate-50 rounded-lg border-2 transition-all cursor-pointer hover:border-[#FEDD00]/50 ${
+                        selectedCardIds.includes(card.id) ? 'border-[#FEDD00] ring-2 ring-[#FEDD00]/30' : 'border-slate-200'
                       }`}
                       onClick={() => toggleCardSelection(card.id)}
                     >
@@ -362,15 +362,15 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                         <Checkbox
                           checked={selectedCardIds.includes(card.id)}
                           onCheckedChange={() => toggleCardSelection(card.id)}
-                          className="bg-zinc-900 border-zinc-600 data-[state=checked]:bg-[#FEDD00] data-[state=checked]:border-[#FEDD00]"
+                          className="bg-white border-slate-300 data-[state=checked]:bg-[#FEDD00] data-[state=checked]:border-[#FEDD00]"
                         />
                       </div>
                       <div className="aspect-[2.5/3.5] overflow-hidden rounded-t-lg">
                         <LazyImage src={card.imageUrl || ''} alt={card.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="p-2 space-y-0.5">
-                        <div className="text-xs font-medium text-white line-clamp-2 leading-tight">{card.name}</div>
-                        {card.cardNumber && <div className="text-[10px] text-gray-400">{card.cardNumber}</div>}
+                        <div className="text-xs font-medium text-slate-900 line-clamp-2 leading-tight">{card.name}</div>
+                        {card.cardNumber && <div className="text-[10px] text-slate-500">{card.cardNumber}</div>}
                         {card.latestPrice && (
                           <div className="text-[10px] text-[#FEDD00] font-semibold">HKD${Number(card.latestPrice).toLocaleString()}</div>
                         )}
@@ -379,14 +379,14 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">{t("cardSelectionDialog.noMatchingCards")}</div>
+                <div className="text-center py-10 text-slate-500 text-sm">{t("cardSelectionDialog.noMatchingCards")}</div>
               )}
             </>
           )}
         </div>
 
         {/* Actions Footer */}
-        <div className="flex gap-2 pt-2 border-t border-zinc-800">
+        <div className="flex gap-2 pt-2 border-t border-slate-200">
           <Button
             variant="outline"
             onClick={() => {
@@ -395,7 +395,7 @@ export function CardSelectionDialog({ open, onOpenChange, onInsert }: CardSelect
               setShowPreview(false);
               onOpenChange(false);
             }}
-            className="border-zinc-700 text-white hover:bg-zinc-800 flex-1"
+            className="border-slate-200 text-slate-900 hover:bg-slate-50 flex-1"
           >
             {t("common.cancel")}
           </Button>

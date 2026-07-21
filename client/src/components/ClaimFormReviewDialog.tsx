@@ -475,7 +475,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
             <Button
               onClick={handleImport}
               disabled={rows.filter(r => r.editableItems.length > 0).length === 0}
-              className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-slate-900 gap-2"
             >
               <RefreshCw className="w-4 h-4" />
               批量匯入 {rows.filter(r => r.editableItems.length > 0).length} 行記錄

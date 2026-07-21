@@ -125,7 +125,7 @@ export default function AdminMessages() {
       <div className="grid grid-cols-3 gap-3">
         <Card className="border border-gray-200">
           <CardContent className="pt-4 pb-3 px-4">
-            <p className="text-xs text-gray-500 mb-1">訊息總數</p>
+            <p className="text-xs text-slate-400 mb-1">訊息總數</p>
             <p className="text-2xl font-bold text-gray-800">{stats.total.toLocaleString()}</p>
           </CardContent>
         </Card>
@@ -154,7 +154,7 @@ export default function AdminMessages() {
         <CardContent className="px-4 pb-4">
           <form onSubmit={handleSearch} className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[160px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
                 placeholder="搜尋訂單編號..."
                 value={searchOrderNo}
@@ -167,7 +167,7 @@ export default function AdminMessages() {
               variant={unreadOnly ? "default" : "outline"}
               size="sm"
               onClick={() => { setUnreadOnly(!unreadOnly); setOffset(0); }}
-              className={unreadOnly ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}
+              className={unreadOnly ? "bg-orange-500 hover:bg-orange-600 text-slate-900" : ""}
             >
               {unreadOnly ? "僅未讀" : "全部訊息"}
             </Button>
@@ -194,18 +194,18 @@ export default function AdminMessages() {
             <MessageSquare className="w-4 h-4" />
             訊息記錄（按訂單分組）
             {orderGroups.length > 0 && (
-              <span className="text-xs font-normal text-gray-400">（{orderGroups.length} 個訂單）</span>
+              <span className="text-xs font-normal text-slate-500">（{orderGroups.length} 個訂單）</span>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-5 h-5 animate-spin text-gray-400 mr-2" />
-              <span className="text-sm text-gray-500">載入中...</span>
+              <RefreshCw className="w-5 h-5 animate-spin text-slate-500 mr-2" />
+              <span className="text-sm text-slate-400">載入中...</span>
             </div>
           ) : orderGroups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
               <MessageSquare className="w-10 h-10 mb-3 opacity-30" />
               <p className="text-sm">暫無訊息記錄</p>
             </div>
@@ -222,7 +222,7 @@ export default function AdminMessages() {
                       {/* Expand toggle */}
                       <button
                         onClick={() => toggleOrder(group.orderNo)}
-                        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="flex-shrink-0 text-slate-500 hover:text-gray-600 transition-colors"
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
@@ -245,10 +245,10 @@ export default function AdminMessages() {
                               {group.unreadCount} 未讀
                             </Badge>
                           )}
-                          <span className="text-xs text-gray-400">{group.msgs.length} 條訊息</span>
+                          <span className="text-xs text-slate-500">{group.msgs.length} 條訊息</span>
                         </div>
                         {latestMsg && (
-                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">
                             <span className={`inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium border mr-1 ${ROLE_COLORS[latestMsg.senderRole] ?? ROLE_COLORS.system}`}>
                               {ROLE_LABELS[latestMsg.senderRole] ?? latestMsg.senderRole}
                             </span>
@@ -260,7 +260,7 @@ export default function AdminMessages() {
                       {/* Actions */}
                       <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
                         {latestMsg && (
-                          <span className="text-[11px] text-gray-400">
+                          <span className="text-[11px] text-slate-500">
                             {new Date(latestMsg.createdAt).toLocaleString('zh-HK', {
                               month: '2-digit', day: '2-digit',
                               hour: '2-digit', minute: '2-digit',
@@ -386,7 +386,7 @@ export default function AdminMessages() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDisputeOrderId(null)}>取消</Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-slate-900"
               disabled={markDisputed.isPending}
               onClick={() => {
                 if (disputeOrderId !== null) {
@@ -424,7 +424,7 @@ export default function AdminMessages() {
                   className={`flex items-center justify-center gap-2 rounded-lg border-2 py-3 px-4 transition-all ${
                     resolveInFavorOf === "buyer"
                       ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 text-gray-500 hover:border-blue-200 hover:bg-blue-50/30"
+                      : "border-gray-200 text-slate-400 hover:border-blue-200 hover:bg-blue-50/30"
                   }`}
                 >
                   <User className="w-4 h-4" />
@@ -436,14 +436,14 @@ export default function AdminMessages() {
                   className={`flex items-center justify-center gap-2 rounded-lg border-2 py-3 px-4 transition-all ${
                     resolveInFavorOf === "seller"
                       ? "border-green-500 bg-green-50 text-green-700"
-                      : "border-gray-200 text-gray-500 hover:border-green-200 hover:bg-green-50/30"
+                      : "border-gray-200 text-slate-400 hover:border-green-200 hover:bg-green-50/30"
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
                   <span className="text-sm font-medium">支持賣家</span>
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-slate-500 mt-2">
                 {resolveInFavorOf === "buyer"
                   ? "支持買家：訂單將退款給買家，賣家收到相應通知。"
                   : "支持賣家：訂單視為完成，買家收到相應通知。"}
@@ -463,7 +463,7 @@ export default function AdminMessages() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setResolveOrderId(null)}>取消</Button>
             <Button
-              className={resolveInFavorOf === "buyer" ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+              className={resolveInFavorOf === "buyer" ? "bg-blue-600 hover:bg-blue-700 text-slate-900" : "bg-green-600 hover:bg-green-700 text-slate-900"}
               disabled={resolveDispute.isPending}
               onClick={() => {
                 if (resolveOrderId !== null) {

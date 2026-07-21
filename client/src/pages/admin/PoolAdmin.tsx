@@ -77,7 +77,7 @@ const TIER_CONFIG: Record<RewardType, {
     shortLabel: "黃金",
     badgeClass: "bg-yellow-500 text-black border-0",
     borderClass: "border-l-4 border-l-yellow-500",
-    headerBg: "bg-yellow-900/20",
+    headerBg: "bg-amber-50",
     accentColor: "text-yellow-400",
     tabActiveClass: "bg-yellow-600 text-black shadow-lg shadow-yellow-900/40",
   },
@@ -86,7 +86,7 @@ const TIER_CONFIG: Record<RewardType, {
     shortLabel: "藍色",
     badgeClass: "bg-blue-500 text-white border-0",
     borderClass: "border-l-4 border-l-blue-500",
-    headerBg: "bg-blue-900/20",
+    headerBg: "bg-blue-50",
     accentColor: "text-blue-400",
     tabActiveClass: "bg-blue-600 text-white shadow-lg shadow-blue-900/40",
   },
@@ -95,7 +95,7 @@ const TIER_CONFIG: Record<RewardType, {
     shortLabel: "里程碑",
     badgeClass: "bg-orange-500 text-white border-0",
     borderClass: "border-l-4 border-l-orange-500",
-    headerBg: "bg-orange-900/20",
+    headerBg: "bg-orange-50",
     accentColor: "text-orange-400",
     tabActiveClass: "bg-orange-600 text-white shadow-lg shadow-orange-900/40",
   },
@@ -103,8 +103,8 @@ const TIER_CONFIG: Record<RewardType, {
 
 // ─── 深色輸入框 ───────────────────────────────────────────────────────────────
 const darkInput =
-  "bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500 " +
-  "focus-visible:bg-zinc-800 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20";
+  "bg-slate-50/60 border-slate-200 text-slate-900 placeholder-zinc-500 " +
+  "focus-visible:bg-slate-50 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20";
 
 // ─── 現代搜尋彈窗 ─────────────────────────────────────────────────────────────
 function CardSearchModal({
@@ -144,22 +144,22 @@ function CardSearchModal({
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className="w-full max-w-2xl max-h-[82vh] flex flex-col rounded-3xl border border-zinc-800 shadow-2xl"
+        className="w-full max-w-2xl max-h-[82vh] flex flex-col rounded-3xl border border-slate-200 shadow-2xl"
         style={{ background: "#0f0f0f", boxShadow: "0 25px 60px rgba(0,0,0,0.7)" }}
       >
         {/* 頂部標題列 */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-800/60">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-200/60">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-blue-600/20 flex items-center justify-center">
               <Search className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">搜尋卡片</h3>
-              <p className="text-xs text-zinc-500">搜索並綁定對應卡牌</p>
+              <h3 className="text-sm font-bold text-slate-900">搜尋卡片</h3>
+              <p className="text-xs text-slate-400">搜索並綁定對應卡牌</p>
             </div>
           </div>
           <button
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
             onClick={handleClose}
           >
             <X className="w-4 h-4" />
@@ -169,17 +169,17 @@ function CardSearchModal({
         {/* 搜尋輸入框 */}
         <div className="px-6 py-4">
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             <input
               autoFocus
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm bg-zinc-800/80 border border-zinc-700 text-white placeholder-zinc-500 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm bg-slate-50/80 border border-slate-200 text-slate-900 placeholder-zinc-500 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
               placeholder="輸入卡片名稱或卡號..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             {query && (
               <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-300 transition-colors"
                 onClick={() => setQuery("")}
               >
                 <X className="w-3 h-3" />
@@ -194,17 +194,17 @@ function CardSearchModal({
           {isFetching && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <RefreshCw className="w-6 h-6 text-blue-400 animate-spin" />
-              <span className="text-sm text-zinc-400">搜尋中...</span>
+              <span className="text-sm text-slate-500">搜尋中...</span>
             </div>
           )}
 
           {/* 初始提示 */}
           {!isFetching && !debouncedQuery && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50/60 flex items-center justify-center">
                 <Layers className="w-7 h-7 text-zinc-600" />
               </div>
-              <p className="text-sm text-zinc-400 font-medium">輸入關鍵字開始搜尋</p>
+              <p className="text-sm text-slate-500 font-medium">輸入關鍵字開始搜尋</p>
               <p className="text-xs text-zinc-600">支援卡片名稱、卡號搜尋</p>
             </div>
           )}
@@ -212,10 +212,10 @@ function CardSearchModal({
           {/* 無結果 */}
           {!isFetching && debouncedQuery && data?.cards?.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50/60 flex items-center justify-center">
                 <Search className="w-7 h-7 text-zinc-600" />
               </div>
-              <p className="text-sm text-zinc-400 font-medium">找不到相關卡片</p>
+              <p className="text-sm text-slate-500 font-medium">找不到相關卡片</p>
               <p className="text-xs text-zinc-600">請嘗試輸入其他關鍵字或卡片編號</p>
             </div>
           )}
@@ -226,7 +226,7 @@ function CardSearchModal({
               {data.cards.map((card: any) => (
                 <button
                   key={card.id}
-                  className="group flex flex-col items-center gap-2 p-2.5 rounded-2xl border border-zinc-800 hover:border-blue-500/50 hover:bg-blue-950/20 transition-all duration-200 text-left"
+                  className="group flex flex-col items-center gap-2 p-2.5 rounded-2xl border border-slate-200 hover:border-blue-500/50 hover:bg-blue-950/20 transition-all duration-200 text-left"
                   onClick={() =>
                     onSelect({
                       id: card.id,
@@ -246,13 +246,13 @@ function CardSearchModal({
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full aspect-[2/3] bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-600 text-xs">
+                    <div className="w-full aspect-[2/3] bg-slate-50 rounded-lg flex items-center justify-center text-zinc-600 text-xs">
                       無圖
                     </div>
                   )}
-                  <span className="text-xs text-zinc-300 text-center leading-tight line-clamp-2 w-full">{card.name}</span>
+                  <span className="text-xs text-slate-400 text-center leading-tight line-clamp-2 w-full">{card.name}</span>
                   {card.rarity && (
-                    <span className="text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded-full">{card.rarity}</span>
+                    <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full">{card.rarity}</span>
                   )}
                 </button>
               ))}
@@ -292,24 +292,24 @@ function RewardCard({
         onClose={() => setSearchOpen(false)}
         onSelect={handleCardSelect}
       />
-      <div className={`rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden ${cfg.borderClass} transition-all`}>
+      <div className={`rounded-xl border border-slate-200 bg-white/50 overflow-hidden ${cfg.borderClass} transition-all`}>
         {/* 標頭 */}
         <div className={`flex items-center justify-between px-4 py-2.5 ${cfg.headerBg}`}>
           <div className="flex items-center gap-2">
             <Badge className={`text-xs px-2 py-0.5 ${cfg.badgeClass}`}>{cfg.label}</Badge>
             {reward.name && (
-              <span className="text-sm text-zinc-300 truncate max-w-[180px]">{reward.name}</span>
+              <span className="text-sm text-slate-400 truncate max-w-[180px]">{reward.name}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
             <button
-              className="text-zinc-500 hover:text-zinc-300 p-1 rounded transition-colors"
+              className="text-slate-400 hover:text-slate-400 p-1 rounded transition-colors"
               onClick={() => setCollapsed(!collapsed)}
             >
               {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
             <button
-              className="text-zinc-500 hover:text-red-400 p-1 rounded transition-colors"
+              className="text-slate-400 hover:text-red-400 p-1 rounded transition-colors"
               onClick={onRemove}
             >
               <Trash2 className="w-4 h-4" />
@@ -326,10 +326,10 @@ function RewardCard({
                   <img
                     src={reward.imageUrl}
                     alt={reward.name}
-                    className="w-16 h-24 object-contain rounded-lg border border-zinc-700"
+                    className="w-16 h-24 object-contain rounded-lg border border-slate-200"
                   />
                   <button
-                    className="absolute -top-1 -right-1 bg-zinc-800 rounded-full p-1 text-zinc-400 hover:text-white border border-zinc-700 transition-colors"
+                    className="absolute -top-1 -right-1 bg-slate-50 rounded-full p-1 text-slate-500 hover:text-slate-900 border border-slate-200 transition-colors"
                     onClick={() => setSearchOpen(true)}
                   >
                     <Edit3 className="w-3 h-3" />
@@ -337,7 +337,7 @@ function RewardCard({
                 </div>
               ) : (
                 <button
-                  className="w-16 h-24 flex-shrink-0 rounded-lg border-2 border-dashed border-zinc-700 hover:border-blue-500/50 hover:bg-blue-950/10 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-blue-400 transition-all"
+                  className="w-16 h-24 flex-shrink-0 rounded-lg border-2 border-dashed border-slate-200 hover:border-blue-500/50 hover:bg-blue-950/10 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-blue-400 transition-all"
                   onClick={() => setSearchOpen(true)}
                 >
                   <Search className="w-4 h-4" />
@@ -347,7 +347,7 @@ function RewardCard({
 
               <div className="flex-1 space-y-2">
                 <div>
-                  <Label className="text-xs text-zinc-400 mb-1 block">卡片名稱</Label>
+                  <Label className="text-xs text-slate-500 mb-1 block">卡片名稱</Label>
                   <Input
                     className={`h-8 text-sm ${darkInput}`}
                     placeholder="手動輸入或搜尋綁定"
@@ -356,7 +356,7 @@ function RewardCard({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-zinc-400 mb-1 block">圖片 URL（可選）</Label>
+                  <Label className="text-xs text-slate-500 mb-1 block">圖片 URL（可選）</Label>
                   <Input
                     className={`h-8 text-sm ${darkInput}`}
                     placeholder="https://..."
@@ -370,7 +370,7 @@ function RewardCard({
             <div className="grid grid-cols-3 gap-2">
               {reward.rewardType !== "milestone" && (
                 <div>
-                  <Label className="text-xs text-zinc-400 mb-1 block">數量（張）</Label>
+                  <Label className="text-xs text-slate-500 mb-1 block">數量（張）</Label>
                   <Input
                     type="number"
                     min={1}
@@ -382,7 +382,7 @@ function RewardCard({
               )}
               {reward.rewardType === "milestone" && (
                 <div>
-                  <Label className="text-xs text-zinc-400 mb-1 block">觸發抽數</Label>
+                  <Label className="text-xs text-slate-500 mb-1 block">觸發抽數</Label>
                   <Input
                     type="number"
                     min={1}
@@ -394,7 +394,7 @@ function RewardCard({
                 </div>
               )}
               <div>
-                <Label className="text-xs text-zinc-400 mb-1 block">成本（HKD）</Label>
+                <Label className="text-xs text-slate-500 mb-1 block">成本（HKD）</Label>
                 <Input
                   type="number"
                   min={0}
@@ -406,8 +406,8 @@ function RewardCard({
               </div>
               {reward.rewardType !== "milestone" && (
                 <div className="flex flex-col justify-end">
-                  <span className="text-xs text-zinc-500 mb-1">小計</span>
-                  <span className="text-sm text-zinc-300 font-mono font-medium">
+                  <span className="text-xs text-slate-400 mb-1">小計</span>
+                  <span className="text-sm text-slate-400 font-mono font-medium">
                     HK${(reward.cost * reward.quantity).toFixed(0)}
                   </span>
                 </div>
@@ -449,10 +449,10 @@ function FinancialDashboard({ form }: { form: PoolFormData }) {
       {/* 主要指標網格 */}
       <div className="grid grid-cols-1 gap-3">
         {/* 總收入 */}
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-white/60 border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <DollarSign className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">總收入（滿池）</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wider">總收入（滿池）</span>
           </div>
           <div className="text-2xl font-bold font-mono text-green-400">
             HK${totalRevenue.toLocaleString()}
@@ -461,10 +461,10 @@ function FinancialDashboard({ form }: { form: PoolFormData }) {
         </div>
 
         {/* 總成本 */}
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-white/60 border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <BarChart3 className="w-4 h-4 text-red-400" />
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">總成本</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wider">總成本</span>
           </div>
           <div className="text-2xl font-bold font-mono text-red-400">
             HK${totalCost.toLocaleString()}
@@ -487,10 +487,10 @@ function FinancialDashboard({ form }: { form: PoolFormData }) {
                 ? <TrendingUp className="w-4 h-4 text-green-400" />
                 : <TrendingDown className="w-4 h-4 text-red-400" />
               }
-              <span className="text-xs text-zinc-500 uppercase tracking-wider">預期利潤</span>
+              <span className="text-xs text-slate-400 uppercase tracking-wider">預期利潤</span>
             </div>
             {!isProfit && (
-              <span className="text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-red-50 text-red-400 px-2 py-0.5 rounded-full font-medium">
                 ⚠ 虧損
               </span>
             )}
@@ -512,29 +512,29 @@ function FinancialDashboard({ form }: { form: PoolFormData }) {
       </div>
 
       {/* 卡池規模 */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-2">
+      <div className="bg-white/60 border border-slate-200 rounded-xl p-4 space-y-2">
         <div className="flex items-center gap-2 mb-2">
-          <Package className="w-4 h-4 text-zinc-400" />
-          <span className="text-xs text-zinc-500 uppercase tracking-wider">卡池規模</span>
+          <Package className="w-4 h-4 text-slate-500" />
+          <span className="text-xs text-slate-400 uppercase tracking-wider">卡池規模</span>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-zinc-800/50 rounded-lg p-2">
-            <div className="text-lg font-bold text-white">{form.totalSlots}</div>
-            <div className="text-xs text-zinc-500">總格數</div>
+          <div className="bg-slate-50/50 rounded-lg p-2">
+            <div className="text-lg font-bold text-slate-900">{form.totalSlots}</div>
+            <div className="text-xs text-slate-400">總格數</div>
           </div>
-          <div className="bg-zinc-800/50 rounded-lg p-2">
+          <div className="bg-slate-50/50 rounded-lg p-2">
             <div className="text-lg font-bold text-blue-400">{namedQty}</div>
-            <div className="text-xs text-zinc-500">命名獎品</div>
+            <div className="text-xs text-slate-400">命名獎品</div>
           </div>
-          <div className={`rounded-lg p-2 ${overflowCount > 0 ? "bg-red-900/30" : "bg-zinc-800/50"}`}>
-            <div className={`text-lg font-bold ${overflowCount > 0 ? "text-red-400" : "text-zinc-300"}`}>
+          <div className={`rounded-lg p-2 ${overflowCount > 0 ? "bg-red-50" : "bg-slate-50/50"}`}>
+            <div className={`text-lg font-bold ${overflowCount > 0 ? "text-red-400" : "text-slate-400"}`}>
               {overflowCount > 0 ? `-${overflowCount}` : hiddenCount}
             </div>
-            <div className="text-xs text-zinc-500">{overflowCount > 0 ? "超出" : "暗卡"}</div>
+            <div className="text-xs text-slate-400">{overflowCount > 0 ? "超出" : "暗卡"}</div>
           </div>
         </div>
         {overflowCount > 0 && (
-          <div className="text-xs text-red-400 bg-red-900/20 rounded-lg px-3 py-2 flex items-center gap-2">
+          <div className="text-xs text-red-400 bg-red-50 rounded-lg px-3 py-2 flex items-center gap-2">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
             獎品數量超過總格數 {overflowCount} 格，請調整
           </div>
@@ -542,15 +542,15 @@ function FinancialDashboard({ form }: { form: PoolFormData }) {
       </div>
 
       {/* 官方回購 */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-2">
-        <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">官方回購估算</div>
+      <div className="bg-white/60 border border-slate-200 rounded-xl p-4 space-y-2">
+        <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">官方回購估算</div>
         <div className="flex justify-between text-sm">
-          <span className="text-zinc-400">每張回購</span>
-          <span className="text-zinc-300 font-mono">{form.officialBuybackPoints} 點</span>
+          <span className="text-slate-500">每張回購</span>
+          <span className="text-slate-400 font-mono">{form.officialBuybackPoints} 點</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-zinc-400">暗卡總回購</span>
-          <span className="text-zinc-300 font-mono">HK${buybackTotal.toLocaleString()}</span>
+          <span className="text-slate-500">暗卡總回購</span>
+          <span className="text-slate-400 font-mono">HK${buybackTotal.toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -583,9 +583,9 @@ function RewardSection({
   const tabRewards = rewards.filter((r) => r.rewardType === activeTab);
 
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-white/40 border border-slate-200 rounded-xl overflow-hidden">
       {/* 分頁標籤列 */}
-      <div className="flex border-b border-zinc-800 bg-zinc-900/60">
+      <div className="flex border-b border-slate-200 bg-white/60">
         {TABS.map((type) => {
           const cfg = TIER_CONFIG[type];
           const count = rewards.filter((r) => r.rewardType === type).length;
@@ -595,8 +595,8 @@ function RewardSection({
               key={type}
               className={`flex-1 flex flex-col items-center gap-0.5 py-3 px-2 text-xs font-medium transition-all relative ${
                 isActive
-                  ? "text-white"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  ? "text-slate-900"
+                  : "text-slate-400 hover:text-slate-400"
               }`}
               onClick={() => setActiveTab(type)}
             >
@@ -628,11 +628,11 @@ function RewardSection({
         {activeTab !== "milestone" && (
           <div className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${
             overflowCount > 0
-              ? "bg-red-900/20 border border-red-800/40 text-red-400"
-              : "bg-zinc-800/40 text-zinc-500"
+              ? "bg-red-50 border border-red-800/40 text-red-400"
+              : "bg-slate-50/40 text-slate-400"
           }`}>
             <span>命名獎品 {namedQty} 格 / 總格數 {totalSlots} 格</span>
-            <span className={overflowCount > 0 ? "text-red-400 font-medium" : "text-zinc-400"}>
+            <span className={overflowCount > 0 ? "text-red-400 font-medium" : "text-slate-500"}>
               {overflowCount > 0 ? `⚠ 超出 ${overflowCount} 格` : `暗卡 ${hiddenCount} 格`}
             </span>
           </div>
@@ -827,7 +827,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
   if (isEditing && isLoadingExisting) {
     return (
-      <div className="flex items-center justify-center py-16 text-zinc-500">
+      <div className="flex items-center justify-center py-16 text-slate-400">
         <RefreshCw className="w-5 h-5 animate-spin mr-2" />
         載入草稿資料中...
       </div>
@@ -844,21 +844,21 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
             <Edit3 className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span className="text-sm text-blue-300 font-medium">正在編輯草稿卡池</span>
             {onCancelEdit && (
-              <button className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 transition-colors" onClick={onCancelEdit}>
+              <button className="ml-auto text-xs text-slate-400 hover:text-slate-400 transition-colors" onClick={onCancelEdit}>
                 取消編輯
               </button>
             )}
           </div>
         )}
         {/* 基本設定卡片 */}
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-5 space-y-4 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <div className="bg-white/40 border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
             <Sparkles className="w-4 h-4 text-blue-400" />
-            <h3 className="text-sm font-semibold text-white">基本設定</h3>
+            <h3 className="text-sm font-semibold text-slate-900">基本設定</h3>
           </div>
 
           <div>
-            <Label className="text-xs text-zinc-400 mb-1.5 block">
+            <Label className="text-xs text-slate-500 mb-1.5 block">
               卡池標題 <span className="text-zinc-600 ml-1">（僅後台顯示，用戶看不到）</span>
             </Label>
             <Input
@@ -872,7 +872,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
           {/* 封面橫幅上傳 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <Label className="text-xs text-zinc-400">
+              <Label className="text-xs text-slate-500">
                 封面橫幅圖片 <span className="text-zinc-600 ml-1">（選填，建議 16:9，最大 5MB）</span>
               </Label>
               <button
@@ -897,10 +897,10 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
               </button>
             </div>
             {form.coverImageUrl ? (
-              <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900">
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white">
                 <img src={form.coverImageUrl} alt="封面" className="w-full h-32 object-cover" />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity bg-black/50">
-                  <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                  <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-slate-900 text-xs px-3 py-1.5 rounded-lg transition-colors">
                     {coverUploading ? "上傳中..." : "更換圖片"}
                     <input type="file" accept="image/*" className="hidden" disabled={coverUploading} onChange={async (e) => {
                       const file = e.target.files?.[0];
@@ -916,12 +916,12 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
                       } catch { toast.error("上傳失敗"); } finally { setCoverUploading(false); }
                     }} />
                   </label>
-                  <button className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition-colors" onClick={() => updateField("coverImageUrl", "")}>移除</button>
+                  <button className="bg-red-600 hover:bg-red-500 text-slate-900 text-xs px-3 py-1.5 rounded-lg transition-colors" onClick={() => updateField("coverImageUrl", "")}>移除</button>
                 </div>
               </div>
             ) : (
-              <label className={`flex flex-col items-center justify-center w-full h-24 rounded-xl border-2 border-dashed border-zinc-700 hover:border-blue-500/60 hover:bg-blue-950/10 cursor-pointer transition-all ${coverUploading ? "opacity-50 pointer-events-none" : ""}`}>
-                <div className="flex flex-col items-center gap-1.5 text-zinc-500 hover:text-blue-400 transition-colors">
+              <label className={`flex flex-col items-center justify-center w-full h-24 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-500/60 hover:bg-blue-950/10 cursor-pointer transition-all ${coverUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="flex flex-col items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors">
                   {coverUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5" />}
                   <span className="text-xs">{coverUploading ? "上傳中..." : "點擊上傳封面橫幅"}</span>
                 </div>
@@ -943,7 +943,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
           </div>
 
           <div>
-            <Label className="text-xs text-zinc-400 mb-1.5 block">
+            <Label className="text-xs text-slate-500 mb-1.5 block">
               備注說明 <span className="text-zinc-600 ml-1">（選填）</span>
             </Label>
             <Textarea
@@ -957,7 +957,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
           {/* 標籤勾選 */}
           <div>
-            <Label className="text-xs text-zinc-400 mb-2 block">前台標籤 <span className="text-zinc-600 ml-1">（顯示在卡池封面）</span></Label>
+            <Label className="text-xs text-slate-500 mb-2 block">前台標籤 <span className="text-zinc-600 ml-1">（顯示在卡池封面）</span></Label>
             <div className="flex flex-wrap gap-2">
               {["限時", "新上架", "高回報", "大賞保證", "BOX 形式", "PSA10", "熱門"].map((tag) => {
                 const selected = form.tags.includes(tag);
@@ -968,8 +968,8 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
                     onClick={() => updateField("tags", selected ? form.tags.filter((t) => t !== tag) : [...form.tags, tag])}
                     className={`text-xs px-3 py-1 rounded-full border font-medium transition-all ${
                       selected
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-blue-500/60 hover:text-blue-400"
+                        ? "bg-blue-600 border-blue-500 text-slate-900"
+                        : "bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-500/60 hover:text-blue-400"
                     }`}
                   >
                     {selected ? "✓ " : ""}{tag}
@@ -981,7 +981,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
           {/* 回報率 */}
           <div>
-            <Label className="text-xs text-zinc-400 mb-1.5 block">
+            <Label className="text-xs text-slate-500 mb-1.5 block">
               總回報率 (%) <span className="text-zinc-600 ml-1">（選填，顯示在封面，例：97）</span>
             </Label>
             <div className="flex items-center gap-2">
@@ -994,7 +994,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
                 value={form.returnRate}
                 onChange={(e) => updateField("returnRate", e.target.value === "" ? "" : parseInt(e.target.value) || "")}
               />
-              <span className="text-zinc-500 text-sm">%</span>
+              <span className="text-slate-400 text-sm">%</span>
               {form.returnRate !== "" && Number(form.returnRate) >= 100 && (
                 <span className="text-xs bg-green-900/40 text-green-400 border border-green-700/50 px-2 py-0.5 rounded-full">✓ 保證回本</span>
               )}
@@ -1003,7 +1003,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-zinc-400 mb-1.5 block">總格數</Label>
+              <Label className="text-xs text-slate-500 mb-1.5 block">總格數</Label>
               <Input
                 type="number"
                 min={1}
@@ -1014,7 +1014,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
               />
             </div>
             <div>
-              <Label className="text-xs text-zinc-400 mb-1.5 block">每格售價（點數）</Label>
+              <Label className="text-xs text-slate-500 mb-1.5 block">每格售價（點數）</Label>
               <Input
                 type="number"
                 min={1}
@@ -1027,7 +1027,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs text-zinc-400 mb-1.5 block">回購點數/張</Label>
+              <Label className="text-xs text-slate-500 mb-1.5 block">回購點數/張</Label>
               <Input
                 type="number"
                 min={0}
@@ -1037,7 +1037,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
               />
             </div>
             <div>
-              <Label className="text-xs text-zinc-400 mb-1.5 block">可見卡成本/格</Label>
+              <Label className="text-xs text-slate-500 mb-1.5 block">可見卡成本/格</Label>
               <Input
                 type="number"
                 min={0}
@@ -1048,7 +1048,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
               />
             </div>
             <div>
-              <Label className="text-xs text-zinc-400 mb-1.5 block">雜項成本（HKD）</Label>
+              <Label className="text-xs text-slate-500 mb-1.5 block">雜項成本（HKD）</Label>
               <Input
                 type="number"
                 min={0}
@@ -1072,8 +1072,8 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
 
         {/* 提交按鈕 */}
         <Button
-          className={`w-full text-white hover:scale-[1.01] transition-all ${
-            isEditing ? "bg-blue-700 hover:bg-blue-600" : "bg-zinc-700 hover:bg-zinc-600"
+          className={`w-full text-slate-900 hover:scale-[1.01] transition-all ${
+            isEditing ? "bg-blue-700 hover:bg-blue-600" : "bg-slate-200 hover:bg-slate-300"
           }`}
           onClick={handleSubmit}
           disabled={createMutation.isPending || updateMutation.isPending}
@@ -1090,7 +1090,7 @@ function PoolForm({ onSuccess, editingPoolId, onCancelEdit }: { onSuccess: () =>
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-sm font-semibold text-zinc-300">即時財務看板</span>
+          <span className="text-sm font-semibold text-slate-400">即時財務看板</span>
         </div>
         <FinancialDashboard form={form} />
       </div>
@@ -1114,30 +1114,30 @@ function DeleteConfirmDialog({
 }) {
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <AlertDialogContent className="!bg-zinc-900 border border-zinc-800 shadow-2xl">
+      <AlertDialogContent className="!bg-white border border-slate-200 shadow-2xl">
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-red-900/30">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-red-50">
               <Trash2 className="w-5 h-5 text-red-400" />
             </div>
-            <AlertDialogTitle className="text-white font-bold">刪除卡池</AlertDialogTitle>
+            <AlertDialogTitle className="text-slate-900 font-bold">刪除卡池</AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-zinc-400 pl-13">
+          <AlertDialogDescription className="text-slate-500 pl-13">
             確定要删除此卡池嗎？此操作無法復原，所有相關抽卡記錄將一併刪除。
-            <span className="block mt-2 font-semibold text-zinc-200">
+            <span className="block mt-2 font-semibold text-slate-600">
               「{poolTitle}」
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel
-            className="border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800 bg-transparent"
+            className="border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 bg-transparent"
             onClick={onCancel}
           >
             取消
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-red-700 hover:bg-red-600 text-white border-0 font-bold"
+            className="bg-red-700 hover:bg-red-600 text-slate-900 border-0 font-bold"
             onClick={onConfirm}
             disabled={isPending}
           >
@@ -1185,9 +1185,9 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
 
   const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      draft: "bg-zinc-700/60 text-zinc-300 border-zinc-600",
+      draft: "bg-slate-200/60 text-slate-400 border-slate-300",
       active: "bg-green-900/40 text-green-300 border-green-700",
-      archived: "bg-zinc-800/60 text-zinc-500 border-zinc-700",
+      archived: "bg-slate-50/60 text-slate-400 border-slate-200",
     };
     const labels: Record<string, string> = {
       draft: "草稿",
@@ -1203,7 +1203,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-zinc-500">
+      <div className="flex items-center justify-center py-16 text-slate-400">
         <RefreshCw className="w-5 h-5 animate-spin mr-2" />
         載入中...
       </div>
@@ -1222,15 +1222,15 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400 font-medium">{pools?.length ?? 0} 個卡池</span>
-          <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white h-8" onClick={() => refetch()}>
+          <span className="text-sm text-slate-500 font-medium">{pools?.length ?? 0} 個卡池</span>
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900 h-8" onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             重新整理
           </Button>
         </div>
 
         {pools?.length === 0 && (
-          <div className="text-center py-16 text-zinc-600 border-2 border-dashed border-zinc-800 rounded-xl">
+          <div className="text-center py-16 text-zinc-600 border-2 border-dashed border-slate-200 rounded-xl">
             尚無卡池，請在「建立新卡池」分頁建立
           </div>
         )}
@@ -1238,7 +1238,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
         {pools?.map((pool: any) => (
           <div
             key={pool.id}
-            className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center gap-4 hover:border-zinc-700 transition-colors"
+            className="bg-white/50 border border-slate-200 rounded-xl p-4 flex items-center gap-4 hover:border-slate-200 transition-colors"
           >
             {pool.coverImageUrl ? (
               <img
@@ -1247,7 +1247,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                 className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
               />
             ) : (
-              <div className="w-14 h-14 bg-zinc-800 rounded-lg flex-shrink-0 flex items-center justify-center text-zinc-600 text-xs">
+              <div className="w-14 h-14 bg-slate-50 rounded-lg flex-shrink-0 flex items-center justify-center text-zinc-600 text-xs">
                 無封面
               </div>
             )}
@@ -1255,9 +1255,9 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 {statusBadge(pool.status)}
-                <span className="text-sm font-semibold text-white truncate">{pool.title}</span>
+                <span className="text-sm font-semibold text-slate-900 truncate">{pool.title}</span>
               </div>
-              <div className="text-xs text-zinc-500 flex gap-3">
+              <div className="text-xs text-slate-400 flex gap-3">
                 <span>{pool.totalSlots} 格</span>
                 <span>{pool.pricePoints} 點/格</span>
                 <span>{new Date(pool.createdAt).toLocaleDateString("zh-TW")}</span>
@@ -1270,7 +1270,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 text-xs h-8 transition-all"
+                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-50 text-xs h-8 transition-all"
                     onClick={() => onEdit(pool.id)}
                   >
                     <Edit3 className="w-3 h-3 mr-1" />
@@ -1278,7 +1278,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-green-700 hover:bg-green-600 text-white text-xs h-8 hover:scale-[1.02] transition-all"
+                    className="bg-green-700 hover:bg-green-600 text-slate-900 text-xs h-8 hover:scale-[1.02] transition-all"
                     onClick={() => publishMutation.mutate({ poolId: pool.id })}
                     disabled={publishMutation.isPending}
                   >
@@ -1288,7 +1288,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-red-500 hover:text-red-400 hover:bg-red-900/20 text-xs h-8 transition-all"
+                    className="text-red-500 hover:text-red-400 hover:bg-red-50 text-xs h-8 transition-all"
                     onClick={() => setDeleteTarget({ id: pool.id, title: pool.title })}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -1300,7 +1300,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-zinc-700 bg-transparent text-zinc-400 hover:text-white text-xs h-8 hover:scale-[1.02] transition-all"
+                    className="border-slate-200 bg-transparent text-slate-500 hover:text-slate-900 text-xs h-8 hover:scale-[1.02] transition-all"
                     onClick={() => archiveMutation.mutate({ poolId: pool.id })}
                     disabled={archiveMutation.isPending}
                   >
@@ -1310,7 +1310,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-red-500 hover:text-red-400 hover:bg-red-900/20 text-xs h-8 transition-all"
+                    className="text-red-500 hover:text-red-400 hover:bg-red-50 text-xs h-8 transition-all"
                     onClick={() => setDeleteTarget({ id: pool.id, title: pool.title })}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -1321,7 +1321,7 @@ function PoolList({ onEdit }: { onEdit: (poolId: number) => void }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-red-500 hover:text-red-400 hover:bg-red-900/20 text-xs h-8 transition-all"
+                  className="text-red-500 hover:text-red-400 hover:bg-red-50 text-xs h-8 transition-all"
                   onClick={() => setDeleteTarget({ id: pool.id, title: pool.title })}
                 >
                   <Trash2 className="w-3 h-3" />
@@ -1363,21 +1363,21 @@ export default function PoolAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-white">
+    <div className="min-h-screen bg-[#0d0d0d] text-slate-900">
       {/* 頁首 */}
-      <div className="border-b border-zinc-800/60 bg-zinc-900/40 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="border-b border-slate-200/60 bg-white/40 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">福袋卡池管理</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">建立、設定並發布 BOXIUM 福袋卡池</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">福袋卡池管理</h1>
+            <p className="text-xs text-slate-400 mt-0.5">建立、設定並發布 BOXIUM 福袋卡池</p>
           </div>
           {/* 分頁切換 */}
-          <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800 rounded-xl p-1">
+          <div className="flex gap-1 bg-white/80 border border-slate-200 rounded-xl p-1">
             <button
               className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-all hover:scale-[1.01] ${
                 tab === "list"
-                  ? "bg-zinc-700 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-white"
+                  ? "bg-slate-200 text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
               onClick={() => { setTab("list"); setEditingPoolId(undefined); }}
             >
@@ -1387,8 +1387,8 @@ export default function PoolAdmin() {
             <button
               className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-all hover:scale-[1.01] ${
                 tab === "create"
-                  ? "bg-zinc-700 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-white"
+                  ? "bg-slate-200 text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
               onClick={() => { setTab("create"); setEditingPoolId(undefined); }}
             >
@@ -1396,7 +1396,7 @@ export default function PoolAdmin() {
               建立新卡池
             </button>
             {tab === "edit" && (
-              <button className="px-4 py-1.5 text-sm rounded-lg font-medium bg-blue-700 text-white shadow-sm">
+              <button className="px-4 py-1.5 text-sm rounded-lg font-medium bg-blue-700 text-slate-900 shadow-sm">
                 <Edit3 className="w-3.5 h-3.5 inline mr-1.5" />
                 編輯草稿
               </button>

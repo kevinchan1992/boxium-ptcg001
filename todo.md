@@ -9926,3 +9926,14 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] AdminCompanyCardInventory.tsx：工具列主次分級、批量工具 dropdown、白底搜尋/篩選列、Slate 表格
 - [x] AdminCardInventory.tsx：同步套用 Slate 白底風格（工具列、搜尋列、表格 header/body/badge）
 - [x] TypeScript 0 errors，已部署
+
+## Admin UI 全局彻底重構（移除前台 Header + 深色硬編碼）（2026-07-21）
+- [x] App.tsx：偵測 /admin 路由，移除前台 TopNav 和 MessageCenter，移除 pt-14 padding
+- [x] 批量修復所有 Admin 組件（20 個）的深色硬編碼（bg-zinc-*, bg-gray-8/9, text-white）
+- [x] 修復 AdminVipDashboard.tsx 深色 class
+- [x] 修復 ContentWorkflowCenter.tsx 深色 class
+- [x] 修復 PoolAdmin.tsx 深色 class（保留彩色按鈕的 text-white）
+- [x] 修復 CardSelectionDialog.tsx 深色 class（Admin 後台使用）
+- [x] 修復 ClaimFormReviewDialog.tsx 深色 class
+- [x] index.css：新增 body:has(.admin-shell) Dialog/Sheet portal 強制 light mode CSS 覆蓋
+- [x] TypeScript 0 errors，已部署

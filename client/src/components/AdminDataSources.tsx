@@ -662,7 +662,7 @@ export function AdminDataSources() {
                 onClick={() => startSnkrdunkBatchUpdateMutation.mutate()}
                 disabled={startSnkrdunkBatchUpdateMutation.isPending || (snkrdunkTaskProgress?.status === 'running' || snkrdunkTaskProgress?.status === 'paused')}
                 variant="outline"
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                className="bg-blue-500 text-slate-900 hover:bg-blue-600"
               >
                 {startSnkrdunkBatchUpdateMutation.isPending ? (
                   <>

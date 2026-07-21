@@ -415,11 +415,11 @@ export function AdminCacheManagement() {
       {/* Cache Statistics */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
             <Database className="w-4 h-4 sm:w-5 sm:h-5" />
             緩存統計
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm">
             查看當前 SNKRDUNK 價格緩存狀態
           </CardDescription>
         </CardHeader>
@@ -427,20 +427,20 @@ export function AdminCacheManagement() {
           {cacheStats ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400 mb-1">總緩存數量</p>
-                <p className="text-xl sm:text-2xl font-bold text-white">{cacheStats.totalCount}</p>
+                <p className="text-sm text-slate-500 mb-1">總緩存數量</p>
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">{cacheStats.totalCount}</p>
               </div>
               <div className="bg-slate-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400 mb-1">最舊緩存</p>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm text-slate-500 mb-1">最舊緩存</p>
+                <p className="text-sm font-medium text-slate-900">
                   {cacheStats.oldestCache 
                     ? formatHKLocale(cacheStats.oldestCache)
                     : "N/A"}
                 </p>
               </div>
               <div className="bg-slate-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400 mb-1">最新緩存</p>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm text-slate-500 mb-1">最新緩存</p>
+                <p className="text-sm font-medium text-slate-900">
                   {cacheStats.newestCache 
                     ? formatHKLocale(cacheStats.newestCache)
                     : "N/A"}
@@ -449,46 +449,46 @@ export function AdminCacheManagement() {
             </div>
           ) : (
             <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-400">載入中...</span>
+              <RefreshCw className="w-6 h-6 animate-spin text-slate-500" />
+              <span className="ml-2 text-slate-500">載入中...</span>
             </div>
           )}
 
           {/* Detailed Cache Statistics */}
           {detailedStats && (
             <div className="mt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-white">快取狀態分布</h3>
+              <h3 className="text-lg font-semibold text-slate-900">快取狀態分布</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-green-900/20 border border-green-700 p-4 rounded-lg">
+                <div className="bg-emerald-50 border border-green-700 p-4 rounded-lg">
                   <p className="text-sm text-green-400 mb-1">✅ 熱快取 (&lt; 1 小時)</p>
                   <p className="text-2xl font-bold text-green-400">{detailedStats.hotCache}</p>
-                  <p className="text-xs text-gray-400 mt-1">跳過</p>
+                  <p className="text-xs text-slate-500 mt-1">跳過</p>
                 </div>
-                <div className="bg-yellow-900/20 border border-yellow-700 p-4 rounded-lg">
+                <div className="bg-amber-50 border border-yellow-700 p-4 rounded-lg">
                   <p className="text-sm text-yellow-400 mb-1">🟡 冷快取 (1-6 小時)</p>
                   <p className="text-2xl font-bold text-yellow-400">{detailedStats.coldCache}</p>
-                  <p className="text-xs text-gray-400 mt-1">跳過</p>
+                  <p className="text-xs text-slate-500 mt-1">跳過</p>
                 </div>
-                <div className="bg-orange-900/20 border border-orange-700 p-4 rounded-lg">
+                <div className="bg-orange-50 border border-orange-700 p-4 rounded-lg">
                   <p className="text-sm text-orange-400 mb-1">⚠️ 過期快取 (&gt; 6 小時)</p>
                   <p className="text-2xl font-bold text-orange-400">{detailedStats.expiredCache}</p>
-                  <p className="text-xs text-gray-400 mt-1">需要更新</p>
+                  <p className="text-xs text-slate-500 mt-1">需要更新</p>
                 </div>
-                <div className="bg-red-900/20 border border-red-700 p-4 rounded-lg">
+                <div className="bg-red-50 border border-red-700 p-4 rounded-lg">
                   <p className="text-sm text-red-400 mb-1">❌ 無快取</p>
                   <p className="text-2xl font-bold text-red-400">{detailedStats.noCache}</p>
-                  <p className="text-xs text-gray-400 mt-1">需要更新</p>
+                  <p className="text-xs text-slate-500 mt-1">需要更新</p>
                 </div>
               </div>
               
               <div className="bg-slate-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-gray-400">需要爬取</p>
-                  <p className="text-xl font-bold text-white">{detailedStats.needUpdate} 張 ({((detailedStats.needUpdate / detailedStats.total) * 100).toFixed(1)}%)</p>
+                  <p className="text-sm text-slate-500">需要爬取</p>
+                  <p className="text-xl font-bold text-slate-900">{detailedStats.needUpdate} 張 ({((detailedStats.needUpdate / detailedStats.total) * 100).toFixed(1)}%)</p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-400">預計時間</p>
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm text-slate-500">預計時間</p>
+                  <p className="text-sm font-medium text-slate-900">
                     {detailedStats.estimatedTimeMinutes < 60 
                       ? `${detailedStats.estimatedTimeMinutes.toFixed(0)} 分鐘`
                       : `${(detailedStats.estimatedTimeMinutes / 60).toFixed(1)} 小時`
@@ -513,12 +513,12 @@ export function AdminCacheManagement() {
                   {/* Progress Bar */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">總進度</span>
-                      <span className="text-white font-medium">
+                      <span className="text-slate-500">總進度</span>
+                      <span className="text-slate-900 font-medium">
                         {batchProgress.current} / {batchProgress.total} ({((batchProgress.current / batchProgress.total) * 100).toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-zinc-700 rounded-full h-4 overflow-hidden">
+                    <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
                         style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
@@ -527,8 +527,8 @@ export function AdminCacheManagement() {
                     {/* Estimated Time Remaining */}
                     {taskStartTime && batchProgress.current > 0 && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">預估剩餘時間</span>
-                        <span className="text-white font-medium">
+                        <span className="text-slate-500">預估剩餘時間</span>
+                        <span className="text-slate-900 font-medium">
                           {(() => {
                             const elapsedMs = Date.now() - taskStartTime;
                             const elapsedMinutes = elapsedMs / 1000 / 60;
@@ -553,17 +553,17 @@ export function AdminCacheManagement() {
                   
                   {/* Statistics */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-900/20 p-3 rounded-lg">
+                    <div className="bg-emerald-50 p-3 rounded-lg">
                       <p className="text-xs text-green-400 mb-1">成功</p>
                       <p className="text-xl font-bold text-green-400">{batchProgress.success}</p>
                     </div>
-                    <div className="bg-red-900/20 p-3 rounded-lg">
+                    <div className="bg-red-50 p-3 rounded-lg">
                       <p className="text-xs text-red-400 mb-1">失敗</p>
                       <p className="text-xl font-bold text-red-400">{batchProgress.failed}</p>
                     </div>
-                    <div className="bg-gray-700 p-3 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-1">跳過</p>
-                      <p className="text-xl font-bold text-white">{batchProgress.skipped}</p>
+                    <div className="bg-slate-200 p-3 rounded-lg">
+                      <p className="text-xs text-slate-500 mb-1">跳過</p>
+                      <p className="text-xl font-bold text-slate-900">{batchProgress.skipped}</p>
                     </div>
                   </div>
                   
@@ -623,11 +623,11 @@ export function AdminCacheManagement() {
       {/* On-Sale Listings Cache Statistics */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
             <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
             在售商品快取統計
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm">
             snkrdunkListingsCache — 每 6 小時由 GitHub Actions 批量更新
           </CardDescription>
         </CardHeader>
@@ -636,18 +636,18 @@ export function AdminCacheManagement() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-slate-50 p-3 rounded-lg">
-                  <p className="text-xs text-gray-400 mb-1">已快取卡牌</p>
-                  <p className="text-xl font-bold text-white">{listingsStats.totalCount.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 mb-1">已快取卡牌</p>
+                  <p className="text-xl font-bold text-slate-900">{listingsStats.totalCount.toLocaleString()}</p>
                 </div>
-                <div className="bg-green-900/20 border border-green-800 p-3 rounded-lg">
+                <div className="bg-emerald-50 border border-green-800 p-3 rounded-lg">
                   <p className="text-xs text-green-400 mb-1">熱快取 (&lt;1h)</p>
                   <p className="text-xl font-bold text-green-400">{listingsStats.hotCount.toLocaleString()}</p>
                 </div>
-                <div className="bg-yellow-900/20 border border-yellow-800 p-3 rounded-lg">
+                <div className="bg-amber-50 border border-yellow-800 p-3 rounded-lg">
                   <p className="text-xs text-yellow-400 mb-1">冷快取 (1-6h)</p>
                   <p className="text-xl font-bold text-yellow-400">{listingsStats.coldCount.toLocaleString()}</p>
                 </div>
-                <div className="bg-orange-900/20 border border-orange-800 p-3 rounded-lg">
+                <div className="bg-orange-50 border border-orange-800 p-3 rounded-lg">
                   <p className="text-xs text-orange-400 mb-1">已過期 (&gt;6h)</p>
                   <p className="text-xl font-bold text-orange-400">{listingsStats.expiredCount.toLocaleString()}</p>
                 </div>
@@ -656,8 +656,8 @@ export function AdminCacheManagement() {
                 <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <Clock className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">最後批量更新</p>
-                    <p className="text-sm font-medium text-white mt-0.5">
+                    <p className="text-xs text-slate-500">最後批量更新</p>
+                    <p className="text-sm font-medium text-slate-900 mt-0.5">
                       {listingsStats.lastBatchUpdate ? formatHKLocale(listingsStats.lastBatchUpdate) : "尚未更新"}
                     </p>
                   </div>
@@ -665,23 +665,23 @@ export function AdminCacheManagement() {
                 <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400">更新排程</p>
-                    <p className="text-sm font-medium text-white mt-0.5">每 6 小時（HKT 09:07 / 15:07 / 21:07 / 03:07）</p>
+                    <p className="text-xs text-slate-500">更新排程</p>
+                    <p className="text-sm font-medium text-slate-900 mt-0.5">每 6 小時（HKT 09:07 / 15:07 / 21:07 / 03:07）</p>
                   </div>
                 </div>
               </div>
               {listingsStats.totalCount > 0 && (
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-gray-400">
+                  <div className="flex justify-between text-xs text-slate-500">
                     <span>快取新鮮度</span>
                     <span>{(((listingsStats.hotCount + listingsStats.coldCount) / listingsStats.totalCount) * 100).toFixed(1)}% 有效</span>
                   </div>
-                  <div className="flex h-2.5 rounded-full overflow-hidden bg-zinc-700">
+                  <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-200">
                     <div className="bg-green-500 transition-all" style={{ width: `${(listingsStats.hotCount / listingsStats.totalCount) * 100}%` }} />
                     <div className="bg-yellow-500 transition-all" style={{ width: `${(listingsStats.coldCount / listingsStats.totalCount) * 100}%` }} />
                     <div className="bg-orange-500 transition-all" style={{ width: `${(listingsStats.expiredCount / listingsStats.totalCount) * 100}%` }} />
                   </div>
-                  <div className="flex gap-4 text-xs text-gray-500">
+                  <div className="flex gap-4 text-xs text-slate-400">
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />熱快取</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />冷快取</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" />已過期</span>
@@ -691,8 +691,8 @@ export function AdminCacheManagement() {
             </>
           ) : (
             <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-400">載入中...</span>
+              <RefreshCw className="w-6 h-6 animate-spin text-slate-500" />
+              <span className="ml-2 text-slate-500">載入中...</span>
             </div>
           )}
           <Button variant="outline" size="sm" className="text-xs" onClick={() => refetchListingsStats()}>
@@ -705,19 +705,19 @@ export function AdminCacheManagement() {
       {/* Cache List */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
             <List className="w-4 h-4 sm:w-5 sm:h-5" />
             緩存列表
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm">
             查看所有卡牌的緩存狀態，包含過期時間和商品數量
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoadingList ? (
             <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-400">載入中...</span>
+              <RefreshCw className="w-6 h-6 animate-spin text-slate-500" />
+              <span className="ml-2 text-slate-500">載入中...</span>
             </div>
           ) : cacheList && cacheList.data.length > 0 ? (
             <>
@@ -725,13 +725,13 @@ export function AdminCacheManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-slate-200 hover:bg-slate-50/50">
-                      <TableHead className="text-gray-300">卡牌圖片</TableHead>
-                      <TableHead className="text-gray-300">卡牌名稱</TableHead>
-                      <TableHead className="text-gray-300">卡號</TableHead>
-                      <TableHead className="text-gray-300">商品數量</TableHead>
-                      <TableHead className="text-gray-300">熱快取過期</TableHead>
-                      <TableHead className="text-gray-300">冷快取過期</TableHead>
-                      <TableHead className="text-gray-300">操作</TableHead>
+                      <TableHead className="text-slate-400">卡牌圖片</TableHead>
+                      <TableHead className="text-slate-400">卡牌名稱</TableHead>
+                      <TableHead className="text-slate-400">卡號</TableHead>
+                      <TableHead className="text-slate-400">商品數量</TableHead>
+                      <TableHead className="text-slate-400">熱快取過期</TableHead>
+                      <TableHead className="text-slate-400">冷快取過期</TableHead>
+                      <TableHead className="text-slate-400">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -750,25 +750,25 @@ export function AdminCacheManagement() {
                                 className="w-12 h-16 object-cover rounded"
                               />
                             ) : (
-                              <div className="w-12 h-16 bg-zinc-700 rounded flex items-center justify-center text-gray-500 text-xs">
+                              <div className="w-12 h-16 bg-slate-200 rounded flex items-center justify-center text-slate-400 text-xs">
                                 無圖
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="text-white font-medium">
+                          <TableCell className="text-slate-900 font-medium">
                             {cache.cardName || "未知卡牌"}
                           </TableCell>
-                          <TableCell className="text-gray-400">
+                          <TableCell className="text-slate-500">
                             {cache.cardNumber || "N/A"}
                           </TableCell>
-                          <TableCell className="text-white">
+                          <TableCell className="text-slate-900">
                             {cache.itemCount} 個
                           </TableCell>
                           <TableCell>
                             <span className={hotExpired ? "text-red-400" : "text-green-400"}>
                               {hotExpired ? "已過期" : "有效"}
                             </span>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs text-slate-400 mt-1">
                               {formatHKLocale(cache.hotExpiresAt, {
                                 month: "2-digit",
                                 day: "2-digit",
@@ -781,7 +781,7 @@ export function AdminCacheManagement() {
                             <span className={coldExpired ? "text-red-400" : "text-green-400"}>
                               {coldExpired ? "已過期" : "有效"}
                             </span>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs text-slate-400 mt-1">
                               {formatHKLocale(cache.expiresAt, {
                                 month: "2-digit",
                                 day: "2-digit",
@@ -824,7 +824,7 @@ export function AdminCacheManagement() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-slate-500">
                     第 {currentPage} 頁，共 {totalPages} 頁（總共 {cacheList.total} 條記錄）
                   </p>
                   <div className="flex gap-2">
@@ -849,7 +849,7 @@ export function AdminCacheManagement() {
               )}
             </>
           ) : (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-slate-500">
               目前沒有任何緩存記錄
             </div>
           )}
@@ -859,11 +859,11 @@ export function AdminCacheManagement() {
       {/* Cache Warming */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
             <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
             快取預熱
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm">
             預先爬取熱門卡牌數據，減少用戶首次查詢等待時間
           </CardDescription>
         </CardHeader>
@@ -899,14 +899,14 @@ export function AdminCacheManagement() {
       {/* Clear Specific Card Cache */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">清除指定卡牌緩存</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-slate-900">清除指定卡牌緩存</CardTitle>
+          <CardDescription className="text-slate-500">
             輸入卡牌 ID 清除該卡牌的 SNKRDUNK 價格緩存，強制重新抓取最新數據
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cardId" className="text-gray-300">卡牌 ID</Label>
+            <Label htmlFor="cardId" className="text-slate-400">卡牌 ID</Label>
             <div className="flex gap-2">
               <Input
                 id="cardId"
@@ -914,7 +914,7 @@ export function AdminCacheManagement() {
                 placeholder="例如: 180001"
                 value={cardIdInput}
                 onChange={(e) => setCardIdInput(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white"
+                className="bg-slate-50 border-slate-200 text-slate-900"
               />
               <BrandButton
                 onClick={handleClearCardCache}
@@ -949,8 +949,8 @@ export function AdminCacheManagement() {
       {/* Clear All Cache */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">清除所有緩存</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-slate-900">清除所有緩存</CardTitle>
+          <CardDescription className="text-slate-500">
             清除所有卡牌的 SNKRDUNK 價格緩存，強制重新抓取所有數據
           </CardDescription>
         </CardHeader>
@@ -988,19 +988,19 @@ export function AdminCacheManagement() {
       <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
         <AlertDialogContent className="bg-white border-slate-200 shadow-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">確認清除所有緩存？</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogTitle className="text-slate-900">確認清除所有緩存？</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500">
               此操作將清除所有 {cacheStats?.totalCount || 0} 條 SNKRDUNK 價格緩存記錄。
               清除後，系統將在下次訪問時重新抓取所有卡牌的最新價格數據。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-50 text-white border-slate-200">
+            <AlertDialogCancel className="bg-slate-50 text-slate-900 border-slate-200">
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleClearAllCache}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-slate-900"
             >
               確認清除
             </AlertDialogAction>
@@ -1012,18 +1012,18 @@ export function AdminCacheManagement() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent className="bg-white border-slate-200 shadow-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">確認取消任務</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogTitle className="text-slate-900">確認取消任務</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500">
               您確定要取消批量更新任務嗎？此操作將停止所有正在進行的更新。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-50 hover:bg-zinc-700 text-white border-slate-200">
+            <AlertDialogCancel className="bg-slate-50 hover:bg-slate-200 text-slate-900 border-slate-200">
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmCancelTask}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-slate-900"
             >
               確認取消
             </AlertDialogAction>

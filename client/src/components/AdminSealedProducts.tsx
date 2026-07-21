@@ -57,19 +57,19 @@ export default function AdminSealedProducts() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <Package className="w-5 h-5 text-yellow-400" />
             卡盒管理
           </h2>
-          <p className="text-sm text-gray-400 mt-1">管理卡盒封面圖，確保 eBay 圖片搜尋準確</p>
+          <p className="text-sm text-slate-500 mt-1">管理卡盒封面圖，確保 eBay 圖片搜尋準確</p>
         </div>
-        <Badge variant="outline" className="text-gray-300 border-gray-600">
+        <Badge variant="outline" className="text-slate-400 border-slate-300">
           共 {products?.length ?? 0} 個卡盒
         </Badge>
       </div>
 
       {(!products || products.length === 0) ? (
-        <div className="flex flex-col items-center justify-center h-48 text-gray-500">
+        <div className="flex flex-col items-center justify-center h-48 text-slate-400">
           <Package className="w-12 h-12 mb-3 opacity-30" />
           <p>目前沒有卡盒資料</p>
           <p className="text-xs mt-1">請在「數據源管理」中添加卡盒類型的數據源</p>
@@ -81,11 +81,11 @@ export default function AdminSealedProducts() {
               <CardHeader className="pb-2 pt-4 px-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm font-semibold text-white leading-snug line-clamp-2">
+                    <CardTitle className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
                       {product.name}
                     </CardTitle>
                     {product.nameJa && (
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{product.nameJa}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{product.nameJa}</p>
                     )}
                   </div>
                   <Badge className="shrink-0 bg-purple-900/50 text-purple-300 border-purple-700 text-xs">
@@ -93,9 +93,9 @@ export default function AdminSealedProducts() {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-gray-500">ID: {product.id}</span>
+                  <span className="text-xs text-slate-400">ID: {product.id}</span>
                   {product.setCode && (
-                    <Badge variant="outline" className="text-xs text-gray-400 border-gray-600 px-1 py-0">
+                    <Badge variant="outline" className="text-xs text-slate-500 border-slate-300 px-1 py-0">
                       {product.setCode}
                     </Badge>
                   )}
@@ -104,7 +104,7 @@ export default function AdminSealedProducts() {
 
               <CardContent className="px-4 pb-4 space-y-3">
                 {/* 封面圖預覽 */}
-                <div className="relative w-full h-36 rounded-lg overflow-hidden bg-gray-800 border border-slate-200 flex items-center justify-center">
+                <div className="relative w-full h-36 rounded-lg overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center">
                   {product.imageUrl ? (
                     <img
                       src={getProxiedImageUrl(product.imageUrl) ?? ""}
@@ -116,7 +116,7 @@ export default function AdminSealedProducts() {
                       }}
                     />
                   ) : null}
-                  <div className={`flex flex-col items-center gap-1 text-gray-500 ${product.imageUrl ? 'hidden' : ''}`}>
+                  <div className={`flex flex-col items-center gap-1 text-slate-400 ${product.imageUrl ? 'hidden' : ''}`}>
                     <ImageIcon className="w-8 h-8 opacity-40" />
                     <span className="text-xs">無封面圖</span>
                   </div>
@@ -127,7 +127,7 @@ export default function AdminSealedProducts() {
                       rel="noopener noreferrer"
                       className="absolute top-1 right-1 bg-slate-800/70 rounded p-0.5 hover:bg-slate-900/80 transition-colors"
                     >
-                      <ExternalLink className="w-3 h-3 text-gray-300" />
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
                     </a>
                   )}
                 </div>
@@ -139,7 +139,7 @@ export default function AdminSealedProducts() {
                       value={editImageUrl}
                       onChange={(e) => setEditImageUrl(e.target.value)}
                       placeholder="https://example.com/image.jpg"
-                      className="bg-gray-800 border-gray-600 text-white text-xs h-8"
+                      className="bg-slate-50 border-slate-300 text-slate-900 text-xs h-8"
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -155,7 +155,7 @@ export default function AdminSealedProducts() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-700"
+                        className="flex-1 h-7 text-xs border-slate-300 text-slate-400 hover:bg-slate-200"
                         onClick={handleCancel}
                       >
                         <X className="w-3 h-3 mr-1" />
@@ -167,7 +167,7 @@ export default function AdminSealedProducts() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                    className="w-full h-7 text-xs border-slate-300 text-slate-400 hover:bg-slate-200 hover:text-slate-900"
                     onClick={() => handleEdit(product)}
                   >
                     <Pencil className="w-3 h-3 mr-1.5" />

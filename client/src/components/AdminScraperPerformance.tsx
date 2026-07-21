@@ -21,11 +21,11 @@ export function AdminScraperPerformance() {
       <div className="space-y-4">
         <Card className="bg-white border-slate-200">
           <CardHeader>
-            <CardTitle className="text-base md:text-lg text-white flex items-center gap-2">
+            <CardTitle className="text-base md:text-lg text-slate-900 flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-400" />
               爬蟲性能監控
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm text-gray-400">載入中...</CardDescription>
+            <CardDescription className="text-xs md:text-sm text-slate-500">載入中...</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -46,11 +46,11 @@ export function AdminScraperPerformance() {
     return (
       <Card className="bg-white border-slate-200">
         <CardHeader>
-          <CardTitle className="text-base md:text-lg text-white flex items-center gap-2">
+          <CardTitle className="text-base md:text-lg text-slate-900 flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-400" />
             爬蟲性能監控
           </CardTitle>
-          <CardDescription className="text-xs md:text-sm text-gray-400">無法載入性能數據</CardDescription>
+          <CardDescription className="text-xs md:text-sm text-slate-500">無法載入性能數據</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -91,17 +91,17 @@ export function AdminScraperPerformance() {
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className="text-base md:text-lg text-white flex items-center gap-2">
+              <CardTitle className="text-base md:text-lg text-slate-900 flex items-center gap-2">
                 <Activity className="h-5 w-5 text-blue-400" />
                 爬蟲性能監控
               </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-gray-400 mt-1">
+              <CardDescription className="text-xs md:text-sm text-slate-500 mt-1">
                 實時監控數據抓取性能、成功率和錯誤日誌
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Select value={source} onValueChange={(v) => setSource(v as any)}>
-                <SelectTrigger className="w-[130px] text-xs md:text-sm bg-slate-50 border-slate-200 text-white">
+                <SelectTrigger className="w-[130px] text-xs md:text-sm bg-slate-50 border-slate-200 text-slate-900">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,7 +111,7 @@ export function AdminScraperPerformance() {
               </Select>
 
               <Select value={String(hours)} onValueChange={(v) => setHours(Number(v))}>
-                <SelectTrigger className="w-[120px] text-xs md:text-sm bg-slate-50 border-slate-200 text-white">
+                <SelectTrigger className="w-[120px] text-xs md:text-sm bg-slate-50 border-slate-200 text-slate-900">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -127,7 +127,7 @@ export function AdminScraperPerformance() {
                 onClick={() => refetch()}
                 variant="outline"
                 size="sm"
-                className="text-xs md:text-sm border-slate-200 text-gray-300 hover:text-white hover:bg-slate-50"
+                className="text-xs md:text-sm border-slate-200 text-slate-400 hover:text-slate-900 hover:bg-slate-50"
               >
                 <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                 刷新
@@ -144,9 +144,9 @@ export function AdminScraperPerformance() {
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 className="h-4 w-4 text-blue-400" />
-              <span className="text-xs text-gray-400 font-medium">總請求數</span>
+              <span className="text-xs text-slate-500 font-medium">總請求數</span>
             </div>
-            <div className="text-2xl md:text-3xl font-bold text-white">{performance.totalRequests.toLocaleString()}</div>
+            <div className="text-2xl md:text-3xl font-bold text-slate-900">{performance.totalRequests.toLocaleString()}</div>
             <div className="flex items-center gap-3 mt-3 text-xs">
               <span className="flex items-center gap-1 text-green-400">
                 <CheckCircle2 className="h-3 w-3" />
@@ -169,7 +169,7 @@ export function AdminScraperPerformance() {
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-400" />
               )}
-              <span className="text-xs text-gray-400 font-medium">成功率</span>
+              <span className="text-xs text-slate-500 font-medium">成功率</span>
             </div>
             <div className={`text-2xl md:text-3xl font-bold ${getSuccessRateColor(performance.successRate)}`}>
               {performance.successRate}%
@@ -193,12 +193,12 @@ export function AdminScraperPerformance() {
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-4 w-4 text-blue-400" />
-              <span className="text-xs text-gray-400 font-medium">平均響應時間</span>
+              <span className="text-xs text-slate-500 font-medium">平均響應時間</span>
             </div>
             <div className={`text-2xl md:text-3xl font-bold ${getResponseTimeColor(performance.avgResponseTime)}`}>
               {(performance.avgResponseTime / 1000).toFixed(2)}s
             </div>
-            <div className="text-xs text-gray-500 mt-2">
+            <div className="text-xs text-slate-400 mt-2">
               {performance.avgResponseTime}ms
             </div>
           </CardContent>
@@ -209,9 +209,9 @@ export function AdminScraperPerformance() {
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="h-4 w-4 text-yellow-400" />
-              <span className="text-xs text-gray-400 font-medium">處理項目數</span>
+              <span className="text-xs text-slate-500 font-medium">處理項目數</span>
             </div>
-            <div className="text-2xl md:text-3xl font-bold text-white">{performance.totalItemsProcessed.toLocaleString()}</div>
+            <div className="text-2xl md:text-3xl font-bold text-slate-900">{performance.totalItemsProcessed.toLocaleString()}</div>
             <div className="flex items-center gap-1 mt-3 text-xs">
               <AlertTriangle className="h-3 w-3 text-yellow-500" />
               <span className="text-yellow-400">{performance.timeoutCount} 超時</span>
@@ -223,8 +223,8 @@ export function AdminScraperPerformance() {
       {/* Recent Logs */}
       <Card className="bg-white border-slate-200">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base md:text-lg text-white">最近爬取記錄</CardTitle>
-          <CardDescription className="text-xs md:text-sm text-gray-400">
+          <CardTitle className="text-base md:text-lg text-slate-900">最近爬取記錄</CardTitle>
+          <CardDescription className="text-xs md:text-sm text-slate-500">
             顯示最近 10 次爬取操作
           </CardDescription>
         </CardHeader>
@@ -232,8 +232,8 @@ export function AdminScraperPerformance() {
           <div className="space-y-2">
             {performance.recentLogs.length === 0 ? (
               <div className="text-center py-8">
-                <Activity className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">暫無爬取記錄</p>
+                <Activity className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">暫無爬取記錄</p>
               </div>
             ) : (
               performance.recentLogs.map((log: any) => (
@@ -252,25 +252,25 @@ export function AdminScraperPerformance() {
                     >
                       {log.source.toUpperCase()}
                     </Badge>
-                    <span className="text-gray-400">
+                    <span className="text-slate-500">
                       {log.operationType === "batch" ? "批量" : "單個"}
                     </span>
                     {log.cardId && (
-                      <span className="text-gray-500 font-mono text-xs">
+                      <span className="text-slate-400 font-mono text-xs">
                         #{log.cardId}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-gray-400">
+                  <div className="flex items-center gap-4 text-slate-500">
                     <span className={`font-mono ${
-                      log.responseTime > 10000 ? "text-yellow-400" : "text-gray-300"
+                      log.responseTime > 10000 ? "text-yellow-400" : "text-slate-400"
                     }`}>
                       {(log.responseTime / 1000).toFixed(2)}s
                     </span>
                     {log.itemsProcessed > 0 && (
                       <span>{log.itemsProcessed} 項</span>
                     )}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-slate-400">
                       {formatHKLocale(log.createdAt)}
                     </span>
                   </div>
@@ -289,7 +289,7 @@ export function AdminScraperPerformance() {
               <XCircle className="h-5 w-5" />
               錯誤日誌
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm text-gray-400">
+            <CardDescription className="text-xs md:text-sm text-slate-500">
               顯示最近 20 條錯誤記錄
             </CardDescription>
           </CardHeader>
@@ -316,12 +316,12 @@ export function AdminScraperPerformance() {
                         {log.status === "timeout" ? "超時" : "錯誤"}
                       </Badge>
                       {log.cardId && (
-                        <span className="text-xs text-gray-500 font-mono">
+                        <span className="text-xs text-slate-400 font-mono">
                           #{log.cardId}
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-slate-400">
                       {formatHKLocale(log.createdAt)}
                     </span>
                   </div>

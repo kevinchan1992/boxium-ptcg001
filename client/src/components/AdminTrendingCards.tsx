@@ -104,7 +104,7 @@ function GameTrendingPanel({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: accentColor }} />
           </div>
         ) : cards.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">
+          <div className="text-center py-8 text-slate-400 text-sm">
             暫無快取數據，請點擊「重新計算」
           </div>
         ) : (
@@ -116,11 +116,11 @@ function GameTrendingPanel({
               return (
                 <div key={card.id} className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-gray-500 transition-colors">
                   {/* 卡牌圖片 */}
-                  <div className="aspect-[2.5/3.5] relative overflow-hidden bg-gray-700">
+                  <div className="aspect-[2.5/3.5] relative overflow-hidden bg-slate-200">
                     {card.imageUrl ? (
                       <LazyImage src={getProxiedImageUrl(card.imageUrl) ?? ""} alt={card.name ?? ""} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">無圖片</div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">無圖片</div>
                     )}
                     {/* 排名徽章 */}
                     <div
@@ -154,11 +154,11 @@ function GameTrendingPanel({
                         <p className="text-xs font-bold" style={{ color: accentColor === "#06038d" ? "#818cf8" : "#f87171" }}>
                           HK${card.currentPrice?.toLocaleString()}
                         </p>
-                        <p className="text-[8px] text-gray-500">PSA10 參考價</p>
+                        <p className="text-[8px] text-slate-400">PSA10 參考價</p>
                       </div>
                       <Badge
                         variant="outline"
-                        className={`text-[9px] px-1 py-0 border-0 font-semibold ${priceChange >= 0 ? "bg-green-900/50 text-green-400" : "bg-red-900/50 text-red-400"}`}
+                        className={`text-[9px] px-1 py-0 border-0 font-semibold ${priceChange >= 0 ? "bg-green-900/50 text-green-400" : "bg-red-50 text-red-400"}`}
                       >
                         {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(1)}%
                       </Badge>

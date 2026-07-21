@@ -42,7 +42,7 @@ function ShareStatisticsCard() {
           <div className="flex items-center gap-3">
             <Share2 className="w-5 h-5 text-[#FEDD00]" />
             <div>
-              <CardTitle className="text-white text-base">分享統計</CardTitle>
+              <CardTitle className="text-slate-900 text-base">分享統計</CardTitle>
               <CardDescription className="text-xs">
                 總分享 {totalShares} 次 · {sortedStats.length} 篇文章有分享記錄
               </CardDescription>
@@ -50,46 +50,46 @@ function ShareStatisticsCard() {
           </div>
           <div className="flex items-center gap-2">
             {!isExpanded && totalShares > 0 && (
-              <div className="flex gap-3 text-xs text-gray-400 mr-4">
+              <div className="flex gap-3 text-xs text-slate-500 mr-4">
                 <span className="flex items-center gap-1"><Facebook className="w-3 h-3 text-blue-400" />{sortedStats.reduce((s, x) => s + x.facebook, 0)}</span>
                 <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3 text-green-400" />{sortedStats.reduce((s, x) => s + x.whatsapp, 0)}</span>
                 <span className="flex items-center gap-1"><Link2 className="w-3 h-3 text-yellow-400" />{sortedStats.reduce((s, x) => s + x.copyLink, 0)}</span>
               </div>
             )}
-            {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+            {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
           </div>
         </div>
       </CardHeader>
       {isExpanded && (
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-6 text-gray-400">載入中...</div>
+            <div className="text-center py-6 text-slate-500">載入中...</div>
           ) : sortedStats.length > 0 ? (
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-1"><TrendingUp className="w-3.5 h-3.5" />總分享</div>
-                  <div className="text-xl font-bold text-white">{totalShares}</div>
+                  <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1"><TrendingUp className="w-3.5 h-3.5" />總分享</div>
+                  <div className="text-xl font-bold text-slate-900">{totalShares}</div>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-lg border border-blue-800/30">
                   <div className="flex items-center gap-1.5 text-blue-400 text-xs mb-1"><Facebook className="w-3.5 h-3.5" />Facebook</div>
-                  <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.facebook, 0)}</div>
+                  <div className="text-xl font-bold text-slate-900">{sortedStats.reduce((s, x) => s + x.facebook, 0)}</div>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-lg border border-green-800/30">
                   <div className="flex items-center gap-1.5 text-green-400 text-xs mb-1"><MessageCircle className="w-3.5 h-3.5" />WhatsApp</div>
-                  <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.whatsapp, 0)}</div>
+                  <div className="text-xl font-bold text-slate-900">{sortedStats.reduce((s, x) => s + x.whatsapp, 0)}</div>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-lg border border-yellow-800/30">
                   <div className="flex items-center gap-1.5 text-yellow-400 text-xs mb-1"><Link2 className="w-3.5 h-3.5" />複製連結</div>
-                  <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.copyLink, 0)}</div>
+                  <div className="text-xl font-bold text-slate-900">{sortedStats.reduce((s, x) => s + x.copyLink, 0)}</div>
                 </div>
               </div>
 
               {/* Sort */}
               <div className="flex justify-end">
                 <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                  <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-white text-xs h-8">
+                  <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-slate-900 text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -117,8 +117,8 @@ function ShareStatisticsCard() {
                   <tbody>
                     {sortedStats.slice(0, 10).map((stat, i) => (
                       <tr key={stat.postId} className="border-b border-slate-200 hover:bg-slate-50/50">
-                        <td className="px-3 py-2 text-gray-500">{i + 1}</td>
-                        <td className="px-3 py-2 text-white">
+                        <td className="px-3 py-2 text-slate-400">{i + 1}</td>
+                        <td className="px-3 py-2 text-slate-900">
                           <a href={`/blog/${stat.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#FEDD00] transition-colors line-clamp-1">
                             {stat.title}
                           </a>
@@ -134,7 +134,7 @@ function ShareStatisticsCard() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-6 text-gray-400">
+            <div className="text-center py-6 text-slate-500">
               <Share2 className="w-10 h-10 mx-auto mb-3 opacity-50" />
               <p className="text-sm">還沒有分享數據</p>
             </div>
@@ -400,14 +400,14 @@ export function AdminBlogManagement() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-white">文章管理</CardTitle>
+              <CardTitle className="text-slate-900">文章管理</CardTitle>
               <CardDescription>共 {posts?.total || 0} 篇文章</CardDescription>
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button
                 onClick={() => setActiveView(activeView === 'cluster' ? 'list' : 'cluster')}
                 variant="outline"
-                className={`border-zinc-600 text-sm ${activeView === 'cluster' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-700' : 'text-gray-300 hover:bg-zinc-700'}`}
+                className={`border-slate-300 text-sm ${activeView === 'cluster' ? 'bg-indigo-600 border-indigo-500 text-slate-900 hover:bg-indigo-700' : 'text-slate-400 hover:bg-slate-200'}`}
                 size="sm"
               >
                 <FolderOpen className="w-4 h-4 mr-1.5" />
@@ -449,16 +449,16 @@ export function AdminBlogManagement() {
           {activeView !== 'cluster' && (
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
                 placeholder="搜尋文章標題..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                className="bg-slate-50 border-slate-200 text-white pl-9"
+                className="bg-slate-50 border-slate-200 text-slate-900 pl-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="w-32 bg-slate-50 border-slate-200 text-white">
+              <SelectTrigger className="w-32 bg-slate-50 border-slate-200 text-slate-900">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -468,7 +468,7 @@ export function AdminBlogManagement() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-white">
+              <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-slate-900">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -483,9 +483,9 @@ export function AdminBlogManagement() {
 
           {/* Post List - only show in list mode */}
           {activeView !== 'cluster' && isLoading ? (
-            <div className="text-center py-12 text-gray-400">載入中...</div>
+            <div className="text-center py-12 text-slate-500">載入中...</div>
           ) : filteredPosts.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-slate-500">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>沒有找到文章</p>
               <Button onClick={() => setActiveView('generate')} className="mt-4 bg-purple-600 hover:bg-purple-700" size="sm">
@@ -515,15 +515,15 @@ export function AdminBlogManagement() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <Badge className={post.status === 'published' ? 'bg-green-600 text-white text-[10px] px-1.5 py-0' : 'bg-zinc-600 text-gray-300 text-[10px] px-1.5 py-0'}>
+                      <Badge className={post.status === 'published' ? 'bg-green-600 text-slate-900 text-[10px] px-1.5 py-0' : 'bg-slate-200 text-slate-500 text-[10px] px-1.5 py-0'}>
                         {post.status === 'published' ? '已發布' : '草稿'}
                       </Badge>
                       {post.category && (
-                        <Badge className="bg-zinc-700 text-gray-300 text-[10px] px-1.5 py-0">{post.category.name}</Badge>
+                        <Badge className="bg-slate-200 text-slate-400 text-[10px] px-1.5 py-0">{post.category.name}</Badge>
                       )}
                     </div>
-                    <p className="text-white text-sm font-medium line-clamp-1">{post.title}</p>
-                    <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2 flex-wrap">
+                    <p className="text-slate-900 text-sm font-medium line-clamp-1">{post.title}</p>
+                    <p className="text-slate-400 text-xs mt-0.5 flex items-center gap-2 flex-wrap">
                       <Clock className="w-3 h-3" />
                       {formatHKDate(post.publishedAt || post.createdAt)}
                       {post.viewCount > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.viewCount}</span>}
@@ -538,15 +538,15 @@ export function AdminBlogManagement() {
                   {/* Action buttons — always visible (not hover-only) for touch devices */}
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleEdit(post); }}
-                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
+                      className="h-7 px-2 border-slate-300 text-slate-400 hover:bg-slate-200 text-xs">
                       <PenLine className="w-3 h-3 sm:mr-1" /><span className="hidden sm:inline">編輯</span>
                     </Button>
                     <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleTogglePublish(post.id); }}
-                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs">
+                      className="h-7 px-2 border-slate-300 text-slate-400 hover:bg-slate-200 text-xs">
                       {post.status === 'published' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </Button>
                     <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleTranslate(post.id); }}
-                      className="h-7 px-2 border-zinc-600 text-gray-300 hover:bg-zinc-700 text-xs hidden sm:flex"
+                      className="h-7 px-2 border-slate-300 text-slate-400 hover:bg-slate-200 text-xs hidden sm:flex"
                       disabled={translatePostMutation.isPending}>
                       <Globe className="w-3 h-3" />
                     </Button>
@@ -564,12 +564,12 @@ export function AdminBlogManagement() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1} className="border-slate-200 text-white hover:bg-slate-50">
+                disabled={currentPage === 1} className="border-slate-200 text-slate-900 hover:bg-slate-50">
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <span className="text-gray-400 text-sm">{currentPage} / {totalPages}</span>
+              <span className="text-slate-500 text-sm">{currentPage} / {totalPages}</span>
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages} className="border-slate-200 text-white hover:bg-slate-50">
+                disabled={currentPage === totalPages} className="border-slate-200 text-slate-900 hover:bg-slate-50">
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -595,10 +595,10 @@ function WorkflowStepIndicator({ currentStep }: { currentStep: number }) {
         <div key={step.id} className="flex items-center gap-1 flex-shrink-0">
           <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
             currentStep === step.id
-              ? 'bg-purple-600 text-white'
+              ? 'bg-purple-600 text-slate-900'
               : currentStep > step.id
               ? 'bg-green-600/20 text-green-400 border border-green-600/30'
-              : 'bg-slate-50 text-gray-500'
+              : 'bg-slate-50 text-slate-400'
           }`}>
             {currentStep > step.id ? (
               <Check className="w-3 h-3" />
@@ -765,11 +765,11 @@ function AIArticleGenerator({
     <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-slate-900 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-400" />
             AI 內容工廠
           </CardTitle>
-          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
             <ChevronLeft className="w-4 h-4 mr-1" /> 返回
           </Button>
         </div>
@@ -781,14 +781,14 @@ function AIArticleGenerator({
         {/* ── STEP 1: 輸入素材 ── */}
         {workflowStep === 1 && (
           <div className="space-y-4">
-            <div className="p-3 bg-purple-900/20 border border-purple-700/30 rounded-lg">
+            <div className="p-3 bg-purple-50 border border-purple-700/30 rounded-lg">
               <p className="text-purple-300 text-xs font-medium mb-1">📋 步驟 1：提供素材</p>
-              <p className="text-gray-400 text-xs">選擇輸入方式，提供文章主題或參考資料。AI 將分析並制定內容策略。</p>
+              <p className="text-slate-500 text-xs">選擇輸入方式，提供文章主題或參考資料。AI 將分析並制定內容策略。</p>
             </div>
 
             {/* Input Mode Tabs */}
             <div>
-              <Label className="text-white mb-2 block text-sm">輸入方式</Label>
+              <Label className="text-slate-900 mb-2 block text-sm">輸入方式</Label>
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   { key: 'topic' as const, icon: PenLine, label: '主題' },
@@ -798,7 +798,7 @@ function AIArticleGenerator({
                 ].map(({ key, icon: Icon, label }) => (
                   <Button key={key} variant={inputMethod === key ? 'default' : 'outline'}
                     onClick={() => setInputMethod(key)}
-                    className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-200 text-white hover:bg-slate-50'}
+                    className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}
                     size="sm">
                     <Icon className="w-3.5 h-3.5 mr-1" />{label}
                   </Button>
@@ -808,9 +808,9 @@ function AIArticleGenerator({
 
             {/* Article Type */}
             <div>
-              <Label className="text-white text-sm">文章類型</Label>
+              <Label className="text-slate-900 text-sm">文章類型</Label>
               <Select value={articleType} onValueChange={setArticleType}>
-                <SelectTrigger className="bg-slate-50 border-slate-200 text-white mt-1">
+                <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-900 mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -827,9 +827,9 @@ function AIArticleGenerator({
             {/* Topic Input */}
             {inputMethod === 'topic' && (
               <div>
-                <Label className="text-white text-sm">文章主題 <span className="text-red-400">*</span></Label>
+                <Label className="text-slate-900 text-sm">文章主題 <span className="text-red-400">*</span></Label>
                 <Input value={topic} onChange={(e) => setTopic(e.target.value)}
-                  className="bg-slate-50 border-slate-200 text-white mt-1"
+                  className="bg-slate-50 border-slate-200 text-slate-900 mt-1"
                   placeholder="例如：Charizard PSA 10 近期市場分析、2024 年最值得收藏的 Pokemon 卡牌" />
               </div>
             )}
@@ -838,16 +838,16 @@ function AIArticleGenerator({
             {inputMethod === 'url' && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-white text-sm">參考網址</Label>
+                  <Label className="text-slate-900 text-sm">參考網址</Label>
                   <Input placeholder="https://example.com/article" value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="bg-slate-50 border-slate-200 text-white mt-1" />
-                  <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
+                    className="bg-slate-50 border-slate-200 text-slate-900 mt-1" />
+                  <p className="text-xs text-slate-400 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
                 </div>
                 <div>
-                  <Label className="text-white text-sm">目標語言</Label>
+                  <Label className="text-slate-900 text-sm">目標語言</Label>
                   <Select value={targetLanguage} onValueChange={(v) => setTargetLanguage(v as 'zh-TW' | 'en' | 'ja')}>
-                    <SelectTrigger className="bg-slate-50 border-slate-200 text-white mt-1"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-900 mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="zh-TW">繁體中文</SelectItem>
                       <SelectItem value="en">English</SelectItem>
@@ -862,13 +862,13 @@ function AIArticleGenerator({
             {inputMethod === 'image' && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-white mb-2 block text-sm">上傳圖片</Label>
+                  <Label className="text-slate-900 mb-2 block text-sm">上傳圖片</Label>
                   <div className="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center hover:border-purple-500 transition-colors">
                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" id="image-upload" disabled={isUploading} />
                     <label htmlFor="image-upload" className="cursor-pointer">
-                      <ImageIcon className="w-10 h-10 mx-auto mb-3 text-gray-500" />
-                      <p className="text-white text-sm mb-1">點擊上傳圖片</p>
-                      <p className="text-xs text-gray-500">支援 JPG、PNG、WEBP 格式</p>
+                      <ImageIcon className="w-10 h-10 mx-auto mb-3 text-slate-400" />
+                      <p className="text-slate-900 text-sm mb-1">點擊上傳圖片</p>
+                      <p className="text-xs text-slate-400">支援 JPG、PNG、WEBP 格式</p>
                     </label>
                   </div>
                 </div>
@@ -893,14 +893,14 @@ function AIArticleGenerator({
             {inputMethod === 'text' && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-white text-sm">主題（選填）</Label>
+                  <Label className="text-slate-900 text-sm">主題（選填）</Label>
                   <Input value={topic} onChange={(e) => setTopic(e.target.value)}
-                    className="bg-slate-50 border-slate-200 text-white mt-1"
+                    className="bg-slate-50 border-slate-200 text-slate-900 mt-1"
                     placeholder="例如：Pikachu 價格飆升、市場動態等" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <Label className="text-white text-sm">參考資料 / 數據</Label>
+                    <Label className="text-slate-900 text-sm">參考資料 / 數據</Label>
                     <Button type="button" variant="outline" size="sm"
                       onClick={() => setCardSelectionDialogOpen(true)}
                       className="h-7 text-xs border-[#FEDD00] text-[#FEDD00] hover:bg-[#FEDD00]/10">
@@ -908,7 +908,7 @@ function AIArticleGenerator({
                     </Button>
                   </div>
                   <Textarea value={textContent} onChange={(e) => setTextContent(e.target.value)}
-                    className="bg-slate-50 border-slate-200 text-white"
+                    className="bg-slate-50 border-slate-200 text-slate-900"
                     placeholder={`輸入參考資料或數據...\n\n例如：\n- Charizard PSA 10 今日成交：HKD 45,000\n- 過去 30 天均價：HKD 38,500\n- 交易量：+45%\n\n提示：點擊「插入卡牌資料」可從資料庫選擇卡牌並插入真實價格資料`}
                     rows={8} />
                 </div>
@@ -918,14 +918,14 @@ function AIArticleGenerator({
             {/* Strategy Options */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-white text-xs">目標讀者</Label>
+                <Label className="text-slate-900 text-xs">目標讀者</Label>
                 <Input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)}
-                  className="bg-slate-50 border-slate-200 text-white mt-1 text-xs" />
+                  className="bg-slate-50 border-slate-200 text-slate-900 mt-1 text-xs" />
               </div>
               <div>
-                <Label className="text-white text-xs">SEO 關鍵字（選填）</Label>
+                <Label className="text-slate-900 text-xs">SEO 關鍵字（選填）</Label>
                 <Input value={seoKeywords} onChange={(e) => setSeoKeywords(e.target.value)}
-                  className="bg-slate-50 border-slate-200 text-white mt-1 text-xs"
+                  className="bg-slate-50 border-slate-200 text-slate-900 mt-1 text-xs"
                   placeholder="PSA 10, 卡牌市場, 香港 PTCG" />
               </div>
             </div>
@@ -943,30 +943,30 @@ function AIArticleGenerator({
         {/* ── STEP 2: 內容策略 ── */}
         {workflowStep === 2 && strategy && (
           <div className="space-y-4">
-            <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
+            <div className="p-3 bg-blue-50 border border-blue-700/30 rounded-lg">
               <p className="text-blue-300 text-xs font-medium mb-1">🎯 步驟 2：確認內容策略</p>
-              <p className="text-gray-400 text-xs">AI 已分析你的主題並制定策略。選擇最合適的標題，然後生成大綱。</p>
+              <p className="text-slate-500 text-xs">AI 已分析你的主題並制定策略。選擇最合適的標題，然後生成大綱。</p>
             </div>
 
             {/* Search Intent */}
             <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-gray-400 mb-1">搜尋意圖分析</p>
-              <p className="text-white text-sm">{strategy.searchIntent}</p>
+              <p className="text-xs text-slate-500 mb-1">搜尋意圖分析</p>
+              <p className="text-slate-900 text-sm">{strategy.searchIntent}</p>
             </div>
 
             {/* Title Options */}
             <div>
-              <Label className="text-white text-sm mb-2 block">選擇標題方案</Label>
+              <Label className="text-slate-900 text-sm mb-2 block">選擇標題方案</Label>
               <div className="space-y-2">
                 {strategy.titleOptions?.map((title: string, i: number) => (
                   <button key={i} onClick={() => setSelectedTitleIndex(i)}
                     className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${
                       selectedTitleIndex === i
-                        ? 'border-purple-500 bg-purple-900/20 text-white'
-                        : 'border-slate-200 bg-slate-50 text-gray-300 hover:border-zinc-500'
+                        ? 'border-purple-500 bg-purple-50 text-slate-900'
+                        : 'border-slate-200 bg-slate-50 text-slate-400 hover:border-zinc-500'
                     }`}>
                     <span className={`inline-block w-5 h-5 rounded-full text-xs text-center leading-5 mr-2 ${
-                      selectedTitleIndex === i ? 'bg-purple-600 text-white' : 'bg-zinc-700 text-gray-400'
+                      selectedTitleIndex === i ? 'bg-purple-600 text-slate-900' : 'bg-slate-200 text-slate-500'
                     }`}>{i + 1}</span>
                     {title}
                   </button>
@@ -977,21 +977,21 @@ function AIArticleGenerator({
             {/* Strategy Details */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">內容切入角度</p>
-                <p className="text-white text-xs">{strategy.contentAngle}</p>
+                <p className="text-xs text-slate-500 mb-1">內容切入角度</p>
+                <p className="text-slate-900 text-xs">{strategy.contentAngle}</p>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">內容集群</p>
-                <p className="text-white text-xs">{strategy.contentCluster}</p>
+                <p className="text-xs text-slate-500 mb-1">內容集群</p>
+                <p className="text-slate-900 text-xs">{strategy.contentCluster}</p>
               </div>
             </div>
 
             {strategy.keyPoints?.length > 0 && (
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-2">必須涵蓋重點</p>
+                <p className="text-xs text-slate-500 mb-2">必須涵蓋重點</p>
                 <div className="flex flex-wrap gap-1.5">
                   {strategy.keyPoints.map((point: string, i: number) => (
-                    <Badge key={i} className="bg-zinc-700 text-gray-200 text-xs">{point}</Badge>
+                    <Badge key={i} className="bg-slate-200 text-slate-600 text-xs">{point}</Badge>
                   ))}
                 </div>
               </div>
@@ -999,7 +999,7 @@ function AIArticleGenerator({
 
             <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(1)}
-                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+                className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleGenerateOutline} disabled={outlineMutation.isPending}
@@ -1014,16 +1014,16 @@ function AIArticleGenerator({
         {/* ── STEP 3: 文章大綱 ── */}
         {workflowStep === 3 && outline && (
           <div className="space-y-4">
-            <div className="p-3 bg-green-900/20 border border-green-700/30 rounded-lg">
+            <div className="p-3 bg-emerald-50 border border-green-700/30 rounded-lg">
               <p className="text-green-300 text-xs font-medium mb-1">📋 步驟 3：確認文章大綱</p>
-              <p className="text-gray-400 text-xs">AI 已生成結構化大綱。確認無誤後，AI 將按大綱生成完整文章。</p>
+              <p className="text-slate-500 text-xs">AI 已生成結構化大綱。確認無誤後，AI 將按大綱生成完整文章。</p>
             </div>
 
             {/* Title */}
             <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-gray-400 mb-1">文章標題</p>
-              <p className="text-white font-semibold">{outline.h1}</p>
-              <p className="text-xs text-gray-500 mt-1">預估字數：{outline.estimatedWordCount}</p>
+              <p className="text-xs text-slate-500 mb-1">文章標題</p>
+              <p className="text-slate-900 font-semibold">{outline.h1}</p>
+              <p className="text-xs text-slate-400 mt-1">預估字數：{outline.estimatedWordCount}</p>
             </div>
 
             {/* Sections */}
@@ -1033,17 +1033,17 @@ function AIArticleGenerator({
                   <div className="flex items-start gap-2">
                     <span className="text-purple-400 text-xs font-mono mt-0.5">H2</span>
                     <div className="flex-1">
-                      <p className="text-white text-sm font-medium">{section.h2}</p>
-                      <p className="text-gray-400 text-xs mt-0.5">{section.description}</p>
+                      <p className="text-slate-900 text-sm font-medium">{section.h2}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">{section.description}</p>
                       {section.hasImage && (
                         <Badge className="mt-1 bg-blue-900/40 text-blue-300 text-[10px] border border-blue-700/30">
                           📷 {section.imageNote || '建議插圖'}
                         </Badge>
                       )}
                       {section.subsections?.map((sub: any, j: number) => (
-                        <div key={j} className="mt-2 ml-3 pl-3 border-l border-zinc-600">
-                          <p className="text-gray-300 text-xs font-medium">{sub.h3}</p>
-                          <p className="text-gray-500 text-xs">{sub.description}</p>
+                        <div key={j} className="mt-2 ml-3 pl-3 border-l border-slate-300">
+                          <p className="text-slate-400 text-xs font-medium">{sub.h3}</p>
+                          <p className="text-slate-400 text-xs">{sub.description}</p>
                         </div>
                       ))}
                     </div>
@@ -1055,16 +1055,16 @@ function AIArticleGenerator({
             {/* FAQ Preview */}
             {outline.faq?.length > 0 && (
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-2">FAQ（{outline.faq.length} 個問題）</p>
+                <p className="text-xs text-slate-500 mb-2">FAQ（{outline.faq.length} 個問題）</p>
                 {outline.faq.map((f: any, i: number) => (
-                  <p key={i} className="text-gray-300 text-xs mb-1">Q{i+1}: {f.question}</p>
+                  <p key={i} className="text-slate-400 text-xs mb-1">Q{i+1}: {f.question}</p>
                 ))}
               </div>
             )}
 
             <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(2)}
-                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+                className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleGenerateArticle} disabled={generateMutation.isPending}
@@ -1079,34 +1079,34 @@ function AIArticleGenerator({
         {/* ── STEP 4: 生成全文 ── */}
         {workflowStep === 4 && generatedArticle && (
           <div className="space-y-4">
-            <div className="p-3 bg-yellow-900/20 border border-yellow-700/30 rounded-lg">
+            <div className="p-3 bg-amber-50 border border-yellow-700/30 rounded-lg">
               <p className="text-yellow-300 text-xs font-medium mb-1">✍️ 步驟 4：文章已生成</p>
-              <p className="text-gray-400 text-xs">文章已按大綱生成完成。建議進行 AI 校對，或直接接受並進入編輯器。</p>
+              <p className="text-slate-500 text-xs">文章已按大綱生成完成。建議進行 AI 校對，或直接接受並進入編輯器。</p>
             </div>
 
             {/* Article Preview */}
             <div className="p-4 bg-slate-50 rounded-lg space-y-2">
-              <p className="text-xs text-gray-400">標題</p>
-              <p className="text-white font-semibold">{generatedArticle.title}</p>
+              <p className="text-xs text-slate-500">標題</p>
+              <p className="text-slate-900 font-semibold">{generatedArticle.title}</p>
               {generatedArticle.excerpt && (
                 <>
-                  <p className="text-xs text-gray-400 mt-2">摘要</p>
-                  <p className="text-gray-300 text-sm">{generatedArticle.excerpt}</p>
+                  <p className="text-xs text-slate-500 mt-2">摘要</p>
+                  <p className="text-slate-400 text-sm">{generatedArticle.excerpt}</p>
                 </>
               )}
-              <p className="text-xs text-gray-400 mt-2">內容預覽</p>
-              <p className="text-gray-300 text-xs line-clamp-6 font-mono">{generatedArticle.content?.substring(0, 400)}...</p>
-              <p className="text-xs text-gray-500">約 {generatedArticle.content?.length || 0} 字元</p>
+              <p className="text-xs text-slate-500 mt-2">內容預覽</p>
+              <p className="text-slate-400 text-xs line-clamp-6 font-mono">{generatedArticle.content?.substring(0, 400)}...</p>
+              <p className="text-xs text-slate-400">約 {generatedArticle.content?.length || 0} 字元</p>
             </div>
 
             <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(3)}
-                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+                className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleProofread} disabled={proofreadMutation.isPending}
-                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/20" size="sm">
+                  className="border-yellow-600 text-yellow-400 hover:bg-amber-50" size="sm">
                   <Check className="w-4 h-4 mr-1" />
                   {proofreadMutation.isPending ? 'AI 校對中...' : 'AI 校對'}
                 </Button>
@@ -1124,26 +1124,26 @@ function AIArticleGenerator({
           <div className="space-y-4">
             <div className="p-3 bg-slate-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-white font-semibold text-sm">整體評分：{proofreadResult.overallScore}</p>
+                <p className="text-slate-900 font-semibold text-sm">整體評分：{proofreadResult.overallScore}</p>
                 <div className="flex gap-2 text-xs">
                   <Badge className={`${
                     proofreadResult.aiDetectionRisk === '低' ? 'bg-green-900/40 text-green-300 border-green-700/30'
                     : proofreadResult.aiDetectionRisk === '中' ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700/30'
                     : 'bg-red-900/40 text-red-300 border-red-700/30'
                   } border`}>AI 痕跡：{proofreadResult.aiDetectionRisk}</Badge>
-                  <Badge className="bg-zinc-700 text-gray-200 border-zinc-600 border">可讀性：{proofreadResult.readabilityScore}/10</Badge>
+                  <Badge className="bg-slate-200 text-slate-600 border-slate-300 border">可讀性：{proofreadResult.readabilityScore}/10</Badge>
                 </div>
               </div>
-              <p className="text-gray-300 text-xs">{proofreadResult.overallComment}</p>
+              <p className="text-slate-400 text-xs">{proofreadResult.overallComment}</p>
             </div>
 
             {/* Quick Fixes */}
             {proofreadResult.quickFixes?.length > 0 && (
-              <div className="p-3 bg-orange-900/20 border border-orange-700/30 rounded-lg">
+              <div className="p-3 bg-orange-50 border border-orange-700/30 rounded-lg">
                 <p className="text-orange-300 text-xs font-medium mb-2">⚡ 快速修改建議</p>
                 <ul className="space-y-1">
                   {proofreadResult.quickFixes.map((fix: string, i: number) => (
-                    <li key={i} className="text-gray-300 text-xs flex items-start gap-1.5">
+                    <li key={i} className="text-slate-400 text-xs flex items-start gap-1.5">
                       <span className="text-orange-400 mt-0.5">•</span>{fix}
                     </li>
                   ))}
@@ -1154,21 +1154,21 @@ function AIArticleGenerator({
             {/* Issues */}
             {proofreadResult.issues?.length > 0 && (
               <div className="space-y-2">
-                <p className="text-white text-sm font-medium">發現 {proofreadResult.issues.length} 個問題</p>
+                <p className="text-slate-900 text-sm font-medium">發現 {proofreadResult.issues.length} 個問題</p>
                 {proofreadResult.issues.slice(0, 5).map((issue: any, i: number) => (
                   <div key={i} className={`p-3 rounded-lg border ${
-                    issue.severity === '高' ? 'bg-red-900/20 border-red-700/30'
-                    : issue.severity === '中' ? 'bg-yellow-900/20 border-yellow-700/30'
+                    issue.severity === '高' ? 'bg-red-50 border-red-700/30'
+                    : issue.severity === '中' ? 'bg-amber-50 border-yellow-700/30'
                     : 'bg-slate-50 border-slate-200'
                   }`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Badge className={`text-[10px] ${
-                        issue.severity === '高' ? 'bg-red-600' : issue.severity === '中' ? 'bg-yellow-600' : 'bg-zinc-600'
+                        issue.severity === '高' ? 'bg-red-600' : issue.severity === '中' ? 'bg-yellow-600' : 'bg-slate-300'
                       }`}>{issue.severity}</Badge>
-                      <span className="text-gray-400 text-xs">{issue.category}</span>
-                      <span className="text-gray-500 text-xs">@ {issue.location}</span>
+                      <span className="text-slate-500 text-xs">{issue.category}</span>
+                      <span className="text-slate-400 text-xs">@ {issue.location}</span>
                     </div>
-                    <p className="text-gray-300 text-xs">{issue.description}</p>
+                    <p className="text-slate-400 text-xs">{issue.description}</p>
                     <p className="text-blue-300 text-xs mt-1">💡 {issue.suggestion}</p>
                   </div>
                 ))}
@@ -1178,24 +1178,24 @@ function AIArticleGenerator({
             {/* SEO Analysis */}
             {proofreadResult.seoAnalysis && (
               <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-2">SEO 分析</p>
+                <p className="text-xs text-slate-500 mb-2">SEO 分析</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div className="text-center p-2 bg-zinc-700 rounded">
-                    <p className="text-white font-semibold">{proofreadResult.seoAnalysis.titleScore}/10</p>
-                    <p className="text-xs text-gray-400">標題評分</p>
+                  <div className="text-center p-2 bg-slate-200 rounded">
+                    <p className="text-slate-900 font-semibold">{proofreadResult.seoAnalysis.titleScore}/10</p>
+                    <p className="text-xs text-slate-500">標題評分</p>
                   </div>
-                  <div className="text-center p-2 bg-zinc-700 rounded">
-                    <p className="text-white font-semibold">{proofreadResult.seoAnalysis.excerptScore}/10</p>
-                    <p className="text-xs text-gray-400">摘要評分</p>
+                  <div className="text-center p-2 bg-slate-200 rounded">
+                    <p className="text-slate-900 font-semibold">{proofreadResult.seoAnalysis.excerptScore}/10</p>
+                    <p className="text-xs text-slate-500">摘要評分</p>
                   </div>
                 </div>
-                <p className="text-gray-400 text-xs">{proofreadResult.seoAnalysis.keywordDensity}</p>
+                <p className="text-slate-500 text-xs">{proofreadResult.seoAnalysis.keywordDensity}</p>
               </div>
             )}
 
             <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(4)}
-                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+                className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleAccept}
@@ -1211,14 +1211,14 @@ function AIArticleGenerator({
           <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
             <div className="bg-white border border-slate-200 rounded-xl p-6 text-center max-w-sm mx-4">
               <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-white font-medium">
+              <p className="text-slate-900 font-medium">
                 {strategyMutation.isPending ? '🎯 AI 正在分析內容策略...'
                   : outlineMutation.isPending ? '📋 AI 正在生成文章大綱...'
                   : generateMutation.isPending ? '✍️ AI 正在按大綱生成全文...'
                   : proofreadMutation.isPending ? '🔍 AI 正在校對文章品質...'
                   : '處理中...'}
               </p>
-              <p className="text-gray-400 text-sm mt-2">Gemini 2.5 Flash 深度思考中，請稍候</p>
+              <p className="text-slate-500 text-sm mt-2">Gemini 2.5 Flash 深度思考中，請稍候</p>
             </div>
           </div>
         )}
@@ -1269,11 +1269,11 @@ function TranslationEditor({
     <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-slate-900 flex items-center gap-2">
             <Languages className="w-5 h-5 text-blue-400" />
             編輯翻譯
           </CardTitle>
-          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-white hover:bg-slate-50" size="sm">
+          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-slate-900 hover:bg-slate-50" size="sm">
             <ChevronLeft className="w-4 h-4 mr-1" /> 返回
           </Button>
         </div>
@@ -1285,7 +1285,7 @@ function TranslationEditor({
           {[{ key: 'en' as const, label: '🇬🇧 English' }, { key: 'ja' as const, label: '🇯🇵 日本語' }].map(({ key, label }) => (
             <Button key={key} variant={activeTab === key ? 'default' : 'outline'}
               onClick={() => setActiveTab(key)}
-              className={activeTab === key ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-200 text-white hover:bg-slate-50'}
+              className={activeTab === key ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-200 text-slate-900 hover:bg-slate-50'}
               size="sm">{label}</Button>
           ))}
         </div>
@@ -1293,19 +1293,19 @@ function TranslationEditor({
         {activeTab === 'en' && (
           <div className="space-y-3">
             <div>
-              <Label className="text-white text-sm">English Title</Label>
+              <Label className="text-slate-900 text-sm">English Title</Label>
               <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" />
             </div>
             <div>
-              <Label className="text-white text-sm">English Excerpt</Label>
+              <Label className="text-slate-900 text-sm">English Excerpt</Label>
               <Textarea value={enExcerpt} onChange={(e) => setEnExcerpt(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" rows={3} />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" rows={3} />
             </div>
             <div>
-              <Label className="text-white text-sm">English Content</Label>
+              <Label className="text-slate-900 text-sm">English Content</Label>
               <Textarea value={enContent} onChange={(e) => setEnContent(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" rows={12} />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" rows={12} />
             </div>
           </div>
         )}
@@ -1313,19 +1313,19 @@ function TranslationEditor({
         {activeTab === 'ja' && (
           <div className="space-y-3">
             <div>
-              <Label className="text-white text-sm">日本語タイトル</Label>
+              <Label className="text-slate-900 text-sm">日本語タイトル</Label>
               <Input value={jaTitle} onChange={(e) => setJaTitle(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" />
             </div>
             <div>
-              <Label className="text-white text-sm">日本語概要</Label>
+              <Label className="text-slate-900 text-sm">日本語概要</Label>
               <Textarea value={jaExcerpt} onChange={(e) => setJaExcerpt(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" rows={3} />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" rows={3} />
             </div>
             <div>
-              <Label className="text-white text-sm">日本語コンテンツ</Label>
+              <Label className="text-slate-900 text-sm">日本語コンテンツ</Label>
               <Textarea value={jaContent} onChange={(e) => setJaContent(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-white mt-1" rows={12} />
+                className="bg-slate-50 border-slate-200 text-slate-900 mt-1" rows={12} />
             </div>
           </div>
         )}
