@@ -21,6 +21,7 @@ import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
   Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera, Sparkles,
+  Settings, ChevronDown, SlidersHorizontal,
 } from "lucide-react";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { ClaimFormReviewDialog } from "@/components/ClaimFormReviewDialog";
@@ -1913,58 +1914,61 @@ export default function AdminCompanyCardInventory() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
+    <div className="admin-shell p-4 sm:p-6 space-y-5">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">公司買取及賣出記錄</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">公司獨立買取賣出記錄，與個人記錄完全分離</p>
+          <h1 className="text-xl font-semibold text-slate-900">公司買取及賣出記錄</h1>
+          <p className="text-sm text-slate-500 mt-0.5">公司獨立買取賣出記錄，與個人記錄完全分離</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowBatchForm(true)}
-            className="gap-2 border-primary text-primary hover:bg-primary/10"
-          >
-            <Layers className="w-4 h-4" />批量買取
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowBatchSell(true)}
-            className="gap-2 border-green-500 text-green-500 hover:bg-green-500/10"
-          >
-            <TrendingDown className="w-4 h-4" />批量賣出
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => backfillImageUrlsMutation.mutate()}
-            disabled={backfillImageUrlsMutation.isPending}
-            className="gap-2 border-orange-500 text-orange-500 hover:bg-orange-500/10"
-            title="對缺少圖片的記錄自動匹配卡牌圖片"
-          >
-            <ImageOff className="w-4 h-4" />{backfillImageUrlsMutation.isPending ? "補全中...": "補全圖片"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => cacheImagesToS3Mutation.mutate()}
-            disabled={cacheImagesToS3Mutation.isPending}
-            className="gap-2 border-blue-500 text-blue-500 hover:bg-blue-500/10"
-            title="將所有卡牌圖片上傳到平台雲端，加快往後匯出速度"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-            {cacheImagesToS3Mutation.isPending ? "上傳中..." : "快取圖片"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowClaimForm(true)}
-            className="gap-2 border-purple-500 text-purple-400 hover:bg-purple-500/10"
-            title="上傳 Claim Form PDF，AI 自動從卡牌庫智能匹配並建立買取記錄"
-          >
-            <Sparkles className="w-4 h-4" />AI 智能拆單
-          </Button>
+        <div className="flex items-center gap-2">
+          {/* Secondary: 批量工具 dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-slate-600 border-slate-200 hover:bg-slate-50 h-9">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                批量工具
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 bg-white border border-slate-200 shadow-md rounded-lg">
+              <DropdownMenuLabel className="text-xs text-slate-400 font-normal">買取 / 賣出</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setShowBatchForm(true)} className="gap-2 cursor-pointer text-slate-700 hover:bg-slate-50">
+                <Layers className="w-4 h-4 text-blue-500" />批量買取
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowBatchSell(true)} className="gap-2 cursor-pointer text-slate-700 hover:bg-slate-50">
+                <TrendingDown className="w-4 h-4 text-emerald-500" />批量賣出
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuLabel className="text-xs text-slate-400 font-normal">圖片管理</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => backfillImageUrlsMutation.mutate()}
+                disabled={backfillImageUrlsMutation.isPending}
+                className="gap-2 cursor-pointer text-slate-700 hover:bg-slate-50"
+              >
+                <ImageOff className="w-4 h-4 text-orange-500" />
+                {backfillImageUrlsMutation.isPending ? "補全中..." : "補全圖片"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => cacheImagesToS3Mutation.mutate()}
+                disabled={cacheImagesToS3Mutation.isPending}
+                className="gap-2 cursor-pointer text-slate-700 hover:bg-slate-50"
+              >
+                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                {cacheImagesToS3Mutation.isPending ? "上傳中..." : "快取圖片"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuLabel className="text-xs text-slate-400 font-normal">AI 功能</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setShowClaimForm(true)} className="gap-2 cursor-pointer text-slate-700 hover:bg-slate-50">
+                <Sparkles className="w-4 h-4 text-purple-500" />AI 智能拆單
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* Primary CTA */}
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+            size="sm"
+            className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
             <Plus className="w-4 h-4" />新增買取
           </Button>
@@ -1981,38 +1985,41 @@ export default function AdminCompanyCardInventory() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Records Tab */}
+                {/* Records Tab */}
         <TabsContent value="records" className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          {/* Search + Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="搜尋卡牌名稱或系列..."
+                placeholder="搜尋卡牌名稱、BN 編號或系列..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9"
+                className="pl-9 h-8 border-0 bg-transparent focus-visible:ring-0 text-slate-800 placeholder:text-slate-400 text-sm"
               />
             </div>
+            <div className="w-px h-5 bg-slate-200" />
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-white border border-slate-200 shadow-md">
                 <SelectItem value="all">全部狀態</SelectItem>
                 <SelectItem value="holding">持有中</SelectItem>
                 <SelectItem value="sold">已賣出</SelectItem>
               </SelectContent>
             </Select>
             <Select value={itemTypeFilter} onValueChange={(v) => { setItemTypeFilter(v as any); setPage(1); }}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-white border border-slate-200 shadow-md">
                 <SelectItem value="all">全部類型</SelectItem>
                 <SelectItem value="card">單卡</SelectItem>
                 <SelectItem value="sealed">封裝商品</SelectItem>
               </SelectContent>
             </Select>
+            <div className="w-px h-5 bg-slate-200" />
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="gap-1.5 h-9"
+              className="gap-1.5 h-8 text-slate-500 hover:text-slate-700 hover:bg-slate-50 text-xs"
               onClick={() => {
                 const today = new Date().toISOString().slice(0, 10);
                 setSearch(today);
@@ -2021,12 +2028,11 @@ export default function AdminCompanyCardInventory() {
             >
               <CalendarDays className="w-3.5 h-3.5" />今日
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => { setSearch(""); setStatusFilter("all"); setItemTypeFilter("all"); setPage(1); utils.cardInventory.list.invalidate(); }}>
-              <RefreshCw className="w-4 h-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600" onClick={() => { setSearch(""); setStatusFilter("all"); setItemTypeFilter("all"); setPage(1); utils.companyCardInventory.list.invalidate(); }}>
+              <RefreshCw className="w-3.5 h-3.5" />
             </Button>
           </div>
-
-          <div className="text-sm text-muted-foreground">共 {total} 筆記錄</div>
+          <div className="text-xs text-slate-500">共 {total} 筆記錄</div>
 
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">載入中...</div>
@@ -2102,34 +2108,34 @@ export default function AdminCompanyCardInventory() {
               })}
             </div>
             {/* Desktop table - hidden on mobile */}
-            <div className="hidden sm:block overflow-x-auto rounded-lg border">
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left p-3 font-medium">類型</th>
-                    <th className="text-left p-3 font-medium">卡牌/商品</th>
-                    <th className="text-right p-3 font-medium">買取成本</th>
-                    <th className="text-right p-3 font-medium">賣出金額</th>
-                    <th className="text-right p-3 font-medium">毛利</th>
-                    <th className="text-left p-3 font-medium">狀態</th>
-                    <th className="text-left p-3 font-medium">買取日期</th>
-                    <th className="text-left p-3 font-medium max-w-[120px]">備注</th>
-                    <th className="text-center p-3 font-medium">操作</th>
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">類型</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">卡牌/商品</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">買取成本</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">賣出金額</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">毛利</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">狀態</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">買取日期</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide max-w-[120px]">備注</th>
+                    <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">操作</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {items.map((item) => {
                     const buyHkd = Number(item.buyPriceHkd);
                     const sellHkd = item.sellPriceHkd ? Number(item.sellPriceHkd) : null;
                     const profit = sellHkd !== null ? sellHkd - buyHkd : null;
                     return (
-                      <tr key={item.id} className="border-t hover:bg-muted/30">
-                        <td className="p-3">
-                          <Badge variant="outline" className="text-xs">
+                      <tr key={item.id} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
                             {item.itemType === "card" ? "單卡" : "封裝"}
-                          </Badge>
+                          </span>
                         </td>
-                        <td className="p-3">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
                             {/* Card image */}
                             <div className="w-9 h-12 flex-shrink-0 rounded overflow-hidden bg-muted">
@@ -2147,42 +2153,43 @@ export default function AdminCompanyCardInventory() {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <div className="font-medium max-w-[180px] truncate">{item.cardName}</div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="font-medium text-slate-900 max-w-[180px] truncate">{item.cardName}</div>
+                              <div className="text-xs text-slate-400 mt-0.5">
                                 {[item.cardSet, item.cardNumber, item.grade].filter(Boolean).join(" · ")}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-right font-medium text-primary">
+                        <td className="px-4 py-3 text-right font-medium text-blue-600">
                           {formatHkd(item.buyPriceHkd)}
                           {item.buyPriceCurrency !== "HKD" && (
-                            <div className="text-xs text-muted-foreground">{item.buyPriceCurrency} {Number(item.buyPriceOriginal).toLocaleString()}</div>
+                            <div className="text-xs text-slate-400">{item.buyPriceCurrency} {Number(item.buyPriceOriginal).toLocaleString()}</div>
                           )}
                         </td>
-                        <td className="p-3 text-right font-medium text-green-500">
-                          {sellHkd !== null ? formatHkd(sellHkd) : "—"}
+                        <td className="px-4 py-3 text-right font-medium text-emerald-600">
+                          {sellHkd !== null ? formatHkd(sellHkd) : <span className="text-slate-300">—</span>}
                           {item.sellPriceCurrency && item.sellPriceCurrency !== "HKD" && item.sellPriceOriginal && (
-                            <div className="text-xs text-muted-foreground">{item.sellPriceCurrency} {Number(item.sellPriceOriginal).toLocaleString()}</div>
+                            <div className="text-xs text-slate-400">{item.sellPriceCurrency} {Number(item.sellPriceOriginal).toLocaleString()}</div>
                           )}
                         </td>
-                        <td className={`p-3 text-right font-semibold ${profit === null ? "text-muted-foreground" : profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        <td className={`px-4 py-3 text-right font-semibold ${profit === null ? "text-slate-300" : profit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                           {profit === null ? "—" : `${profit >= 0 ? "+" : ""}${formatHkd(profit)}`}
                         </td>
-                        <td className="p-3">
-                          <Badge className={item.status === "holding"
-                            ? "bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                            : "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/20"
-                          }>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            item.status === "holding"
+                              ? "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200"
+                              : "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200"
+                          }`}>
                             {item.status === "holding" ? "持有中" : "已賣出"}
-                          </Badge>
+                          </span>
                         </td>
-                        <td className="p-3 text-muted-foreground text-xs">{formatDate(item.buyDate)}</td>
-                        <td className="p-3 max-w-[120px]">
+                        <td className="px-4 py-3 text-slate-500 text-xs">{formatDate(item.buyDate)}</td>
+                        <td className="px-4 py-3 max-w-[120px]">
                           {item.notes ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="text-xs text-muted-foreground truncate block max-w-[110px] cursor-default">
+                                <span className="text-xs text-slate-400 truncate block max-w-[110px] cursor-default">
                                   {item.notes}
                                 </span>
                               </TooltipTrigger>
@@ -2191,16 +2198,16 @@ export default function AdminCompanyCardInventory() {
                               </TooltipContent>
                             </Tooltip>
                           ) : (
-                            <span className="text-xs text-muted-foreground/40">—</span>
+                            <span className="text-xs text-slate-200">—</span>
                           )}
                         </td>
-                        <td className="p-3">
+                        <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
                             {item.status === "holding" && (
                               <Button
                                 variant="ghost" size="sm"
                                 onClick={() => setSellItem(item as CardInventoryItem)}
-                                className="h-7 px-2 text-xs text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                                className="h-7 px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                               >
                                 記錄賣出
                               </Button>
@@ -2208,14 +2215,14 @@ export default function AdminCompanyCardInventory() {
                             <Button
                               variant="ghost" size="icon"
                               onClick={() => { setEditItem(item as CardInventoryItem); setShowBuyForm(true); }}
-                              className="h-7 w-7"
+                              className="h-7 w-7 text-slate-400 hover:text-slate-600"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               variant="ghost" size="icon"
                               onClick={() => setDeleteConfirm(item.id)}
-                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              className="h-7 w-7 text-slate-300 hover:text-red-500"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>

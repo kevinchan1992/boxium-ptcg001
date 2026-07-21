@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  LayoutDashboard, Users, Database, TrendingUp, FileText,
-  HardDrive, Clock, Activity, History, MapPin, Mail, FlaskConical,
-  Settings, ShoppingCart, PanelLeftClose, PanelLeft, Menu, X,
-  MessageSquare, Sparkles, Shield, Wand2, BookOpen, Wrench, ChevronRight, Package, Crown
+  LayoutDashboard, Users, Database, Package, TrendingUp, FileText,
+  Wand2, Sparkles, HardDrive, Clock, Activity, History, Shield,
+  Mail, FlaskConical, MessageSquare, Settings, MapPin, BookOpen,
+  Crown, Wrench, PanelLeft, PanelLeftClose, X, Menu, ChevronRight,
+  ShoppingCart, Search, Bell, ChevronDown, Building2, User,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminUserManagement } from "@/components/AdminUserManagement";
@@ -26,18 +27,16 @@ import AdminCardInventory from "@/components/AdminCardInventory";
 import AdminCompanyCardInventory from "@/components/AdminCompanyCardInventory";
 import AdminSealedProducts from "@/components/AdminSealedProducts";
 import { AdminVipDashboard } from "@/pages/admin/AdminVipDashboard";
-import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 
-/* ─── Constants ─────────────────────────────────────────────────────── */
+/* ─── Storage Keys ───────────────────────────────────────────────────────── */
 const STORAGE_KEY_SECTION = "boxium_admin_active_section";
 const STORAGE_KEY_TAB = "boxium_admin_active_tab";
 const STORAGE_KEY_COLLAPSED = "boxium_admin_sidebar_collapsed";
 
-/* ─── Section & Tab Definitions ─────────────────────────────────────── */
-
-// Each "section" is a sidebar item; each section has one or more "tabs"
+/* ─── Section & Tab Definitions ─────────────────────────────────────────── */
 interface TabDef {
   id: string;
   label: string;
@@ -55,7 +54,7 @@ const SECTIONS: SectionDef[] = [
   {
     id: "overview",
     label: "統計總覽",
-    icon: <LayoutDashboard className="w-[18px] h-[18px]" />,
+    icon: <LayoutDashboard className="w-[17px] h-[17px]" />,
     tabs: [
       { id: "dashboard", label: "統計資訊", icon: <LayoutDashboard className="w-4 h-4" /> },
       { id: "users", label: "帳號管理", icon: <Users className="w-4 h-4" /> },
@@ -64,7 +63,7 @@ const SECTIONS: SectionDef[] = [
   {
     id: "content",
     label: "內容管理",
-    icon: <FileText className="w-[18px] h-[18px]" />,
+    icon: <FileText className="w-[17px] h-[17px]" />,
     tabs: [
       { id: "datasources", label: "數據源管理", icon: <Database className="w-4 h-4" /> },
       { id: "sealed-products", label: "卡盒管理", icon: <Package className="w-4 h-4" /> },
@@ -77,7 +76,7 @@ const SECTIONS: SectionDef[] = [
   {
     id: "system",
     label: "系統運維",
-    icon: <Wrench className="w-[18px] h-[18px]" />,
+    icon: <Wrench className="w-[17px] h-[17px]" />,
     tabs: [
       { id: "cache", label: "緩存管理", icon: <HardDrive className="w-4 h-4" /> },
       { id: "schedule", label: "排程管理", icon: <Clock className="w-4 h-4" /> },
@@ -92,17 +91,17 @@ const SECTIONS: SectionDef[] = [
   {
     id: "finance",
     label: "財務記錄",
-    icon: <BookOpen className="w-[18px] h-[18px]" />,
+    icon: <BookOpen className="w-[17px] h-[17px]" />,
     tabs: [
-      { id: "card-inventory", label: "買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
-      { id: "company-inventory", label: "公司買取賣出記錄", icon: <BookOpen className="w-4 h-4" /> },
-      { id: "vip-subscriptions", label: "VIP 訂閱管理", icon: <Crown className="w-4 h-4" /> },
+      { id: "company-inventory", label: "公司買取賣出", icon: <Building2 className="w-4 h-4" /> },
+      { id: "card-inventory", label: "個人買賣紀錄", icon: <User className="w-4 h-4" /> },
+      { id: "vip-subscriptions", label: "VIP 訂閱", icon: <Crown className="w-4 h-4" /> },
     ],
   },
   {
     id: "settings",
     label: "設定",
-    icon: <Settings className="w-[18px] h-[18px]" />,
+    icon: <Settings className="w-[17px] h-[17px]" />,
     tabs: [
       { id: "sfstations", label: "順豐站管理", icon: <MapPin className="w-4 h-4" /> },
       { id: "platformsettings", label: "平台設定", icon: <Settings className="w-4 h-4" /> },
@@ -110,11 +109,9 @@ const SECTIONS: SectionDef[] = [
   },
 ];
 
-// Build a flat map: tabId → sectionId
 const TAB_TO_SECTION: Record<string, string> = {};
 SECTIONS.forEach(s => s.tabs.forEach(t => { TAB_TO_SECTION[t.id] = s.id; }));
 
-// Default tab for each section
 const SECTION_DEFAULT_TAB: Record<string, string> = {};
 SECTIONS.forEach(s => { SECTION_DEFAULT_TAB[s.id] = s.tabs[0].id; });
 
@@ -143,7 +140,7 @@ function getStoredCollapsed(): boolean {
   } catch { return false; }
 }
 
-/* ─── Tab Content Renderer ───────────────────────────────────────────── */
+/* ─── Tab Content Renderer ───────────────────────────────────────────────── */
 function TabContent({ tabId }: { tabId: string }) {
   switch (tabId) {
     case "dashboard": return <AdminDashboard />;
@@ -171,7 +168,7 @@ function TabContent({ tabId }: { tabId: string }) {
   }
 }
 
-/* ─── In-page Tab Bar ────────────────────────────────────────────────── */
+/* ─── Section Tab Bar ────────────────────────────────────────────────────── */
 function SectionTabBar({
   section,
   activeTab,
@@ -195,14 +192,13 @@ function SectionTabBar({
     return () => { ro.disconnect(); el.removeEventListener("scroll", check); };
   }, [section.tabs]);
 
-  // Only render the tab bar if there are multiple tabs
   if (section.tabs.length <= 1) return null;
 
   return (
-    <div className="relative border-b border-white/[0.06] bg-[#0a0a1e]/60 shrink-0">
+    <div className="relative shrink-0 adm-tab-bar">
       <div
         ref={tabBarRef}
-        className="flex overflow-x-auto scrollbar-none px-4 md:px-6 gap-1"
+        className="flex overflow-x-auto"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {section.tabs.map((tab) => {
@@ -211,30 +207,22 @@ function SectionTabBar({
             <button
               key={tab.id}
               onClick={() => onSelect(tab.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 transition-all duration-150 shrink-0",
-                isActive
-                  ? "border-[#FEDD00] text-white"
-                  : "border-transparent text-gray-500 hover:text-gray-300 hover:border-white/20"
-              )}
+              className={cn("adm-tab", isActive && "active")}
             >
-              <span className={cn("shrink-0", isActive ? "text-[#FEDD00]" : "text-gray-500")}>
-                {tab.icon}
-              </span>
+              <span className="shrink-0">{tab.icon}</span>
               {tab.label}
             </button>
           );
         })}
       </div>
-      {/* Right fade hint for mobile */}
       {showFade && (
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-[#0a0a1e] to-transparent sm:hidden" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
       )}
     </div>
   );
 }
 
-/* ─── Sidebar Navigation ─────────────────────────────────────────────── */
+/* ─── Sidebar Navigation ─────────────────────────────────────────────────── */
 function SidebarNav({
   activeSection,
   onSelect,
@@ -253,24 +241,30 @@ function SidebarNav({
   const showLabels = isMobile || !collapsed;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full adm-sidebar">
       {/* Sidebar Header */}
       <div className={cn(
-        "flex items-center h-14 border-b border-white/[0.06] px-4 shrink-0",
+        "adm-sidebar-header shrink-0",
         !showLabels ? "justify-center" : "justify-between"
       )}>
         {showLabels && (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-1.5 h-7 rounded-full bg-[#FEDD00] shrink-0" />
-            <h1 className="text-[15px] font-semibold text-white truncate tracking-tight">
-              管理後台
-            </h1>
+            {/* Brand mark */}
+            <div className="w-7 h-7 rounded-lg bg-[#06038D] flex items-center justify-center shrink-0">
+              <span className="text-[#FEDD00] font-black text-[11px] leading-none">B</span>
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-[14px] font-bold text-[#0F172A] truncate tracking-tight leading-tight">
+                BOXIUM
+              </h1>
+              <p className="text-[10px] text-[#94A3B8] font-medium tracking-wide">管理後台</p>
+            </div>
           </div>
         )}
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] transition-colors shrink-0"
+            className="p-1.5 rounded-md text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors shrink-0"
             title={collapsed ? "展開側邊欄" : "收合側邊欄"}
           >
             {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -288,30 +282,19 @@ function SidebarNav({
               onClick={() => onSelect(section.id)}
               title={!showLabels ? section.label : undefined}
               className={cn(
-                "w-full flex items-center gap-2.5 rounded-lg transition-all duration-150 group relative",
-                !showLabels ? "justify-center px-0 py-2.5 mx-auto" : "px-2.5 py-2.5",
-                isActive
-                  ? "bg-primary/80 text-white shadow-[0_1px_3px_rgba(6,3,141,0.4)]"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]"
+                "adm-nav-item",
+                !showLabels ? "justify-center px-0 py-2.5" : "",
+                isActive && "active"
               )}
             >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#FEDD00]" />
-              )}
-              <span className={cn(
-                "shrink-0 transition-colors",
-                isActive ? "text-[#FEDD00]" : "text-gray-500 group-hover:text-gray-300"
-              )}>
+              <span className={cn("adm-nav-icon", isActive && "text-[#2563EB]")}>
                 {section.icon}
               </span>
               {showLabels && (
                 <>
-                  <span className="text-[13px] font-medium truncate flex-1 text-left">{section.label}</span>
+                  <span className="flex-1 truncate text-left">{section.label}</span>
                   {section.tabs.length > 1 && (
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                      isActive ? "bg-white/20 text-white" : "bg-white/[0.06] text-gray-500"
-                    )}>
+                    <span className={cn("adm-nav-badge", isActive && "bg-[#BFDBFE] text-[#1D4ED8]")}>
                       {section.tabs.length}
                     </span>
                   )}
@@ -322,72 +305,140 @@ function SidebarNav({
         })}
       </nav>
 
-      {/* Sidebar Footer — Marketplace Shortcut */}
-      <div className="border-t border-white/[0.06] p-2.5 shrink-0">
+      {/* Sidebar Footer */}
+      <div className="border-t border-[#E2E8F0] p-2.5 shrink-0">
         <button
           onClick={onMarketplace}
           title={!showLabels ? "商場管理" : undefined}
           className={cn(
-            "w-full flex items-center gap-2.5 rounded-lg py-2.5 transition-all duration-150",
-            "text-[#FEDD00] hover:bg-[#FEDD00]/[0.08] border border-[#FEDD00]/20 hover:border-[#FEDD00]/40",
+            "w-full flex items-center gap-2.5 rounded-lg py-2.5 transition-all duration-150 text-[13px] font-medium",
+            "text-[#06038D] hover:bg-[#EFF6FF] border border-[#BFDBFE] hover:border-[#2563EB]",
             !showLabels ? "justify-center px-0" : "px-3"
           )}
         >
-          <ShoppingCart className="w-[18px] h-[18px] shrink-0" />
-          {showLabels && (
-            <span className="text-[13px] font-medium truncate">商場管理</span>
-          )}
+          <ShoppingCart className="w-[17px] h-[17px] shrink-0" />
+          {showLabels && <span className="truncate">商場管理</span>}
         </button>
       </div>
     </div>
   );
 }
 
-/* ─── Main Admin Page ────────────────────────────────────────────────── */
+/* ─── Global Search Bar ──────────────────────────────────────────────────── */
+function GlobalSearchBar() {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.altKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return (
+    <>
+      <button
+        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+        className="flex items-center gap-2 px-3 h-8 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-[#94A3B8] text-[13px] hover:border-[#CBD5E1] hover:bg-white transition-all min-w-[200px] max-w-[280px]"
+      >
+        <Search className="w-3.5 h-3.5 shrink-0" />
+        <span className="flex-1 text-left">搜尋...</span>
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#E2E8F0] text-[10px] font-mono text-[#64748B]">
+          ⌥K
+        </kbd>
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]" onClick={() => setOpen(false)}>
+          <div className="absolute inset-0 bg-[#0F172A]/30 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-lg mx-4 bg-white rounded-xl border border-[#E2E8F0] shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0]">
+              <Search className="w-4 h-4 text-[#94A3B8] shrink-0" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="搜尋功能、頁面..."
+                className="flex-1 text-[14px] text-[#0F172A] bg-transparent outline-none placeholder:text-[#94A3B8]"
+              />
+              <kbd className="px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[11px] font-mono text-[#64748B]">Esc</kbd>
+            </div>
+            <div className="py-2 px-2 max-h-[320px] overflow-y-auto">
+              {SECTIONS.map(section => (
+                <div key={section.id}>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+                    {section.label}
+                  </div>
+                  {section.tabs
+                    .filter(t => !query || t.label.includes(query))
+                    .map(tab => (
+                      <button
+                        key={tab.id}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+                        onClick={() => setOpen(false)}
+                      >
+                        <span className="text-[#64748B]">{tab.icon}</span>
+                        {tab.label}
+                      </button>
+                    ))
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ─── Main Admin Page ────────────────────────────────────────────────────── */
 export default function Admin() {
   const [, navigate] = useLocation();
+  const { data: user } = trpc.auth.me.useQuery();
 
-  // Active section (sidebar item)
   const [activeSection, setActiveSection] = useState<SectionId>(getStoredSection);
-
-  // Active tab per section (stored separately)
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>(() => {
     const result: Record<string, string> = {};
     SECTIONS.forEach(s => { result[s.id] = getStoredTab(s.id); });
     return result;
   });
-
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getStoredCollapsed);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  // Persist active section
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY_SECTION, activeSection); } catch { /* ignore */ }
   }, [activeSection]);
 
-  // Persist active tab per section
   useEffect(() => {
     SECTIONS.forEach(s => {
       try { localStorage.setItem(`${STORAGE_KEY_TAB}_${s.id}`, activeTabs[s.id] ?? SECTION_DEFAULT_TAB[s.id]); } catch { /* ignore */ }
     });
   }, [activeTabs]);
 
-  // Persist sidebar collapsed state
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY_COLLAPSED, String(sidebarCollapsed)); } catch { /* ignore */ }
   }, [sidebarCollapsed]);
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
-    const handler = (e: MediaQueryListEvent) => {
-      if (e.matches) setMobileMenuOpen(false);
-    };
+    const handler = (e: MediaQueryListEvent) => { if (e.matches) setMobileMenuOpen(false); };
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
   }, []);
 
-  // Listen for cross-component navigation events
   useEffect(() => {
     const handleNavigateToBlog = () => {
       setActiveSection("content");
@@ -407,7 +458,6 @@ export default function Admin() {
     };
   }, []);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -431,16 +481,21 @@ export default function Admin() {
     setMobileMenuOpen(false);
   }, [navigate]);
 
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => { window.location.href = "/"; },
+  });
+
   const currentSection = SECTIONS.find(s => s.id === activeSection) ?? SECTIONS[0];
   const currentTabId = activeTabs[activeSection] ?? SECTION_DEFAULT_TAB[activeSection];
+  const currentTabLabel = currentSection.tabs.find(t => t.id === currentTabId)?.label ?? "";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#060618]">
+    <div className="admin-shell flex h-screen overflow-hidden">
       {/* ─── Desktop Sidebar ─────────────────────────────────────── */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-white/[0.06] bg-[#0a0a1e] transition-all duration-300 ease-in-out shrink-0",
-          sidebarCollapsed ? "w-[68px]" : "w-[220px]"
+          "hidden md:flex flex-col shrink-0 transition-all duration-300 ease-in-out",
+          sidebarCollapsed ? "w-[64px]" : "w-[220px]"
         )}
       >
         <SidebarNav
@@ -456,19 +511,19 @@ export default function Admin() {
       {/* ─── Mobile Overlay + Drawer ─────────────────────────────── */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-[#0F172A]/30 backdrop-blur-sm md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[240px] bg-[#0a0a1e] border-r border-white/[0.06] transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[240px] transition-transform duration-300 ease-in-out md:hidden",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <button
           onClick={() => setMobileMenuOpen(false)}
-          className="absolute top-3 right-3 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors z-10"
+          className="absolute top-3 right-3 p-1.5 rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
@@ -484,40 +539,90 @@ export default function Admin() {
 
       {/* ─── Right Content Area ───────────────────────────────────── */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Top Bar */}
-        <header className="flex items-center h-14 border-b border-white/[0.06] bg-[#0a0a1e]/80 backdrop-blur-sm px-4 md:px-6 shrink-0 gap-3">
+        {/* ── Top Header ── */}
+        <header className="adm-header shrink-0 z-30">
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors md:hidden shrink-0"
+            className="p-1.5 rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors md:hidden shrink-0"
           >
             <Menu className="w-5 h-5" />
           </button>
+
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 min-w-0 text-[14px]">
-            <span className="text-gray-500 shrink-0">{currentSection.icon}</span>
-            <span className="text-gray-400 font-medium shrink-0">{currentSection.label}</span>
+          <div className="adm-breadcrumb min-w-0 flex-1">
+            <span className="text-[#94A3B8] shrink-0">{currentSection.icon}</span>
+            <span className="text-[#64748B] font-medium shrink-0">{currentSection.label}</span>
             {currentSection.tabs.length > 1 && (
               <>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                <span className="text-white font-semibold truncate">
-                  {currentSection.tabs.find(t => t.id === currentTabId)?.label ?? ""}
-                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#CBD5E1] shrink-0" />
+                <span className="adm-breadcrumb-active truncate">{currentTabLabel}</span>
+              </>
+            )}
+          </div>
+
+          {/* Global Search */}
+          <GlobalSearchBar />
+
+          {/* Notification Bell */}
+          <button className="relative p-2 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors shrink-0">
+            <Bell className="w-4.5 h-4.5" />
+          </button>
+
+          {/* Profile Dropdown */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setProfileOpen(v => !v)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-[#06038D] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase() ?? "A"}
+              </div>
+              <span className="hidden sm:block text-[13px] font-medium text-[#0F172A] max-w-[100px] truncate">
+                {user?.name ?? "Admin"}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8]" />
+            </button>
+
+            {profileOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 adm-dropdown-content w-48">
+                  <div className="px-3 py-2 border-b border-[#E2E8F0] mb-1">
+                    <p className="text-[12px] font-semibold text-[#0F172A] truncate">{user?.name}</p>
+                    <p className="text-[11px] text-[#94A3B8] truncate">{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigate("/"); setProfileOpen(false); }}
+                    className="adm-dropdown-item w-full"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    前往前台
+                  </button>
+                  <div className="h-px bg-[#E2E8F0] my-1" />
+                  <button
+                    onClick={() => logoutMutation.mutate()}
+                    className="adm-dropdown-item danger w-full"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    登出
+                  </button>
+                </div>
               </>
             )}
           </div>
         </header>
 
-        {/* In-page Tab Bar */}
+        {/* ── In-page Tab Bar ── */}
         <SectionTabBar
           section={currentSection}
           activeTab={currentTabId}
           onSelect={(tabId) => handleSelectTab(activeSection, tabId)}
         />
 
-        {/* Content */}
+        {/* ── Content ── */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="p-4 md:p-6 lg:p-8">
             <TabContent tabId={currentTabId} />
           </div>
         </div>

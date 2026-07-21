@@ -308,3 +308,608 @@
   0%   { opacity: 1; transform: translateY(-10px) rotate(0deg); }
   100% { opacity: 0; transform: translateY(300px) rotate(720deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN SHELL — Slate / Linear / Stripe SaaS Light Theme
+   Scoped under .admin-shell to avoid polluting the public-facing dark theme.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-shell {
+  /* ── Surface ─────────────────────────────────────────────────────────── */
+  --adm-bg-page:        #F8FAFC;   /* Slate 50 */
+  --adm-bg-sidebar:     #FFFFFF;
+  --adm-bg-header:      #FFFFFF;
+  --adm-bg-card:        #FFFFFF;
+  --adm-bg-hover:       #F1F5F9;   /* Slate 100 */
+  --adm-bg-active:      #EFF6FF;   /* Blue 50 */
+  --adm-bg-input:       #FFFFFF;
+
+  /* ── Border ──────────────────────────────────────────────────────────── */
+  --adm-border:         #E2E8F0;   /* Slate 200 */
+  --adm-border-strong:  #CBD5E1;   /* Slate 300 */
+  --adm-border-focus:   #2563EB;   /* Blue 600 */
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --adm-text-primary:   #0F172A;   /* Slate 900 */
+  --adm-text-secondary: #64748B;   /* Slate 500 */
+  --adm-text-muted:     #94A3B8;   /* Slate 400 */
+  --adm-text-link:      #2563EB;
+
+  /* ── Brand / Action ──────────────────────────────────────────────────── */
+  --adm-blue:           #2563EB;   /* Indigo Blue primary */
+  --adm-blue-hover:     #1D4ED8;
+  --adm-blue-light:     #EFF6FF;
+  --adm-orange:         #F97316;   /* Brand orange CTA */
+  --adm-orange-hover:   #EA6C0A;
+  --adm-orange-light:   #FFF7ED;
+
+  /* ── Status Badges ───────────────────────────────────────────────────── */
+  --adm-success-bg:     #DCFCE7;
+  --adm-success-text:   #15803D;
+  --adm-warning-bg:     #FEF3C7;
+  --adm-warning-text:   #B45309;
+  --adm-danger-bg:      #FEE2E2;
+  --adm-danger-text:    #B91C1C;
+  --adm-info-bg:        #DBEAFE;
+  --adm-info-text:      #1D4ED8;
+
+  /* ── Shadow ──────────────────────────────────────────────────────────── */
+  --adm-shadow-sm:      0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
+  --adm-shadow-md:      0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+  --adm-shadow-card:    0 1px 3px rgba(15,23,42,0.06);
+
+  /* Apply base */
+  background-color: var(--adm-bg-page);
+  color: var(--adm-text-primary);
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.admin-shell .adm-sidebar {
+  background: var(--adm-bg-sidebar);
+  border-right: 1px solid var(--adm-border);
+  box-shadow: var(--adm-shadow-sm);
+}
+
+.admin-shell .adm-sidebar-header {
+  border-bottom: 1px solid var(--adm-border);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.admin-shell .adm-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--adm-text-secondary);
+  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+}
+
+.admin-shell .adm-nav-item:hover {
+  background: var(--adm-bg-hover);
+  color: var(--adm-text-primary);
+}
+
+.admin-shell .adm-nav-item.active {
+  background: var(--adm-blue-light);
+  color: var(--adm-blue);
+  font-weight: 600;
+}
+
+.admin-shell .adm-nav-item.active .adm-nav-icon {
+  color: var(--adm-blue);
+}
+
+.admin-shell .adm-nav-icon {
+  color: var(--adm-text-muted);
+  flex-shrink: 0;
+}
+
+.admin-shell .adm-nav-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--adm-border);
+  color: var(--adm-text-secondary);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.admin-shell .adm-nav-item.active .adm-nav-badge {
+  background: #BFDBFE;
+  color: var(--adm-blue);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.admin-shell .adm-header {
+  background: var(--adm-bg-header);
+  border-bottom: 1px solid var(--adm-border);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  box-shadow: var(--adm-shadow-sm);
+}
+
+.admin-shell .adm-breadcrumb {
+  font-size: 13px;
+  color: var(--adm-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-shell .adm-breadcrumb-active {
+  color: var(--adm-text-primary);
+  font-weight: 600;
+}
+
+/* ── Tab Bar ─────────────────────────────────────────────────────────────── */
+.admin-shell .adm-tab-bar {
+  background: var(--adm-bg-header);
+  border-bottom: 1px solid var(--adm-border);
+  display: flex;
+  padding: 0 24px;
+  gap: 4px;
+}
+
+.admin-shell .adm-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--adm-text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.admin-shell .adm-tab:hover {
+  color: var(--adm-text-primary);
+}
+
+.admin-shell .adm-tab.active {
+  color: var(--adm-blue);
+  border-bottom-color: var(--adm-blue);
+  font-weight: 600;
+}
+
+/* ── Cards & Containers ──────────────────────────────────────────────────── */
+.admin-shell .adm-card {
+  background: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  box-shadow: var(--adm-shadow-card);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.admin-shell .adm-btn-primary {
+  background: var(--adm-orange);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.12s, box-shadow 0.12s;
+  box-shadow: 0 1px 3px rgba(249,115,22,0.3);
+}
+
+.admin-shell .adm-btn-primary:hover {
+  background: var(--adm-orange-hover);
+  box-shadow: 0 2px 6px rgba(249,115,22,0.4);
+}
+
+.admin-shell .adm-btn-secondary {
+  background: #fff;
+  color: var(--adm-text-primary);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.admin-shell .adm-btn-secondary:hover {
+  background: var(--adm-bg-hover);
+  border-color: var(--adm-border-focus);
+}
+
+.admin-shell .adm-btn-ghost {
+  background: transparent;
+  color: var(--adm-text-secondary);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.admin-shell .adm-btn-ghost:hover {
+  background: var(--adm-bg-hover);
+  color: var(--adm-text-primary);
+}
+
+/* ── Dropdown Menu ───────────────────────────────────────────────────────── */
+.admin-shell .adm-dropdown-content {
+  background: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  box-shadow: var(--adm-shadow-md);
+  padding: 4px;
+  min-width: 180px;
+}
+
+.admin-shell .adm-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--adm-text-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.admin-shell .adm-dropdown-item:hover {
+  background: var(--adm-bg-hover);
+}
+
+.admin-shell .adm-dropdown-item.danger {
+  color: var(--adm-danger-text);
+}
+
+.admin-shell .adm-dropdown-item.danger:hover {
+  background: var(--adm-danger-bg);
+}
+
+/* ── Search & Filter Bar ─────────────────────────────────────────────────── */
+.admin-shell .adm-search-bar {
+  background: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.admin-shell .adm-search-bar:focus-within {
+  border-color: var(--adm-border-focus);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.admin-shell .adm-search-bar input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--adm-text-primary);
+  width: 100%;
+}
+
+.admin-shell .adm-search-bar input::placeholder {
+  color: var(--adm-text-muted);
+}
+
+.admin-shell .adm-select {
+  background: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 0 10px;
+  height: 36px;
+  font-size: 13px;
+  color: var(--adm-text-primary);
+  cursor: pointer;
+  transition: border-color 0.12s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.admin-shell .adm-select:focus {
+  border-color: var(--adm-border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.admin-shell .adm-table-wrap {
+  background: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--adm-shadow-card);
+}
+
+.admin-shell .adm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-shell .adm-table th {
+  background: #F8FAFC;
+  color: var(--adm-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--adm-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-shell .adm-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--adm-text-primary);
+  border-bottom: 1px solid var(--adm-border);
+  vertical-align: middle;
+}
+
+.admin-shell .adm-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-shell .adm-table tbody tr {
+  transition: background 0.1s;
+  cursor: pointer;
+}
+
+.admin-shell .adm-table tbody tr:hover {
+  background: var(--adm-bg-hover);
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────────── */
+.admin-shell .adm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-shell .adm-badge-success {
+  background: var(--adm-success-bg);
+  color: var(--adm-success-text);
+}
+
+.admin-shell .adm-badge-warning {
+  background: var(--adm-warning-bg);
+  color: var(--adm-warning-text);
+}
+
+.admin-shell .adm-badge-danger {
+  background: var(--adm-danger-bg);
+  color: var(--adm-danger-text);
+}
+
+.admin-shell .adm-badge-info {
+  background: var(--adm-info-bg);
+  color: var(--adm-info-text);
+}
+
+.admin-shell .adm-badge-neutral {
+  background: #F1F5F9;
+  color: var(--adm-text-secondary);
+}
+
+/* ── Slide-over Drawer ───────────────────────────────────────────────────── */
+.admin-shell .adm-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.35);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  animation: adm-fade-in 0.15s ease;
+}
+
+.admin-shell .adm-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--adm-bg-card);
+  border-left: 1px solid var(--adm-border);
+  box-shadow: -8px 0 32px rgba(15,23,42,0.12);
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  animation: adm-slide-in 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+.admin-shell .adm-drawer-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--adm-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.admin-shell .adm-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.admin-shell .adm-drawer-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--adm-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  background: var(--adm-bg-page);
+}
+
+/* ── Floating Bulk Action Bar ────────────────────────────────────────────── */
+.admin-shell .adm-bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0F172A;
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(15,23,42,0.25), 0 2px 8px rgba(15,23,42,0.15);
+  z-index: 40;
+  animation: adm-slide-up 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.admin-shell .adm-bulk-bar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.15);
+}
+
+.admin-shell .adm-bulk-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  background: transparent;
+  border: none;
+}
+
+.admin-shell .adm-bulk-action:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.admin-shell .adm-bulk-action.danger:hover {
+  background: rgba(239,68,68,0.2);
+  color: #FCA5A5;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes adm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes adm-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes adm-slide-up {
+  from { transform: translateX(-50%) translateY(16px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* ── Wizard / Two-column Dialog ──────────────────────────────────────────── */
+.admin-shell .adm-wizard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 480px;
+}
+
+.admin-shell .adm-wizard-left {
+  padding: 24px;
+  border-right: 1px solid var(--adm-border);
+  overflow-y: auto;
+}
+
+.admin-shell .adm-wizard-right {
+  padding: 24px;
+  background: var(--adm-bg-page);
+  overflow-y: auto;
+}
+
+/* ── Form Fields ─────────────────────────────────────────────────────────── */
+.admin-shell .adm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--adm-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.admin-shell .adm-input {
+  width: 100%;
+  background: var(--adm-bg-input);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--adm-text-primary);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.admin-shell .adm-input:focus {
+  border-color: var(--adm-border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.admin-shell .adm-input::placeholder {
+  color: var(--adm-text-muted);
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+.admin-shell .adm-divider {
+  height: 1px;
+  background: var(--adm-border);
+  margin: 12px 0;
+}
+
+/* ── Profit / Loss colors ────────────────────────────────────────────────── */
+.admin-shell .adm-profit { color: #15803D; font-weight: 600; }
+.admin-shell .adm-loss   { color: #B91C1C; font-weight: 600; }
+.admin-shell .adm-neutral { color: var(--adm-text-secondary); }
