@@ -1167,6 +1167,7 @@ function BuyFormDialog({
   const [manualMode, setManualMode] = useState(isEdit);
   const [selectedCard, setSelectedCard] = useState<CardSearchResult | null>(null);
   const [cardSearchOpen, setCardSearchOpen] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     itemType: editItem?.itemType ?? "card",
@@ -1197,22 +1198,22 @@ function BuyFormDialog({
 
   const createMutation = trpc.companyCardInventory.create.useMutation({
     onSuccess: () => {
-      toast.success("已新增買取記錄");
+      toast.success("已新增買取記錄", { description: "記錄已成功儲存至資料庫" });
       utils.companyCardInventory.list.invalidate();
       utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error("新增失敗", { description: e.message }),
   });
 
   const updateMutation = trpc.companyCardInventory.update.useMutation({
     onSuccess: () => {
-      toast.success("已更新記錄");
+      toast.success("買取記錄已更新", { description: "所有變更已成功儲存" });
       utils.companyCardInventory.list.invalidate();
       utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error("更新失敗", { description: e.message }),
   });
 
   const handleCardSelect = (card: CardSearchResult, rarity?: string | null) => {
@@ -1243,7 +1244,11 @@ function BuyFormDialog({
   const handleSubmit = () => {
     if (!form.cardName.trim()) return toast.error("請輸入卡牌/商品名稱");
     const amt = parseFloat(form.buyPriceOriginal);
-    if (!amt || isNaN(amt) || amt <= 0) return toast.error("請輸入有效的買取金額");
+    if (!amt || isNaN(amt) || amt <= 0) {
+      setPriceError("買取金額必須大於零");
+      return;
+    }
+    setPriceError(null);
 
     const payload = {
       itemType: form.itemType as "card" | "sealed",
@@ -1490,11 +1495,24 @@ function BuyFormDialog({
                     step="0.01"
                     placeholder="0.00"
                     value={form.buyPriceOriginal}
-                    onChange={(e) => setForm(f => ({ ...f, buyPriceOriginal: e.target.value }))}
-                    className="flex-1 h-11"
+                    onChange={(e) => {
+                      setForm(f => ({ ...f, buyPriceOriginal: e.target.value }));
+                      const v = parseFloat(e.target.value);
+                      if (e.target.value === "" || isNaN(v) || v <= 0) {
+                        setPriceError("買取金額必須大於零");
+                      } else {
+                        setPriceError(null);
+                      }
+                    }}
+                    className={`flex-1 h-11${priceError ? " border-red-500 focus-visible:ring-red-500" : ""}`}
                   />
                 </div>
-                {estimatedHkd !== null && form.buyPriceCurrency !== "HKD" && (
+                {priceError && (
+                  <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+                    <span aria-hidden>⚠</span> {priceError}
+                  </p>
+                )}
+                {!priceError && estimatedHkd !== null && form.buyPriceCurrency !== "HKD" && (
                   <p className="text-xs text-muted-foreground mt-1">
                     ≈ {formatHkd(estimatedHkd)} HKD（匯率：{rates[form.buyPriceCurrency as keyof typeof rates]}）
                   </p>
