@@ -228,32 +228,42 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
     // Total col widths = 762 = A4 landscape (841.89) - margin*2 (80)
     const IMG_COL_W = 40;
     const cols = [
-      { label: "圖片", width: IMG_COL_W },  // 40
-      { label: "日期", width: 60 },          // 60
-      { label: "類型", width: 34 },          // 34
-      { label: "卡牌/商品名稱", width: 148 }, // 148
-      { label: "系列", width: 72 },          // 72
-      { label: "等級", width: 50 },          // 50
-      { label: "買取金額", width: 72 },      // 72
-      { label: "買取來源", width: 68 },      // 68
-      { label: "狀態", width: 42 },          // 42
-      { label: "賣出金額", width: 66 },      // 66
-      { label: "賣出渠道", width: 60 },      // 60
-      { label: "備注", width: 50 },          // 50  ← total = 762
+      { label: "圖片", width: IMG_COL_W },   // 40
+      { label: "日期", width: 58 },           // 58
+      { label: "類型", width: 32 },           // 32
+      { label: "卡牌/商品名稱", width: 180 }, // 180 ← increased
+      { label: "系列", width: 100 },          // 100 ← increased
+      { label: "等級", width: 44 },           // 44
+      { label: "買取金額", width: 68 },       // 68
+      { label: "買取來源", width: 60 },       // 60
+      { label: "狀態", width: 40 },           // 40
+      { label: "賣出金額", width: 60 },       // 60
+      { label: "賣出渠道", width: 50 },       // 50
+      { label: "備注", width: 30 },           // 30  ← total = 762
     ];
 
     const tableTop = sy + 60;
-    // Dynamic row height based on notes length
-    // Notes col is 50px wide, ~6 Chinese chars per line at 7pt font
-    const NOTES_CHARS_PER_LINE = 6;
     const NOTES_LINE_HEIGHT = 11;
     const BASE_ROW_H = 44;
-    const getRowH = (notes: string | null) => {
-      if (!notes) return BASE_ROW_H;
-      const lines = Math.ceil(notes.length / NOTES_CHARS_PER_LINE);
-      if (lines <= 1) return BASE_ROW_H;
-      // Extra height needed beyond 1 line
-      const extraH = (lines - 1) * NOTES_LINE_HEIGHT;
+    // Card name col: 180px wide, ~18 chars per line at 7.5pt (mixed CJK+ASCII)
+    const CARD_NAME_COL_W = 180;
+    const CARD_NAME_CHARS_PER_LINE = 22; // conservative estimate for mixed text
+    // Series col: 100px wide, ~12 chars per line
+    const SERIES_COL_W = 100;
+    const SERIES_CHARS_PER_LINE = 14;
+
+    const getRowH = (row: { notes: string | null; cardName: string; cardSet: string | null }) => {
+      // Calculate lines needed for card name
+      const nameLines = Math.ceil(row.cardName.length / CARD_NAME_CHARS_PER_LINE);
+      // Calculate lines needed for series
+      const seriesText = row.cardSet || "";
+      const seriesLines = seriesText.length > 0 ? Math.ceil(seriesText.length / SERIES_CHARS_PER_LINE) : 1;
+      // Calculate lines needed for notes
+      const notesText = row.notes || "";
+      const notesLines = notesText.length > 0 ? Math.ceil(notesText.length / 4) : 1; // notes col is narrow (30px)
+      const maxLines = Math.max(nameLines, seriesLines, notesLines);
+      if (maxLines <= 1) return BASE_ROW_H;
+      const extraH = (maxLines - 1) * NOTES_LINE_HEIGHT;
       return Math.max(BASE_ROW_H, BASE_ROW_H + extraH);
     };
 
@@ -275,7 +285,7 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
     let simY = tableTop + 22;
     let totalPages = 1;
     rows.forEach((row) => {
-      const rh = getRowH(row.notes);
+      const rh = getRowH(row);
       if (simY + rh > pageH - margin) { totalPages++; simY = margin + 22; }
       simY += rh;
     });
@@ -295,7 +305,7 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
 
     let rowY = tableTop + 22;
     rows.forEach((row, idx) => {
-      const ROW_H = getRowH(row.notes);
+      const ROW_H = getRowH(row);
       if (rowY + ROW_H > pageH - margin) {
         drawFooter(currentPage);
         currentPage++;
@@ -353,15 +363,17 @@ export async function generateCardInventoryPdf(year: number, month: number, onPr
       cells.forEach((cell, ci) => {
         const colDef = cols[ci + 1]; // +1 to skip image col
         const textColor = ci === 7 ? (row.status === "holding" ? "#d97706" : "#16a34a") : "#111827";
-        const textY = rowY + (ROW_H - 14) / 2; // vertically center
+        const textY = rowY + (ROW_H - 14) / 2; // vertically center for single-line cells
+        const isCardNameCol = ci === 2;  // "卡牌/商品名稱"
+        const isSeriesCol = ci === 3;    // "系列"
         const isNotesCol = ci === cells.length - 1;
-        if (isNotesCol) {
-          // Notes col: top-aligned with line wrapping for long notes
-          const notesTextY = rowY + 6; // small top padding
+        if (isCardNameCol || isSeriesCol || isNotesCol) {
+          // Multi-line columns: top-aligned with line wrapping
+          const multiTextY = rowY + 6;
           doc.fillColor(textColor).font("NotoTC-Regular").fontSize(7)
-            .text(cell === "—" ? cell : cell, dcx + 3, notesTextY, {
+            .text(cell, dcx + 3, multiTextY, {
               width: colDef.width - 6,
-              lineBreak: cell !== "—" && cell.length > NOTES_CHARS_PER_LINE,
+              lineBreak: true,
               ellipsis: false,
             });
         } else {
