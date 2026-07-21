@@ -593,62 +593,77 @@ export const companyCardInventoryRouter = router({
       date: z.string(),             // DD/MM/YYYY
       boughtNoteNo: z.string(),
       seller: z.string(),
-      cardId: z.number(),
-      productType: z.enum(["single_card", "sealed_product"]),
-      buyPrice: z.number(),
       notes: z.string().optional(),
+      // Each row can have multiple items (multi-item combination)
+      items: z.array(z.object({
+        cardId: z.number(),
+        productType: z.enum(["single_card", "sealed_product"]),
+        buyPrice: z.number(),        // price per unit
+        quantity: z.number().min(1), // quantity
+      })),
     })))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("DB not available");
 
-      const inserted: number[] = [];
+      const { sealedProducts } = await import("../../drizzle/schema_new");
+      let insertedCount = 0;
+
       for (const row of input) {
         // Parse DD/MM/YYYY to Date
         const [day, month, year] = row.date.split("/").map(Number);
         const buyDate = new Date(year, month - 1, day);
+        const buySource = [row.seller, row.boughtNoteNo].filter(Boolean).join(" | ");
 
-        // Get card name
-        let cardName = "";
-        let cardImage = "";
-        let series = "";
-        let setName = "";
-        if (row.productType === "single_card") {
-          const [card] = await db.select({ name: cards.name, imageUrl: cards.imageUrl, series: cards.series, setName: cards.setName })
-            .from(cards).where(eq(cards.id, row.cardId)).limit(1);
-          cardName = card?.name ?? "";
-          cardImage = card?.imageUrl ?? "";
-          series = card?.series ?? "";
-          setName = card?.setName ?? "";
-        } else {
-          const { sealedProducts } = await import("../../drizzle/schema_new");
-          const [sp] = await db.select({ name: sealedProducts.name, imageUrl: sealedProducts.imageUrl, series: sealedProducts.series, setName: sealedProducts.setName })
-            .from(sealedProducts).where(eq(sealedProducts.id, row.cardId)).limit(1);
-          cardName = sp?.name ?? "";
-          cardImage = sp?.imageUrl ?? "";
-          series = sp?.series ?? "";
-          setName = sp?.setName ?? "";
+        for (const item of row.items) {
+          // Expand quantity: insert one record per unit
+          const qty = Math.max(1, Math.round(item.quantity));
+
+          // Get card/product info
+          let cardName = "";
+          let cardImage = "";
+          let series = "";
+          let setName = "";
+
+          if (item.productType === "single_card") {
+            const [card] = await db.select({ name: cards.name, imageUrl: cards.imageUrl, series: cards.series, setName: cards.setName })
+              .from(cards).where(eq(cards.id, item.cardId)).limit(1);
+            cardName = card?.name ?? "";
+            cardImage = card?.imageUrl ?? "";
+            series = card?.series ?? "";
+            setName = card?.setName ?? "";
+          } else {
+            const [sp] = await db.select({ name: sealedProducts.name, imageUrl: sealedProducts.imageUrl, series: sealedProducts.series, setName: sealedProducts.setName })
+              .from(sealedProducts).where(eq(sealedProducts.id, item.cardId)).limit(1);
+            cardName = sp?.name ?? "";
+            cardImage = sp?.imageUrl ?? "";
+            series = sp?.series ?? "";
+            setName = sp?.setName ?? "";
+          }
+
+          // Insert qty records (one per unit)
+          for (let q = 0; q < qty; q++) {
+            await db.insert(companyCardInventory).values({
+              itemType: item.productType === "sealed_product" ? "sealed" : "card",
+              cardName,
+              cardSet: setName || series || undefined,
+              grade: "RAW",
+              buyPriceCurrency: "HKD",
+              buyPriceOriginal: String(item.buyPrice),
+              buyPriceHkd: String(item.buyPrice),
+              buyExchangeRate: "1.0000",
+              buyDate,
+              buySource,
+              status: "holding",
+              imageUrl: cardImage || undefined,
+              linkedCardId: item.cardId || undefined,
+              notes: row.notes || undefined,
+            });
+            insertedCount++;
+          }
         }
-
-        const result = await db.insert(companyCardInventory).values({
-          itemType: row.productType === "sealed_product" ? "sealed" : "card",
-          cardName,
-          cardSet: setName || series || undefined,
-          grade: "RAW",
-          buyPriceCurrency: "HKD",
-          buyPriceOriginal: String(row.buyPrice),
-          buyPriceHkd: String(row.buyPrice),
-          buyExchangeRate: "1.0000",
-          buyDate,
-          buySource: [row.seller, row.boughtNoteNo].filter(Boolean).join(" | "),
-          status: "holding",
-          imageUrl: cardImage || undefined,
-          linkedCardId: row.cardId || undefined,
-          notes: row.notes || undefined,
-        });
-        inserted.push((result as any).insertId ?? 0);
       }
 
-      return { inserted: inserted.length };
+      return { inserted: insertedCount };
     }),
 });
