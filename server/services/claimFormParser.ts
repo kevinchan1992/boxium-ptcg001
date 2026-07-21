@@ -346,40 +346,63 @@ ${JSON.stringify(candidateList, null, 2)}`;
 export async function matchProductsToClaimLines(
   lines: ClaimFormLine[]
 ): Promise<ParsedClaimRow[]> {
-  const results: ParsedClaimRow[] = [];
+  // Process lines in parallel batches of 5 for much faster execution
+  const CONCURRENCY = 5;
+  const results: ParsedClaimRow[] = new Array(lines.length);
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (let batch = 0; batch < lines.length; batch += CONCURRENCY) {
+    const batchLines = lines.slice(batch, batch + CONCURRENCY);
+    const batchResults = await Promise.all(
+      batchLines.map(async (line, batchIdx): Promise<ParsedClaimRow> => {
+        const i = batch + batchIdx;
+        try {
+          const candidates = await fetchCandidatesForAmount(line.amount);
 
-    const candidates = await fetchCandidatesForAmount(line.amount);
+          if (candidates.length === 0) {
+            return {
+              lineIndex: i,
+              date: line.date,
+              boughtNoteNo: line.boughtNoteNo,
+              seller: line.seller,
+              description: line.description,
+              totalAmount: line.amount,
+              combinations: [],
+              selectedCombination: null,
+              notes: '未找到符合價格範圍的卡牌/卡盒',
+            };
+          }
 
-    if (candidates.length === 0) {
-      results.push({
-        lineIndex: i,
-        date: line.date,
-        boughtNoteNo: line.boughtNoteNo,
-        seller: line.seller,
-        description: line.description,
-        totalAmount: line.amount,
-        combinations: [],
-        selectedCombination: null,
-        notes: '未找到符合價格範圍的卡牌/卡盒',
-      });
-      continue;
+          const combinations = await generateCombinations(line.amount, line.description, candidates);
+
+          return {
+            lineIndex: i,
+            date: line.date,
+            boughtNoteNo: line.boughtNoteNo,
+            seller: line.seller,
+            description: line.description,
+            totalAmount: line.amount,
+            combinations,
+            selectedCombination: combinations[0] || null,
+          };
+        } catch (err) {
+          console.error(`[claimFormParser] Failed to process line ${i}:`, err);
+          return {
+            lineIndex: i,
+            date: line.date,
+            boughtNoteNo: line.boughtNoteNo,
+            seller: line.seller,
+            description: line.description,
+            totalAmount: line.amount,
+            combinations: [],
+            selectedCombination: null,
+            notes: '處理失敗，請手動輸入',
+          };
+        }
+      })
+    );
+    for (let j = 0; j < batchResults.length; j++) {
+      results[batch + j] = batchResults[j];
     }
-
-    const combinations = await generateCombinations(line.amount, line.description, candidates);
-
-    results.push({
-      lineIndex: i,
-      date: line.date,
-      boughtNoteNo: line.boughtNoteNo,
-      seller: line.seller,
-      description: line.description,
-      totalAmount: line.amount,
-      combinations,
-      selectedCombination: combinations[0] || null,
-    });
   }
 
   return results;

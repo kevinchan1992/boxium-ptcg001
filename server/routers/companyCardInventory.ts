@@ -587,6 +587,51 @@ export const companyCardInventoryRouter = router({
       return result;
     }),
 
+  // Step 1: 只做 PDF 解析，提取交易行（不做 AI 匹配）
+  extractClaimLines: adminProcedure
+    .input(z.object({
+      pdfBase64: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { extractClaimFormLines } = await import("../services/claimFormParser");
+      const pdfBuffer = Buffer.from(input.pdfBase64, "base64");
+      const lines = await extractClaimFormLines(pdfBuffer);
+      return { lines, totalLines: lines.length };
+    }),
+
+  // Step 2: 對單一行進行 AI 匹配（支援前端逐行呼叫）
+  matchClaimLine: adminProcedure
+    .input(z.object({
+      lineIndex: z.number(),
+      date: z.string(),
+      boughtNoteNo: z.string(),
+      seller: z.string(),
+      description: z.string(),
+      amount: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const { matchProductsToClaimLines } = await import("../services/claimFormParser");
+      const results = await matchProductsToClaimLines([{
+        date: input.date,
+        boughtNoteNo: input.boughtNoteNo,
+        seller: input.seller,
+        description: input.description,
+        amount: input.amount,
+      }]);
+      const row = results[0];
+      return {
+        lineIndex: input.lineIndex,
+        date: row.date,
+        boughtNoteNo: row.boughtNoteNo,
+        seller: row.seller,
+        description: row.description,
+        totalAmount: row.totalAmount,
+        combinations: row.combinations,
+        selectedCombination: row.selectedCombination,
+        notes: row.notes,
+      };
+    }),
+
   // 批量匯入 AI 拆單結果為公司買取記錄
   importClaimFormRows: adminProcedure
     .input(z.array(z.object({
