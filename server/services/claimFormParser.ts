@@ -10,8 +10,22 @@
  * 4. 返回最多 3 個替代組合供用戶覆核
  */
 
-import * as pdfParseModule from 'pdf-parse';
-const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
+// Use pdfjs-dist directly for PDF text extraction (pdf-parse v2 changed its API)
+async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+  // Dynamic import to avoid ESM/CJS issues at module load time
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const getDocument = pdfjsLib.getDocument;
+  const loadingTask = getDocument({ data: new Uint8Array(buffer) });
+  const pdf = await loadingTask.promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    const pageText = (tc.items as any[]).map((item: any) => item.str).join(' ');
+    pages.push(pageText);
+  }
+  return pages.join('\n');
+}
 import { invokeLLM } from '../_core/llm';
 import { getProductsByPriceRange } from '../db';
 
@@ -65,8 +79,7 @@ export interface ParsedClaimRow {
 // ─── Step 1: Extract text from PDF ───────────────────────────────────────────
 
 export async function extractClaimFormLines(pdfBuffer: Buffer): Promise<ClaimFormLine[]> {
-  const data = await pdfParse(pdfBuffer);
-  const text = data.text;
+  const text = await extractTextFromPdfBuffer(pdfBuffer);
 
   const systemPrompt = `You are a financial document parser. Extract all transaction rows from this Director Claim Form PDF text.
 Each row has: date (DD/MM/YYYY), bought note number (e.g. BN202601010), seller info, item description, and HKD amount.
