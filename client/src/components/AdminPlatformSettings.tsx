@@ -56,16 +56,16 @@ function SettingField({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-gray-300 text-sm font-medium">{label}</Label>
+      <Label className="text-slate-400 text-sm font-medium">{label}</Label>
       <div className="relative flex items-center">
-        {prefix && <span className="absolute left-3 text-gray-400 text-sm pointer-events-none">{prefix}</span>}
+        {prefix && <span className="absolute left-3 text-slate-500 text-sm pointer-events-none">{prefix}</span>}
         <Input
           type="number" min={min} max={max} step={step}
           value={value}
           onChange={e => onChange(e.target.value)}
           className={`bg-gray-700 border-gray-600 text-white focus:border-yellow-500 ${prefix ? "pl-10" : ""} ${suffix ? "pr-14" : ""}`}
         />
-        {suffix && <span className="absolute right-3 text-gray-400 text-sm pointer-events-none">{suffix}</span>}
+        {suffix && <span className="absolute right-3 text-slate-500 text-sm pointer-events-none">{suffix}</span>}
       </div>
       {hint && <p className="text-xs text-gray-500">{hint}</p>}
     </div>
@@ -239,12 +239,12 @@ export default function AdminPlatformSettings() {
         <Settings className="w-6 h-6 text-yellow-400" />
         <div>
           <h2 className="text-xl font-bold text-white">平台設定</h2>
-          <p className="text-sm text-gray-400">管理平台費率及其他系統設定</p>
+          <p className="text-sm text-slate-500">管理平台費率及其他系統設定</p>
         </div>
       </div>
 
       {/* Tiered Fee Rate Card */}
-      <Card className="bg-gray-900 border-gray-700">
+      <Card className="bg-white border-slate-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -265,13 +265,13 @@ export default function AdminPlatformSettings() {
               </div>
             )}
           </div>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-slate-500">
             適用於所有 C2C 二手市集交易。費率按成交金額自動套用對應等級，並在賣家放款時生效。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex items-center gap-2 text-slate-500">
               <RefreshCw className="w-4 h-4 animate-spin" />
               <span>載入中...</span>
             </div>
@@ -297,7 +297,7 @@ export default function AdminPlatformSettings() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">成交金額上限（HKD）</Label>
+                      <Label className="text-slate-500 text-xs">成交金額上限（HKD）</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
                         <Input type="number" min="1" step="100" value={tiers.tier1Max}
@@ -307,12 +307,12 @@ export default function AdminPlatformSettings() {
                       <p className="text-xs text-gray-500">HK$1 至此金額</p>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier1Rate}
                           onChange={e => updateTier("tier1Rate", e.target.value)}
                           className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-yellow-500" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
                   </div>
@@ -331,7 +331,7 @@ export default function AdminPlatformSettings() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">成交金額上限（HKD）</Label>
+                      <Label className="text-slate-500 text-xs">成交金額上限（HKD）</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">HK$</span>
                         <Input type="number" min="1" step="100" value={tiers.tier2Max}
@@ -341,12 +341,12 @@ export default function AdminPlatformSettings() {
                       <p className="text-xs text-gray-500">超過第一級至此金額</p>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier2Rate}
                           onChange={e => updateTier("tier2Rate", e.target.value)}
                           className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-blue-500" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
                   </div>
@@ -365,19 +365,19 @@ export default function AdminPlatformSettings() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">適用範圍</Label>
-                      <div className="bg-gray-700/50 border border-gray-600 rounded-md px-3 py-2 text-gray-400 text-sm">
+                      <Label className="text-slate-500 text-xs">適用範圍</Label>
+                      <div className="bg-gray-700/50 border border-gray-600 rounded-md px-3 py-2 text-slate-500 text-sm">
                         超過 HK${(parseFloat(tiers.tier2Max) || 10000).toLocaleString()} 以上
                       </div>
                       <p className="text-xs text-gray-500">無上限</p>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-gray-400 text-xs">費率（%）</Label>
+                      <Label className="text-slate-500 text-xs">費率（%）</Label>
                       <div className="relative">
                         <Input type="number" min="0" max="30" step="0.1" value={tiers.tier3Rate}
                           onChange={e => updateTier("tier3Rate", e.target.value)}
                           className="bg-gray-700 border-gray-600 text-white pr-8 focus:border-green-500" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
                       </div>
                     </div>
                   </div>
@@ -395,14 +395,14 @@ export default function AdminPlatformSettings() {
                     )}
                   </Button>
                   <Button onClick={handleCancel} variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700">取消</Button>
+                    className="border-gray-600 text-slate-400 hover:bg-gray-700">取消</Button>
                 </div>
               )}
 
               <Separator className="bg-gray-700" />
 
               <div className="space-y-3">
-                <p className="text-sm text-gray-400 font-medium">費率預覽計算</p>
+                <p className="text-sm text-slate-500 font-medium">費率預覽計算</p>
                 <div className="grid grid-cols-3 gap-2">
                   {previewAmounts.map((amount) => {
                     const fee = calcFeeForAmount(amount, tiers);
@@ -428,19 +428,19 @@ export default function AdminPlatformSettings() {
       </Card>
 
       {/* More Settings Card */}
-      <Card className="bg-gray-900 border-gray-700">
+      <Card className="bg-white border-slate-200">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-purple-400" />
             <CardTitle className="text-white text-lg">更多設定</CardTitle>
           </div>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-slate-500">
             訂單時限、商品出價、購物車、SLA 等系統行為設定。修改後即時生效，無需重啟服務。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {moreLoading ? (
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex items-center gap-2 text-slate-500">
               <RefreshCw className="w-4 h-4 animate-spin" />
               <span>載入中...</span>
             </div>
@@ -462,7 +462,7 @@ export default function AdminPlatformSettings() {
                   <Truck className="w-4 h-4 text-blue-400" />
                   <h3 className="text-sm font-semibold text-blue-300">訂單生命週期</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/60 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <SettingField
                     label="出貨後自動完成天數"
                     hint="賣家出貨後，買家 N 天內未確認收貨，訂單自動完成"
@@ -487,7 +487,7 @@ export default function AdminPlatformSettings() {
                   <MessageSquare className="w-4 h-4 text-yellow-400" />
                   <h3 className="text-sm font-semibold text-yellow-300">出價設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingField
                     label="每商品每買家每日最多出價次數"
                     hint="同一商品 24 小時內，同一買家最多出價 N 次"
@@ -511,7 +511,7 @@ export default function AdminPlatformSettings() {
                   <Tag className="w-4 h-4 text-green-400" />
                   <h3 className="text-sm font-semibold text-green-300">商品上架設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/60 grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-1 gap-4">
                   <SettingField
                     label="最低出售金額"
                     hint="賣家上架商品的最低定價限制"
@@ -528,7 +528,7 @@ export default function AdminPlatformSettings() {
                   <ShoppingCart className="w-4 h-4 text-orange-400" />
                   <h3 className="text-sm font-semibold text-orange-300">購物車設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SettingField
                     label="購物車商品保留天數"
                     hint="商品加入購物車後保留 N 天，到期自動移除"
@@ -552,7 +552,7 @@ export default function AdminPlatformSettings() {
                   <Shield className="w-4 h-4 text-red-400" />
                   <h3 className="text-sm font-semibold text-red-300">SLA 時限設定</h3>
                 </div>
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/60 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <SettingField
                     label="Alipay 審核 SLA"
                     hint="Alipay 付款憑證審核時限"
@@ -589,7 +589,7 @@ export default function AdminPlatformSettings() {
                     )}
                   </Button>
                   <Button onClick={handleMoreCancel} variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700">取消</Button>
+                    className="border-gray-600 text-slate-400 hover:bg-gray-700">取消</Button>
                 </div>
               )}
             </>

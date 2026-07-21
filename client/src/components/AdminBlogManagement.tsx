@@ -33,7 +33,7 @@ function ShareStatisticsCard() {
   const totalShares = sortedStats.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader
         className="cursor-pointer select-none"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -68,19 +68,19 @@ function ShareStatisticsCard() {
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-1"><TrendingUp className="w-3.5 h-3.5" />總分享</div>
                   <div className="text-xl font-bold text-white">{totalShares}</div>
                 </div>
-                <div className="bg-zinc-800 p-3 rounded-lg border border-blue-800/30">
+                <div className="bg-slate-50 p-3 rounded-lg border border-blue-800/30">
                   <div className="flex items-center gap-1.5 text-blue-400 text-xs mb-1"><Facebook className="w-3.5 h-3.5" />Facebook</div>
                   <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.facebook, 0)}</div>
                 </div>
-                <div className="bg-zinc-800 p-3 rounded-lg border border-green-800/30">
+                <div className="bg-slate-50 p-3 rounded-lg border border-green-800/30">
                   <div className="flex items-center gap-1.5 text-green-400 text-xs mb-1"><MessageCircle className="w-3.5 h-3.5" />WhatsApp</div>
                   <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.whatsapp, 0)}</div>
                 </div>
-                <div className="bg-zinc-800 p-3 rounded-lg border border-yellow-800/30">
+                <div className="bg-slate-50 p-3 rounded-lg border border-yellow-800/30">
                   <div className="flex items-center gap-1.5 text-yellow-400 text-xs mb-1"><Link2 className="w-3.5 h-3.5" />複製連結</div>
                   <div className="text-xl font-bold text-white">{sortedStats.reduce((s, x) => s + x.copyLink, 0)}</div>
                 </div>
@@ -89,7 +89,7 @@ function ShareStatisticsCard() {
               {/* Sort */}
               <div className="flex justify-end">
                 <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                  <SelectTrigger className="w-36 bg-zinc-800 border-zinc-700 text-white text-xs h-8">
+                  <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-white text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -116,7 +116,7 @@ function ShareStatisticsCard() {
                   </thead>
                   <tbody>
                     {sortedStats.slice(0, 10).map((stat, i) => (
-                      <tr key={stat.postId} className="border-b border-zinc-800 hover:bg-zinc-800/50">
+                      <tr key={stat.postId} className="border-b border-slate-200 hover:bg-slate-50/50">
                         <td className="px-3 py-2 text-gray-500">{i + 1}</td>
                         <td className="px-3 py-2 text-white">
                           <a href={`/blog/${stat.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#FEDD00] transition-colors line-clamp-1">
@@ -396,7 +396,7 @@ export function AdminBlogManagement() {
       <ShareStatisticsCard />
 
       {/* Header */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -454,11 +454,11 @@ export function AdminBlogManagement() {
                 placeholder="搜尋文章標題..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                className="bg-zinc-800 border-zinc-700 text-white pl-9"
+                className="bg-slate-50 border-slate-200 text-white pl-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-white">
+              <SelectTrigger className="w-32 bg-slate-50 border-slate-200 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -468,7 +468,7 @@ export function AdminBlogManagement() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-36 bg-zinc-800 border-zinc-700 text-white">
+              <SelectTrigger className="w-36 bg-slate-50 border-slate-200 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -497,7 +497,7 @@ export function AdminBlogManagement() {
               {filteredPosts.map((post: any) => (
                 <div
                   key={post.id}
-                  className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors group cursor-pointer"
+                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-zinc-500 transition-colors group cursor-pointer"
                   onClick={(e) => {
                     // Only trigger if not clicking a button
                     if ((e.target as HTMLElement).closest('button')) return;
@@ -564,12 +564,12 @@ export function AdminBlogManagement() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1} className="border-zinc-700 text-white hover:bg-zinc-800">
+                disabled={currentPage === 1} className="border-slate-200 text-white hover:bg-slate-50">
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <span className="text-gray-400 text-sm">{currentPage} / {totalPages}</span>
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages} className="border-zinc-700 text-white hover:bg-zinc-800">
+                disabled={currentPage === totalPages} className="border-slate-200 text-white hover:bg-slate-50">
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -598,7 +598,7 @@ function WorkflowStepIndicator({ currentStep }: { currentStep: number }) {
               ? 'bg-purple-600 text-white'
               : currentStep > step.id
               ? 'bg-green-600/20 text-green-400 border border-green-600/30'
-              : 'bg-zinc-800 text-gray-500'
+              : 'bg-slate-50 text-gray-500'
           }`}>
             {currentStep > step.id ? (
               <Check className="w-3 h-3" />
@@ -762,14 +762,14 @@ function AIArticleGenerator({
   const isAnyLoading = strategyMutation.isPending || outlineMutation.isPending || generateMutation.isPending || proofreadMutation.isPending;
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-400" />
             AI 內容工廠
           </CardTitle>
-          <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-white hover:bg-slate-50" size="sm">
             <ChevronLeft className="w-4 h-4 mr-1" /> 返回
           </Button>
         </div>
@@ -798,7 +798,7 @@ function AIArticleGenerator({
                 ].map(({ key, icon: Icon, label }) => (
                   <Button key={key} variant={inputMethod === key ? 'default' : 'outline'}
                     onClick={() => setInputMethod(key)}
-                    className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+                    className={inputMethod === key ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-200 text-white hover:bg-slate-50'}
                     size="sm">
                     <Icon className="w-3.5 h-3.5 mr-1" />{label}
                   </Button>
@@ -810,7 +810,7 @@ function AIArticleGenerator({
             <div>
               <Label className="text-white text-sm">文章類型</Label>
               <Select value={articleType} onValueChange={setArticleType}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                <SelectTrigger className="bg-slate-50 border-slate-200 text-white mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -829,7 +829,7 @@ function AIArticleGenerator({
               <div>
                 <Label className="text-white text-sm">文章主題 <span className="text-red-400">*</span></Label>
                 <Input value={topic} onChange={(e) => setTopic(e.target.value)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  className="bg-slate-50 border-slate-200 text-white mt-1"
                   placeholder="例如：Charizard PSA 10 近期市場分析、2024 年最值得收藏的 Pokemon 卡牌" />
               </div>
             )}
@@ -841,13 +841,13 @@ function AIArticleGenerator({
                   <Label className="text-white text-sm">參考網址</Label>
                   <Input placeholder="https://example.com/article" value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                    className="bg-slate-50 border-slate-200 text-white mt-1" />
                   <p className="text-xs text-gray-500 mt-1">支援日文/英文/中文網站，AI 將自動抓取並分析內容</p>
                 </div>
                 <div>
                   <Label className="text-white text-sm">目標語言</Label>
                   <Select value={targetLanguage} onValueChange={(v) => setTargetLanguage(v as 'zh-TW' | 'en' | 'ja')}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-slate-50 border-slate-200 text-white mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="zh-TW">繁體中文</SelectItem>
                       <SelectItem value="en">English</SelectItem>
@@ -863,7 +863,7 @@ function AIArticleGenerator({
               <div className="space-y-3">
                 <div>
                   <Label className="text-white mb-2 block text-sm">上傳圖片</Label>
-                  <div className="border-2 border-dashed border-zinc-700 rounded-lg p-5 text-center hover:border-purple-500 transition-colors">
+                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center hover:border-purple-500 transition-colors">
                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" id="image-upload" disabled={isUploading} />
                     <label htmlFor="image-upload" className="cursor-pointer">
                       <ImageIcon className="w-10 h-10 mx-auto mb-3 text-gray-500" />
@@ -876,7 +876,7 @@ function AIArticleGenerator({
                   <div className="grid grid-cols-4 gap-2">
                     {uploadedImageUrls.map((url, i) => (
                       <div key={i} className="relative group">
-                        <LazyImage src={url} alt="" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
+                        <LazyImage src={url} alt="" className="w-full h-20 object-cover rounded-lg border border-slate-200" />
                         {i === 0 && <Badge className="absolute top-1 left-1 bg-purple-600 text-[10px]">主題圖</Badge>}
                         <Button size="sm" variant="destructive" onClick={() => removeImage(i)}
                           className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100">
@@ -895,7 +895,7 @@ function AIArticleGenerator({
                 <div>
                   <Label className="text-white text-sm">主題（選填）</Label>
                   <Input value={topic} onChange={(e) => setTopic(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                    className="bg-slate-50 border-slate-200 text-white mt-1"
                     placeholder="例如：Pikachu 價格飆升、市場動態等" />
                 </div>
                 <div>
@@ -908,7 +908,7 @@ function AIArticleGenerator({
                     </Button>
                   </div>
                   <Textarea value={textContent} onChange={(e) => setTextContent(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white"
+                    className="bg-slate-50 border-slate-200 text-white"
                     placeholder={`輸入參考資料或數據...\n\n例如：\n- Charizard PSA 10 今日成交：HKD 45,000\n- 過去 30 天均價：HKD 38,500\n- 交易量：+45%\n\n提示：點擊「插入卡牌資料」可從資料庫選擇卡牌並插入真實價格資料`}
                     rows={8} />
                 </div>
@@ -920,17 +920,17 @@ function AIArticleGenerator({
               <div>
                 <Label className="text-white text-xs">目標讀者</Label>
                 <Input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1 text-xs" />
+                  className="bg-slate-50 border-slate-200 text-white mt-1 text-xs" />
               </div>
               <div>
                 <Label className="text-white text-xs">SEO 關鍵字（選填）</Label>
                 <Input value={seoKeywords} onChange={(e) => setSeoKeywords(e.target.value)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1 text-xs"
+                  className="bg-slate-50 border-slate-200 text-white mt-1 text-xs"
                   placeholder="PSA 10, 卡牌市場, 香港 PTCG" />
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-zinc-700">
+            <div className="flex justify-end pt-2 border-t border-slate-200">
               <Button onClick={handleGenerateStrategy} disabled={strategyMutation.isPending}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
                 <TrendingUp className="w-4 h-4 mr-1.5" />
@@ -949,7 +949,7 @@ function AIArticleGenerator({
             </div>
 
             {/* Search Intent */}
-            <div className="p-3 bg-zinc-800 rounded-lg">
+            <div className="p-3 bg-slate-50 rounded-lg">
               <p className="text-xs text-gray-400 mb-1">搜尋意圖分析</p>
               <p className="text-white text-sm">{strategy.searchIntent}</p>
             </div>
@@ -963,7 +963,7 @@ function AIArticleGenerator({
                     className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${
                       selectedTitleIndex === i
                         ? 'border-purple-500 bg-purple-900/20 text-white'
-                        : 'border-zinc-700 bg-zinc-800 text-gray-300 hover:border-zinc-500'
+                        : 'border-slate-200 bg-slate-50 text-gray-300 hover:border-zinc-500'
                     }`}>
                     <span className={`inline-block w-5 h-5 rounded-full text-xs text-center leading-5 mr-2 ${
                       selectedTitleIndex === i ? 'bg-purple-600 text-white' : 'bg-zinc-700 text-gray-400'
@@ -976,18 +976,18 @@ function AIArticleGenerator({
 
             {/* Strategy Details */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-1">內容切入角度</p>
                 <p className="text-white text-xs">{strategy.contentAngle}</p>
               </div>
-              <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-1">內容集群</p>
                 <p className="text-white text-xs">{strategy.contentCluster}</p>
               </div>
             </div>
 
             {strategy.keyPoints?.length > 0 && (
-              <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-2">必須涵蓋重點</p>
                 <div className="flex flex-wrap gap-1.5">
                   {strategy.keyPoints.map((point: string, i: number) => (
@@ -997,9 +997,9 @@ function AIArticleGenerator({
               </div>
             )}
 
-            <div className="flex justify-between pt-2 border-t border-zinc-700">
+            <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(1)}
-                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleGenerateOutline} disabled={outlineMutation.isPending}
@@ -1020,7 +1020,7 @@ function AIArticleGenerator({
             </div>
 
             {/* Title */}
-            <div className="p-3 bg-zinc-800 rounded-lg">
+            <div className="p-3 bg-slate-50 rounded-lg">
               <p className="text-xs text-gray-400 mb-1">文章標題</p>
               <p className="text-white font-semibold">{outline.h1}</p>
               <p className="text-xs text-gray-500 mt-1">預估字數：{outline.estimatedWordCount}</p>
@@ -1029,7 +1029,7 @@ function AIArticleGenerator({
             {/* Sections */}
             <div className="space-y-2">
               {outline.sections?.map((section: any, i: number) => (
-                <div key={i} className="p-3 bg-zinc-800 rounded-lg">
+                <div key={i} className="p-3 bg-slate-50 rounded-lg">
                   <div className="flex items-start gap-2">
                     <span className="text-purple-400 text-xs font-mono mt-0.5">H2</span>
                     <div className="flex-1">
@@ -1054,7 +1054,7 @@ function AIArticleGenerator({
 
             {/* FAQ Preview */}
             {outline.faq?.length > 0 && (
-              <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-2">FAQ（{outline.faq.length} 個問題）</p>
                 {outline.faq.map((f: any, i: number) => (
                   <p key={i} className="text-gray-300 text-xs mb-1">Q{i+1}: {f.question}</p>
@@ -1062,9 +1062,9 @@ function AIArticleGenerator({
               </div>
             )}
 
-            <div className="flex justify-between pt-2 border-t border-zinc-700">
+            <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(2)}
-                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleGenerateArticle} disabled={generateMutation.isPending}
@@ -1085,7 +1085,7 @@ function AIArticleGenerator({
             </div>
 
             {/* Article Preview */}
-            <div className="p-4 bg-zinc-800 rounded-lg space-y-2">
+            <div className="p-4 bg-slate-50 rounded-lg space-y-2">
               <p className="text-xs text-gray-400">標題</p>
               <p className="text-white font-semibold">{generatedArticle.title}</p>
               {generatedArticle.excerpt && (
@@ -1099,9 +1099,9 @@ function AIArticleGenerator({
               <p className="text-xs text-gray-500">約 {generatedArticle.content?.length || 0} 字元</p>
             </div>
 
-            <div className="flex justify-between pt-2 border-t border-zinc-700">
+            <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(3)}
-                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <div className="flex gap-2">
@@ -1122,7 +1122,7 @@ function AIArticleGenerator({
         {/* ── STEP 5: AI 校對結果 ── */}
         {workflowStep === 5 && proofreadResult && (
           <div className="space-y-4">
-            <div className="p-3 bg-zinc-800 rounded-lg">
+            <div className="p-3 bg-slate-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-white font-semibold text-sm">整體評分：{proofreadResult.overallScore}</p>
                 <div className="flex gap-2 text-xs">
@@ -1159,7 +1159,7 @@ function AIArticleGenerator({
                   <div key={i} className={`p-3 rounded-lg border ${
                     issue.severity === '高' ? 'bg-red-900/20 border-red-700/30'
                     : issue.severity === '中' ? 'bg-yellow-900/20 border-yellow-700/30'
-                    : 'bg-zinc-800 border-zinc-700'
+                    : 'bg-slate-50 border-slate-200'
                   }`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Badge className={`text-[10px] ${
@@ -1177,7 +1177,7 @@ function AIArticleGenerator({
 
             {/* SEO Analysis */}
             {proofreadResult.seoAnalysis && (
-              <div className="p-3 bg-zinc-800 rounded-lg">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <p className="text-xs text-gray-400 mb-2">SEO 分析</p>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <div className="text-center p-2 bg-zinc-700 rounded">
@@ -1193,9 +1193,9 @@ function AIArticleGenerator({
               </div>
             )}
 
-            <div className="flex justify-between pt-2 border-t border-zinc-700">
+            <div className="flex justify-between pt-2 border-t border-slate-200">
               <Button variant="outline" onClick={() => setWorkflowStep(4)}
-                className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+                className="border-slate-200 text-white hover:bg-slate-50" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-1" /> 返回
               </Button>
               <Button onClick={handleAccept}
@@ -1208,8 +1208,8 @@ function AIArticleGenerator({
 
         {/* Loading Overlay */}
         {isAnyLoading && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 text-center max-w-sm mx-4">
+          <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center max-w-sm mx-4">
               <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-white font-medium">
                 {strategyMutation.isPending ? '🎯 AI 正在分析內容策略...'
@@ -1266,14 +1266,14 @@ function TranslationEditor({
   };
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
             <Languages className="w-5 h-5 text-blue-400" />
             編輯翻譯
           </CardTitle>
-          <Button variant="outline" onClick={onCancel} className="border-zinc-700 text-white hover:bg-zinc-800" size="sm">
+          <Button variant="outline" onClick={onCancel} className="border-slate-200 text-white hover:bg-slate-50" size="sm">
             <ChevronLeft className="w-4 h-4 mr-1" /> 返回
           </Button>
         </div>
@@ -1285,7 +1285,7 @@ function TranslationEditor({
           {[{ key: 'en' as const, label: '🇬🇧 English' }, { key: 'ja' as const, label: '🇯🇵 日本語' }].map(({ key, label }) => (
             <Button key={key} variant={activeTab === key ? 'default' : 'outline'}
               onClick={() => setActiveTab(key)}
-              className={activeTab === key ? 'bg-blue-600 hover:bg-blue-700' : 'border-zinc-700 text-white hover:bg-zinc-800'}
+              className={activeTab === key ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-200 text-white hover:bg-slate-50'}
               size="sm">{label}</Button>
           ))}
         </div>
@@ -1295,17 +1295,17 @@ function TranslationEditor({
             <div>
               <Label className="text-white text-sm">English Title</Label>
               <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                className="bg-slate-50 border-slate-200 text-white mt-1" />
             </div>
             <div>
               <Label className="text-white text-sm">English Excerpt</Label>
               <Textarea value={enExcerpt} onChange={(e) => setEnExcerpt(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={3} />
+                className="bg-slate-50 border-slate-200 text-white mt-1" rows={3} />
             </div>
             <div>
               <Label className="text-white text-sm">English Content</Label>
               <Textarea value={enContent} onChange={(e) => setEnContent(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={12} />
+                className="bg-slate-50 border-slate-200 text-white mt-1" rows={12} />
             </div>
           </div>
         )}
@@ -1315,22 +1315,22 @@ function TranslationEditor({
             <div>
               <Label className="text-white text-sm">日本語タイトル</Label>
               <Input value={jaTitle} onChange={(e) => setJaTitle(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                className="bg-slate-50 border-slate-200 text-white mt-1" />
             </div>
             <div>
               <Label className="text-white text-sm">日本語概要</Label>
               <Textarea value={jaExcerpt} onChange={(e) => setJaExcerpt(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={3} />
+                className="bg-slate-50 border-slate-200 text-white mt-1" rows={3} />
             </div>
             <div>
               <Label className="text-white text-sm">日本語コンテンツ</Label>
               <Textarea value={jaContent} onChange={(e) => setJaContent(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={12} />
+                className="bg-slate-50 border-slate-200 text-white mt-1" rows={12} />
             </div>
           </div>
         )}
 
-        <div className="flex justify-end pt-2 border-t border-zinc-700">
+        <div className="flex justify-end pt-2 border-t border-slate-200">
           <Button onClick={handleSave} disabled={updateTranslationMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700">
             {updateTranslationMutation.isPending ? '儲存中...' : '儲存翻譯'}

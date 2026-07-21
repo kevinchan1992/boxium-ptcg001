@@ -21,9 +21,9 @@ export function AdminDashboard() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="p-6 animate-pulse">
-            <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-muted rounded w-1/3"></div>
+          <Card key={i} className="p-6 animate-pulse bg-white border-slate-200">
+            <div className="h-4 bg-slate-100 rounded w-1/2 mb-4"></div>
+            <div className="h-8 bg-slate-100 rounded w-1/3"></div>
           </Card>
         ))}
       </div>
@@ -72,15 +72,15 @@ export function AdminDashboard() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-1">數據統計</h2>
-          <p className="text-xs sm:text-sm text-gray-400">系統整體數據概覽</p>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1">數據統計</h2>
+          <p className="text-xs sm:text-sm text-slate-500">系統整體數據概覽</p>
         </div>
         <Button
           onClick={handleRefresh}
           disabled={isLoading}
           variant="outline"
           size="sm"
-          className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+          className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           刷新數據
@@ -93,13 +93,13 @@ export function AdminDashboard() {
           return (
             <Card 
               key={index} 
-              className="p-3 sm:p-6 hover:shadow-lg transition-all hover:scale-105 border-l-4" 
+              className="p-3 sm:p-6 hover:shadow-md transition-all hover:scale-105 border-l-4 bg-white border-slate-200 shadow-sm" 
               style={{ borderLeftColor: stat.color }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-400 mb-0.5 sm:mb-1">{stat.title}</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stat.value.toLocaleString()}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 mb-0.5 sm:mb-1">{stat.title}</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{stat.value.toLocaleString()}</p>
                 </div>
                 <div className={`p-2 sm:p-3 rounded-full ${stat.bgColor}`}>
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: stat.color }} />
@@ -133,12 +133,12 @@ function DisputeStatsPanel() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
+        <div className="h-6 bg-slate-100 rounded w-1/4 animate-pulse"></div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="h-4 bg-muted rounded w-1/2 mb-3"></div>
-              <div className="h-8 bg-muted rounded w-1/3"></div>
+            <Card key={i} className="p-4 animate-pulse bg-white border-slate-200">
+              <div className="h-4 bg-slate-100 rounded w-1/2 mb-3"></div>
+              <div className="h-8 bg-slate-100 rounded w-1/3"></div>
             </Card>
           ))}
         </div>
@@ -194,21 +194,21 @@ function DisputeStatsPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2">
-            <Scale className="w-5 h-5 text-orange-400" />
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 flex items-center gap-2">
+            <Scale className="w-5 h-5 text-orange-500" />
             爭議案件統計
             {hasUrgent && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 ring-1 ring-inset ring-red-200">
                 需處理
               </span>
             )}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-400">爭議案件健康度與解決效率監控</p>
+          <p className="text-xs sm:text-sm text-slate-500">爭議案件健康度與解決效率監控</p>
         </div>
         {hasUnresolved && (
           <button
             onClick={() => setLocation('/admin?tab=messages')}
-            className="text-xs text-orange-400 hover:text-orange-300 underline"
+            className="text-xs text-orange-600 hover:text-orange-700 underline"
           >
             前往處理 →
           </button>
@@ -221,18 +221,18 @@ function DisputeStatsPanel() {
           return (
             <Card
               key={index}
-              className={`p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4 ${
-                card.alert ? 'ring-1 ring-red-500/30' : ''
+              className={`p-3 sm:p-4 hover:shadow-md transition-all hover:scale-105 border-l-4 bg-white border-slate-200 shadow-sm ${
+                card.alert ? 'ring-1 ring-red-200' : ''
               }`}
               style={{ borderLeftColor: card.color }}
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-400 mb-0.5 truncate">{card.title}</p>
-                  <p className={`text-xl sm:text-2xl font-bold ${card.alert ? 'text-red-400' : 'text-white'}`}>
+                  <p className="text-xs text-slate-500 mb-0.5 truncate">{card.title}</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${card.alert ? 'text-red-600' : 'text-slate-900'}`}>
                     {card.value}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{card.description}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 hidden sm:block">{card.description}</p>
                 </div>
                 <div className={`p-2 rounded-full ${card.bgColor} flex-shrink-0 ml-2`}>
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: card.color }} />
@@ -245,41 +245,41 @@ function DisputeStatsPanel() {
 
       {/* 勝率進度條 */}
       {(disputeStats?.totalResolvedCount ?? 0) > 0 && (
-        <Card className="p-4 border-l-4 border-l-purple-500">
+        <Card className="p-4 border-l-4 border-l-purple-500 bg-white border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="w-4 h-4 text-purple-400" />
-            <h3 className="text-sm font-semibold text-white">爭議裁決分佈</h3>
+            <BarChart3 className="w-4 h-4 text-purple-500" />
+            <h3 className="text-sm font-semibold text-slate-900">爭議裁決分佈</h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-blue-400 w-16 shrink-0">買家勝訴</span>
-              <div className="flex-1 bg-gray-700 rounded-full h-2">
+              <span className="text-blue-600 w-16 shrink-0">買家勝訴</span>
+              <div className="flex-1 bg-slate-200 rounded-full h-2">
                 <div
                   className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${disputeStats?.buyerWinRate ?? 0}%` }}
                 />
               </div>
-              <span className="text-gray-400 w-10 text-right">{disputeStats?.buyerWinRate ?? 0}%</span>
+              <span className="text-slate-500 w-10 text-right">{disputeStats?.buyerWinRate ?? 0}%</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-green-400 w-16 shrink-0">賣家勝訴</span>
-              <div className="flex-1 bg-gray-700 rounded-full h-2">
+              <span className="text-emerald-600 w-16 shrink-0">賣家勝訴</span>
+              <div className="flex-1 bg-slate-200 rounded-full h-2">
                 <div
-                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                  className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${disputeStats?.sellerWinRate ?? 0}%` }}
                 />
               </div>
-              <span className="text-gray-400 w-10 text-right">{disputeStats?.sellerWinRate ?? 0}%</span>
+              <span className="text-slate-500 w-10 text-right">{disputeStats?.sellerWinRate ?? 0}%</span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-slate-400 mt-2">
             基於 {disputeStats?.totalResolvedCount ?? 0} 件已解決案件的統計
           </p>
         </Card>
       )}
 
       {!hasUnresolved && (
-        <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-200">
           <ShieldCheck className="w-4 h-4" />
           <span>目前無待處理爭議案件</span>
         </div>
@@ -333,21 +333,21 @@ function ProofReviewStatsPanel({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2">
-            <Camera className="w-5 h-5 text-amber-400" />
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-amber-500" />
             支付寶截圖審核
             {hasAlerts && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white animate-pulse">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 ring-1 ring-inset ring-red-200">
                 需處理
               </span>
             )}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-400">支付寶 HK 截圖審核狀態監控</p>
+          <p className="text-xs sm:text-sm text-slate-500">支付寶 HK 截圖審核狀態監控</p>
         </div>
         {hasAlerts && (
           <button
             onClick={() => setLocation('/admin?tab=marketplace&proofStatus=pending_review')}
-            className="text-xs text-amber-400 hover:text-amber-300 underline"
+            className="text-xs text-amber-600 hover:text-amber-700 underline"
           >
             前往審核 →
           </button>
@@ -359,20 +359,20 @@ function ProofReviewStatsPanel({
           return (
             <Card
               key={index}
-              className={`p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4 ${
-                card.alert ? 'ring-1 ring-amber-500/30' : ''
+              className={`p-3 sm:p-4 hover:shadow-md transition-all hover:scale-105 border-l-4 bg-white border-slate-200 shadow-sm ${
+                card.alert ? 'ring-1 ring-amber-200' : ''
               }`}
               style={{ borderLeftColor: card.color }}
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-400 mb-0.5 truncate">{card.title}</p>
+                  <p className="text-xs text-slate-500 mb-0.5 truncate">{card.title}</p>
                   <p className={`text-xl sm:text-2xl font-bold ${
-                    card.alert ? 'text-amber-400' : 'text-white'
+                    card.alert ? 'text-amber-600' : 'text-slate-900'
                   }`}>
                     {card.value.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{card.description}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 hidden sm:block">{card.description}</p>
                 </div>
                 <div className={`p-2 rounded-full ${card.bgColor} flex-shrink-0 ml-2`}>
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: card.color }} />
@@ -383,7 +383,7 @@ function ProofReviewStatsPanel({
         })}
       </div>
       {!hasAlerts && (
-        <div className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-200">
           <ShieldCheck className="w-4 h-4" />
           <span>所有截圖已審核，無待處理項目</span>
         </div>
@@ -399,12 +399,12 @@ function SearchStatsPanel() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
+        <div className="h-6 bg-slate-100 rounded w-1/4 animate-pulse"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="p-6 animate-pulse">
-              <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-              <div className="h-8 bg-muted rounded w-1/3"></div>
+            <Card key={i} className="p-6 animate-pulse bg-white border-slate-200">
+              <div className="h-4 bg-slate-100 rounded w-1/2 mb-4"></div>
+              <div className="h-8 bg-slate-100 rounded w-1/3"></div>
             </Card>
           ))}
         </div>
@@ -450,8 +450,8 @@ function SearchStatsPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-1">搜尋統計</h2>
-        <p className="text-xs sm:text-sm text-gray-400">數據源搜尋效果與效能分析</p>
+        <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1">搜尋統計</h2>
+        <p className="text-xs sm:text-sm text-slate-500">數據源搜尋效果與效能分析</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -460,7 +460,7 @@ function SearchStatsPanel() {
           return (
             <Card 
               key={index}
-              className="p-3 sm:p-4 hover:shadow-lg transition-all hover:scale-105 border-l-4"
+              className="p-3 sm:p-4 hover:shadow-md transition-all hover:scale-105 border-l-4 bg-white border-slate-200 shadow-sm"
               style={{ borderLeftColor: stat.color }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -469,9 +469,9 @@ function SearchStatsPanel() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-                <p className="text-xl sm:text-3xl font-bold text-white mb-2">{stat.value}</p>
-                <p className="text-xs text-gray-400">{stat.description}</p>
+                <p className="text-sm text-slate-500 mb-1">{stat.title}</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900 mb-2">{stat.value}</p>
+                <p className="text-xs text-slate-400">{stat.description}</p>
               </div>
             </Card>
           );
@@ -479,14 +479,14 @@ function SearchStatsPanel() {
       </div>
 
       {searchStats && searchStats.totalSearches > 0 && (
-        <Card className="p-6 border-l-4 border-l-green-500">
+        <Card className="p-6 border-l-4 border-l-emerald-500 bg-white border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            <h3 className="text-lg font-semibold">搜尋效果分析</h3>
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+            <h3 className="text-lg font-semibold text-slate-900">搜尋效果分析</h3>
           </div>
-          <div className="space-y-2 text-sm text-gray-400">
-            <p>• 總搜尋次數：<span className="font-semibold text-white">{searchStats.totalSearches}</span> 次</p>
-            <p>• 圖片搜尋成功率：<span className="font-semibold text-green-600">{searchStats.imageSuccessRate.toFixed(2)}%</span></p>
+          <div className="space-y-2 text-sm text-slate-500">
+            <p>• 總搜尋次數：<span className="font-semibold text-slate-900">{searchStats.totalSearches}</span> 次</p>
+            <p>• 圖片搜尋成功率：<span className="font-semibold text-emerald-600">{searchStats.imageSuccessRate.toFixed(2)}%</span></p>
             <p>• 圖片搜尋平均耗時：<span className="font-semibold text-blue-600">{(searchStats.avgImageDuration / 1000).toFixed(2)}s</span></p>
             <p>• 文字搜尋平均耗時：<span className="font-semibold text-purple-600">{(searchStats.avgTextDuration / 1000).toFixed(2)}s</span></p>
             <p className="mt-4 text-xs">

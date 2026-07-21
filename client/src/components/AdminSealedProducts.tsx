@@ -77,7 +77,7 @@ export default function AdminSealedProducts() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {products.map((product) => (
-            <Card key={product.id} className="bg-gray-900 border-gray-700 overflow-hidden">
+            <Card key={product.id} className="bg-white border-slate-200 overflow-hidden">
               <CardHeader className="pb-2 pt-4 px-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -104,7 +104,7 @@ export default function AdminSealedProducts() {
 
               <CardContent className="px-4 pb-4 space-y-3">
                 {/* 封面圖預覽 */}
-                <div className="relative w-full h-36 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center">
+                <div className="relative w-full h-36 rounded-lg overflow-hidden bg-gray-800 border border-slate-200 flex items-center justify-center">
                   {product.imageUrl ? (
                     <img
                       src={getProxiedImageUrl(product.imageUrl) ?? ""}
@@ -125,7 +125,7 @@ export default function AdminSealedProducts() {
                       href={product.imageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="absolute top-1 right-1 bg-black/60 rounded p-0.5 hover:bg-black/80 transition-colors"
+                      className="absolute top-1 right-1 bg-slate-800/70 rounded p-0.5 hover:bg-slate-900/80 transition-colors"
                     >
                       <ExternalLink className="w-3 h-3 text-gray-300" />
                     </a>

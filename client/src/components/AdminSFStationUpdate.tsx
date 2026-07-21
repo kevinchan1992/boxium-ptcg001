@@ -210,7 +210,7 @@ export function AdminSFStationUpdate() {
       {/* CSV Format Guide */}
       <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
         <p className="text-gray-300 text-sm font-medium mb-2">CSV 格式說明</p>
-        <div className="bg-black/30 rounded-lg p-3 font-mono text-xs text-green-400">
+        <div className="bg-slate-100 rounded-lg p-3 font-mono text-xs text-green-400">
           <p>code,name,district,address,region</p>
           <p className="text-gray-500"># 順豐站（code 格式：852XXX）</p>
           <p>852FTL,順豐站 上水,上水,"香港新界北區上水彩園路...",新界</p>
@@ -328,8 +328,8 @@ export function AdminSFStationUpdate() {
                 <div className="flex-1">
                   <p className="text-amber-300 font-medium text-sm">更新說明</p>
                   <p className="text-amber-400/80 text-xs mt-1">
-                    點擊「生成 TypeScript 文件」後，系統會下載新的 <code className="bg-black/30 px-1 rounded">sfStations.ts</code> 和/或 <code className="bg-black/30 px-1 rounded">sfLockers.ts</code> 文件。
-                    請將文件替換到 <code className="bg-black/30 px-1 rounded">client/src/lib/</code> 目錄並重新部署，即可更新站點資料。
+                    點擊「生成 TypeScript 文件」後，系統會下載新的 <code className="bg-slate-100 px-1 rounded">sfStations.ts</code> 和/或 <code className="bg-slate-100 px-1 rounded">sfLockers.ts</code> 文件。
+                    請將文件替換到 <code className="bg-slate-100 px-1 rounded">client/src/lib/</code> 目錄並重新部署，即可更新站點資料。
                   </p>
                 </div>
               </div>

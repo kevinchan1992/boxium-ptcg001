@@ -9912,10 +9912,17 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 在 Admin.tsx 的 renderSection 中加入 case "company-inventory"
 
 ## AI 智能拆單功能（2026-07-21）
-- [ ] 在 db.ts 中新增 getProductsByPriceRange 函數（從 priceHistory 中查找指定價格範圍的卡牌/卡盒）
-- [ ] 安裝 pdf-parse 套件用於 PDF 文字提取
-- [ ] 新增 server/services/claimFormParser.ts（PDF 解析 + AI 拆單邏輯）
-- [ ] 在 server/routers/companyCardInventory.ts 中新增 analyzeClaimForm procedure（接收 PDF 上傳，返回拆單建議）
-- [ ] 在 AdminCompanyCardInventory.tsx 中新增「分析文件」按鈕
-- [ ] 建立 ClaimFormReviewDialog.tsx 覆核介面（顯示 AI 建議拆單結果，支援修改後批量匯入）
-- [ ] 測試驗證並部署
+- [x] 在 db.ts 中新增 getProductsByPriceRange 函數（從 priceHistory 中查找指定價格範圍的卡牌/卡盒）
+- [x] 安裝 pdfjs-dist 套件用於 PDF 文字提取
+- [x] 新增 server/services/claimFormParser.ts（PDF 解析 + AI 拆單邏輯）
+- [x] 在 server/routers/companyCardInventory.ts 中新增 analyzeClaimForm procedure（接收 PDF 上傳，返回拆單建議）
+- [x] 在 AdminCompanyCardInventory.tsx 中新增「AI 智能拆單」按鈕
+- [x] 建立 ClaimFormReviewDialog.tsx 覆核介面（顯示 AI 建議拆單結果，支援修改後批量匯入）
+- [x] 測試驗證並部署
+
+## Admin UI 全面重設計（Slate 白底 SaaS 風格）（2026-07-21）
+- [x] index.css：加入 .admin-shell 範圍 CSS（Slate 50 背景、白色卡片、Slate 色彩 token）
+- [x] Admin.tsx：全面重寫 SideNav（白底、扁平導航）和 Header（移除前台連結、加入全局搜尋列）
+- [x] AdminCompanyCardInventory.tsx：工具列主次分級、批量工具 dropdown、白底搜尋/篩選列、Slate 表格
+- [x] AdminCardInventory.tsx：同步套用 Slate 白底風格（工具列、搜尋列、表格 header/body/badge）
+- [x] TypeScript 0 errors，已部署

@@ -413,7 +413,7 @@ export function AdminCacheManagement() {
     <div className="space-y-6">
 
       {/* Cache Statistics */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
             <Database className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -426,11 +426,11 @@ export function AdminCacheManagement() {
         <CardContent className="space-y-4">
           {cacheStats ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-zinc-800 p-4 rounded-lg">
+              <div className="bg-slate-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-400 mb-1">總緩存數量</p>
                 <p className="text-xl sm:text-2xl font-bold text-white">{cacheStats.totalCount}</p>
               </div>
-              <div className="bg-zinc-800 p-4 rounded-lg">
+              <div className="bg-slate-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-400 mb-1">最舊緩存</p>
                 <p className="text-sm font-medium text-white">
                   {cacheStats.oldestCache 
@@ -438,7 +438,7 @@ export function AdminCacheManagement() {
                     : "N/A"}
                 </p>
               </div>
-              <div className="bg-zinc-800 p-4 rounded-lg">
+              <div className="bg-slate-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-400 mb-1">最新緩存</p>
                 <p className="text-sm font-medium text-white">
                   {cacheStats.newestCache 
@@ -481,7 +481,7 @@ export function AdminCacheManagement() {
                 </div>
               </div>
               
-              <div className="bg-zinc-800 p-4 rounded-lg">
+              <div className="bg-slate-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-gray-400">需要爬取</p>
                   <p className="text-xl font-bold text-white">{detailedStats.needUpdate} 張 ({((detailedStats.needUpdate / detailedStats.total) * 100).toFixed(1)}%)</p>
@@ -621,7 +621,7 @@ export function AdminCacheManagement() {
       </Card>
 
       {/* On-Sale Listings Cache Statistics */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
             <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
@@ -635,7 +635,7 @@ export function AdminCacheManagement() {
           {listingsStats ? (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-zinc-800 p-3 rounded-lg">
+                <div className="bg-slate-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-400 mb-1">已快取卡牌</p>
                   <p className="text-xl font-bold text-white">{listingsStats.totalCount.toLocaleString()}</p>
                 </div>
@@ -653,7 +653,7 @@ export function AdminCacheManagement() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex items-start gap-3 p-3 bg-zinc-800 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <Clock className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-400">最後批量更新</p>
@@ -662,7 +662,7 @@ export function AdminCacheManagement() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-zinc-800 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
                   <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-400">更新排程</p>
@@ -703,7 +703,7 @@ export function AdminCacheManagement() {
       </Card>
 
       {/* Cache List */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
             <List className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -724,7 +724,7 @@ export function AdminCacheManagement() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-zinc-800 hover:bg-zinc-800/50">
+                    <TableRow className="border-slate-200 hover:bg-slate-50/50">
                       <TableHead className="text-gray-300">卡牌圖片</TableHead>
                       <TableHead className="text-gray-300">卡牌名稱</TableHead>
                       <TableHead className="text-gray-300">卡號</TableHead>
@@ -741,7 +741,7 @@ export function AdminCacheManagement() {
                       const coldExpired = new Date(cache.expiresAt) < now;
 
                       return (
-                        <TableRow key={cache.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                        <TableRow key={cache.id} className="border-slate-200 hover:bg-slate-50/50">
                           <TableCell>
                             {cache.cardImageUrl ? (
                               <LazyImage 
@@ -857,7 +857,7 @@ export function AdminCacheManagement() {
       </Card>
 
       {/* Cache Warming */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
             <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -897,7 +897,7 @@ export function AdminCacheManagement() {
       </Card>
 
       {/* Clear Specific Card Cache */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-white">清除指定卡牌緩存</CardTitle>
           <CardDescription className="text-gray-400">
@@ -914,7 +914,7 @@ export function AdminCacheManagement() {
                 placeholder="例如: 180001"
                 value={cardIdInput}
                 onChange={(e) => setCardIdInput(e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white"
+                className="bg-slate-50 border-slate-200 text-white"
               />
               <BrandButton
                 onClick={handleClearCardCache}
@@ -947,7 +947,7 @@ export function AdminCacheManagement() {
       </Card>
 
       {/* Clear All Cache */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-white">清除所有緩存</CardTitle>
           <CardDescription className="text-gray-400">
@@ -986,7 +986,7 @@ export function AdminCacheManagement() {
 
       {/* Confirmation Dialog */}
       <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+        <AlertDialogContent className="bg-white border-slate-200 shadow-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">確認清除所有緩存？</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
@@ -995,7 +995,7 @@ export function AdminCacheManagement() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 text-white border-zinc-700">
+            <AlertDialogCancel className="bg-slate-50 text-white border-slate-200">
               取消
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1010,7 +1010,7 @@ export function AdminCacheManagement() {
       
       {/* Cancel Task Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+        <AlertDialogContent className="bg-white border-slate-200 shadow-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">確認取消任務</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
@@ -1018,7 +1018,7 @@ export function AdminCacheManagement() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700">
+            <AlertDialogCancel className="bg-slate-50 hover:bg-zinc-700 text-white border-slate-200">
               取消
             </AlertDialogCancel>
             <AlertDialogAction

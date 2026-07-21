@@ -19,7 +19,7 @@ export function AdminScraperPerformance() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-white border-slate-200">
           <CardHeader>
             <CardTitle className="text-base md:text-lg text-white flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-400" />
@@ -30,9 +30,9 @@ export function AdminScraperPerformance() {
           <CardContent>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4 bg-zinc-800 rounded-lg animate-pulse">
-                  <div className="h-3 bg-zinc-700 rounded w-1/2 mb-3"></div>
-                  <div className="h-8 bg-zinc-700 rounded w-2/3"></div>
+                <div key={i} className="p-4 bg-slate-50 rounded-lg animate-pulse">
+                  <div className="h-3 bg-slate-200 rounded w-1/2 mb-3"></div>
+                  <div className="h-8 bg-slate-200 rounded w-2/3"></div>
                 </div>
               ))}
             </div>
@@ -44,7 +44,7 @@ export function AdminScraperPerformance() {
 
   if (!performance) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200">
         <CardHeader>
           <CardTitle className="text-base md:text-lg text-white flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-400" />
@@ -87,7 +87,7 @@ export function AdminScraperPerformance() {
   return (
     <div className="space-y-4">
       {/* Header with Filters */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200">
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -101,7 +101,7 @@ export function AdminScraperPerformance() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Select value={source} onValueChange={(v) => setSource(v as any)}>
-                <SelectTrigger className="w-[130px] text-xs md:text-sm bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="w-[130px] text-xs md:text-sm bg-slate-50 border-slate-200 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,7 +111,7 @@ export function AdminScraperPerformance() {
               </Select>
 
               <Select value={String(hours)} onValueChange={(v) => setHours(Number(v))}>
-                <SelectTrigger className="w-[120px] text-xs md:text-sm bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="w-[120px] text-xs md:text-sm bg-slate-50 border-slate-200 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -127,7 +127,7 @@ export function AdminScraperPerformance() {
                 onClick={() => refetch()}
                 variant="outline"
                 size="sm"
-                className="text-xs md:text-sm border-zinc-700 text-gray-300 hover:text-white hover:bg-zinc-800"
+                className="text-xs md:text-sm border-slate-200 text-gray-300 hover:text-white hover:bg-slate-50"
               >
                 <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                 刷新
@@ -140,7 +140,7 @@ export function AdminScraperPerformance() {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Requests */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 className="h-4 w-4 text-blue-400" />
@@ -161,7 +161,7 @@ export function AdminScraperPerformance() {
         </Card>
 
         {/* Success Rate */}
-        <Card className={`border ${getSuccessRateBg(performance.successRate)} bg-zinc-900`}>
+        <Card className={`border ${getSuccessRateBg(performance.successRate)} bg-white`}>
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               {performance.successRate >= 90 ? (
@@ -175,7 +175,7 @@ export function AdminScraperPerformance() {
               {performance.successRate}%
             </div>
             {/* Mini bar chart */}
-            <div className="flex gap-0.5 mt-3 h-2 rounded-full overflow-hidden bg-zinc-800">
+            <div className="flex gap-0.5 mt-3 h-2 rounded-full overflow-hidden bg-slate-50">
               <div
                 className="bg-green-500 rounded-l-full transition-all"
                 style={{ width: `${successBarWidth}%` }}
@@ -189,7 +189,7 @@ export function AdminScraperPerformance() {
         </Card>
 
         {/* Avg Response Time */}
-        <Card className={`border ${getResponseTimeBg(performance.avgResponseTime)} bg-zinc-900`}>
+        <Card className={`border ${getResponseTimeBg(performance.avgResponseTime)} bg-white`}>
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-4 w-4 text-blue-400" />
@@ -205,7 +205,7 @@ export function AdminScraperPerformance() {
         </Card>
 
         {/* Items Processed */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="h-4 w-4 text-yellow-400" />
@@ -221,7 +221,7 @@ export function AdminScraperPerformance() {
       </div>
 
       {/* Recent Logs */}
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card className="bg-white border-slate-200">
         <CardHeader className="pb-3">
           <CardTitle className="text-base md:text-lg text-white">最近爬取記錄</CardTitle>
           <CardDescription className="text-xs md:text-sm text-gray-400">
@@ -241,7 +241,7 @@ export function AdminScraperPerformance() {
                   key={log.id}
                   className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 rounded-lg border text-xs md:text-sm ${
                     log.status === "success"
-                      ? "bg-zinc-800/50 border-zinc-700"
+                      ? "bg-slate-50/50 border-slate-200"
                       : "bg-red-950/30 border-red-800/50"
                   }`}
                 >
@@ -283,7 +283,7 @@ export function AdminScraperPerformance() {
 
       {/* Error Logs */}
       {performance.errorLogs.length > 0 && (
-        <Card className="bg-zinc-900 border-red-900/50">
+        <Card className="bg-white border-red-900/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base md:text-lg text-red-400 flex items-center gap-2">
               <XCircle className="h-5 w-5" />

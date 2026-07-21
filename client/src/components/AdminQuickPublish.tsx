@@ -142,12 +142,12 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
                   ? "bg-green-500 text-white"
                   : step === s.num
                   ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                  : "bg-zinc-700 text-zinc-400"
+                  : "bg-zinc-700 text-slate-500"
               }`}
             >
               {step > s.num ? <CheckCircle className="w-4 h-4" /> : s.num}
             </div>
-            <span className={`text-xs mt-1 whitespace-nowrap ${step === s.num ? "text-white font-medium" : "text-zinc-500"}`}>
+            <span className={`text-xs mt-1 whitespace-nowrap ${step === s.num ? "text-white font-medium" : "text-slate-400"}`}>
               {s.label}
             </span>
           </div>
@@ -177,7 +177,7 @@ function TypeCard({
       className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:scale-[1.01] active:scale-[0.99] ${
         selected
           ? `${type.borderColor} ${type.bgColor} ring-1 ${type.borderColor.replace("border-", "ring-")}`
-          : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-500"
+          : "border-slate-200 bg-slate-50/50 hover:border-zinc-500"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -663,12 +663,12 @@ function CoverImageSection({
   const activeStyleInfo = COVER_STYLES.find(s => s.id === activeStyle);
 
   return (
-    <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 space-y-3">
+    <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Image className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">封面圖</span>
+          <Image className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">封面圖</span>
           {articleCardCount > 0 && (
             <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/30">
               已識別 {articleCardCount} 張卡牌
@@ -678,7 +678,7 @@ function CoverImageSection({
         {coverImageUrl && (
           <button
             onClick={() => onCoverImageChange(null)}
-            className="text-xs text-zinc-500 hover:text-red-400 flex items-center gap-1 transition-colors"
+            className="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors"
           >
             <X className="w-3 h-3" />
             移除
@@ -689,7 +689,7 @@ function CoverImageSection({
       {/* Style Selector — with thumbnail previews */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">選擇封面風格</p>
+          <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">選擇封面風格</p>
           <span className="text-[10px] text-zinc-600">點選即自動生成</span>
         </div>
         <div className="grid grid-cols-2 gap-2.5">
@@ -707,7 +707,7 @@ function CoverImageSection({
                 className={`group relative rounded-xl text-left transition-all duration-200 overflow-hidden border-2 ${
                   isActive
                     ? `ring-1`
-                    : "border-zinc-700/80 hover:border-zinc-500"
+                    : "border-slate-200/80 hover:border-zinc-500"
                 } ${isGenerating ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"}`}
                 style={isActive ? {
                   borderColor: style.accentColor,
@@ -770,12 +770,12 @@ function CoverImageSection({
                 <Wand2 className="w-3 h-3 text-[#e94560]" />
               </div>
               <p className="text-xs font-semibold text-white">自訂風格設定</p>
-              <span className="text-[10px] text-zinc-500">至少填寫一項</span>
+              <span className="text-[10px] text-slate-400">至少填寫一項</span>
             </div>
 
             {/* Text description */}
             <div className="space-y-1.5">
-              <label className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+              <label className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
                 <Type className="w-3 h-3" />
                 風格描述
                 <span className="text-[10px] text-zinc-600">(選填)</span>
@@ -787,7 +787,7 @@ function CoverImageSection({
                   placeholder="例：日系漫畫風、貽赛宣傳風、水彩淡雅風、香港街頭射影風..."
                   rows={2}
                   maxLength={500}
-                  className="w-full text-xs bg-zinc-900/80 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-600 resize-none focus:outline-none focus:border-[#e94560]/60 transition-colors"
+                  className="w-full text-xs bg-white/80 border border-slate-200 rounded-lg px-3 py-2 text-white placeholder:text-zinc-600 resize-none focus:outline-none focus:border-[#e94560]/60 transition-colors"
                 />
                 <span className="absolute bottom-1.5 right-2 text-[9px] text-zinc-600">{customStyleDesc.length}/500</span>
               </div>
@@ -808,7 +808,7 @@ function CoverImageSection({
 
             {/* Reference image upload */}
             <div className="space-y-1.5">
-              <label className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+              <label className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
                 <ImageIcon className="w-3 h-3" />
                 參考圖片
                 <span className="text-[10px] text-zinc-600">(選上傳)</span>
@@ -832,7 +832,7 @@ function CoverImageSection({
                 <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
                   isUploadingRef
                     ? 'border-[#e94560]/40 bg-[#e94560]/5 cursor-wait'
-                    : 'border-zinc-700 hover:border-[#e94560]/50 hover:bg-[#e94560]/5'
+                    : 'border-slate-200 hover:border-[#e94560]/50 hover:bg-[#e94560]/5'
                 }`}>
                   <input
                     type="file"
@@ -847,12 +847,12 @@ function CoverImageSection({
                   {isUploadingRef ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin text-[#e94560]" />
-                      <span className="text-xs text-zinc-400">上傳中...</span>
+                      <span className="text-xs text-slate-500">上傳中...</span>
                     </>
                   ) : (
                     <>
-                      <Upload className="w-5 h-5 text-zinc-500" />
-                      <span className="text-xs text-zinc-500">點擊上傳參考圖片</span>
+                      <Upload className="w-5 h-5 text-slate-400" />
+                      <span className="text-xs text-slate-400">點擊上傳參考圖片</span>
                       <span className="text-[10px] text-zinc-600">AI 將分析圖片風格並應用至封面圖</span>
                     </>
                   )}
@@ -879,7 +879,7 @@ function CoverImageSection({
 
       {/* Current Cover Preview */}
       {coverImageUrl && (
-        <div className="relative rounded-lg overflow-hidden border border-zinc-700 group">
+        <div className="relative rounded-lg overflow-hidden border border-slate-200 group">
           <LazyImage src={coverImageUrl} alt="封面圖" className="w-full h-44 object-cover" />
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button
@@ -904,18 +904,18 @@ function CoverImageSection({
 
       {/* Extracted Cards Preview */}
       {isExtracting ? (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50/50 border border-slate-200">
           <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          <span className="text-sm text-zinc-400">AI 正在從文章識別相關卡牌...</span>
+          <span className="text-sm text-slate-500">AI 正在從文章識別相關卡牌...</span>
         </div>
       ) : selectedCards.length > 0 ? (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-zinc-500 font-medium">封面素材卡牌</p>
+            <p className="text-[11px] text-slate-400 font-medium">封面素材卡牌</p>
             <button
               onClick={() => handleAutoExtract(true)}
               disabled={isExtracting || isGenerating}
-              className="text-[10px] text-zinc-600 hover:text-zinc-400 flex items-center gap-1 transition-colors"
+              className="text-[10px] text-zinc-600 hover:text-slate-500 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="w-2.5 h-2.5" />
               重新識別
@@ -927,13 +927,13 @@ function CoverImageSection({
               return (
                 <div key={card.id} className="relative flex-shrink-0 group">
                   <div className={`rounded-lg overflow-hidden border-2 w-14 ${
-                    card.matchedFrom === 'article' ? 'border-[#FEDD00]/60' : 'border-zinc-600'
+                    card.matchedFrom === 'article' ? 'border-[#FEDD00]/60' : 'border-slate-300'
                   }`}>
                     {imgUrl ? (
                       <LazyImage src={imgUrl} alt={card.name} className="w-14 aspect-[3/4] object-cover" />
                     ) : (
                       <div className="w-14 aspect-[3/4] bg-zinc-700 flex items-center justify-center">
-                        <Image className="w-4 h-4 text-zinc-500" />
+                        <Image className="w-4 h-4 text-slate-400" />
                       </div>
                     )}
                     <button
@@ -943,7 +943,7 @@ function CoverImageSection({
                       <X className="w-2.5 h-2.5 text-white" />
                     </button>
                   </div>
-                  <p className="text-[9px] text-zinc-500 mt-0.5 w-14 truncate text-center">{card.name.split('[')[0].trim()}</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5 w-14 truncate text-center">{card.name.split('[')[0].trim()}</p>
                   {card.matchedFrom === 'article' && (
                     <div className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-[#FEDD00] flex items-center justify-center">
                       <Star className="w-2 h-2 text-black fill-black" />
@@ -964,7 +964,7 @@ function CoverImageSection({
       {isGenerating && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
           <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          <span className="text-sm text-zinc-300">AI 正在生成「{activeStyleInfo?.label}」封面圖（約 20 秒）...</span>
+          <span className="text-sm text-slate-400">AI 正在生成「{activeStyleInfo?.label}」封面圖（約 20 秒）...</span>
         </div>
       )}
     </div>
@@ -1008,7 +1008,7 @@ function ArticlePreview({
   return (
     <div className="space-y-4">
       {/* Action Bar */}
-      <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-200">
         <div className="flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-green-400" />
           <span className="text-sm text-white font-medium">文章已生成，請確認後發布</span>
@@ -1018,7 +1018,7 @@ function ArticlePreview({
             variant="outline"
             size="sm"
             onClick={onRegenerate}
-            className="gap-1.5 border-zinc-600 text-zinc-300 hover:bg-zinc-700 text-xs"
+            className="gap-1.5 border-slate-300 text-slate-400 hover:bg-zinc-700 text-xs"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             重新生成
@@ -1028,7 +1028,7 @@ function ArticlePreview({
             size="sm"
             onClick={onSaveDraft}
             disabled={isSavingDraft}
-            className="gap-1.5 border-zinc-600 text-zinc-300 hover:bg-zinc-700 text-xs"
+            className="gap-1.5 border-slate-300 text-slate-400 hover:bg-zinc-700 text-xs"
           >
             {isSavingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
             存草稿
@@ -1056,12 +1056,12 @@ function ArticlePreview({
       />
 
       {/* Title */}
-      <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700">
+      <div className="p-4 rounded-xl bg-white border border-slate-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">文章標題</span>
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">文章標題</span>
           <button
             onClick={() => setEditingTitle(!editingTitle)}
-            className="text-xs text-zinc-400 hover:text-white flex items-center gap-1"
+            className="text-xs text-slate-500 hover:text-white flex items-center gap-1"
           >
             <Edit3 className="w-3 h-3" />
             {editingTitle ? "完成" : "編輯"}
@@ -1074,7 +1074,7 @@ function ArticlePreview({
               setLocalTitle(e.target.value);
               onEdit("title", e.target.value);
             }}
-            className="bg-zinc-800 border-zinc-600 text-white text-base font-bold"
+            className="bg-slate-50 border-slate-300 text-white text-base font-bold"
           />
         ) : (
           <h2 className="text-white font-bold text-lg leading-tight">{localTitle || article.title}</h2>
@@ -1082,12 +1082,12 @@ function ArticlePreview({
       </div>
 
       {/* Excerpt */}
-      <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700">
+      <div className="p-4 rounded-xl bg-white border border-slate-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">文章摘要</span>
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">文章摘要</span>
           <button
             onClick={() => setEditingExcerpt(!editingExcerpt)}
-            className="text-xs text-zinc-400 hover:text-white flex items-center gap-1"
+            className="text-xs text-slate-500 hover:text-white flex items-center gap-1"
           >
             <Edit3 className="w-3 h-3" />
             {editingExcerpt ? "完成" : "編輯"}
@@ -1100,24 +1100,24 @@ function ArticlePreview({
               setLocalExcerpt(e.target.value);
               onEdit("excerpt", e.target.value);
             }}
-            className="bg-zinc-800 border-zinc-600 text-white text-sm resize-none"
+            className="bg-slate-50 border-slate-300 text-white text-sm resize-none"
             rows={3}
           />
         ) : (
-          <p className="text-zinc-300 text-sm leading-relaxed">{localExcerpt || article.excerpt}</p>
+          <p className="text-slate-400 text-sm leading-relaxed">{localExcerpt || article.excerpt}</p>
         )}
       </div>
 
       {/* Tags */}
       {(article.tags || article.suggestedTags) && (
-        <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700">
+        <div className="p-4 rounded-xl bg-white border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
-            <Tag className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">標籤</span>
+            <Tag className="w-3.5 h-3.5 text-slate-500" />
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">標籤</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(article.tags || article.suggestedTags || []).map((tag: string, i: number) => (
-              <Badge key={i} variant="outline" className="text-xs text-zinc-300 border-zinc-600">
+              <Badge key={i} variant="outline" className="text-xs text-slate-400 border-slate-300">
                 {tag}
               </Badge>
             ))}
@@ -1126,14 +1126,14 @@ function ArticlePreview({
       )}
 
       {/* Content Preview */}
-      <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700">
+      <div className="p-4 rounded-xl bg-white border border-slate-200">
         <div className="flex items-center gap-2 mb-3">
-          <Eye className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">文章內容預覽</span>
+          <Eye className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">文章內容預覽</span>
         </div>
         <div className="prose prose-invert prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2
-          prose-headings:text-white prose-p:text-zinc-300 prose-strong:text-white
-          prose-li:text-zinc-300 prose-a:text-blue-400 prose-code:text-yellow-300
+          prose-headings:text-white prose-p:text-slate-400 prose-strong:text-white
+          prose-li:text-slate-400 prose-a:text-blue-400 prose-code:text-yellow-300
           prose-h2:text-base prose-h3:text-sm">
           <ReactMarkdown>{article.content}</ReactMarkdown>
         </div>
@@ -1171,7 +1171,7 @@ function GeneratingView({ typeTitle }: { typeTitle: string }) {
       </div>
       <div className="text-center space-y-2">
         <h3 className="text-white font-semibold text-lg">AI 正在生成「{typeTitle}」</h3>
-        <p className="text-zinc-400 text-sm">{steps[currentStep]}</p>
+        <p className="text-slate-500 text-sm">{steps[currentStep]}</p>
       </div>
       <div className="flex gap-1.5">
         {steps.map((_, i) => (
@@ -1183,7 +1183,7 @@ function GeneratingView({ typeTitle }: { typeTitle: string }) {
           />
         ))}
       </div>
-      <p className="text-xs text-zinc-500">全程自動完成，無需等待或操作</p>
+      <p className="text-xs text-slate-400">全程自動完成，無需等待或操作</p>
     </div>
   );
 }
@@ -1424,7 +1424,7 @@ export default function AdminQuickPublish() {
             variant="ghost"
             size="sm"
             onClick={handleReset}
-            className="ml-auto text-zinc-400 hover:text-white gap-1.5"
+            className="ml-auto text-slate-500 hover:text-white gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             重新開始
@@ -1451,7 +1451,7 @@ export default function AdminQuickPublish() {
       {/* ── STEP 1: 選擇類型 ── */}
       {step === 1 && (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-400 text-center mb-4">選擇你想生成的文章類型</p>
+          <p className="text-sm text-slate-500 text-center mb-4">選擇你想生成的文章類型</p>
 
           <div className="grid grid-cols-1 gap-3">
             {ARTICLE_TYPES.map((type) => (
@@ -1466,7 +1466,7 @@ export default function AdminQuickPublish() {
 
           {/* Topic Input (conditional) */}
           {selectedType && selectedTypeInfo && (
-            <div className="mt-4 p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 space-y-3">
+            <div className="mt-4 p-4 rounded-xl bg-slate-50/50 border border-slate-200 space-y-3">
               {selectedTypeInfo.requiresTopic ? (
                 <>
                   <div className="flex items-center gap-2">
@@ -1478,13 +1478,13 @@ export default function AdminQuickPublish() {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder={selectedTypeInfo.topicPlaceholder}
-                    className="bg-zinc-900 border-zinc-600 text-white placeholder:text-zinc-500"
+                    className="bg-white border-slate-300 text-white placeholder:text-slate-400"
                     onKeyDown={(e) => e.key === "Enter" && topic.trim() && handleGenerate()}
                   />
                   {selectedTypeInfo.topicHint && (
                     <div className="flex items-start gap-1.5">
-                      <Info className="w-3.5 h-3.5 text-zinc-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-zinc-500">{selectedTypeInfo.topicHint}</p>
+                      <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-slate-400">{selectedTypeInfo.topicHint}</p>
                     </div>
                   )}
                 </>
@@ -1495,24 +1495,24 @@ export default function AdminQuickPublish() {
                       <div className="flex items-center gap-2">
                         <BarChart3 className={`w-4 h-4 ${selectedTypeInfo.color}`} />
                         <span className="text-sm text-white font-medium">指定主題（選填）</span>
-                        <Badge variant="outline" className="text-[10px] text-zinc-400 border-zinc-600">選填</Badge>
+                        <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-300">選填</Badge>
                       </div>
                       <Input
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder={selectedTypeInfo.topicPlaceholder}
-                        className="bg-zinc-900 border-zinc-600 text-white placeholder:text-zinc-500"
+                        className="bg-white border-slate-300 text-white placeholder:text-slate-400"
                       />
                       {selectedTypeInfo.topicHint && (
                         <div className="flex items-start gap-1.5">
-                          <Info className="w-3.5 h-3.5 text-zinc-500 mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-zinc-500">{selectedTypeInfo.topicHint}</p>
+                          <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-slate-400">{selectedTypeInfo.topicHint}</p>
                         </div>
                       )}
                     </>
                   )}
                   {!selectedTypeInfo.topicPlaceholder && (
-                    <div className="flex items-center gap-2 text-zinc-400">
+                    <div className="flex items-center gap-2 text-slate-500">
                       <CheckCircle className="w-4 h-4 text-green-400" />
                       <span className="text-sm">無需輸入，AI 自動從平台數據生成</span>
                     </div>
@@ -1537,16 +1537,16 @@ export default function AdminQuickPublish() {
           </Button>
 
           {selectedType && (
-            <p className="text-center text-xs text-zinc-500">
+            <p className="text-center text-xs text-slate-400">
               預計生成時間：{selectedTypeInfo?.estimatedTime}，全程自動完成
             </p>
           )}
 
           {/* Divider + Manual Create */}
           <div className="flex items-center gap-3 pt-2">
-            <div className="flex-1 h-px bg-zinc-800" />
+            <div className="flex-1 h-px bg-slate-50" />
             <span className="text-xs text-zinc-600">或</span>
-            <div className="flex-1 h-px bg-zinc-800" />
+            <div className="flex-1 h-px bg-slate-50" />
           </div>
           <Button
             variant="outline"
@@ -1557,7 +1557,7 @@ export default function AdminQuickPublish() {
               // Fallback: dispatch custom event
               window.dispatchEvent(new CustomEvent('admin:navigate', { detail: { tab: 'blog', action: 'new' } }));
             }}
-            className="w-full h-10 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 gap-2 bg-transparent"
+            className="w-full h-10 border-slate-200 text-slate-500 hover:text-white hover:border-zinc-500 gap-2 bg-transparent"
           >
             <FileText className="w-4 h-4" />
             手動新增文章
@@ -1567,7 +1567,7 @@ export default function AdminQuickPublish() {
 
       {/* ── STEP 2: 生成中 ── */}
       {step === 2 && isGenerating && selectedTypeInfo && (
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-white border-slate-200">
           <CardContent className="p-6">
             <GeneratingView typeTitle={selectedTypeInfo.title} />
           </CardContent>

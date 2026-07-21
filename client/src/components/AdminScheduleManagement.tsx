@@ -19,18 +19,18 @@ function ScheduleHealthStats() {
   
   if (!stats) {
     return (
-      <Card className="bg-gray-900 border-gray-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg lg:text-xl">
             <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
             排程健康統計（最近 7 天）
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm lg:text-base">
             查看排程任務的執行健康度和性能指標
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8 text-gray-400">
+          <div className="flex items-center justify-center py-8 text-slate-500">
             <RefreshCw className="w-5 h-5 animate-spin mr-2" />
             載入中...
           </div>
@@ -60,39 +60,39 @@ function ScheduleHealthStats() {
   };
   
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+        <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg lg:text-xl">
           <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
           排程健康統計（最近 7 天）
         </CardTitle>
-        <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+        <CardDescription className="text-slate-500 text-xs sm:text-sm lg:text-base">
           查看排程任務的執行健康度和性能指標
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* SNKRDUNK 健康統計 */}
         <div className="space-y-3">
-          <h3 className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新</h3>
+          <h3 className="text-slate-900 font-medium text-sm sm:text-base">SNKRDUNK 批量更新</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">總執行次數</p>
-              <p className="text-white text-lg font-semibold">{stats.snkrdunk.totalExecutions}</p>
+              <p className="text-slate-500 text-xs mb-1">總執行次數</p>
+              <p className="text-slate-900 text-lg font-semibold">{stats.snkrdunk.totalExecutions}</p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">成功率</p>
+              <p className="text-slate-500 text-xs mb-1">成功率</p>
               <p className={`text-lg font-semibold ${getSuccessRateColor(stats.snkrdunk.successRate)}`}>
                 {stats.snkrdunk.successRate.toFixed(1)}%
               </p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">平均執行時間</p>
-              <p className="text-white text-lg font-semibold">
+              <p className="text-slate-500 text-xs mb-1">平均執行時間</p>
+              <p className="text-slate-900 text-lg font-semibold">
                 {formatDuration(stats.snkrdunk.averageExecutionTime)}
               </p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">失敗次數</p>
+              <p className="text-slate-500 text-xs mb-1">失敗次數</p>
               <p className="text-red-400 text-lg font-semibold">{stats.snkrdunk.failureCount}</p>
             </div>
           </div>
@@ -100,10 +100,10 @@ function ScheduleHealthStats() {
           {/* 失敗原因統計 */}
           {stats.snkrdunk.failureReasons.length > 0 && (
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-2">失敗原因統計（Top 5）</p>
+              <p className="text-slate-500 text-xs mb-2">失敗原因統計（Top 5）</p>
               <ul className="space-y-1">
                 {stats.snkrdunk.failureReasons.map((reason, index) => (
-                  <li key={index} className="text-xs text-gray-300 flex justify-between">
+                  <li key={index} className="text-xs text-slate-400 flex justify-between">
                     <span className="truncate mr-2">{reason.reason}</span>
                     <span className="text-red-400 font-medium">{reason.count}次</span>
                   </li>
@@ -115,26 +115,26 @@ function ScheduleHealthStats() {
         
         {/* Trending 健康統計 */}
         <div className="space-y-3">
-          <h3 className="text-white font-medium text-sm sm:text-base">Trending 計算</h3>
+          <h3 className="text-slate-900 font-medium text-sm sm:text-base">Trending 計算</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">總執行次數</p>
-              <p className="text-white text-lg font-semibold">{stats.trending.totalExecutions}</p>
+              <p className="text-slate-500 text-xs mb-1">總執行次數</p>
+              <p className="text-slate-900 text-lg font-semibold">{stats.trending.totalExecutions}</p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">成功率</p>
+              <p className="text-slate-500 text-xs mb-1">成功率</p>
               <p className={`text-lg font-semibold ${getSuccessRateColor(stats.trending.successRate)}`}>
                 {stats.trending.successRate.toFixed(1)}%
               </p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">平均執行時間</p>
-              <p className="text-white text-lg font-semibold">
+              <p className="text-slate-500 text-xs mb-1">平均執行時間</p>
+              <p className="text-slate-900 text-lg font-semibold">
                 {formatDuration(stats.trending.averageExecutionTime)}
               </p>
             </div>
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-1">失敗次數</p>
+              <p className="text-slate-500 text-xs mb-1">失敗次數</p>
               <p className="text-red-400 text-lg font-semibold">{stats.trending.failureCount}</p>
             </div>
           </div>
@@ -142,10 +142,10 @@ function ScheduleHealthStats() {
           {/* 失敗原因統計 */}
           {stats.trending.failureReasons.length > 0 && (
             <div className="bg-gray-800 p-3 rounded-lg">
-              <p className="text-gray-400 text-xs mb-2">失敗原因統計（Top 5）</p>
+              <p className="text-slate-500 text-xs mb-2">失敗原因統計（Top 5）</p>
               <ul className="space-y-1">
                 {stats.trending.failureReasons.map((reason, index) => (
-                  <li key={index} className="text-xs text-gray-300 flex justify-between">
+                  <li key={index} className="text-xs text-slate-400 flex justify-between">
                     <span className="truncate mr-2">{reason.reason}</span>
                     <span className="text-red-400 font-medium">{reason.count}次</span>
                   </li>
@@ -167,18 +167,18 @@ function ExecutionHistory() {
   
   if (!history) {
     return (
-      <Card className="bg-gray-900 border-gray-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg lg:text-xl">
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
             排程執行歷史
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm lg:text-base">
             查看排程任務的執行記錄
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8 text-gray-400">
+          <div className="flex items-center justify-center py-8 text-slate-500">
             <RefreshCw className="w-5 h-5 animate-spin mr-2" />
             載入中...
           </div>
@@ -223,7 +223,7 @@ function ExecutionHistory() {
       case 'running':
         return 'text-blue-400';
       default:
-        return 'text-gray-400';
+        return 'text-slate-500';
     }
   };
   
@@ -241,20 +241,20 @@ function ExecutionHistory() {
   };
   
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg lg:text-xl">
+        <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg lg:text-xl">
           <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
           排程執行歷史
         </CardTitle>
-        <CardDescription className="text-gray-400 text-xs sm:text-sm lg:text-base">
+        <CardDescription className="text-slate-500 text-xs sm:text-sm lg:text-base">
           查看排程任務的執行記錄
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* SNKRDUNK 執行歷史 */}
         <div className="space-y-3">
-          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">💰 SNKRDUNK 批量更新歷史</h3>
+          <h3 className="text-slate-900 font-medium text-sm sm:text-base lg:text-lg">💰 SNKRDUNK 批量更新歷史</h3>
           {(history as any).snkrdunk && (history as any).snkrdunk.length > 0 ? (
             <div className="space-y-2">
               {(history as any).snkrdunk.map((record: any) => (
@@ -263,11 +263,11 @@ function ExecutionHistory() {
                     <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
                       {getStatusText(record.status)}
                     </span>
-                    <span className="text-xs sm:text-sm text-gray-400">
+                    <span className="text-xs sm:text-sm text-slate-500">
                       {record.executionType === 'manual' ? '手動觸發' : record.executionType === 'catchup' ? '補執行' : '自動排程'}
                     </span>
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                  <div className="text-xs sm:text-sm text-slate-400 space-y-1">
                     <div>開始時間：{formatDate(record.startedAt)}</div>
                     {record.completedAt && (
                       <div>完成時間：{formatDate(record.completedAt)}</div>
@@ -291,14 +291,14 @@ function ExecutionHistory() {
               ))}
             </div>
           ) : (
-            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
               尚無執行記錄
             </div>
           )}
         </div>
         {/* Trending 執行歷史 */}
         <div className="space-y-3">
-          <h3 className="text-white font-medium text-sm sm:text-base lg:text-lg">🔥 熱門卡牌計算歷史</h3>
+          <h3 className="text-slate-900 font-medium text-sm sm:text-base lg:text-lg">🔥 熱門卡牌計算歷史</h3>
           {history.trending && history.trending.length > 0 ? (
             <div className="space-y-2">
               {history.trending.map((record: any) => (
@@ -307,11 +307,11 @@ function ExecutionHistory() {
                     <span className={`font-medium text-xs sm:text-sm lg:text-base ${getStatusColor(record.status)}`}>
                       {getStatusText(record.status)}
                     </span>
-                    <span className="text-xs sm:text-sm text-gray-400">
+                    <span className="text-xs sm:text-sm text-slate-500">
                       {record.executionType === 'manual' ? '手動觸發' : record.executionType === 'catchup' ? '補執行' : '自動排程'}
                     </span>
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-300 space-y-1">
+                  <div className="text-xs sm:text-sm text-slate-400 space-y-1">
                     <div>開始時間：{formatDate(record.startedAt)}</div>
                     {record.completedAt && (
                       <div>完成時間：{formatDate(record.completedAt)}</div>
@@ -327,7 +327,7 @@ function ExecutionHistory() {
               ))}
             </div>
           ) : (
-            <div className="text-gray-400 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
+            <div className="text-slate-500 text-xs sm:text-sm lg:text-base p-3 lg:p-4 bg-gray-800 rounded-lg">
               尚無執行記錄
             </div>
           )}
@@ -460,13 +460,13 @@ export function AdminScheduleManagement() {
   
   return (
     <div className="space-y-6">
-      <Card className="bg-gray-900 border-gray-800">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
             <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             價格更新排程設定
           </CardTitle>
-          <CardDescription className="text-gray-400 text-xs sm:text-sm">
+          <CardDescription className="text-slate-500 text-xs sm:text-sm">
             設定 SNKRDUNK 價格的自動更新時間
           </CardDescription>
         </CardHeader>
@@ -475,7 +475,7 @@ export function AdminScheduleManagement() {
           <div className="space-y-4 p-4 bg-gray-800 rounded-lg">
             {/* 更新模式切換 */}
             <div className="space-y-2">
-              <Label className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新模式</Label>
+              <Label className="text-slate-900 font-medium text-sm sm:text-base">SNKRDUNK 批量更新模式</Label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -483,7 +483,7 @@ export function AdminScheduleManagement() {
                   className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
                     snkrdunkUpdateMode === 'github_actions'
                       ? 'bg-green-900/50 border-green-500 text-green-300'
-                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                      : 'bg-slate-200 border-slate-300 text-slate-500 hover:border-gray-500'
                   }`}
                 >
                   <Github className="w-4 h-4" />
@@ -499,7 +499,7 @@ export function AdminScheduleManagement() {
                   className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
                     snkrdunkUpdateMode === 'platform'
                       ? 'bg-blue-900/50 border-blue-500 text-blue-300'
-                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500'
+                      : 'bg-slate-200 border-slate-300 text-slate-500 hover:border-gray-500'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -511,13 +511,13 @@ export function AdminScheduleManagement() {
                 </button>
               </div>
               {snkrdunkUpdateMode === 'github_actions' && (
-                <div className="flex items-start gap-2 p-2 bg-green-900/20 border border-green-800 rounded text-xs text-green-300">
+                <div className="flex items-start gap-2 p-2 bg-emerald-50 border border-green-800 rounded text-xs text-green-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
                   <span>GitHub Actions 模式：儲存時會自動啟用 GitHub Actions 排程、停用平台內建 cron，避免重複執行。每日 02:00 HKT 執行一次。</span>
                 </div>
               )}
               {snkrdunkUpdateMode === 'platform' && (
-                <div className="flex items-start gap-2 p-2 bg-blue-900/20 border border-blue-800 rounded text-xs text-blue-300">
+                <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-800 rounded text-xs text-blue-300">
                   <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
                   <span>平台內建排程模式：儲存時會自動停用 GitHub Actions 排程，由平台伺服器獨立執行，不會重複。</span>
                 </div>
@@ -526,8 +526,8 @@ export function AdminScheduleManagement() {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-white font-medium text-sm sm:text-base">SNKRDUNK 批量更新</Label>
-                <p className="text-sm text-gray-400">
+                <Label className="text-slate-900 font-medium text-sm sm:text-base">SNKRDUNK 批量更新</Label>
+                <p className="text-sm text-slate-500">
                   每日自動更新所有卡牌的 SNKRDUNK 價格
                 </p>
               </div>
@@ -540,15 +540,15 @@ export function AdminScheduleManagement() {
             {snkrdunkEnabled && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-white">每日更新時間（香港時間）</Label>
+                  <Label className="text-slate-900">每日更新時間（香港時間）</Label>
                   <Input
                     type="time"
                     value={snkrdunkTime}
                     onChange={(e) => setSnkrdunkTime(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white max-w-[200px]"
+                    className="bg-slate-200 border-slate-300 text-slate-900 max-w-[200px]"
                   />
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-500">
                   每日執行一次：{snkrdunkTime}（香港時間）
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -560,7 +560,7 @@ export function AdminScheduleManagement() {
                     排程 {(schedule as any)?.snkrdunkSchedulerRunning ? '✓ 運行中' : '✗ 未運行'}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-500">
                   最後執行時間：{schedule?.snkrdunkLastExecutedAt 
                     ? formatHKLocale(schedule.snkrdunkLastExecutedAt, {
                         year: 'numeric',
@@ -580,7 +580,7 @@ export function AdminScheduleManagement() {
                 onClick={() => triggerSnkrdunkUpdate.mutate()}
                 disabled={triggerSnkrdunkUpdate.isPending || progress?.isRunning}
                 variant="outline"
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+                className="w-full bg-slate-200 hover:bg-slate-300 text-slate-900 border-slate-300"
               >
                 {triggerSnkrdunkUpdate.isPending || progress?.isRunning ? (
                   <>
@@ -598,11 +598,11 @@ export function AdminScheduleManagement() {
             
             {/* 進度條 */}
             {progress?.isRunning && (
-              <div className="space-y-3 p-4 bg-gray-700 rounded-lg">
+              <div className="space-y-3 p-4 bg-slate-200 rounded-lg">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-300">更新進度</span>
+                  <span className="text-slate-400">更新進度</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">
+                    <span className="text-slate-900 font-medium">
                       {progress.processedCards} / {progress.totalCards}
                     </span>
                     {progress.isPaused ? (
@@ -611,7 +611,7 @@ export function AdminScheduleManagement() {
                         variant="outline"
                         onClick={() => resumeUpdate.mutate()}
                         disabled={resumeUpdate.isPending}
-                        className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white border-green-500"
+                        className="h-7 px-2 bg-green-600 hover:bg-green-700 text-slate-900 border-green-500"
                       >
                         <PlayCircle className="w-3 h-3 mr-1" />
                         繼續
@@ -622,7 +622,7 @@ export function AdminScheduleManagement() {
                         variant="outline"
                         onClick={() => pauseUpdate.mutate()}
                         disabled={pauseUpdate.isPending}
-                        className="h-7 px-2 bg-orange-600 hover:bg-orange-700 text-white border-orange-500"
+                        className="h-7 px-2 bg-orange-600 hover:bg-orange-700 text-slate-900 border-orange-500"
                       >
                         <Pause className="w-3 h-3 mr-1" />
                         暫停
@@ -637,7 +637,7 @@ export function AdminScheduleManagement() {
                         }
                       }}
                       disabled={cancelUpdate.isPending || !(progress as any)?.taskId}
-                      className="h-7 px-2 bg-red-600 hover:bg-red-700 text-white border-red-500"
+                      className="h-7 px-2 bg-red-600 hover:bg-red-700 text-slate-900 border-red-500"
                     >
                       <XCircle className="w-3 h-3 mr-1" />
                       取消
@@ -648,7 +648,7 @@ export function AdminScheduleManagement() {
                   value={progress.totalCards > 0 ? Math.min(100, (progress.processedCards / progress.totalCards) * 100) : 0} 
                   className="h-2"
                 />
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center justify-between text-xs text-slate-500">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-green-500" />
@@ -676,11 +676,11 @@ export function AdminScheduleManagement() {
                       {(progress as any)?.speedPerSec > 0 && (
                         <span className="flex items-center gap-1 text-blue-400">
                           <span className="font-mono">{(progress as any).speedPerSec.toFixed(1)}</span>
-                          <span className="text-gray-500">張/秒</span>
+                          <span className="text-slate-400">張/秒</span>
                         </span>
                       )}
                       {(progress as any)?.source === 'github_actions' && (
-                        <span className="text-gray-500 text-xs">GitHub Actions</span>
+                        <span className="text-slate-400 text-xs">GitHub Actions</span>
                       )}
                     </div>
                     {(progress as any)?.etaMinutes > 0 && (
@@ -695,7 +695,7 @@ export function AdminScheduleManagement() {
             
             {/* 錯誤詳情 */}
             {progress?.failureCount && progress.failureCount > 0 && !progress?.isRunning && (
-              <div className="space-y-2 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+              <div className="space-y-2 p-4 bg-red-50 border border-red-800 rounded-lg">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -721,11 +721,11 @@ export function AdminScheduleManagement() {
                           <div className="flex items-start gap-2">
                             <AlertCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 space-y-1">
-                              <div className="text-white font-medium">
+                              <div className="text-slate-900 font-medium">
                                 卡牌 ID: {error.cardId}
                               </div>
                               {error.cardName && (
-                                <div className="text-gray-400">
+                                <div className="text-slate-500">
                                   {error.cardName}
                                 </div>
                               )}
@@ -766,7 +766,7 @@ export function AdminScheduleManagement() {
           </div>
           
           {/* 說明文字 */}
-          <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+          <div className="p-4 bg-blue-50 border border-blue-800 rounded-lg">
             <p className="text-sm text-blue-300">
               <strong>注意事項：</strong>
             </p>
@@ -806,10 +806,10 @@ function WorkflowStatusBadge({ status, conclusion }: { status: string; conclusio
   if (status === 'completed') {
     if (conclusion === 'success') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-900/40 text-green-300 border border-green-700"><CheckCircle2 className="w-3 h-3" />成功</span>;
     if (conclusion === 'failure') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-900/40 text-red-300 border border-red-700"><XCircle className="w-3 h-3" />失敗</span>;
-    if (conclusion === 'cancelled') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-300 border border-gray-600"><XCircle className="w-3 h-3" />已取消</span>;
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-300 border border-gray-600"><CheckCircle2 className="w-3 h-3" />{conclusion ?? '完成'}</span>;
+    if (conclusion === 'cancelled') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-400 border border-slate-300"><XCircle className="w-3 h-3" />已取消</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-400 border border-slate-300"><CheckCircle2 className="w-3 h-3" />{conclusion ?? '完成'}</span>;
   }
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-700 text-gray-400 border border-gray-600">{status}</span>;
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-500 border border-slate-300">{status}</span>;
 }
 
 function GitHubActionsGuide() {
@@ -849,26 +849,26 @@ function GitHubActionsGuide() {
   });
 
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-white border-slate-200 shadow-sm">
       <CardHeader
         className="cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        <CardTitle className="flex items-center justify-between text-white text-base sm:text-lg">
+        <CardTitle className="flex items-center justify-between text-slate-900 text-base sm:text-lg">
           <span className="flex items-center gap-2">
             <Github className="w-5 h-5" />
             GitHub Actions 批次更新（沙盒獨立方案）
           </span>
-          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          {expanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
         </CardTitle>
-        <CardDescription className="text-gray-400 text-xs sm:text-sm">
+        <CardDescription className="text-slate-500 text-xs sm:text-sm">
           此方案讓批次更新在 GitHub 雲端執行，完全不依賴本平台伺服器是否在線
         </CardDescription>
       </CardHeader>
       {expanded && (
         <CardContent className="space-y-4">
           {/* 狀態說明 */}
-          <div className="flex items-start gap-3 p-3 bg-green-900/20 border border-green-800 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-green-800 rounded-lg">
             <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-green-300 text-sm font-medium">Workflow 已就緒</p>
@@ -882,31 +882,31 @@ function GitHubActionsGuide() {
 
           {/* 設定步驟 */}
           <div className="space-y-3">
-            <h3 className="text-white font-medium text-sm flex items-center gap-2">
+            <h3 className="text-slate-900 font-medium text-sm flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-400" />
               必要設定步驟（一次性）
             </h3>
-            <ol className="space-y-3 text-sm text-gray-300">
+            <ol className="space-y-3 text-sm text-slate-400">
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-slate-900 text-xs flex items-center justify-center font-bold">1</span>
                 <div>
-                  <p className="font-medium text-white">前往 GitHub 倉庫設定</p>
-                  <p className="text-gray-400 text-xs mt-1">在 GitHub 倉庫頁面，點擊 <strong>Settings → Secrets and variables → Actions</strong></p>
+                  <p className="font-medium text-slate-900">前往 GitHub 倉庫設定</p>
+                  <p className="text-slate-500 text-xs mt-1">在 GitHub 倉庫頁面，點擊 <strong>Settings → Secrets and variables → Actions</strong></p>
                 </div>
               </li>
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-slate-900 text-xs flex items-center justify-center font-bold">2</span>
                 <div>
-                  <p className="font-medium text-white">新增 Secret：DATABASE_URL</p>
-                  <p className="text-gray-400 text-xs mt-1">點擊 <strong>New repository secret</strong>，名稱填 <code className="bg-gray-800 px-1 rounded">DATABASE_URL</code>，值填入 MySQL 連接字串</p>
+                  <p className="font-medium text-slate-900">新增 Secret：DATABASE_URL</p>
+                  <p className="text-slate-500 text-xs mt-1">點擊 <strong>New repository secret</strong>，名稱填 <code className="bg-gray-800 px-1 rounded">DATABASE_URL</code>，值填入 MySQL 連接字串</p>
                   <p className="text-yellow-400 text-xs mt-1">⚠️ 連接字串格式：<code className="bg-gray-800 px-1 rounded">mysql://用戶名:密碼@主機:埠/資料庫名</code></p>
                 </div>
               </li>
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-slate-900 text-xs flex items-center justify-center font-bold">3</span>
                 <div>
-                  <p className="font-medium text-white">手動測試執行</p>
-                  <p className="text-gray-400 text-xs mt-1">前往 GitHub 倉庫 → <strong>Actions → SNKRDUNK Batch Price Update → Run workflow</strong></p>
+                  <p className="font-medium text-slate-900">手動測試執行</p>
+                  <p className="text-slate-500 text-xs mt-1">前往 GitHub 倉庫 → <strong>Actions → SNKRDUNK Batch Price Update → Run workflow</strong></p>
                 </div>
               </li>
             </ol>
@@ -914,7 +914,7 @@ function GitHubActionsGuide() {
 
           {/* 手動觸發按鈕 + 狀態 */}
           <div className="space-y-3">
-            <p className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
+            <p className="text-slate-500 text-xs font-medium flex items-center gap-1.5">
               <Play className="w-3.5 h-3.5" />
               立即手動觸發 GitHub Actions
             </p>
@@ -926,14 +926,14 @@ function GitHubActionsGuide() {
                 {priceUpdateStatus && (
                   <div className="flex items-center gap-2">
                     <WorkflowStatusBadge status={priceUpdateStatus.status} conclusion={priceUpdateStatus.conclusion} />
-                    <a href={priceUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-300">
+                    <a href={priceUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-400">
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
                 )}
               </div>
               {priceUpdateStatus && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   #{priceUpdateStatus.runNumber} · {priceUpdateStatus.event === 'schedule' ? '排程' : '手動'} · {formatHKLocale(priceUpdateStatus.updatedAt)}
                 </p>
               )}
@@ -960,14 +960,14 @@ function GitHubActionsGuide() {
                 {listingsUpdateStatus && (
                   <div className="flex items-center gap-2">
                     <WorkflowStatusBadge status={listingsUpdateStatus.status} conclusion={listingsUpdateStatus.conclusion} />
-                    <a href={listingsUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-300">
+                    <a href={listingsUpdateStatus.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-400">
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
                 )}
               </div>
               {listingsUpdateStatus && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   #{listingsUpdateStatus.runNumber} · {listingsUpdateStatus.event === 'schedule' ? '排程' : '手動'} · {formatHKLocale(listingsUpdateStatus.updatedAt)}
                 </p>
               )}
@@ -987,7 +987,7 @@ function GitHubActionsGuide() {
               </Button>
             </div>
 
-            <p className="text-gray-500 text-xs">觸發後每 8 秒自動更新狀態，完成後恢復 30 秒輪詢</p>
+            <p className="text-slate-400 text-xs">觸發後每 8 秒自動更新狀態，完成後恢復 30 秒輪詢</p>
           </div>
           {/* 快速連結 */}
           <div className="flex flex-wrap gap-2">
@@ -995,7 +995,7 @@ function GitHubActionsGuide() {
               href="https://github.com/kevinchan1992/boxium-ptcg001/actions"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-md transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-900 text-xs rounded-md transition-colors"
             >
               <Github className="w-3.5 h-3.5" />
               前往 GitHub Actions
@@ -1005,9 +1005,9 @@ function GitHubActionsGuide() {
 
           {/* 技術說明 */}
           <div className="p-3 bg-gray-800 rounded-lg space-y-2">
-            <p className="text-gray-400 text-xs font-medium">技術說明</p>
-            <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
-              <li>腳本位置：<code className="bg-gray-700 px-1 rounded">scripts/githubActionsBatchUpdate.mjs</code></li>
+            <p className="text-slate-500 text-xs font-medium">技術說明</p>
+            <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
+              <li>腳本位置：<code className="bg-slate-200 px-1 rounded">scripts/githubActionsBatchUpdate.mjs</code></li>
               <li>每次執行：8 個並行工作者，跳過 12 小時內已更新的卡牌</li>
               <li>預計時間：約 2 小時完成 55,000+ 張卡牌</li>
               <li>GitHub Actions 免費額度：每月 2,000 分鐘（約 33 小時），足夠每日執行</li>

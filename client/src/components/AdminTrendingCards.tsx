@@ -61,7 +61,7 @@ function GameTrendingPanel({
     : null;
 
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-white border-slate-200">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           {/* Logo + 分隔線 */}
@@ -76,7 +76,7 @@ function GameTrendingPanel({
             variant="outline"
             onClick={() => { onRefreshAll(); setTimeout(() => refetch(), 1500); }}
             disabled={isRefreshing}
-            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white flex-shrink-0"
+            className="border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-900 flex-shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? "animate-spin" : ""}`} />
             {isRefreshing ? "計算中..." : "重新計算"}
@@ -86,12 +86,12 @@ function GameTrendingPanel({
         {/* 時間資訊 */}
         <div className="flex flex-wrap gap-3 mt-2">
           {lastCalcTime && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Clock className="w-3 h-3" />
               <span>上次計算：{lastCalcTime}</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <Calendar className="w-3 h-3" />
             <span>下次更新：{getNextUpdateTime()}</span>
           </div>
@@ -114,7 +114,7 @@ function GameTrendingPanel({
               const rc = RANK_CONFIG[rankNum] || RANK_CONFIG[5];
               const priceChange = card.priceChange ?? 0;
               return (
-                <div key={card.id} className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-gray-500 transition-colors">
+                <div key={card.id} className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-gray-500 transition-colors">
                   {/* 卡牌圖片 */}
                   <div className="aspect-[2.5/3.5] relative overflow-hidden bg-gray-700">
                     {card.imageUrl ? (
@@ -134,7 +134,7 @@ function GameTrendingPanel({
                     </div>
                     {/* 漲幅徽章 */}
                     <div
-                      className="absolute top-1.5 right-1.5 text-white font-bold rounded text-[10px] px-1 py-0.5 shadow"
+                      className="absolute top-1.5 right-1.5 text-slate-900 font-bold rounded text-[10px] px-1 py-0.5 shadow"
                       style={{ background: badgeBg }}
                     >
                       {card.priceChangeFormatted}
@@ -143,11 +143,11 @@ function GameTrendingPanel({
 
                   {/* 卡牌資訊 */}
                   <div className="p-2 space-y-1">
-                    <p className="text-[10px] sm:text-xs font-medium text-white line-clamp-2 leading-tight">
+                    <p className="text-[10px] sm:text-xs font-medium text-slate-900 line-clamp-2 leading-tight">
                       {card.name}
                     </p>
                     {card.nameJa && (
-                      <p className="text-[9px] text-gray-400 line-clamp-1">{card.nameJa}</p>
+                      <p className="text-[9px] text-slate-500 line-clamp-1">{card.nameJa}</p>
                     )}
                     <div className="flex items-center justify-between gap-1">
                       <div>
@@ -199,11 +199,11 @@ export function AdminTrendingCards() {
       {/* 頁面標題 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
             {t("admin.trendingCards.title")}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             {t("admin.trendingCards.description")} — 每日 06:00 HKT 自動更新
           </p>
         </div>
@@ -211,7 +211,7 @@ export function AdminTrendingCards() {
         <Button
           onClick={handleCalculate}
           disabled={isCalculating}
-          className="bg-orange-600 hover:bg-orange-700 text-white"
+          className="bg-orange-600 hover:bg-orange-700 text-slate-900"
           size="sm"
         >
           <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isCalculating ? "animate-spin" : ""}`} />
