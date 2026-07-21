@@ -1176,8 +1176,18 @@ function BuyFormDialog({
     buyPriceCurrency: editItem?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: editItem?.buyPriceOriginal ?? "",
     buyDate: editItem?.buyDate ? new Date(editItem.buyDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    buySource: editItem?.buySource || "__none__",
-    buySourceCustom: "",
+    buySource: (() => {
+      const src = editItem?.buySource;
+      if (!src) return "__none__";
+      if (BUY_SOURCE_OPTIONS.includes(src)) return src;
+      return "其他";
+    })(),
+    buySourceCustom: (() => {
+      const src = editItem?.buySource;
+      if (!src) return "";
+      if (BUY_SOURCE_OPTIONS.includes(src)) return "";
+      return src;
+    })(),
     notes: editItem?.notes ?? "",
     imageUrl: editItem?.imageUrl ?? "",
     linkedCardId: editItem?.linkedCardId ?? null as number | null,

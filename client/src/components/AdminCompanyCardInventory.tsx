@@ -403,8 +403,8 @@ function BatchSellDialog({
   const batchSellMutation = trpc.companyCardInventory.batchSell.useMutation({
     onSuccess: (data) => {
       toast.success(`已批量記錄 ${data.count} 筆賣出`);
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -733,8 +733,8 @@ function BatchBuyDialog({
   const batchCreateMutation = trpc.companyCardInventory.batchCreate.useMutation({
     onSuccess: (data) => {
       toast.success(`已批量新增 ${data.count} 筆買取記錄`);
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -1178,8 +1178,18 @@ function BuyFormDialog({
     buyPriceCurrency: editItem?.buyPriceCurrency ?? "HKD",
     buyPriceOriginal: editItem?.buyPriceOriginal ?? "",
     buyDate: editItem?.buyDate ? new Date(editItem.buyDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    buySource: editItem?.buySource || "__none__",
-    buySourceCustom: "",
+    buySource: (() => {
+      const src = editItem?.buySource;
+      if (!src) return "__none__";
+      if (BUY_SOURCE_OPTIONS.includes(src)) return src;
+      return "其他";
+    })(),
+    buySourceCustom: (() => {
+      const src = editItem?.buySource;
+      if (!src) return "";
+      if (BUY_SOURCE_OPTIONS.includes(src)) return "";
+      return src;
+    })(),
     notes: editItem?.notes ?? "",
     imageUrl: editItem?.imageUrl ?? "",
     linkedCardId: editItem?.linkedCardId ?? null as number | null,
@@ -1188,8 +1198,8 @@ function BuyFormDialog({
   const createMutation = trpc.companyCardInventory.create.useMutation({
     onSuccess: () => {
       toast.success("已新增買取記錄");
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -1198,8 +1208,8 @@ function BuyFormDialog({
   const updateMutation = trpc.companyCardInventory.update.useMutation({
     onSuccess: () => {
       toast.success("已更新記錄");
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -1548,8 +1558,8 @@ function SellDialog({
   const updateMutation = trpc.companyCardInventory.update.useMutation({
     onSuccess: () => {
       toast.success("已記錄賣出");
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -1811,8 +1821,8 @@ export default function AdminCompanyCardInventory() {
   const deleteMutation = trpc.companyCardInventory.delete.useMutation({
     onSuccess: () => {
       toast.success("已刪除記錄");
-      utils.cardInventory.list.invalidate();
-      utils.cardInventory.monthlySummary.invalidate();
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
       setDeleteConfirm(null);
     },
     onError: (e) => toast.error(e.message),
@@ -1821,14 +1831,14 @@ export default function AdminCompanyCardInventory() {
   const cacheImagesToS3Mutation = trpc.companyCardInventory.cacheImagesToS3.useMutation({
     onSuccess: (data) => {
       toast.success(data.message ?? `圖片快取完成：${data.cached}/${data.total} 張`);
-      utils.cardInventory.list.invalidate();
+      utils.companyCardInventory.list.invalidate();
     },
     onError: (e) => toast.error(`快取失敗：${e.message}`),
   });
   const backfillImageUrlsMutation = trpc.companyCardInventory.backfillImageUrls.useMutation({
     onSuccess: (data) => {
       toast.success(`圖片補全完成：${data.updated}/${data.total} 筆記錄已更新`);
-      utils.cardInventory.list.invalidate();
+      utils.companyCardInventory.list.invalidate();
     },
     onError: (e) => toast.error(`補全失敗：${e.message}`),
   });
