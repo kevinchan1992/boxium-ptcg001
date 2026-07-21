@@ -1684,65 +1684,88 @@ function MonthlySummaryTab({ year, onExportMonth }: { year: number; onExportMont
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-primary text-slate-900">
+        {/* 年度總買取 */}
+        <Card className="bg-white border border-slate-200 shadow-sm rounded-xl">
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs opacity-80">年度總買取</p>
-            <p className="text-lg font-bold">{formatHkd(data.yearTotal.totalBuyHkd)}</p>
-            <p className="text-xs opacity-70">{data.yearTotal.buyCount} 筆</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-slate-500">年度總買取</p>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">買入</span>
+            </div>
+            <p className="text-lg font-bold text-slate-900">{formatHkd(data.yearTotal.totalBuyHkd)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{data.yearTotal.buyCount} 筆</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-600 text-slate-900">
+        {/* 年度總賣出 */}
+        <Card className="bg-white border border-slate-200 shadow-sm rounded-xl">
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs opacity-80">年度總賣出</p>
-            <p className="text-lg font-bold">{formatHkd(data.yearTotal.totalSellHkd)}</p>
-            <p className="text-xs opacity-70">{data.yearTotal.soldCount} 筆</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-slate-500">年度總賣出</p>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">賣出</span>
+            </div>
+            <p className="text-lg font-bold text-slate-900">{formatHkd(data.yearTotal.totalSellHkd)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{data.yearTotal.soldCount} 筆</p>
           </CardContent>
         </Card>
-        <Card className={data.yearTotal.grossProfitHkd >= 0 ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950"}>
+        {/* 年度毛利 */}
+        <Card className="bg-white border border-slate-200 shadow-sm rounded-xl">
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">年度毛利</p>
-            <p className={`text-lg font-bold ${data.yearTotal.grossProfitHkd >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-slate-500">年度毛利</p>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
+                data.yearTotal.grossProfitHkd >= 0
+                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                  : "bg-red-50 text-red-600 border-red-100"
+              }`}>{data.yearTotal.grossProfitHkd >= 0 ? "盈利" : "虧損"}</span>
+            </div>
+            <p className={`text-lg font-bold ${
+              data.yearTotal.grossProfitHkd >= 0 ? "text-emerald-600" : "text-red-600"
+            }`}>
               {data.yearTotal.grossProfitHkd >= 0 ? "+" : ""}{formatHkd(data.yearTotal.grossProfitHkd)}
             </p>
           </CardContent>
         </Card>
-        <Card>
+        {/* 持有中 */}
+        <Card className="bg-white border border-slate-200 shadow-sm rounded-xl">
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">持有中</p>
-            <p className="text-lg font-bold text-amber-600">{data.yearTotal.holdingCount} 件</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-slate-500">持有中</p>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">庫存</span>
+            </div>
+            <p className="text-lg font-bold text-slate-900">{data.yearTotal.holdingCount} <span className="text-sm font-normal text-slate-400">件</span></p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="text-left p-3 font-medium">月份</th>
-              <th className="text-right p-3 font-medium">買取總額</th>
-              <th className="text-right p-3 font-medium">賣出總額</th>
-              <th className="text-right p-3 font-medium">毛利</th>
-              <th className="text-right p-3 font-medium">買取筆數</th>
-              <th className="text-right p-3 font-medium">已售/持有</th>
-              <th className="text-center p-3 font-medium">匯出</th>
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">月份</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">買取總額</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">賣出總額</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">毛利</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">買取筆數</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">已售/持有</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">匯出</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {data.months.map((m) => (
-              <tr key={m.month} className="border-t hover:bg-muted/30">
-                <td className="p-3 font-medium">{year}年{MONTHS[m.month - 1]}</td>
-                <td className="p-3 text-right text-primary font-medium">{m.buyCount > 0 ? formatHkd(m.totalBuyHkd) : "—"}</td>
-                <td className="p-3 text-right text-green-500 font-medium">{m.soldCount > 0 ? formatHkd(m.totalSellHkd) : "—"}</td>
-                <td className={`p-3 text-right font-semibold ${m.grossProfitHkd > 0 ? "text-emerald-600" : m.grossProfitHkd < 0 ? "text-red-600" : "text-muted-foreground"}`}>
-                  {m.buyCount > 0 || m.soldCount > 0 ? `${m.grossProfitHkd >= 0 ? "+" : ""}${formatHkd(m.grossProfitHkd)}` : "—"}
+              <tr key={m.month} className="hover:bg-slate-50 transition-colors">
+                <td className="px-4 py-3 font-medium text-slate-900">{year}年{MONTHS[m.month - 1]}</td>
+                <td className="px-4 py-3 text-right text-blue-600 font-medium">{m.buyCount > 0 ? formatHkd(m.totalBuyHkd) : <span className="text-slate-300">—</span>}</td>
+                <td className="px-4 py-3 text-right text-emerald-600 font-medium">{m.soldCount > 0 ? formatHkd(m.totalSellHkd) : <span className="text-slate-300">—</span>}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${m.grossProfitHkd > 0 ? "text-emerald-600" : m.grossProfitHkd < 0 ? "text-red-600" : "text-slate-300"}`}>
+                  {m.buyCount > 0 || m.soldCount > 0 ? `${m.grossProfitHkd >= 0 ? "+" : ""}${formatHkd(m.grossProfitHkd)}` : <span className="text-slate-300">—</span>}
                 </td>
-                <td className="p-3 text-right text-muted-foreground">{m.buyCount > 0 ? m.buyCount : "—"}</td>
-                <td className="p-3 text-right text-muted-foreground">
-                  {m.buyCount > 0 ? `${m.soldCount}/${m.holdingCount}` : "—"}
+                <td className="px-4 py-3 text-right text-slate-500">{m.buyCount > 0 ? m.buyCount : <span className="text-slate-300">—</span>}</td>
+                <td className="px-4 py-3 text-right text-slate-500">
+                  {m.buyCount > 0 ? `${m.soldCount}/${m.holdingCount}` : <span className="text-slate-300">—</span>}
                 </td>
-                <td className="p-3 text-center">
+                <td className="px-4 py-3 text-center">
                   {m.buyCount > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => onExportMonth(m.month)} className="h-7 px-2 text-xs">
+                    <Button variant="outline" size="sm" onClick={() => onExportMonth(m.month)}
+                      className="h-7 px-2 text-xs bg-white border-slate-300 text-slate-700 hover:bg-slate-50">
                       <Download className="w-3 h-3 mr-1" />匯出
                     </Button>
                   )}
@@ -1960,7 +1983,7 @@ export default function AdminCardInventory() {
           <Button
             onClick={() => { setEditItem(null); setShowBuyForm(true); }}
             size="sm"
-            className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-slate-900 shadow-sm"
+            className="gap-1.5 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           >
             <Plus className="w-4 h-4" />新增買取
           </Button>
