@@ -420,6 +420,17 @@ export const companyCardInventoryRouter = router({
       return { success: true };
     }),
 
+  // Batch delete multiple records
+  batchDelete: adminProcedure
+    .input(z.object({ ids: z.array(z.number()).min(1).max(200) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      await db.delete(companyCardInventory).where(
+        sql`${companyCardInventory.id} IN (${sql.join(input.ids.map(id => sql`${id}`), sql`, `)})`
+      );
+      return { success: true, deleted: input.ids.length };
+    }),
+
   // Monthly summary statistics
   monthlySummary: adminProcedure
     .input(z.object({

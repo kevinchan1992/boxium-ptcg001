@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -1839,6 +1840,8 @@ export default function AdminCompanyCardInventory() {
   const [gradeFilter, setGradeFilter] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
 
@@ -1884,6 +1887,17 @@ export default function AdminCompanyCardInventory() {
       toast.success("記錄已刪除", { description: name ? `「${name}」已從清單中移除` : "記錄已成功刪除" });
     },
     onError: (e) => toast.error("刪除失敗", { description: e.message }),
+  });
+
+  const batchDeleteMutation = trpc.companyCardInventory.batchDelete.useMutation({
+    onSuccess: (data) => {
+      utils.companyCardInventory.list.invalidate();
+      utils.companyCardInventory.monthlySummary.invalidate();
+      setSelectedIds(new Set());
+      setBatchDeleteConfirm(false);
+      toast.success(`已批量刪除 ${data.deleted} 筆記錄`, { description: "所有選取的記錄已從清單中移除" });
+    },
+    onError: (e) => toast.error("批量刪除失敗", { description: e.message }),
   });
 
   const cacheImagesToS3Mutation = trpc.companyCardInventory.cacheImagesToS3.useMutation({
@@ -2315,7 +2329,31 @@ export default function AdminCompanyCardInventory() {
               </div>
             )}
           </div>
-          <div className="text-xs text-slate-500">共 {total} 筆記錄</div>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-slate-500">共 {total} 筆記錄</div>
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-600">已選 <span className="font-semibold text-blue-600">{selectedIds.size}</span> 筆</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-slate-400 hover:text-slate-600 px-2"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  <X className="w-3 h-3 mr-1" />取消選取
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs bg-red-600 hover:bg-red-700 text-white gap-1.5"
+                  onClick={() => setBatchDeleteConfirm(true)}
+                  disabled={batchDeleteMutation.isPending}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  刪除 {selectedIds.size} 筆
+                </Button>
+              </div>
+            )}
+          </div>
 
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">載入中...</div>
@@ -2395,6 +2433,24 @@ export default function AdminCompanyCardInventory() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="w-10 px-3 py-3">
+                      <Checkbox
+                        checked={items.length > 0 && items.every(i => selectedIds.has(i.id))}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedIds(prev => { const next = new Set(prev); items.forEach(i => next.add(i.id)); return next; });
+                          } else {
+                            setSelectedIds(prev => {
+                              const next = new Set(prev);
+                              items.forEach(i => next.delete(i.id));
+                              return next;
+                            });
+                          }
+                        }}
+                        aria-label="全選"
+                        className="border-slate-300"
+                      />
+                    </th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">類型</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">卡牌/商品</th>
                     <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">買取成本</th>
@@ -2412,7 +2468,25 @@ export default function AdminCompanyCardInventory() {
                     const sellHkd = item.sellPriceHkd ? Number(item.sellPriceHkd) : null;
                     const profit = sellHkd !== null ? sellHkd - buyHkd : null;
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                      <tr
+                        key={item.id}
+                        className={`hover:bg-slate-50 transition-colors cursor-pointer ${
+                          selectedIds.has(item.id) ? "bg-blue-50/60" : ""
+                        }`}
+                      >
+                        <td className="w-10 px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(item.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedIds(prev => {
+                                const next = new Set(prev);
+                                if (checked) next.add(item.id); else next.delete(item.id);
+                                return next;
+                              });
+                            }}
+                            className="border-slate-300"
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
                             {item.itemType === "card" ? "單卡" : "封裝"}
@@ -2691,6 +2765,36 @@ export default function AdminCompanyCardInventory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Batch Delete Confirmation Dialog */}
+      <AlertDialog open={batchDeleteConfirm} onOpenChange={(o) => !o && setBatchDeleteConfirm(false)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <span className="text-slate-900">確認批量刪除</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 pl-11">
+              此操作無法復原。即將永久刪除以下記錄：
+              <span className="block mt-2 font-semibold text-red-600">
+                {selectedIds.size} 筆買取記錄
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-200 text-slate-700 hover:bg-slate-50">取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => batchDeleteMutation.mutate({ ids: Array.from(selectedIds) })}
+              disabled={batchDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+            >
+              {batchDeleteMutation.isPending ? "刪除中..." : `確認刪除 ${selectedIds.size} 筆`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* AI 智能拆單 Dialog */}
       <ClaimFormReviewDialog
         open={showClaimForm}
