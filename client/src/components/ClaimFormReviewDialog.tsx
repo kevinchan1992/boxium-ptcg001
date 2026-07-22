@@ -459,7 +459,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
 
           {/* ── Step 1: Upload (multi-file) ── */}
           {step === "upload" && (
@@ -569,7 +569,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
 
           {/* ── Step 2: Matching (show rows + progress) ── */}
           {step === "matching" && (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               {/* Progress header */}
               <div className="px-6 py-3 border-b border-slate-200 bg-blue-50/50">
                 <div className="flex items-center justify-between mb-2">
@@ -586,7 +586,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                 <Progress value={progressPct} className="h-1.5" />
               </div>
 
-              <ScrollArea className="flex-1 px-4 py-2">
+              <div className="px-4 py-2">
                 <div className="space-y-2 pb-4">
                   {rows.map((row) => (
                     <div
@@ -636,13 +636,13 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
 
           {/* ── Review Step ── */}
           {(step === "review" || step === "importing") && (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               {/* Summary bar */}
               <div className="flex items-center gap-4 px-6 py-3 bg-slate-50 border-b border-slate-200 text-sm">
                 <span className="text-slate-700">共 <strong>{totalCount}</strong> 行</span>
@@ -653,7 +653,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                 <span className="ml-auto text-slate-400 text-xs">覆核並確認後點擊「批量匯入」</span>
               </div>
 
-              <ScrollArea className="flex-1 px-4 py-2">
+              <div className="px-4 py-2">
                 <div className="space-y-3 pb-4">
                   {rows.map((row, rowIdx) => {
                     const editableTotal = calcEditableTotal(row.editableItems);
@@ -824,7 +824,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                     );
                   })}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
 
