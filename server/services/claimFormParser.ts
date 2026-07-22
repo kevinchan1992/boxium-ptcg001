@@ -27,7 +27,7 @@ async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
   return pages.join('\n');
 }
 import { invokeLLM } from '../_core/llm';
-import { getProductsByPriceRange } from '../db';
+import { getProductsByPriceRange, searchCards, searchSealedProducts } from '../db';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,6 +171,99 @@ async function fetchCandidatesForAmount(targetAmount: number): Promise<DbProduct
   return allResults;
 }
 
+/**
+ * Fallback: use description text to search for candidates when price-range yields nothing.
+ * Extracts keywords from description and searches both cards and sealed products.
+ */
+async function fetchCandidatesByDescription(description: string): Promise<DbProduct[]> {
+  if (!description || description.trim().length < 3) return [];
+
+  // Use LLM to extract 1-3 short search keywords from the description
+  let keywords: string[] = [];
+  try {
+    const resp = await invokeLLM({
+      messages: [
+        { role: 'system', content: 'You are a Pokemon TCG expert. Extract 1-3 short search keywords (product names or set names) from the purchase description. Return JSON array of strings. Each keyword should be 2-30 chars. Focus on product/card names, not quantities or prices.' },
+        { role: 'user', content: `Description: "${description.slice(0, 200)}"` },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'keywords',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: { keywords: { type: 'array', items: { type: 'string' } } },
+            required: ['keywords'],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const raw = resp.choices?.[0]?.message?.content;
+    if (typeof raw === 'string') {
+      keywords = (JSON.parse(raw).keywords || []).slice(0, 3) as string[];
+    }
+  } catch {
+    // Fallback: use first 3 words of description
+    keywords = description.trim().split(/\s+/).slice(0, 3);
+  }
+
+  const allResults: DbProduct[] = [];
+  const seen = new Set<string>(); // key: `${productType}:${id}`
+
+  for (const kw of keywords) {
+    if (!kw || kw.length < 2) continue;
+    try {
+      // Search single cards
+      const cardResult = await searchCards(kw, 10, 0);
+      for (const c of cardResult.cards) {
+        const key = `single_card:${c.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          allResults.push({
+            id: c.id,
+            productType: 'single_card',
+            name: c.name,
+            nameJa: c.nameJa ?? null,
+            imageUrl: c.imageUrl ?? null,
+            series: c.series ?? null,
+            setName: c.setName ?? null,
+            avgPrice: typeof (c as any).latestPrice === 'number' ? (c as any).latestPrice : 0,
+            priceCount: 1,
+            latestSoldAt: null,
+          });
+        }
+      }
+      // Search sealed products
+      const sealedResult = await searchSealedProducts(kw, 10, 0);
+      for (const s of sealedResult.products) {
+        const key = `sealed_product:${s.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          allResults.push({
+            id: s.id,
+            productType: 'sealed_product',
+            name: s.name,
+            nameJa: s.nameJa ?? null,
+            imageUrl: s.imageUrl ?? null,
+            series: s.series ?? null,
+            setName: s.setName ?? null,
+            avgPrice: typeof (s as any).latestPrice === 'number' ? (s as any).latestPrice : 0,
+            priceCount: 1,
+            latestSoldAt: null,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn(`[claimFormParser] description search failed for keyword "${kw}":`, e);
+    }
+  }
+
+  // Filter out items with no price data (avgPrice = 0)
+  return allResults.filter(r => r.avgPrice > 0);
+}
+
 // ─── Step 3: AI-powered combination generation ───────────────────────────────
 
 /**
@@ -180,7 +273,8 @@ async function fetchCandidatesForAmount(targetAmount: number): Promise<DbProduct
 async function generateCombinations(
   targetAmount: number,
   description: string,
-  candidates: DbProduct[]
+  candidates: DbProduct[],
+  usedFallback: boolean = false
 ): Promise<ItemCombination[]> {
   if (candidates.length === 0) return [];
 
@@ -193,20 +287,26 @@ async function generateCombinations(
     priceCount: c.priceCount,
   }));
 
+  // When using description fallback, allow higher quantity multipliers to reach target amount
+  const fallbackNote = usedFallback
+    ? `\n- IMPORTANT: These candidates were found by description search, not price range. You MUST use quantity multipliers (e.g., quantity=8 for "x8" in description) to reach the target total. The description says: "${description.slice(0, 150)}"`
+    : '';
+
   const systemPrompt = `You are a Pokemon/TCG card trading expert helping a company reconcile purchase records.
 A company made a purchase for HKD ${targetAmount}. The document description is: "${description}".
 
 Your task: From the candidate products below, generate up to 3 DIFFERENT combinations of items whose TOTAL PRICE is as close as possible to HKD ${targetAmount}.
 
 Rules:
-- Each combination can have 1 to 5 items (can repeat the same item with quantity > 1)
+- Each combination can have 1 to 5 DISTINCT item types (can use quantity > 1 for each)
 - Use the avgPrice as the price per unit
 - Total = sum of (price × quantity) for all items in the combination
-- Aim for total within ±20% of target HKD ${targetAmount}
-- Prefer combinations where total is within ±10% of target
+- Aim for total within ±30% of target HKD ${targetAmount} (be flexible)
+- Prefer combinations where total is within ±15% of target
+- If description mentions quantity (e.g. "x8", "x3"), use that as a hint for quantity
 - Combinations should be realistic (e.g., a mix of sealed boxes and single cards is fine)
 - Each combination must be DIFFERENT from the others
-- Provide a brief reason in Traditional Chinese for each combination
+- Provide a brief reason in Traditional Chinese for each combination${fallbackNote}
 
 Candidates (index, name, type, avgPrice):
 ${JSON.stringify(candidateList, null, 2)}`;
@@ -356,7 +456,15 @@ export async function matchProductsToClaimLines(
       batchLines.map(async (line, batchIdx): Promise<ParsedClaimRow> => {
         const i = batch + batchIdx;
         try {
-          const candidates = await fetchCandidatesForAmount(line.amount);
+          let candidates = await fetchCandidatesForAmount(line.amount);
+          let usedFallback = false;
+
+          // Fallback: if price-range search yields nothing, try description-based search
+          if (candidates.length === 0 && line.description && line.description.trim().length > 2) {
+            console.log(`[claimFormParser] Price-range empty for HK$${line.amount}, trying description fallback: "${line.description.slice(0, 80)}"`);
+            candidates = await fetchCandidatesByDescription(line.description);
+            usedFallback = true;
+          }
 
           if (candidates.length === 0) {
             return {
@@ -368,11 +476,11 @@ export async function matchProductsToClaimLines(
               totalAmount: line.amount,
               combinations: [],
               selectedCombination: null,
-              notes: '未找到符合價格範圍的卡牌/卡盒',
+              notes: '未找到符合的卡牌/卡盒，請手動輸入',
             };
           }
 
-          const combinations = await generateCombinations(line.amount, line.description, candidates);
+          const combinations = await generateCombinations(line.amount, line.description, candidates, usedFallback);
 
           return {
             lineIndex: i,
