@@ -71,6 +71,18 @@ interface EditableItem {
 
 type MatchStatus = "pending" | "matching" | "done" | "error";
 
+// ─── Multi-file batch state ──────────────────────────────────────────────────
+
+type FileParseStatus = "pending" | "parsing" | "done" | "error";
+
+interface PdfFileEntry {
+  id: string; // unique per file
+  file: File;
+  status: FileParseStatus;
+  lineCount?: number;
+  error?: string;
+}
+
 interface EditableRow {
   lineIndex: number;
   date: string;
@@ -84,6 +96,7 @@ interface EditableRow {
   editableItems: EditableItem[];
   expanded: boolean;
   notes?: string;
+  sourceFileName?: string; // which PDF this row came from
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -123,7 +136,7 @@ interface Props {
   onImported: () => void;
 }
 
-type Step = "upload" | "extracting" | "matching" | "review" | "importing";
+type Step = "upload" | "extracting" | "matching" | "review" | "importing";  // "upload" now shows multi-file selector
 
 const MATCH_CONCURRENCY = 3; // parallel matchClaimLine calls
 
@@ -133,48 +146,15 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
   const [matchedCount, setMatchedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pdfFiles, setPdfFiles] = useState<PdfFileEntry[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef(false);
 
   const utils = trpc.useUtils();
 
   // ── tRPC mutations ──
-  const extractClaimLines = trpc.companyCardInventory.extractClaimLines.useMutation({
-    onSuccess: async (data) => {
-      if (data.lines.length === 0) {
-        toast.error("未能從 PDF 中提取到任何交易行，請確認文件格式");
-        setStep("upload");
-        return;
-      }
-
-      // Immediately show extracted rows (pending state)
-      const initialRows: EditableRow[] = data.lines.map((line, idx) => ({
-        lineIndex: idx,
-        date: line.date,
-        boughtNoteNo: line.boughtNoteNo,
-        seller: line.seller,
-        description: line.description,
-        totalAmount: line.amount,
-        matchStatus: "pending",
-        selectedCombinationIdx: 0,
-        combinations: [],
-        editableItems: [],
-        expanded: false,
-      }));
-
-      setRows(initialRows);
-      setTotalCount(data.lines.length);
-      setMatchedCount(0);
-      setStep("matching");
-
-      // Phase 2: match rows in parallel batches
-      abortRef.current = false;
-      await runMatchingPhase(data.lines, initialRows);
-    },
-    onError: (e) => {
-      toast.error(`PDF 解析失敗：${e.message}`);
-      setStep("upload");
-    },
-  });
+  // Note: extractClaimLines is called per-file in processFiles(); we use utils.client directly
+  const extractClaimLines = trpc.companyCardInventory.extractClaimLines.useMutation();
 
   const matchClaimLineMutation = trpc.companyCardInventory.matchClaimLine.useMutation();
 
@@ -267,37 +247,112 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
     setRows([]);
     setTotalCount(0);
     setMatchedCount(0);
+    setPdfFiles([]);
     onOpenChange(false);
   }, [onOpenChange]);
 
-  // ── File upload ──
-  // ── Shared file processing ──
-  const processFile = async (file: File) => {
-    if (file.type !== "application/pdf") {
-      toast.error("請上傳 PDF 格式的文件");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("文件大小不能超過 10MB");
-      return;
-    }
+  // ── Multi-file helpers ──
 
-    setStep("extracting");
+  /** Validate and add files to the queue (deduplicates by name+size) */
+  const addFiles = (incoming: FileList | File[]) => {
+    const arr = Array.from(incoming);
+    const valid: PdfFileEntry[] = [];
+    for (const file of arr) {
+      if (file.type !== "application/pdf") {
+        toast.error(`${file.name} 不是 PDF 格式，已跳過`);
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} 超過 10MB 限制，已跳過`);
+        continue;
+      }
+      valid.push({ id: `${file.name}-${file.size}-${Date.now()}`, file, status: "pending" });
+    }
+    if (valid.length > 0) {
+      setPdfFiles(prev => {
+        // deduplicate by name+size
+        const existing = new Set(prev.map(e => `${e.file.name}-${e.file.size}`));
+        const newEntries = valid.filter(e => !existing.has(`${e.file.name}-${e.file.size}`));
+        return [...prev, ...newEntries];
+      });
+    }
+    // reset input so same file can be re-added after removal
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  /** Convert a File to base64 string */
+  const fileToBase64 = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     const uint8 = new Uint8Array(arrayBuffer);
     let binary = "";
     for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-    const base64 = btoa(binary);
-    extractClaimLines.mutate({ pdfBase64: base64 });
+    return btoa(binary);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await processFile(file);
+  /** Parse all pending files, merge lines, then start matching phase */
+  const startProcessing = async () => {
+    if (pdfFiles.length === 0) return;
+    abortRef.current = false;
+    setStep("extracting");
+
+    const allLines: (ClaimFormLine & { sourceFileName: string })[] = [];
+
+    // Parse each PDF sequentially to avoid overwhelming the server
+    for (const entry of pdfFiles) {
+      if (abortRef.current) break;
+      setPdfFiles(prev => prev.map(e => e.id === entry.id ? { ...e, status: "parsing" } : e));
+      try {
+        const base64 = await fileToBase64(entry.file);
+        const data = await utils.client.companyCardInventory.extractClaimLines.mutate({ pdfBase64: base64 });
+        setPdfFiles(prev => prev.map(e =>
+          e.id === entry.id ? { ...e, status: "done", lineCount: data.lines.length } : e
+        ));
+        for (const line of data.lines) {
+          allLines.push({ ...line, sourceFileName: entry.file.name });
+        }
+      } catch (err: any) {
+        setPdfFiles(prev => prev.map(e =>
+          e.id === entry.id ? { ...e, status: "error", error: err.message } : e
+        ));
+        toast.error(`${entry.file.name} 解析失敗：${err.message}`);
+      }
+    }
+
+    if (allLines.length === 0) {
+      toast.error("所有 PDF 均未提取到交易行，請確認文件格式");
+      setStep("upload");
+      return;
+    }
+
+    // Build initial rows with sourceFileName
+    const initialRows: EditableRow[] = allLines.map((line, idx) => ({
+      lineIndex: idx,
+      date: line.date,
+      boughtNoteNo: line.boughtNoteNo,
+      seller: line.seller,
+      description: line.description,
+      totalAmount: line.amount,
+      matchStatus: "pending",
+      selectedCombinationIdx: 0,
+      combinations: [],
+      editableItems: [],
+      expanded: false,
+      sourceFileName: line.sourceFileName,
+    }));
+
+    setRows(initialRows);
+    setTotalCount(allLines.length);
+    setMatchedCount(0);
+    setStep("matching");
+
+    await runMatchingPhase(allLines, initialRows);
   };
 
   // ── Drag and drop handlers ──
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addFiles(e.target.files);
+  };
+
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -313,19 +368,16 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
   const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only clear if leaving the label itself (not a child element)
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
     }
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    await processFile(file);
+    if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
   };
 
   // ── Row editing helpers ──
@@ -409,11 +461,12 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
 
         <div className="flex-1 overflow-hidden">
 
-          {/* ── Step 1a: Upload ── */}
+          {/* ── Step 1: Upload (multi-file) ── */}
           {step === "upload" && (
-            <div className="flex flex-col items-center justify-center h-64 gap-4 px-6">
+            <div className="flex flex-col gap-4 px-6 py-5">
+              {/* Drop zone */}
               <label
-                className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
                   isDragOver
                     ? "border-purple-500 bg-purple-50 scale-[1.01]"
                     : "border-slate-300 hover:border-purple-400 hover:bg-purple-50/50"
@@ -423,27 +476,94 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <Upload className={`w-10 h-10 mb-3 transition-colors ${isDragOver ? "text-purple-500" : "text-slate-400"}`} />
+                <Upload className={`w-8 h-8 mb-2 transition-colors ${isDragOver ? "text-purple-500" : "text-slate-400"}`} />
                 <span className={`text-sm font-medium transition-colors ${isDragOver ? "text-purple-700" : "text-slate-700"}`}>
-                  {isDragOver ? "放開以上傳 PDF" : "點擊或拖放上傳 Claim Form PDF"}
+                  {isDragOver ? "放開以加入檔案" : "點擊或拖放上傳 PDF（支援多檔）"}
                 </span>
-                <span className="text-xs text-slate-400 mt-1">支援 Director Claim Form 格式，最大 10MB</span>
-                <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+                <span className="text-xs text-slate-400 mt-1">支援 Director Claim Form 格式，每檔最大 10MB</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
               </label>
+
+              {/* File queue */}
+              {pdfFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500 font-medium">已選擇 {pdfFiles.length} 個檔案</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {pdfFiles.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200"
+                      >
+                        <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="flex-1 text-xs text-slate-700 truncate">{entry.file.name}</span>
+                        <span className="text-xs text-slate-400 shrink-0">
+                          {(entry.file.size / 1024).toFixed(0)} KB
+                        </span>
+                        <button
+                          onClick={() => setPdfFiles(prev => prev.filter(e => e.id !== entry.id))}
+                          className="p-0.5 hover:text-red-500 text-slate-400 transition-colors shrink-0"
+                          title="移除"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Start button */}
+              <Button
+                onClick={startProcessing}
+                disabled={pdfFiles.length === 0}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                開始 AI 解析 {pdfFiles.length > 0 ? `${pdfFiles.length} 個 PDF` : ""}
+              </Button>
             </div>
           )}
 
-          {/* ── Step 1b: Extracting PDF ── */}
+          {/* ── Step 1b: Extracting PDFs ── */}
           {step === "extracting" && (
-            <div className="flex flex-col items-center justify-center h-64 gap-4 px-6">
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-blue-500 animate-pulse" />
+            <div className="flex flex-col gap-4 px-6 py-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                <span className="text-sm font-semibold text-slate-800">正在解析 PDF 文件...</span>
               </div>
-              <div className="text-center space-y-1">
-                <p className="text-sm font-semibold text-slate-800">正在解析 PDF 文件...</p>
-                <p className="text-xs text-slate-400">提取交易行資料，預計需 5-10 秒</p>
+              <div className="space-y-2">
+                {pdfFiles.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
+                      entry.status === "done" ? "border-emerald-200 bg-emerald-50/40"
+                      : entry.status === "error" ? "border-red-200 bg-red-50/30"
+                      : entry.status === "parsing" ? "border-blue-200 bg-blue-50/40"
+                      : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    {entry.status === "parsing" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin shrink-0" />}
+                    {entry.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
+                    {entry.status === "error" && <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                    {entry.status === "pending" && <div className="w-4 h-4 rounded-full border-2 border-slate-300 shrink-0" />}
+                    <span className="flex-1 text-xs text-slate-700 truncate">{entry.file.name}</span>
+                    {entry.status === "done" && (
+                      <span className="text-xs text-emerald-600 shrink-0">{entry.lineCount} 行</span>
+                    )}
+                    {entry.status === "error" && (
+                      <span className="text-xs text-red-400 shrink-0 truncate max-w-[120px]">{entry.error}</span>
+                    )}
+                  </div>
+                ))}
               </div>
-              <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+              <p className="text-xs text-slate-400">預計每個檔案需 5-10 秒，請耐心等候...</p>
             </div>
           )}
 
@@ -564,6 +684,11 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
                                 {row.boughtNoteNo}
                               </Badge>
                               <span className="text-xs text-slate-400 truncate max-w-[200px]">{row.seller}</span>
+                              {row.sourceFileName && (
+                                <Badge variant="outline" className="text-xs px-1.5 py-0 border-purple-200 text-purple-600 bg-purple-50">
+                                  {row.sourceFileName.replace(/\.pdf$/i, "")}
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-3 mt-1">
                               <span className="text-sm font-medium text-slate-800">
