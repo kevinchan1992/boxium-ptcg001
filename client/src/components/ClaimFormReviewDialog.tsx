@@ -132,6 +132,7 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
   const [rows, setRows] = useState<EditableRow[]>([]);
   const [matchedCount, setMatchedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
   const abortRef = useRef(false);
 
   const utils = trpc.useUtils();
@@ -270,9 +271,8 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
   }, [onOpenChange]);
 
   // ── File upload ──
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ── Shared file processing ──
+  const processFile = async (file: File) => {
     if (file.type !== "application/pdf") {
       toast.error("請上傳 PDF 格式的文件");
       return;
@@ -289,6 +289,43 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
     for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
     const base64 = btoa(binary);
     extractClaimLines.mutate({ pdfBase64: base64 });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  // ── Drag and drop handlers ──
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear if leaving the label itself (not a child element)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await processFile(file);
   };
 
   // ── Row editing helpers ──
@@ -375,9 +412,21 @@ export function ClaimFormReviewDialog({ open, onOpenChange, onImported }: Props)
           {/* ── Step 1a: Upload ── */}
           {step === "upload" && (
             <div className="flex flex-col items-center justify-center h-64 gap-4 px-6">
-              <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-colors">
-                <Upload className="w-10 h-10 text-slate-400 mb-3" />
-                <span className="text-sm font-medium text-slate-700">點擊或拖放上傳 Claim Form PDF</span>
+              <label
+                className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                  isDragOver
+                    ? "border-purple-500 bg-purple-50 scale-[1.01]"
+                    : "border-slate-300 hover:border-purple-400 hover:bg-purple-50/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <Upload className={`w-10 h-10 mb-3 transition-colors ${isDragOver ? "text-purple-500" : "text-slate-400"}`} />
+                <span className={`text-sm font-medium transition-colors ${isDragOver ? "text-purple-700" : "text-slate-700"}`}>
+                  {isDragOver ? "放開以上傳 PDF" : "點擊或拖放上傳 Claim Form PDF"}
+                </span>
                 <span className="text-xs text-slate-400 mt-1">支援 Director Claim Form 格式，最大 10MB</span>
                 <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
               </label>
