@@ -2433,7 +2433,7 @@ export default function AdminCompanyCardInventory() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
-                    <th className="w-10 px-3 py-3">
+                    <th className="w-8 px-2 py-3">
                       <Checkbox
                         checked={items.length > 0 && items.every(i => selectedIds.has(i.id))}
                         onCheckedChange={(checked) => {
@@ -2474,7 +2474,7 @@ export default function AdminCompanyCardInventory() {
                           selectedIds.has(item.id) ? "bg-blue-50/60" : ""
                         }`}
                       >
-                        <td className="w-10 px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                        <td className="w-8 px-2 py-3" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={selectedIds.has(item.id)}
                             onCheckedChange={(checked) => {
