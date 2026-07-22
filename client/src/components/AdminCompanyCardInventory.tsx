@@ -23,10 +23,13 @@ import {
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Plus, Search, Edit, Trash2, ShoppingBag, TrendingUp,
   Package, RefreshCw, Download, ChevronLeft, ChevronRight, X, ImageOff,
   Copy, Layers, MessageSquare, TrendingDown, CalendarDays, Camera, Sparkles,
-  Settings, ChevronDown, SlidersHorizontal, AlertTriangle,
+  Settings, ChevronDown, SlidersHorizontal, AlertTriangle, Filter, CheckCircle2,
 } from "lucide-react";
 import { CameraSearchSheet } from "@/components/CameraSearchSheet";
 import { ClaimFormReviewDialog } from "@/components/ClaimFormReviewDialog";
@@ -1825,18 +1828,49 @@ export default function AdminCompanyCardInventory() {
   const [editItem, setEditItem] = useState<CardInventoryItem | null>(null);
   const [sellItem, setSellItem] = useState<CardInventoryItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; cardName: string } | null>(null);
-  const [search, setSearch] = useState("");
+    const [search, setSearch] = useState("");
+  const [searchField, setSearchField] = useState<"all" | "cardName" | "cardSet" | "buySource">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "holding" | "sold">("all");
   const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "card" | "sealed">("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [minBuyPrice, setMinBuyPrice] = useState("");
+  const [maxBuyPrice, setMaxBuyPrice] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+  const [channelFilter, setChannelFilter] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
 
-  const { data: rates = { HKD: 1, JPY: 0.053, USD: 7.78 } } = trpc.companyCardInventory.getExchangeRates.useQuery();
+  // Count active advanced filters
+  const activeAdvancedCount = [dateFrom, dateTo, minBuyPrice, maxBuyPrice, gradeFilter, channelFilter].filter(Boolean).length;
 
+  const resetAllFilters = () => {
+    setSearch("");
+    setSearchField("all");
+    setStatusFilter("all");
+    setItemTypeFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setMinBuyPrice("");
+    setMaxBuyPrice("");
+    setGradeFilter("");
+    setChannelFilter("");
+    setPage(1);
+  };
+
+  const { data: rates = { HKD: 1, JPY: 0.053, USD: 7.78 } } = trpc.companyCardInventory.getExchangeRates.useQuery();
   const { data: listData, isLoading } = trpc.companyCardInventory.list.useQuery({
     status: statusFilter,
     itemType: itemTypeFilter,
     search: search || undefined,
+    searchField,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    minBuyPrice: minBuyPrice ? Number(minBuyPrice) : undefined,
+    maxBuyPrice: maxBuyPrice ? Number(maxBuyPrice) : undefined,
+    grade: gradeFilter || undefined,
+    channel: channelFilter || undefined,
     page,
     pageSize: 20,
   });
@@ -2045,49 +2079,241 @@ export default function AdminCompanyCardInventory() {
                 {/* Records Tab */}
         <TabsContent value="records" className="space-y-4">
           {/* Search + Filter Bar */}
-          <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="搜尋卡牌名稱、BN 編號或系列..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9 h-8 border-0 bg-transparent focus-visible:ring-0 text-slate-800 placeholder:text-slate-400 text-sm"
-              />
+          <div className="flex flex-col gap-2">
+            {/* Main filter row */}
+            <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
+              {/* Search scope selector */}
+              <Select value={searchField} onValueChange={(v) => { setSearchField(v as any); setPage(1); }}>
+                <SelectTrigger className="w-28 h-8 border-0 bg-slate-50 text-slate-600 text-xs focus:ring-0 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-md">
+                  <SelectItem value="all">全部欄位</SelectItem>
+                  <SelectItem value="cardName">卡牌名稱</SelectItem>
+                  <SelectItem value="cardSet">系列</SelectItem>
+                  <SelectItem value="buySource">來源/備注</SelectItem>
+                </SelectContent>
+              </Select>
+              {/* Search input */}
+              <div className="relative flex-1 min-w-[180px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder={searchField === "cardName" ? "搜尋卡牌名稱..." : searchField === "cardSet" ? "搜尋系列..." : searchField === "buySource" ? "搜尋來源/備注..." : "搜尋卡牌名稱、系列或來源..."}
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  className="pl-9 h-8 border-0 bg-transparent focus-visible:ring-0 text-slate-800 placeholder:text-slate-400 text-sm"
+                />
+              </div>
+              <div className="w-px h-5 bg-slate-200" />
+              {/* Status filter */}
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-md">
+                  <SelectItem value="all">全部狀態</SelectItem>
+                  <SelectItem value="holding">持有中</SelectItem>
+                  <SelectItem value="sold">已賣出</SelectItem>
+                </SelectContent>
+              </Select>
+              {/* Type filter */}
+              <Select value={itemTypeFilter} onValueChange={(v) => { setItemTypeFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-md">
+                  <SelectItem value="all">全部類型</SelectItem>
+                  <SelectItem value="card">單卡</SelectItem>
+                  <SelectItem value="sealed">封裝商品</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="w-px h-5 bg-slate-200" />
+              {/* Advanced filter popover */}
+              <Popover open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`gap-1.5 h-8 text-xs relative ${
+                      activeAdvancedCount > 0
+                        ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    進階篩選
+                    {activeAdvancedCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center">
+                        {activeAdvancedCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-slate-800">進階篩選</h4>
+                      {activeAdvancedCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs text-slate-400 hover:text-red-500 px-2"
+                          onClick={() => {
+                            setDateFrom(""); setDateTo("");
+                            setMinBuyPrice(""); setMaxBuyPrice("");
+                            setGradeFilter(""); setChannelFilter("");
+                            setPage(1);
+                          }}
+                        >
+                          <X className="w-3 h-3 mr-1" />清除全部
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Date range */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600">買取日期範圍</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                          className="h-8 text-xs flex-1"
+                          placeholder="從"
+                        />
+                        <span className="text-slate-400 text-xs shrink-0">至</span>
+                        <Input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                          className="h-8 text-xs flex-1"
+                          placeholder="至"
+                        />
+                      </div>
+                      {/* Quick date shortcuts */}
+                      <div className="flex gap-1.5 flex-wrap">
+                        {[
+                          { label: "今日", days: 0 },
+                          { label: "本週", days: 7 },
+                          { label: "本月", days: 30 },
+                          { label: "三個月", days: 90 },
+                        ].map(({ label, days }) => (
+                          <button
+                            key={label}
+                            onClick={() => {
+                              const to = new Date().toISOString().slice(0, 10);
+                              const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+                              setDateFrom(days === 0 ? to : from);
+                              setDateTo(to);
+                              setPage(1);
+                            }}
+                            className="text-xs px-2 py-0.5 rounded-full border border-slate-200 hover:border-blue-400 hover:text-blue-600 text-slate-500 transition-colors"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Buy price range */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600">買取金額範圍（HKD）</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          value={minBuyPrice}
+                          onChange={(e) => { setMinBuyPrice(e.target.value); setPage(1); }}
+                          className="h-8 text-xs flex-1"
+                          placeholder="最低"
+                        />
+                        <span className="text-slate-400 text-xs shrink-0">—</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={maxBuyPrice}
+                          onChange={(e) => { setMaxBuyPrice(e.target.value); setPage(1); }}
+                          className="h-8 text-xs flex-1"
+                          placeholder="最高"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Grade filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600">評級</label>
+                      <Select value={gradeFilter || "__all__"} onValueChange={(v) => { setGradeFilter(v === "__all__" ? "" : v); setPage(1); }}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="全部評級" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__all__">全部評級</SelectItem>
+                          {GRADE_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Channel filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600">賣出渠道</label>
+                      <Select value={channelFilter || "__all__"} onValueChange={(v) => { setChannelFilter(v === "__all__" ? "" : v); setPage(1); }}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="全部渠道" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__all__">全部渠道</SelectItem>
+                          {SELL_CHANNEL_OPTIONS_CONST.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setAdvancedOpen(false)}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />套用篩選
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {/* Reset button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                title="重置所有篩選"
+                onClick={() => { resetAllFilters(); utils.companyCardInventory.list.invalidate(); }}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </Button>
             </div>
-            <div className="w-px h-5 bg-slate-200" />
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
-              <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-white border border-slate-200 shadow-md">
-                <SelectItem value="all">全部狀態</SelectItem>
-                <SelectItem value="holding">持有中</SelectItem>
-                <SelectItem value="sold">已賣出</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={itemTypeFilter} onValueChange={(v) => { setItemTypeFilter(v as any); setPage(1); }}>
-              <SelectTrigger className="w-28 h-8 border-0 bg-transparent text-slate-600 text-sm focus:ring-0"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-white border border-slate-200 shadow-md">
-                <SelectItem value="all">全部類型</SelectItem>
-                <SelectItem value="card">單卡</SelectItem>
-                <SelectItem value="sealed">封裝商品</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="w-px h-5 bg-slate-200" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 h-8 text-slate-500 hover:text-slate-700 hover:bg-slate-50 text-xs"
-              onClick={() => {
-                const today = new Date().toISOString().slice(0, 10);
-                setSearch(today);
-                setPage(1);
-              }}
-            >
-              <CalendarDays className="w-3.5 h-3.5" />今日
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600" onClick={() => { setSearch(""); setStatusFilter("all"); setItemTypeFilter("all"); setPage(1); utils.companyCardInventory.list.invalidate(); }}>
-              <RefreshCw className="w-3.5 h-3.5" />
-            </Button>
+
+            {/* Active filter badges */}
+            {(dateFrom || dateTo || minBuyPrice || maxBuyPrice || gradeFilter || channelFilter) && (
+              <div className="flex flex-wrap gap-1.5 px-1">
+                {(dateFrom || dateTo) && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                    <CalendarDays className="w-3 h-3" />
+                    {dateFrom && dateTo ? `${dateFrom} ~ ${dateTo}` : dateFrom ? `從 ${dateFrom}` : `至 ${dateTo}`}
+                    <button onClick={() => { setDateFrom(""); setDateTo(""); setPage(1); }} className="ml-0.5 hover:text-red-500"><X className="w-3 h-3" /></button>
+                  </Badge>
+                )}
+                {(minBuyPrice || maxBuyPrice) && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-green-50 text-green-700 border-green-200">
+                    HK${minBuyPrice || "0"} — HK${maxBuyPrice || "∞"}
+                    <button onClick={() => { setMinBuyPrice(""); setMaxBuyPrice(""); setPage(1); }} className="ml-0.5 hover:text-red-500"><X className="w-3 h-3" /></button>
+                  </Badge>
+                )}
+                {gradeFilter && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                    {gradeFilter}
+                    <button onClick={() => { setGradeFilter(""); setPage(1); }} className="ml-0.5 hover:text-red-500"><X className="w-3 h-3" /></button>
+                  </Badge>
+                )}
+                {channelFilter && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-orange-50 text-orange-700 border-orange-200">
+                    {channelFilter}
+                    <button onClick={() => { setChannelFilter(""); setPage(1); }} className="ml-0.5 hover:text-red-500"><X className="w-3 h-3" /></button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
           <div className="text-xs text-slate-500">共 {total} 筆記錄</div>
 

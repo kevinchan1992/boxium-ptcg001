@@ -72,8 +72,15 @@ export const companyCardInventoryRouter = router({
       status: z.enum(["all", "holding", "sold"]).default("all"),
       itemType: z.enum(["all", "card", "sealed"]).default("all"),
       search: z.string().optional(),
+      searchField: z.enum(["all", "cardName", "cardSet", "buySource"]).default("all"),
       year: z.number().optional(),
       month: z.number().optional(), // 1-12
+      dateFrom: z.string().optional(), // ISO date string YYYY-MM-DD
+      dateTo: z.string().optional(),   // ISO date string YYYY-MM-DD
+      minBuyPrice: z.number().optional(),
+      maxBuyPrice: z.number().optional(),
+      grade: z.string().optional(),
+      channel: z.string().optional(),
       page: z.number().default(1),
       pageSize: z.number().default(50),
     }))
@@ -83,13 +90,33 @@ export const companyCardInventoryRouter = router({
       if (input.status !== "all") conditions.push(eq(companyCardInventory.status, input.status));
       if (input.itemType !== "all") conditions.push(eq(companyCardInventory.itemType, input.itemType));
       if (input.search) {
-        const searchCond = or(
-          like(companyCardInventory.cardName, `%${input.search}%`),
-          like(companyCardInventory.cardSet, `%${input.search}%`),
-        );
+        let searchCond;
+        if (input.searchField === "cardName") {
+          searchCond = like(companyCardInventory.cardName, `%${input.search}%`);
+        } else if (input.searchField === "cardSet") {
+          searchCond = like(companyCardInventory.cardSet, `%${input.search}%`);
+        } else if (input.searchField === "buySource") {
+          searchCond = like(companyCardInventory.buySource, `%${input.search}%`);
+        } else {
+          searchCond = or(
+            like(companyCardInventory.cardName, `%${input.search}%`),
+            like(companyCardInventory.cardSet, `%${input.search}%`),
+            like(companyCardInventory.buySource, `%${input.search}%`),
+          );
+        }
         if (searchCond) conditions.push(searchCond);
       }
-      if (input.year && input.month) {
+      // Date range filter (dateFrom/dateTo takes priority over year/month)
+      if (input.dateFrom || input.dateTo) {
+        if (input.dateFrom) {
+          conditions.push(gte(companyCardInventory.buyDate, new Date(input.dateFrom)));
+        }
+        if (input.dateTo) {
+          const toDate = new Date(input.dateTo);
+          toDate.setDate(toDate.getDate() + 1); // inclusive end
+          conditions.push(lte(companyCardInventory.buyDate, toDate));
+        }
+      } else if (input.year && input.month) {
         const start = new Date(input.year, input.month - 1, 1);
         const end = new Date(input.year, input.month, 1);
         conditions.push(gte(companyCardInventory.buyDate, start));
@@ -99,6 +126,21 @@ export const companyCardInventoryRouter = router({
         const end = new Date(input.year + 1, 0, 1);
         conditions.push(gte(companyCardInventory.buyDate, start));
         conditions.push(lte(companyCardInventory.buyDate, end));
+      }
+      // Price range filter (buyPriceHkd)
+      if (input.minBuyPrice !== undefined) {
+        conditions.push(gte(companyCardInventory.buyPriceHkd, String(input.minBuyPrice)));
+      }
+      if (input.maxBuyPrice !== undefined) {
+        conditions.push(lte(companyCardInventory.buyPriceHkd, String(input.maxBuyPrice)));
+      }
+      // Grade filter
+      if (input.grade) {
+        conditions.push(eq(companyCardInventory.grade, input.grade));
+      }
+      // Channel filter
+      if (input.channel) {
+        conditions.push(like(companyCardInventory.sellChannel, `%${input.channel}%`));
       }
 
       const offset = (input.page - 1) * input.pageSize;
