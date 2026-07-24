@@ -736,7 +736,7 @@ export default function Home() {
     <>
       <StructuredData data={structuredData} />
       <PageHead
-        title="BOXIUM TCG | 卡牌價格查詢與市集"
+        title="BOXIUM TCG | Pokémon、One Piece 卡牌即時價格查詢、PSA 10 成交記錄與市集"
         description="BOXIUM TCG 提供 Pokémon、One Piece、遊戲王等 TCG 卡牌的即時價格查詢、PSA 10 成交記錄、價格走勢分析及市集交易平台。"
         keywords="TCG 卡牌, Pokémon 卡牌價格, PSA 10, BOXIUM TCG, 卡牌市集"
       />
