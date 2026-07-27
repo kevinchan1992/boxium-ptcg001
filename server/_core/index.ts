@@ -1219,10 +1219,16 @@ async function startServer() {
     try {
       // Serve pre-generated sitemap if available (fast path, < 1ms)
       const pregen = getPregenSitemap("index");
-      // Always respond immediately: use pregen if available, else use static fallback
-      // This ensures sub-100ms TTFB even on cold start (no DB query needed for index)
-      setSitemapCacheHeaders(res, 3600, 86400);
-      return res.send(pregen ?? STATIC_SITEMAP_INDEX);
+      if (pregen) {
+        // Valid pre-generated sitemap: cache for 1h browser, 1h CDN (avoid stale Cloudflare cache)
+        setSitemapCacheHeaders(res, 3600, 3600);
+        return res.send(pregen);
+      } else {
+        // Cold start fallback: do NOT cache on CDN to avoid Cloudflare caching empty/stale content
+        res.header("Content-Type", "application/xml; charset=utf-8");
+        res.header("Cache-Control", "no-store");
+        return res.send(STATIC_SITEMAP_INDEX);
+      }
     } catch (error) {
       console.error("[Sitemap] Error generating sitemap index:", error);
       res.status(500).send("Error generating sitemap");

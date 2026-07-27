@@ -36,28 +36,44 @@ function getStaticSitemapPath(filename: string): string {
 
 /**
  * Read a static sitemap file from disk.
- * Priority: dist/public/ (SSG, build-time) > /tmp/sitemaps/ (runtime refresh)
- * Returns null if the file doesn't exist or can't be read.
+ * Priority: /tmp/sitemaps/ (runtime, most up-to-date) > dist/public/ (SSG, build-time)
+ * Returns null if the file doesn't exist, can't be read, or content is invalid.
  */
 function readStaticSitemap(filename: string): string | null {
-  // 1. Try SSG path first (dist/public/ — generated at build time, always available)
-  try {
-    const ssgPath = path.join(getDistPublicDir(), filename);
-    if (fs.existsSync(ssgPath)) {
-      return fs.readFileSync(ssgPath, "utf-8");
-    }
-  } catch (e) {
-    // ignore
-  }
-  // 2. Fallback to runtime-generated path (/tmp/sitemaps/)
+  // Helper: validate sitemap content is non-trivially populated
+  const isValidSitemap = (content: string): boolean => {
+    if (!content || content.length < 150) return false;
+    if (!content.includes('<?xml')) return false;
+    // For index sitemaps, must have at least one <sitemap> entry
+    if (filename === 'sitemap.xml' && !content.includes('<sitemap>')) return false;
+    // For urlset sitemaps, must have at least one <url> entry
+    if (filename !== 'sitemap.xml' && !content.includes('<url>')) return false;
+    return true;
+  };
+
+  // 1. Try runtime-generated path first (/tmp/sitemaps/ — most up-to-date)
+  // pregenerateSitemaps() writes here at startup and on daily refresh.
   try {
     const filePath = getStaticSitemapPath(filename);
     if (fs.existsSync(filePath)) {
-      return fs.readFileSync(filePath, "utf-8");
+      const content = fs.readFileSync(filePath, 'utf-8');
+      if (isValidSitemap(content)) return content;
     }
   } catch (e) {
     // ignore
   }
+
+  // 2. Fallback to SSG path (dist/public/ — generated at build time)
+  try {
+    const ssgPath = path.join(getDistPublicDir(), filename);
+    if (fs.existsSync(ssgPath)) {
+      const content = fs.readFileSync(ssgPath, 'utf-8');
+      if (isValidSitemap(content)) return content;
+    }
+  } catch (e) {
+    // ignore
+  }
+
   return null;
 }
 
