@@ -112,8 +112,8 @@ function HoloCard({
       {card.cardNumber && (
         <div className="mt-1.5 text-center">
           <p
-            className="font-mono text-[9px] uppercase tracking-[0.12em] truncate"
-            style={{ color: '#555555', letterSpacing: '0.1em' }}
+            className="font-mono text-[10px] uppercase tracking-widest truncate font-semibold"
+            style={{ color: 'rgba(255,255,255,0.75)', letterSpacing: '0.12em' }}
           >
             {card.cardNumber}
           </p>
@@ -152,19 +152,26 @@ function MobileCardItem({
       </button>
       <div className="flex flex-col gap-0.5 px-0.5">
         {card.cardNumber && (
-          <span className="text-[6px] uppercase tracking-[0.08em] truncate block"
-            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+          <span className="text-[8px] uppercase tracking-widest truncate block font-semibold"
+            style={{ color: 'rgba(255,255,255,0.70)', fontFamily: 'monospace' }}>
             {card.cardNumber}
           </span>
         )}
         {card.currentPrice ? (
-          <span className="text-[7px] flex items-center gap-0.5"
-            style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+          <span className="text-[8px] flex items-center gap-0.5 font-bold"
+            style={{ color: 'rgba(255,255,255,0.90)', fontFamily: 'monospace' }}>
             {card.currentPrice >= 1000
               ? `$${(card.currentPrice / 1000).toFixed(1)}k`
               : `$${Math.round(card.currentPrice)}`}
             {card.priceChange7d !== null && card.priceChange7d !== 0 && (
-              <span style={{ color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A', fontSize: '6px' }}>
+              <span
+                className={`inline-flex items-center px-1 py-0 rounded-full border font-semibold ${
+                  card.priceChange7d > 0
+                    ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700/60'
+                    : 'bg-rose-900/60 text-rose-300 border-rose-700/60'
+                }`}
+                style={{ fontSize: '6px', lineHeight: 1.4 }}
+              >
                 {card.priceChange7d > 0 ? '↑' : '↓'}
               </span>
             )}
@@ -393,22 +400,26 @@ export default function Home() {
                       {/* Gallery label: card number + price */}
                       <div className="flex items-center justify-between w-full px-0.5 gap-2">
                         {card.cardNumber && (
-                          <span className="text-[8px] uppercase tracking-[0.12em] truncate"
-                            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>
+                          <span className="text-[9px] uppercase tracking-widest truncate font-semibold"
+                            style={{ color: 'rgba(255,255,255,0.70)', fontFamily: 'monospace' }}>
                             {card.cardNumber}
                           </span>
                         )}
                         {card.currentPrice ? (
-                          <span className="text-[9px] flex-shrink-0 flex items-center gap-0.5"
-                            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>
+                          <span className="text-[10px] flex-shrink-0 flex items-center gap-1 font-bold"
+                            style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'monospace' }}>
                             {card.currentPrice >= 1000
                               ? `$${(card.currentPrice/1000).toFixed(1)}k`
                               : `$${Math.round(card.currentPrice)}`}
                             {card.priceChange7d !== null && card.priceChange7d !== 0 && (
-                              <span style={{
-                                color: card.priceChange7d > 0 ? '#2ecc71' : '#8B1A1A',
-                                fontSize: '8px',
-                              }}>
+                              <span
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded-full border font-semibold ${
+                                  card.priceChange7d > 0
+                                    ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700/60'
+                                    : 'bg-rose-900/60 text-rose-300 border-rose-700/60'
+                                }`}
+                                style={{ fontSize: '8px', lineHeight: 1.4 }}
+                              >
                                 {card.priceChange7d > 0 ? '↑' : '↓'}
                               </span>
                             )}
