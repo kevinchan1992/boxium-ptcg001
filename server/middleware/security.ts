@@ -452,7 +452,7 @@ export function botDetection(req: Request, res: Response, next: NextFunction) {
   // robots.txt and sitemap files must be accessible to ALL crawlers (including
   // Googlebot, Bingbot, etc.) without any bot detection interference.
   // These are public, read-only resources with no security risk.
-  if (req.path === "/robots.txt" || req.path.endsWith(".xml") && (req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-"))) return next();
+  if (req.path === "/robots.txt" || req.path === "/sitemap" || req.path.endsWith(".xml") && (req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-"))) return next();
 
   // Allow known good crawlers
   if (ALLOWED_CRAWLERS.some((p) => p.test(ua))) return next();
@@ -546,6 +546,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // because those are browser-only directives that have no meaning on XML files.
   const isSitemapOrRobots =
     req.path === "/robots.txt" ||
+    req.path === "/sitemap" ||
     req.path === "/sitemap.xml" ||
     req.path.startsWith("/sitemap-");
   if (isSitemapOrRobots) {

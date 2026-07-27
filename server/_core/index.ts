@@ -125,7 +125,7 @@ async function startServer() {
     }
     // Skip CORS for sitemap and robots.txt — these are public, cacheable resources
     // CORS adds Vary: Origin which prevents Cloudflare from caching
-    if (req.path === "/robots.txt" || req.path === "/sitemap.xml" || req.path.startsWith("/sitemap-")) {
+    if (req.path === "/robots.txt" || req.path === "/sitemap.xml" || req.path === "/sitemap" || req.path.startsWith("/sitemap-")) {
       return next();
     }
     cors({
@@ -1214,6 +1214,11 @@ async function startServer() {
     xml += '</sitemapindex>';
     return xml;
   })();
+
+  // Redirect /sitemap (without .xml) to /sitemap.xml for Google Search Console compatibility
+  app.get("/sitemap", (_req, res) => {
+    res.redirect(301, "/sitemap.xml");
+  });
 
   app.get("/sitemap.xml", async (req, res) => {
     try {

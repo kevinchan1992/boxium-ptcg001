@@ -9944,3 +9944,18 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 將靜態 sitemap 文件（sitemap.xml, sitemap-static.xml, sitemap-sets.xml, sitemap-blog.xml）放入 client/public/
 - [ ] 更新 generateStaticSitemapFiles() 在生成後同步更新 client/public/ 中的靜態文件
 - [ ] 部署並驗證 Google Search Console 能成功抓取
+
+## ✅ Google Search Console Sitemap 無法抓取修復（2026-07-27）
+
+### 根本原因
+- Manus serverless 架構冷啟動時 /tmp/sitemaps/ 為空，導致 Google 抓取到空 sitemap
+- /sitemap（無 .xml）路由被 botDetection 中間件攔截返回 403
+
+### 修復清單
+- [x] 診斷根本原因（Manus 代理延遲 + 冷啟動時 /tmp/sitemaps/ 為空）
+- [x] 將靜態 sitemap 文件放入 client/public/（解決冷啟動問題）
+- [x] 添加 /sitemap → /sitemap.xml 的 301 重定向
+- [x] 修復 botDetection 中間件豁免 /sitemap 路徑
+- [x] 修復 securityHeaders 中間件豁免 /sitemap 路徑
+- [x] 修復 CORS 中間件豁免 /sitemap 路徑
+- [x] 在 Google Search Console 重新提交 sitemap（使用完整 URL）
