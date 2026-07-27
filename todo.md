@@ -9959,3 +9959,14 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 修復 securityHeaders 中間件豁免 /sitemap 路徑
 - [x] 修復 CORS 中間件豁免 /sitemap 路徑
 - [x] 在 Google Search Console 重新提交 sitemap（使用完整 URL）
+
+## ✅ PSA 精準匹配整合（2026-07-27）
+- [x] 刪除所有 eBay 成交記錄（3,200,189 筆，source='ebay'）
+- [x] 資料庫新增 psaSpecId、psaMatchedAt、psaScrapedAt 欄位（cards 表）
+- [x] 建立 PSA specId 批量匹配腳本（scripts/psaSpecMatcher.mjs）
+- [x] 建立 PSA spec 成交記錄爬取腳本（scripts/githubActionsPsaScraper.mjs）
+- [x] 建立 GitHub Actions workflow（psa-spec-matcher.yml + psa-scraper.yml）
+- [x] 前端 CardDetail 標籤：「eBay · 實際成交價格歷史」→「PSA · 實際成交價格歷史」
+- [ ] 將 PSA_REFRESH_TOKEN 存入 GitHub Secrets
+- [ ] 手動觸發 psa-spec-matcher workflow（首次 specId 批量匹配）
+- [ ] 手動觸發 psa-scraper workflow（首次成交記錄抓取）

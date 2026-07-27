@@ -106,6 +106,8 @@ export const cards = mysqlTable("cards", {
   description: text("description"), // Card description
   types: text("types"), // Pokemon types (JSON array)
   hp: int("hp"), // HP value
+  psaSpecId: varchar("psaSpecId", { length: 32 }), // PSA spec ID for precise auction price lookup (e.g., "2497226")
+  psaMatchedAt: timestamp("psaMatchedAt"), // Timestamp of last PSA spec ID matching attempt
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -113,6 +115,7 @@ export const cards = mysqlTable("cards", {
   nameIdx: index("cards_name_idx").on(table.name),
   nameJaIdx: index("cards_nameJa_idx").on(table.nameJa),
   cardNumberIdx: index("cards_cardNumber_idx").on(table.cardNumber), // 加速 cardNumber 搜尋
+  psaSpecIdIdx: index("cards_psaSpecId_idx").on(table.psaSpecId), // PSA spec ID lookup
 }));
 
 export type Card = typeof cards.$inferSelect;

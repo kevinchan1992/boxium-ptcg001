@@ -1026,13 +1026,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             </div>
                     )}
         </div>}
-        {/* ── eBay Sold History (single cards only) ── */}
+        {/* ── PSA Sold History (single cards only) ── */}
         {!isSealedProduct && (
           <div className="rounded-xl overflow-hidden mb-4 sm:mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center gap-3">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: '#999999' }}>
-                  eBay · {t("cardDetail.actualPriceHistory")}
+                  PSA · {t("cardDetail.actualPriceHistory")}
                 </h3>
                 <span
                   className="text-[9px] font-mono"
@@ -1112,13 +1112,13 @@ export default function CardDetail({ sealedProductId }: CardDetailProps = {}) {
             ) : (
               <div className="py-10 text-center">
                 <p className="text-sm" style={{ color: '#555555' }}>{t("cardDetail.noEbayData")}</p>
-                <p className="text-xs mt-1" style={{ color: '#444444' }}>{t("cardDetail.ebayDataComingSoon", "eBay 成交記錄將由 GitHub Actions 定期更新")}</p>
+                <p className="text-xs mt-1" style={{ color: '#444444' }}>{t("cardDetail.ebayDataComingSoon", "PSA 成交記錄將由 GitHub Actions 定期更新")}</p>
               </div>
             )}
             {ebayPriceHistory.length > 0 && (
               <div className="px-4 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                 <p className="text-[9px]" style={{ color: '#444444' }}>
-                  {t("cardDetail.ebayDataNote", "eBay PSA 10 已成交記錄，由 GitHub Actions 定期爬取更新")}
+                  {t("cardDetail.ebayDataNote", "PSA 10 已成交記錄，由 GitHub Actions 定期爬取更新（資料來源：PSA Auction Prices）")}
                 </p>
               </div>
             )}
