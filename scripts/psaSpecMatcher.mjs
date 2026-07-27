@@ -310,11 +310,14 @@ async function getCardsToProcess(conn) {
     params = CARD_IDS;
   } else {
     // Shard mode: process cards where MOD(id, TOTAL_BATCHES) = BATCH_INDEX
-    // Priority: cards never matched first, then cards matched long ago
+    // Skip cards that have already been successfully matched (psaSpecId IS NOT NULL)
+    // Only retry cards that were attempted but failed (psaMatchedAt IS NOT NULL AND psaSpecId IS NULL)
+    //   if they haven't been retried within REMATCH_DAYS
     query = `
       SELECT id, cardId, name, nameJa, series, setName, cardNumber, language, rarity
       FROM cards
       WHERE MOD(id, ?) = ?
+        AND psaSpecId IS NULL
         AND (psaMatchedAt IS NULL OR psaMatchedAt < ?)
       ORDER BY psaMatchedAt ASC, id ASC
       LIMIT ?
