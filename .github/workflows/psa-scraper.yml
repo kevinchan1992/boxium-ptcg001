@@ -1,8 +1,8 @@
 name: PSA Scraper (Parallel)
 on:
   schedule:
-    # Daily at HKT 16:20 (UTC 08:20)
-    - cron: '20 8 * * *'
+    # Daily at HKT 16:50 (UTC 08:50)
+    - cron: '50 8 * * *'
   workflow_dispatch:
     inputs:
       total_batches:
