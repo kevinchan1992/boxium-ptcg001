@@ -1,0 +1,186 @@
+name: PSA Spec ID Matcher (Parallel)
+
+on:
+  schedule:
+    # Weekly on Monday at HKT 22:00 (UTC 14:00)
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+    inputs:
+      total_batches:
+        description: 'Number of parallel jobs (default: 20)'
+        required: false
+        default: '20'
+      cards_per_batch:
+        description: 'Max cards per job (default: 4000)'
+        required: false
+        default: '4000'
+      rematch_days:
+        description: 'Re-attempt cards matched more than N days ago (default: 30)'
+        required: false
+        default: '30'
+      delay_ms:
+        description: 'Delay between PSA requests in ms (default: 2500)'
+        required: false
+        default: '2500'
+      card_ids:
+        description: 'Comma-separated card IDs for single-card mode (e.g. "123,456"). Overrides shard logic.'
+        required: false
+        default: ''
+
+# Prevent concurrent runs
+concurrency:
+  group: psa-spec-matcher
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # ─── Preflight: validate inputs and decide run parameters ─────────────────
+  preflight:
+    name: Preflight Check
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      total_batches: ${{ steps.check.outputs.total_batches }}
+      cards_per_batch: ${{ steps.check.outputs.cards_per_batch }}
+      rematch_days: ${{ steps.check.outputs.rematch_days }}
+      delay_ms: ${{ steps.check.outputs.delay_ms }}
+      single_card_mode: ${{ steps.check.outputs.single_card_mode }}
+      card_ids: ${{ steps.check.outputs.card_ids }}
+    steps:
+      - name: Validate and set parameters
+        id: check
+        run: |
+          TOTAL_BATCHES="${{ github.event.inputs.total_batches || '20' }}"
+          CARDS_PER_BATCH="${{ github.event.inputs.cards_per_batch || '4000' }}"
+          REMATCH_DAYS="${{ github.event.inputs.rematch_days || '30' }}"
+          DELAY_MS="${{ github.event.inputs.delay_ms || '2500' }}"
+          CARD_IDS="${{ github.event.inputs.card_ids || '' }}"
+
+          echo "total_batches=$TOTAL_BATCHES" >> $GITHUB_OUTPUT
+          echo "cards_per_batch=$CARDS_PER_BATCH" >> $GITHUB_OUTPUT
+          echo "rematch_days=$REMATCH_DAYS" >> $GITHUB_OUTPUT
+          echo "delay_ms=$DELAY_MS" >> $GITHUB_OUTPUT
+          echo "card_ids=$CARD_IDS" >> $GITHUB_OUTPUT
+          echo "should_run=true" >> $GITHUB_OUTPUT
+
+          if [ -n "$CARD_IDS" ]; then
+            echo "single_card_mode=true" >> $GITHUB_OUTPUT
+            echo "📌 Single card mode: $CARD_IDS"
+          else
+            echo "single_card_mode=false" >> $GITHUB_OUTPUT
+            echo "🚀 Batch mode: $TOTAL_BATCHES shards × $CARDS_PER_BATCH cards"
+          fi
+
+  # ─── Single card mode ─────────────────────────────────────────────────────
+  psa-match-single:
+    name: "PSA Match — Single Card Mode"
+    needs: preflight
+    if: needs.preflight.outputs.should_run == 'true' && needs.preflight.outputs.single_card_mode == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install script dependencies
+        run: |
+          mkdir -p /tmp/psa-runner
+          cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
+          cp scripts/package.json /tmp/psa-runner/
+          cd /tmp/psa-runner
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed (mysql2 + cheerio)"
+
+      - name: Run PSA matcher — single card mode
+        working-directory: /tmp/psa-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BATCH_INDEX: '0'
+          TOTAL_BATCHES: '1'
+          CARDS_PER_BATCH: '999'
+          CARD_IDS: ${{ needs.preflight.outputs.card_ids }}
+          REMATCH_DAYS: '0'
+          DELAY_MS: ${{ needs.preflight.outputs.delay_ms }}
+          NODE_ENV: 'production'
+        run: |
+          echo "=== PSA Spec Matcher — Single Card Mode ==="
+          echo "Card IDs: $CARD_IDS"
+          node psaSpecMatcher.mjs
+
+  # ─── Matrix: parallel shard jobs ─────────────────────────────────────────
+  psa-match:
+    name: "PSA Match Shard ${{ matrix.batch_index }}"
+    needs: preflight
+    if: needs.preflight.outputs.should_run == 'true' && needs.preflight.outputs.single_card_mode == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max per shard
+    strategy:
+      fail-fast: false  # One shard failing must NOT cancel the others
+      matrix:
+        batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Staggered startup: spread requests over 10 minutes to avoid simultaneous PSA hits
+      - name: Staggered startup delay
+        run: |
+          BATCH_IDX=${{ matrix.batch_index }}
+          BASE_DELAY=$(( BATCH_IDX * 30 ))
+          JITTER=$(( RANDOM % 30 ))
+          TOTAL_DELAY=$(( BASE_DELAY + JITTER ))
+          echo "Shard $BATCH_IDX: startup delay = ${TOTAL_DELAY}s"
+          sleep $TOTAL_DELAY
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install script dependencies
+        run: |
+          mkdir -p /tmp/psa-runner
+          cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
+          cp scripts/package.json /tmp/psa-runner/
+          cd /tmp/psa-runner
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed (mysql2 + cheerio)"
+
+      - name: Run PSA matcher — shard ${{ matrix.batch_index }}
+        working-directory: /tmp/psa-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BATCH_INDEX: ${{ matrix.batch_index }}
+          TOTAL_BATCHES: ${{ needs.preflight.outputs.total_batches }}
+          CARDS_PER_BATCH: ${{ needs.preflight.outputs.cards_per_batch }}
+          REMATCH_DAYS: ${{ needs.preflight.outputs.rematch_days }}
+          DELAY_MS: ${{ needs.preflight.outputs.delay_ms }}
+          NODE_ENV: 'production'
+        run: |
+          echo "=== PSA Spec Matcher v1.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
+          echo "Cards per shard: ${{ needs.preflight.outputs.cards_per_batch }}"
+          node psaSpecMatcher.mjs
+
+  # ─── Summary job ─────────────────────────────────────────────────────────
+  summary:
+    name: "Matching Summary"
+    needs: [preflight, psa-match]
+    if: always() && needs.preflight.outputs.single_card_mode == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print summary
+        run: |
+          echo "## PSA Spec Matcher Run Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Shards**: ${{ needs.preflight.outputs.total_batches }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cards per shard**: ${{ needs.preflight.outputs.cards_per_batch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rematch days**: ${{ needs.preflight.outputs.rematch_days }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check individual shard logs for match statistics." >> $GITHUB_STEP_SUMMARY
