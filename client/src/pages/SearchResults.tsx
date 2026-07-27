@@ -1,23 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { Search, Loader2, AlertCircle, Lightbulb, RefreshCw, LayoutGrid, List, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, Loader2, AlertCircle, Lightbulb, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { Button } from "@/components/ui/button";
 import { CardSearchDropdown } from "@/components/CardSearchDropdown";
 import { useTranslation } from "react-i18next";
 import { getProxiedImageUrl } from "@/lib/utils";
-
-// Hot category shortcuts
-const HOT_CATEGORIES = [
-  { label: "Pokémon", query: "Pokémon" },
-  { label: "One Piece", query: "One Piece" },
-  { label: "Yu-Gi-Oh!", query: "Yu-Gi-Oh" },
-  { label: "PSA 10", query: "PSA 10" },
-];
-
-type ViewMode = "gallery" | "list";
 
 export default function SearchResults() {
   const { t } = useTranslation();
@@ -29,7 +20,6 @@ export default function SearchResults() {
   const currentPage = isNaN(pageFromUrl) || pageFromUrl < 1 ? 1 : pageFromUrl;
 
   const [searchQuery, setSearchQuery] = useState(query);
-  const [viewMode, setViewMode] = useState<ViewMode>("gallery");
   const [, setLocation] = useLocation();
   const limit = 40;
 
@@ -145,6 +135,14 @@ export default function SearchResults() {
     }
   }, [query]);
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // New search always resets to page 1
+      setLocation(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   const logSearchMutation = trpc.cards.logSearch.useMutation();
 
   const handleItemClick = (item: { id: number; productType: string }) => {
@@ -166,296 +164,141 @@ export default function SearchResults() {
     setLocation(`/search?q=${encodeURIComponent(suggestedQuery)}`);
   };
 
-  // Navigate to a hot category
-  const handleCategoryClick = (categoryQuery: string) => {
-    setSearchQuery(categoryQuery);
-    setLocation(`/search?q=${encodeURIComponent(categoryQuery)}`);
-  };
-
-  // Price change pill helper (placeholder — no real change data from search API)
-  // We show a subtle indicator based on price tier for visual richness
-  const getPriceChangePill = (price: number | null | undefined) => {
-    if (!price) return null;
-    return null; // No change data available from search API
-  };
-
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 sm:px-4 md:px-6 lg:px-8 pb-[140px] md:pb-6">
-      {/* Breadcrumb */}
-      <Breadcrumb 
-        items={[
-          { label: t("searchResults.breadcrumb.home"), href: "/" },
-          { label: t("searchResults.breadcrumb.search") }
-        ]}
-      />
-      
-      {/* ── Integrated Search Suite ── */}
-      <div className="max-w-3xl mx-auto mb-6 sm:mb-8">
-        {/* Search Box — rounded-full, shadow-sm */}
-        <CardSearchDropdown
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={(q) => {
-            if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
-          }}
-          cardLinkPrefix="card"
-          inputClassName="h-12 rounded-full border border-slate-300 bg-white shadow-sm px-6 text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-          placeholder={t("searchResults.search.placeholder")}
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: t("searchResults.breadcrumb.home"), href: "/" },
+            { label: t("searchResults.breadcrumb.search") }
+          ]}
         />
-
-        {/* Hot Category Shortcuts */}
-        <div className="flex items-center gap-1 mt-3 flex-wrap justify-center">
-          <span className="text-xs text-muted-foreground mr-1">熱門：</span>
-          {HOT_CATEGORIES.map((cat, idx) => (
-            <button
-              key={cat.query}
-              onClick={() => handleCategoryClick(cat.query)}
-              className={`text-xs px-3 py-1 rounded-full border transition-all duration-150 ${
-                query === cat.query
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-900"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        
+        {/* Search Bar with Dropdown */}
+        <div className="mb-4 sm:mb-6 md:mb-8 max-w-2xl">
+          <CardSearchDropdown
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={(q) => {
+              if (q.trim()) setLocation(`/search?q=${encodeURIComponent(q)}`);
+            }}
+            cardLinkPrefix="card"
+            inputClassName="py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg bg-card border-border rounded-lg sm:rounded-xl focus:ring-2 focus:ring-primary"
+            placeholder={t("searchResults.search.placeholder")}
+          />
         </div>
-      </div>
 
-      {/* ── Results Header + View Toggle ── */}
-      <div className="mb-4 sm:mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground">
+        {/* Results Header with H1 */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
             {query ? t("searchResults.header.titleWithQuery", { query }) : t("searchResults.header.title")}
           </h1>
           {isLoading ? (
-            <p className="text-xs text-muted-foreground mt-0.5">{t("searchResults.header.loading")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">{t("searchResults.header.loading")}</p>
           ) : (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
               {t("searchResults.header.found", { count: searchResults.length })}
             </p>
           )}
         </div>
 
-        {/* View Mode Toggle */}
-        {searchResults.length > 0 && (
-          <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5 bg-white shadow-sm">
-            <button
-              onClick={() => setViewMode("gallery")}
-              title="畫廊模式"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
-                viewMode === "gallery"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">畫廊</span>
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              title="圖錄列表"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
-                viewMode === "list"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">列表</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Results Content ── */}
-      {isLoading ? (
-        /* Loading skeleton — gallery style */
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
-              <div className="aspect-[2/3] bg-slate-100 animate-pulse rounded-lg m-2" />
-              <div className="px-3 pb-3 space-y-2">
-                <div className="h-3 w-full rounded bg-slate-100 animate-pulse" />
-                <div className="h-3 w-2/3 rounded bg-slate-100 animate-pulse" />
-                <div className="h-4 w-1/2 rounded bg-slate-100 animate-pulse mt-1" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">{t("searchResults.error.message")}</p>
-            <Button
-              onClick={() => refetch()}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              disabled={isFetching}
-            >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? t("pricing.searching") : t("pricing.retrySearch")}
-            </Button>
-          </div>
-        </div>
-      ) : searchResults.length > 0 ? (
-        <>
-          {/* Results count and page info */}
-          <div className="mb-4 text-xs text-muted-foreground flex justify-between items-center">
-            <span>{t("searchResults.pagination.pageInfo", { page: currentPage, total: totalPages, count: totalResults })}</span>
-            <span>{t("searchResults.pagination.showing", { from: (currentPage - 1) * limit + 1, to: Math.min(currentPage * limit, totalResults) })}</span>
-          </div>
-
-          {/* ── Gallery Mode ── */}
-          {viewMode === "gallery" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
-              {searchResults.map((card: any) => (
-                <div
-                  key={card.id}
-                  onClick={() => handleItemClick(card)}
-                  className="bg-white border border-slate-200/80 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group"
-                >
-                  {/* Card Image Container */}
-                  <div className="aspect-[2/3] relative bg-slate-50 rounded-lg m-2 overflow-hidden">
-                    {card.imageUrl ? (
-                      <img
-                        src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                        alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("searchResults.card.imageAlt")}`}
-                        className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-muted-foreground text-xs">{t("searchResults.card.noImage")}</p>
-                      </div>
-                    )}
-                    {/* Sealed product badge overlay */}
-                    {card.productType === 'sealed_product' && (
-                      <span className="absolute top-1.5 left-1.5 bg-slate-900 text-white text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded font-medium">
-                        SEALED
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Card Info */}
-                  <div className="px-3 pb-3 flex flex-col gap-1">
-                    {/* Card Number / Rarity Badge */}
-                    {(card.cardNumber || card.rarity) && (
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {card.cardNumber && (
-                          <span className="bg-slate-900 text-white text-[10px] tracking-widest uppercase px-2 py-0.5 rounded font-medium">
-                            {card.cardNumber}
-                          </span>
-                        )}
-                        {card.rarity && (
-                          <span className="bg-slate-100 text-slate-600 text-[10px] tracking-wide px-2 py-0.5 rounded font-medium border border-slate-200">
-                            {card.rarity}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Card Name */}
-                    <h3 className="font-semibold text-slate-900 text-xs leading-tight line-clamp-2">
-                      {card.name}
-                    </h3>
-
-                    {/* Japanese Name */}
-                    {card.nameJa && (
-                      <p className="hidden sm:block text-[10px] text-slate-400 truncate">
-                        {card.nameJa}
-                      </p>
-                    )}
-
-                    {/* Price Row */}
-                    <div className="mt-1 flex items-center gap-1.5">
-                      {card.latestPrice ? (
-                        <p className="text-sm font-bold text-slate-900 truncate">
-                          {formatCurrency(card.latestPrice)}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-slate-400">--</p>
-                      )}
-                    </div>
-                  </div>
+        {/* Results Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="aspect-[2/3] bg-muted animate-pulse" />
+                <div className="p-1.5 sm:p-2 space-y-1">
+                  <div className="h-2 sm:h-2.5 w-full rounded bg-muted animate-pulse" />
+                  <div className="h-2 sm:h-2.5 w-3/4 rounded bg-muted animate-pulse" />
+                  <div className="h-2 sm:h-2.5 w-1/2 rounded bg-orange-400/20 animate-pulse mt-1" />
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">{t("searchResults.error.message")}</p>
+              <Button
+                onClick={() => refetch()}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isFetching}
+              >
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                {isFetching ? t("pricing.searching") : t("pricing.retrySearch")}
+              </Button>
             </div>
-          ) : (
-            /* ── List Mode ── */
-            <div className="flex flex-col divide-y divide-slate-100 border border-slate-200/80 rounded-xl overflow-hidden bg-white shadow-sm">
-              {searchResults.map((card: any) => (
-                <div
-                  key={card.id}
-                  onClick={() => handleItemClick(card)}
-                  className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors duration-150 group"
-                >
-                  {/* Thumbnail */}
-                  <div className="w-10 sm:w-12 aspect-[2/3] flex-shrink-0 bg-slate-50 rounded-md overflow-hidden border border-slate-100">
-                    {card.imageUrl ? (
-                      <img
-                        src={getProxiedImageUrl(card.imageUrl) ?? ""}
-                        alt={card.name}
-                        className="w-full h-full object-contain"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-slate-300 text-[8px]">N/A</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                      {card.productType === 'sealed_product' && (
-                        <span className="bg-slate-900 text-white text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded font-medium">
-                          SEALED
-                        </span>
-                      )}
-                      {card.cardNumber && (
-                        <span className="bg-slate-900 text-white text-[10px] tracking-widest uppercase px-2 py-0.5 rounded font-medium">
-                          {card.cardNumber}
-                        </span>
-                      )}
-                      {card.rarity && (
-                        <span className="bg-slate-100 text-slate-600 text-[10px] tracking-wide px-2 py-0.5 rounded font-medium border border-slate-200">
-                          {card.rarity}
-                        </span>
-                      )}
+          </div>
+        ) : searchResults.length > 0 ? (
+          <>
+            {/* Results count and page info */}
+            <div className="mb-4 text-sm text-muted-foreground flex justify-between items-center">
+              <span>{t("searchResults.pagination.pageInfo", { page: currentPage, total: totalPages, count: totalResults })}</span>
+              <span>{t("searchResults.pagination.showing", { from: (currentPage - 1) * limit + 1, to: Math.min(currentPage * limit, totalResults) })}</span>
+            </div>
+            
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
+            {searchResults.map((card: any) => (
+              <div
+                key={card.id}
+                onClick={() => handleItemClick(card)}
+                className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer transform transition-all hover:scale-[1.03] hover:shadow-lg"
+              >
+                <div className="aspect-[2/3] relative bg-muted">
+                  {card.imageUrl ? (
+                    <img
+                      src={getProxiedImageUrl(card.imageUrl) ?? ""}
+                      alt={`${card.name}${card.cardNumber ? ` ${card.cardNumber}` : ''} ${t("searchResults.card.imageAlt")}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <p className="text-muted-foreground text-xs">{t("searchResults.card.noImage")}</p>
                     </div>
-                    <h3 className="font-semibold text-slate-900 text-sm leading-tight truncate">
-                      {card.name}
-                    </h3>
-                    {card.nameJa && (
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{card.nameJa}</p>
-                    )}
-                    {card.series && (
-                      <p className="text-[11px] text-slate-400 truncate">{card.series}</p>
-                    )}
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-right flex-shrink-0">
+                  )}
+                </div>
+                <div className="p-1.5 sm:p-2 flex flex-col">
+                  {card.productType === 'sealed_product' && (
+                    <span className="inline-block text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded mb-0.5 font-medium">
+                      {t("searchResults.card.sealedProduct")}
+                    </span>
+                  )}
+                  <h3 className="font-semibold text-foreground text-[9px] sm:text-xs mb-0 sm:mb-0.5 line-clamp-2 leading-tight">
+                    {card.name}
+                  </h3>
+                  {card.nameJa && (
+                    <p className="hidden sm:block text-[10px] text-muted-foreground mb-0.5 truncate">
+                      {card.nameJa}
+                    </p>
+                  )}
+                  {card.cardNumber && (
+                    <p className="hidden sm:block text-[10px] text-muted-foreground mb-1">
+                      #{card.cardNumber}
+                    </p>
+                  )}
+                  <div className="mt-auto pt-1">
                     {card.latestPrice ? (
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-[9px] sm:text-xs font-bold text-primary truncate">
                         {formatCurrency(card.latestPrice)}
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-400">--</p>
+                      <p className="text-[9px] sm:text-xs text-muted-foreground">--</p>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8">
+            <div className="flex justify-center items-center gap-2 mt-6">
+              {/* Previous button */}
               <Button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1 || isLoading}
@@ -465,6 +308,7 @@ export default function SearchResults() {
                 {t("common.prevPage")}
               </Button>
               
+              {/* Page numbers */}
               <div className="flex gap-1">
                 {getPageNumbers().map((page, index) => (
                   page === '...' ? (
@@ -486,6 +330,7 @@ export default function SearchResults() {
                 ))}
               </div>
               
+              {/* Next button */}
               <Button
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages || isLoading}
@@ -496,53 +341,53 @@ export default function SearchResults() {
               </Button>
             </div>
           )}
-        </>
-      ) : (
-        /* ── Zero results state ── */
-        <div className="flex flex-col items-center justify-center py-12 gap-6">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground text-base">
-              {query ? t("searchResults.noResults.withQuery", { query }) : t("searchResults.noResults.empty")}
-            </p>
-          </div>
-
-          {/* Fuzzy suggestions */}
-          {query && (
-            <div className="w-full max-w-md">
-              {isSuggesting ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-0.5 items-center">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0ms]" />
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:150ms]" />
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:300ms]" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">{t("searchResults.suggestions.finding")}</span>
-                </div>
-              ) : suggestions.length > 0 ? (
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{t("searchResults.suggestions.didYouMean")}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((s) => (
-                      <button
-                        key={s.query}
-                        onClick={() => handleSuggestionClick(s.query)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors border border-primary/20 hover:border-primary/40"
-                      >
-                        <Search className="w-3 h-3" />
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+          </>
+        ) : (
+          /* ── Zero results state ── */
+          <div className="flex flex-col items-center justify-center py-12 gap-6">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-base">
+                {query ? t("searchResults.noResults.withQuery", { query }) : t("searchResults.noResults.empty")}
+              </p>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Fuzzy suggestions */}
+            {query && (
+              <div className="w-full max-w-md">
+                {isSuggesting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5 items-center">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0ms]" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:150ms]" />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:300ms]" />
+                    </div>
+                    <span className="text-sm text-muted-foreground">{t("searchResults.suggestions.finding")}</span>
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground">{t("searchResults.suggestions.didYouMean")}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.query}
+                          onClick={() => handleSuggestionClick(s.query)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors border border-primary/20 hover:border-primary/40"
+                        >
+                          <Search className="w-3 h-3" />
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }
