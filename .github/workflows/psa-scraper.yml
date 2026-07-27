@@ -1,8 +1,8 @@
 name: PSA Scraper (Parallel)
 on:
   schedule:
-    # Daily at HKT 04:00 (UTC 20:00 prev day) — 1 hour after eBay scraper
-    - cron: '0 20 * * *'
+    # Daily at HKT 16:20 (UTC 08:20)
+    - cron: '20 8 * * *'
   workflow_dispatch:
     inputs:
       total_batches:

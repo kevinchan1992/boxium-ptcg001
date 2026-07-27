@@ -2,8 +2,8 @@ name: PSA Spec ID Matcher (Parallel)
 
 on:
   schedule:
-    # Weekly on Sunday at HKT 04:00 (UTC 20:00 Saturday)
-    - cron: '0 20 * * 6'
+    # Weekly on Sunday at HKT 16:20 (UTC 08:20)
+    - cron: '20 8 * * 0'
   workflow_dispatch:
     inputs:
       total_batches:
