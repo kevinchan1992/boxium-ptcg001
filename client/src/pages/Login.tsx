@@ -22,12 +22,16 @@ const IS_DEV = import.meta.env.DEV;
 // Detect if running inside a Capacitor native app (iOS/Android)
 const isCapacitor = () => !!(window as any).Capacitor?.isNativePlatform?.();
 
+// The canonical production origin — must match Google Cloud Console authorized redirect URIs
+const PRODUCTION_ORIGIN = 'https://boxium.asia';
+
 // Open OAuth URL: use in-app browser (SFSafariViewController) on iOS, normal redirect on web
 async function openOAuthUrl(url: string) {
   if (isCapacitor()) {
     try {
       const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ url, presentationStyle: 'popover' });
+      // Use fullscreen on iPhone, default on iPad — avoids Google blocking popover/sheet style
+      await Browser.open({ url, presentationStyle: 'fullscreen' });
     } catch {
       // Fallback to window.location if plugin fails
       window.location.href = url;
@@ -273,13 +277,16 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    const origin = window.location.origin;
-    openOAuthUrl(`${origin}/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`);
+    // In Capacitor (iOS/Android), window.location.origin may be 'capacitor://localhost'
+    // or 'https://localhost', which won't match Google Cloud Console authorized redirect URIs.
+    // Always use the production origin so redirect_uri matches the registered URI.
+    const origin = isCapacitor() ? PRODUCTION_ORIGIN : window.location.origin;
+    openOAuthUrl(`${PRODUCTION_ORIGIN}/api/auth/google?origin=${encodeURIComponent(origin)}&returnTo=/`);
   };
 
   const handleAppleLogin = () => {
-    const origin = window.location.origin;
-    openOAuthUrl(`${origin}/api/auth/apple?origin=${encodeURIComponent(origin)}&returnTo=/`);
+    const origin = isCapacitor() ? PRODUCTION_ORIGIN : window.location.origin;
+    openOAuthUrl(`${PRODUCTION_ORIGIN}/api/auth/apple?origin=${encodeURIComponent(origin)}&returnTo=/`);
   };
 
   const handleDevLogin = async () => {
