@@ -91,7 +91,7 @@ function CarouselOverlay({ names }: { names: string[] }) {
     <div
       className="absolute left-7 top-1/2 -translate-y-1/2 pointer-events-none select-none flex items-center"
       style={{
-        color: 'rgba(255,255,255,0.22)',
+        color: 'rgba(255,255,255,0.45)',
         fontSize: '14px',
         letterSpacing: '0.02em',
         maxWidth: 'calc(100% - 5rem)',
@@ -238,7 +238,7 @@ export function EditorialSearchBox({
           <Search
             className="absolute left-0 w-4 h-4 flex-shrink-0 transition-colors duration-300 z-10"
             strokeWidth={1.5}
-            style={{ color: isFocused ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.22)' }}
+            style={{ color: isFocused ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.50)' }}
           />
 
           {/* Actual input — value is always the real user text */}
@@ -545,7 +545,7 @@ export function EditorialSearchBox({
       {hint && !isFocused && (
         <p
           className="mt-2 text-[10px] uppercase tracking-[0.15em]"
-          style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'monospace' }}
+          style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace' }}
         >
           {hint}
         </p>
