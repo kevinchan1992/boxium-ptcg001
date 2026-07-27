@@ -9937,3 +9937,10 @@ Apple 審查員使用共享 IP，`authLimiter`（15分鐘 10次）被觸發，�
 - [x] 修復 ClaimFormReviewDialog.tsx 深色 class
 - [x] index.css：新增 body:has(.admin-shell) Dialog/Sheet portal 強制 light mode CSS 覆蓋
 - [x] TypeScript 0 errors，已部署
+
+## Google Search Console Sitemap 無法抓取修復（2026-07-27）
+
+- [x] 診斷根本原因：Manus serverless 冷啟動時 /tmp/sitemaps/ 為空，sitemap.xml 返回 no-store fallback
+- [x] 將靜態 sitemap 文件（sitemap.xml, sitemap-static.xml, sitemap-sets.xml, sitemap-blog.xml）放入 client/public/
+- [ ] 更新 generateStaticSitemapFiles() 在生成後同步更新 client/public/ 中的靜態文件
+- [ ] 部署並驗證 Google Search Console 能成功抓取
