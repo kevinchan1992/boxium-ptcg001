@@ -1,0 +1,219 @@
+name: PSA Scraper (Parallel)
+on:
+  schedule:
+    # Daily at HKT 16:20 (UTC 08:20)
+    - cron: '20 8 * * *'
+  workflow_dispatch:
+    inputs:
+      total_batches:
+        description: 'Number of parallel jobs (default: 20)'
+        required: false
+        default: '20'
+      cards_per_batch:
+        description: 'Max cards per shard (default: 4500 → 20×4500=90000 covers all cards)'
+        required: false
+        default: '4500'
+      headless:
+        description: 'Run browser headless (default: true)'
+        required: false
+        default: 'true'
+      card_ids:
+        description: 'Comma-separated card IDs for single-card mode (e.g. "123,456"). Overrides shard logic.'
+        required: false
+        default: ''
+
+# Prevent concurrent full runs
+concurrency:
+  group: psa-scraper
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # ─── Pre-flight: duplicate-run guard ────────────────────────────────────────
+  preflight:
+    name: Pre-flight Check
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.dup_check.outputs.should_run }}
+      total_batches: ${{ steps.params.outputs.total_batches }}
+      cards_per_batch: ${{ steps.params.outputs.cards_per_batch }}
+      card_ids: ${{ steps.params.outputs.card_ids }}
+      single_card_mode: ${{ steps.params.outputs.single_card_mode }}
+    steps:
+      - name: Check for duplicate scheduled run today (HKT)
+        id: dup_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Manual dispatch — skipping duplicate check."
+            exit 0
+          fi
+          TODAY_HKT=$(TZ=Asia/Hong_Kong date +%Y-%m-%d)
+          echo "Today (HKT): $TODAY_HKT"
+          RUNS=$(gh run list \
+            --workflow=psa-scraper.yml \
+            --status=success \
+            --limit=10 \
+            --json createdAt,event \
+            --jq '.[] | "\(.event) \(.createdAt)"' 2>/dev/null || echo "")
+          ALREADY_RAN=false
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then continue; fi
+            EVENT=$(echo "$line" | awk '{print $1}')
+            CREATED_AT=$(echo "$line" | awk '{print $2}')
+            if [ "$EVENT" = "schedule" ]; then
+              RUN_DATE_HKT=$(TZ=Asia/Hong_Kong date -d "$CREATED_AT" +%Y-%m-%d 2>/dev/null || echo "")
+              if [ "$RUN_DATE_HKT" = "$TODAY_HKT" ]; then
+                ALREADY_RAN=true
+                break
+              fi
+            fi
+          done <<< "$RUNS"
+          if [ "$ALREADY_RAN" = "true" ]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  Duplicate run detected for HKT $TODAY_HKT — skipping."
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "✅ No successful run today HKT ($TODAY_HKT). Proceeding."
+          fi
+
+      - name: Resolve parameters
+        id: params
+        run: |
+          CARD_IDS="${{ github.event.inputs.card_ids }}"
+          if [ -n "$CARD_IDS" ]; then
+            echo "single_card_mode=true" >> "$GITHUB_OUTPUT"
+            echo "total_batches=1" >> "$GITHUB_OUTPUT"
+            echo "cards_per_batch=999" >> "$GITHUB_OUTPUT"
+            echo "card_ids=$CARD_IDS" >> "$GITHUB_OUTPUT"
+            echo "🎯 Single-card mode: card_ids=$CARD_IDS"
+          else
+            TOTAL="${{ github.event.inputs.total_batches || '20' }}"
+            PER_BATCH="${{ github.event.inputs.cards_per_batch || '4500' }}"
+            echo "single_card_mode=false" >> "$GITHUB_OUTPUT"
+            echo "total_batches=$TOTAL" >> "$GITHUB_OUTPUT"
+            echo "cards_per_batch=$PER_BATCH" >> "$GITHUB_OUTPUT"
+            echo "card_ids=" >> "$GITHUB_OUTPUT"
+            echo "Will run $TOTAL parallel jobs × $PER_BATCH cards each"
+            echo "At ~3s/card, each job ≈ $(( PER_BATCH * 3 / 60 )) min"
+          fi
+
+  # ─── Single-card mode: 1 job only ───────────────────────────────────────────
+  psa-scrape-single:
+    name: "Scrape Single Card(s)"
+    needs: preflight
+    if: needs.preflight.outputs.should_run == 'true' && needs.preflight.outputs.single_card_mode == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install script dependencies
+        run: |
+          mkdir -p /tmp/psa-runner
+          cp scripts/githubActionsPsaScraper.mjs /tmp/psa-runner/
+          cp scripts/package.json /tmp/psa-runner/
+          cd /tmp/psa-runner
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed."
+      - name: Install Playwright Chromium browser
+        run: |
+          cd /tmp/psa-runner
+          npx playwright install chromium --with-deps
+          echo "✅ Playwright Chromium installed."
+      - name: Run PSA scraper — single card mode
+        working-directory: /tmp/psa-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
+          BATCH_INDEX: '0'
+          TOTAL_BATCHES: '1'
+          CARDS_PER_BATCH: '999'
+          CARD_IDS: ${{ needs.preflight.outputs.card_ids }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
+          NODE_ENV: 'production'
+        run: |
+          echo "=== PSA Scraper — Single Card Mode ==="
+          echo "Card IDs: $CARD_IDS"
+          node githubActionsPsaScraper.mjs
+
+  # ─── Matrix: 20 parallel scraper jobs ───────────────────────────────────────
+  psa-scrape:
+    name: "Scrape Shard ${{ matrix.batch_index }}"
+    needs: preflight
+    if: needs.preflight.outputs.should_run == 'true' && needs.preflight.outputs.single_card_mode == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 220  # 4500 cards × 3s ≈ 225 min, allow buffer
+    strategy:
+      fail-fast: false   # One job failing must NOT cancel the others
+      matrix:
+        batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Staggered startup: spread to avoid simultaneous PSA hits ──
+      - name: Staggered startup delay (based on shard index)
+        run: |
+          BATCH_IDX=${{ matrix.batch_index }}
+          BASE_DELAY=$(( BATCH_IDX * 30 ))
+          JITTER=$(( RANDOM % 60 ))
+          TOTAL_DELAY=$(( BASE_DELAY + JITTER ))
+          echo "Shard $BATCH_IDX: staggered delay = ${TOTAL_DELAY}s"
+          sleep $TOTAL_DELAY
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install script dependencies
+        run: |
+          mkdir -p /tmp/psa-runner
+          cp scripts/githubActionsPsaScraper.mjs /tmp/psa-runner/
+          cp scripts/package.json /tmp/psa-runner/
+          cd /tmp/psa-runner
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed."
+
+      - name: Install Playwright Chromium browser
+        run: |
+          cd /tmp/psa-runner
+          npx playwright install chromium --with-deps
+          echo "✅ Playwright Chromium installed."
+
+      - name: Run PSA scraper — shard ${{ matrix.batch_index }}
+        working-directory: /tmp/psa-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
+          BATCH_INDEX: ${{ matrix.batch_index }}
+          TOTAL_BATCHES: ${{ needs.preflight.outputs.total_batches }}
+          CARDS_PER_BATCH: ${{ needs.preflight.outputs.cards_per_batch }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
+          NODE_ENV: 'production'
+        run: |
+          echo "=== PSA Scraper v1.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
+          echo "Cards per shard: ${{ needs.preflight.outputs.cards_per_batch }}"
+          node githubActionsPsaScraper.mjs
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psa-failure-shard${{ matrix.batch_index }}-run${{ github.run_id }}
+          path: /tmp/psa-runner/*.log
+          retention-days: 7
