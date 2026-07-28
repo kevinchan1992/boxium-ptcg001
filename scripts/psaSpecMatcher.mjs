@@ -424,46 +424,55 @@ async function loginToPsa(page) {
       }
     }
 
+    // Click submit and wait for navigation in parallel
+    console.log('[PSA Login] Submitting login form...');
+    const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => null);
     if (submitBtn) {
       await submitBtn.click();
     } else {
-      // Try pressing Enter
       await passwordInput.press('Enter');
     }
+    await navigationPromise;
 
-    // Wait for navigation after login — PSA uses Auth0 brandsignin which may take several redirects
-    console.log('[PSA Login] Waiting for login redirects to complete...');
-    try {
-      // Wait for navigation to settle (up to 15 seconds)
-      await page.waitForURL(
-        url => !url.includes('signin') && !url.includes('login') && !url.includes('brandsignin'),
-        { timeout: 15000 }
-      );
-    } catch (e) {
-      // waitForURL timed out — check current URL anyway
-      console.log(`[PSA Login] waitForURL timeout: ${e.message.slice(0, 60)}`);
-    }
+    // PSA uses Auth0 which does multiple redirects: signin → brandsignin → psacard.com
+    // Poll URL until we land on psacard.com or timeout
+    console.log('[PSA Login] Waiting for Auth0 redirects to complete...');
+    const maxWait = 30000; // 30 seconds
+    const pollInterval = 1000;
+    const startTime = Date.now();
+    let finalUrl = page.url();
 
-    // Extra wait for any remaining JS redirects
-    await sleep(3000);
+    while (Date.now() - startTime < maxWait) {
+      finalUrl = page.url();
+      console.log(`[PSA Login] Current URL: ${finalUrl.slice(0, 80)}`);
 
-    const finalUrl = page.url();
-    console.log(`[PSA Login] Post-login URL: ${finalUrl}`);
-
-    // Check if login was successful (no longer on signin/login/brandsignin page)
-    if (finalUrl.includes('signin') || finalUrl.includes('login') || finalUrl.includes('brandsignin')) {
-      console.log('[PSA Login] ⚠️ Still on auth page, login may have failed');
-      try {
-        const errHtml = await page.content();
-        const errMatch = errHtml.match(/error[^<]{0,200}/i);
-        if (errMatch) console.log(`[PSA Login] Error text: ${errMatch[0]}`);
-      } catch (contentErr) {
-        console.log(`[PSA Login] Could not read page content: ${contentErr.message.slice(0, 60)}`);
+      // Success: landed on psacard.com
+      if (finalUrl.includes('psacard.com') && !finalUrl.includes('signin')) {
+        console.log('[PSA Login] ✅ Login successful! Landed on psacard.com');
+        return true;
       }
-      return false;
+
+      // Still on auth pages — wait and poll
+      if (finalUrl.includes('signin') || finalUrl.includes('login') || finalUrl.includes('brandsignin') || finalUrl.includes('collectors.com')) {
+        await sleep(pollInterval);
+        continue;
+      }
+
+      // Unknown URL — might be success
+      break;
     }
 
-    console.log('[PSA Login] ✅ Login successful!');
+    finalUrl = page.url();
+    console.log(`[PSA Login] Final URL after wait: ${finalUrl}`);
+
+    // Final check
+    if (finalUrl.includes('psacard.com') && !finalUrl.includes('signin')) {
+      console.log('[PSA Login] ✅ Login successful!');
+      return true;
+    }
+
+    console.log('[PSA Login] ⚠️ Login may have failed, but will attempt searches anyway');
+    // Return true anyway — let the search attempt reveal if we're actually logged in
     return true;
   } catch (e) {
     console.log(`[PSA Login] ❌ Login error: ${e.message}`);
