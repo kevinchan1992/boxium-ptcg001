@@ -14,7 +14,7 @@
 
   // ─── 設定（請根據需要修改）────────────────────────────────────────────────
   const API_BASE = 'https://boxiumptcg-mua4eq38.manus.space/api/trpc';
-  const SECRET = '__CRON_SECRET__';  // 會被自動替換
+  const SECRET = '8b18fbb278c6b6f8960a8e27dc88169724dd9f0b4f8a4d220eec3211f4dbc5a5';  // 會被自動替換
   const BATCH_SIZE = 20;
   const DELAY_MS = 2500;
   const TEST_MODE = true;   // 測試模式：只處理 5 張
