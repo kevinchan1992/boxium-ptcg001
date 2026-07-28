@@ -14,7 +14,7 @@
 
   // ─── 設定（請根據需要修改）────────────────────────────────────────────────
   const API_BASE = 'https://boxiumptcg-mua4eq38.manus.space/api/trpc';
-  const SECRET = '8b18fbb278c6b6f8960a8e27dc88169724dd9f0b4f8a4d220eec3211f4dbc5a5';  // 會被自動替換
+  const SECRET = '__CRON_SECRET__';  // 會被自動替換
   const BATCH_SIZE = 20;
   const DELAY_MS = 2500;
   const TEST_MODE = true;   // 測試模式：只處理 5 張
@@ -192,8 +192,9 @@
   // ─── API Calls ────────────────────────────────────────────────────────────
   async function getUnmatchedBatch(offset) {
     const input = { secret: SECRET, limit: BATCH_SIZE, offset };
+    // tRPC v11 batch GET format
     const params = encodeURIComponent(JSON.stringify(input));
-    const res = await fetch(`${API_BASE}/admin.psaGetUnmatchedBatch?input=${params}`, {
+    const res = await fetch(`${API_BASE}/admin.psaGetUnmatchedBatch?batch=1&input=${encodeURIComponent(JSON.stringify({"0":input}))}`, {
       headers: { 'Content-Type': 'application/json' }
     });
     if (!res.ok) {
@@ -201,24 +202,24 @@
       throw new Error(`API error ${res.status}: ${text.slice(0, 200)}`);
     }
     const json = await res.json();
-    // tRPC response format
+    // tRPC batch response format: [{result:{data:...}}]
+    if (Array.isArray(json) && json[0]?.result?.data) return json[0].result.data;
     if (json.result?.data) return json.result.data;
-    if (json[0]?.result?.data) return json[0].result.data;
     throw new Error('Unexpected API response: ' + JSON.stringify(json).slice(0, 200));
   }
 
   async function submitResults(results) {
-    const res = await fetch(`${API_BASE}/admin.psaBatchUpdateSpecIds`, {
+    const res = await fetch(`${API_BASE}/admin.psaBatchUpdateSpecIds?batch=1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { secret: SECRET, results } }),
+      body: JSON.stringify({"0":{ json: { secret: SECRET, results } }}),
     });
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Submit error ${res.status}: ${text.slice(0, 200)}`);
     }
     const json = await res.json();
-    return json.result?.data ?? json[0]?.result?.data ?? json;
+    return (Array.isArray(json) ? json[0]?.result?.data : json.result?.data) ?? json;
   }
 
   // ─── Fetch PSA Search (same-origin fetch, no CORS) ────────────────────────
