@@ -161,7 +161,7 @@ async function getCardsToScrape() {
   }
 
   // T1: Hot — cards with SNKRDUNK data (high value), stale > 1 day
-  const [t1] = await pool.execute(
+  const [t1] = await pool.query(
     `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName, c.psaScrapedAt
      FROM cards c
      INNER JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'snkrdunk'
@@ -169,14 +169,14 @@ async function getCardsToScrape() {
        AND c.psaSpecId IS NOT NULL
        AND (c.psaScrapedAt IS NULL OR c.psaScrapedAt < ?)
      ORDER BY c.psaScrapedAt ASC, c.id ASC
-     LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, hotCutoff.toISOString().slice(0, 19).replace('T', ' '), hotQuota]
+     LIMIT ${hotQuota}`,
+    [TOTAL_BATCHES, BATCH_INDEX, hotCutoff]
   );
 
   // T2: Warm — cards with existing PSA history, stale > 3 days
   const t1Ids = t1.map(r => r.id);
   const t1Exclude = t1Ids.length > 0 ? `AND c.id NOT IN (${t1Ids.map(() => '?').join(',')})` : '';
-  const [t2] = await pool.execute(
+  const [t2] = await pool.query(
     `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName, c.psaScrapedAt
      FROM cards c
      INNER JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
@@ -185,15 +185,15 @@ async function getCardsToScrape() {
        AND (c.psaScrapedAt IS NULL OR c.psaScrapedAt < ?)
        ${t1Exclude}
      ORDER BY c.psaScrapedAt ASC, c.id ASC
-     LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, warmCutoff.toISOString().slice(0, 19).replace('T', ' '), ...t1Ids, warmQuota]
+     LIMIT ${warmQuota}`,
+    [TOTAL_BATCHES, BATCH_INDEX, warmCutoff, ...t1Ids]
   );
 
   // T3: Cold — any card with psaSpecId, stale > 7 days
   const t2Ids = t2.map(r => r.id);
   const allExclude = [...t1Ids, ...t2Ids];
   const allExcludeClause = allExclude.length > 0 ? `AND c.id NOT IN (${allExclude.map(() => '?').join(',')})` : '';
-  const [t3] = await pool.execute(
+  const [t3] = await pool.query(
     `SELECT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName
      FROM cards c
      WHERE MOD(c.id, ?) = ?
@@ -201,8 +201,8 @@ async function getCardsToScrape() {
        AND (c.psaScrapedAt IS NULL OR c.psaScrapedAt < ?)
        ${allExcludeClause}
      ORDER BY c.psaScrapedAt ASC, c.id ASC
-     LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, coldCutoff.toISOString().slice(0, 19).replace('T', ' '), ...allExclude, coldQuota]
+     LIMIT ${coldQuota}`,
+    [TOTAL_BATCHES, BATCH_INDEX, coldCutoff, ...allExclude]
   );
 
   return [
