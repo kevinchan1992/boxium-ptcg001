@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       total_batches:
-        description: 'Number of parallel jobs (default: 20)'
+        description: 'Number of parallel jobs (default: 5, max: 20)'
         required: false
-        default: '20'
+        default: '5'
       cards_per_batch:
         description: 'Max cards per job (default: 4000)'
         required: false
@@ -19,9 +19,9 @@ on:
         required: false
         default: '30'
       delay_ms:
-        description: 'Delay between PSA requests in ms (default: 2500)'
+        description: 'Delay between PSA requests in ms (default: 5000)'
         required: false
-        default: '2500'
+        default: '5000'
       card_ids:
         description: 'Comma-separated card IDs for single-card mode (e.g. "123,456"). Overrides shard logic.'
         required: false
@@ -52,10 +52,10 @@ jobs:
       - name: Validate and set parameters
         id: check
         run: |
-          TOTAL_BATCHES="${{ github.event.inputs.total_batches || '20' }}"
+          TOTAL_BATCHES="${{ github.event.inputs.total_batches || '5' }}"
           CARDS_PER_BATCH="${{ github.event.inputs.cards_per_batch || '4000' }}"
           REMATCH_DAYS="${{ github.event.inputs.rematch_days || '30' }}"
-          DELAY_MS="${{ github.event.inputs.delay_ms || '2500' }}"
+          DELAY_MS="${{ github.event.inputs.delay_ms || '5000' }}"
           CARD_IDS="${{ github.event.inputs.card_ids || '' }}"
 
           echo "total_batches=$TOTAL_BATCHES" >> $GITHUB_OUTPUT
@@ -133,19 +133,22 @@ jobs:
     strategy:
       fail-fast: false  # One shard failing must NOT cancel the others
       matrix:
+        # Default 5 shards; user can override total_batches up to 20 via workflow_dispatch
         batch_index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        # Note: only shards 0..(total_batches-1) will have cards; others will exit early with "Nothing to process"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Staggered startup: spread requests over 10 minutes to avoid simultaneous PSA hits
+      # Staggered startup: spread requests over 20 minutes to avoid simultaneous PSA hits
+      # Each shard starts 60s apart + random jitter up to 30s
       - name: Staggered startup delay
         run: |
           BATCH_IDX=${{ matrix.batch_index }}
-          BASE_DELAY=$(( BATCH_IDX * 30 ))
+          BASE_DELAY=$(( BATCH_IDX * 60 ))
           JITTER=$(( RANDOM % 30 ))
           TOTAL_DELAY=$(( BASE_DELAY + JITTER ))
-          echo "Shard $BATCH_IDX: startup delay = ${TOTAL_DELAY}s"
+          echo "Shard $BATCH_IDX: startup delay = ${TOTAL_DELAY}s (base=${BASE_DELAY}s + jitter=${JITTER}s)"
           sleep $TOTAL_DELAY
 
       - name: Set up Node.js 22
