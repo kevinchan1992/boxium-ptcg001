@@ -1854,4 +1854,99 @@ await db.setSystemSetting("smtp_host", input.smtpHost, "SMTP server host");
           repoUrl: `https://github.com/${githubRepo}/actions`,
         };
       }),
+
+  // ─── PSA Spec ID Batch Update ──────────────────────────────────────────────
+  // Called by Chrome Console script running on psacard.com to submit matched specIds
+  psaBatchUpdateSpecIds: publicProcedure
+    .input(z.object({
+      secret: z.string(),
+      results: z.array(z.object({
+        cardId: z.number().int().positive(),
+        specId: z.string().nullable(), // null = no match found
+      })).max(200),
+    }))
+    .mutation(async ({ input }) => {
+      // Simple secret check (not user-auth, just prevent abuse)
+      const expectedSecret = process.env.CRON_SECRET || 'psa-matcher-secret';
+      if (input.secret !== expectedSecret) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid secret' });
+      }
+
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB unavailable' });
+
+      const { cards } = await import('../../drizzle/schema_new');
+      const { eq } = await import('drizzle-orm');
+
+      let updated = 0;
+      let noMatch = 0;
+
+      for (const r of input.results) {
+        await dbInstance.update(cards)
+          .set({
+            psaSpecId: r.specId,
+            psaMatchedAt: new Date(),
+          })
+          .where(eq(cards.id, r.cardId));
+        if (r.specId) updated++;
+        else noMatch++;
+      }
+
+      return { success: true, updated, noMatch, total: input.results.length };
+    }),
+
+  // Get next batch of unmatched cards for PSA Console script
+  psaGetUnmatchedBatch: publicProcedure
+    .input(z.object({
+      secret: z.string(),
+      limit: z.number().int().min(1).max(100).default(20),
+      offset: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      const expectedSecret = process.env.CRON_SECRET || 'psa-matcher-secret';
+      if (input.secret !== expectedSecret) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid secret' });
+      }
+
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB unavailable' });
+
+      const { cards } = await import('../../drizzle/schema_new');
+      const { isNull, or, lt, and, sql } = await import('drizzle-orm');
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const batch = await dbInstance.select({
+        id: cards.id,
+        name: cards.name,
+        nameJa: cards.nameJa,
+        cardNumber: cards.cardNumber,
+        series: cards.series,
+        language: cards.language,
+        rarity: cards.rarity,
+      })
+      .from(cards)
+      .where(
+        or(
+          isNull(cards.psaMatchedAt),
+          lt(cards.psaMatchedAt, thirtyDaysAgo)
+        )
+      )
+      .limit(input.limit)
+      .offset(input.offset);
+
+      // Also get total count
+      const countResult = await dbInstance.select({ count: sql<number>`COUNT(*)` })
+        .from(cards)
+        .where(
+          or(
+            isNull(cards.psaMatchedAt),
+            lt(cards.psaMatchedAt, thirtyDaysAgo)
+          )
+        );
+
+      const total = Number(countResult[0]?.count ?? 0);
+
+      return { cards: batch, total, offset: input.offset, limit: input.limit };
+    }),
 });
