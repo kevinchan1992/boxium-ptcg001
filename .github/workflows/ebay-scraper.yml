@@ -1,0 +1,105 @@
+name: eBay Scraper (Parallel)
+
+on:
+  schedule:
+    # Daily at HKT 03:00 (UTC 19:00 previous day)
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+    inputs:
+      total_batches:
+        description: 'Total number of parallel jobs (default: 12)'
+        required: false
+        default: '12'
+      cards_per_batch:
+        description: 'Max cards per job (default: 4700)'
+        required: false
+        default: '4700'
+      card_ids:
+        description: 'Comma-separated card IDs for single-card mode (optional)'
+        required: false
+        default: ''
+
+# Only one run at a time — cancel in-progress if a new one is triggered
+concurrency:
+  group: ebay-scraper-parallel
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # ── Determine matrix ────────────────────────────────────────────────────────
+  setup:
+    name: Setup matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      total_batches: ${{ steps.set-matrix.outputs.total_batches }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          TOTAL=${{ github.event.inputs.total_batches || '12' }}
+          echo "total_batches=$TOTAL" >> "$GITHUB_OUTPUT"
+          # Build JSON array [0, 1, 2, ..., TOTAL-1]
+          MATRIX=$(python3 -c "import json; print(json.dumps(list(range(int('$TOTAL')))))")
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "Matrix: $MATRIX"
+
+  # ── Parallel scraper jobs ────────────────────────────────────────────────────
+  scrape:
+    name: "Shard ${{ matrix.batch_index }}"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        batch_index: ${{ fromJson(needs.setup.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          mkdir -p /tmp/ebay-runner
+          cp scripts/githubActionsEbayBatchUpdate.mjs /tmp/ebay-runner/
+          cp scripts/package.json /tmp/ebay-runner/
+          cd /tmp/ebay-runner
+          npm install --ignore-scripts
+
+      - name: Install Playwright Chromium
+        run: |
+          cd /tmp/ebay-runner
+          npx playwright install chromium --with-deps
+
+      - name: Run eBay batch scraper (Shard ${{ matrix.batch_index }})
+        working-directory: /tmp/ebay-runner
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BATCH_INDEX: ${{ matrix.batch_index }}
+          TOTAL_BATCHES: ${{ needs.setup.outputs.total_batches }}
+          CARDS_PER_BATCH: ${{ github.event.inputs.cards_per_batch || '4700' }}
+          CARD_IDS: ${{ github.event.inputs.card_ids || '' }}
+          HEADLESS: 'true'
+          NODE_ENV: 'production'
+        run: |
+          echo "Starting eBay scraper shard ${{ matrix.batch_index }} / ${{ needs.setup.outputs.total_batches }}"
+          node githubActionsEbayBatchUpdate.mjs
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ebay-failure-shard-${{ matrix.batch_index }}-${{ github.run_id }}
+          path: '/tmp/ebay-runner/*.log'
+          retention-days: 7
