@@ -20,7 +20,6 @@
  */
 
 import { createConnection } from 'mysql2/promise';
-import { load as cheerioLoad } from 'cheerio';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const DB_URL = process.env.DATABASE_URL;
@@ -208,20 +207,21 @@ async function fetchPsaSearchPage(query, retries = 3) {
 }
 
 function parseSearchResults(html) {
-  const $ = cheerioLoad(html);
   const results = [];
   // PSA search results: links with href containing /spec/psa/
-  $('a[href*="/spec/psa/"]').each((_, el) => {
-    const href = $(el).attr('href') || '';
+  // Use regex to extract href and text from <a> tags
+  const linkRegex = /<a[^>]+href=["']([^"']*\/spec\/psa\/[^"']*)["'][^>]*>(.*?)<\/a>/gis;
+  let m;
+  while ((m = linkRegex.exec(html)) !== null) {
+    const href = m[1];
+    const rawText = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const specMatch = href.match(/\/spec\/psa\/(\d+)/);
-    if (!specMatch) return;
+    if (!specMatch) continue;
     const specId = specMatch[1];
-    // Get the text content of the link or its parent
-    const title = $(el).text().trim() || $(el).closest('[class]').text().trim();
-    if (specId && title) {
-      results.push({ specId, title });
+    if (specId && rawText) {
+      results.push({ specId, title: rawText });
     }
-  });
+  }
   // Deduplicate by specId
   const seen = new Set();
   return results.filter(r => {
