@@ -482,18 +482,34 @@ async function runWorker(workerIdx, totalWorkers, account, sharedStats) {
     return;
   }
 
-  // Launch browser
-  const browser = await chromium.launch({
-    headless: HEADLESS,
-    args: [
-      '--no-sandbox',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-infobars',
-      '--disable-dev-shm-usage',
-      '--window-size=1280,900',
-      '--start-maximized',
-    ],
-  });
+  // Launch browser — use system Chrome if available (better CF bypass)
+  let browser;
+  try {
+    browser = await chromium.launch({
+      channel: 'chrome', // Use system Chrome instead of Playwright's Chromium
+      headless: HEADLESS,
+      args: [
+        '--no-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',
+        '--window-size=1280,900',
+      ],
+    });
+    console.log(`[W${workerIdx}] Using system Chrome`);
+  } catch {
+    // Fallback to Playwright's Chromium
+    browser = await chromium.launch({
+      headless: HEADLESS,
+      args: [
+        '--no-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',
+        '--disable-dev-shm-usage',
+        '--window-size=1280,900',
+      ],
+    });
+    console.log(`[W${workerIdx}] Using Playwright Chromium (system Chrome not found)`);
+  }
 
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
