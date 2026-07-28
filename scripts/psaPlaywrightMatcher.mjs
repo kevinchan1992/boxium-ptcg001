@@ -9,9 +9,14 @@
  *   node psaPlaywrightMatcher.mjs --test      # 測試模式（每帳號 5 張）
  *   node psaPlaywrightMatcher.mjs             # 正式執行
  *
- * accounts.json 格式：
+ * accounts.json 格式（支援兩種模式）：
+ *   Cookie 模式（推薦）：
  *   [
- *     { "email": "user1@example.com", "password": "yourpassword" }
+ *     { "email": "user@example.com", "cookies": [...] }  // cookies 為瀏覽器 JSON 格式
+ *   ]
+ *   密碼模式：
+ *   [
+ *     { "email": "user@example.com", "password": "yourpassword" }
  *   ]
  *
  * 環境變數：
@@ -498,9 +503,41 @@ async function runWorker(workerIdx, totalWorkers, account, sharedStats) {
 
   const page = await context.newPage();
 
-  // Login
-  console.log(`[W${workerIdx}] Logging in...`);
-  const loggedIn = await loginToPsa(page, account.email, account.password, workerIdx);
+  // Login — cookie injection mode or password mode
+  let loggedIn = false;
+  if (account.cookies && Array.isArray(account.cookies) && account.cookies.length > 0) {
+    console.log(`[W${workerIdx}] Injecting ${account.cookies.length} cookies...`);
+    // Normalize cookies: ensure domain is set correctly
+    const normalizedCookies = account.cookies.map(c => ({
+      name: c.name,
+      value: c.value,
+      domain: c.domain || '.psacard.com',
+      path: c.path || '/',
+      httpOnly: c.httpOnly || false,
+      secure: c.secure || false,
+      sameSite: c.sameSite || 'Lax',
+    }));
+    await context.addCookies(normalizedCookies);
+    // Navigate to PSA to verify session
+    await page.goto('https://www.psacard.com/auctionprices/search?q=Pikachu', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
+    await sleep(2000);
+    const verifyUrl = page.url();
+    const verifyHtml = await page.content();
+    if (verifyUrl.includes('psacard.com') && !isLoginPage(verifyHtml, verifyUrl)) {
+      console.log(`[W${workerIdx}] ✅ Cookie injection successful, PSA accessible`);
+      loggedIn = true;
+    } else {
+      console.log(`[W${workerIdx}] ⚠️ Cookie injection failed (session expired?), trying password login...`);
+      loggedIn = await loginToPsa(page, account.email, account.password || '', workerIdx);
+    }
+  } else {
+    console.log(`[W${workerIdx}] Logging in with password...`);
+    loggedIn = await loginToPsa(page, account.email, account.password || '', workerIdx);
+  }
+
   if (!loggedIn) {
     console.error(`[W${workerIdx}] ❌ Login failed, skipping worker`);
     await browser.close();
