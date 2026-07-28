@@ -145,9 +145,9 @@ async function getCardsToScrape() {
   const warmCutoff = new Date(Date.now() - CONFIG.WARM_DAYS * 86400000);
   const coldCutoff = new Date(Date.now() - CONFIG.COLD_DAYS * 86400000);
 
-  const hotQuota  = Math.ceil(CARDS_PER_BATCH * 0.40);
-  const warmQuota = Math.ceil(CARDS_PER_BATCH * 0.35);
-  const coldQuota = Math.ceil(CARDS_PER_BATCH * 0.25);
+  const hotQuota  = Math.max(1, Math.ceil(CARDS_PER_BATCH * 0.40));
+  const warmQuota = Math.max(1, Math.ceil(CARDS_PER_BATCH * 0.35));
+  const coldQuota = Math.max(1, Math.ceil(CARDS_PER_BATCH * 0.25));
 
   if (SINGLE_CARD_MODE) {
     const [rows] = await pool.execute(
@@ -170,7 +170,7 @@ async function getCardsToScrape() {
        AND (c.psaScrapedAt IS NULL OR c.psaScrapedAt < ?)
      ORDER BY c.psaScrapedAt ASC, c.id ASC
      LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, hotCutoff, hotQuota]
+    [TOTAL_BATCHES, BATCH_INDEX, hotCutoff.toISOString().slice(0, 19).replace('T', ' '), hotQuota]
   );
 
   // T2: Warm — cards with existing PSA history, stale > 3 days
@@ -186,7 +186,7 @@ async function getCardsToScrape() {
        ${t1Exclude}
      ORDER BY c.psaScrapedAt ASC, c.id ASC
      LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, warmCutoff, ...t1Ids, warmQuota]
+    [TOTAL_BATCHES, BATCH_INDEX, warmCutoff.toISOString().slice(0, 19).replace('T', ' '), ...t1Ids, warmQuota]
   );
 
   // T3: Cold — any card with psaSpecId, stale > 7 days
@@ -202,7 +202,7 @@ async function getCardsToScrape() {
        ${allExcludeClause}
      ORDER BY c.psaScrapedAt ASC, c.id ASC
      LIMIT ?`,
-    [TOTAL_BATCHES, BATCH_INDEX, coldCutoff, ...allExclude, coldQuota]
+    [TOTAL_BATCHES, BATCH_INDEX, coldCutoff.toISOString().slice(0, 19).replace('T', ' '), ...allExclude, coldQuota]
   );
 
   return [
