@@ -346,15 +346,29 @@ async function loginToPsa(page, email, password, workerIdx) {
     await passwordInput.fill(password);
     await sleep(500);
 
-    // Submit
+    // Submit - find the actual sign in button (not filter buttons)
     console.log(`  [W${workerIdx}] Submitting login...`);
-    const submitBtn = page.locator('button[type="submit"]').first();
-    await submitBtn.click();
+    // Use more specific selector to find the login submit button
+    const submitBtn = page.locator('button[type="submit"][data-testid="signInButton"], button[type="submit"]:has-text("Sign In"), button[type="submit"]:has-text("Log In"), button[type="submit"]:has-text("Continue"), form button[type="submit"]').first();
+    await submitBtn.click({ timeout: 10000 });
 
-    // Wait for redirect to PSA
-    console.log(`  [W${workerIdx}] Waiting for redirect to PSA...`);
-    await page.waitForURL('**/psacard.com/**', { timeout: 30000 });
+    // Wait for any navigation (could go to collection or PSA)
+    console.log(`  [W${workerIdx}] Waiting for post-login navigation...`);
+    await page.waitForNavigation({ timeout: 30000 }).catch(() => {});
     await sleep(2000);
+
+    // Navigate to PSA search page regardless of where we ended up
+    const postLoginUrl = page.url();
+    console.log(`  [W${workerIdx}] Post-login URL: ${postLoginUrl}`);
+    
+    if (!postLoginUrl.includes('psacard.com')) {
+      console.log(`  [W${workerIdx}] Navigating to PSA search page...`);
+      await page.goto('https://www.psacard.com/auctionprices/search?q=Pikachu', {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+      await sleep(2000);
+    }
 
     const finalUrl = page.url();
     console.log(`  [W${workerIdx}] Login successful! URL: ${finalUrl}`);
