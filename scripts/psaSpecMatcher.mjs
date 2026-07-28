@@ -1,7 +1,8 @@
 /**
- * PSA Spec ID Batch Matcher v2.0 (Playwright Edition)
+ * PSA Spec ID Batch Matcher v3.0 (Playwright + Full Login)
  *
- * Strategy: Precise 3-Layer Matching using Playwright (bypasses Cloudflare)
+ * Strategy: Precise 3-Layer Matching using Playwright (bypasses Cloudflare + Login)
+ *   - Login: Playwright navigates to PSA login page, enters email/password
  *   - Layer 1: Card number exact match (e.g., "#141", "#293")
  *   - Layer 2: Language match (japanese / EN)
  *   - Layer 3: Series/set keyword match
@@ -12,13 +13,14 @@
  *   DATABASE_URL    MySQL connection string
  *   BATCH_INDEX     This job's shard index (0-based)
  *   TOTAL_BATCHES   Total number of parallel jobs
+ *   PSA_EMAIL       PSA account email
+ *   PSA_PASSWORD    PSA account password
  *
  * Optional env:
  *   CARDS_PER_BATCH Max cards per shard (default: 5000)
  *   REMATCH_DAYS    Re-attempt cards matched > N days ago (default: 30)
  *   DELAY_MS        Delay between PSA requests in ms (default: 2500)
  *   HEADLESS        Set to 'false' for debugging (default: true)
- *   PSA_REFRESH_TOKEN  PSA refreshToken cookie (helps bypass login redirects)
  */
 
 import { chromium } from 'playwright';
@@ -33,7 +35,8 @@ const REMATCH_DAYS = parseInt(process.env.REMATCH_DAYS ?? '30', 10);
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '2500', 10);
 const CARD_IDS = process.env.CARD_IDS ? process.env.CARD_IDS.split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean) : [];
 const HEADLESS = process.env.HEADLESS !== 'false';
-const PSA_REFRESH_TOKEN = process.env.PSA_REFRESH_TOKEN || '';
+const PSA_EMAIL = process.env.PSA_EMAIL || '';
+const PSA_PASSWORD = process.env.PSA_PASSWORD || '';
 
 // ─── Browser Profiles ─────────────────────────────────────────────────────────
 const BROWSER_PROFILES = [
@@ -283,6 +286,175 @@ function matchCard(card, results) {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const randomDelay = () => DELAY_MS + Math.floor(Math.random() * 1500);
 
+// ─── Playwright: Login to PSA ─────────────────────────────────────────────────
+async function loginToPsa(page) {
+  if (!PSA_EMAIL || !PSA_PASSWORD) {
+    console.log('[PSA Login] No credentials provided, skipping login');
+    return false;
+  }
+
+  console.log('[PSA Login] Navigating to PSA login page...');
+  try {
+    // Navigate to a page that will redirect to login
+    await page.goto('https://www.psacard.com/myaccount/signin', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
+
+    await sleep(2000);
+
+    const url = page.url();
+    console.log(`[PSA Login] Current URL: ${url}`);
+
+    // Check if we're on an Auth0 login page or PSA login page
+    const pageTitle = await page.title();
+    console.log(`[PSA Login] Page title: ${pageTitle}`);
+
+    // Look for email input field
+    const emailSelectors = [
+      'input[type="email"]',
+      'input[name="email"]',
+      'input[id="email"]',
+      'input[placeholder*="email" i]',
+      'input[placeholder*="Email" i]',
+    ];
+
+    let emailInput = null;
+    for (const sel of emailSelectors) {
+      try {
+        emailInput = await page.waitForSelector(sel, { timeout: 5000 });
+        if (emailInput) {
+          console.log(`[PSA Login] Found email input: ${sel}`);
+          break;
+        }
+      } catch (e) {
+        // try next selector
+      }
+    }
+
+    if (!emailInput) {
+      console.log('[PSA Login] ⚠️ Could not find email input, trying alternative login flow...');
+      // Try clicking continue/next button if there's a two-step login
+      const html = await page.content();
+      console.log(`[PSA Login] Page HTML snippet: ${html.slice(0, 500)}`);
+      return false;
+    }
+
+    // Type email
+    await emailInput.click();
+    await emailInput.fill(PSA_EMAIL);
+    await sleep(500);
+
+    // Look for "Continue" button (Auth0 two-step login)
+    const continueSelectors = [
+      'button[type="submit"]',
+      'button:has-text("Continue")',
+      'button:has-text("Next")',
+      'input[type="submit"]',
+    ];
+
+    let continueBtn = null;
+    for (const sel of continueSelectors) {
+      try {
+        continueBtn = await page.$(sel);
+        if (continueBtn) {
+          console.log(`[PSA Login] Found continue button: ${sel}`);
+          break;
+        }
+      } catch (e) {
+        // try next
+      }
+    }
+
+    if (continueBtn) {
+      await continueBtn.click();
+      await sleep(2000);
+    }
+
+    // Now look for password input
+    const passwordSelectors = [
+      'input[type="password"]',
+      'input[name="password"]',
+      'input[id="password"]',
+    ];
+
+    let passwordInput = null;
+    for (const sel of passwordSelectors) {
+      try {
+        passwordInput = await page.waitForSelector(sel, { timeout: 5000 });
+        if (passwordInput) {
+          console.log(`[PSA Login] Found password input: ${sel}`);
+          break;
+        }
+      } catch (e) {
+        // try next selector
+      }
+    }
+
+    if (!passwordInput) {
+      console.log('[PSA Login] ⚠️ Could not find password input');
+      return false;
+    }
+
+    // Type password
+    await passwordInput.click();
+    await passwordInput.fill(PSA_PASSWORD);
+    await sleep(500);
+
+    // Submit login form
+    const submitSelectors = [
+      'button[type="submit"]',
+      'button:has-text("Sign In")',
+      'button:has-text("Log In")',
+      'button:has-text("Login")',
+      'button:has-text("Continue")',
+      'input[type="submit"]',
+    ];
+
+    let submitBtn = null;
+    for (const sel of submitSelectors) {
+      try {
+        submitBtn = await page.$(sel);
+        if (submitBtn) {
+          console.log(`[PSA Login] Found submit button: ${sel}`);
+          break;
+        }
+      } catch (e) {
+        // try next
+      }
+    }
+
+    if (submitBtn) {
+      await submitBtn.click();
+    } else {
+      // Try pressing Enter
+      await passwordInput.press('Enter');
+    }
+
+    // Wait for navigation after login
+    console.log('[PSA Login] Waiting for login to complete...');
+    await sleep(5000);
+
+    const finalUrl = page.url();
+    console.log(`[PSA Login] Post-login URL: ${finalUrl}`);
+
+    // Check if login was successful (no longer on signin page)
+    if (finalUrl.includes('signin') || finalUrl.includes('login')) {
+      console.log('[PSA Login] ⚠️ Still on login page, login may have failed');
+      const errHtml = await page.content();
+      const errMatch = errHtml.match(/error[^<]{0,200}/i);
+      if (errMatch) console.log(`[PSA Login] Error text: ${errMatch[0]}`);
+      return false;
+    }
+
+    console.log('[PSA Login] ✅ Login successful!');
+    return true;
+  } catch (e) {
+    console.log(`[PSA Login] ❌ Login error: ${e.message}`);
+    return false;
+  }
+}
+
 // ─── Playwright: Fetch PSA Search Page ───────────────────────────────────────
 async function fetchPsaSearchPage(page, query, retries = 3) {
   const url = `https://www.psacard.com/auctionprices/search?q=${encodeURIComponent(query)}`;
@@ -312,8 +484,12 @@ async function fetchPsaSearchPage(page, query, retries = 3) {
       // Check for login redirect
       const finalUrl = page.url();
       if (finalUrl.includes('signin') || finalUrl.includes('login')) {
-        console.log(`  [Login Redirect] attempt ${attempt}/${retries}`);
-        if (attempt < retries) { await sleep(5000); continue; }
+        console.log(`  [Login Redirect] attempt ${attempt}/${retries} — re-logging in...`);
+        const loginOk = await loginToPsa(page);
+        if (loginOk) {
+          // Retry the search after re-login
+          if (attempt < retries) { await sleep(2000); continue; }
+        }
         return null;
       }
 
@@ -393,17 +569,21 @@ async function markCardAsAttempted(conn, cardId) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`PSA Spec Matcher v2.0 (Playwright)`);
+  console.log(`PSA Spec Matcher v3.0 (Playwright + Full Login)`);
   console.log(`Shard: ${BATCH_INDEX}/${TOTAL_BATCHES}`);
   console.log(`Cards per batch: ${CARDS_PER_BATCH}`);
   console.log(`Rematch after: ${REMATCH_DAYS} days`);
   console.log(`Delay: ${DELAY_MS}ms`);
   console.log(`Headless: ${HEADLESS}`);
   console.log(`Profile: ${PROFILE.userAgent.slice(0, 60)}...`);
+  console.log(`PSA Email: ${PSA_EMAIL ? PSA_EMAIL.slice(0, 5) + '***' : '(not set)'}`);
   if (CARD_IDS.length > 0) console.log(`Single card mode: ${CARD_IDS.join(', ')}`);
   console.log(`${'='.repeat(60)}\n`);
 
   if (!DB_URL) throw new Error('DATABASE_URL is required');
+  if (!PSA_EMAIL || !PSA_PASSWORD) {
+    throw new Error('PSA_EMAIL and PSA_PASSWORD are required for login');
+  }
 
   const conn = await getConnection();
   console.log('✅ Database connected');
@@ -448,22 +628,6 @@ async function main() {
     },
   });
 
-  // Inject PSA refreshToken cookie if available
-  if (PSA_REFRESH_TOKEN) {
-    await context.addCookies([
-      {
-        name: 'refreshToken',
-        value: PSA_REFRESH_TOKEN,
-        domain: '.psacard.com',
-        path: '/',
-        httpOnly: false,
-        secure: true,
-        sameSite: 'Lax',
-      },
-    ]);
-    console.log('[PSA] ✅ PSA refreshToken cookie injected');
-  }
-
   // Block heavy resources to speed up page loads
   await context.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot,ico}', r => r.abort());
   await context.route('**/analytics**', r => r.abort());
@@ -474,6 +638,13 @@ async function main() {
   await context.addInitScript(STEALTH_SCRIPT);
 
   const page = await context.newPage();
+
+  // ─── Login to PSA ─────────────────────────────────────────────────────────
+  console.log('[PSA] Performing login...');
+  const loginSuccess = await loginToPsa(page);
+  if (!loginSuccess) {
+    console.log('[PSA] ⚠️ Login failed. Will attempt searches anyway (may fail).');
+  }
 
   let matched = 0;
   let noMatch = 0;
