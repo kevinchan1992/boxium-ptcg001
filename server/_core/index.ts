@@ -109,6 +109,9 @@ async function startServer() {
     "https://www.boxium.asia",
     // Apple Sign In with Apple uses form_post — browser sends Origin: appleid.apple.com
     "https://appleid.apple.com",
+    // PSA Console Matcher runs from psacard.com browser context
+    "https://www.psacard.com",
+    "https://psacard.com",
     /\.manus\.computer$/,
     /\.manus\.space$/,
     /localhost/,
