@@ -441,8 +441,23 @@ async function fetchPsaSearchPage(page, query, retries = 3) {
 
       const status = response ? response.status() : 0;
       if (status === 429) {
-        const wait = attempt * 30000;
+        // Exponential backoff: 60s, 120s, 180s
+        const wait = attempt * 60000;
         console.log(`  [Rate Limited] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
+        await sleep(wait);
+        // Re-login after rate limit — session may have been invalidated
+        if (attempt < retries) {
+          console.log(`  [Rate Limited] Re-logging in after rate limit...`);
+          await loginToPsa(page);
+        }
+        continue;
+      }
+
+      // Also check for rate limit via page content (some PSA rate limits return 200 with error page)
+      const currentUrl = page.url();
+      if (currentUrl.includes('429') || currentUrl.includes('rate-limit')) {
+        const wait = attempt * 60000;
+        console.log(`  [Rate Limited via URL] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
         await sleep(wait);
         continue;
       }
@@ -543,7 +558,7 @@ async function markCardAsAttempted(conn, cardId) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`PSA Spec Matcher v4.0 (Playwright-Extra Stealth + RSC Extraction)`);
+  console.log(`PSA Spec Matcher v4.1 (Stealth + RSC + Browser Crash Recovery)`);
   console.log(`Shard: ${BATCH_INDEX}/${TOTAL_BATCHES}`);
   console.log(`Cards per batch: ${CARDS_PER_BATCH}`);
   console.log(`Rematch after: ${REMATCH_DAYS} days`);
@@ -571,42 +586,49 @@ async function main() {
     return;
   }
 
-  // ─── Launch Playwright Browser ────────────────────────────────────────────
-  console.log(`[PSA] Launching Playwright (headless=${HEADLESS})...`);
-  // playwright-extra + StealthPlugin handles CF Bot Management automatically
-  const browser = await chromium.launch({
-    headless: HEADLESS,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--disable-gpu',
-    ],
-  });
+  // ─── Browser factory: creates a fresh browser + logged-in page ───────────
+  async function launchBrowser() {
+    console.log(`[PSA] Launching Playwright (headless=${HEADLESS})...`);
+    const br = await chromium.launch({
+      headless: HEADLESS,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--single-process',           // Reduce memory: run renderer in main process
+        '--memory-pressure-off',
+        '--js-flags=--max-old-space-size=256',  // Limit V8 heap to 256MB
+      ],
+    });
+    const ctx = await br.newContext({
+      userAgent: PROFILE.userAgent,
+      viewport: PROFILE.viewport,
+      locale: PROFILE.language.split(',')[0],
+      timezoneId: PROFILE.timezone,
+      extraHTTPHeaders: {
+        'Accept-Language': PROFILE.language,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+      },
+    });
+    // Block heavy resources to reduce memory usage
+    await ctx.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot,ico}', r => r.abort());
+    await ctx.route('**/*.{mp4,webm,ogg,mp3,wav}', r => r.abort());
+    await ctx.route('**/analytics**', r => r.abort());
+    await ctx.route('**/gtag**', r => r.abort());
+    await ctx.route('**/googletagmanager**', r => r.abort());
+    await ctx.route('**/facebook**', r => r.abort());
+    await ctx.route('**/twitter**', r => r.abort());
+    const pg = await ctx.newPage();
+    return { browser: br, context: ctx, page: pg };
+  }
 
-  const context = await browser.newContext({
-    userAgent: PROFILE.userAgent,
-    viewport: PROFILE.viewport,
-    locale: PROFILE.language.split(',')[0],
-    timezoneId: PROFILE.timezone,
-    extraHTTPHeaders: {
-      'Accept-Language': PROFILE.language,
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Cache-Control': 'no-cache',
-    },
-  });
-
-  // Block heavy resources to speed up page loads
-  await context.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot,ico}', r => r.abort());
-  await context.route('**/analytics**', r => r.abort());
-  await context.route('**/gtag**', r => r.abort());
-  await context.route('**/googletagmanager**', r => r.abort());
-
-  const page = await context.newPage();
+  let { browser, context, page } = await launchBrowser();
 
   // ─── Login to PSA ─────────────────────────────────────────────────────────
   console.log('[PSA] Performing login...');
@@ -619,6 +641,7 @@ async function main() {
   let matched = 0;
   let noMatch = 0;
   let errors = 0;
+  let crashCount = 0;
 
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
@@ -658,9 +681,27 @@ async function main() {
         noMatch++;
       }
     } catch (e) {
-      console.error(`  💥 Error: ${e.message}`);
-      await markCardAsAttempted(conn, card.id);
-      errors++;
+      const msg = e.message || '';
+      // Handle page crash: restart browser and re-login
+      if (msg.includes('Page crashed') || msg.includes('Target closed') || msg.includes('Session closed')) {
+        crashCount++;
+        console.log(`  💥 Browser crashed (crash #${crashCount}). Restarting browser...`);
+        try { await browser.close(); } catch (_) {}
+        await sleep(5000);
+        const fresh = await launchBrowser();
+        browser = fresh.browser;
+        context = fresh.context;
+        page = fresh.page;
+        // Re-login after restart
+        console.log('[PSA] Re-logging in after browser restart...');
+        await loginToPsa(page);
+        // Don't mark as attempted — will be retried next run
+        errors++;
+      } else {
+        console.error(`  💥 Error: ${msg}`);
+        await markCardAsAttempted(conn, card.id);
+        errors++;
+      }
     }
 
     if (i < cards.length - 1) {
@@ -677,6 +718,7 @@ async function main() {
   console.log(`  ✅ Matched:  ${matched} (${cards.length > 0 ? Math.round(matched / cards.length * 100) : 0}%)`);
   console.log(`  ❌ No match: ${noMatch}`);
   console.log(`  ⚠️  Errors:   ${errors}`);
+  if (crashCount > 0) console.log(`  💥 Browser crashes recovered: ${crashCount}`);
   console.log(`${'='.repeat(60)}\n`);
 }
 
