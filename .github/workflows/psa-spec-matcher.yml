@@ -108,7 +108,8 @@ jobs:
         working-directory: /tmp/psa-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
+          PSA_EMAIL: ${{ secrets.PSA_EMAIL }}
+          PSA_PASSWORD: ${{ secrets.PSA_PASSWORD }}
           BATCH_INDEX: '0'
           TOTAL_BATCHES: '1'
           CARDS_PER_BATCH: '999'
@@ -118,7 +119,7 @@ jobs:
           HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
-          echo "=== PSA Spec Matcher — Single Card Mode ==="
+          echo "=== PSA Spec Matcher v3.0 — Single Card Mode ==="
           echo "Card IDs: $CARD_IDS"
           node psaSpecMatcher.mjs
 
@@ -171,7 +172,8 @@ jobs:
         working-directory: /tmp/psa-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
+          PSA_EMAIL: ${{ secrets.PSA_EMAIL }}
+          PSA_PASSWORD: ${{ secrets.PSA_PASSWORD }}
           BATCH_INDEX: ${{ matrix.batch_index }}
           TOTAL_BATCHES: ${{ needs.preflight.outputs.total_batches }}
           CARDS_PER_BATCH: ${{ needs.preflight.outputs.cards_per_batch }}
@@ -180,7 +182,7 @@ jobs:
           HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
-          echo "=== PSA Spec Matcher v2.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
+          echo "=== PSA Spec Matcher v3.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
           echo "Cards per shard: ${{ needs.preflight.outputs.cards_per_batch }}"
           node psaSpecMatcher.mjs
 
