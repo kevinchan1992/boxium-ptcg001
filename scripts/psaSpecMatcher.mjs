@@ -296,6 +296,8 @@ async function getConnection() {
 async function getCardsToProcess(conn) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - REMATCH_DAYS);
+  // Format as MySQL datetime string to avoid mysql2 prepared statement issues with Date objects
+  const cutoffStr = cutoffDate.toISOString().slice(0, 19).replace('T', ' ');
 
   let query, params;
 
@@ -322,7 +324,7 @@ async function getCardsToProcess(conn) {
       ORDER BY psaMatchedAt ASC, id ASC
       LIMIT ?
     `;
-    params = [TOTAL_BATCHES, BATCH_INDEX, cutoffDate, CARDS_PER_BATCH];
+    params = [TOTAL_BATCHES, BATCH_INDEX, cutoffStr, CARDS_PER_BATCH];
   }
 
   const [rows] = await conn.execute(query, params);
