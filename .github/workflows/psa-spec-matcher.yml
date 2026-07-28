@@ -96,7 +96,8 @@ jobs:
           cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
           npm install
-          echo "✅ Dependencies installed (mysql2 + cheerio)"
+          ls node_modules/cheerio && echo "✅ cheerio installed" || echo "❌ cheerio NOT found"
+          ls node_modules/mysql2 && echo "✅ mysql2 installed" || echo "❌ mysql2 NOT found"
 
       - name: Run PSA matcher — single card mode
         working-directory: /tmp/psa-runner
@@ -151,7 +152,8 @@ jobs:
           cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
           npm install
-          echo "✅ Dependencies installed (mysql2 + cheerio)"
+          ls node_modules/cheerio && echo "✅ cheerio installed" || echo "❌ cheerio NOT found"
+          ls node_modules/mysql2 && echo "✅ mysql2 installed" || echo "❌ mysql2 NOT found"
 
       - name: Run PSA matcher — shard ${{ matrix.batch_index }}
         working-directory: /tmp/psa-runner
