@@ -256,7 +256,13 @@
 
   function extractPureNumber(cardNumber) {
     if (!cardNumber) return null;
-    const m = String(cardNumber).match(/(\d+)/);
+    const s = String(cardNumber);
+    // Format: "e5 041/088" or "DP3 030/055" or "s12 105/098" — extract the number AFTER the set code
+    // Match: optional set-code prefix (letters+digits), then space, then the card number
+    const afterSetCode = s.match(/^[a-zA-Z][a-zA-Z0-9\-]*\s+(\d+)/);
+    if (afterSetCode) return afterSetCode[1];
+    // Fallback: first number in string
+    const m = s.match(/(\d+)/);
     return m ? m[1] : null;
   }
 
@@ -275,11 +281,13 @@
     // Take only first 3 words max
     const nameWords = cleanName.split(/\s+/).filter(w => w.length > 0).slice(0, 3).join(' ');
 
-    // Step 2: Extract set abbreviation from card number (e.g. "EBB" from "EBB 093/093")
-    // Card numbers can be: "EBB 093/093", "093/093", "SV-P 123", "SWSH123", "BW-P 001"
-    const setAbbr = cardNumber.match(/^([A-Z][A-Z0-9\-]{1,5})\s/)?.[1] || '';
-    // Extract the numeric part
-    const numPart = cardNumber.match(/(\d{1,4})/)?.[1] || '';
+    // Step 2: Extract set code and card number from cardNumber field
+    // Formats: "DP3 030/055", "e5 041/088", "s12 105/098", "SM1M 066/060", "093/093"
+    // setCode: the alphabetic prefix (case-insensitive)
+    const setCodeMatch = cardNumber.match(/^([a-zA-Z][a-zA-Z0-9\-]*)\s+(\d+)/);
+    const setAbbr = setCodeMatch ? setCodeMatch[1].toUpperCase() : '';
+    // numPart: the card number AFTER the set code (not the number inside the set code)
+    const numPart = setCodeMatch ? setCodeMatch[2] : (cardNumber.match(/(\d+)/)?.[1] || '');
 
     const parts = [];
     if (nameWords) parts.push(nameWords);
