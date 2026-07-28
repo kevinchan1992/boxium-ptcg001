@@ -281,7 +281,9 @@ function isSearchResultPage(html) {
 }
 
 function isLoginPage(html, url) {
-  return url.includes('signin') || url.includes('login') || url.includes('collectors.com/brandsignin') ||
+  // If we're on psacard.com, it's NOT a login page
+  if (url.includes('psacard.com')) return false;
+  return url.includes('/signin') || url.includes('/login') || url.includes('collectors.com/brandsignin') ||
          html.includes('Sign in to PSA') || html.includes('Sign In to PSA');
 }
 
