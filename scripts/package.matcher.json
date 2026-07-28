@@ -1,11 +1,10 @@
 {
   "name": "boxium-psa-matcher",
   "version": "1.0.0",
-  "description": "PSA Spec ID Matcher - minimal deps (mysql2 + cheerio only)",
+  "description": "PSA Spec ID Matcher - minimal deps (mysql2 only, no cheerio)",
   "type": "module",
   "private": true,
   "dependencies": {
-    "mysql2": "^3.11.0",
-    "cheerio": "^1.0.0"
+    "mysql2": "^3.11.0"
   }
 }
