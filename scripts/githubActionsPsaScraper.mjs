@@ -162,7 +162,7 @@ async function getCardsToScrape() {
 
   // T1: Hot — cards with SNKRDUNK data (high value), stale > 1 day
   const [t1] = await pool.execute(
-    `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName
+    `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName, c.psaScrapedAt
      FROM cards c
      INNER JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'snkrdunk'
      WHERE MOD(c.id, ?) = ?
@@ -177,7 +177,7 @@ async function getCardsToScrape() {
   const t1Ids = t1.map(r => r.id);
   const t1Exclude = t1Ids.length > 0 ? `AND c.id NOT IN (${t1Ids.map(() => '?').join(',')})` : '';
   const [t2] = await pool.execute(
-    `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName
+    `SELECT DISTINCT c.id, c.name, c.cardNumber, c.psaSpecId, c.series, c.setName, c.psaScrapedAt
      FROM cards c
      INNER JOIN priceHistory ph ON ph.cardId = c.id AND ph.source = 'ebay'
      WHERE MOD(c.id, ?) = ?

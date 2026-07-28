@@ -1,7 +1,10 @@
 /**
- * PSA Spec ID Batch Matcher v1.0
+ * PSA Spec ID Batch Matcher v4.0 (Playwright-Extra Stealth + RSC Payload Extraction)
  *
- * Strategy: Precise 3-Layer Matching
+ * Strategy: Precise 3-Layer Matching using Playwright-Extra Stealth
+ *   - Stealth: playwright-extra + puppeteer-extra-plugin-stealth bypasses Cloudflare Bot Management
+ *   - Login: Fixed Continue button detection (avoids cookie banner close button)
+ *   - Extraction: RSC payload parsing (no JS hydration wait needed)
  *   - Layer 1: Card number exact match (e.g., "#141", "#293")
  *   - Layer 2: Language match (japanese / EN)
  *   - Layer 3: Series/set keyword match
@@ -12,15 +15,22 @@
  *   DATABASE_URL    MySQL connection string
  *   BATCH_INDEX     This job's shard index (0-based)
  *   TOTAL_BATCHES   Total number of parallel jobs
+ *   PSA_EMAIL       PSA account email
+ *   PSA_PASSWORD    PSA account password
  *
  * Optional env:
  *   CARDS_PER_BATCH Max cards per shard (default: 5000)
  *   REMATCH_DAYS    Re-attempt cards matched > N days ago (default: 30)
  *   DELAY_MS        Delay between PSA requests in ms (default: 2500)
+ *   HEADLESS        Set to 'false' for debugging (default: true)
  */
 
+import { chromium } from 'playwright-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { createConnection } from 'mysql2/promise';
-import { load as cheerioLoad } from 'cheerio';
+
+// Enable stealth mode to bypass Cloudflare Bot Management
+chromium.use(StealthPlugin());
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const DB_URL = process.env.DATABASE_URL;
@@ -30,10 +40,54 @@ const CARDS_PER_BATCH = parseInt(process.env.CARDS_PER_BATCH ?? '5000', 10);
 const REMATCH_DAYS = parseInt(process.env.REMATCH_DAYS ?? '30', 10);
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '2500', 10);
 const CARD_IDS = process.env.CARD_IDS ? process.env.CARD_IDS.split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean) : [];
+const HEADLESS = process.env.HEADLESS !== 'false';
+const PSA_EMAIL = process.env.PSA_EMAIL || '';
+const PSA_PASSWORD = process.env.PSA_PASSWORD || '';
+
+// ─── Browser Profiles ─────────────────────────────────────────────────────────
+const BROWSER_PROFILES = [
+  {
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    platform: 'Win32',
+    language: 'en-US,en;q=0.9',
+    viewport: { width: 1366, height: 768 },
+    timezone: 'America/New_York',
+  },
+  {
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    platform: 'MacIntel',
+    language: 'en-US,en;q=0.9',
+    viewport: { width: 1440, height: 900 },
+    timezone: 'America/Los_Angeles',
+  },
+  {
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    platform: 'Win32',
+    language: 'en-US,en;q=0.5',
+    viewport: { width: 1600, height: 900 },
+    timezone: 'America/Chicago',
+  },
+  {
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+    platform: 'MacIntel',
+    language: 'en-US,en;q=0.9',
+    viewport: { width: 1280, height: 800 },
+    timezone: 'America/Denver',
+  },
+  {
+    userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    platform: 'Linux x86_64',
+    language: 'en-US,en;q=0.9',
+    viewport: { width: 1920, height: 1200 },
+    timezone: 'America/Toronto',
+  },
+];
+const PROFILE = BROWSER_PROFILES[BATCH_INDEX % BROWSER_PROFILES.length];
+
+// Stealth is now handled by playwright-extra StealthPlugin (above)
+// No manual stealth script needed
 
 // ─── PSA Series Keyword Map ───────────────────────────────────────────────────
-// Maps setName/series keywords → PSA search abbreviations
-// Used for Layer 3 matching: PSA title must contain one of these keywords
 const PSA_SET_KEYWORDS = {
   // English Scarlet & Violet era
   'Obsidian Flames': ['Obsidian Flames', 'Obf', 'OBF'],
@@ -102,13 +156,10 @@ function detectLanguage(card) {
   const setName = (card.setName || '').toLowerCase();
   const cardId = (card.cardId || '').toLowerCase();
 
-  // Japanese indicators
   if (lang === 'ja' || lang === 'jp' || lang === 'japanese') return 'japanese';
   if (series.includes('japanese') || setName.includes('japanese')) return 'japanese';
   if (cardId.includes('jp') || cardId.includes('-ja-')) return 'japanese';
-  // Card number patterns like "SM-P 141", "XY-P 208" → Japanese promo
   if (/^(sm|xy|bw|dp|swsh|sv)-?p\s/i.test(card.cardNumber || '')) return 'japanese';
-  // setName contains Japanese promo patterns
   if (/SM-P|XY-P|BW-P|SWSH-P|SV-P/i.test(card.setName || '')) return 'japanese';
 
   return 'en';
@@ -121,30 +172,23 @@ function buildSearchQuery(card) {
   const setName = card.setName || '';
   const series = card.series || '';
 
-  // Extract pure card number (e.g., "SM-P 141" → "141", "XY-P 208" → "208", "125/198" → "125")
   let cardNum = card.cardNumber || '';
-  // Handle formats: "SM-P 141", "XY-P 208", "125/198", "125", "PROMO"
   const numMatch = cardNum.match(/(\d+)(?:\/\d+)?$/);
   const pureNum = numMatch ? numMatch[1] : null;
 
-  // Build query parts
   const parts = [name];
 
-  // Add set/series identifier
   const setKeywords = PSA_SET_KEYWORDS[setName] || PSA_SET_KEYWORDS[series];
   if (setKeywords && setKeywords.length > 0) {
     parts.push(setKeywords[0]);
   } else if (setName) {
-    // Use first 2 words of setName as fallback
     parts.push(setName.split(' ').slice(0, 2).join(' '));
   }
 
-  // Add card number
   if (pureNum) {
     parts.push(pureNum);
   }
 
-  // Add language
   parts.push(lang === 'japanese' ? 'japanese' : 'EN');
   parts.push('pokemon');
 
@@ -158,131 +202,300 @@ function extractPureNumber(cardNumber) {
   return m ? m[1] : null;
 }
 
-// ─── PSA Search & Match ───────────────────────────────────────────────────────
-const USER_AGENTS = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
-];
+// ─── Parse Search Results from RSC Payload ───────────────────────────────────
+// PSA uses Next.js RSC (React Server Components). Search results are embedded
+// in <script> tags as self.__next_f.push([1,"..."])  JSON payloads.
+// Each result has: specId, setName, collectibleYear, collectibleSubject, variety, setNumber
+function parseSearchResults(html) {
+  const results = [];
+  const seen = new Set();
 
-let uaIndex = 0;
-function getNextUA() {
-  return USER_AGENTS[uaIndex++ % USER_AGENTS.length];
-}
-
-async function fetchPsaSearchPage(query, retries = 3) {
-  const url = `https://www.psacard.com/auctionprices/search?q=${encodeURIComponent(query)}`;
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const resp = await fetch(url, {
-        headers: {
-          'User-Agent': getNextUA(),
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Cache-Control': 'no-cache',
-          'Referer': 'https://www.psacard.com/',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (resp.status === 429) {
-        const wait = attempt * 30000;
-        console.log(`  [Rate Limited] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
-        await sleep(wait);
-        continue;
-      }
-      if (!resp.ok) {
-        console.log(`  [HTTP ${resp.status}] attempt ${attempt}/${retries}`);
-        if (attempt < retries) { await sleep(5000); continue; }
-        return null;
-      }
-      return await resp.text();
-    } catch (e) {
-      console.log(`  [Fetch Error] attempt ${attempt}/${retries}: ${e.message}`);
-      if (attempt < retries) { await sleep(5000); continue; }
-      return null;
+  // Method 1: Extract from RSC payload (self.__next_f.push)
+  // The payload contains dehydrated React Query state with search results
+  const rscRegex = /self\.__next_f\.push\(\[1,"(.*?)"\]\)/gs;
+  let rscMatch;
+  while ((rscMatch = rscRegex.exec(html)) !== null) {
+    const raw = rscMatch[1];
+    // Decode escaped JSON string
+    const decoded = raw.replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n');
+    // Find all specId occurrences
+    const specRegex = /"specId":(\d+),"categoryId":\d+,"setName":"([^"]*)","collectibleYear":"([^"]*)","collectibleSubject":"([^"]*)","variety":"([^"]*)","setNumber":"([^"]*)"/g;
+    let m;
+    while ((m = specRegex.exec(decoded)) !== null) {
+      const [, specId, setName, year, subject, variety, setNumber] = m;
+      if (seen.has(specId)) continue;
+      seen.add(specId);
+      // Build a title string for matching (same format as before)
+      const title = `${subject} ${setName} ${setNumber} ${variety} ${year}`.trim();
+      results.push({ specId, title, setName, year, subject, variety, setNumber });
     }
   }
-  return null;
-}
 
-function parseSearchResults(html) {
-  const $ = cheerioLoad(html);
-  const results = [];
-  // PSA search results: links with href containing /spec/psa/
-  $('a[href*="/spec/psa/"]').each((_, el) => {
-    const href = $(el).attr('href') || '';
-    const specMatch = href.match(/\/spec\/psa\/(\d+)/);
-    if (!specMatch) return;
-    const specId = specMatch[1];
-    // Get the text content of the link or its parent
-    const title = $(el).text().trim() || $(el).closest('[class]').text().trim();
-    if (specId && title) {
-      results.push({ specId, title });
+  // Method 2: Fallback — extract from href links (old format, in case RSC changes)
+  if (results.length === 0) {
+    const linkRegex = /<a[^>]+href=["']([^"']*\/auctionprices\/[^"']*\/values\/[^"']*\/(\d+))["'][^>]*>(.*?)<\/a>/gis;
+    let m;
+    while ((m = linkRegex.exec(html)) !== null) {
+      const specId = m[2];
+      const rawText = m[3].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (specId && rawText && !seen.has(specId)) {
+        seen.add(specId);
+        results.push({ specId, title: rawText });
+      }
     }
-  });
-  // Deduplicate by specId
-  const seen = new Set();
-  return results.filter(r => {
-    if (seen.has(r.specId)) return false;
-    seen.add(r.specId);
-    return true;
-  });
+  }
+
+  return results;
 }
 
+// ─── Match Card Against PSA Results ──────────────────────────────────────────
 function matchCard(card, results) {
   const lang = detectLanguage(card);
   const pureNum = extractPureNumber(card.cardNumber);
   const setName = card.setName || '';
   const series = card.series || '';
 
-  // Get expected set keywords for Layer 3
   const setKeywords = PSA_SET_KEYWORDS[setName] || PSA_SET_KEYWORDS[series] || [];
 
   for (const result of results) {
+    // Use combined title for text matching
     const title = result.title.toLowerCase();
+    // Also check structured fields if available (from RSC payload)
+    const resultSetName = (result.setName || '').toLowerCase();
+    const resultSetNumber = (result.setNumber || '').toLowerCase();
+    const resultSubject = (result.subject || '').toLowerCase();
 
-    // ── Layer 1: Card number exact match ──────────────────────────────────
+    // Layer 1: Card number exact match
     if (pureNum) {
-      // Must contain #<number> or end with <number>
+      // Check in title OR in structured setNumber field
       const numPattern = new RegExp(`#${pureNum}\\b|\\b${pureNum}\\b`);
-      if (!numPattern.test(result.title)) continue;
+      const numInTitle = numPattern.test(result.title);
+      const numInSetNumber = resultSetNumber === pureNum.padStart(3, '0') ||
+                             resultSetNumber === pureNum ||
+                             resultSetNumber.startsWith(pureNum + '/');
+      if (!numInTitle && !numInSetNumber) continue;
     }
 
-    // ── Layer 2: Language match ────────────────────────────────────────────
+    // Layer 2: Language match
     if (lang === 'japanese') {
-      if (!title.includes('japanese') && !title.includes('japan') && !title.includes('jp ')) continue;
+      if (!title.includes('japanese') && !title.includes('japan') && !title.includes('jp ') &&
+          !resultSetName.includes('japanese') && !resultSetName.includes('japan')) continue;
     } else {
-      // English: must NOT be Japanese
-      if (title.includes('japanese') || title.includes('japan')) continue;
+      if (title.includes('japanese') || title.includes('japan') ||
+          resultSetName.includes('japanese') || resultSetName.includes('japan')) continue;
     }
 
-    // ── Layer 3: Series/set keyword match ─────────────────────────────────
+    // Layer 3: Series/set keyword match
     if (setKeywords.length > 0) {
-      const hasSetMatch = setKeywords.some(kw => title.includes(kw.toLowerCase()));
+      const hasSetMatch = setKeywords.some(kw =>
+        title.includes(kw.toLowerCase()) || resultSetName.includes(kw.toLowerCase())
+      );
       if (!hasSetMatch) {
-        // Fallback: check if setName words appear in title
         const setWords = setName.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-        const hasFallback = setWords.length > 0 && setWords.some(w => title.includes(w));
+        const hasFallback = setWords.length > 0 && setWords.some(w =>
+          title.includes(w) || resultSetName.includes(w)
+        );
         if (!hasFallback) continue;
       }
     }
 
-    // All 3 layers passed!
     return result.specId;
   }
   return null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const randomDelay = () => DELAY_MS + Math.floor(Math.random() * 1500);
+
+// ─── Playwright: Login to PSA ─────────────────────────────────────────────────
+async function loginToPsa(page) {
+  if (!PSA_EMAIL || !PSA_PASSWORD) {
+    console.log('[PSA Login] No credentials provided, skipping login');
+    return false;
+  }
+
+  console.log('[PSA Login] Navigating to PSA login page...');
+  try {
+    await page.goto(
+      'https://app.collectors.com/signin?b=psa&r=https%3A%2F%2Fwww.psacard.com%2Fmyaccount',
+      { waitUntil: 'networkidle', timeout: 30000 }
+    );
+    await sleep(1000);
+
+    const url = page.url();
+    console.log(`[PSA Login] Current URL: ${url}`);
+    const pageTitle = await page.title();
+    console.log(`[PSA Login] Page title: ${pageTitle}`);
+
+    // Fill email
+    const emailInput = await page.$('input[name="email"], input[type="email"], input#email');
+    if (!emailInput) {
+      console.log('[PSA Login] ⚠️ Could not find email input');
+      return false;
+    }
+    await emailInput.fill(PSA_EMAIL);
+    console.log('[PSA Login] Found email input: input[name="email"]');
+
+    // Click the CORRECT Continue button — NOT the cookie banner close button.
+    // The page has multiple button[type="submit"]: first is cookie banner "Close",
+    // last is the actual "Continue" button. Use text-based detection.
+    const allSubmitBtns = await page.$$('button[type="submit"]');
+    let continueClicked = false;
+    for (const btn of allSubmitBtns) {
+      const text = (await btn.textContent() || '').trim().toLowerCase();
+      if (text.includes('continue') || text.includes('next')) {
+        console.log('[PSA Login] Found continue button: text-based detection');
+        await btn.click();
+        continueClicked = true;
+        break;
+      }
+    }
+    if (!continueClicked) {
+      console.log('[PSA Login] ⚠️ Could not find Continue button');
+      return false;
+    }
+
+    // Wait for password field to appear
+    try {
+      await page.waitForSelector('input[type="password"]', { timeout: 15000 });
+      console.log('[PSA Login] Found password input: input[type="password"]');
+    } catch (e) {
+      console.log('[PSA Login] ⚠️ Password field did not appear');
+      return false;
+    }
+
+    const passwordInput = await page.$('input[type="password"]');
+    if (!passwordInput) {
+      console.log('[PSA Login] ⚠️ Could not find password input');
+      return false;
+    }
+    await passwordInput.fill(PSA_PASSWORD);
+
+    // Submit login form
+    console.log('[PSA Login] Submitting login form...');
+    const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => null);
+    const submitBtn = await page.$('button[type="submit"]');
+    if (submitBtn) {
+      await submitBtn.click();
+    } else {
+      await passwordInput.press('Enter');
+    }
+    await navigationPromise;
+
+    // PSA uses Auth0 which does multiple redirects: signin → brandsignin → psacard.com
+    // Poll URL until we land on psacard.com or timeout
+    console.log('[PSA Login] Waiting for Auth0 redirects to complete...');
+    const maxWait = 30000; // 30 seconds
+    const pollInterval = 1000;
+    const startTime = Date.now();
+    let finalUrl = page.url();
+
+    while (Date.now() - startTime < maxWait) {
+      finalUrl = page.url();
+      console.log(`[PSA Login] Current URL: ${finalUrl.slice(0, 80)}`);
+
+      // Success: landed on psacard.com
+      if (finalUrl.includes('psacard.com') && !finalUrl.includes('signin')) {
+        console.log('[PSA Login] ✅ Login successful! Landed on psacard.com');
+        return true;
+      }
+
+      // Still on auth pages — wait and poll
+      if (finalUrl.includes('signin') || finalUrl.includes('login') || finalUrl.includes('brandsignin') || finalUrl.includes('collectors.com')) {
+        await sleep(pollInterval);
+        continue;
+      }
+
+      // Unknown URL — might be success
+      break;
+    }
+
+    finalUrl = page.url();
+    console.log(`[PSA Login] Final URL after wait: ${finalUrl}`);
+
+    // Final check
+    if (finalUrl.includes('psacard.com') && !finalUrl.includes('signin')) {
+      console.log('[PSA Login] ✅ Login successful!');
+      return true;
+    }
+
+    console.log('[PSA Login] ⚠️ Login may have failed, but will attempt searches anyway');
+    // Return true anyway — let the search attempt reveal if we're actually logged in
+    return true;
+  } catch (e) {
+    console.log(`[PSA Login] ❌ Login error: ${e.message}`);
+    return false;
+  }
 }
 
-function randomDelay() {
-  // 2–4 seconds with jitter
-  return DELAY_MS + Math.floor(Math.random() * 1500);
+// ─── Playwright: Fetch PSA Search Page ───────────────────────────────────────
+async function fetchPsaSearchPage(page, query, retries = 3) {
+  const url = `https://www.psacard.com/auctionprices/search?q=${encodeURIComponent(query)}`;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+
+      const status = response ? response.status() : 0;
+      if (status === 429) {
+        // Exponential backoff: 60s, 120s, 180s
+        // Do NOT re-login here — CF will block login attempts after rate limiting
+        // Just wait and retry with existing session
+        const wait = attempt * 60000;
+        console.log(`  [Rate Limited] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
+        await sleep(wait);
+        continue;
+      }
+
+      // Also check for rate limit via page content (some PSA rate limits return 200 with error page)
+      const currentUrl = page.url();
+      if (currentUrl.includes('429') || currentUrl.includes('rate-limit')) {
+        const wait = attempt * 60000;
+        console.log(`  [Rate Limited via URL] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
+        await sleep(wait);
+        continue;
+      }
+
+      // Check for Cloudflare block
+      const title = await page.title();
+      if (title.includes('Just a moment') || title.includes('Attention Required') || title.includes('Access denied')) {
+        console.log(`  [CF Block] attempt ${attempt}/${retries}, sleeping 120s...`);
+        await sleep(120000);
+        continue;
+      }
+
+      // Check for login redirect
+      const finalUrl = page.url();
+      if (finalUrl.includes('signin') || finalUrl.includes('login')) {
+        console.log(`  [Login Redirect] attempt ${attempt}/${retries} — re-logging in...`);
+        const loginOk = await loginToPsa(page);
+        if (loginOk) {
+          // Retry the search after re-login
+          if (attempt < retries) { await sleep(2000); continue; }
+        }
+        return null;
+      }
+
+      if (status && status >= 400) {
+        console.log(`  [HTTP ${status}] attempt ${attempt}/${retries}`);
+        if (attempt < retries) { await sleep(5000); continue; }
+        return null;
+      }
+
+      // Wait a bit for JS to render search results
+      await sleep(1500);
+      return await page.content();
+
+    } catch (e) {
+      console.log(`  [Fetch Error] attempt ${attempt}/${retries}: ${e.message.slice(0, 80)}`);
+      if (attempt < retries) { await sleep(5000); continue; }
+      return null;
+    }
+  }
+  return null;
 }
 
 // ─── Database ─────────────────────────────────────────────────────────────────
@@ -296,11 +509,11 @@ async function getConnection() {
 async function getCardsToProcess(conn) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - REMATCH_DAYS);
+  const cutoffStr = cutoffDate.toISOString().slice(0, 19).replace('T', ' ');
 
   let query, params;
 
   if (CARD_IDS.length > 0) {
-    // Single card mode
     query = `
       SELECT id, cardId, name, nameJa, series, setName, cardNumber, language, rarity
       FROM cards
@@ -309,20 +522,16 @@ async function getCardsToProcess(conn) {
     `;
     params = CARD_IDS;
   } else {
-    // Shard mode: process cards where MOD(id, TOTAL_BATCHES) = BATCH_INDEX
-    // Skip cards that have already been successfully matched (psaSpecId IS NOT NULL)
-    // Only retry cards that were attempted but failed (psaMatchedAt IS NOT NULL AND psaSpecId IS NULL)
-    //   if they haven't been retried within REMATCH_DAYS
     query = `
       SELECT id, cardId, name, nameJa, series, setName, cardNumber, language, rarity
       FROM cards
-      WHERE MOD(id, ?) = ?
+      WHERE MOD(id, ${TOTAL_BATCHES}) = ${BATCH_INDEX}
         AND psaSpecId IS NULL
         AND (psaMatchedAt IS NULL OR psaMatchedAt < ?)
       ORDER BY psaMatchedAt ASC, id ASC
-      LIMIT ?
+      LIMIT ${CARDS_PER_BATCH}
     `;
-    params = [TOTAL_BATCHES, BATCH_INDEX, cutoffDate, CARDS_PER_BATCH];
+    params = [cutoffStr];
   }
 
   const [rows] = await conn.execute(query, params);
@@ -346,15 +555,21 @@ async function markCardAsAttempted(conn, cardId) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`PSA Spec Matcher v1.0`);
+  console.log(`PSA Spec Matcher v4.2 (Stealth + RSC + Crash Recovery + Rate Limit Fix)`);
   console.log(`Shard: ${BATCH_INDEX}/${TOTAL_BATCHES}`);
   console.log(`Cards per batch: ${CARDS_PER_BATCH}`);
   console.log(`Rematch after: ${REMATCH_DAYS} days`);
   console.log(`Delay: ${DELAY_MS}ms`);
+  console.log(`Headless: ${HEADLESS}`);
+  console.log(`Profile: ${PROFILE.userAgent.slice(0, 60)}...`);
+  console.log(`PSA Email: ${PSA_EMAIL ? PSA_EMAIL.slice(0, 5) + '***' : '(not set)'}`);
   if (CARD_IDS.length > 0) console.log(`Single card mode: ${CARD_IDS.join(', ')}`);
   console.log(`${'='.repeat(60)}\n`);
 
   if (!DB_URL) throw new Error('DATABASE_URL is required');
+  if (!PSA_EMAIL || !PSA_PASSWORD) {
+    throw new Error('PSA_EMAIL and PSA_PASSWORD are required for login');
+  }
 
   const conn = await getConnection();
   console.log('✅ Database connected');
@@ -362,9 +577,68 @@ async function main() {
   const cards = await getCardsToProcess(conn);
   console.log(`📋 Cards to process: ${cards.length}\n`);
 
+  if (cards.length === 0) {
+    console.log('[PSA] Nothing to process in this shard. All cards are matched or up to date.');
+    await conn.end();
+    return;
+  }
+
+  // ─── Browser factory: creates a fresh browser + logged-in page ───────────
+  async function launchBrowser() {
+    console.log(`[PSA] Launching Playwright (headless=${HEADLESS})...`);
+    const br = await chromium.launch({
+      headless: HEADLESS,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--single-process',           // Reduce memory: run renderer in main process
+        '--memory-pressure-off',
+        '--js-flags=--max-old-space-size=256',  // Limit V8 heap to 256MB
+      ],
+    });
+    const ctx = await br.newContext({
+      userAgent: PROFILE.userAgent,
+      viewport: PROFILE.viewport,
+      locale: PROFILE.language.split(',')[0],
+      timezoneId: PROFILE.timezone,
+      extraHTTPHeaders: {
+        'Accept-Language': PROFILE.language,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+      },
+    });
+    // Block heavy resources to reduce memory usage
+    await ctx.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot,ico}', r => r.abort());
+    await ctx.route('**/*.{mp4,webm,ogg,mp3,wav}', r => r.abort());
+    await ctx.route('**/analytics**', r => r.abort());
+    await ctx.route('**/gtag**', r => r.abort());
+    await ctx.route('**/googletagmanager**', r => r.abort());
+    await ctx.route('**/facebook**', r => r.abort());
+    await ctx.route('**/twitter**', r => r.abort());
+    const pg = await ctx.newPage();
+    return { browser: br, context: ctx, page: pg };
+  }
+
+  let { browser, context, page } = await launchBrowser();
+
+  // ─── Login to PSA ─────────────────────────────────────────────────────────
+  console.log('[PSA] Performing login...');
+  const loginSuccess = await loginToPsa(page);
+  if (!loginSuccess) {
+    console.log('[PSA] ⚠️ Login failed. Will attempt searches anyway (may fail).');
+  }
+  console.log('[PSA] Using playwright-extra stealth mode (CF bypass active)');
+
   let matched = 0;
   let noMatch = 0;
   let errors = 0;
+  let crashCount = 0;
 
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
@@ -375,7 +649,7 @@ async function main() {
       console.log(`${progress} Card #${card.id} "${card.name}" (${card.cardNumber || 'no num'}) | ${card.setName || card.series || 'unknown set'}`);
       console.log(`  Query: "${query}"`);
 
-      const html = await fetchPsaSearchPage(query);
+      const html = await fetchPsaSearchPage(page, query);
       if (!html) {
         console.log(`  ⚠️  Failed to fetch PSA page`);
         await markCardAsAttempted(conn, card.id);
@@ -385,7 +659,7 @@ async function main() {
       }
 
       const results = parseSearchResults(html);
-      console.log(`  Found ${results.length} PSA results`);
+      console.log(`  Found ${results.length} PSA results (RSC payload)`);
 
       const specId = matchCard(card, results);
 
@@ -397,7 +671,6 @@ async function main() {
         await markCardAsAttempted(conn, card.id);
         if (results.length > 0) {
           console.log(`  ❌ No precise match (${results.length} candidates rejected)`);
-          // Log first 3 candidates for debugging
           results.slice(0, 3).forEach(r => console.log(`     - [${r.specId}] ${r.title.substring(0, 80)}`));
         } else {
           console.log(`  ❌ No PSA results found`);
@@ -405,17 +678,35 @@ async function main() {
         noMatch++;
       }
     } catch (e) {
-      console.error(`  💥 Error: ${e.message}`);
-      await markCardAsAttempted(conn, card.id);
-      errors++;
+      const msg = e.message || '';
+      // Handle page crash: restart browser and re-login
+      if (msg.includes('Page crashed') || msg.includes('Target closed') || msg.includes('Session closed')) {
+        crashCount++;
+        console.log(`  💥 Browser crashed (crash #${crashCount}). Restarting browser...`);
+        try { await browser.close(); } catch (_) {}
+        await sleep(5000);
+        const fresh = await launchBrowser();
+        browser = fresh.browser;
+        context = fresh.context;
+        page = fresh.page;
+        // Re-login after restart
+        console.log('[PSA] Re-logging in after browser restart...');
+        await loginToPsa(page);
+        // Don't mark as attempted — will be retried next run
+        errors++;
+      } else {
+        console.error(`  💥 Error: ${msg}`);
+        await markCardAsAttempted(conn, card.id);
+        errors++;
+      }
     }
 
-    // Delay between requests
     if (i < cards.length - 1) {
       await sleep(randomDelay());
     }
   }
 
+  await browser.close();
   await conn.end();
 
   console.log(`\n${'='.repeat(60)}`);
@@ -424,6 +715,7 @@ async function main() {
   console.log(`  ✅ Matched:  ${matched} (${cards.length > 0 ? Math.round(matched / cards.length * 100) : 0}%)`);
   console.log(`  ❌ No match: ${noMatch}`);
   console.log(`  ⚠️  Errors:   ${errors}`);
+  if (crashCount > 0) console.log(`  💥 Browser crashes recovered: ${crashCount}`);
   console.log(`${'='.repeat(60)}\n`);
 }
 
