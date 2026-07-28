@@ -312,11 +312,18 @@ async function loginToPsa(page, email, password, workerIdx) {
   const currentUrl = page.url();
   console.log(`  [W${workerIdx}] Current URL: ${currentUrl}`);
 
-  // If already on PSA (logged in), return success
-  if (currentUrl.includes('psacard.com') && !currentUrl.includes('signin')) {
-    const html = await page.content();
-    if (isSearchResultPage(html)) {
-      console.log(`  [W${workerIdx}] Already logged in!`);
+  // If already redirected away from signin (session exists), go to PSA directly
+  if (!currentUrl.includes('signin') && !currentUrl.includes('login')) {
+    console.log(`  [W${workerIdx}] Session already active, navigating to PSA...`);
+    await page.goto('https://www.psacard.com/auctionprices/search?q=Pikachu', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
+    await sleep(2000);
+    const psaUrl = page.url();
+    const psaHtml = await page.content();
+    if (psaUrl.includes('psacard.com') && !isLoginPage(psaHtml, psaUrl)) {
+      console.log(`  [W${workerIdx}] PSA accessible, login successful!`);
       return true;
     }
   }
@@ -346,15 +353,18 @@ async function loginToPsa(page, email, password, workerIdx) {
     await passwordInput.fill(password);
     await sleep(500);
 
-    // Submit - find the actual sign in button (not filter buttons)
+    // Submit - find the actual sign in button on the login form
     console.log(`  [W${workerIdx}] Submitting login...`);
-    // Use more specific selector to find the login submit button
-    const submitBtn = page.locator('button[type="submit"][data-testid="signInButton"], button[type="submit"]:has-text("Sign In"), button[type="submit"]:has-text("Log In"), button[type="submit"]:has-text("Continue"), form button[type="submit"]').first();
-    await submitBtn.click({ timeout: 10000 });
+    // Press Enter to submit (most reliable)
+    await passwordInput.press('Enter');
 
-    // Wait for any navigation (could go to collection or PSA)
+    // Wait for navigation away from login page
     console.log(`  [W${workerIdx}] Waiting for post-login navigation...`);
-    await page.waitForNavigation({ timeout: 30000 }).catch(() => {});
+    try {
+      await page.waitForURL(url => !url.includes('signin') && !url.includes('login'), { timeout: 30000 });
+    } catch {
+      // Navigation might have already happened
+    }
     await sleep(2000);
 
     // Navigate to PSA search page regardless of where we ended up
@@ -371,15 +381,36 @@ async function loginToPsa(page, email, password, workerIdx) {
     }
 
     const finalUrl = page.url();
+    const finalHtml = await page.content();
+    if (isLoginPage(finalHtml, finalUrl)) {
+      console.log(`  [W${workerIdx}] Still on login page after submit`);
+      return false;
+    }
     console.log(`  [W${workerIdx}] Login successful! URL: ${finalUrl}`);
     return true;
 
   } catch (e) {
-    console.error(`  [W${workerIdx}] Login error: ${e.message}`);
-    // Show current page state for debugging
-    const debugUrl = page.url();
-    const debugTitle = await page.title();
-    console.log(`  [W${workerIdx}] Debug - URL: ${debugUrl}, Title: ${debugTitle}`);
+    // Even if there was an error, check if we ended up on PSA
+    const errorUrl = page.url();
+    const errorTitle = await page.title();
+    console.log(`  [W${workerIdx}] Login attempt error: ${e.message.slice(0, 100)}`);
+    console.log(`  [W${workerIdx}] Current - URL: ${errorUrl}, Title: ${errorTitle}`);
+    
+    // If we're not on signin page, try navigating to PSA directly
+    if (!errorUrl.includes('signin') && !errorUrl.includes('login')) {
+      console.log(`  [W${workerIdx}] Not on login page, trying PSA directly...`);
+      await page.goto('https://www.psacard.com/auctionprices/search?q=Pikachu', {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      }).catch(() => {});
+      await sleep(2000);
+      const tryUrl = page.url();
+      const tryHtml = await page.content();
+      if (tryUrl.includes('psacard.com') && !isLoginPage(tryHtml, tryUrl)) {
+        console.log(`  [W${workerIdx}] PSA accessible after error recovery!`);
+        return true;
+      }
+    }
     return false;
   }
 }
