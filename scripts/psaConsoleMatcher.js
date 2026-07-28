@@ -192,9 +192,8 @@
   // ─── API Calls ────────────────────────────────────────────────────────────
   async function getUnmatchedBatch(offset) {
     const input = { secret: SECRET, limit: BATCH_SIZE, offset };
-    // tRPC v11 batch GET format
-    const params = encodeURIComponent(JSON.stringify(input));
-    const res = await fetch(`${API_BASE}/admin.psaGetUnmatchedBatch?batch=1&input=${encodeURIComponent(JSON.stringify({"0":input}))}`, {
+    // tRPC v11 GET format: wrap input in {json: ...}
+    const res = await fetch(`${API_BASE}/admin.psaGetUnmatchedBatch?input=${encodeURIComponent(JSON.stringify({json: input}))}`, {
       headers: { 'Content-Type': 'application/json' }
     });
     if (!res.ok) {
@@ -202,24 +201,25 @@
       throw new Error(`API error ${res.status}: ${text.slice(0, 200)}`);
     }
     const json = await res.json();
-    // tRPC batch response format: [{result:{data:...}}]
-    if (Array.isArray(json) && json[0]?.result?.data) return json[0].result.data;
+    // tRPC response format: {result:{data:{json:...}}}
+    if (json.result?.data?.json) return json.result.data.json;
     if (json.result?.data) return json.result.data;
     throw new Error('Unexpected API response: ' + JSON.stringify(json).slice(0, 200));
   }
 
   async function submitResults(results) {
-    const res = await fetch(`${API_BASE}/admin.psaBatchUpdateSpecIds?batch=1`, {
+    const res = await fetch(`${API_BASE}/admin.psaBatchUpdateSpecIds`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({"0":{ json: { secret: SECRET, results } }}),
+      body: JSON.stringify({ json: { secret: SECRET, results } }),
     });
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Submit error ${res.status}: ${text.slice(0, 200)}`);
     }
     const json = await res.json();
-    return (Array.isArray(json) ? json[0]?.result?.data : json.result?.data) ?? json;
+    if (json.result?.data?.json) return json.result.data.json;
+    return json.result?.data ?? json;
   }
 
   // ─── Fetch PSA Search (same-origin fetch, no CORS) ────────────────────────
