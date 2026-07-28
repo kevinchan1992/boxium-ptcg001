@@ -97,15 +97,32 @@
 
   function buildSearchQuery(card) {
     const lang = detectLanguage(card);
-    const setName = card.setName || card.series || '';
     const name = card.name || '';
-    const langStr = lang === 'japanese' ? 'japanese' : 'EN';
+    const cardNumber = card.cardNumber || '';
+
+    // Step 1: Extract clean name — only first 2-3 meaningful words, strip special chars
+    // Remove everything after ':', '[', '(', or Japanese brackets
+    const cleanName = name
+      .replace(/[:\[\(（【「『〔\{].*/g, '')  // strip from special chars onward
+      .replace(/[^a-zA-Z0-9\s\-'éèêëàâùûüôîïœæç]/g, ' ')  // keep latin chars
+      .replace(/\s+/g, ' ')
+      .trim();
+    // Take only first 3 words max
+    const nameWords = cleanName.split(/\s+/).filter(w => w.length > 0).slice(0, 3).join(' ');
+
+    // Step 2: Extract set abbreviation from card number (e.g. "EBB" from "EBB 093/093")
+    // Card numbers can be: "EBB 093/093", "093/093", "SV-P 123", "SWSH123", "BW-P 001"
+    const setAbbr = cardNumber.match(/^([A-Z][A-Z0-9\-]{1,5})\s/)?.[1] || '';
+    // Extract the numeric part
+    const numPart = cardNumber.match(/(\d{1,4})/)?.[1] || '';
+
     const parts = [];
-    if (name) parts.push(name);
-    if (card.cardNumber) parts.push(`[${card.cardNumber}]`);
-    if (setName) parts.push(`(${setName})`);
-    parts.push(langStr);
+    if (nameWords) parts.push(nameWords);
+    if (setAbbr) parts.push(setAbbr);
+    if (numPart) parts.push(numPart);
+    if (lang === 'japanese') parts.push('japanese');
     parts.push('pokemon');
+
     return parts.join(' ').replace(/\s+/g, ' ').trim();
   }
 
@@ -144,46 +161,63 @@
   }
 
   function matchCard(card, results) {
+    // ─── 三重驗證：全部通過才儲存 specId，不猜測，不 fallback ─────────────
     const lang = detectLanguage(card);
     const pureNum = extractPureNumber(card.cardNumber);
+    const cardNumber = card.cardNumber || '';
     const setName = card.setName || '';
     const series = card.series || '';
     const setKeywords = PSA_SET_KEYWORDS[setName] || PSA_SET_KEYWORDS[series] || [];
+
+    // 從卡號提取 set abbreviation（例如 "EBB" from "EBB 093/093"）
+    const setAbbr = cardNumber.match(/^([A-Z][A-Z0-9\-]{1,5})\s/)?.[1]?.toLowerCase() || '';
 
     for (const result of results) {
       const title = result.title.toLowerCase();
       const resultSetName = (result.setName || '').toLowerCase();
       const resultSetNumber = (result.setNumber || '').toLowerCase();
 
-      if (pureNum) {
-        const numPattern = new RegExp(`#${pureNum}\\b|\\b${pureNum}\\b`);
-        const numInTitle = numPattern.test(result.title);
-        const numInSetNumber = resultSetNumber === pureNum.padStart(3, '0') ||
-                               resultSetNumber === pureNum ||
-                               resultSetNumber.startsWith(pureNum + '/');
-        if (!numInTitle && !numInSetNumber) continue;
-      }
+      // ── 第一層：卡號精確匹配（必須通過）──────────────────────────────────
+      // pureNum 必須精確出現在 setNumber 或 title 中
+      if (!pureNum) continue;  // 沒有卡號的卡片跳過（無法驗證）
 
+      const paddedNum = pureNum.padStart(3, '0');
+      const numInSetNumber =
+        resultSetNumber === paddedNum ||
+        resultSetNumber === pureNum ||
+        resultSetNumber.startsWith(paddedNum + '/') ||
+        resultSetNumber.startsWith(pureNum + '/');
+
+      if (!numInSetNumber) continue;  // setNumber 不符合，直接跳過
+
+      // ── 第二層：語言匹配（必須通過）──────────────────────────────────────
       if (lang === 'japanese') {
-        if (!title.includes('japanese') && !title.includes('japan') && !title.includes('jp ') &&
-            !resultSetName.includes('japanese') && !resultSetName.includes('japan')) continue;
+        // 日文卡必須在 title 或 setName 中有 japanese/japan 字樣
+        const isJapanese =
+          title.includes('japanese') || title.includes('japan') ||
+          resultSetName.includes('japanese') || resultSetName.includes('japan');
+        if (!isJapanese) continue;
       } else {
-        if (title.includes('japanese') || title.includes('japan') ||
-            resultSetName.includes('japanese') || resultSetName.includes('japan')) continue;
+        // 英文卡不能有 japanese/japan 字樣
+        const isJapanese =
+          title.includes('japanese') || title.includes('japan') ||
+          resultSetName.includes('japanese') || resultSetName.includes('japan');
+        if (isJapanese) continue;
       }
 
+      // ── 第三層：系列匹配（有 keywords 時必須通過）────────────────────────
       if (setKeywords.length > 0) {
         const hasSetMatch = setKeywords.some(kw =>
           title.includes(kw.toLowerCase()) || resultSetName.includes(kw.toLowerCase())
         );
-        if (!hasSetMatch) {
-          const setWords = setName.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-          const hasFallback = setWords.length > 0 && setWords.some(w =>
-            title.includes(w) || resultSetName.includes(w)
-          );
-          if (!hasFallback) continue;
-        }
+        if (!hasSetMatch) continue;  // 系列不符合，直接跳過（不 fallback）
+      } else if (setAbbr) {
+        // 沒有 PSA_SET_KEYWORDS 但有 setAbbr，嘗試用 setAbbr 匹配 setName
+        const abbrInSet = resultSetName.includes(setAbbr) || title.includes(setAbbr);
+        if (!abbrInSet) continue;
       }
+
+      // 三層全部通過
       return result.specId;
     }
     return null;
