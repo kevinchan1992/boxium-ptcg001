@@ -93,9 +93,9 @@ jobs:
         run: |
           mkdir -p /tmp/psa-runner
           cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
-          cp scripts/package.json /tmp/psa-runner/
+          cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
-          npm install --ignore-scripts
+          npm install
           echo "✅ Dependencies installed (mysql2 + cheerio)"
 
       - name: Run PSA matcher — single card mode
@@ -148,9 +148,9 @@ jobs:
         run: |
           mkdir -p /tmp/psa-runner
           cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
-          cp scripts/package.json /tmp/psa-runner/
+          cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
-          npm install --ignore-scripts
+          npm install
           echo "✅ Dependencies installed (mysql2 + cheerio)"
 
       - name: Run PSA matcher — shard ${{ matrix.batch_index }}
