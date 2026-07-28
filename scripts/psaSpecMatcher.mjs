@@ -1,8 +1,10 @@
 /**
- * PSA Spec ID Batch Matcher v3.0 (Playwright + Full Login)
+ * PSA Spec ID Batch Matcher v4.0 (Playwright-Extra Stealth + RSC Payload Extraction)
  *
- * Strategy: Precise 3-Layer Matching using Playwright (bypasses Cloudflare + Login)
- *   - Login: Playwright navigates to PSA login page, enters email/password
+ * Strategy: Precise 3-Layer Matching using Playwright-Extra Stealth
+ *   - Stealth: playwright-extra + puppeteer-extra-plugin-stealth bypasses Cloudflare Bot Management
+ *   - Login: Fixed Continue button detection (avoids cookie banner close button)
+ *   - Extraction: RSC payload parsing (no JS hydration wait needed)
  *   - Layer 1: Card number exact match (e.g., "#141", "#293")
  *   - Layer 2: Language match (japanese / EN)
  *   - Layer 3: Series/set keyword match
@@ -23,8 +25,12 @@
  *   HEADLESS        Set to 'false' for debugging (default: true)
  */
 
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { createConnection } from 'mysql2/promise';
+
+// Enable stealth mode to bypass Cloudflare Bot Management
+chromium.use(StealthPlugin());
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const DB_URL = process.env.DATABASE_URL;
@@ -78,31 +84,8 @@ const BROWSER_PROFILES = [
 ];
 const PROFILE = BROWSER_PROFILES[BATCH_INDEX % BROWSER_PROFILES.length];
 
-// ─── Stealth Script ───────────────────────────────────────────────────────────
-const STEALTH_SCRIPT = `
-  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-  Object.defineProperty(navigator, 'plugins', {
-    get: () => {
-      const arr = [
-        { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
-        { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' },
-        { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' },
-      ];
-      arr.__proto__ = PluginArray.prototype;
-      return arr;
-    }
-  });
-  Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-  window.chrome = { runtime: {}, loadTimes: function(){}, csi: function(){}, app: {} };
-  const _origQuery = window.navigator.permissions.query;
-  window.navigator.permissions.query = (p) =>
-    p.name === 'notifications'
-      ? Promise.resolve({ state: Notification.permission })
-      : _origQuery(p);
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-`;
+// Stealth is now handled by playwright-extra StealthPlugin (above)
+// No manual stealth script needed
 
 // ─── PSA Series Keyword Map ───────────────────────────────────────────────────
 const PSA_SET_KEYWORDS = {
@@ -219,27 +202,50 @@ function extractPureNumber(cardNumber) {
   return m ? m[1] : null;
 }
 
-// ─── Parse Search Results from HTML ──────────────────────────────────────────
+// ─── Parse Search Results from RSC Payload ───────────────────────────────────
+// PSA uses Next.js RSC (React Server Components). Search results are embedded
+// in <script> tags as self.__next_f.push([1,"..."])  JSON payloads.
+// Each result has: specId, setName, collectibleYear, collectibleSubject, variety, setNumber
 function parseSearchResults(html) {
   const results = [];
-  const linkRegex = /<a[^>]+href=["']([^"']*\/spec\/psa\/[^"']*)["'][^>]*>(.*?)<\/a>/gis;
-  let m;
-  while ((m = linkRegex.exec(html)) !== null) {
-    const href = m[1];
-    const rawText = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const specMatch = href.match(/\/spec\/psa\/(\d+)/);
-    if (!specMatch) continue;
-    const specId = specMatch[1];
-    if (specId && rawText) {
-      results.push({ specId, title: rawText });
+  const seen = new Set();
+
+  // Method 1: Extract from RSC payload (self.__next_f.push)
+  // The payload contains dehydrated React Query state with search results
+  const rscRegex = /self\.__next_f\.push\(\[1,"(.*?)"\]\)/gs;
+  let rscMatch;
+  while ((rscMatch = rscRegex.exec(html)) !== null) {
+    const raw = rscMatch[1];
+    // Decode escaped JSON string
+    const decoded = raw.replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\n/g, '\n');
+    // Find all specId occurrences
+    const specRegex = /"specId":(\d+),"categoryId":\d+,"setName":"([^"]*)","collectibleYear":"([^"]*)","collectibleSubject":"([^"]*)","variety":"([^"]*)","setNumber":"([^"]*)"/g;
+    let m;
+    while ((m = specRegex.exec(decoded)) !== null) {
+      const [, specId, setName, year, subject, variety, setNumber] = m;
+      if (seen.has(specId)) continue;
+      seen.add(specId);
+      // Build a title string for matching (same format as before)
+      const title = `${subject} ${setName} ${setNumber} ${variety} ${year}`.trim();
+      results.push({ specId, title, setName, year, subject, variety, setNumber });
     }
   }
-  const seen = new Set();
-  return results.filter(r => {
-    if (seen.has(r.specId)) return false;
-    seen.add(r.specId);
-    return true;
-  });
+
+  // Method 2: Fallback — extract from href links (old format, in case RSC changes)
+  if (results.length === 0) {
+    const linkRegex = /<a[^>]+href=["']([^"']*\/auctionprices\/[^"']*\/values\/[^"']*\/(\d+))["'][^>]*>(.*?)<\/a>/gis;
+    let m;
+    while ((m = linkRegex.exec(html)) !== null) {
+      const specId = m[2];
+      const rawText = m[3].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (specId && rawText && !seen.has(specId)) {
+        seen.add(specId);
+        results.push({ specId, title: rawText });
+      }
+    }
+  }
+
+  return results;
 }
 
 // ─── Match Card Against PSA Results ──────────────────────────────────────────
@@ -252,27 +258,43 @@ function matchCard(card, results) {
   const setKeywords = PSA_SET_KEYWORDS[setName] || PSA_SET_KEYWORDS[series] || [];
 
   for (const result of results) {
+    // Use combined title for text matching
     const title = result.title.toLowerCase();
+    // Also check structured fields if available (from RSC payload)
+    const resultSetName = (result.setName || '').toLowerCase();
+    const resultSetNumber = (result.setNumber || '').toLowerCase();
+    const resultSubject = (result.subject || '').toLowerCase();
 
     // Layer 1: Card number exact match
     if (pureNum) {
+      // Check in title OR in structured setNumber field
       const numPattern = new RegExp(`#${pureNum}\\b|\\b${pureNum}\\b`);
-      if (!numPattern.test(result.title)) continue;
+      const numInTitle = numPattern.test(result.title);
+      const numInSetNumber = resultSetNumber === pureNum.padStart(3, '0') ||
+                             resultSetNumber === pureNum ||
+                             resultSetNumber.startsWith(pureNum + '/');
+      if (!numInTitle && !numInSetNumber) continue;
     }
 
     // Layer 2: Language match
     if (lang === 'japanese') {
-      if (!title.includes('japanese') && !title.includes('japan') && !title.includes('jp ')) continue;
+      if (!title.includes('japanese') && !title.includes('japan') && !title.includes('jp ') &&
+          !resultSetName.includes('japanese') && !resultSetName.includes('japan')) continue;
     } else {
-      if (title.includes('japanese') || title.includes('japan')) continue;
+      if (title.includes('japanese') || title.includes('japan') ||
+          resultSetName.includes('japanese') || resultSetName.includes('japan')) continue;
     }
 
     // Layer 3: Series/set keyword match
     if (setKeywords.length > 0) {
-      const hasSetMatch = setKeywords.some(kw => title.includes(kw.toLowerCase()));
+      const hasSetMatch = setKeywords.some(kw =>
+        title.includes(kw.toLowerCase()) || resultSetName.includes(kw.toLowerCase())
+      );
       if (!hasSetMatch) {
         const setWords = setName.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-        const hasFallback = setWords.length > 0 && setWords.some(w => title.includes(w));
+        const hasFallback = setWords.length > 0 && setWords.some(w =>
+          title.includes(w) || resultSetName.includes(w)
+        );
         if (!hasFallback) continue;
       }
     }
@@ -295,138 +317,65 @@ async function loginToPsa(page) {
 
   console.log('[PSA Login] Navigating to PSA login page...');
   try {
-    // Navigate to a page that will redirect to login
-    await page.goto('https://www.psacard.com/myaccount/signin', {
-      waitUntil: 'domcontentloaded',
-      timeout: 30000,
-    });
-
-    await sleep(2000);
+    await page.goto(
+      'https://app.collectors.com/signin?b=psa&r=https%3A%2F%2Fwww.psacard.com%2Fmyaccount',
+      { waitUntil: 'networkidle', timeout: 30000 }
+    );
+    await sleep(1000);
 
     const url = page.url();
     console.log(`[PSA Login] Current URL: ${url}`);
-
-    // Check if we're on an Auth0 login page or PSA login page
     const pageTitle = await page.title();
     console.log(`[PSA Login] Page title: ${pageTitle}`);
 
-    // Look for email input field
-    const emailSelectors = [
-      'input[type="email"]',
-      'input[name="email"]',
-      'input[id="email"]',
-      'input[placeholder*="email" i]',
-      'input[placeholder*="Email" i]',
-    ];
+    // Fill email
+    const emailInput = await page.$('input[name="email"], input[type="email"], input#email');
+    if (!emailInput) {
+      console.log('[PSA Login] ⚠️ Could not find email input');
+      return false;
+    }
+    await emailInput.fill(PSA_EMAIL);
+    console.log('[PSA Login] Found email input: input[name="email"]');
 
-    let emailInput = null;
-    for (const sel of emailSelectors) {
-      try {
-        emailInput = await page.waitForSelector(sel, { timeout: 5000 });
-        if (emailInput) {
-          console.log(`[PSA Login] Found email input: ${sel}`);
-          break;
-        }
-      } catch (e) {
-        // try next selector
+    // Click the CORRECT Continue button — NOT the cookie banner close button.
+    // The page has multiple button[type="submit"]: first is cookie banner "Close",
+    // last is the actual "Continue" button. Use text-based detection.
+    const allSubmitBtns = await page.$$('button[type="submit"]');
+    let continueClicked = false;
+    for (const btn of allSubmitBtns) {
+      const text = (await btn.textContent() || '').trim().toLowerCase();
+      if (text.includes('continue') || text.includes('next')) {
+        console.log('[PSA Login] Found continue button: text-based detection');
+        await btn.click();
+        continueClicked = true;
+        break;
       }
     }
-
-    if (!emailInput) {
-      console.log('[PSA Login] ⚠️ Could not find email input, trying alternative login flow...');
-      // Try clicking continue/next button if there's a two-step login
-      const html = await page.content();
-      console.log(`[PSA Login] Page HTML snippet: ${html.slice(0, 500)}`);
+    if (!continueClicked) {
+      console.log('[PSA Login] ⚠️ Could not find Continue button');
       return false;
     }
 
-    // Type email
-    await emailInput.click();
-    await emailInput.fill(PSA_EMAIL);
-    await sleep(500);
-
-    // Look for "Continue" button (Auth0 two-step login)
-    const continueSelectors = [
-      'button[type="submit"]',
-      'button:has-text("Continue")',
-      'button:has-text("Next")',
-      'input[type="submit"]',
-    ];
-
-    let continueBtn = null;
-    for (const sel of continueSelectors) {
-      try {
-        continueBtn = await page.$(sel);
-        if (continueBtn) {
-          console.log(`[PSA Login] Found continue button: ${sel}`);
-          break;
-        }
-      } catch (e) {
-        // try next
-      }
+    // Wait for password field to appear
+    try {
+      await page.waitForSelector('input[type="password"]', { timeout: 15000 });
+      console.log('[PSA Login] Found password input: input[type="password"]');
+    } catch (e) {
+      console.log('[PSA Login] ⚠️ Password field did not appear');
+      return false;
     }
 
-    if (continueBtn) {
-      await continueBtn.click();
-      await sleep(2000);
-    }
-
-    // Now look for password input
-    const passwordSelectors = [
-      'input[type="password"]',
-      'input[name="password"]',
-      'input[id="password"]',
-    ];
-
-    let passwordInput = null;
-    for (const sel of passwordSelectors) {
-      try {
-        passwordInput = await page.waitForSelector(sel, { timeout: 5000 });
-        if (passwordInput) {
-          console.log(`[PSA Login] Found password input: ${sel}`);
-          break;
-        }
-      } catch (e) {
-        // try next selector
-      }
-    }
-
+    const passwordInput = await page.$('input[type="password"]');
     if (!passwordInput) {
       console.log('[PSA Login] ⚠️ Could not find password input');
       return false;
     }
-
-    // Type password
-    await passwordInput.click();
     await passwordInput.fill(PSA_PASSWORD);
-    await sleep(500);
 
     // Submit login form
-    const submitSelectors = [
-      'button[type="submit"]',
-      'button:has-text("Sign In")',
-      'button:has-text("Log In")',
-      'button:has-text("Login")',
-      'button:has-text("Continue")',
-      'input[type="submit"]',
-    ];
-
-    let submitBtn = null;
-    for (const sel of submitSelectors) {
-      try {
-        submitBtn = await page.$(sel);
-        if (submitBtn) {
-          console.log(`[PSA Login] Found submit button: ${sel}`);
-          break;
-        }
-      } catch (e) {
-        // try next
-      }
-    }
-
-    // Click submit and wait for navigation in parallel
     console.log('[PSA Login] Submitting login form...');
     const navigationPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => null);
+    const submitBtn = await page.$('button[type="submit"]');
     if (submitBtn) {
       await submitBtn.click();
     } else {
@@ -594,7 +543,7 @@ async function markCardAsAttempted(conn, cardId) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`PSA Spec Matcher v3.0 (Playwright + Full Login)`);
+  console.log(`PSA Spec Matcher v4.0 (Playwright-Extra Stealth + RSC Extraction)`);
   console.log(`Shard: ${BATCH_INDEX}/${TOTAL_BATCHES}`);
   console.log(`Cards per batch: ${CARDS_PER_BATCH}`);
   console.log(`Rematch after: ${REMATCH_DAYS} days`);
@@ -624,6 +573,7 @@ async function main() {
 
   // ─── Launch Playwright Browser ────────────────────────────────────────────
   console.log(`[PSA] Launching Playwright (headless=${HEADLESS})...`);
+  // playwright-extra + StealthPlugin handles CF Bot Management automatically
   const browser = await chromium.launch({
     headless: HEADLESS,
     args: [
@@ -634,9 +584,6 @@ async function main() {
       '--no-first-run',
       '--no-zygote',
       '--disable-gpu',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-features=IsolateOrigins,site-per-process',
-      `--lang=${PROFILE.language.split(',')[0]}`,
     ],
   });
 
@@ -659,9 +606,6 @@ async function main() {
   await context.route('**/gtag**', r => r.abort());
   await context.route('**/googletagmanager**', r => r.abort());
 
-  // Inject stealth script
-  await context.addInitScript(STEALTH_SCRIPT);
-
   const page = await context.newPage();
 
   // ─── Login to PSA ─────────────────────────────────────────────────────────
@@ -670,6 +614,7 @@ async function main() {
   if (!loginSuccess) {
     console.log('[PSA] ⚠️ Login failed. Will attempt searches anyway (may fail).');
   }
+  console.log('[PSA] Using playwright-extra stealth mode (CF bypass active)');
 
   let matched = 0;
   let noMatch = 0;
@@ -694,7 +639,7 @@ async function main() {
       }
 
       const results = parseSearchResults(html);
-      console.log(`  Found ${results.length} PSA results`);
+      console.log(`  Found ${results.length} PSA results (RSC payload)`);
 
       const specId = matchCard(card, results);
 
