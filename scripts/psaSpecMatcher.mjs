@@ -442,14 +442,11 @@ async function fetchPsaSearchPage(page, query, retries = 3) {
       const status = response ? response.status() : 0;
       if (status === 429) {
         // Exponential backoff: 60s, 120s, 180s
+        // Do NOT re-login here — CF will block login attempts after rate limiting
+        // Just wait and retry with existing session
         const wait = attempt * 60000;
         console.log(`  [Rate Limited] Waiting ${wait / 1000}s before retry ${attempt}/${retries}...`);
         await sleep(wait);
-        // Re-login after rate limit — session may have been invalidated
-        if (attempt < retries) {
-          console.log(`  [Rate Limited] Re-logging in after rate limit...`);
-          await loginToPsa(page);
-        }
         continue;
       }
 
@@ -558,7 +555,7 @@ async function markCardAsAttempted(conn, cardId) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`PSA Spec Matcher v4.1 (Stealth + RSC + Browser Crash Recovery)`);
+  console.log(`PSA Spec Matcher v4.2 (Stealth + RSC + Crash Recovery + Rate Limit Fix)`);
   console.log(`Shard: ${BATCH_INDEX}/${TOTAL_BATCHES}`);
   console.log(`Cards per batch: ${CARDS_PER_BATCH}`);
   console.log(`Rematch after: ${REMATCH_DAYS} days`);
