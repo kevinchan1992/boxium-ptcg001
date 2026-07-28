@@ -39,7 +39,7 @@ const DELAY_MS = parseInt(process.env.DELAY_MS ?? '3000', 10);
 const CARDS_PER_WORKER = parseInt(process.env.CARDS_PER_WORKER ?? '0', 10);
 const REMATCH_DAYS = parseInt(process.env.REMATCH_DAYS ?? '30', 10);
 const TEST_MODE = process.argv.includes('--test') || process.env.TEST_MODE === 'true';
-const HEADLESS = process.env.HEADLESS !== 'false'; // default true
+const HEADLESS = process.env.HEADLESS === 'true'; // default false (visible browser)
 const ACCOUNTS_FILE = join(__dirname, 'accounts.json');
 
 // ─── PSA Series Keyword Map ───────────────────────────────────────────────────
@@ -433,15 +433,16 @@ async function fetchPsaPagePlaywright(page, query, workerIdx) {
       // Handle CF challenge
       const titleText = await page.title();
       if (titleText.includes('Just a moment')) {
-        console.log(`  [W${workerIdx}] CF challenge, waiting up to 20s...`);
+        console.log(`  [W${workerIdx}] CF challenge detected, waiting up to 60s for browser to solve...`);
         try {
-          await page.waitForFunction(() => !document.title.includes('Just a moment'), { timeout: 20000 });
+          await page.waitForFunction(() => !document.title.includes('Just a moment'), { timeout: 60000 });
+          console.log(`  [W${workerIdx}] CF challenge solved!`);
         } catch {
-          console.log(`  [W${workerIdx}] CF challenge timeout, retrying...`);
-          await sleep(5000);
+          console.log(`  [W${workerIdx}] CF challenge timeout after 60s, retrying...`);
+          await sleep(10000);
           continue;
         }
-        await sleep(1500);
+        await sleep(2000);
       }
 
       // Wait for Next.js RSC data to be injected
@@ -489,16 +490,26 @@ async function runWorker(workerIdx, totalWorkers, account, sharedStats) {
       '--disable-blink-features=AutomationControlled',
       '--disable-infobars',
       '--disable-dev-shm-usage',
+      '--window-size=1280,900',
+      '--start-maximized',
     ],
   });
 
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1280, height: 900 },
     locale: 'en-US',
     extraHTTPHeaders: {
       'Accept-Language': 'en-US,en;q=0.9',
     },
+  });
+
+  // Stealth: hide webdriver flag
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+    window.chrome = { runtime: {} };
   });
 
   const page = await context.newPage();
