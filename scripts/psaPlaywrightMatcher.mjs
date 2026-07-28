@@ -645,10 +645,16 @@ async function main() {
     process.exit(1);
   }
 
-  const accounts = JSON.parse(readFileSync(ACCOUNTS_FILE, 'utf8'));
-  const validAccounts = accounts.filter(a => a.email && a.password && a.password !== 'your-password');
+  // Strip BOM if present (Windows Notepad adds UTF-8 BOM)
+  const rawJson = readFileSync(ACCOUNTS_FILE, 'utf8').replace(/^\uFEFF/, '');
+  const accounts = JSON.parse(rawJson);
+  // Valid if has email + (password OR cookies)
+  const validAccounts = accounts.filter(a => a.email && (
+    (a.cookies && Array.isArray(a.cookies) && a.cookies.length > 0) ||
+    (a.password && a.password !== 'your-password')
+  ));
   if (!validAccounts.length) {
-    console.error('❌ No valid accounts in accounts.json. Please add email and password.');
+    console.error('❌ No valid accounts in accounts.json. Please add email with cookies or password.');
     process.exit(1);
   }
 
