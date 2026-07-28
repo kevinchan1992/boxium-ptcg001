@@ -431,19 +431,35 @@ async function loginToPsa(page) {
       await passwordInput.press('Enter');
     }
 
-    // Wait for navigation after login
-    console.log('[PSA Login] Waiting for login to complete...');
-    await sleep(5000);
+    // Wait for navigation after login — PSA uses Auth0 brandsignin which may take several redirects
+    console.log('[PSA Login] Waiting for login redirects to complete...');
+    try {
+      // Wait for navigation to settle (up to 15 seconds)
+      await page.waitForURL(
+        url => !url.includes('signin') && !url.includes('login') && !url.includes('brandsignin'),
+        { timeout: 15000 }
+      );
+    } catch (e) {
+      // waitForURL timed out — check current URL anyway
+      console.log(`[PSA Login] waitForURL timeout: ${e.message.slice(0, 60)}`);
+    }
+
+    // Extra wait for any remaining JS redirects
+    await sleep(3000);
 
     const finalUrl = page.url();
     console.log(`[PSA Login] Post-login URL: ${finalUrl}`);
 
-    // Check if login was successful (no longer on signin page)
-    if (finalUrl.includes('signin') || finalUrl.includes('login')) {
-      console.log('[PSA Login] ⚠️ Still on login page, login may have failed');
-      const errHtml = await page.content();
-      const errMatch = errHtml.match(/error[^<]{0,200}/i);
-      if (errMatch) console.log(`[PSA Login] Error text: ${errMatch[0]}`);
+    // Check if login was successful (no longer on signin/login/brandsignin page)
+    if (finalUrl.includes('signin') || finalUrl.includes('login') || finalUrl.includes('brandsignin')) {
+      console.log('[PSA Login] ⚠️ Still on auth page, login may have failed');
+      try {
+        const errHtml = await page.content();
+        const errMatch = errHtml.match(/error[^<]{0,200}/i);
+        if (errMatch) console.log(`[PSA Login] Error text: ${errMatch[0]}`);
+      } catch (contentErr) {
+        console.log(`[PSA Login] Could not read page content: ${contentErr.message.slice(0, 60)}`);
+      }
       return false;
     }
 
