@@ -95,20 +95,27 @@ jobs:
           cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
           cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
-          npm install
-          ls node_modules/cheerio && echo "✅ cheerio installed" || echo "❌ cheerio NOT found"
-          ls node_modules/mysql2 && echo "✅ mysql2 installed" || echo "❌ mysql2 NOT found"
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed (mysql2 + playwright)"
+
+      - name: Install Playwright Chromium browser
+        run: |
+          cd /tmp/psa-runner
+          npx playwright install chromium --with-deps
+          echo "✅ Playwright Chromium installed."
 
       - name: Run PSA matcher — single card mode
         working-directory: /tmp/psa-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
           BATCH_INDEX: '0'
           TOTAL_BATCHES: '1'
           CARDS_PER_BATCH: '999'
           CARD_IDS: ${{ needs.preflight.outputs.card_ids }}
           REMATCH_DAYS: '0'
           DELAY_MS: ${{ needs.preflight.outputs.delay_ms }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
           echo "=== PSA Spec Matcher — Single Card Mode ==="
@@ -151,22 +158,29 @@ jobs:
           cp scripts/psaSpecMatcher.mjs /tmp/psa-runner/
           cp scripts/package.matcher.json /tmp/psa-runner/package.json
           cd /tmp/psa-runner
-          npm install
-          ls node_modules/cheerio && echo "✅ cheerio installed" || echo "❌ cheerio NOT found"
-          ls node_modules/mysql2 && echo "✅ mysql2 installed" || echo "❌ mysql2 NOT found"
+          npm install --ignore-scripts
+          echo "✅ Dependencies installed (mysql2 + playwright)"
+
+      - name: Install Playwright Chromium browser
+        run: |
+          cd /tmp/psa-runner
+          npx playwright install chromium --with-deps
+          echo "✅ Playwright Chromium installed."
 
       - name: Run PSA matcher — shard ${{ matrix.batch_index }}
         working-directory: /tmp/psa-runner
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PSA_REFRESH_TOKEN: ${{ secrets.PSA_REFRESH_TOKEN }}
           BATCH_INDEX: ${{ matrix.batch_index }}
           TOTAL_BATCHES: ${{ needs.preflight.outputs.total_batches }}
           CARDS_PER_BATCH: ${{ needs.preflight.outputs.cards_per_batch }}
           REMATCH_DAYS: ${{ needs.preflight.outputs.rematch_days }}
           DELAY_MS: ${{ needs.preflight.outputs.delay_ms }}
+          HEADLESS: ${{ github.event.inputs.headless || 'true' }}
           NODE_ENV: 'production'
         run: |
-          echo "=== PSA Spec Matcher v1.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
+          echo "=== PSA Spec Matcher v2.0 | Shard ${{ matrix.batch_index }} / ${{ needs.preflight.outputs.total_batches }} ==="
           echo "Cards per shard: ${{ needs.preflight.outputs.cards_per_batch }}"
           node psaSpecMatcher.mjs
 
