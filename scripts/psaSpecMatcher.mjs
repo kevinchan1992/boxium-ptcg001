@@ -315,16 +315,17 @@ async function getCardsToProcess(conn) {
     // Skip cards that have already been successfully matched (psaSpecId IS NOT NULL)
     // Only retry cards that were attempted but failed (psaMatchedAt IS NOT NULL AND psaSpecId IS NULL)
     //   if they haven't been retried within REMATCH_DAYS
+    // Use literal values for LIMIT and MOD to avoid mysql2 prepared statement type issues
     query = `
       SELECT id, cardId, name, nameJa, series, setName, cardNumber, language, rarity
       FROM cards
-      WHERE MOD(id, ?) = ?
+      WHERE MOD(id, ${TOTAL_BATCHES}) = ${BATCH_INDEX}
         AND psaSpecId IS NULL
         AND (psaMatchedAt IS NULL OR psaMatchedAt < ?)
       ORDER BY psaMatchedAt ASC, id ASC
-      LIMIT ?
+      LIMIT ${CARDS_PER_BATCH}
     `;
-    params = [TOTAL_BATCHES, BATCH_INDEX, cutoffStr, CARDS_PER_BATCH];
+    params = [cutoffStr];
   }
 
   const [rows] = await conn.execute(query, params);
