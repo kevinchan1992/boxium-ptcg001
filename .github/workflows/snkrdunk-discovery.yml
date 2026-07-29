@@ -56,3 +56,4 @@ jobs:
           name: discovery-failure-logs
           path: scripts/*.log
           retention-days: 7
+
