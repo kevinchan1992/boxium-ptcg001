@@ -112,15 +112,21 @@ function extractApparelIds(html) {
 
 // Extract card info from apparel page HTML
 function extractCardInfo(html, apparelId) {
-  // Extract Japanese name (og:title or h1)
+  // Extract Japanese name: prefer h1 (clean), fallback to og:title (strip suffix)
   let nameJa = '';
-  const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/);
-  if (ogTitle) {
-    nameJa = ogTitle[1].replace(/\s*-\s*SNKRDUNK.*$/, '').trim();
+  const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
+  if (h1Match) {
+    nameJa = h1Match[1].trim();
   }
   if (!nameJa) {
-    const h1 = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    if (h1) nameJa = h1[1].trim();
+    const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/);
+    if (ogTitle) {
+      // Strip SNKRDUNK suffix: 「通販・買取・相場｜スニダン」
+      nameJa = ogTitle[1]
+        .replace(/[\s　]*通販[・・]買取[・・]相場[\s　]*[|｜][\s　]*スニダン.*$/u, '')
+        .replace(/\s*-\s*SNKRDUNK.*$/i, '')
+        .trim();
+    }
   }
 
   // Extract English name (og:description or meta description)
@@ -128,16 +134,25 @@ function extractCardInfo(html, apparelId) {
   const metaDesc = html.match(/<meta name="description" content="([^"]+)"/);
   if (metaDesc) {
     // Try to extract English name from description
-    const engMatch = metaDesc[1].match(/^([A-Za-z0-9\s\-\[\]\/\(\)\.,'&!?:]+)/);
+    const engMatch = metaDesc[1].match(/^([A-Za-z0-9\s\-\[\]\/\(\)\.,\'&!?:]+)/);
     if (engMatch && engMatch[1].trim().length > 3) {
       name = engMatch[1].trim();
     }
   }
 
-  // Extract image URL
+  // Extract image URL: prefer upload_bg_removed (actual card image), fallback to og:image
   let imageUrl = null;
-  const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/);
-  if (ogImage) imageUrl = ogImage[1];
+  // Pattern: cdn.snkrdunk.com/upload_bg_removed/{uuid}.webp
+  const bgRemovedMatch = html.match(/https:\/\/cdn\.snkrdunk\.com\/upload_bg_removed\/[a-f0-9\-]+\.webp/);
+  if (bgRemovedMatch) {
+    imageUrl = bgRemovedMatch[0];
+  } else {
+    // Fallback: og:image (may be the generic SNKRDUNK OGP image)
+    const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/);
+    if (ogImage && !ogImage[1].includes('og-image.png')) {
+      imageUrl = ogImage[1];
+    }
+  }
 
   // Extract card number from name (e.g., "[SM-P 288]" or "[M2a 223/193]")
   let cardNumber = null;
