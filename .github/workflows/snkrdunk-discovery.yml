@@ -2,8 +2,8 @@ name: SNKRDUNK Discovery (Weekly)
 
 on:
   schedule:
-    # Every Monday at HKT 04:00 (UTC 20:00 Sunday)
-    - cron: '0 20 * * 0'
+    # Every Thursday at HKT 11:00 (UTC 03:00 Thursday)
+    - cron: '0 3 * * 4'
   workflow_dispatch:
     inputs:
       max_new_per_brand:
