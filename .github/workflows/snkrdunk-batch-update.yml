@@ -45,7 +45,7 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read
+  actions: write  # Required to trigger workflow_dispatch
 
 jobs:
   batch-update:
@@ -195,6 +195,20 @@ jobs:
           echo "MAX_NEW_PER_BRAND=$MAX_NEW_PER_BRAND"
           echo "MAX_PAGES_PER_BRAND=$MAX_PAGES_PER_BRAND"
           node githubActionsSnkrdunkDiscovery.mjs
+
+      - name: Trigger batch-update to scrape newly discovered cards
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Discovery complete. Triggering batch-update to scrape new cards (SKIP_HOURS=0)..."
+          gh workflow run snkrdunk-batch-update.yml \
+            --repo ${{ github.repository }} \
+            --field skip_hours=0 \
+            --field parallel=8 \
+            --field batch_limit=0 \
+            --field skip_discovery=true
+          echo "Batch-update triggered successfully. New cards will be scraped shortly."
 
       - name: Upload discovery logs on failure
         if: failure()
