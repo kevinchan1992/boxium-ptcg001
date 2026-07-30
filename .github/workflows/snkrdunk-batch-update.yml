@@ -29,9 +29,9 @@ on:
         required: false
         default: '200'
       max_pages_per_brand:
-        description: '[Discovery] Max search pages to scan per brand (default: 50)'
+        description: '[Discovery] Max search pages per brand (default: unlimited, scan to last page)'
         required: false
-        default: '50'
+        default: '99999'
       skip_discovery:
         description: '[Discovery] Skip discovery job (true/false, default: false)'
         required: false

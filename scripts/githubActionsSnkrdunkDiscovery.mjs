@@ -28,10 +28,10 @@ import mysql from 'mysql2/promise';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
-  MAX_NEW_PER_BRAND: parseInt(process.env.MAX_NEW_PER_BRAND || '200', 10),
+  MAX_NEW_PER_BRAND: parseInt(process.env.MAX_NEW_PER_BRAND || '99999', 10),
   DELAY_MS: parseInt(process.env.DELAY_MS || '500', 10),
   REQUEST_TIMEOUT: 20000,
-  MAX_PAGES_PER_BRAND: parseInt(process.env.MAX_PAGES_PER_BRAND || '50', 10),
+  MAX_PAGES_PER_BRAND: parseInt(process.env.MAX_PAGES_PER_BRAND || '99999', 10), // No limit — scan until empty page
   USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 };
 
@@ -268,8 +268,8 @@ async function discoverBrand(brand, allExistingIds) {
   let page = 1;
   let consecutiveAllExisting = 0;
 
-  // Scan pages until we hit MAX_PAGES or MAX_NEW_PER_BRAND
-  while (page <= CONFIG.MAX_PAGES_PER_BRAND && newIds.length < CONFIG.MAX_NEW_PER_BRAND) {
+  // Scan all pages until empty page (no items found) or 25 consecutive pages with no new items
+  while (page <= CONFIG.MAX_PAGES_PER_BRAND) {
     const url = `https://snkrdunk.com/search/?brandIds=${brand.brandSlug}&searchCategoryIds=6%2F33&sortKey=latest&page=${page}`;
     
     let html;
@@ -346,7 +346,7 @@ async function discoverBrand(brand, allExistingIds) {
 async function main() {
   console.log('='.repeat(60));
   console.log('[SNKRDUNK Discovery] Starting v1.0');
-  console.log(`[Config] MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND}, MAX_PAGES=${CONFIG.MAX_PAGES_PER_BRAND}`);
+  console.log(`[Config] MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND === 99999 ? 'unlimited' : CONFIG.MAX_NEW_PER_BRAND}, MAX_PAGES=${CONFIG.MAX_PAGES_PER_BRAND === 99999 ? 'unlimited (scan to last page)' : CONFIG.MAX_PAGES_PER_BRAND}`);
   console.log('='.repeat(60));
 
   // Load all existing SNKRDUNK IDs once (for deduplication)
