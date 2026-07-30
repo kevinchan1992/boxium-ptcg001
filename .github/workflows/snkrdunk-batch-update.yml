@@ -32,8 +32,8 @@ on:
         description: '[Discovery] Max search pages to scan per brand (default: 50)'
         required: false
         default: '50'
-      run_discovery:
-        description: '[Discovery] Force run discovery job (true/false, default: false)'
+      skip_discovery:
+        description: '[Discovery] Skip discovery job (true/false, default: false)'
         required: false
         default: 'false'
 
@@ -162,10 +162,10 @@ jobs:
   # ── Weekly SNKRDUNK Card Discovery (every Thursday HKT 11:00) ───────────────
   discovery:
     name: Discover New SNKRDUNK Cards (Weekly)
-    # Run on Thursday UTC 03:00 schedule OR when manually triggered with run_discovery=true
+    # Run on Thursday UTC 03:00 schedule OR when manually triggered (unless skip_discovery=true)
     if: |
       (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 3 * * 4')) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_discovery == 'true')
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery != 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
