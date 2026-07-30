@@ -299,8 +299,8 @@ async function discoverBrand(brand, allExistingIds) {
     // If entire page has existing IDs, we've caught up
     if (newOnPage === 0) {
       consecutiveAllExisting++;
-      if (consecutiveAllExisting >= 3) {
-        console.log(`[Discovery] 3 consecutive pages with no new items, stopping scan`);
+      if (consecutiveAllExisting >= 25) {
+        console.log(`[Discovery] 25 consecutive pages with no new items, stopping scan`);
         break;
       }
     } else {
