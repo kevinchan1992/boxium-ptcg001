@@ -24,14 +24,6 @@ on:
         description: 'Re-check empty cards every N days (default: 7)'
         required: false
         default: '7'
-      max_new_per_brand:
-        description: '[Discovery] Max new cards to insert per brand (default: 200)'
-        required: false
-        default: '200'
-      max_pages_per_brand:
-        description: '[Discovery] Max search pages per brand (default: unlimited, scan to last page)'
-        required: false
-        default: '99999'
       skip_discovery:
         description: '[Discovery] Skip discovery job (true/false, default: false)'
         required: false
@@ -167,7 +159,7 @@ jobs:
       (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 3 * * 4')) ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery != 'true')
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -187,13 +179,10 @@ jobs:
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MAX_NEW_PER_BRAND: ${{ github.event.inputs.max_new_per_brand || '200' }}
-          MAX_PAGES_PER_BRAND: ${{ github.event.inputs.max_pages_per_brand || '50' }}
           DELAY_MS: '400'
         run: |
-          echo "Starting SNKRDUNK Discovery (Weekly - Thursday HKT 11:00)"
-          echo "MAX_NEW_PER_BRAND=$MAX_NEW_PER_BRAND"
-          echo "MAX_PAGES_PER_BRAND=$MAX_PAGES_PER_BRAND"
+          echo "Starting SNKRDUNK Discovery v2.0 (Batch Insert - Weekly Thursday HKT 11:00)"
+          echo "Mode: Batch insert (no per-card HTML fetch, batch-update fills details later)"
           node githubActionsSnkrdunkDiscovery.mjs
 
       - name: Trigger batch-update to scrape newly discovered cards

@@ -1,5 +1,5 @@
 /**
- * GitHub Actions SNKRDUNK Discovery Script v1.0
+ * GitHub Actions SNKRDUNK Discovery Script v2.0
  *
  * Automatically discovers NEW card URLs from SNKRDUNK for 7 TCG brands
  * and inserts them into the database (cards + dataSources tables).
@@ -13,15 +13,17 @@
  *   - Weiß Schwarz (gameId=60003)
  *   - Gundam Card Game (gameId=60004)
  *
- * Strategy:
+ * Strategy v2.0 (FAST BATCH INSERT):
  *   1. Fetch search pages (sortKey=latest) for each brand
  *   2. Extract apparel IDs from HTML
  *   3. Skip IDs already in dataSources table
- *   4. For new IDs: fetch apparel page, extract card info
- *   5. Insert into cards + dataSources tables
+ *   4. Batch INSERT new IDs directly into cards + dataSources (no per-card HTML fetch)
+ *      - cards: placeholder name = "SNKRDUNK Card {id}" (batch-update will fill details later)
+ *      - dataSources: sourceUrl + sourceIdentifier only (lastFetchedAt = NULL → batch-update priority)
+ *   5. batch-update workflow will auto-run after discovery to fill in card details
  *
  * Required env: DATABASE_URL
- * Optional env: MAX_NEW_PER_BRAND (default: 200), DELAY_MS (default: 500)
+ * Optional env: MAX_NEW_PER_BRAND (default: unlimited), DELAY_MS (default: 400, for HTTP only)
  */
 
 import mysql from 'mysql2/promise';
@@ -29,9 +31,10 @@ import mysql from 'mysql2/promise';
 // ─── Configuration ────────────────────────────────────────────────────────────
 const CONFIG = {
   MAX_NEW_PER_BRAND: parseInt(process.env.MAX_NEW_PER_BRAND || '99999', 10),
-  DELAY_MS: parseInt(process.env.DELAY_MS || '500', 10),
+  DELAY_MS: parseInt(process.env.DELAY_MS || '400', 10), // Only used for search page HTTP requests
   REQUEST_TIMEOUT: 20000,
   MAX_PAGES_PER_BRAND: parseInt(process.env.MAX_PAGES_PER_BRAND || '99999', 10), // No limit — scan until empty page
+  BATCH_SIZE: 500, // Number of cards to insert per batch SQL statement
   USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 };
 
@@ -85,7 +88,7 @@ async function fetchHtml(url) {
       },
     });
     if (res.status === 404) {
-      throw new Error('HTTP 404 Not Found - card may have been removed from SNKRDUNK');
+      throw new Error('HTTP 404 Not Found');
     }
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} - unexpected response`);
@@ -110,85 +113,7 @@ function extractApparelIds(html) {
   return ids;
 }
 
-// Extract card info from apparel page HTML
-function extractCardInfo(html, apparelId) {
-  // Extract Japanese name: prefer h1 (clean), fallback to og:title (strip suffix)
-  let nameJa = '';
-  const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-  if (h1Match) {
-    nameJa = h1Match[1].trim();
-  }
-  if (!nameJa) {
-    const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/);
-    if (ogTitle) {
-      // Strip SNKRDUNK suffix: 「通販・買取・相場｜スニダン」
-      nameJa = ogTitle[1]
-        .replace(/[\s　]*通販[・・]買取[・・]相場[\s　]*[|｜][\s　]*スニダン.*$/u, '')
-        .replace(/\s*-\s*SNKRDUNK.*$/i, '')
-        .trim();
-    }
-  }
-
-  // Extract English name (og:description or meta description)
-  let name = nameJa; // fallback to Japanese name
-  const metaDesc = html.match(/<meta name="description" content="([^"]+)"/);
-  if (metaDesc) {
-    // Try to extract English name from description
-    const engMatch = metaDesc[1].match(/^([A-Za-z0-9\s\-\[\]\/\(\)\.,\'&!?:]+)/);
-    if (engMatch && engMatch[1].trim().length > 3) {
-      name = engMatch[1].trim();
-    }
-  }
-
-  // Extract image URL: prefer upload_bg_removed (actual card image), fallback to og:image
-  let imageUrl = null;
-  // Pattern: cdn.snkrdunk.com/upload_bg_removed/{uuid}.webp
-  const bgRemovedMatch = html.match(/https:\/\/cdn\.snkrdunk\.com\/upload_bg_removed\/[a-f0-9\-]+\.webp/);
-  if (bgRemovedMatch) {
-    imageUrl = bgRemovedMatch[0];
-  } else {
-    // Fallback: og:image (may be the generic SNKRDUNK OGP image)
-    const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/);
-    if (ogImage && !ogImage[1].includes('og-image.png')) {
-      imageUrl = ogImage[1];
-    }
-  }
-
-  // Extract card number from name (e.g., "[SM-P 288]" or "[M2a 223/193]")
-  let cardNumber = null;
-  const cardNumMatch = nameJa.match(/\[([^\]]+)\]/);
-  if (cardNumMatch) cardNumber = cardNumMatch[1].trim();
-
-  // Extract set name from breadcrumb or title
-  let setName = null;
-  const breadcrumb = html.match(/breadcrumb[^>]*>.*?<\/[^>]+>/s);
-  if (breadcrumb) {
-    const parts = breadcrumb[0].match(/>[^<>]+</g);
-    if (parts && parts.length >= 3) {
-      setName = parts[parts.length - 2].replace(/[><]/g, '').trim();
-    }
-  }
-
-  return {
-    name: name || `SNKRDUNK Card ${apparelId}`,
-    nameJa: nameJa || null,
-    imageUrl,
-    cardNumber,
-    setName,
-  };
-}
-
 // ─── Database Operations ──────────────────────────────────────────────────────
-
-// Get all existing SNKRDUNK IDs for a game
-async function getExistingSnkrdunkIds(gameId) {
-  const pool = await getPool();
-  const [rows] = await pool.query(
-    'SELECT sourceIdentifier FROM dataSources WHERE source = "snkrdunk" AND gameId = ?',
-    [gameId]
-  );
-  return new Set(rows.map(r => r.sourceIdentifier));
-}
 
 // Get ALL existing SNKRDUNK IDs (for cross-brand dedup)
 async function getAllExistingSnkrdunkIds() {
@@ -199,62 +124,97 @@ async function getAllExistingSnkrdunkIds() {
   return new Set(rows.map(r => r.sourceIdentifier));
 }
 
-// Insert new card + dataSource
-async function insertNewCard(apparelId, gameId, cardInfo) {
+/**
+ * Batch insert new cards + dataSources without fetching individual card pages.
+ * Cards are inserted with placeholder names; batch-update will fill in details later.
+ * Uses INSERT IGNORE to handle any race conditions safely.
+ *
+ * @param {string[]} apparelIds - Array of new SNKRDUNK apparel IDs
+ * @param {number} gameId - Game ID for this brand
+ * @param {string} brandName - Brand name for logging
+ * @returns {{ inserted: number, failed: number }}
+ */
+async function batchInsertNewCards(apparelIds, gameId, brandName) {
+  if (apparelIds.length === 0) return { inserted: 0, failed: 0 };
+
   const pool = await getPool();
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
+  let totalInserted = 0;
+  let totalFailed = 0;
 
-    const cardIdStr = `snkrdunk-${apparelId}`;
-    const sourceUrl = `https://snkrdunk.com/apparels/${apparelId}`;
+  // Process in chunks of BATCH_SIZE
+  for (let i = 0; i < apparelIds.length; i += CONFIG.BATCH_SIZE) {
+    const chunk = apparelIds.slice(i, i + CONFIG.BATCH_SIZE);
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    // Check if card already exists (by cardId)
-    const [existing] = await conn.query(
-      'SELECT id FROM cards WHERE cardId = ? LIMIT 1',
-      [cardIdStr]
-    );
+      // Step 1: Batch INSERT into cards table (placeholder names)
+      // INSERT IGNORE skips duplicates silently
+      const cardValues = chunk.map(id => [
+        `snkrdunk-${id}`,  // cardId (unique key)
+        id,                 // snkrdunkId
+        gameId,             // gameId
+        `SNKRDUNK Card ${id}`, // name (placeholder — batch-update will update this)
+        null,               // nameJa
+        null,               // imageUrl
+        null,               // cardNumber
+        null,               // setName
+      ]);
 
-    let cardDbId;
-    if (existing.length > 0) {
-      cardDbId = existing[0].id;
-      // Update card info if needed
+      const cardPlaceholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
       await conn.query(
-        'UPDATE cards SET name=?, nameJa=?, imageUrl=COALESCE(?, imageUrl), cardNumber=COALESCE(?, cardNumber), snkrdunkId=?, updatedAt=NOW() WHERE id=?',
-        [cardInfo.name, cardInfo.nameJa, cardInfo.imageUrl, cardInfo.cardNumber, apparelId, cardDbId]
+        `INSERT IGNORE INTO cards (cardId, snkrdunkId, gameId, name, nameJa, imageUrl, cardNumber, setName)
+         VALUES ${cardPlaceholders}`,
+        cardValues.flat()
       );
-    } else {
-      // Insert new card (ON DUPLICATE KEY to handle race conditions)
-      const [result] = await conn.query(
-        `INSERT INTO cards (cardId, snkrdunkId, gameId, name, nameJa, imageUrl, cardNumber, setName, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE snkrdunkId=VALUES(snkrdunkId), updatedAt=NOW()`,
-        [cardIdStr, apparelId, gameId, cardInfo.name, cardInfo.nameJa, cardInfo.imageUrl, cardInfo.cardNumber, cardInfo.setName]
+
+      // Step 2: Get the card IDs we just inserted (or already existed)
+      const cardIdStrs = chunk.map(id => `snkrdunk-${id}`);
+      const placeholders = cardIdStrs.map(() => '?').join(', ');
+      const [cardRows] = await conn.query(
+        `SELECT id, cardId FROM cards WHERE cardId IN (${placeholders})`,
+        cardIdStrs
       );
-      if (result.insertId > 0) {
-        cardDbId = result.insertId;
-      } else {
-        const [existRow] = await conn.query('SELECT id FROM cards WHERE cardId = ? LIMIT 1', [cardIdStr]);
-        cardDbId = existRow[0]?.id;
+
+      // Build a map: cardIdStr → db id
+      const cardIdMap = new Map(cardRows.map(r => [r.cardId, r.id]));
+
+      // Step 3: Batch INSERT into dataSources table
+      const dsValues = [];
+      for (const apparelId of chunk) {
+        const cardDbId = cardIdMap.get(`snkrdunk-${apparelId}`);
+        if (!cardDbId) {
+          totalFailed++;
+          continue;
+        }
+        const sourceUrl = `https://snkrdunk.com/apparels/${apparelId}`;
+        dsValues.push([cardDbId, gameId, sourceUrl, apparelId]);
       }
+
+      if (dsValues.length > 0) {
+        const dsPlaceholders = dsValues.map(() => '(?, ?, \'single_card\', \'snkrdunk\', ?, ?, 1)').join(', ');
+        await conn.query(
+          `INSERT IGNORE INTO dataSources (cardId, gameId, productType, source, sourceUrl, sourceIdentifier, isActive)
+           VALUES ${dsPlaceholders}`,
+          dsValues.flat()
+        );
+        totalInserted += dsValues.length;
+      }
+
+      await conn.commit();
+
+      const chunkEnd = Math.min(i + CONFIG.BATCH_SIZE, apparelIds.length);
+      console.log(`[Discovery] ${brandName}: batch inserted ${chunkEnd}/${apparelIds.length} (${totalFailed} failed)`);
+    } catch (e) {
+      await conn.rollback();
+      console.error(`[Discovery] ${brandName}: batch insert error (chunk ${i}-${i + chunk.length}): ${e.message}`);
+      totalFailed += chunk.length;
+    } finally {
+      conn.release();
     }
-
-    // Insert dataSource
-    await conn.query(
-      `INSERT INTO dataSources (cardId, gameId, productType, source, sourceUrl, sourceIdentifier, isActive, createdAt, updatedAt)
-       VALUES (?, ?, 'single_card', 'snkrdunk', ?, ?, 1, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE updatedAt=NOW()`,
-      [cardDbId, gameId, sourceUrl, apparelId]
-    );
-
-    await conn.commit();
-    return cardDbId;
-  } catch (e) {
-    await conn.rollback();
-    throw e;
-  } finally {
-    conn.release();
   }
+
+  return { inserted: totalInserted, failed: totalFailed };
 }
 
 // ─── Main Discovery Logic ─────────────────────────────────────────────────────
@@ -268,10 +228,10 @@ async function discoverBrand(brand, allExistingIds) {
   let page = 1;
   let consecutiveAllExisting = 0;
 
-  // Scan all pages until empty page (no items found) or 25 consecutive pages with no new items
+  // Phase 1: Scan all pages to collect new apparel IDs (HTTP only, no DB writes)
   while (page <= CONFIG.MAX_PAGES_PER_BRAND) {
     const url = `https://snkrdunk.com/search/?brandIds=${brand.brandSlug}&searchCategoryIds=6%2F33&sortKey=latest&page=${page}`;
-    
+
     let html;
     try {
       html = await fetchHtml(url);
@@ -296,7 +256,7 @@ async function discoverBrand(brand, allExistingIds) {
 
     console.log(`[Discovery] Page ${page}: ${ids.length} items, ${newOnPage} new`);
 
-    // If entire page has existing IDs, we've caught up
+    // Stop after 25 consecutive pages with no new items
     if (newOnPage === 0) {
       consecutiveAllExisting++;
       if (consecutiveAllExisting >= 25) {
@@ -308,45 +268,30 @@ async function discoverBrand(brand, allExistingIds) {
     }
 
     page++;
-    await delay(CONFIG.DELAY_MS);
+    await delay(CONFIG.DELAY_MS); // Throttle HTTP requests only
   }
 
   console.log(`[Discovery] Found ${newIds.length} new apparel IDs for ${brand.name}`);
 
-  // Now fetch card info for each new ID and insert into DB
-  let inserted = 0;
-  let failed = 0;
-
-  for (let i = 0; i < newIds.length; i++) {
-    const apparelId = newIds[i];
-    const url = `https://snkrdunk.com/apparels/${apparelId}`;
-
-    try {
-      const html = await fetchHtml(url);
-      const cardInfo = extractCardInfo(html, apparelId);
-
-      await insertNewCard(apparelId, brand.gameId, cardInfo);
-      allExistingIds.add(apparelId); // Update global set to avoid cross-brand duplicates
-
-      inserted++;
-      if (inserted % 10 === 0 || inserted === newIds.length) {
-        console.log(`[Discovery] ${brand.name}: ${inserted}/${newIds.length} inserted (${failed} failed)`);
-      }
-    } catch (e) {
-      failed++;
-      console.log(`[Discovery] Failed to insert ${apparelId}: ${e.message}`);
-    }
-
-    await delay(CONFIG.DELAY_MS);
+  // Phase 2: Batch insert all new IDs into DB (no per-card HTTP fetch)
+  if (newIds.length === 0) {
+    return { brand: brand.name, newIds: 0, inserted: 0, failed: 0 };
   }
+
+  console.log(`[Discovery] ${brand.name}: batch inserting ${newIds.length} new cards (no per-card fetch)...`);
+  const { inserted, failed } = await batchInsertNewCards(newIds, brand.gameId, brand.name);
+
+  // Update global dedup set
+  for (const id of newIds) allExistingIds.add(id);
 
   return { brand: brand.name, newIds: newIds.length, inserted, failed };
 }
 
 async function main() {
   console.log('='.repeat(60));
-  console.log('[SNKRDUNK Discovery] Starting v1.0');
-  console.log(`[Config] MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND === 99999 ? 'unlimited' : CONFIG.MAX_NEW_PER_BRAND}, MAX_PAGES=${CONFIG.MAX_PAGES_PER_BRAND === 99999 ? 'unlimited (scan to last page)' : CONFIG.MAX_PAGES_PER_BRAND}`);
+  console.log('[SNKRDUNK Discovery] Starting v2.0 (Batch Insert Mode)');
+  console.log(`[Config] MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND === 99999 ? 'unlimited' : CONFIG.MAX_NEW_PER_BRAND}, MAX_PAGES=${CONFIG.MAX_PAGES_PER_BRAND === 99999 ? 'unlimited (scan to last page)' : CONFIG.MAX_PAGES_PER_BRAND}, BATCH_SIZE=${CONFIG.BATCH_SIZE}`);
+  console.log('[Note] v2.0: No per-card HTML fetch during discovery. batch-update will fill card details.');
   console.log('='.repeat(60));
 
   // Load all existing SNKRDUNK IDs once (for deduplication)
@@ -377,6 +322,7 @@ async function main() {
     totalInserted += r.inserted || 0;
   }
   console.log(`\n[SNKRDUNK Discovery] Total inserted: ${totalInserted}`);
+  console.log('[SNKRDUNK Discovery] Card details (name/image) will be filled by the subsequent batch-update run.');
 
   if (pool) await pool.end();
   process.exit(0);
