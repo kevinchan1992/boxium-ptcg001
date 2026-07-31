@@ -240,19 +240,26 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
 // ─── Database Operations ──────────────────────────────────────────────────────
 async function getAllSnkrdunkProducts() {
   const db = await getPool();
+  // CRITICAL FIX: cardId is NOT unique across product types.
+  // The same integer can exist in both `cards` (single_card) and `sealedProducts` (sealed_product).
+  // We must JOIN the correct table based on productType to get the right name.
+  // Using CASE expression: when productType='sealed_product' use sealedProducts, else use cards.
   const [rows] = await db.execute(
-    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus, c.name
+    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus,
+            CASE WHEN ds.productType = 'sealed_product' THEN sp.name ELSE c.name END as name
      FROM dataSources ds
-     LEFT JOIN cards c ON c.id = ds.cardId
+     LEFT JOIN cards c ON c.id = ds.cardId AND ds.productType != 'sealed_product'
+     LEFT JOIN sealedProducts sp ON sp.id = ds.cardId AND ds.productType = 'sealed_product'
      WHERE ds.source = 'snkrdunk' AND ds.isActive = 1`
   );
 
-  // v3.0 Smart Skip: load set of cardIds that have at least one price history record
+  // v3.0 Smart Skip: load set of (productType, cardId) pairs that have at least one price history record
+  // Use composite key to avoid cross-type contamination (same cardId in different product types)
   const [histRows] = await db.execute(
-    `SELECT DISTINCT cardId FROM priceHistory WHERE source = 'snkrdunk' LIMIT 100000`
+    `SELECT DISTINCT cardId, productType FROM priceHistory WHERE source = 'snkrdunk' LIMIT 200000`
   );
-  const cardIdsWithHistory = new Set(histRows.map(r => r.cardId));
-  console.log(`[BatchUpdate] Smart Skip: ${cardIdsWithHistory.size} cards have price history`);
+  const cardIdsWithHistory = new Set(histRows.map(r => `${r.productType || 'single_card'}:${r.cardId}`));
+  console.log(`[BatchUpdate] Smart Skip: ${cardIdsWithHistory.size} (productType:cardId) pairs have price history`);
 
   const unique = new Map();
   for (const row of rows) {
@@ -270,7 +277,7 @@ async function getAllSnkrdunkProducts() {
       lastFetchStatus: row.lastFetchStatus || null,
       sourceUrl: row.sourceUrl || '',
       dataSourceId: row.dataSourceId,
-      hasHistory: cardIdsWithHistory.has(row.cardId), // v3.0 Smart Skip flag
+      hasHistory: cardIdsWithHistory.has(key), // v3.0 Smart Skip flag (composite key)
     });
   }
   return Array.from(unique.values());
