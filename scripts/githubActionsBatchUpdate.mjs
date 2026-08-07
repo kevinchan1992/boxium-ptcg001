@@ -13,6 +13,17 @@
  * Required env: DATABASE_URL (MySQL connection string)
  * Optional env: PARALLEL, SKIP_HOURS, MAX_CONSECUTIVE_ERR, REQUEST_TIMEOUT_MS, EMPTY_CARD_RECHECK_DAYS
  */
+/**
+ * GitHub Actions SNKRDUNK Batch Update Script v3.1 (Card Details Backfill)
+ *
+ * v3.1 changes (2026-08-07):
+ *   - Card Details Backfill: cards with placeholder names ("SNKRDUNK Card XXXX") or missing images
+ *     now automatically fetch card details from /v1/apparels/{id} API and update the DB.
+ *     This fixes the bug where Discovery inserted placeholder cards but batch-update never filled details.
+ *   - getAllSnkrdunkProducts now also fetches imageUrl to detect cards missing images.
+ *   - fetchCardDetailsFromApi + updateCardDetails functions added.
+ *   - Non-fatal: if card detail fetch fails, price history update still proceeds normally.
+ */
 
 import mysql from 'mysql2/promise';
 import { createHash } from 'crypto';
@@ -246,7 +257,8 @@ async function getAllSnkrdunkProducts() {
   // Using CASE expression: when productType='sealed_product' use sealedProducts, else use cards.
   const [rows] = await db.execute(
     `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus,
-            CASE WHEN ds.productType = 'sealed_product' THEN sp.name ELSE c.name END as name
+            CASE WHEN ds.productType = 'sealed_product' THEN sp.name ELSE c.name END as name,
+            CASE WHEN ds.productType = 'sealed_product' THEN sp.imageUrl ELSE c.imageUrl END as imageUrl
      FROM dataSources ds
      LEFT JOIN cards c ON c.id = ds.cardId AND ds.productType != 'sealed_product'
      LEFT JOIN sealedProducts sp ON sp.id = ds.cardId AND ds.productType = 'sealed_product'
@@ -271,6 +283,8 @@ async function getAllSnkrdunkProducts() {
     unique.set(key, {
       id: row.cardId,
       name: row.name || `Product ${row.cardId}`,
+      isPlaceholder: !row.name || row.name.startsWith('SNKRDUNK Card ') || row.name === '待更新',
+      hasImage: !!row.imageUrl,
       productType: pt,
       snkrdunkId: sid,
       lastFetchedAt: row.lastFetchedAt ? new Date(row.lastFetchedAt) : null,
@@ -336,11 +350,65 @@ async function updateDataSourceStatus(dataSourceId, status) {
   );
 }
 
+// ─── Fetch Card Details from SNKRDUNK API (v3.1 Card Details Backfill) ────────
+async function fetchCardDetailsFromApi(snkrdunkId) {
+  const url = `https://snkrdunk.com/v1/apparels/${snkrdunkId}`;
+  const resp = await fetchWithTimeout(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json',
+      'Referer': `https://snkrdunk.com/apparels/${snkrdunkId}`,
+    },
+  }, CONFIG.REQUEST_TIMEOUT);
+  if (!resp.ok) {
+    const isTransient = resp.status === 429 || resp.status === 503 || resp.status === 502 || resp.status === 500;
+    throw Object.assign(new Error(`HTTP ${resp.status} fetching card details for ${snkrdunkId}`), { httpStatus: resp.status, isTransient });
+  }
+  const data = await resp.json();
+  return {
+    name: data.name || null,
+    nameJa: data.localizedName || data.name || null,
+    imageUrl: data.primaryMedia?.imageUrl || null,
+    styleCode: data.productNumber || null,
+  };
+}
+
+// ─── Update Card / SealedProduct Details in DB (v3.1 Card Details Backfill) ──
+async function updateCardDetails(product, details) {
+  const db = await getPool();
+  if (!details.name && !details.imageUrl) return;
+  if (product.productType === 'sealed_product') {
+    await db.execute(
+      `UPDATE sealedProducts SET name=COALESCE(?,name), nameJa=COALESCE(?,nameJa), imageUrl=COALESCE(?,imageUrl), updatedAt=NOW() WHERE id=?`,
+      [details.name, details.nameJa, details.imageUrl, product.id]
+    );
+  } else {
+    await db.execute(
+      `UPDATE cards SET name=COALESCE(?,name), nameJa=COALESCE(?,nameJa), imageUrl=COALESCE(?,imageUrl), updatedAt=NOW() WHERE id=?`,
+      [details.name, details.nameJa, details.imageUrl, product.id]
+    );
+  }
+}
+
 // ─── Process Single Product (with retry) ─────────────────────────────────────
 async function processSingleProduct(product, attempt = 1) {
   const productKey = `${product.productType}:${product.id}`;
   try {
     const pt = product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
+    // v3.1 Card Details Backfill: if name is still a placeholder or image is missing, fetch card details first
+    if (product.isPlaceholder || !product.hasImage) {
+      try {
+        const details = await fetchCardDetailsFromApi(product.snkrdunkId);
+        if (details.name && !details.name.startsWith('SNKRDUNK Card ')) {
+          await updateCardDetails(product, details);
+          product.name = details.name;
+          product.isPlaceholder = false;
+        }
+      } catch (detailErr) {
+        // Non-fatal: log and continue with price history update
+        console.warn(`[BatchUpdate] Card details fetch failed for ${product.snkrdunkId}: ${detailErr.message}`);
+      }
+    }
     const raw = await fetchPriceHistoryFromApi(product.snkrdunkId, pt);
     const history = validateHistory(raw || [], pt);
     if (history && history.length > 0) {
