@@ -1,34 +1,28 @@
 /**
- * GitHub Actions eBay Sold Listings Batch Scraper v3.1
+ * GitHub Actions eBay Sold Listings Batch Scraper v4.0 (Free Safe Collector)
  *
- * Strategy: Full Coverage (Method A)
- *   - 12 parallel GitHub Actions jobs, each handles 1/12 of the card pool
- *   - 12 × 4700 = 56,400 cards/day → covers all 56K cards daily
- *   - Sharding: WHERE MOD(c.id, TOTAL_BATCHES) = BATCH_INDEX
+ * Strategy: Low-frequency, high-priority collection
+ *   - One serial GitHub Actions job handles at most 50 hot cards by default.
+ *   - A security/auth page is a data-source health event, never a zero-sale.
+ *   - Two blocked responses stop the complete run instead of retrying for hours.
  *
- * Anti-detection features:
- *   ① Extreme asset blocking  — images, fonts, CSS, ads, analytics all aborted
- *      → page load drops from ~3s to <1s; only HTML text is read
- *   ② Browser fingerprint rotation — 6 realistic UA/platform/language/viewport/tz profiles
- *   ③ Stealth init script — hides navigator.webdriver, fakes plugins & chrome object
- *   ④ Dynamic random delay — 1.5–3.5s between cards
- *   ⑤ Smart retry & skip — on 403/CAPTCHA: sleep 3 min, retry up to 3×; then SKIP card
- *      (skipped cards logged to skipped-cards.json for next day's run)
+ * This collector deliberately uses a small workload and stops on access gates.
+ * It does not attempt to bypass eBay security measures.
  *
- * Tiered priority within each shard:
- *   T1 (Hot, 40%)  — SNKRDUNK cards, update every 1 day
- *   T2 (Warm, 35%) — cards with eBay history, update every 3 days
- *   T3 (Cold, 25%) — never scraped or stale, update every 7 days
+ * Default priority: T1 hot cards with active SNKRDUNK sources. T2/T3 are only
+ * enabled deliberately through EBAY_TIER_MODE=balanced.
  *
  * Required env:
  *   DATABASE_URL    MySQL connection string
  *   PLATFORM_URL    Platform base URL
  *   CRON_SECRET     Bearer token for platform API auth
  *   BATCH_INDEX     This job's shard index (0-based)
- *   TOTAL_BATCHES   Total number of parallel jobs (e.g. 12)
+ *   TOTAL_BATCHES   Total number of serial jobs (default 1)
  *
  * Optional env:
- *   CARDS_PER_BATCH Max cards per job (default: 4700)
+ *   CARDS_PER_BATCH Max cards per job (default: 50)
+ *   EBAY_TIER_MODE  hot_only (default) or balanced
+ *   MAX_BLOCKS_PER_RUN Stop whole run after this many security/auth blocks (default: 2)
  *   HEADLESS        Set to 'false' for debugging (default: true)
  */
 
@@ -36,12 +30,13 @@ import { chromium } from 'playwright';
 import mysql from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
+import { createEbayCircuitBreaker } from './ebayCircuitBreaker.mjs';
 
 // ─── Shard Configuration ──────────────────────────────────────────────────────
 const BATCH_INDEX   = parseInt(process.env.BATCH_INDEX   || '0',  10);
-const TOTAL_BATCHES = parseInt(process.env.TOTAL_BATCHES || '12', 10);
-// 56,000 ÷ 12 ≈ 4,667 cards/shard; at 2.5s/card ≈ 194 min ≈ 3.2h (well within 5.5h limit)
-const CARDS_PER_BATCH = parseInt(process.env.CARDS_PER_BATCH || '4700', 10);
+const TOTAL_BATCHES = parseInt(process.env.TOTAL_BATCHES || '1', 10);
+const CARDS_PER_BATCH = parseInt(process.env.CARDS_PER_BATCH || '50', 10);
+const TIER_MODE = process.env.EBAY_TIER_MODE || 'hot_only';
 
 // Single-card mode: CARD_IDS is a comma-separated list of card IDs to scrape directly.
 // e.g. CARD_IDS="123,456" — bypasses all shard/tier logic, runs only those specific cards.
@@ -63,10 +58,10 @@ const CONFIG = {
   TIER2_WARM_DAYS: 3,
   TIER3_COLD_DAYS: 7,
 
-  // Quota per tier within this shard (40% / 35% / 25%)
-  TIER1_QUOTA: Math.ceil(CARDS_PER_BATCH * 0.40),
-  TIER2_QUOTA: Math.ceil(CARDS_PER_BATCH * 0.35),
-  TIER3_QUOTA: Math.ceil(CARDS_PER_BATCH * 0.25),
+  // Free default: use only recently active cards with the strongest user value.
+  TIER1_QUOTA: TIER_MODE === 'balanced' ? Math.ceil(CARDS_PER_BATCH * 0.60) : CARDS_PER_BATCH,
+  TIER2_QUOTA: TIER_MODE === 'balanced' ? Math.ceil(CARDS_PER_BATCH * 0.25) : 0,
+  TIER3_QUOTA: TIER_MODE === 'balanced' ? Math.floor(CARDS_PER_BATCH * 0.15) : 0,
 
   INGEST_BATCH: 50,
   HEADLESS: process.env.HEADLESS !== 'false',
@@ -74,15 +69,13 @@ const CONFIG = {
   PAGE_TIMEOUT: 25000,
   NAV_TIMEOUT:  35000,
 
-  // ① Dynamic random delay between cards: 1.5–3.5s
-  DELAY_MIN_MS: 1500,
-  DELAY_MAX_MS: 3500,
+  DELAY_MIN_MS: 2200,
+  DELAY_MAX_MS: 4200,
 
-  // ⑤ On block/CAPTCHA: sleep 3 min then retry
-  RETRY_SLEEP_MS: 180000,   // 3 minutes
-  MAX_RETRIES: 3,
+  MAX_RETRIES: Math.max(1, parseInt(process.env.MAX_RETRIES || '1', 10)),
+  MAX_BLOCKS_PER_RUN: Math.max(1, parseInt(process.env.MAX_BLOCKS_PER_RUN || '2', 10)),
 
-  MAX_PAGES_PER_CARD: 3,
+  MAX_PAGES_PER_CARD: Math.max(1, parseInt(process.env.MAX_PAGES_PER_CARD || '1', 10)),
   MAX_LISTINGS_PER_CARD: 60,
   PROGRESS_REPORT_INTERVAL: 50,
 };
@@ -467,7 +460,7 @@ async function ingestRecords(records) {
   }
 }
 
-async function reportProgress(processed, success, fail, total, inserted) {
+async function reportProgress(processed, success, fail, total, inserted, blockedCount = 0) {
   if (!platformUrl || !cronSecret) return;
   const elapsed = (Date.now() - startTime) / 1000;
   const speed = elapsed > 0 ? processed / elapsed : 0;
@@ -484,13 +477,14 @@ async function reportProgress(processed, success, fail, total, inserted) {
         speedPerSec: Math.round(speed * 10) / 10,
         etaMinutes: eta, totalInserted: inserted,
         batchIndex: BATCH_INDEX, totalBatches: TOTAL_BATCHES,
+        blockedCount,
       }),
       signal: AbortSignal.timeout(8000),
     });
   } catch (_) {}
 }
 
-async function reportFinal(total, success, fail, inserted, status) {
+async function reportFinal(total, success, fail, inserted, status, details = {}) {
   if (!platformUrl || !cronSecret) return;
   const runUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && runId
     ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}` : null;
@@ -504,6 +498,9 @@ async function reportFinal(total, success, fail, inserted, status) {
         startedAt: new Date(startTime).toISOString(),
         status, runId: `${runId}-shard${BATCH_INDEX}`, runUrl,
         totalInserted: inserted, batchIndex: BATCH_INDEX, totalBatches: TOTAL_BATCHES,
+        blockedCount: Number(details.blockedCount || 0),
+        stoppedEarly: Boolean(details.stoppedEarly),
+        stopReason: details.stopReason || null,
       }),
       signal: AbortSignal.timeout(15000),
     });
@@ -714,41 +711,41 @@ async function scrapeEbaySoldListings(page, keyword, cardNumber, engName = '', c
 }
 
 // ─── ⑤ Scrape with Retry & Skip ──────────────────────────────────────────────
-// Returns { listings, skipped }
+// Returns { listings, skipped, blocked }
 async function scrapeWithRetryOrSkip(page, keyword, cardId, cardNumber, engName = '', cleanedName = '') {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
     try {
       const result = await scrapeEbaySoldListings(page, keyword, cardNumber, engName, cleanedName);
 
       if (result === null) {
-        // Blocked — sleep 3 min then retry
-        const sleepMin = Math.round(CONFIG.RETRY_SLEEP_MS / 60000 * 10) / 10;
-        console.warn(`[eBay] ⚠️  Blocked for cardId=${cardId}, attempt ${attempt}/${CONFIG.MAX_RETRIES}. Sleeping ${sleepMin} min...`);
-        await delay(CONFIG.RETRY_SLEEP_MS);
+        console.warn(`[eBay] ⚠️  Security/auth gate for cardId=${cardId}, attempt ${attempt}/${CONFIG.MAX_RETRIES}`);
+        if (attempt === CONFIG.MAX_RETRIES) {
+          return { listings: [], skipped: true, blocked: true };
+        }
         continue;
       }
 
-      return { listings: result, skipped: false };
+      return { listings: result, skipped: false, blocked: false };
     } catch (err) {
       if (attempt < CONFIG.MAX_RETRIES) {
         console.warn(`[eBay] ❌ cardId=${cardId} attempt ${attempt} error: ${err.message}. Sleeping 3 min...`);
-        await delay(CONFIG.RETRY_SLEEP_MS);
+        await delay(2000);
       } else {
         // All retries exhausted — SKIP this card
         console.error(`[eBay] 🚫 cardId=${cardId} SKIPPED after ${CONFIG.MAX_RETRIES} retries: ${err.message}`);
-        return { listings: [], skipped: true };
+        return { listings: [], skipped: true, blocked: false };
       }
     }
   }
   // Blocked on all retries — SKIP
   console.error(`[eBay] 🚫 cardId=${cardId} SKIPPED — blocked on all ${CONFIG.MAX_RETRIES} retries`);
-  return { listings: [], skipped: true };
+  return { listings: [], skipped: true, blocked: true };
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('='.repeat(70));
-  console.log(`[eBay] GitHub Actions eBay Scraper v3.1 — Full Coverage`);
+  console.log(`[eBay] GitHub Actions eBay Scraper v4.0 — Free Safe Collector`);
   console.log(`[eBay] Shard: ${BATCH_INDEX} / ${TOTAL_BATCHES}  |  Cards/shard: ${CARDS_PER_BATCH}`);
   console.log(`[eBay] Profile: ${PROFILE.userAgent.slice(0, 70)}`);
   console.log(`[eBay] Quota: T1=${CONFIG.TIER1_QUOTA} T2=${CONFIG.TIER2_QUOTA} T3=${CONFIG.TIER3_QUOTA}`);
@@ -814,9 +811,13 @@ async function main() {
   let failCards    = 0;
   let skippedCards = 0;
   let totalInserted = 0;
+  let blockedCount = 0;
+  let stoppedEarly = false;
+  let stopReason = null;
   const pendingRecords = [];
   const skippedLog = [];  // for artifact upload
   const tierStats = { 1: { s: 0, f: 0 }, 2: { s: 0, f: 0 }, 3: { s: 0, f: 0 } };
+  const circuitBreaker = createEbayCircuitBreaker(CONFIG.MAX_BLOCKS_PER_RUN);
 
   try {
     for (let i = 0; i < cards.length; i++) {
@@ -824,13 +825,23 @@ async function main() {
       const tl = `T${card.tier}`;
       console.log(`[eBay] [${i + 1}/${cards.length}][${tl}][shard${BATCH_INDEX}] "${card.keyword}" (id=${card.cardId})`);
 
-      const { listings, skipped } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber, card.engName || '', card.cleanedName || '');
+      const { listings, skipped, blocked } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber, card.engName || '', card.cleanedName || '');
 
       if (skipped) {
         skippedCards++;
         failCards++;
         tierStats[card.tier].f++;
-        skippedLog.push({ cardId: card.cardId, keyword: card.keyword, tier: card.tier, skippedAt: new Date().toISOString() });
+        skippedLog.push({ cardId: card.cardId, keyword: card.keyword, tier: card.tier, reason: blocked ? 'security_or_auth_gate' : 'request_error', skippedAt: new Date().toISOString() });
+        if (blocked) {
+          const state = circuitBreaker.recordBlocked();
+          blockedCount = state.blockedCount;
+          if (state.shouldStop) {
+            stoppedEarly = true;
+            stopReason = `security_or_auth_gate_after_${blockedCount}_responses`;
+            console.warn(`[eBay] 🛑 Circuit breaker opened: ${stopReason}. Remaining cards are deferred; no zero-sales writes were made.`);
+            break;
+          }
+        }
       } else {
         if (listings.length > 0) {
           pendingRecords.push(...listings.map(l => ({ ...l, cardId: card.cardId })));
@@ -850,7 +861,7 @@ async function main() {
 
       // Periodic progress report
       if ((i + 1) % CONFIG.PROGRESS_REPORT_INTERVAL === 0) {
-        await reportProgress(i + 1, successCards, failCards, cards.length, totalInserted);
+        await reportProgress(i + 1, successCards, failCards, cards.length, totalInserted, blockedCount);
       }
 
       // ④ Dynamic random delay 1.5–3.5s between cards
@@ -884,9 +895,24 @@ async function main() {
   console.log('='.repeat(70));
 
   const failRate = failCards / (successCards + failCards || 1);
-  const finalStatus = (failRate > 0.5 && failCards > 50) ? 'failed' : 'completed';
+  const finalStatus = stoppedEarly ? 'blocked' : ((failRate > 0.5 && failCards > 10) ? 'failed' : 'completed');
 
-  await reportFinal(cards.length, successCards, failCards, totalInserted, finalStatus);
+  const summary = {
+    status: finalStatus,
+    totalItems: cards.length,
+    successCards,
+    failCards,
+    skippedCards,
+    blockedCount,
+    stoppedEarly,
+    stopReason,
+    totalInserted,
+    maxBlocksPerRun: CONFIG.MAX_BLOCKS_PER_RUN,
+    finishedAt: new Date().toISOString(),
+  };
+  fs.writeFileSync('run-summary.json', JSON.stringify(summary, null, 2));
+
+  await reportFinal(cards.length, successCards, failCards, totalInserted, finalStatus, summary);
 
   if (finalStatus === 'failed') {
     console.error(`[eBay] High failure rate: ${(failRate * 100).toFixed(1)}%`);

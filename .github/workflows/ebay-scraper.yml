@@ -2,18 +2,18 @@ name: eBay Scraper (Parallel)
 
 on:
   schedule:
-    # Daily at HKT 03:00 (UTC 19:00 previous day)
-    - cron: '0 19 * * *'
+    # HKT 08:00 / 20:00：每次僅執行一個受控低頻 collector。
+    - cron: '0 0,12 * * *'
   workflow_dispatch:
     inputs:
       total_batches:
-        description: 'Total number of parallel jobs (default: 12)'
+        description: 'Total number of serial jobs (default: 1; do not raise without eBay health evidence)'
         required: false
-        default: '12'
+        default: '1'
       cards_per_batch:
-        description: 'Max cards per job (default: 4700)'
+        description: 'Max high-priority cards per job (default: 50)'
         required: false
-        default: '4700'
+        default: '50'
       card_ids:
         description: 'Comma-separated card IDs for single-card mode (optional)'
         required: false
@@ -40,7 +40,7 @@ jobs:
       - name: Set matrix
         id: set-matrix
         run: |
-          TOTAL=${{ github.event.inputs.total_batches || '12' }}
+          TOTAL=${{ github.event.inputs.total_batches || '1' }}
           echo "total_batches=$TOTAL" >> "$GITHUB_OUTPUT"
           # Build JSON array [0, 1, 2, ..., TOTAL-1]
           MATRIX=$(python3 -c "import json; print(json.dumps(list(range(int('$TOTAL')))))")
@@ -52,9 +52,10 @@ jobs:
     name: "Shard ${{ matrix.batch_index }}"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 55
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         batch_index: ${{ fromJson(needs.setup.outputs.matrix) }}
 
@@ -71,6 +72,8 @@ jobs:
         run: |
           mkdir -p /tmp/ebay-runner
           cp scripts/githubActionsEbayBatchUpdate.mjs /tmp/ebay-runner/
+          cp scripts/ebayCircuitBreaker.mjs /tmp/ebay-runner/
+          cp scripts/ebayCircuitBreaker.test.mjs /tmp/ebay-runner/
           cp scripts/package.json /tmp/ebay-runner/
           cd /tmp/ebay-runner
           npm install --ignore-scripts
@@ -80,6 +83,10 @@ jobs:
           cd /tmp/ebay-runner
           npx playwright install chromium --with-deps
 
+      - name: Verify eBay circuit breaker rules
+        working-directory: /tmp/ebay-runner
+        run: node ebayCircuitBreaker.test.mjs
+
       - name: Run eBay batch scraper (Shard ${{ matrix.batch_index }})
         working-directory: /tmp/ebay-runner
         env:
@@ -88,18 +95,25 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           BATCH_INDEX: ${{ matrix.batch_index }}
           TOTAL_BATCHES: ${{ needs.setup.outputs.total_batches }}
-          CARDS_PER_BATCH: ${{ github.event.inputs.cards_per_batch || '4700' }}
+          CARDS_PER_BATCH: ${{ github.event.inputs.cards_per_batch || '50' }}
           CARD_IDS: ${{ github.event.inputs.card_ids || '' }}
+          EBAY_TIER_MODE: hot_only
+          MAX_PAGES_PER_CARD: '1'
+          MAX_RETRIES: '1'
+          MAX_BLOCKS_PER_RUN: '2'
           HEADLESS: 'true'
           NODE_ENV: 'production'
         run: |
           echo "Starting eBay scraper shard ${{ matrix.batch_index }} / ${{ needs.setup.outputs.total_batches }}"
           node githubActionsEbayBatchUpdate.mjs
 
-      - name: Upload failure logs
-        if: failure()
+      - name: Upload scraper summary and failure logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ebay-failure-shard-${{ matrix.batch_index }}-${{ github.run_id }}
-          path: '/tmp/ebay-runner/*.log'
+          name: ebay-scraper-shard-${{ matrix.batch_index }}-${{ github.run_id }}
+          path: |
+            /tmp/ebay-runner/*.log
+            /tmp/ebay-runner/run-summary.json
+            /tmp/ebay-runner/skipped-cards.json
           retention-days: 7
