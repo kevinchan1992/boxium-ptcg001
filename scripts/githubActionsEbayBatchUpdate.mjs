@@ -823,6 +823,7 @@ async function main() {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
       const tl = `T${card.tier}`;
+      const currentTierStats = tierStats[card.tier] || (tierStats[card.tier] = { s: 0, f: 0 });
       console.log(`[eBay] [${i + 1}/${cards.length}][${tl}][shard${BATCH_INDEX}] "${card.keyword}" (id=${card.cardId})`);
 
       const { listings, skipped, blocked } = await scrapeWithRetryOrSkip(page, card.keyword, card.cardId, card.cardNumber, card.engName || '', card.cleanedName || '');
@@ -830,7 +831,7 @@ async function main() {
       if (skipped) {
         skippedCards++;
         failCards++;
-        tierStats[card.tier].f++;
+        currentTierStats.f++;
         skippedLog.push({ cardId: card.cardId, keyword: card.keyword, tier: card.tier, reason: blocked ? 'security_or_auth_gate' : 'request_error', skippedAt: new Date().toISOString() });
         if (blocked) {
           const state = circuitBreaker.recordBlocked();
@@ -847,7 +848,7 @@ async function main() {
           pendingRecords.push(...listings.map(l => ({ ...l, cardId: card.cardId })));
         }
         successCards++;
-        tierStats[card.tier].s++;
+        currentTierStats.s++;
         console.log(`[eBay] ✅ [${tl}] id=${card.cardId}: ${listings.length} listings`);
       }
 
