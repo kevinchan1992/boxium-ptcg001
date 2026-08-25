@@ -1,0 +1,9 @@
+{
+  "source": "drizzle/schema_new.ts",
+  "sourceRoot": "explicit S1_SOURCE_ROOT snapshot",
+  "tables": 95,
+  "rawSqlTags": 390,
+  "executeCalls": 120,
+  "generatedAt": "2026-08-25T05:52:40.714Z",
+  "safety": "S1 code-only analysis; no database connection or write was performed"
+}
