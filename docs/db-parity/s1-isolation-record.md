@@ -1,6 +1,6 @@
 # BOXIUM S1：Schema Inventory 與 Mapping 設計隔離紀錄
 
-**狀態：執行中；此文件只記錄 source-code-only analysis，未執行任何資料庫操作。**
+**狀態：完成，等待使用者審核；此文件只記錄 source-code-only analysis，未執行任何資料庫操作。**
 
 ## Supabase Lab Change Record
 
@@ -32,3 +32,20 @@
 GitHub staging-only branch 由既有 `main` commit `89e75cdd1fa810aa2799d8706f47d359a00e602f` 分出，該 branch 的 `drizzle/schema_new.ts` 含 91 張 `mysqlTable` 定義。現行受管 BOXIUM project 的同名 schema 檔案含 95 張定義，檔案 SHA-256 為 `c78e658defe2232014f4f33d0a0f48cde10e716d1ded66c9c8cf4ef4bb937750`。
 
 S1 的 inventory、mapping draft 與 manifest 將以這份**目前受管 source-code snapshot**為唯一輸入，並只將其衍生 artifact 提交到 staging-only branch；不會以較舊 branch schema 降低盤點範圍，也不會將任何 Production runtime 或資料庫設定帶入 branch。這是 source-code read-only analysis，不是 Production database access。
+
+## S1 完成證據
+
+| 驗證項目 | 結果 |
+|---|---|
+| Source schema inventory | 95 張 `mysqlTable` 定義全數對照；94 張宣告 primary key、0 張宣告 Drizzle `.references()`、189 個 secondary index、37 個 unique field/index。 |
+| PostgreSQL mapping draft | 已產生 `drizzle/schema.pg.ts`，使用 `pgTable`、`pgEnum`、`numeric`、identity 與 `timestamptz` design proposal；檔首明確禁止 runtime import、`db:push` 或 migration apply。 |
+| TypeScript validation | 現行受管 source tree 執行 `pnpm check` 通過；此 validation 沒有連線任何資料庫。 |
+| Raw SQL manifest | 390 個 `sql` tag 和 120 個 `.execute()` call，合計 510 trace entries，均保存 file、line、owner、初步 PostgreSQL target design 和 `not_started` test status。 |
+| Secret/direct-access scan | staging artifacts 不含 PostgreSQL/MySQL DSN、secret assignment、`VITE_*` Supabase key 或 `service_role` credential。 |
+| Supabase Lab | 未連線、未讀取、未執行 DDL/DML/migration/fixture；Data API 無變更並維持關卡 B 的停用狀態。 |
+| GitHub branch isolation | S1 artifacts 僅提交到 `chore/supabase-lab-schema-parity` commit `6e1fe273f15c963d76b3e2d2a9d6100fba014ba1`。GitHub `main` 仍為 `89e75cdd1fa810aa2799d8706f47d359a00e602f`，未被寫入。 |
+| Production resources/data | MySQL／TiDB、Cloud Run、runtime secret、workflow、Heartbeat、production branch、S3/Auth behavior 與 Production data 均未讀取或修改。 |
+
+## 仍需使用者批准的工作
+
+S1 並未批准、更未執行：PostgreSQL physical FK/PK decision、timestamp semantic register、JSONB decision、raw SQL query-unit conversion、Lab migration、secret value 填寫、synthetic fixture、PITR/restore drill、shadow read、dual-write 或任何 Production runtime change。所有工作仍需要後續逐關明確批准。
