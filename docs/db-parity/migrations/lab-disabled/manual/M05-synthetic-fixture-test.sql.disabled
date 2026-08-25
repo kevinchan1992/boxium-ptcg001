@@ -1,0 +1,99 @@
+-- ============================================================================
+-- M05 synthetic fixture transaction — REVIEW ARTIFACT: intentionally disabled.
+-- Reserved values: IDs 910001–910099; email m05-fixture@lab.invalid.
+-- This is Lab-only and synthetic-only. The DO block is atomic: an unexpected
+-- error rolls back every fixture row. Expected violations are caught locally.
+-- ============================================================================
+DO $m05$
+BEGIN
+  INSERT INTO "games" ("id", "code", "name") VALUES (910001, 'm05-lab-game', 'M05 Synthetic Game');
+  INSERT INTO "users" ("id", "email", "name", "loginMethod") VALUES (910010, 'm05-fixture@lab.invalid', 'M05 Fixture User', 'password');
+  INSERT INTO "cards" ("id", "cardId", "gameId", "name") VALUES (910020, 'M05-LAB-CARD', 910001, 'M05 Synthetic Card');
+  INSERT INTO "sealedProducts" ("id", "gameId", "name") VALUES (910021, 910001, 'M05 Synthetic Sealed Product');
+  INSERT INTO "categories" ("id", "name", "slug") VALUES (910030, 'M05 Category', 'm05-lab-category');
+  INSERT INTO "tags" ("id", "name", "slug") VALUES (910040, 'M05 Tag', 'm05-lab-tag');
+  INSERT INTO "posts" ("id", "title", "slug", "content", "categoryId", "authorId", "dataSource") VALUES (910050, 'M05 Parent Post', 'm05-parent-post', 'Synthetic content only', 910030, 910010, 'manual');
+  INSERT INTO "posts" ("id", "title", "slug", "content", "authorId", "dataSource") VALUES (910051, 'M05 Cascade Post', 'm05-cascade-post', 'Synthetic cascade content only', 910010, 'manual');
+  INSERT INTO "post_tags" ("postId", "tagId") VALUES (910050, 910040), (910051, 910040);
+  INSERT INTO "post_versions" ("id", "postId", "title", "content", "createdBy") VALUES (910060, 910050, 'M05 Version', 'Synthetic version only', 910010), (910061, 910051, 'M05 Cascade Version', 'Synthetic cascade version only', 910010);
+  INSERT INTO "userCollections" ("id", "userId", "cardId", "grader", "quantity") VALUES (910070, 910010, 910020, 'PSA', 1);
+
+  BEGIN
+    INSERT INTO "cards" ("id", "cardId", "gameId", "name") VALUES (910022, 'M05-ORPHAN-CARD', 919999, 'Orphan must fail');
+    RAISE EXCEPTION 'expected m05_cards_game violation';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "posts" ("id", "title", "slug", "content", "authorId", "dataSource") VALUES (910052, 'Orphan author', 'm05-orphan-author', 'Must fail', 919999, 'manual');
+    RAISE EXCEPTION 'expected m05_posts_author violation';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "post_tags" ("postId", "tagId") VALUES (919999, 910040);
+    RAISE EXCEPTION 'expected m05_post_tags_post violation';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "post_versions" ("id", "postId", "title", "content", "createdBy") VALUES (910062, 919999, 'Orphan version', 'Must fail', 910010);
+    RAISE EXCEPTION 'expected m05_post_versions_post violation';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "userCollections" ("id", "userId", "cardId", "grader") VALUES (910071, 919999, 910020, 'PSA');
+    RAISE EXCEPTION 'expected m05_user_collections_user violation';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "post_tags" ("postId", "tagId") VALUES (910050, NULL);
+    RAISE EXCEPTION 'expected post_tags tagId NOT NULL violation';
+  EXCEPTION WHEN not_null_violation THEN NULL; END;
+  BEGIN
+    INSERT INTO "users" ("id", "email", "loginMethod") VALUES (910011, 'm05-fixture@lab.invalid', 'password');
+    RAISE EXCEPTION 'expected users email unique violation';
+  EXCEPTION WHEN unique_violation THEN NULL; END;
+
+  DELETE FROM "categories" WHERE "id" = 910030;
+  IF (SELECT "categoryId" FROM "posts" WHERE "id" = 910050) IS NOT NULL THEN
+    RAISE EXCEPTION 'expected m05_posts_category SET NULL';
+  END IF;
+  DELETE FROM "posts" WHERE "id" = 910051;
+  IF EXISTS (SELECT 1 FROM "post_tags" WHERE "postId" = 910051) OR EXISTS (SELECT 1 FROM "post_versions" WHERE "postId" = 910051) THEN
+    RAISE EXCEPTION 'expected post cascade cleanup';
+  END IF;
+  BEGIN
+    DELETE FROM "games" WHERE "id" = 910001;
+    RAISE EXCEPTION 'expected m05_cards_game RESTRICT';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+  BEGIN
+    DELETE FROM "users" WHERE "id" = 910010;
+    RAISE EXCEPTION 'expected m05_posts_author RESTRICT';
+  EXCEPTION WHEN foreign_key_violation THEN NULL; END;
+
+  DELETE FROM "userCollections" WHERE "id" = 910070;
+  DELETE FROM "posts" WHERE "id" = 910050;
+  DELETE FROM "tags" WHERE "id" = 910040;
+  DELETE FROM "sealedProducts" WHERE "id" = 910021;
+  DELETE FROM "cards" WHERE "id" = 910020;
+  DELETE FROM "users" WHERE "id" = 910010;
+  DELETE FROM "games" WHERE "id" = 910001;
+
+  IF EXISTS (SELECT 1 FROM "games" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "users" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "cards" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "sealedProducts" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "categories" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "tags" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "posts" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "post_versions" WHERE "id" BETWEEN 910001 AND 910099)
+     OR EXISTS (SELECT 1 FROM "userCollections" WHERE "id" BETWEEN 910001 AND 910099) THEN
+    RAISE EXCEPTION 'M05 fixture cleanup failed';
+  END IF;
+END $m05$;
+
+SELECT COUNT(*)::integer AS "m05_fixture_rows_remaining"
+FROM (
+  SELECT "id" FROM "games" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "users" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "cards" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "sealedProducts" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "categories" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "tags" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "posts" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "post_versions" WHERE "id" BETWEEN 910001 AND 910099
+  UNION ALL SELECT "id" FROM "userCollections" WHERE "id" BETWEEN 910001 AND 910099
+) AS "m05_fixture_rows";

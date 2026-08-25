@@ -1,0 +1,16 @@
+-- ============================================================================
+-- M05 — validated high-confidence foreign key proposal
+-- REVIEW ARTIFACT: intentionally disabled. Apply only through approved Lab gate.
+-- No Production target, role/grant, RLS policy, fixture or client access is included.
+-- ============================================================================
+
+ALTER TABLE "cards" ADD CONSTRAINT "m05_cards_game" FOREIGN KEY ("gameId") REFERENCES "games" ("id") ON DELETE RESTRICT;
+ALTER TABLE "sealedProducts" ADD CONSTRAINT "m05_sealed_products_game" FOREIGN KEY ("gameId") REFERENCES "games" ("id") ON DELETE RESTRICT;
+ALTER TABLE "posts" ADD CONSTRAINT "m05_posts_category" FOREIGN KEY ("categoryId") REFERENCES "categories" ("id") ON DELETE SET NULL;
+ALTER TABLE "posts" ADD CONSTRAINT "m05_posts_author" FOREIGN KEY ("authorId") REFERENCES "users" ("id") ON DELETE RESTRICT;
+ALTER TABLE "post_tags" ADD CONSTRAINT "m05_post_tags_post" FOREIGN KEY ("postId") REFERENCES "posts" ("id") ON DELETE CASCADE;
+ALTER TABLE "post_tags" ADD CONSTRAINT "m05_post_tags_tag" FOREIGN KEY ("tagId") REFERENCES "tags" ("id") ON DELETE CASCADE;
+ALTER TABLE "post_versions" ADD CONSTRAINT "m05_post_versions_post" FOREIGN KEY ("postId") REFERENCES "posts" ("id") ON DELETE CASCADE;
+ALTER TABLE "post_versions" ADD CONSTRAINT "m05_post_versions_creator" FOREIGN KEY ("createdBy") REFERENCES "users" ("id") ON DELETE RESTRICT;
+ALTER TABLE "userCollections" ADD CONSTRAINT "m05_user_collections_user" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT;
+ALTER TABLE "userCollections" ADD CONSTRAINT "m05_user_collections_card" FOREIGN KEY ("cardId") REFERENCES "cards" ("id") ON DELETE RESTRICT;

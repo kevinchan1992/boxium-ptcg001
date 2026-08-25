@@ -11,6 +11,8 @@
 - [x] 依使用者授權自主完成 S1-refresh、disabled bundle revalidation 及通過 preflight 後的既批准 S2-B baseline；僅在成本、Production、資料安全、不可回復操作或範圍變更時暫停請示
 - [x] 修正 M04 PostgreSQL schema-wide index name collision（`cardId_idx`），離線驗證全域唯一 index name 後才重試 Lab-only M04；修正後 migration 成功
 - [x] 依已批准安全決策維持 Lab Data API disabled，並在 M06 前不啟用 RLS 或建立 RLS policy；RLS/policy 設計改列未來獨立安全 gate；見 docs/db-parity/s2b-security-decision.md
+- [x] 執行 M05：只在 Supabase Lab 驗證經設計審核的 FK／constraint與合成 fixtures；清除所有 fixture，保留 M06、PITR／匯入、runtime與 Production cutover 禁止變更；見 docs/db-parity/m05-execution-isolation-record.md
+- [x] 使用獨立 M05 allowlist input 準備器套用十條高信心 FK；禁止 M06 role/grant、RLS、fixture DML與任何 Production target；fixture 結果為零殘留 row
 
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
