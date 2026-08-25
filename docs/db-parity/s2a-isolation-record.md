@@ -28,6 +28,7 @@
 | Manifest integrity | `package.json` SHA-256 `b6b44c473c58a6f21f4c351eaefe9f1c75081e78f5b1c3c361711ed84f163959`；`pnpm-lock.yaml` SHA-256 `550abec90cebb89f4a3ce0458998fb10e0d3061e8c61ad9c804c7a26da46cab5`。最新版 CLI 使用 `/tmp` 無憑證 config 對實際 `schema.pg.ts` retry 前後雜湊一致；沒有寫入 manifest/lockfile。 |
 | node_modules cleanup | `node_modules/drizzle-orm` 已維持 / 還原至 locked `0.45.2` symlink；沒有 temporary replacement 留在 staging project。 |
 | Database / Production | 未連線、讀取或寫入 Supabase Lab 或 Production；未執行 DDL、DML、fixture、role/grant、secret、runtime、Cloud Run、GitHub production workflow/environment 或 Heartbeat 變更。 |
+| GitHub branch proof | Disabled bundle commit 為 `da3c0ed22e80cdd668856cef8838f8f1ab8f8990`，僅位於 `chore/supabase-lab-schema-parity`；GitHub `main` 保持 `89e75cdd1fa810aa2799d8706f47d359a00e602f`。 |
 
 ## Remaining prohibition
 
