@@ -14,8 +14,16 @@
 - [x] 執行 M05：只在 Supabase Lab 驗證經設計審核的 FK／constraint與合成 fixtures；清除所有 fixture，保留 M06、PITR／匯入、runtime與 Production cutover 禁止變更；見 docs/db-parity/m05-execution-isolation-record.md
 - [x] 使用獨立 M05 allowlist input 準備器套用十條高信心 FK；禁止 M06 role/grant、RLS、fixture DML與任何 Production target；fixture 結果為零殘留 row
 - [x] 依使用者選擇 B 維持 Lab schema／synthetic-only 範圍：不升級 PITR、不讀取/匯出/匯入 Production data、不推進 M06/RLS/runtime或 Production cutover，並保存停止決策稽核；見 docs/db-parity/stage2-choice-b-stop-record.md
+- [ ] 依使用者零付費目標恢復正式 Supabase PostgreSQL system-database migration：先完成 Free-plan 手工備份／回退、data-quality與reconciliation方案，再進入 M06、受控匯入、shadow/dual-write、load/rollback proof及明確 Production cutover gate
+- [x] 建立獨立 `BOXIUM Production PostgreSQL`（Singapore `ap-southeast-1`）空白 target；Data API 已停用，未填入runtime credential、匯入資料或切換 BOXIUM應用程式；見 docs/db-parity/production-target-isolation-record.md
+- [x] 使用者確認維持零付費 Free plan；不啟用 Pro、Small compute或PITR，改採可重複的邏輯備份、受控匯入與回退證據
+- [ ] 設計並驗證 Free-plan 手工備份／回退工序，以取代 PITR gate；任何 Production data export/import前仍須完成對帳與明確cutover approval
 
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
+- [x] 在空白 Supabase Production target 套用已驗證的 M02–M05 schema baseline；未匯入資料、未建立runtime credential且維持Data API disabled；95 tables均為0 rows
+- [x] 執行已確認M06第一階段：建立BOXIUM server-only runtime/migration權限模型、撤銷 anon/authenticated 外部角色權限並延後RLS policies；未把任何credential或Data API交給瀏覽器；見 docs/db-parity/production-m06-change-record.md
+- [x] 修正M06後仍由PUBLIC繼承的public schema usage，撤銷PUBLIC外部權限並以只讀權限檢查確認anon/authenticated完全無存取
+- [ ] 於獨立gate建立並驗證Production runtime login credential及managed secret綁定；不得把密碼、DSN或secret value寫入source、Git、log或browser
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
 - [x] 將 withDbTimeout 移至 parseGradeFilter 之前（確保可用）
 - [x] 為 searchCardsByGrade 的全表查詢加入 15s 超時保護
