@@ -24,6 +24,10 @@
 - [x] 執行已確認M06第一階段：建立BOXIUM server-only runtime/migration權限模型、撤銷 anon/authenticated 外部角色權限並延後RLS policies；未把任何credential或Data API交給瀏覽器；見 docs/db-parity/production-m06-change-record.md
 - [x] 修正M06後仍由PUBLIC繼承的public schema usage，撤銷PUBLIC外部權限並以只讀權限檢查確認anon/authenticated完全無存取
 - [ ] 於獨立gate建立並驗證Production runtime login credential及managed secret綁定；不得把密碼、DSN或secret value寫入source、Git、log或browser
+- [ ] 執行已批准的受控Production資料複製與逐表對帳：先完成讀取快照／品質基線／批次manifest，寫入Supabase後核對；不得切換runtime、使用者流量或刪除MySQL/TiDB資料
+- [ ] 處理來源94表／Supabase目標95表差異：記錄MySQL缺少但runtime仍定義的articleGenerationHistory，確認其在目標維持空表並在複製前列為schema discrepancy
+- [x] 核對首頁237萬「成交價格記錄」的實際資料來源，並將94張資料庫表按業務、索引、快取及日誌拆分，重新估算真正Supabase遷移集及Free-plan容量；見 docs/db-parity/homepage-stats-and-free-plan-capacity-assessment.md
+- [x] 使用者選擇維持現有MySQL/TiDB為正式系統資料庫；停止Supabase真實資料複製、runtime credential、shadow/dual-write與cutover，Supabase僅保留為隔離schema／安全驗證環境
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
 - [x] 將 withDbTimeout 移至 parseGradeFilter 之前（確保可用）
 - [x] 為 searchCardsByGrade 的全表查詢加入 15s 超時保護

@@ -1,0 +1,722 @@
+{
+  "generatedAt": "2026-08-25T08:58:13.307Z",
+  "sourceSchemaSha256": "c78e658defe2232014f4f33d0a0f48cde10e716d1ded66c9c8cf4ef4bb937750",
+  "targetOnlyTables": [
+    "articleGenerationHistory"
+  ],
+  "totals": {
+    "rows": 8088434,
+    "dataBytes": 1470911340,
+    "indexBytes": 830615150
+  },
+  "groups": {
+    "core_or_business_data": {
+      "rows": 2015585,
+      "dataBytes": 1164235635,
+      "indexBytes": 559430649,
+      "tables": [
+        {
+          "tableName": "games",
+          "rowCount": 7,
+          "estimatedDataBytes": 471,
+          "estimatedIndexBytes": 92
+        },
+        {
+          "tableName": "fxRates",
+          "rowCount": 15,
+          "estimatedDataBytes": 375,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "sealedProducts",
+          "rowCount": 2226,
+          "estimatedDataBytes": 494506,
+          "estimatedIndexBytes": 31136
+        },
+        {
+          "tableName": "users",
+          "rowCount": 45,
+          "estimatedDataBytes": 5406,
+          "estimatedIndexBytes": 254
+        },
+        {
+          "tableName": "cards",
+          "rowCount": 96129,
+          "estimatedDataBytes": 25459668,
+          "estimatedIndexBytes": 12490417
+        },
+        {
+          "tableName": "priceHistory",
+          "rowCount": 1809467,
+          "estimatedDataBytes": 1123916945,
+          "estimatedIndexBytes": 541132608
+        },
+        {
+          "tableName": "watchlist",
+          "rowCount": 4,
+          "estimatedDataBytes": 214,
+          "estimatedIndexBytes": 128
+        },
+        {
+          "tableName": "viewHistory",
+          "rowCount": 782,
+          "estimatedDataBytes": 31120,
+          "estimatedIndexBytes": 18672
+        },
+        {
+          "tableName": "dataSources",
+          "rowCount": 85618,
+          "estimatedDataBytes": 12634488,
+          "estimatedIndexBytes": 5390754
+        },
+        {
+          "tableName": "firecrawlUsage",
+          "rowCount": 4,
+          "estimatedDataBytes": 586,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "systemSettings",
+          "rowCount": 21,
+          "estimatedDataBytes": 336,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "categories",
+          "rowCount": 128,
+          "estimatedDataBytes": 2812,
+          "estimatedIndexBytes": 171
+        },
+        {
+          "tableName": "tags",
+          "rowCount": 176,
+          "estimatedDataBytes": 4331,
+          "estimatedIndexBytes": 1515
+        },
+        {
+          "tableName": "posts",
+          "rowCount": 2,
+          "estimatedDataBytes": 48072,
+          "estimatedIndexBytes": 146
+        },
+        {
+          "tableName": "post_tags",
+          "rowCount": 6,
+          "estimatedDataBytes": 96,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "post_versions",
+          "rowCount": 2,
+          "estimatedDataBytes": 34221,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "uploaded_images",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "notifications",
+          "rowCount": 7,
+          "estimatedDataBytes": 280,
+          "estimatedIndexBytes": 112
+        },
+        {
+          "tableName": "postShares",
+          "rowCount": 3,
+          "estimatedDataBytes": 511,
+          "estimatedIndexBytes": 48
+        },
+        {
+          "tableName": "sellerProfiles",
+          "rowCount": 3,
+          "estimatedDataBytes": 222,
+          "estimatedIndexBytes": 48
+        },
+        {
+          "tableName": "marketplaceListings",
+          "rowCount": 24,
+          "estimatedDataBytes": 6600,
+          "estimatedIndexBytes": 3000
+        },
+        {
+          "tableName": "marketplaceOrders",
+          "rowCount": 19,
+          "estimatedDataBytes": 6004,
+          "estimatedIndexBytes": 2888
+        },
+        {
+          "tableName": "cartOrders",
+          "rowCount": 9,
+          "estimatedDataBytes": 567,
+          "estimatedIndexBytes": 144
+        },
+        {
+          "tableName": "marketplaceOrderItems",
+          "rowCount": 2,
+          "estimatedDataBytes": 154,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "marketplacePayouts",
+          "rowCount": 1,
+          "estimatedDataBytes": 61,
+          "estimatedIndexBytes": 32
+        },
+        {
+          "tableName": "marketplaceBanners",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "wishlists",
+          "rowCount": 2,
+          "estimatedDataBytes": 64,
+          "estimatedIndexBytes": 32
+        },
+        {
+          "tableName": "marketplaceReviews",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "userShippingAddresses",
+          "rowCount": 4,
+          "estimatedDataBytes": 192,
+          "estimatedIndexBytes": 32
+        },
+        {
+          "tableName": "offers",
+          "rowCount": 3,
+          "estimatedDataBytes": 303,
+          "estimatedIndexBytes": 96
+        },
+        {
+          "tableName": "listingReports",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "orderStatusHistory",
+          "rowCount": 7,
+          "estimatedDataBytes": 224,
+          "estimatedIndexBytes": 112
+        },
+        {
+          "tableName": "cartItems",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "emailUnsubscribes",
+          "rowCount": 159,
+          "estimatedDataBytes": 5088,
+          "estimatedIndexBytes": 1272
+        },
+        {
+          "tableName": "marketplaceWhitelist",
+          "rowCount": 5,
+          "estimatedDataBytes": 160,
+          "estimatedIndexBytes": 80
+        },
+        {
+          "tableName": "orderMessages",
+          "rowCount": 4,
+          "estimatedDataBytes": 384,
+          "estimatedIndexBytes": 96
+        },
+        {
+          "tableName": "disputeMedia",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "auctionBids",
+          "rowCount": 7,
+          "estimatedDataBytes": 609,
+          "estimatedIndexBytes": 168
+        },
+        {
+          "tableName": "auctionAgreements",
+          "rowCount": 5,
+          "estimatedDataBytes": 160,
+          "estimatedIndexBytes": 120
+        },
+        {
+          "tableName": "auctionViolations",
+          "rowCount": 1,
+          "estimatedDataBytes": 64,
+          "estimatedIndexBytes": 16
+        },
+        {
+          "tableName": "platformRules",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "productCategories",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "sellerRiskProfiles",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "blockedIps",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "adminIpWhitelist",
+          "rowCount": 6,
+          "estimatedDataBytes": 48,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "gradingServiceTiers",
+          "rowCount": 3,
+          "estimatedDataBytes": 198,
+          "estimatedIndexBytes": 48
+        },
+        {
+          "tableName": "gradingBatches",
+          "rowCount": 1,
+          "estimatedDataBytes": 61,
+          "estimatedIndexBytes": 16
+        },
+        {
+          "tableName": "gradingSubmissions",
+          "rowCount": 11,
+          "estimatedDataBytes": 2222,
+          "estimatedIndexBytes": 264
+        },
+        {
+          "tableName": "gradingSubmissionItems",
+          "rowCount": 20,
+          "estimatedDataBytes": 4117,
+          "estimatedIndexBytes": 176
+        },
+        {
+          "tableName": "gradingReviews",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "cardInventory",
+          "rowCount": 138,
+          "estimatedDataBytes": 15732,
+          "estimatedIndexBytes": 3312
+        },
+        {
+          "tableName": "companyCardInventory",
+          "rowCount": 188,
+          "estimatedDataBytes": 21432,
+          "estimatedIndexBytes": 4512
+        },
+        {
+          "tableName": "whatsappWebhookEvents",
+          "rowCount": 96,
+          "estimatedDataBytes": 3072,
+          "estimatedIndexBytes": 768
+        },
+        {
+          "tableName": "whatsappTradeIntakes",
+          "rowCount": 8,
+          "estimatedDataBytes": 784,
+          "estimatedIndexBytes": 256
+        },
+        {
+          "tableName": "whatsappTradeMedia",
+          "rowCount": 8,
+          "estimatedDataBytes": 320,
+          "estimatedIndexBytes": 192
+        },
+        {
+          "tableName": "exportJobs",
+          "rowCount": 11,
+          "estimatedDataBytes": 880,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "gradingBannerImages",
+          "rowCount": 42,
+          "estimatedDataBytes": 1680,
+          "estimatedIndexBytes": 672
+        },
+        {
+          "tableName": "userCollections",
+          "rowCount": 87,
+          "estimatedDataBytes": 6699,
+          "estimatedIndexBytes": 4176
+        },
+        {
+          "tableName": "cardTrades",
+          "rowCount": 1,
+          "estimatedDataBytes": 45,
+          "estimatedIndexBytes": 16
+        },
+        {
+          "tableName": "cardTradeItems",
+          "rowCount": 3,
+          "estimatedDataBytes": 207,
+          "estimatedIndexBytes": 72
+        },
+        {
+          "tableName": "orders",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "orderItems",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "tcgMarketPrices",
+          "rowCount": 19685,
+          "estimatedDataBytes": 1488084,
+          "estimatedIndexBytes": 330644
+        },
+        {
+          "tableName": "pools",
+          "rowCount": 3,
+          "estimatedDataBytes": 336,
+          "estimatedIndexBytes": 48
+        },
+        {
+          "tableName": "poolRewards",
+          "rowCount": 18,
+          "estimatedDataBytes": 1296,
+          "estimatedIndexBytes": 144
+        },
+        {
+          "tableName": "poolSlots",
+          "rowCount": 300,
+          "estimatedDataBytes": 28800,
+          "estimatedIndexBytes": 9600
+        },
+        {
+          "tableName": "userVault",
+          "rowCount": 27,
+          "estimatedDataBytes": 2808,
+          "estimatedIndexBytes": 864
+        },
+        {
+          "tableName": "userPointBalance",
+          "rowCount": 1,
+          "estimatedDataBytes": 32,
+          "estimatedIndexBytes": 16
+        },
+        {
+          "tableName": "pointTransactions",
+          "rowCount": 22,
+          "estimatedDataBytes": 1056,
+          "estimatedIndexBytes": 528
+        },
+        {
+          "tableName": "freeTrialDraws",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "aiScanUsage",
+          "rowCount": 3,
+          "estimatedDataBytes": 96,
+          "estimatedIndexBytes": 24
+        },
+        {
+          "tableName": "wallEntries",
+          "rowCount": 2,
+          "estimatedDataBytes": 208,
+          "estimatedIndexBytes": 48
+        },
+        {
+          "tableName": "wallComments",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "wallSighLogs",
+          "rowCount": 4,
+          "estimatedDataBytes": 128,
+          "estimatedIndexBytes": 64
+        }
+      ],
+      "totalBytes": 1723666284,
+      "percentOfRows": 24.92
+    },
+    "operational_log": {
+      "rows": 128676,
+      "dataBytes": 36046715,
+      "indexBytes": 3113063,
+      "tables": [
+        {
+          "tableName": "scraperPerformanceLogs",
+          "rowCount": 19999,
+          "estimatedDataBytes": 22205044,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "userSearchLogs",
+          "rowCount": 5716,
+          "estimatedDataBytes": 356369,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "scheduleExecutionHistory",
+          "rowCount": 299,
+          "estimatedDataBytes": 25324,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "marketplaceSearchLogs",
+          "rowCount": 2,
+          "estimatedDataBytes": 48,
+          "estimatedIndexBytes": 16
+        },
+        {
+          "tableName": "emailLogs",
+          "rowCount": 261,
+          "estimatedDataBytes": 8352,
+          "estimatedIndexBytes": 6264
+        },
+        {
+          "tableName": "adminAuditLogs",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "listingModerationLogs",
+          "rowCount": 4,
+          "estimatedDataBytes": 192,
+          "estimatedIndexBytes": 96
+        },
+        {
+          "tableName": "securityEvents",
+          "rowCount": 102395,
+          "estimatedDataBytes": 13451386,
+          "estimatedIndexBytes": 3106687
+        },
+        {
+          "tableName": "webhookLogs",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        }
+      ],
+      "totalBytes": 39159778,
+      "percentOfRows": 1.59
+    },
+    "rebuildable_cache": {
+      "rows": 74218,
+      "dataBytes": 41757873,
+      "indexBytes": 1182770,
+      "tables": [
+        {
+          "tableName": "marketTrends",
+          "rowCount": 0,
+          "estimatedDataBytes": 0,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "scheduledTasks",
+          "rowCount": 786,
+          "estimatedDataBytes": 114651,
+          "estimatedIndexBytes": 2026
+        },
+        {
+          "tableName": "snkrdunkListingsCache",
+          "rowCount": 72734,
+          "estimatedDataBytes": 41408670,
+          "estimatedIndexBytes": 1163744
+        },
+        {
+          "tableName": "ebayListingsCache",
+          "rowCount": 509,
+          "estimatedDataBytes": 204202,
+          "estimatedIndexBytes": 16645
+        },
+        {
+          "tableName": "searchStats",
+          "rowCount": 151,
+          "estimatedDataBytes": 8456,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "priceUpdateSchedule",
+          "rowCount": 1,
+          "estimatedDataBytes": 88,
+          "estimatedIndexBytes": 0
+        },
+        {
+          "tableName": "scheduleConfig",
+          "rowCount": 1,
+          "estimatedDataBytes": 165,
+          "estimatedIndexBytes": 19
+        },
+        {
+          "tableName": "trendingCardsCache",
+          "rowCount": 33,
+          "estimatedDataBytes": 1815,
+          "estimatedIndexBytes": 264
+        },
+        {
+          "tableName": "trendingRankingsCache",
+          "rowCount": 3,
+          "estimatedDataBytes": 19826,
+          "estimatedIndexBytes": 72
+        }
+      ],
+      "totalBytes": 42940643,
+      "percentOfRows": 0.92
+    },
+    "rebuildable_search_index": {
+      "rows": 5869955,
+      "dataBytes": 228871117,
+      "indexBytes": 266888668,
+      "tables": [
+        {
+          "tableName": "searchTokens",
+          "rowCount": 5842562,
+          "estimatedDataBytes": 227719145,
+          "estimatedIndexBytes": 266283090
+        },
+        {
+          "tableName": "snkrdunkGradeIndex",
+          "rowCount": 27393,
+          "estimatedDataBytes": 1151972,
+          "estimatedIndexBytes": 605578
+        }
+      ],
+      "totalBytes": 495759785,
+      "percentOfRows": 72.57
+    }
+  },
+  "largestTables": [
+    {
+      "tableName": "priceHistory",
+      "rowCount": 1809467,
+      "estimatedDataBytes": 1123916945,
+      "estimatedIndexBytes": 541132608,
+      "totalBytes": 1665049553
+    },
+    {
+      "tableName": "searchTokens",
+      "rowCount": 5842562,
+      "estimatedDataBytes": 227719145,
+      "estimatedIndexBytes": 266283090,
+      "totalBytes": 494002235
+    },
+    {
+      "tableName": "snkrdunkListingsCache",
+      "rowCount": 72734,
+      "estimatedDataBytes": 41408670,
+      "estimatedIndexBytes": 1163744,
+      "totalBytes": 42572414
+    },
+    {
+      "tableName": "cards",
+      "rowCount": 96129,
+      "estimatedDataBytes": 25459668,
+      "estimatedIndexBytes": 12490417,
+      "totalBytes": 37950085
+    },
+    {
+      "tableName": "scraperPerformanceLogs",
+      "rowCount": 19999,
+      "estimatedDataBytes": 22205044,
+      "estimatedIndexBytes": 0,
+      "totalBytes": 22205044
+    },
+    {
+      "tableName": "dataSources",
+      "rowCount": 85618,
+      "estimatedDataBytes": 12634488,
+      "estimatedIndexBytes": 5390754,
+      "totalBytes": 18025242
+    },
+    {
+      "tableName": "securityEvents",
+      "rowCount": 102395,
+      "estimatedDataBytes": 13451386,
+      "estimatedIndexBytes": 3106687,
+      "totalBytes": 16558073
+    },
+    {
+      "tableName": "tcgMarketPrices",
+      "rowCount": 19685,
+      "estimatedDataBytes": 1488084,
+      "estimatedIndexBytes": 330644,
+      "totalBytes": 1818728
+    },
+    {
+      "tableName": "snkrdunkGradeIndex",
+      "rowCount": 27393,
+      "estimatedDataBytes": 1151972,
+      "estimatedIndexBytes": 605578,
+      "totalBytes": 1757550
+    },
+    {
+      "tableName": "sealedProducts",
+      "rowCount": 2226,
+      "estimatedDataBytes": 494506,
+      "estimatedIndexBytes": 31136,
+      "totalBytes": 525642
+    },
+    {
+      "tableName": "userSearchLogs",
+      "rowCount": 5716,
+      "estimatedDataBytes": 356369,
+      "estimatedIndexBytes": 0,
+      "totalBytes": 356369
+    },
+    {
+      "tableName": "ebayListingsCache",
+      "rowCount": 509,
+      "estimatedDataBytes": 204202,
+      "estimatedIndexBytes": 16645,
+      "totalBytes": 220847
+    },
+    {
+      "tableName": "scheduledTasks",
+      "rowCount": 786,
+      "estimatedDataBytes": 114651,
+      "estimatedIndexBytes": 2026,
+      "totalBytes": 116677
+    },
+    {
+      "tableName": "viewHistory",
+      "rowCount": 782,
+      "estimatedDataBytes": 31120,
+      "estimatedIndexBytes": 18672,
+      "totalBytes": 49792
+    },
+    {
+      "tableName": "posts",
+      "rowCount": 2,
+      "estimatedDataBytes": 48072,
+      "estimatedIndexBytes": 146,
+      "totalBytes": 48218
+    }
+  ],
+  "dataHandling": "Aggregated table counts and information_schema metadata only; no row content, credentials or connection strings are written."
+}
