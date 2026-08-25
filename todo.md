@@ -13,6 +13,7 @@
 - [x] 依已批准安全決策維持 Lab Data API disabled，並在 M06 前不啟用 RLS 或建立 RLS policy；RLS/policy 設計改列未來獨立安全 gate；見 docs/db-parity/s2b-security-decision.md
 - [x] 執行 M05：只在 Supabase Lab 驗證經設計審核的 FK／constraint與合成 fixtures；清除所有 fixture，保留 M06、PITR／匯入、runtime與 Production cutover 禁止變更；見 docs/db-parity/m05-execution-isolation-record.md
 - [x] 使用獨立 M05 allowlist input 準備器套用十條高信心 FK；禁止 M06 role/grant、RLS、fixture DML與任何 Production target；fixture 結果為零殘留 row
+- [x] 依使用者選擇 B 維持 Lab schema／synthetic-only 範圍：不升級 PITR、不讀取/匯出/匯入 Production data、不推進 M06/RLS/runtime或 Production cutover，並保存停止決策稽核；見 docs/db-parity/stage2-choice-b-stop-record.md
 
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時

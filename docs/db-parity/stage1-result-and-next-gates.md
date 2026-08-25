@@ -40,7 +40,7 @@ Production cutover 未開始，且仍被下列事項阻擋：PITR restore proof�
 
 ## Current branch and safety state
 
-All migration documents and disabled artifacts reside only in GitHub staging branch `chore/supabase-lab-schema-parity`; GitHub `main` and the managed Production working tree remain unchanged. The next action requiring your decision is enabling a suitable paid Lab plan/compute/PITR and authorizing a restore drill. Until then, I will not read/export/import Production data or start M06/cutover work.
+All migration documents and disabled artifacts reside only in GitHub staging branch `chore/supabase-lab-schema-parity`; GitHub `main` and the managed Production working tree remain unchanged. The user selected **Option B**: no paid Lab/PITR upgrade and no Production data import planning. Until a new explicit reversal, I will not read/export/import Production data or start M06/cutover work.[6]
 
 ## References
 
@@ -49,3 +49,4 @@ All migration documents and disabled artifacts reside only in GitHub staging bra
 [3]: https://supabase.com/docs/guides/platform/backups "Supabase Database Backups and PITR"
 [4]: https://supabase.com/docs/guides/database/import-data "Import data into Supabase"
 [5]: ./s2b-security-decision.md "Data API-disabled and RLS-deferred decision"
+[6]: ./stage2-choice-b-stop-record.md "Stage 2 Option B stop record"
