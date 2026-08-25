@@ -4,6 +4,6 @@
   "tables": 95,
   "rawSqlTags": 390,
   "executeCalls": 120,
-  "generatedAt": "2026-08-25T05:52:40.714Z",
+  "generatedAt": "2026-08-25T06:48:08.556Z",
   "safety": "S1 code-only analysis; no database connection or write was performed"
 }

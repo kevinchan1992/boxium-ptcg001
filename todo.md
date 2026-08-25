@@ -6,8 +6,11 @@
 - [x] 依使用者選擇，使用暫時最新版 Drizzle CLI 重試離線 generation，並驗證 `package.json` 與 lockfile 雜湊完全不變；已確認 published latest 組合仍不能編譯 S1 draft，未產生 SQL
 - [x] 依使用者同意暫時替換 staging `node_modules` 的最新版 `drizzle-orm`，離線生成後移除替換、重裝 locked dependency 並驗證 manifest 雜湊不變；registry 確認 locked 0.45.2 已是 published latest，未有 replacement 留下
 - [x] 依 S2-A 替代方案 B 產生逐段、可追蹤的手工 `.sql.disabled` bundle；M05 constraints 與 M06 grants 維持 absent，且未連線或套用；2/2 bundle tests passed
-- [ ] 執行已批准 S2-B：只在 Supabase Lab 經 target/Data API/PITR/managed-secret/source-snapshot preflight 後套用 M00–M04 baseline，保留 M05/M06 absent，並稽核零 Production 變更
-- [ ] 阻擋項：刷新 S1 mapping 與 M02–M04 disabled bundle，使目前 source snapshot 與 manifest 一致；需使用者另行批准後才可恢復 S2-B Lab DDL
+- [x] 執行已批准 S2-B：只在 Supabase Lab 經 target/Data API/PITR/managed-secret/source-snapshot preflight 後套用 M00–M04 baseline，保留 M05/M06 absent，並稽核零 Production 變更；見 docs/db-parity/s2b-baseline-execution-report.md
+- [x] 阻擋項：刷新 S1 mapping 與 M02–M04 disabled bundle，使目前 source snapshot 與 manifest 一致；已完成並重新通過 M00 preflight
+- [x] 依使用者授權自主完成 S1-refresh、disabled bundle revalidation 及通過 preflight 後的既批准 S2-B baseline；僅在成本、Production、資料安全、不可回復操作或範圍變更時暫停請示
+- [x] 修正 M04 PostgreSQL schema-wide index name collision（`cardId_idx`），離線驗證全域唯一 index name 後才重試 Lab-only M04；修正後 migration 成功
+- [x] 依已批准安全決策維持 Lab Data API disabled，並在 M06 前不啟用 RLS 或建立 RLS policy；RLS/policy 設計改列未來獨立安全 gate；見 docs/db-parity/s2b-security-decision.md
 
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時

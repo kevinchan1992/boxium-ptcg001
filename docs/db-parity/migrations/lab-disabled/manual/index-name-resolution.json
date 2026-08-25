@@ -1,0 +1,26 @@
+{
+  "rule": "PostgreSQL index names share the schema namespace. Any duplicate source name is made table-scoped with __<tableName>.",
+  "postgresIdentifierLimit": 63,
+  "resolutions": [
+    {
+      "sourceName": "cardId_idx",
+      "resolvedName": "cardId_idx__snkrdunkListingsCache",
+      "tableName": "snkrdunkListingsCache"
+    },
+    {
+      "sourceName": "expiresAt_idx",
+      "resolvedName": "expiresAt_idx__snkrdunkListingsCache",
+      "tableName": "snkrdunkListingsCache"
+    },
+    {
+      "sourceName": "cardId_idx",
+      "resolvedName": "cardId_idx__ebayListingsCache",
+      "tableName": "ebayListingsCache"
+    },
+    {
+      "sourceName": "expiresAt_idx",
+      "resolvedName": "expiresAt_idx__ebayListingsCache",
+      "tableName": "ebayListingsCache"
+    }
+  ]
+}

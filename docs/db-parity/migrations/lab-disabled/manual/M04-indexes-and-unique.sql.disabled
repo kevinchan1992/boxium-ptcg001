@@ -37,10 +37,10 @@ CREATE INDEX "idx_datasources_source_lastUpdatedAt" ON "dataSources" ("source", 
 CREATE INDEX "idx_datasources_sourceIdentifier" ON "dataSources" ("sourceIdentifier");
 CREATE INDEX "idx_datasources_isActive_source" ON "dataSources" ("isActive", "source");
 CREATE UNIQUE INDEX "uniq_scheduled_task_external_run" ON "scheduledTasks" ("taskType", "externalRunId");
-CREATE INDEX "cardId_idx" ON "snkrdunkListingsCache" ("cardId");
-CREATE INDEX "expiresAt_idx" ON "snkrdunkListingsCache" ("expiresAt");
-CREATE INDEX "cardId_idx" ON "ebayListingsCache" ("cardId");
-CREATE INDEX "expiresAt_idx" ON "ebayListingsCache" ("expiresAt");
+CREATE INDEX "cardId_idx__snkrdunkListingsCache" ON "snkrdunkListingsCache" ("cardId");
+CREATE INDEX "expiresAt_idx__snkrdunkListingsCache" ON "snkrdunkListingsCache" ("expiresAt");
+CREATE INDEX "cardId_idx__ebayListingsCache" ON "ebayListingsCache" ("cardId");
+CREATE INDEX "expiresAt_idx__ebayListingsCache" ON "ebayListingsCache" ("expiresAt");
 CREATE INDEX "hotExpiresAt_idx" ON "ebayListingsCache" ("hotExpiresAt");
 CREATE INDEX "tcc_cardId_idx" ON "trendingCardsCache" ("cardId");
 CREATE INDEX "userId_idx" ON "notifications" ("userId");

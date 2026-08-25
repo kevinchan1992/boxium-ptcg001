@@ -4,6 +4,7 @@
   "tableCount": 95,
   "enumCount": 96,
   "indexCount": 206,
+  "indexNameCollisionEntries": 4,
   "omittedStages": [
     "M05-validated-constraints",
     "M06-runtime-grants"

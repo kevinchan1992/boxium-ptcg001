@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 const root = process.cwd();
 const schemaPath = path.join(root, "drizzle", "schema.pg.ts");
@@ -156,9 +157,17 @@ function banner(title) {
   ].join("\n");
 }
 
+function postgresIndexName(sourceName, tableName) {
+  const candidate = `${sourceName}__${tableName}`;
+  if (Buffer.byteLength(candidate, "utf8") <= 63) return candidate;
+  const digest = createHash("sha256").update(candidate).digest("hex").slice(0, 8);
+  return `${candidate.slice(0, 54)}_${digest}`;
+}
+
 const enums = parseEnums(source);
 const tables = parseTables(source, enums);
-if (tables.length !== 95) throw new Error(`Expected 95 tables, parsed ${tables.length}`);
+const expectedTableCount = Number(process.env.S2A_EXPECTED_TABLES ?? "95");
+if (tables.length !== expectedTableCount) throw new Error(`Expected ${expectedTableCount} tables, parsed ${tables.length}`);
 
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
@@ -171,10 +180,17 @@ const tableSql = banner("M03 — base table and identity proposal") + tables
   .map((table) => `CREATE TABLE ${sqlQuote(table.physicalName)} (\n  ${table.columns.map((column) => column.sql).join(",\n  ")}\n);`)
   .join("\n\n") + "\n";
 
-const indexSql = banner("M04 — index and unique proposal") + tables
-  .flatMap((table) => table.indexes.map((index) =>
-    `CREATE ${index.unique ? "UNIQUE " : ""}INDEX ${sqlQuote(index.name)} ON ${sqlQuote(table.physicalName)} (${index.columns.map(sqlQuote).join(", ")});`,
-  ))
+const indexEntries = tables.flatMap((table) => table.indexes.map((index) => ({ ...index, tableName: table.physicalName })));
+const indexNameCounts = new Map();
+for (const entry of indexEntries) indexNameCounts.set(entry.name, (indexNameCounts.get(entry.name) ?? 0) + 1);
+const indexNameResolutions = indexEntries
+  .filter((entry) => indexNameCounts.get(entry.name) > 1)
+  .map((entry) => ({ sourceName: entry.name, resolvedName: postgresIndexName(entry.name, entry.tableName), tableName: entry.tableName }));
+const indexSql = banner("M04 — index and unique proposal") + indexEntries
+  .map((entry) => {
+    const resolvedName = indexNameCounts.get(entry.name) > 1 ? postgresIndexName(entry.name, entry.tableName) : entry.name;
+    return `CREATE ${entry.unique ? "UNIQUE " : ""}INDEX ${sqlQuote(resolvedName)} ON ${sqlQuote(entry.tableName)} (${entry.columns.map(sqlQuote).join(", ")});`;
+  })
   .join("\n") + "\n";
 
 fs.writeFileSync(path.join(outDir, "M02-enum-and-domain-types.sql.disabled"), enumSql);
@@ -185,9 +201,15 @@ fs.writeFileSync(path.join(outDir, "bundle-summary.json"), JSON.stringify({
   source: "drizzle/schema.pg.ts",
   tableCount: tables.length,
   enumCount: enums.size,
-  indexCount: tables.reduce((sum, table) => sum + table.indexes.length, 0),
+  indexCount: indexEntries.length,
+  indexNameCollisionEntries: indexNameResolutions.length,
   omittedStages: ["M05-validated-constraints", "M06-runtime-grants"],
   connectionUsed: false,
 }, null, 2) + "\n");
+fs.writeFileSync(path.join(outDir, "index-name-resolution.json"), JSON.stringify({
+  rule: "PostgreSQL index names share the schema namespace. Any duplicate source name is made table-scoped with __<tableName>.",
+  postgresIdentifierLimit: 63,
+  resolutions: indexNameResolutions,
+}, null, 2) + "\n");
 
-console.log(JSON.stringify({ tables: tables.length, enums: enums.size, indexes: tables.reduce((sum, table) => sum + table.indexes.length, 0) }));
+console.log(JSON.stringify({ tables: tables.length, enums: enums.size, indexes: indexEntries.length, indexNameCollisionEntries: indexNameResolutions.length }));

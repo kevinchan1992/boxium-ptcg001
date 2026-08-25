@@ -24,6 +24,31 @@ export type Game = typeof games.$inferSelect;
 export type InsertGame = typeof games.$inferInsert;
 
 /**
+ * Daily foreign-exchange reference rates used by every BOXIUM conversion.
+ * One provider/currency pair is retained per reference date for auditability.
+ */
+export const fxRates = mysqlTable("fxRates", {
+  id: int("id").autoincrement().primaryKey(),
+  baseCurrency: varchar("baseCurrency", { length: 3 }).notNull(),
+  quoteCurrency: varchar("quoteCurrency", { length: 3 }).notNull(),
+  rate: decimal("rate", { precision: 18, scale: 8 }).notNull(),
+  rateDate: varchar("rateDate", { length: 10 }).notNull(),
+  provider: varchar("provider", { length: 64 }).notNull().default("frankfurter"),
+  fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+}, (table) => ({
+  dailyProviderPairUnique: uniqueIndex("uniq_fx_rates_daily_provider_pair").on(
+    table.provider,
+    table.baseCurrency,
+    table.quoteCurrency,
+    table.rateDate,
+  ),
+  latestPairIdx: index("idx_fx_rates_pair_date").on(table.baseCurrency, table.quoteCurrency, table.rateDate),
+}));
+
+export type FxRate = typeof fxRates.$inferSelect;
+export type InsertFxRate = typeof fxRates.$inferInsert;
+
+/**
  * Sealed products table - stores booster boxes and other sealed products
  */
 export const sealedProducts = mysqlTable("sealedProducts", {
@@ -311,6 +336,7 @@ export type InsertDataSource = typeof dataSources.$inferInsert;
 export const scheduledTasks = mysqlTable("scheduledTasks", {
   id: int("id").autoincrement().primaryKey(),
   taskType: varchar("taskType", { length: 64 }).notNull(), // e.g., "snkrdunk_update", "ebay_update", "batch_ebay_update", "batch_snkrdunk_update"
+  externalRunId: varchar("externalRunId", { length: 128 }), // GitHub Actions run/shard ID; nullable for legacy in-process tasks
   status: mysqlEnum("status", ["pending", "running", "completed", "failed", "paused"]).default("pending").notNull(),
   targetId: int("targetId"), // ID of the target (e.g., cardId or dataSourceId)
   totalItems: int("totalItems"), // Total number of items to process (for batch tasks)
@@ -325,7 +351,10 @@ export const scheduledTasks = mysqlTable("scheduledTasks", {
   activeProcessingMs: int("activeProcessingMs").default(0), // Actual processing time in ms (excludes hibernate/idle time, max ~596 hours)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // The database is the idempotency lock for retried/concurrent GitHub callbacks.
+  taskTypeExternalRunIdUnique: uniqueIndex("uniq_scheduled_task_external_run").on(table.taskType, table.externalRunId),
+}));
 
 export type ScheduledTask = typeof scheduledTasks.$inferSelect;
 export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;
@@ -811,7 +840,7 @@ export const marketplaceListings = mysqlTable("marketplaceListings", {
   description: text("description"),
   condition: mysqlEnum("condition", ["psa10", "psa9", "psa8_below", "bgs10", "bgs9", "bgs8_below", "tag10", "tag9_below", "raw_a", "raw_b", "raw_c", "raw_d"]).notNull().default("raw_a"),
   language: varchar("language", { length: 20 }),
-  tcgSeries: mysqlEnum("tcgSeries", ["pokemon", "onepiece", "yugioh", "dragonball", "mtg", "other"]).default("pokemon").notNull(),
+  tcgSeries: mysqlEnum("tcgSeries", ["pokemon", "onepiece", "yugioh", "dragonball", "unionarena", "weiss", "gundam", "mtg", "other"]).default("pokemon").notNull(),
   // Pricing
   priceHkd: decimal("priceHkd", { precision: 10, scale: 2 }).notNull(), // HKD
   quantity: int("quantity").default(1).notNull(),
@@ -1840,6 +1869,72 @@ export const companyCardInventory = mysqlTable("companyCardInventory", {
 
 export type CompanyCardInventory = typeof companyCardInventory.$inferSelect;
 export type InsertCompanyCardInventory = typeof companyCardInventory.$inferInsert;
+
+// ─── WhatsApp Personal Trade Intake ─────────────────────────────────────────
+// These records are strictly for the personal cardInventory ledger. They must
+// never be read by or written to the companyCardInventory workflow.
+export const whatsappWebhookEvents = mysqlTable("whatsappWebhookEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  idMessage: varchar("idMessage", { length: 255 }).notNull().unique(),
+  typeWebhook: varchar("typeWebhook", { length: 64 }).notNull(),
+  groupChatId: varchar("groupChatId", { length: 255 }),
+  senderChatId: varchar("senderChatId", { length: 255 }),
+  processingState: mysqlEnum("processingState", ["received", "processed", "ignored", "failed"]).default("received").notNull(),
+  payloadJson: text("payloadJson").notNull(),
+  errorMessage: text("errorMessage"),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+  processedAt: timestamp("processedAt"),
+}, (table) => ({
+  groupReceivedIdx: index("wwe_group_received_idx").on(table.groupChatId, table.receivedAt),
+}));
+
+export const whatsappTradeIntakes = mysqlTable("whatsappTradeIntakes", {
+  id: int("id").autoincrement().primaryKey(),
+  commandMessageId: varchar("commandMessageId", { length: 255 }).notNull().unique(),
+  groupChatId: varchar("groupChatId", { length: 255 }).notNull(),
+  senderChatId: varchar("senderChatId", { length: 255 }).notNull(),
+  action: mysqlEnum("action", ["buy", "sell"]).notNull(),
+  rawCommand: text("rawCommand").notNull(),
+  tradeDate: timestamp("tradeDate").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: mysqlEnum("currency", ["HKD"]).default("HKD").notNull(),
+  requestedInventoryId: int("requestedInventoryId"),
+  status: mysqlEnum("status", ["processing", "completed", "needs_review", "ignored", "failed"]).default("processing").notNull(),
+  matchedProductType: mysqlEnum("matchedProductType", ["card", "sealed"]),
+  matchedProductId: int("matchedProductId"),
+  matchScore: decimal("matchScore", { precision: 8, scale: 2 }),
+  matchEvidenceJson: text("matchEvidenceJson"),
+  cardInventoryId: int("cardInventoryId"),
+  reviewReason: text("reviewReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  statusCreatedIdx: index("wti_status_created_idx").on(table.status, table.createdAt),
+  senderCreatedIdx: index("wti_sender_created_idx").on(table.senderChatId, table.createdAt),
+  personalInventoryIdx: index("wti_card_inventory_idx").on(table.cardInventoryId),
+}));
+
+export const whatsappTradeMedia = mysqlTable("whatsappTradeMedia", {
+  id: int("id").autoincrement().primaryKey(),
+  mediaMessageId: varchar("mediaMessageId", { length: 255 }).notNull().unique(),
+  intakeId: int("intakeId"),
+  groupChatId: varchar("groupChatId", { length: 255 }).notNull(),
+  senderChatId: varchar("senderChatId", { length: 255 }).notNull(),
+  s3Key: text("s3Key").notNull(),
+  s3Url: text("s3Url").notNull(),
+  mimeType: varchar("mimeType", { length: 128 }).notNull(),
+  byteSize: int("byteSize").notNull(),
+  sha256: varchar("sha256", { length: 64 }).notNull(),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+  consumedAt: timestamp("consumedAt"),
+}, (table) => ({
+  pendingMediaIdx: index("wtm_pending_media_idx").on(table.groupChatId, table.senderChatId, table.consumedAt, table.receivedAt),
+  intakeMediaIdx: index("wtm_intake_media_idx").on(table.intakeId),
+}));
+
+export type WhatsappWebhookEvent = typeof whatsappWebhookEvents.$inferSelect;
+export type WhatsappTradeIntake = typeof whatsappTradeIntakes.$inferSelect;
+export type WhatsappTradeMedia = typeof whatsappTradeMedia.$inferSelect;
 
 // ─── Export Jobs ─────────────────────────────────────────────────────────────
 // Background export tasks (Excel/PDF) - avoids Cloud Run 60s timeout
