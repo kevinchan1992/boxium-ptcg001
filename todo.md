@@ -1,5 +1,8 @@
 # BOXIUM PTCG 專案待辦事項
 
+## 🧱 Supabase Lab S2 設計審核（2026-08-25）
+- [x] 僅在 staging-only branch 完成 Lab migration order、runtime/migration role、Data API 保護、timezone、JSONB 與 raw SQL conversion 設計；未套用 migration、寫入 Lab、填入 secret 或改動 Production；見 docs/db-parity/s2-design-review-report.md
+
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
 - [x] 將 withDbTimeout 移至 parseGradeFilter 之前（確保可用）
