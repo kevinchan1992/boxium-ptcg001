@@ -1,0 +1,27 @@
+{
+  "status": "design_only_disabled",
+  "scope": "staging-only branch; no database connection or execution",
+  "sourceSchema": "drizzle/schema.pg.ts",
+  "sourceSnapshotRequired": "c78e658defe2232014f4f33d0a0f48cde10e716d1ded66c9c8cf4ef4bb937750",
+  "generator": "scripts/generate-s2a-disabled-sql-bundle.mjs",
+  "outputConvention": "manual-review SQL is emitted directly with the .sql.disabled suffix",
+  "entries": [
+    { "id": "M00", "name": "lab-target-preflight", "state": "manifest_only", "execution_gate": "S2-B" },
+    { "id": "M01", "name": "baseline-access-boundary", "state": "manifest_only", "execution_gate": "S2-B" },
+    { "id": "M02", "name": "enum-and-domain-types", "state": "disabled_manual_review_ddl", "execution_gate": "S2-B" },
+    { "id": "M03", "name": "base-tables-identity", "state": "disabled_manual_review_ddl", "execution_gate": "S2-B" },
+    { "id": "M04", "name": "indexes-and-unique", "state": "disabled_manual_review_ddl", "execution_gate": "S2-B_after_index_review" },
+    { "id": "M05", "name": "validated-constraints", "state": "intentionally_absent", "execution_gate": "S2-C_after_synthetic_fixtures" },
+    { "id": "M06", "name": "runtime-grants", "state": "intentionally_absent", "execution_gate": "S2-C_after_role_and_access_tests" },
+    { "id": "M07", "name": "schema-fingerprint", "state": "manifest_only", "execution_gate": "later_read_only_lab_catalogue_gate" }
+  ],
+  "forbiddenCommands": [
+    "drizzle-kit migrate",
+    "drizzle-kit push",
+    "pnpm db:push",
+    "psql",
+    "Supabase SQL execution",
+    "fixture insertion",
+    "role/grant creation"
+  ]
+}

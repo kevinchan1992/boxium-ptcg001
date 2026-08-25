@@ -1,0 +1,12 @@
+{
+  "status": "disabled_manual_review_artifact",
+  "source": "drizzle/schema.pg.ts",
+  "tableCount": 95,
+  "enumCount": 96,
+  "indexCount": 206,
+  "omittedStages": [
+    "M05-validated-constraints",
+    "M06-runtime-grants"
+  ],
+  "connectionUsed": false
+}

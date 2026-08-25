@@ -2,6 +2,10 @@
 
 ## 🧱 Supabase Lab S2 設計審核（2026-08-25）
 - [x] 僅在 staging-only branch 完成 Lab migration order、runtime/migration role、Data API 保護、timezone、JSONB 與 raw SQL conversion 設計；未套用 migration、寫入 Lab、填入 secret 或改動 Production；見 docs/db-parity/s2-design-review-report.md
+- [x] 依 S2-A 批准在 staging-only branch 產生並檢查不可套用的 Lab migration files 與 preflight contract；未連線、套用 migration、填入 secret 或改動 Production；見 docs/db-parity/s2a-disabled-bundle-review.md
+- [x] 依使用者選擇，使用暫時最新版 Drizzle CLI 重試離線 generation，並驗證 `package.json` 與 lockfile 雜湊完全不變；已確認 published latest 組合仍不能編譯 S1 draft，未產生 SQL
+- [x] 依使用者同意暫時替換 staging `node_modules` 的最新版 `drizzle-orm`，離線生成後移除替換、重裝 locked dependency 並驗證 manifest 雜湊不變；registry 確認 locked 0.45.2 已是 published latest，未有 replacement 留下
+- [x] 依 S2-A 替代方案 B 產生逐段、可追蹤的手工 `.sql.disabled` bundle；M05 constraints 與 M06 grants 維持 absent，且未連線或套用；2/2 bundle tests passed
 
 ## ✅ /pricing/search 評級搜尋「搜尋出錯」修復（2026-05-17）
 - [x] 診斷根本原因：searchCardsByGrade 抓取所有快取行時無超時保護，大資料量時超時
