@@ -37,6 +37,7 @@
 | Database action | 沒有連線/讀取/寫入 Supabase Lab 或 Production database；未執行 DDL、DML、migration、fixture、grant或 role creation。 |
 | Runtime/Production action | 沒有修改 `server/db.ts`、runtime DSN、Cloud Run、GitHub production workflow/environment、Heartbeat、S3/Auth或 Production data。 |
 | Data API | 設計維持 Gate B 的 disabled state；沒有 re-enable 或引入 browser client。 |
+| GitHub branch proof | S2 artifact commit 為 `6c56c80d60943b7cb4d72c77a3c110f96c15b909`，僅位於 `chore/supabase-lab-schema-parity`。GitHub `main` 維持 `89e75cdd1fa810aa2799d8706f47d359a00e602f`。 |
 
 ## 後續需另行批准的操作
 
