@@ -143,6 +143,16 @@ jobs:
           echo "PARALLEL=$PARALLEL, BATCH_LIMIT=$BATCH_LIMIT, SKIP_HOURS=$SKIP_HOURS, EMPTY_CARD_RECHECK_DAYS=$EMPTY_CARD_RECHECK_DAYS"
           node githubActionsBatchUpdate.mjs
 
+      - name: Request trending cards cache recalculation
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run trending-recalc.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ github.ref_name }}"
+          echo "Trending cache recalculation requested."
+
       - name: Upload failure logs
         if: failure()
         uses: actions/upload-artifact@v4
