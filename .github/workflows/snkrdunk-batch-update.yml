@@ -130,6 +130,7 @@ jobs:
         run: |
           mkdir -p /tmp/snkrdunk-runner
           cp scripts/githubActionsBatchUpdate.mjs /tmp/snkrdunk-runner/
+          cp scripts/githubActionsTrendingRecalc.mjs /tmp/snkrdunk-runner/
           cp scripts/package.json /tmp/snkrdunk-runner/
           cd /tmp/snkrdunk-runner
           npm install --ignore-scripts
@@ -156,10 +157,10 @@ jobs:
 
       - name: Recalculate trending cards cache
         if: success()
+        working-directory: /tmp/snkrdunk-runner
         env:
-          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: node scripts/githubActionsTrendingRecalc.mjs
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node githubActionsTrendingRecalc.mjs
 
       - name: Upload failure logs
         if: failure()
@@ -191,11 +192,19 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install lightweight runner dependencies
+        run: |
+          mkdir -p /tmp/trending-recalc-runner
+          cp scripts/githubActionsTrendingRecalc.mjs /tmp/trending-recalc-runner/
+          cp scripts/package.json /tmp/trending-recalc-runner/
+          cd /tmp/trending-recalc-runner
+          npm install --ignore-scripts
+
       - name: Rebuild seven-day trending cache
+        working-directory: /tmp/trending-recalc-runner
         env:
-          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: node scripts/githubActionsTrendingRecalc.mjs
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node githubActionsTrendingRecalc.mjs
 
   # ── Weekly SNKRDUNK Card Discovery (every Thursday HKT 11:00) ───────────────
   discovery:
