@@ -34,6 +34,10 @@ on:
         description: '[Discovery] Skip discovery job (true/false, default: false)'
         required: false
         default: 'false'
+      recalculate_trending_only:
+        description: '[Trending] Rebuild homepage trending cache only (true/false, default: false)'
+        required: false
+        default: 'false'
 
 # Prevent concurrent runs — if a new run is triggered while one is already running,
 # cancel the in-progress run and let the new one proceed.
@@ -51,7 +55,7 @@ jobs:
     # Only run price ingestion on its two regular times or when requested manually.
     # Weekly discovery and trending-only schedules each have a dedicated job below.
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.recalculate_trending_only != 'true') ||
       (github.event_name == 'schedule' && (
         github.event.schedule == '0 17 * * *' ||
         github.event.schedule == '0 5 * * *'
@@ -169,12 +173,13 @@ jobs:
   recalculate-trending:
     name: Recalculate Homepage Trending Cards
     if: |
-      github.event_name == 'schedule' && (
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.recalculate_trending_only == 'true') ||
+      (github.event_name == 'schedule' && (
         github.event.schedule == '0 16 * * *' ||
         github.event.schedule == '0 22 * * *' ||
         github.event.schedule == '0 4 * * *' ||
         github.event.schedule == '0 10 * * *'
-      )
+      ))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -198,7 +203,7 @@ jobs:
     # Run on Thursday UTC 03:00 schedule OR when manually triggered (unless skip_discovery=true)
     if: |
       (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 3 * * 4')) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery != 'true')
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery != 'true' && github.event.inputs.recalculate_trending_only != 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
