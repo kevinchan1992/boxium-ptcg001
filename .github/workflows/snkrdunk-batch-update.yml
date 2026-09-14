@@ -4,8 +4,6 @@ on:
     # Twice daily at HKT 01:00 (UTC 17:00 prev day) and HKT 13:00 (UTC 05:00)
     - cron: '0 17 * * *'
     - cron: '0 5 * * *'
-    # Weekly discovery: every Thursday at HKT 11:00 (UTC 03:00 Thursday)
-    - cron: '0 3 * * 4'
     # Trending-cache-only fallback: HKT 00:00 / 06:00 / 12:00 / 18:00.
     # These trigger only the lightweight recalculate-trending job below.
     - cron: '0 16 * * *'
@@ -205,59 +203,3 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node githubActionsTrendingRecalc.mjs
-
-  # ── Weekly SNKRDUNK Card Discovery (every Thursday HKT 11:00) ───────────────
-  discovery:
-    name: Discover New SNKRDUNK Cards (Weekly)
-    # Run on Thursday UTC 03:00 schedule OR when manually triggered (unless skip_discovery=true)
-    if: |
-      (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 3 * * 4')) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery != 'true' && github.event.inputs.recalculate_trending_only != 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: scripts/package.json
-
-      - name: Install dependencies
-        working-directory: scripts
-        run: npm install --omit=dev
-
-      - name: Run SNKRDUNK Discovery
-        working-directory: scripts
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DELAY_MS: '400'
-        run: |
-          echo "Starting SNKRDUNK Discovery v2.0 (Batch Insert - Weekly Thursday HKT 11:00)"
-          echo "Mode: Batch insert (no per-card HTML fetch, batch-update fills details later)"
-          node githubActionsSnkrdunkDiscovery.mjs
-
-      - name: Trigger batch-update to scrape newly discovered cards
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Discovery complete. Triggering batch-update to scrape new cards (SKIP_HOURS=0)..."
-          gh workflow run snkrdunk-batch-update.yml \
-            --repo ${{ github.repository }} \
-            --field skip_hours=0 \
-            --field parallel=8 \
-            --field batch_limit=0 \
-            --field skip_discovery=true
-          echo "Batch-update triggered successfully. New cards will be scraped shortly."
-
-      - name: Upload discovery logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: discovery-failure-logs-${{ github.run_id }}
-          path: scripts/*.log
-          retention-days: 7

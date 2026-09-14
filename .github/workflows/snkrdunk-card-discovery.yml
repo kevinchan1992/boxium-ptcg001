@@ -7,19 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       max_new_per_brand:
-        description: 'Max new cards to insert per brand (default: 200)'
+        description: 'Max new cards to insert per brand (default: 99999 = no cap)'
         required: false
-        default: '200'
+        default: '99999'
       max_pages_per_brand:
-        description: 'Max search pages to scan per brand (default: 50)'
+        description: 'Max search pages to scan per brand (default: 99999 = scan to end)'
         required: false
-        default: '50'
+        default: '99999'
 
 jobs:
   discover:
     name: Discover New SNKRDUNK Cards
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     permissions:
       contents: read
       actions: write
@@ -43,8 +43,8 @@ jobs:
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MAX_NEW_PER_BRAND: ${{ github.event.inputs.max_new_per_brand || '200' }}
-          MAX_PAGES_PER_BRAND: ${{ github.event.inputs.max_pages_per_brand || '50' }}
+          MAX_NEW_PER_BRAND: ${{ github.event.inputs.max_new_per_brand || '99999' }}
+          MAX_PAGES_PER_BRAND: ${{ github.event.inputs.max_pages_per_brand || '99999' }}
           DELAY_MS: '400'
         run: |
           echo "Starting SNKRDUNK Discovery"

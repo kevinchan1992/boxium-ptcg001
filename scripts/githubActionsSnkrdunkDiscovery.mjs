@@ -251,6 +251,10 @@ async function discoverBrand(brand, allExistingIds) {
       if (!allExistingIds.has(id)) {
         newIds.push(id);
         newOnPage++;
+        if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) {
+          console.log(`[Discovery] Reached MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND}, stopping scan for ${brand.name}`);
+          break;
+        }
       }
     }
 
@@ -267,6 +271,7 @@ async function discoverBrand(brand, allExistingIds) {
       consecutiveAllExisting = 0;
     }
 
+    if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) break;
     page++;
     await delay(CONFIG.DELAY_MS); // Throttle HTTP requests only
   }
