@@ -40,6 +40,7 @@ const CONFIG = {
   EMPTY_CARD_RECHECK_DAYS: parseInt(process.env.EMPTY_CARD_RECHECK_DAYS || '7', 10),
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
   REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || (IS_NEW_ONLY_RUN ? '7000' : '15000'), 10),
+  MAX_HISTORY_PAGES: IS_NEW_ONLY_RUN ? 2 : 20,
   DELAY_AFTER_ERROR: 300,   // Reduced from 500ms to 300ms
   PROGRESS_LOG_INTERVAL: 100,
   PROGRESS_REPORT_INTERVAL: 500, // POST mid-run progress to platform every N items
@@ -193,12 +194,17 @@ function validateHistory(entries, productType = 'single_card') {
 }
 
 // ─── SNKRDUNK API Fetcher (using built-in fetch) ──────────────────────────────
-async function fetchWithTimeout(url, options, timeoutMs) {
+async function fetchJsonWithTimeout(url, options, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const resp = await fetch(url, { ...options, signal: controller.signal });
-    return resp;
+    if (!resp.ok) return { resp, data: null };
+    // Keep the abort signal alive until the JSON body is completely consumed.
+    // Header-only timeouts can otherwise leave a worker waiting indefinitely on
+    // a slow sales-history response body.
+    const body = await resp.text();
+    return { resp, data: body ? JSON.parse(body) : null };
   } finally {
     clearTimeout(timer);
   }
@@ -206,17 +212,20 @@ async function fetchWithTimeout(url, options, timeoutMs) {
 
 async function fetchPriceHistoryFromApi(productId, productType = 'single_card') {
   const history = [];
-  for (let page = 1; page <= 20; page++) {
+  for (let page = 1; page <= CONFIG.MAX_HISTORY_PAGES; page++) {
     const url = `https://snkrdunk.com/v1/apparels/${productId}/sales-history?size_id=0&page=${page}&per_page=100`;
     let resp;
+    let data = null;
     try {
-      resp = await fetchWithTimeout(url, {
+      const result = await fetchJsonWithTimeout(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'application/json',
           'Referer': `https://snkrdunk.com/apparels/${productId}`,
         },
       }, CONFIG.REQUEST_TIMEOUT);
+      resp = result.resp;
+      if (resp.ok) data = result.data;
     } catch (err) {
       if (err.name === 'AbortError') {
         throw Object.assign(new Error(`Request timeout after ${CONFIG.REQUEST_TIMEOUT}ms`), { code: 'ECONNABORTED' });
@@ -233,7 +242,6 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
       });
       throw err;
     }
-    const data = await resp.json();
     if (!data.history || !Array.isArray(data.history) || data.history.length === 0) break;
     for (const item of data.history) {
       history.push({
