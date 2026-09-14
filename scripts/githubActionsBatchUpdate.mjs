@@ -369,18 +369,26 @@ async function updateDataSourceStatus(dataSourceId, status) {
 // ─── Fetch Card Details from SNKRDUNK API (v3.1 Card Details Backfill) ────────
 async function fetchCardDetailsFromApi(snkrdunkId) {
   const url = `https://snkrdunk.com/v1/apparels/${snkrdunkId}`;
-  const resp = await fetchWithTimeout(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json',
-      'Referer': `https://snkrdunk.com/apparels/${snkrdunkId}`,
-    },
-  }, CONFIG.REQUEST_TIMEOUT);
+  let result;
+  try {
+    result = await fetchJsonWithTimeout(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Referer': `https://snkrdunk.com/apparels/${snkrdunkId}`,
+      },
+    }, CONFIG.REQUEST_TIMEOUT);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw Object.assign(new Error(`Request timeout after ${CONFIG.REQUEST_TIMEOUT}ms fetching card details for ${snkrdunkId}`), { code: 'ECONNABORTED' });
+    }
+    throw err;
+  }
+  const { resp, data } = result;
   if (!resp.ok) {
     const isTransient = resp.status === 429 || resp.status === 503 || resp.status === 502 || resp.status === 500;
     throw Object.assign(new Error(`HTTP ${resp.status} fetching card details for ${snkrdunkId}`), { httpStatus: resp.status, isTransient });
   }
-  const data = await resp.json();
   return {
     name: data.name || null,
     nameJa: data.localizedName || data.name || null,
