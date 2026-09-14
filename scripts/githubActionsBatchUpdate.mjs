@@ -506,14 +506,17 @@ async function main() {
   const toUpdate = allProducts
     .filter(p => {
       const age = p.lastFetchedAt ? (now - p.lastFetchedAt) : Infinity;
-      const needsMetadataBackfill = p.isPlaceholder || !p.hasImage || (p.productType === 'single_card' && !p.cardNumber);
-      if (needsMetadataBackfill) return true; // never defer incomplete new-card metadata
       if (age < skipMs) { skippedRecent++; return false; }         // recently updated
       if (!p.hasHistory && age < emptyCardSkipMs) { skippedEmpty++; return false; } // empty card within recheck window
       return true;
     })
     .sort((a, b) => {
-      // Priority: failed first, then has-history, then empty cards, then oldest first
+      // Priority: never-fetched new sources first, then failures, history, empty cards, oldest first.
+      // This lets Discovery's follow-up job finish newly inserted cards without
+      // being crowded out by older historical rows that also lack a cardNumber.
+      const aNew = a.lastFetchedAt ? 1 : 0;
+      const bNew = b.lastFetchedAt ? 1 : 0;
+      if (aNew !== bNew) return aNew - bNew;
       const aFailed = a.lastFetchStatus === 'failed' ? 0 : 1;
       const bFailed = b.lastFetchStatus === 'failed' ? 0 : 1;
       if (aFailed !== bFailed) return aFailed - bFailed;
