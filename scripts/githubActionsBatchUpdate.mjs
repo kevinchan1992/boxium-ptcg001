@@ -29,21 +29,22 @@ import mysql from 'mysql2/promise';
 import { createHash } from 'crypto';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
+const IS_NEW_ONLY_RUN = process.env.NEW_ONLY === 'true';
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
   BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; applies AFTER smart-skip
-  NEW_ONLY: process.env.NEW_ONLY === 'true', // Discovery follow-up: only sources never fetched before
+  NEW_ONLY: IS_NEW_ONLY_RUN, // Discovery follow-up: only sources never fetched before
   // v3.0 Smart Skip: empty cards (no price history) are only re-checked every N days
   // Real-world data: 83.9% of cards (46,775/55,734) have no history → 6x speedup
   EMPTY_CARD_RECHECK_DAYS: parseInt(process.env.EMPTY_CARD_RECHECK_DAYS || '7', 10),
   MAX_CONSECUTIVE_ERRORS: parseInt(process.env.MAX_CONSECUTIVE_ERR || '50', 10),
-  REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || '15000', 10),
+  REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT_MS || (IS_NEW_ONLY_RUN ? '7000' : '15000'), 10),
   DELAY_AFTER_ERROR: 300,   // Reduced from 500ms to 300ms
   PROGRESS_LOG_INTERVAL: 100,
   PROGRESS_REPORT_INTERVAL: 500, // POST mid-run progress to platform every N items
   JPY_TO_HKD_RATE: 0.055,
-  MAX_RETRIES: 3,           // Retry transient errors up to 3 times
+  MAX_RETRIES: IS_NEW_ONLY_RUN ? 1 : 3, // New-card runs fail fast; regular runs retain transient retry
   RETRY_DELAY_MS: 2000,     // Wait 2s between retries
 };
 
@@ -252,7 +253,9 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
 // ─── Database Operations ──────────────────────────────────────────────────────
 async function getAllSnkrdunkProducts() {
   const db = await getPool();
-  const newOnlyFilter = CONFIG.NEW_ONLY ? ' AND ds.lastFetchedAt IS NULL' : '';
+  const newOnlyFilter = CONFIG.NEW_ONLY
+    ? " AND ds.lastFetchedAt IS NULL AND (ds.lastFetchStatus IS NULL OR ds.lastFetchStatus <> 'failed')"
+    : '';
   // CRITICAL FIX: cardId is NOT unique across product types.
   // The same integer can exist in both `cards` (single_card) and `sealedProducts` (sealed_product).
   // We must JOIN the correct table based on productType to get the right name.
@@ -473,14 +476,17 @@ async function processSingleProduct(product, attempt = 1) {
       return processSingleProduct(product, attempt + 1);
     }
 
-    // Only mark as 'failed' for permanent errors; transient errors keep previous status
-    const newStatus = isTransient ? null : 'failed';
+    // A dedicated new-card run must record an unreachable source as failed so it
+    // cannot block every later Discovery follow-up indefinitely. Regular runs
+    // keep their existing transient-retry behaviour.
+    const newStatus = isTransient && !CONFIG.NEW_ONLY ? null : 'failed';
     if (newStatus) {
       await updateDataSourceStatus(product.dataSourceId, newStatus).catch(() => {});
     }
     // Log error for debugging in GitHub Actions
     const retryInfo = attempt > 1 ? ` (after ${attempt - 1} retries)` : '';
-    console.error(`[BatchUpdate] ERROR ${productKey}${retryInfo}: ${err.message}${isTransient ? ' (transient, skipped)' : ' (failed)'}`);
+    const statusLabel = newStatus === 'failed' ? 'failed' : 'transient, skipped';
+    console.error(`[BatchUpdate] ERROR ${productKey}${retryInfo}: ${err.message} (${statusLabel})`);
     return { success: false, productKey, isTimeout, isTransient, error: err.message || String(err) };
   }
 }
@@ -546,7 +552,8 @@ async function main() {
     `${toUpdate.length} eligible (${withHistoryCount} with history, ${failedCount} failed → priority)`
   );
   if (CONFIG.BATCH_LIMIT > 0 && toUpdate.length > CONFIG.BATCH_LIMIT) {
-    console.log(`[BatchUpdate] BATCH_LIMIT=${CONFIG.BATCH_LIMIT}: processing ${limitedToUpdate.length}/${toUpdate.length} (oldest first)`);
+    const orderLabel = CONFIG.NEW_ONLY ? 'newest never-fetched first' : 'oldest first';
+    console.log(`[BatchUpdate] BATCH_LIMIT=${CONFIG.BATCH_LIMIT}: processing ${limitedToUpdate.length}/${toUpdate.length} (${orderLabel})`);
   }
 
   if (!toUpdate.length) {
