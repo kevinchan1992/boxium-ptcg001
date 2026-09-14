@@ -225,6 +225,7 @@ async function discoverBrand(brand, allExistingIds) {
   console.log(`${'='.repeat(60)}`);
 
   const newIds = [];
+  const newIdSet = new Set();
   let page = 1;
   let consecutiveAllExisting = 0;
 
@@ -248,8 +249,9 @@ async function discoverBrand(brand, allExistingIds) {
 
     let newOnPage = 0;
     for (const id of ids) {
-      if (!allExistingIds.has(id)) {
+      if (!allExistingIds.has(id) && !newIdSet.has(id)) {
         newIds.push(id);
+        newIdSet.add(id);
         newOnPage++;
         if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) {
           console.log(`[Discovery] Reached MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND}, stopping scan for ${brand.name}`);
