@@ -62,7 +62,8 @@ jobs:
             --repo ${{ github.repository }} \
             --field skip_hours=0 \
             --field parallel=8 \
-            --field batch_limit=300 \
+            --field batch_limit=1000 \
+            --field new_only=true \
             --field skip_discovery=true
           echo "Batch update dispatched with SKIP_HOURS=0."
 

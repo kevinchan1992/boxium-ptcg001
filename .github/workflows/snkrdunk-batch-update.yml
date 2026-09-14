@@ -36,6 +36,10 @@ on:
         description: '[Trending] Rebuild homepage trending cache only (true/false, default: false)'
         required: false
         default: 'false'
+      new_only:
+        description: '[Discovery] Only process sources that have never been fetched (true/false, default: false)'
+        required: false
+        default: 'false'
 
 # Prevent concurrent runs — if a new run is triggered while one is already running,
 # cancel the in-progress run and let the new one proceed.
@@ -145,12 +149,13 @@ jobs:
           SKIP_HOURS: ${{ github.event.inputs.skip_hours || '4' }}
           BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '0' }}
           EMPTY_CARD_RECHECK_DAYS: ${{ github.event.inputs.empty_card_recheck_days || '7' }}
+          NEW_ONLY: ${{ github.event.inputs.new_only || 'false' }}
           REQUEST_TIMEOUT_MS: '15000'
           MAX_CONSECUTIVE_ERR: '50'
           NODE_ENV: 'production'
         run: |
           echo "Starting SNKRDUNK batch update (Smart Skip v3.0)..."
-          echo "PARALLEL=$PARALLEL, BATCH_LIMIT=$BATCH_LIMIT, SKIP_HOURS=$SKIP_HOURS, EMPTY_CARD_RECHECK_DAYS=$EMPTY_CARD_RECHECK_DAYS"
+          echo "PARALLEL=$PARALLEL, BATCH_LIMIT=$BATCH_LIMIT, SKIP_HOURS=$SKIP_HOURS, EMPTY_CARD_RECHECK_DAYS=$EMPTY_CARD_RECHECK_DAYS, NEW_ONLY=$NEW_ONLY"
           node githubActionsBatchUpdate.mjs
 
       - name: Recalculate trending cards cache

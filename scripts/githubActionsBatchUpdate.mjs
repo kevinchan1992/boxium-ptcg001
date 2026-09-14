@@ -33,6 +33,7 @@ const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
   BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; applies AFTER smart-skip
+  NEW_ONLY: process.env.NEW_ONLY === 'true', // Discovery follow-up: only sources never fetched before
   // v3.0 Smart Skip: empty cards (no price history) are only re-checked every N days
   // Real-world data: 83.9% of cards (46,775/55,734) have no history → 6x speedup
   EMPTY_CARD_RECHECK_DAYS: parseInt(process.env.EMPTY_CARD_RECHECK_DAYS || '7', 10),
@@ -251,19 +252,20 @@ async function fetchPriceHistoryFromApi(productId, productType = 'single_card') 
 // ─── Database Operations ──────────────────────────────────────────────────────
 async function getAllSnkrdunkProducts() {
   const db = await getPool();
+  const newOnlyFilter = CONFIG.NEW_ONLY ? ' AND ds.lastFetchedAt IS NULL' : '';
   // CRITICAL FIX: cardId is NOT unique across product types.
   // The same integer can exist in both `cards` (single_card) and `sealedProducts` (sealed_product).
   // We must JOIN the correct table based on productType to get the right name.
   // Using CASE expression: when productType='sealed_product' use sealedProducts, else use cards.
   const [rows] = await db.execute(
-    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus,
+    `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.createdAt, ds.lastFetchedAt, ds.lastFetchStatus,
             CASE WHEN ds.productType = 'sealed_product' THEN sp.name ELSE c.name END as name,
             CASE WHEN ds.productType = 'sealed_product' THEN sp.imageUrl ELSE c.imageUrl END as imageUrl,
             CASE WHEN ds.productType = 'sealed_product' THEN NULL ELSE c.cardNumber END as cardNumber
      FROM dataSources ds
      LEFT JOIN cards c ON c.id = ds.cardId AND ds.productType != 'sealed_product'
      LEFT JOIN sealedProducts sp ON sp.id = ds.cardId AND ds.productType = 'sealed_product'
-     WHERE ds.source = 'snkrdunk' AND ds.isActive = 1`
+     WHERE ds.source = 'snkrdunk' AND ds.isActive = 1${newOnlyFilter}`
   );
 
   // v3.0 Smart Skip: load set of (productType, cardId) pairs that have at least one price history record
@@ -290,6 +292,7 @@ async function getAllSnkrdunkProducts() {
       productType: pt,
       snkrdunkId: sid,
       lastFetchedAt: row.lastFetchedAt ? new Date(row.lastFetchedAt) : null,
+      createdAt: row.createdAt ? new Date(row.createdAt) : null,
       lastFetchStatus: row.lastFetchStatus || null,
       sourceUrl: row.sourceUrl || '',
       dataSourceId: row.dataSourceId,
@@ -487,7 +490,7 @@ async function main() {
   const startTime = Date.now();
   console.log('='.repeat(60));
   console.log('[BatchUpdate] GitHub Actions SNKRDUNK Batch Update');
-  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT || 'unlimited'}`);
+  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT || 'unlimited'}, NEW_ONLY=${CONFIG.NEW_ONLY}`);
   console.log('='.repeat(60));
 
   const allProducts = await getAllSnkrdunkProducts();
@@ -505,12 +508,16 @@ async function main() {
   let skippedEmpty = 0;
   const toUpdate = allProducts
     .filter(p => {
+      if (CONFIG.NEW_ONLY) return true;
       const age = p.lastFetchedAt ? (now - p.lastFetchedAt) : Infinity;
       if (age < skipMs) { skippedRecent++; return false; }         // recently updated
       if (!p.hasHistory && age < emptyCardSkipMs) { skippedEmpty++; return false; } // empty card within recheck window
       return true;
     })
     .sort((a, b) => {
+      if (CONFIG.NEW_ONLY) {
+        return (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0);
+      }
       // Priority: never-fetched new sources first, then failures, history, empty cards, oldest first.
       // This lets Discovery's follow-up job finish newly inserted cards without
       // being crowded out by older historical rows that also lack a cardNumber.
