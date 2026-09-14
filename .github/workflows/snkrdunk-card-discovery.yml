@@ -20,6 +20,9 @@ jobs:
     name: Discover New SNKRDUNK Cards
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -48,6 +51,20 @@ jobs:
           echo "MAX_NEW_PER_BRAND=$MAX_NEW_PER_BRAND"
           echo "MAX_PAGES_PER_BRAND=$MAX_PAGES_PER_BRAND"
           node githubActionsSnkrdunkDiscovery.mjs
+
+      - name: Trigger batch update for newly discovered cards
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Discovery complete. Triggering metadata and price backfill for newly discovered cards..."
+          gh workflow run snkrdunk-batch-update.yml \
+            --repo ${{ github.repository }} \
+            --field skip_hours=0 \
+            --field parallel=8 \
+            --field batch_limit=0 \
+            --field skip_discovery=true
+          echo "Batch update dispatched with SKIP_HOURS=0."
 
       - name: Upload discovery logs on failure
         if: failure()

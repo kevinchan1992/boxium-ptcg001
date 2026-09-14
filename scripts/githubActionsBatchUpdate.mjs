@@ -258,7 +258,8 @@ async function getAllSnkrdunkProducts() {
   const [rows] = await db.execute(
     `SELECT ds.id as dataSourceId, ds.cardId, ds.sourceUrl, ds.productType, ds.lastFetchedAt, ds.lastFetchStatus,
             CASE WHEN ds.productType = 'sealed_product' THEN sp.name ELSE c.name END as name,
-            CASE WHEN ds.productType = 'sealed_product' THEN sp.imageUrl ELSE c.imageUrl END as imageUrl
+            CASE WHEN ds.productType = 'sealed_product' THEN sp.imageUrl ELSE c.imageUrl END as imageUrl,
+            CASE WHEN ds.productType = 'sealed_product' THEN NULL ELSE c.cardNumber END as cardNumber
      FROM dataSources ds
      LEFT JOIN cards c ON c.id = ds.cardId AND ds.productType != 'sealed_product'
      LEFT JOIN sealedProducts sp ON sp.id = ds.cardId AND ds.productType = 'sealed_product'
@@ -285,6 +286,7 @@ async function getAllSnkrdunkProducts() {
       name: row.name || `Product ${row.cardId}`,
       isPlaceholder: !row.name || row.name.startsWith('SNKRDUNK Card ') || row.name === '待更新',
       hasImage: !!row.imageUrl,
+      cardNumber: row.cardNumber || null,
       productType: pt,
       snkrdunkId: sid,
       lastFetchedAt: row.lastFetchedAt ? new Date(row.lastFetchedAt) : null,
@@ -373,6 +375,11 @@ async function fetchCardDetailsFromApi(snkrdunkId) {
   };
 }
 
+function extractCardNumberFromTitle(name) {
+  const match = String(name || '').match(/\[([A-Za-z0-9-]+(?:\s+\d{1,4}(?:\/\d{1,4})?)?)\]/);
+  return match?.[1]?.trim() || null;
+}
+
 // ─── Update Card / SealedProduct Details in DB (v3.1 Card Details Backfill) ──
 async function updateCardDetails(product, details) {
   const db = await getPool();
@@ -383,9 +390,16 @@ async function updateCardDetails(product, details) {
       [details.name, details.nameJa, details.imageUrl, product.id]
     );
   } else {
+    const cardNumber = extractCardNumberFromTitle(details.name);
     await db.execute(
-      `UPDATE cards SET name=COALESCE(?,name), nameJa=COALESCE(?,nameJa), imageUrl=COALESCE(?,imageUrl), updatedAt=NOW() WHERE id=?`,
-      [details.name, details.nameJa, details.imageUrl, product.id]
+      `UPDATE cards
+       SET name=COALESCE(?,name),
+           nameJa=COALESCE(?,nameJa),
+           imageUrl=COALESCE(?,imageUrl),
+           cardNumber=CASE WHEN cardNumber IS NULL OR cardNumber='' THEN ? ELSE cardNumber END,
+           updatedAt=NOW()
+       WHERE id=?`,
+      [details.name, details.nameJa, details.imageUrl, cardNumber, product.id]
     );
   }
 }
@@ -395,8 +409,10 @@ async function processSingleProduct(product, attempt = 1) {
   const productKey = `${product.productType}:${product.id}`;
   try {
     const pt = product.productType === 'sealed_product' ? 'sealed_product' : 'single_card';
-    // v3.1 Card Details Backfill: if name is still a placeholder or image is missing, fetch card details first
-    if (product.isPlaceholder || !product.hasImage) {
+    // Backfill all metadata required for public visibility. A missing cardNumber
+    // must be treated like a missing title/image so newly discovered set cards
+    // remain discoverable by their series code.
+    if (product.isPlaceholder || !product.hasImage || (pt === 'single_card' && !product.cardNumber)) {
       try {
         const details = await fetchCardDetailsFromApi(product.snkrdunkId);
         if (details.name && !details.name.startsWith('SNKRDUNK Card ')) {
@@ -490,6 +506,8 @@ async function main() {
   const toUpdate = allProducts
     .filter(p => {
       const age = p.lastFetchedAt ? (now - p.lastFetchedAt) : Infinity;
+      const needsMetadataBackfill = p.isPlaceholder || !p.hasImage || (p.productType === 'single_card' && !p.cardNumber);
+      if (needsMetadataBackfill) return true; // never defer incomplete new-card metadata
       if (age < skipMs) { skippedRecent++; return false; }         // recently updated
       if (!p.hasHistory && age < emptyCardSkipMs) { skippedEmpty++; return false; } // empty card within recheck window
       return true;
