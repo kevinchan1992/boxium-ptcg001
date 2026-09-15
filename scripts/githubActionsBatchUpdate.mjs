@@ -27,10 +27,13 @@
 
 import mysql from 'mysql2/promise';
 import { createHash } from 'crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const IS_NEW_ONLY_RUN = process.env.NEW_ONLY === 'true';
 const IS_METADATA_ONLY_RUN = process.env.METADATA_ONLY === 'true';
+const execFileAsync = promisify(execFile);
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
@@ -195,20 +198,34 @@ function validateHistory(entries, productType = 'single_card') {
   });
 }
 
-// ─── SNKRDUNK API Fetcher (using built-in fetch) ──────────────────────────────
+// ─── SNKRDUNK API Fetcher ─────────────────────────────────────────────────────
 async function fetchJsonWithTimeout(url, options, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const resp = await fetch(url, { ...options, signal: controller.signal });
-    if (!resp.ok) return { resp, data: null };
-    // Keep the abort signal alive until the JSON body is completely consumed.
-    // Header-only timeouts can otherwise leave a worker waiting indefinitely on
-    // a slow sales-history response body.
-    const body = await resp.text();
-    return { resp, data: body ? JSON.parse(body) : null };
-  } finally {
-    clearTimeout(timer);
+    const headers = Object.entries(options?.headers || {})
+      .flatMap(([key, value]) => ['-H', `${key}: ${value}`]);
+    const { stdout } = await execFileAsync(
+      'curl',
+      [
+        '--silent', '--show-error', '--location',
+        '--connect-timeout', '5',
+        '--max-time', String(Math.ceil(timeoutMs / 1000)),
+        '--retry', '0',
+        ...headers,
+        '--write-out', '\n%{http_code}',
+        url,
+      ],
+      { timeout: timeoutMs + 2_000, maxBuffer: 4 * 1024 * 1024 },
+    );
+    const splitAt = stdout.lastIndexOf('\n');
+    const body = splitAt >= 0 ? stdout.slice(0, splitAt) : '';
+    const status = Number.parseInt(splitAt >= 0 ? stdout.slice(splitAt + 1).trim() : '0', 10) || 0;
+    const resp = { ok: status >= 200 && status < 300, status };
+    return { resp, data: resp.ok && body ? JSON.parse(body) : null };
+  } catch (error) {
+    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
+      throw Object.assign(new Error(`Request timeout after ${timeoutMs}ms`), { code: 'ECONNABORTED' });
+    }
+    throw error;
   }
 }
 
