@@ -70,6 +70,11 @@ async function getPendingSources() {
        AND ds.isActive = 1
        AND ds.sourceIdentifier REGEXP '^[0-9]+$'
        AND (c.name IS NULL OR c.name LIKE 'SNKRDUNK Card %' OR c.imageUrl IS NULL OR c.cardNumber IS NULL OR c.cardNumber = '')
+       AND NOT (
+         ds.lastFetchStatus = 'failed'
+         AND ds.fetchErrorMessage = 'SNKRDUNK product response lacks required single-card metadata'
+         AND ds.updatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+       )
      ORDER BY ds.createdAt DESC
      LIMIT ${limit}`,
   );
