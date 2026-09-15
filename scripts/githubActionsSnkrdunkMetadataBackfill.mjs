@@ -131,11 +131,11 @@ async function processSourceWithDeadline(source) {
   const deadlineMs = CONFIG.REQUEST_TIMEOUT + 5_000;
   let timer;
   const timedOut = new Promise((resolve) => {
-    timer = setTimeout(async () => {
+    timer = setTimeout(() => {
       const message = `Metadata worker deadline exceeded after ${deadlineMs}ms`;
-      await markFailed(source.dataSourceId, message).catch(() => {});
       console.warn(`[MetadataBackfill] product=${source.sourceIdentifier} deadline exceeded`);
       resolve({ ok: false, error: message });
+      void markFailed(source.dataSourceId, message).catch(() => {});
     }, deadlineMs);
   });
   try {
