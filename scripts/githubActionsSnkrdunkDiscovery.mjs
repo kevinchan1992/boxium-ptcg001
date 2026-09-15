@@ -241,7 +241,7 @@ async function discoverBrand(brand, allExistingIds) {
   const newIds = [];
   const newIdSet = new Set();
   let page = 1;
-  let consecutiveAllExisting = 0;
+  const seenPageSignatures = new Set();
 
   // Phase 1: Scan all pages to collect new apparel IDs (HTTP only, no DB writes)
   while (page <= CONFIG.MAX_PAGES_PER_BRAND) {
@@ -261,6 +261,18 @@ async function discoverBrand(brand, allExistingIds) {
       break;
     }
 
+    // Some upstream pagination paths repeat the final non-empty page rather
+    // than returning an empty one. Stop only in that proven terminal case.
+    // Do not stop merely because a page has no new IDs: sortKey=latest reflects
+    // market activity, so a newly listed card with no recent sale can be behind
+    // many already-known cards.
+    const pageSignature = ids.join(',');
+    if (seenPageSignatures.has(pageSignature)) {
+      console.log(`[Discovery] Page ${page}: repeated page content, stopping`);
+      break;
+    }
+    seenPageSignatures.add(pageSignature);
+
     let newOnPage = 0;
     for (const id of ids) {
       if (!allExistingIds.has(id) && !newIdSet.has(id)) {
@@ -275,17 +287,6 @@ async function discoverBrand(brand, allExistingIds) {
     }
 
     console.log(`[Discovery] Page ${page}: ${ids.length} items, ${newOnPage} new`);
-
-    // Stop after 25 consecutive pages with no new items
-    if (newOnPage === 0) {
-      consecutiveAllExisting++;
-      if (consecutiveAllExisting >= 25) {
-        console.log(`[Discovery] 25 consecutive pages with no new items, stopping scan`);
-        break;
-      }
-    } else {
-      consecutiveAllExisting = 0;
-    }
 
     if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) break;
     page++;
