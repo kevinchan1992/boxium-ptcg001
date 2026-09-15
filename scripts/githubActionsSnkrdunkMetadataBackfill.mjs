@@ -1,4 +1,6 @@
 import mysql from 'mysql2/promise';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const CONFIG = {
   BATCH_LIMIT: Number.parseInt(process.env.METADATA_BATCH_LIMIT || '1000', 10),
@@ -7,6 +9,7 @@ const CONFIG = {
 };
 
 let pool;
+const execFileAsync = promisify(execFile);
 
 async function getPool() {
   if (pool) return pool;
@@ -26,21 +29,29 @@ function extractCardNumber(name) {
 }
 
 async function fetchProduct(apparelId) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
   try {
-    const response = await fetch(`https://snkrdunk.com/v1/apparels/${apparelId}`, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'BOXIUM SNKRDUNK Metadata Backfill/1.0 (+https://boxium.asia)',
-        Accept: 'application/json',
+    const { stdout } = await execFileAsync(
+      'curl',
+      [
+        '--silent', '--show-error', '--fail', '--location',
+        '--connect-timeout', '5',
+        '--max-time', String(Math.ceil(CONFIG.REQUEST_TIMEOUT / 1000)),
+        '--retry', '0',
+        '-A', 'BOXIUM SNKRDUNK Metadata Backfill/1.0 (+https://boxium.asia)',
+        '-H', 'Accept: application/json',
+        `https://snkrdunk.com/v1/apparels/${apparelId}`,
+      ],
+      {
+        timeout: CONFIG.REQUEST_TIMEOUT + 2_000,
+        maxBuffer: 2 * 1024 * 1024,
       },
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
-    return JSON.parse(text);
-  } finally {
-    clearTimeout(timer);
+    );
+    return JSON.parse(stdout);
+  } catch (error) {
+    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
+      throw new Error(`Metadata request timeout after ${CONFIG.REQUEST_TIMEOUT}ms`);
+    }
+    throw error;
   }
 }
 
