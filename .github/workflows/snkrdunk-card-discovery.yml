@@ -59,19 +59,30 @@ jobs:
           echo "MAX_NEW_PER_BRAND=$MAX_NEW_PER_BRAND"
           node githubActionsSnkrdunkDiscovery.mjs
 
-      - name: Trigger metadata backfill for newly discovered cards
+      - name: Complete metadata for newly discovered cards
+        if: success()
+        working-directory: scripts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          METADATA_BATCH_LIMIT: '1000'
+          METADATA_PARALLEL: '8'
+          REQUEST_TIMEOUT_MS: '7000'
+        run: |
+          echo "High-water discovery complete. Completing new-card name, image, and card number metadata..."
+          node githubActionsSnkrdunkMetadataBackfill.mjs
+
+      - name: Trigger price-history backfill for newly discovered cards
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "High-water discovery complete. Triggering new-card metadata backfill..."
+          echo "Metadata complete. Triggering price-history backfill..."
           gh workflow run snkrdunk-batch-update.yml \
             --repo ${{ github.repository }} \
             --field skip_hours=0 \
             --field parallel=8 \
             --field batch_limit=1000 \
             --field new_only=true \
-            --field metadata_only=true \
             --field skip_discovery=true
 
       - name: Upload discovery logs on failure
