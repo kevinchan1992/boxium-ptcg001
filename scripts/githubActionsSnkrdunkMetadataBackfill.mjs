@@ -162,7 +162,11 @@ async function main() {
     }
     console.log(`[MetadataBackfill] COMPLETED success=${success} failed=${failed} selected=${sources.length}`);
   } finally {
-    if (pool) await pool.end();
+    if (pool) {
+      await pool.end().catch((error) => {
+        console.warn(`[MetadataBackfill] connection pool closed with ${error.code || error.message}`);
+      });
+    }
   }
 }
 
