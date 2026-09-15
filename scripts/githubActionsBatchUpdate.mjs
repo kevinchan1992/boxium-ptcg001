@@ -52,6 +52,7 @@ const CONFIG = {
   JPY_TO_HKD_RATE: 0.055,
   MAX_RETRIES: IS_NEW_ONLY_RUN ? 1 : 3, // New-card runs fail fast; regular runs retain transient retry
   RETRY_DELAY_MS: 2000,     // Wait 2s between retries
+  PRODUCT_DEADLINE_MS: parseInt(process.env.PRODUCT_DEADLINE_MS || (IS_NEW_ONLY_RUN ? '30000' : '90000'), 10),
 };
 
 // ─── Database Connection ──────────────────────────────────────────────────────
@@ -540,6 +541,26 @@ async function processSingleProduct(product, attempt = 1) {
   }
 }
 
+async function processSingleProductWithDeadline(product) {
+  let timer;
+  const deadlineMs = CONFIG.PRODUCT_DEADLINE_MS;
+  const timedOut = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      const message = `Product worker deadline exceeded after ${deadlineMs}ms`;
+      console.warn(`[BatchUpdate] TIMEOUT ${product.productType}:${product.id}: ${message}`);
+      resolve({ success: false, productKey: `${product.productType}:${product.id}`, isTimeout: true, isTransient: true, error: message });
+      if (CONFIG.NEW_ONLY) {
+        void updateDataSourceStatus(product.dataSourceId, 'failed').catch(() => {});
+      }
+    }, deadlineMs);
+  });
+  try {
+    return await Promise.race([processSingleProduct(product), timedOut]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const startTime = Date.now();
@@ -607,7 +628,9 @@ async function main() {
 
   if (!toUpdate.length) {
     console.log('[BatchUpdate] Nothing to update. All products are up to date.');
-    await (await getPool()).end();
+    await (await getPool()).end().catch((error) => {
+      console.warn(`[BatchUpdate] connection pool closed with ${error.code || error.message}`);
+    });
     return;
   }
 
@@ -655,7 +678,7 @@ async function main() {
 
     for (let i = 0; i < items.length; i += CONFIG.PARALLEL) {
       const batch = items.slice(i, i + CONFIG.PARALLEL);
-      const results = await Promise.allSettled(batch.map(p => processSingleProduct(p)));
+      const results = await Promise.allSettled(batch.map(p => processSingleProductWithDeadline(p)));
 
       let batchHadError = false;
       results.forEach((r, idx) => {
@@ -723,7 +746,12 @@ async function main() {
   console.log(`[BatchUpdate] COMPLETED: ${successCount} success, ${failCount} failed in ${Math.ceil(elapsed / 60)}min`);
   console.log('='.repeat(60));
 
-  await (await getPool()).end();
+  await Promise.race([
+    (await getPool()).end().catch((error) => {
+      console.warn(`[BatchUpdate] connection pool closed with ${error.code || error.message}`);
+    }),
+    delay(10_000).then(() => console.warn('[BatchUpdate] connection pool close deadline exceeded; forcing clean exit')),
+  ]);
 
   // ─── Report results to platform API ──────────────────────────────────────────────────
   // platformUrl, cronSecret, runId are already defined above (mid-run progress reporter)
@@ -775,7 +803,10 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  console.error('[BatchUpdate] FATAL:', err);
-  process.exit(1);
-});
+main().then(
+  () => process.exit(0),
+  (err) => {
+    console.error('[BatchUpdate] FATAL:', err);
+    process.exit(1);
+  },
+);
