@@ -30,11 +30,13 @@ import { createHash } from 'crypto';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const IS_NEW_ONLY_RUN = process.env.NEW_ONLY === 'true';
+const IS_METADATA_ONLY_RUN = process.env.METADATA_ONLY === 'true';
 const CONFIG = {
   PARALLEL: parseInt(process.env.PARALLEL || '8', 10),  // v2: Raised to 8 (stable with stateless HTTP API)
   SKIP_HOURS: parseInt(process.env.SKIP_HOURS || '8', 10),
   BATCH_LIMIT: parseInt(process.env.BATCH_LIMIT || '18547', 10), // 0 = no limit; applies AFTER smart-skip
   NEW_ONLY: IS_NEW_ONLY_RUN, // Discovery follow-up: only sources never fetched before
+  METADATA_ONLY: IS_METADATA_ONLY_RUN, // Discovery follow-up: establish card visibility before historical-price work
   // v3.0 Smart Skip: empty cards (no price history) are only re-checked every N days
   // Real-world data: 83.9% of cards (46,775/55,734) have no history → 6x speedup
   EMPTY_CARD_RECHECK_DAYS: parseInt(process.env.EMPTY_CARD_RECHECK_DAYS || '7', 10),
@@ -434,49 +436,63 @@ async function processSingleProduct(product, attempt = 1) {
     // Backfill all metadata required for public visibility. A missing cardNumber
     // must be treated like a missing title/image so newly discovered set cards
     // remain discoverable by their series code.
-    if (product.isPlaceholder || !product.hasImage || (pt === 'single_card' && !product.cardNumber)) {
+    const needsMetadata = product.isPlaceholder || !product.hasImage || (pt === 'single_card' && !product.cardNumber);
+    if (needsMetadata) {
       try {
         const details = await fetchCardDetailsFromApi(product.snkrdunkId);
-        if (details.name && !details.name.startsWith('SNKRDUNK Card ')) {
-          await updateCardDetails(product, details);
-          product.name = details.name;
-          product.isPlaceholder = false;
+        const parsedCardNumber = pt === 'single_card' ? extractCardNumberFromTitle(details.name) : null;
+        const metadataComplete = Boolean(
+          details.name &&
+          !details.name.startsWith('SNKRDUNK Card ') &&
+          details.imageUrl &&
+          (pt !== 'single_card' || parsedCardNumber),
+        );
+        if (!metadataComplete) {
+          throw new Error(`Incomplete metadata for ${product.snkrdunkId}`);
         }
+        await updateCardDetails(product, details);
+        product.name = details.name;
+        product.isPlaceholder = false;
+        product.hasImage = true;
+        product.cardNumber = parsedCardNumber || product.cardNumber;
       } catch (detailErr) {
+        if (CONFIG.METADATA_ONLY) throw detailErr;
         // Non-fatal: log and continue with price history update
         console.warn(`[BatchUpdate] Card details fetch failed for ${product.snkrdunkId}: ${detailErr.message}`);
       }
     }
-    const raw = await fetchPriceHistoryFromApi(product.snkrdunkId, pt);
-    const history = validateHistory(raw || [], pt);
-    if (history && history.length > 0) {
-      const counters = new Map();
-      const records = history.map(e => {
-        const soldAtStr = e.soldAt ? e.soldAt.toISOString().slice(0, 10) : 'unknown';
-        const gn = pt === 'single_card' ? (e.normalisedGrade ?? null) : null;
-        const jp = e.jpyPrice ?? e.price;
-        const grpKey = `${soldAtStr}|${gn ?? 'null'}|${jp}`;
-        const pos = counters.get(grpKey) ?? 0;
-        counters.set(grpKey, pos + 1);
-        return {
-          cardId: product.id,
-          source: 'snkrdunk',
-          price: convertJpyToHkd(e.price).toString(),
-          currency: 'HKD',
-          jpyPrice: jp,
-          sourcePosition: pos,
-          grade: gn,
-          quantity: pt === 'sealed_product' ? (e.quantity || null) : null,
-          productType: pt,
-          soldAt: e.soldAt,
-          listingUrl: product.sourceUrl,
-          recordHash: computeRecordHash({
-            cardId: product.id, source: 'snkrdunk', grade: gn,
-            soldAt: e.soldAt, jpyPrice: jp, sourcePosition: pos,
-          }),
-        };
-      });
-      await upsertPriceRecords(records);
+    if (!CONFIG.METADATA_ONLY) {
+      const raw = await fetchPriceHistoryFromApi(product.snkrdunkId, pt);
+      const history = validateHistory(raw || [], pt);
+      if (history && history.length > 0) {
+        const counters = new Map();
+        const records = history.map(e => {
+          const soldAtStr = e.soldAt ? e.soldAt.toISOString().slice(0, 10) : 'unknown';
+          const gn = pt === 'single_card' ? (e.normalisedGrade ?? null) : null;
+          const jp = e.jpyPrice ?? e.price;
+          const grpKey = `${soldAtStr}|${gn ?? 'null'}|${jp}`;
+          const pos = counters.get(grpKey) ?? 0;
+          counters.set(grpKey, pos + 1);
+          return {
+            cardId: product.id,
+            source: 'snkrdunk',
+            price: convertJpyToHkd(e.price).toString(),
+            currency: 'HKD',
+            jpyPrice: jp,
+            sourcePosition: pos,
+            grade: gn,
+            quantity: pt === 'sealed_product' ? (e.quantity || null) : null,
+            productType: pt,
+            soldAt: e.soldAt,
+            listingUrl: product.sourceUrl,
+            recordHash: computeRecordHash({
+              cardId: product.id, source: 'snkrdunk', grade: gn,
+              soldAt: e.soldAt, jpyPrice: jp, sourcePosition: pos,
+            }),
+          };
+        });
+        await upsertPriceRecords(records);
+      }
     }
     await updateDataSourceStatus(product.dataSourceId, 'success');
     return { success: true, productKey };
@@ -512,7 +528,7 @@ async function main() {
   const startTime = Date.now();
   console.log('='.repeat(60));
   console.log('[BatchUpdate] GitHub Actions SNKRDUNK Batch Update');
-  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT || 'unlimited'}, NEW_ONLY=${CONFIG.NEW_ONLY}`);
+  console.log(`[BatchUpdate] Config: PARALLEL=${CONFIG.PARALLEL}, SKIP_HOURS=${CONFIG.SKIP_HOURS}, BATCH_LIMIT=${CONFIG.BATCH_LIMIT || 'unlimited'}, NEW_ONLY=${CONFIG.NEW_ONLY}, METADATA_ONLY=${CONFIG.METADATA_ONLY}`);
   console.log('='.repeat(60));
 
   const allProducts = await getAllSnkrdunkProducts();
