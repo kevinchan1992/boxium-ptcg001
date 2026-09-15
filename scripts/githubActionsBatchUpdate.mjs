@@ -222,7 +222,7 @@ async function fetchJsonWithTimeout(url, options, timeoutMs) {
     const resp = { ok: status >= 200 && status < 300, status };
     return { resp, data: resp.ok && body ? JSON.parse(body) : null };
   } catch (error) {
-    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
+    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT' || Number(error.code) === 28) {
       throw Object.assign(new Error(`Request timeout after ${timeoutMs}ms`), { code: 'ECONNABORTED' });
     }
     throw error;
