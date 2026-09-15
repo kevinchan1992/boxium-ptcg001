@@ -6,14 +6,18 @@ on:
     - cron: '0 3 * * 4'
   workflow_dispatch:
     inputs:
+      high_water_lookback:
+        description: 'Product-ID overlap behind the high-water mark (default: 10000)'
+        required: false
+        default: '10000'
+      high_water_forward:
+        description: 'Product-ID range ahead of the high-water mark (default: 2000)'
+        required: false
+        default: '2000'
       max_new_per_brand:
-        description: 'Max new cards to insert per brand (default: 99999 = no cap)'
+        description: 'Maximum newly discovered target TCG single cards per run (default: 1000)'
         required: false
-        default: '99999'
-      max_pages_per_brand:
-        description: 'Max search pages to scan per brand (default: 99999 = scan to end)'
-        required: false
-        default: '99999'
+        default: '1000'
 
 jobs:
   discover:
@@ -39,25 +43,28 @@ jobs:
         working-directory: scripts
         run: npm install --omit=dev
 
-      - name: Run SNKRDUNK Discovery
+      - name: Run high-water SNKRDUNK Discovery
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MAX_NEW_PER_BRAND: ${{ github.event.inputs.max_new_per_brand || '99999' }}
-          MAX_PAGES_PER_BRAND: ${{ github.event.inputs.max_pages_per_brand || '99999' }}
-          DELAY_MS: '400'
+          HIGH_WATER_LOOKBACK: ${{ github.event.inputs.high_water_lookback || '10000' }}
+          HIGH_WATER_FORWARD: ${{ github.event.inputs.high_water_forward || '2000' }}
+          MAX_NEW_PER_BRAND: ${{ github.event.inputs.max_new_per_brand || '1000' }}
+          HIGH_WATER_CONCURRENCY: '8'
+          REQUEST_TIMEOUT_MS: '8000'
         run: |
-          echo "Starting SNKRDUNK Discovery"
+          echo "Starting SNKRDUNK high-water discovery"
+          echo "HIGH_WATER_LOOKBACK=$HIGH_WATER_LOOKBACK"
+          echo "HIGH_WATER_FORWARD=$HIGH_WATER_FORWARD"
           echo "MAX_NEW_PER_BRAND=$MAX_NEW_PER_BRAND"
-          echo "MAX_PAGES_PER_BRAND=$MAX_PAGES_PER_BRAND"
           node githubActionsSnkrdunkDiscovery.mjs
 
-      - name: Trigger batch update for newly discovered cards
+      - name: Trigger metadata and price backfill for newly discovered cards
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Discovery complete. Triggering metadata and price backfill for newly discovered cards..."
+          echo "High-water discovery complete. Triggering new-card metadata and price backfill..."
           gh workflow run snkrdunk-batch-update.yml \
             --repo ${{ github.repository }} \
             --field skip_hours=0 \
@@ -65,7 +72,6 @@ jobs:
             --field batch_limit=1000 \
             --field new_only=true \
             --field skip_discovery=true
-          echo "Batch update dispatched with SKIP_HOURS=0."
 
       - name: Upload discovery logs on failure
         if: failure()

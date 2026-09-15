@@ -1,356 +1,307 @@
 /**
- * GitHub Actions SNKRDUNK Discovery Script v2.0
+ * SNKRDUNK high-water card discovery.
  *
- * Automatically discovers NEW card URLs from SNKRDUNK for 7 TCG brands
- * and inserts them into the database (cards + dataSources tables).
- *
- * Brands covered:
- *   - Pokemon Card Game (gameId=1)
- *   - ONE PIECE (gameId=2)
- *   - YU-GI-OH (gameId=3)
- *   - Dragon Ball Super Card Game (gameId=60001)
- *   - UNION ARENA (gameId=60002)
- *   - Weiß Schwarz (gameId=60003)
- *   - Gundam Card Game (gameId=60004)
- *
- * Strategy v2.0 (FAST BATCH INSERT):
- *   1. Fetch search pages (sortKey=latest) for each brand
- *   2. Extract apparel IDs from HTML
- *   3. Skip IDs already in dataSources table
- *   4. Batch INSERT new IDs directly into cards + dataSources (no per-card HTML fetch)
- *      - cards: placeholder name = "SNKRDUNK Card {id}" (batch-update will fill details later)
- *      - dataSources: sourceUrl + sourceIdentifier only (lastFetchedAt = NULL → batch-update priority)
- *   5. batch-update workflow will auto-run after discovery to fill in card details
- *
- * Required env: DATABASE_URL
- * Optional env: MAX_NEW_PER_BRAND (default: unlimited), DELAY_MS (default: 400, for HTTP only)
+ * The old implementation enumerated market-ranked HTML search pages. That is
+ * unsuitable for discovery because cards with no listing, sale, or release
+ * activity can be far behind unrelated products. This implementation probes a
+ * bounded product-ID window around the last observed single-card ID instead.
+ * A product is only inserted when the public product API confirms both a
+ * configured TCG brand and the trading-card-single category (ID 25).
  */
 
 import mysql from 'mysql2/promise';
-
-// ─── Configuration ────────────────────────────────────────────────────────────
-function readPositiveIntEnv(name, fallback) {
-  const raw = process.env[name];
-  const parsed = Number.parseInt(raw ?? '', 10);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
-
-  if (raw !== undefined && raw !== '') {
-    console.warn(`[Config] Ignoring invalid ${name}=${JSON.stringify(raw)}; using ${fallback}`);
-  }
-  return fallback;
-}
+import { pathToFileURL } from 'node:url';
+import { createHighWaterRange, isTargetTradingCard, readPositiveInt } from './snkrdunkHighWaterCore.mjs';
 
 const CONFIG = {
-  MAX_NEW_PER_BRAND: readPositiveIntEnv('MAX_NEW_PER_BRAND', 99999),
-  DELAY_MS: parseInt(process.env.DELAY_MS || '400', 10), // Only used for search page HTTP requests
-  REQUEST_TIMEOUT: 20000,
-  // A manual GitHub workflow dispatch can surface an omitted numeric input as
-  // "0". Treat non-positive values as omitted, because page=0 means the loop
-  // never runs and a falsely-successful discovery inserts no new cards.
-  MAX_PAGES_PER_BRAND: readPositiveIntEnv('MAX_PAGES_PER_BRAND', 99999), // No limit — scan until empty page
-  BATCH_SIZE: 500, // Number of cards to insert per batch SQL statement
-  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  LOOKBACK: readPositiveInt(process.env.HIGH_WATER_LOOKBACK, 10_000),
+  FORWARD: readPositiveInt(process.env.HIGH_WATER_FORWARD, 2_000),
+  CONCURRENCY: Math.min(readPositiveInt(process.env.HIGH_WATER_CONCURRENCY, 8), 12),
+  MAX_NEW: readPositiveInt(process.env.MAX_NEW_PER_BRAND, 1_000),
+  REQUEST_TIMEOUT: readPositiveInt(process.env.REQUEST_TIMEOUT_MS, 8_000),
+  BATCH_SIZE: 500,
+  STATE_KEY: 'snkrdunk_high_water_discovery_v1',
+  USER_AGENT: 'BOXIUM SNKRDUNK Discovery/3.0 (+https://boxium.asia)',
 };
 
-// ─── TCG Brand Configuration ──────────────────────────────────────────────────
-const TCG_BRANDS = [
-  { brandSlug: 'pokemon',                    gameId: 1,     name: 'Pokemon Card Game' },
-  { brandSlug: 'onepiece',                   gameId: 2,     name: 'ONE PIECE' },
-  { brandSlug: 'yu-gi-oh',                   gameId: 3,     name: 'YU-GI-OH' },
-  { brandSlug: 'dragon-ball-super-card-game', gameId: 60001, name: 'Dragon Ball Super Card Game' },
-  { brandSlug: 'union-arena',                gameId: 60002, name: 'UNION ARENA' },
-  { brandSlug: 'weis-schwarz',               gameId: 60003, name: 'Weiß Schwarz' },
-  { brandSlug: 'gundam-card-game',           gameId: 60004, name: 'Gundam Card Game' },
-];
-
-// ─── Database Connection ──────────────────────────────────────────────────────
 let pool;
+
 async function getPool() {
-  if (!pool) {
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) throw new Error('DATABASE_URL environment variable is required');
-    const url = dbUrl.includes('timezone=')
-      ? dbUrl
-      : `${dbUrl}${dbUrl.includes('?') ? '&' : '?'}timezone=%2B08:00`;
-    pool = mysql.createPool({
-      uri: url,
-      connectionLimit: 5,
-      charset: 'utf8mb4',
-      connectTimeout: 30000,
-    });
-    const conn = await pool.getConnection();
-    await conn.ping();
-    conn.release();
-    console.log('[DB] Connected to MySQL database');
-  }
+  if (pool) return pool;
+
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) throw new Error('DATABASE_URL environment variable is required');
+  const url = dbUrl.includes('timezone=')
+    ? dbUrl
+    : `${dbUrl}${dbUrl.includes('?') ? '&' : '?'}timezone=%2B08:00`;
+
+  pool = mysql.createPool({
+    uri: url,
+    connectionLimit: 5,
+    charset: 'utf8mb4',
+    connectTimeout: 30_000,
+  });
+  const conn = await pool.getConnection();
+  await conn.ping();
+  conn.release();
+  console.log('[DB] Connected to MySQL database');
   return pool;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-async function fetchHtml(url) {
+async function fetchProduct(apparelId) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
   try {
-    const res = await fetch(url, {
+    const response = await fetch(`https://snkrdunk.com/v1/apparels/${apparelId}`, {
       signal: controller.signal,
       headers: {
         'User-Agent': CONFIG.USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml',
+        Accept: 'application/json',
         'Accept-Language': 'ja,en;q=0.9',
       },
     });
-    if (res.status === 404) {
-      throw new Error('HTTP 404 Not Found');
-    }
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} - unexpected response`);
-    }
-    return await res.text();
+    if (response.status === 404) return { kind: 'not_found' };
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    // Read through the same abort signal so a slow JSON body cannot block the
+    // whole batch after headers have arrived.
+    const body = await response.text();
+    return { kind: 'product', product: JSON.parse(body) };
   } finally {
     clearTimeout(timer);
   }
 }
 
-// Extract apparel IDs from search page HTML
-function extractApparelIds(html) {
-  const matches = html.matchAll(/https:\/\/snkrdunk\.com\/apparels\/(\d+)/g);
-  const ids = [];
-  const seen = new Set();
-  for (const m of matches) {
-    if (!seen.has(m[1])) {
-      seen.add(m[1]);
-      ids.push(m[1]);
-    }
-  }
-  return ids;
-}
-
-// ─── Database Operations ──────────────────────────────────────────────────────
-
-// Get ALL existing SNKRDUNK IDs (for cross-brand dedup)
-async function getAllExistingSnkrdunkIds() {
-  const pool = await getPool();
-  const [rows] = await pool.query(
-    'SELECT sourceIdentifier FROM dataSources WHERE source = "snkrdunk"'
+async function getExistingSourceIds() {
+  const db = await getPool();
+  const [rows] = await db.query(
+    `SELECT sourceIdentifier
+     FROM dataSources
+     WHERE source = 'snkrdunk' AND productType = 'single_card' AND isActive = 1`,
   );
-  return new Set(rows.map(r => r.sourceIdentifier));
+  return new Set(rows.map(({ sourceIdentifier }) => String(sourceIdentifier)));
 }
 
-/**
- * Batch insert new cards + dataSources without fetching individual card pages.
- * Cards are inserted with placeholder names; batch-update will fill in details later.
- * Uses INSERT IGNORE to handle any race conditions safely.
- *
- * @param {string[]} apparelIds - Array of new SNKRDUNK apparel IDs
- * @param {number} gameId - Game ID for this brand
- * @param {string} brandName - Brand name for logging
- * @returns {{ inserted: number, failed: number }}
- */
-async function batchInsertNewCards(apparelIds, gameId, brandName) {
-  if (apparelIds.length === 0) return { inserted: 0, failed: 0 };
+async function getDiscoveryHighWater() {
+  const db = await getPool();
+  const [[maxRow]] = await db.query(
+    `SELECT COALESCE(MAX(CAST(sourceIdentifier AS UNSIGNED)), 0) AS maxId
+     FROM dataSources
+     WHERE source = 'snkrdunk'
+       AND productType = 'single_card'
+       AND sourceIdentifier REGEXP '^[0-9]+$'`,
+  );
+  const [[stateRow]] = await db.query(
+    'SELECT settingValue FROM systemSettings WHERE settingKey = ? LIMIT 1',
+    [CONFIG.STATE_KEY],
+  );
 
-  const pool = await getPool();
-  let totalInserted = 0;
-  let totalFailed = 0;
-
-  // Process in chunks of BATCH_SIZE
-  for (let i = 0; i < apparelIds.length; i += CONFIG.BATCH_SIZE) {
-    const chunk = apparelIds.slice(i, i + CONFIG.BATCH_SIZE);
-    const conn = await pool.getConnection();
+  let savedHighWater = 0;
+  if (stateRow?.settingValue) {
     try {
-      await conn.beginTransaction();
+      savedHighWater = Number(JSON.parse(stateRow.settingValue).highWaterId) || 0;
+    } catch {
+      console.warn('[Discovery] Ignoring malformed persisted high-water state');
+    }
+  }
 
-      // Step 1: Batch INSERT into cards table (placeholder names)
-      // INSERT IGNORE skips duplicates silently
-      const cardValues = chunk.map(id => [
-        `snkrdunk-${id}`,  // cardId (unique key)
-        id,                 // snkrdunkId
-        gameId,             // gameId
-        `SNKRDUNK Card ${id}`, // name (placeholder — batch-update will update this)
-        null,               // nameJa
-        null,               // imageUrl
-        null,               // cardNumber
-        null,               // setName
-      ]);
+  return Math.max(Number(maxRow?.maxId) || 0, savedHighWater);
+}
 
-      const cardPlaceholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
-      await conn.query(
-        `INSERT IGNORE INTO cards (cardId, snkrdunkId, gameId, name, nameJa, imageUrl, cardNumber, setName)
-         VALUES ${cardPlaceholders}`,
-        cardValues.flat()
-      );
+async function saveDiscoveryState(state) {
+  const db = await getPool();
+  await db.query(
+    `INSERT INTO systemSettings (settingKey, settingValue, description)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       settingValue = VALUES(settingValue),
+       description = VALUES(description)`,
+    [
+      CONFIG.STATE_KEY,
+      JSON.stringify(state),
+      'SNKRDUNK high-water direct product discovery cursor and latest run summary',
+    ],
+  );
+}
 
-      // Step 2: Get the card IDs we just inserted (or already existed)
-      const cardIdStrs = chunk.map(id => `snkrdunk-${id}`);
-      const placeholders = cardIdStrs.map(() => '?').join(', ');
-      const [cardRows] = await conn.query(
-        `SELECT id, cardId FROM cards WHERE cardId IN (${placeholders})`,
-        cardIdStrs
-      );
+async function mapWithConcurrency(values, worker) {
+  const results = new Array(values.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(CONFIG.CONCURRENCY, values.length) }, async () => {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= values.length) return;
+      results[index] = await worker(values[index]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
 
-      // Build a map: cardIdStr → db id
-      const cardIdMap = new Map(cardRows.map(r => [r.cardId, r.id]));
+async function insertCandidates(candidates) {
+  const db = await getPool();
+  const grouped = new Map();
+  for (const candidate of candidates) {
+    const key = `${candidate.gameId}:${candidate.brandName}`;
+    const group = grouped.get(key) ?? [];
+    group.push(candidate.apparelId);
+    grouped.set(key, group);
+  }
 
-      // Step 3: Batch INSERT into dataSources table
-      const dsValues = [];
-      for (const apparelId of chunk) {
-        const cardDbId = cardIdMap.get(`snkrdunk-${apparelId}`);
-        if (!cardDbId) {
-          totalFailed++;
-          continue;
-        }
-        const sourceUrl = `https://snkrdunk.com/apparels/${apparelId}`;
-        dsValues.push([cardDbId, gameId, sourceUrl, apparelId]);
-      }
-
-      if (dsValues.length > 0) {
-        const dsPlaceholders = dsValues.map(() => '(?, ?, \'single_card\', \'snkrdunk\', ?, ?, 1)').join(', ');
+  let inserted = 0;
+  let failed = 0;
+  for (const ids of grouped.values()) {
+    for (let index = 0; index < ids.length; index += CONFIG.BATCH_SIZE) {
+      const chunk = ids.slice(index, index + CONFIG.BATCH_SIZE);
+      const conn = await db.getConnection();
+      try {
+        await conn.beginTransaction();
+        const cardValues = chunk.map((id) => [
+          `snkrdunk-${id}`,
+          id,
+          candidates.find((candidate) => candidate.apparelId === id).gameId,
+          `SNKRDUNK Card ${id}`,
+          null,
+          null,
+          null,
+          null,
+        ]);
+        const cardPlaceholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
         await conn.query(
-          `INSERT IGNORE INTO dataSources (cardId, gameId, productType, source, sourceUrl, sourceIdentifier, isActive)
-           VALUES ${dsPlaceholders}`,
-          dsValues.flat()
+          `INSERT IGNORE INTO cards (cardId, snkrdunkId, gameId, name, nameJa, imageUrl, cardNumber, setName)
+           VALUES ${cardPlaceholders}`,
+          cardValues.flat(),
         );
-        totalInserted += dsValues.length;
+
+        const cardKeys = chunk.map((id) => `snkrdunk-${id}`);
+        const keyPlaceholders = cardKeys.map(() => '?').join(', ');
+        const [cardRows] = await conn.query(
+          `SELECT id, cardId FROM cards WHERE cardId IN (${keyPlaceholders})`,
+          cardKeys,
+        );
+        const cardIdByKey = new Map(cardRows.map((row) => [row.cardId, row.id]));
+        const sourceValues = [];
+        for (const id of chunk) {
+          const candidate = candidates.find((entry) => entry.apparelId === id);
+          const cardId = cardIdByKey.get(`snkrdunk-${id}`);
+          if (!cardId) {
+            failed += 1;
+            continue;
+          }
+          sourceValues.push([
+            cardId,
+            candidate.gameId,
+            `https://snkrdunk.com/apparels/${id}`,
+            String(id),
+          ]);
+        }
+        if (sourceValues.length) {
+          const sourcePlaceholders = sourceValues.map(() => '(?, ?, \'single_card\', \'snkrdunk\', ?, ?, 1)').join(', ');
+          const [result] = await conn.query(
+            `INSERT IGNORE INTO dataSources (cardId, gameId, productType, source, sourceUrl, sourceIdentifier, isActive)
+             VALUES ${sourcePlaceholders}`,
+            sourceValues.flat(),
+          );
+          inserted += result.affectedRows;
+        }
+        await conn.commit();
+      } catch (error) {
+        await conn.rollback();
+        failed += chunk.length;
+        console.error(`[Discovery] Insert batch failed: ${error.message}`);
+      } finally {
+        conn.release();
       }
-
-      await conn.commit();
-
-      const chunkEnd = Math.min(i + CONFIG.BATCH_SIZE, apparelIds.length);
-      console.log(`[Discovery] ${brandName}: batch inserted ${chunkEnd}/${apparelIds.length} (${totalFailed} failed)`);
-    } catch (e) {
-      await conn.rollback();
-      console.error(`[Discovery] ${brandName}: batch insert error (chunk ${i}-${i + chunk.length}): ${e.message}`);
-      totalFailed += chunk.length;
-    } finally {
-      conn.release();
     }
   }
-
-  return { inserted: totalInserted, failed: totalFailed };
+  return { inserted, failed };
 }
 
-// ─── Main Discovery Logic ─────────────────────────────────────────────────────
+async function discoverHighWater() {
+  const existingIds = await getExistingSourceIds();
+  const highWater = await getDiscoveryHighWater();
+  if (!highWater) throw new Error('Unable to establish a SNKRDUNK single-card high-water ID');
 
-async function discoverBrand(brand, allExistingIds) {
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`[Discovery] Brand: ${brand.name} (gameId=${brand.gameId})`);
-  console.log(`${'='.repeat(60)}`);
+  const { start, end, ids } = createHighWaterRange(highWater, CONFIG.LOOKBACK, CONFIG.FORWARD);
+  console.log(`[Discovery] mode=high_water range=${start}-${end} highWater=${highWater} concurrency=${CONFIG.CONCURRENCY}`);
 
-  const newIds = [];
-  const newIdSet = new Set();
-  let page = 1;
-  const seenPageSignatures = new Set();
+  const stats = {
+    rangeStart: start,
+    rangeEnd: end,
+    examined: 0,
+    existing: 0,
+    notFound: 0,
+    nonTarget: 0,
+    fetchFailed: 0,
+    candidates: 0,
+    acceptedByBrand: {},
+  };
 
-  // Phase 1: Scan all pages to collect new apparel IDs (HTTP only, no DB writes)
-  while (page <= CONFIG.MAX_PAGES_PER_BRAND) {
-    const url = `https://snkrdunk.com/search/?brandIds=${brand.brandSlug}&searchCategoryIds=6%2F33&sortKey=latest&page=${page}`;
-
-    let html;
+  const candidates = [];
+  const outcomes = await mapWithConcurrency(ids, async (id) => {
+    if (existingIds.has(String(id))) return { kind: 'existing', id };
     try {
-      html = await fetchHtml(url);
-    } catch (e) {
-      console.log(`[Discovery] Page ${page} fetch error: ${e.message}`);
-      break;
+      return { id, ...(await fetchProduct(id)) };
+    } catch (error) {
+      return { kind: 'failed', id, reason: error.name === 'AbortError' ? 'timeout' : error.message };
     }
+  });
 
-    const ids = extractApparelIds(html);
-    if (ids.length === 0) {
-      console.log(`[Discovery] Page ${page}: no items found, stopping`);
-      break;
+  for (const outcome of outcomes) {
+    stats.examined += 1;
+    if (outcome.kind === 'existing') {
+      stats.existing += 1;
+      continue;
     }
-
-    // Some upstream pagination paths repeat the final non-empty page rather
-    // than returning an empty one. Stop only in that proven terminal case.
-    // Do not stop merely because a page has no new IDs: sortKey=latest reflects
-    // market activity, so a newly listed card with no recent sale can be behind
-    // many already-known cards.
-    const pageSignature = ids.join(',');
-    if (seenPageSignatures.has(pageSignature)) {
-      console.log(`[Discovery] Page ${page}: repeated page content, stopping`);
-      break;
+    if (outcome.kind === 'not_found') {
+      stats.notFound += 1;
+      continue;
     }
-    seenPageSignatures.add(pageSignature);
-
-    let newOnPage = 0;
-    for (const id of ids) {
-      if (!allExistingIds.has(id) && !newIdSet.has(id)) {
-        newIds.push(id);
-        newIdSet.add(id);
-        newOnPage++;
-        if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) {
-          console.log(`[Discovery] Reached MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND}, stopping scan for ${brand.name}`);
-          break;
-        }
-      }
+    if (outcome.kind === 'failed') {
+      stats.fetchFailed += 1;
+      console.warn(`[Discovery] product=${outcome.id} skipped (${outcome.reason})`);
+      continue;
     }
-
-    console.log(`[Discovery] Page ${page}: ${ids.length} items, ${newOnPage} new`);
-
-    if (newIds.length >= CONFIG.MAX_NEW_PER_BRAND) break;
-    page++;
-    await delay(CONFIG.DELAY_MS); // Throttle HTTP requests only
+    const brand = isTargetTradingCard(outcome.product);
+    if (!brand) {
+      stats.nonTarget += 1;
+      continue;
+    }
+    if (candidates.length >= CONFIG.MAX_NEW) continue;
+    candidates.push({ apparelId: outcome.id, gameId: brand.gameId, brandName: brand.name });
+    stats.candidates += 1;
+    stats.acceptedByBrand[brand.name] = (stats.acceptedByBrand[brand.name] ?? 0) + 1;
   }
 
-  console.log(`[Discovery] Found ${newIds.length} new apparel IDs for ${brand.name}`);
-
-  // Phase 2: Batch insert all new IDs into DB (no per-card HTTP fetch)
-  if (newIds.length === 0) {
-    return { brand: brand.name, newIds: 0, inserted: 0, failed: 0 };
-  }
-
-  console.log(`[Discovery] ${brand.name}: batch inserting ${newIds.length} new cards (no per-card fetch)...`);
-  const { inserted, failed } = await batchInsertNewCards(newIds, brand.gameId, brand.name);
-
-  // Update global dedup set
-  for (const id of newIds) allExistingIds.add(id);
-
-  return { brand: brand.name, newIds: newIds.length, inserted, failed };
+  const { inserted, failed } = await insertCandidates(candidates);
+  const summary = {
+    ...stats,
+    inserted,
+    insertFailed: failed,
+    highWaterId: end,
+    runAt: new Date().toISOString(),
+  };
+  await saveDiscoveryState(summary);
+  console.log(`[Discovery] summary=${JSON.stringify(summary)}`);
+  return summary;
 }
 
 async function main() {
-  console.log('='.repeat(60));
-  console.log('[SNKRDUNK Discovery] Starting v2.0 (Batch Insert Mode)');
-  console.log(`[Config] MAX_NEW_PER_BRAND=${CONFIG.MAX_NEW_PER_BRAND === 99999 ? 'unlimited' : CONFIG.MAX_NEW_PER_BRAND}, MAX_PAGES=${CONFIG.MAX_PAGES_PER_BRAND === 99999 ? 'unlimited (scan to last page)' : CONFIG.MAX_PAGES_PER_BRAND}, BATCH_SIZE=${CONFIG.BATCH_SIZE}`);
-  console.log('[Note] v2.0: No per-card HTML fetch during discovery. batch-update will fill card details.');
-  console.log('='.repeat(60));
-
-  // Load all existing SNKRDUNK IDs once (for deduplication)
-  console.log('[DB] Loading existing SNKRDUNK IDs...');
-  const allExistingIds = await getAllExistingSnkrdunkIds();
-  console.log(`[DB] Found ${allExistingIds.size} existing SNKRDUNK data sources`);
-
-  const results = [];
-
-  for (const brand of TCG_BRANDS) {
-    try {
-      const result = await discoverBrand(brand, allExistingIds);
-      results.push(result);
-    } catch (e) {
-      console.error(`[Discovery] Fatal error for ${brand.name}: ${e.message}`);
-      results.push({ brand: brand.name, newIds: 0, inserted: 0, failed: 0, error: e.message });
+  try {
+    console.log('[SNKRDUNK Discovery] Starting high-water direct product mode');
+    const summary = await discoverHighWater();
+    if (summary.fetchFailed > 0) {
+      console.warn(`[Discovery] Completed with ${summary.fetchFailed} retriable product request failures; the next overlap window will retry them.`);
     }
+  } finally {
+    if (pool) await pool.end();
   }
-
-  // Summary
-  console.log('\n' + '='.repeat(60));
-  console.log('[SNKRDUNK Discovery] Summary');
-  console.log('='.repeat(60));
-  let totalInserted = 0;
-  for (const r of results) {
-    const status = r.error ? `❌ ERROR: ${r.error}` : `✅ ${r.inserted} inserted, ${r.failed} failed`;
-    console.log(`  ${r.brand}: ${r.newIds} new found → ${status}`);
-    totalInserted += r.inserted || 0;
-  }
-  console.log(`\n[SNKRDUNK Discovery] Total inserted: ${totalInserted}`);
-  console.log('[SNKRDUNK Discovery] Card details (name/image) will be filled by the subsequent batch-update run.');
-
-  if (pool) await pool.end();
-  process.exit(0);
 }
 
-main().catch(e => {
-  console.error('[SNKRDUNK Discovery] Fatal:', e);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error('[SNKRDUNK Discovery] Fatal:', error);
+    process.exit(1);
+  });
+}
