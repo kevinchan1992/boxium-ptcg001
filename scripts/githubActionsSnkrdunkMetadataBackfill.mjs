@@ -67,7 +67,6 @@ async function getPendingSources() {
        AND ds.isActive = 1
        AND ds.sourceIdentifier REGEXP '^[0-9]+$'
        AND (c.name IS NULL OR c.name LIKE 'SNKRDUNK Card %' OR c.imageUrl IS NULL OR c.cardNumber IS NULL OR c.cardNumber = '')
-       AND (ds.lastFetchStatus IS NULL OR ds.lastFetchStatus <> 'failed')
      ORDER BY ds.createdAt DESC
      LIMIT ${limit}`,
   );
