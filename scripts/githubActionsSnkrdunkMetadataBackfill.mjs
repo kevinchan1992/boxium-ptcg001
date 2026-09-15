@@ -31,8 +31,11 @@ function extractCardNumber(name) {
 async function fetchProduct(apparelId) {
   try {
     const { stdout } = await execFileAsync(
-      'curl',
+      'timeout',
       [
+        '--kill-after=2s',
+        `${Math.ceil(CONFIG.REQUEST_TIMEOUT / 1000) + 2}s`,
+        'curl',
         '--silent', '--show-error', '--fail', '--location',
         '--connect-timeout', '5',
         '--max-time', String(Math.ceil(CONFIG.REQUEST_TIMEOUT / 1000)),
@@ -42,13 +45,13 @@ async function fetchProduct(apparelId) {
         `https://snkrdunk.com/v1/apparels/${apparelId}`,
       ],
       {
-        timeout: CONFIG.REQUEST_TIMEOUT + 2_000,
+        timeout: CONFIG.REQUEST_TIMEOUT + 5_000,
         maxBuffer: 2 * 1024 * 1024,
       },
     );
     return JSON.parse(stdout);
   } catch (error) {
-    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
+    if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT' || Number(error.code) === 124 || Number(error.code) === 28) {
       throw new Error(`Metadata request timeout after ${CONFIG.REQUEST_TIMEOUT}ms`);
     }
     throw error;
@@ -112,11 +115,14 @@ async function saveMetadata(source, product) {
 
 async function processSource(source) {
   try {
+    console.log(`[MetadataBackfill] product=${source.sourceIdentifier} start`);
     const product = await fetchProduct(source.sourceIdentifier);
     await saveMetadata(source, product);
+    console.log(`[MetadataBackfill] product=${source.sourceIdentifier} success`);
     return { ok: true };
   } catch (error) {
     await markFailed(source.dataSourceId, error.name === 'AbortError' ? `Metadata request timeout after ${CONFIG.REQUEST_TIMEOUT}ms` : error.message).catch(() => {});
+    console.warn(`[MetadataBackfill] product=${source.sourceIdentifier} failed: ${error.message}`);
     return { ok: false, error: error.message };
   }
 }
