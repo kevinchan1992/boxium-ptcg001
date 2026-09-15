@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHighWaterRange, isTargetTradingCard, readPositiveInt } from './snkrdunkHighWaterCore.mjs';
+import { createHighWaterRange, hasRequiredCardMetadata, isTargetTradingCard, readPositiveInt } from './snkrdunkHighWaterCore.mjs';
 
 test('high-water range overlaps backwards and scans forward in newest-first order', () => {
   const { start, end, ids } = createHighWaterRange(896992, 10_000, 2_000);
@@ -13,11 +13,17 @@ test('high-water range overlaps backwards and scans forward in newest-first orde
 
 test('target classifier only accepts configured TCG single cards', () => {
   assert.deepEqual(
-    isTargetTradingCard({ brands: [{ id: 'pokemon' }], categories: [{ id: 25, name: 'trading-card-single' }] }),
+    isTargetTradingCard({
+      name: 'Pikachu [M6a 025/103]',
+      primaryMedia: { imageUrl: 'https://cdn.snkrdunk.com/pikachu.webp' },
+      brands: [{ id: 'pokemon' }],
+      categories: [{ id: 25, name: 'trading-card-single' }],
+    }),
     { gameId: 1, name: 'Pokemon Card Game' },
   );
-  assert.equal(isTargetTradingCard({ brands: [{ id: 'pokemon' }], categories: [{ id: 26, name: 'trading-card-box' }] }), null);
-  assert.equal(isTargetTradingCard({ brands: [{ id: 'nike' }], categories: [{ id: 25, name: 'trading-card-single' }] }), null);
+  assert.equal(isTargetTradingCard({ name: 'Pikachu [M6a 025/103]', primaryMedia: { imageUrl: 'https://cdn.snkrdunk.com/pikachu.webp' }, brands: [{ id: 'pokemon' }], categories: [{ id: 26, name: 'trading-card-box' }] }), null);
+  assert.equal(isTargetTradingCard({ name: 'Pikachu [M6a 025/103]', primaryMedia: { imageUrl: 'https://cdn.snkrdunk.com/pikachu.webp' }, brands: [{ id: 'nike' }], categories: [{ id: 25, name: 'trading-card-single' }] }), null);
+  assert.equal(hasRequiredCardMetadata({ brands: [{ id: 'pokemon' }], categories: [{ id: 25, name: 'trading-card-single' }] }), false);
 });
 
 test('invalid numeric workflow inputs use the safe configured fallback', () => {

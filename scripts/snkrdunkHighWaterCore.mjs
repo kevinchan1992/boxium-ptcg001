@@ -13,13 +13,20 @@ export const TARGET_BRANDS = new Map([
   ['gundam-card-game', { gameId: 60004, name: 'Gundam Card Game' }],
 ]);
 
+export function hasRequiredCardMetadata(product) {
+  const name = String(product?.name || '').trim();
+  const imageUrl = String(product?.primaryMedia?.imageUrl || '').trim();
+  const cardNumber = name.match(/\[([^\]]+)\]/)?.[1]?.trim();
+  return Boolean(name && imageUrl && cardNumber);
+}
+
 export function isTargetTradingCard(product) {
   const brand = product?.brands?.map(({ id }) => TARGET_BRANDS.get(id)).find(Boolean);
   const isSingleCard = product?.categories?.some(
     ({ id, name }) => Number(id) === 25 || name === 'trading-card-single',
   );
 
-  return brand && isSingleCard ? brand : null;
+  return brand && isSingleCard && hasRequiredCardMetadata(product) ? brand : null;
 }
 
 export function createHighWaterRange(highWater, lookback, forward) {
