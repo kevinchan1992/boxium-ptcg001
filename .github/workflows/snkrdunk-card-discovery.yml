@@ -23,7 +23,7 @@ on:
         required: false
         default: 'false'
       metadata_batch_limit:
-        description: 'Maximum pending cards for metadata-only completion (default: 1000)'
+        description: 'Maximum pending cards for metadata-only completion (default: 1000; max: 20000)'
         required: false
         default: '1000'
 

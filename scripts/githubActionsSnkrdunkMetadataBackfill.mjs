@@ -60,7 +60,7 @@ async function fetchProduct(apparelId) {
 
 async function getPendingSources() {
   const db = await getPool();
-  const limit = Math.max(1, Math.min(CONFIG.BATCH_LIMIT, 1_000));
+  const limit = Math.max(1, Math.min(CONFIG.BATCH_LIMIT, 20_000));
   const [rows] = await db.execute(
     `SELECT ds.id AS dataSourceId, ds.sourceIdentifier, c.id AS cardId
      FROM dataSources ds
