@@ -52,7 +52,7 @@ jobs:
         run: npm install --omit=dev
 
       - name: Run high-water SNKRDUNK Discovery
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.metadata_only != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.metadata_only != 'true' }}
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -81,7 +81,7 @@ jobs:
           node githubActionsSnkrdunkMetadataBackfill.mjs
 
       - name: Trigger price-history backfill for newly discovered cards
-        if: ${{ success() && (github.event_name != 'workflow_dispatch' || inputs.metadata_only != 'true') }}
+        if: ${{ success() && (github.event_name != 'workflow_dispatch' || github.event.inputs.metadata_only != 'true') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
