@@ -46,6 +46,7 @@ async function fetchProduct(apparelId) {
 
 async function getPendingSources() {
   const db = await getPool();
+  const limit = Math.max(1, Math.min(CONFIG.BATCH_LIMIT, 1_000));
   const [rows] = await db.execute(
     `SELECT ds.id AS dataSourceId, ds.sourceIdentifier, c.id AS cardId
      FROM dataSources ds
@@ -57,8 +58,7 @@ async function getPendingSources() {
        AND (c.name IS NULL OR c.name LIKE 'SNKRDUNK Card %' OR c.imageUrl IS NULL OR c.cardNumber IS NULL OR c.cardNumber = '')
        AND (ds.lastFetchStatus IS NULL OR ds.lastFetchStatus <> 'failed')
      ORDER BY ds.createdAt DESC
-     LIMIT ?`,
-    [CONFIG.BATCH_LIMIT],
+     LIMIT ${limit}`,
   );
   return rows;
 }
