@@ -18,6 +18,14 @@ on:
         description: 'Maximum newly discovered target TCG single cards per run (default: 1000)'
         required: false
         default: '1000'
+      metadata_only:
+        description: 'Skip discovery and only complete pending new-card metadata (default: false)'
+        required: false
+        default: 'false'
+      metadata_batch_limit:
+        description: 'Maximum pending cards for metadata-only completion (default: 1000)'
+        required: false
+        default: '1000'
 
 jobs:
   discover:
@@ -44,6 +52,7 @@ jobs:
         run: npm install --omit=dev
 
       - name: Run high-water SNKRDUNK Discovery
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.metadata_only != 'true' }}
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -64,7 +73,7 @@ jobs:
         working-directory: scripts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          METADATA_BATCH_LIMIT: '1000'
+          METADATA_BATCH_LIMIT: ${{ github.event.inputs.metadata_batch_limit || '1000' }}
           METADATA_PARALLEL: '8'
           REQUEST_TIMEOUT_MS: '7000'
         run: |
@@ -72,7 +81,7 @@ jobs:
           node githubActionsSnkrdunkMetadataBackfill.mjs
 
       - name: Trigger price-history backfill for newly discovered cards
-        if: success()
+        if: ${{ success() && (github.event_name != 'workflow_dispatch' || inputs.metadata_only != 'true') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
