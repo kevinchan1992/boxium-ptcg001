@@ -127,6 +127,24 @@ async function processSource(source) {
   }
 }
 
+async function processSourceWithDeadline(source) {
+  const deadlineMs = CONFIG.REQUEST_TIMEOUT + 5_000;
+  let timer;
+  const timedOut = new Promise((resolve) => {
+    timer = setTimeout(async () => {
+      const message = `Metadata worker deadline exceeded after ${deadlineMs}ms`;
+      await markFailed(source.dataSourceId, message).catch(() => {});
+      console.warn(`[MetadataBackfill] product=${source.sourceIdentifier} deadline exceeded`);
+      resolve({ ok: false, error: message });
+    }, deadlineMs);
+  });
+  try {
+    return await Promise.race([processSource(source), timedOut]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function main() {
   try {
     const sources = await getPendingSources();
@@ -135,7 +153,7 @@ async function main() {
     let failed = 0;
     for (let index = 0; index < sources.length; index += CONFIG.PARALLEL) {
       const batch = sources.slice(index, index + CONFIG.PARALLEL);
-      const results = await Promise.all(batch.map(processSource));
+      const results = await Promise.all(batch.map(processSourceWithDeadline));
       for (const result of results) {
         if (result.ok) success += 1;
         else failed += 1;
