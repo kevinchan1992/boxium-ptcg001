@@ -29,11 +29,25 @@
 import mysql from 'mysql2/promise';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
+function readPositiveIntEnv(name, fallback) {
+  const raw = process.env[name];
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+
+  if (raw !== undefined && raw !== '') {
+    console.warn(`[Config] Ignoring invalid ${name}=${JSON.stringify(raw)}; using ${fallback}`);
+  }
+  return fallback;
+}
+
 const CONFIG = {
-  MAX_NEW_PER_BRAND: parseInt(process.env.MAX_NEW_PER_BRAND || '99999', 10),
+  MAX_NEW_PER_BRAND: readPositiveIntEnv('MAX_NEW_PER_BRAND', 99999),
   DELAY_MS: parseInt(process.env.DELAY_MS || '400', 10), // Only used for search page HTTP requests
   REQUEST_TIMEOUT: 20000,
-  MAX_PAGES_PER_BRAND: parseInt(process.env.MAX_PAGES_PER_BRAND || '99999', 10), // No limit — scan until empty page
+  // A manual GitHub workflow dispatch can surface an omitted numeric input as
+  // "0". Treat non-positive values as omitted, because page=0 means the loop
+  // never runs and a falsely-successful discovery inserts no new cards.
+  MAX_PAGES_PER_BRAND: readPositiveIntEnv('MAX_PAGES_PER_BRAND', 99999), // No limit — scan until empty page
   BATCH_SIZE: 500, // Number of cards to insert per batch SQL statement
   USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 };
