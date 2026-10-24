@@ -10,6 +10,10 @@ on:
         description: 'Number of parallel workers (default: 8)'
         required: false
         default: '8'
+      batch_limit:
+        description: 'Max cards per manual run (default: 18528; use a small value for verification)'
+        required: false
+        default: '18528'
       skip_hot_cache_hours:
         description: 'Skip cards updated within N hours (default: 1)'
         required: false
@@ -107,6 +111,7 @@ jobs:
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
+          BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '18528' }}
           SKIP_HOT_CACHE_HOURS: ${{ github.event.inputs.skip_hot_cache_hours || '1' }}
           REQUEST_TIMEOUT_MS: '12000'
           MAX_CONSECUTIVE_ERR: '30'
