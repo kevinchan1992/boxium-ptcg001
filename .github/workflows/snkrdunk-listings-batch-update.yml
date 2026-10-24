@@ -14,6 +14,11 @@ on:
         description: 'Max cards per manual run (default: 18528; use a small value for verification)'
         required: false
         default: '18528'
+      full_refresh:
+        description: 'Confirm a one-off full refresh of all eligible cards (default: false)'
+        required: false
+        type: boolean
+        default: false
       skip_hot_cache_hours:
         description: 'Skip cards updated within N hours (default: 1)'
         required: false
@@ -32,7 +37,9 @@ jobs:
   listings-batch-update:
     name: Update SNKRDUNK On-Sale Listings Cache
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # A normal 18,528-card batch takes about 27 minutes. Only a manually
+    # confirmed full refresh gets the longer window; scheduled jobs stay at 60.
+    timeout-minutes: ${{ inputs.full_refresh && 180 || 60 }}
 
     steps:
       - name: Checkout repository
@@ -111,7 +118,7 @@ jobs:
           PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           PARALLEL: ${{ github.event.inputs.parallel || '8' }}
-          BATCH_LIMIT: ${{ github.event.inputs.batch_limit || '18528' }}
+          BATCH_LIMIT: ${{ inputs.full_refresh && '0' || github.event.inputs.batch_limit || '18528' }}
           SKIP_HOT_CACHE_HOURS: ${{ github.event.inputs.skip_hot_cache_hours || '1' }}
           REQUEST_TIMEOUT_MS: '12000'
           MAX_CONSECUTIVE_ERR: '30'
